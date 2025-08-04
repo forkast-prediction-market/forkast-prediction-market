@@ -7,18 +7,21 @@ import { useEffect, useRef, useState } from 'react'
 import { LoginModal } from '@/components/auth/LoginModal'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { SearchResults } from '@/components/ui/SearchResults'
 import { useAuth } from '@/hooks/useAuth'
+import { useSearch } from '@/hooks/useSearch'
 import { useTheme } from '@/hooks/useTheme'
 import { mockUser } from '@/lib/mockData'
 import { sanitizeSvg } from '@/lib/utils'
 
 export default function Header() {
-  const [searchQuery, setSearchQuery] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showLoginModal, setShowLoginModal] = useState(false)
   const { theme, setTheme } = useTheme()
   const { user, disconnect, isInitialized } = useAuth()
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLDivElement>(null)
+  const { query, results, isLoading, showResults, handleQueryChange, clearSearch, hideResults } = useSearch()
 
   // Get site configuration from environment variables
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME
@@ -26,7 +29,7 @@ export default function Header() {
 
   const sanitizedLogoSvg = logoSvg ? sanitizeSvg(logoSvg) : ''
 
-  // Close dropdown when clicking outside
+  // Close dropdown and search when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -35,15 +38,22 @@ export default function Header() {
       ) {
         setShowUserMenu(false)
       }
+      
+      if (
+        searchRef.current
+        && !searchRef.current.contains(event.target as Node)
+      ) {
+        hideResults()
+      }
     }
 
-    if (showUserMenu) {
+    if (showUserMenu || showResults) {
       document.addEventListener('mousedown', handleClickOutside)
       return () => {
         document.removeEventListener('mousedown', handleClickOutside)
       }
     }
-  }, [showUserMenu])
+  }, [showUserMenu, showResults, hideResults])
 
   return (
     <header className="sticky top-0 z-50 bg-background pt-2">
@@ -64,15 +74,22 @@ export default function Header() {
         </Link>
 
         {/* Search Bar */}
-        <div className="relative mx-2 flex-1 sm:mx-4 sm:mr-6">
+        <div className="relative mx-2 flex-1 sm:mx-4 sm:mr-6" ref={searchRef}>
           <SearchIcon className="absolute top-1/2 left-3 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search markets"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
+            value={query}
+            onChange={e => handleQueryChange(e.target.value)}
             className="w-full pl-9 text-sm sm:w-3/4"
           />
+          {(showResults || isLoading) && (
+            <SearchResults
+              results={results}
+              isLoading={isLoading}
+              onResultClick={clearSearch}
+            />
+          )}
         </div>
 
         {/* Right Section */}
