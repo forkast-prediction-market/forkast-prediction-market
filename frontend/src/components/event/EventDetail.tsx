@@ -1,11 +1,12 @@
 'use client'
 
 import type { Event } from '@/types'
-import { RefreshCwIcon, SparklesIcon, TrendingDownIcon } from 'lucide-react'
+import { RefreshCwIcon, TrendingDownIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useLayoutEffect, useState } from 'react'
 import EventChart from '@/components/event/EventChart'
 import EventFavorite from '@/components/event/EventFavorite'
+import EventMarketContext from '@/components/event/EventMarketContext'
 import EventMobileOrderPanel from '@/components/event/EventMobileOrderPanel'
 import RelatedEvents from '@/components/event/EventRelated'
 import EventShare from '@/components/event/EventShare'
@@ -16,41 +17,18 @@ import { useTradingState } from '@/hooks/useTradingState'
 import { formatDate, formatVolume, mockMarketDetails } from '@/lib/mockData'
 import { formatOracleAddress, formatRules } from '@/lib/utils'
 
-interface EventDetailProps {
+interface Props {
   event: Event
 }
 
-export default function EventDetail({ event }: EventDetailProps) {
+export default function EventDetail({ event }: Props) {
   const tradingState = useTradingState({ event })
 
   const [rulesExpanded, setRulesExpanded] = useState(false)
-  const [contextExpanded, setContextExpanded] = useState(false)
-  const [isGeneratingContext, setIsGeneratingContext] = useState(false)
-  const [generatedContext, setGeneratedContext] = useState<string[]>([])
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false)
 
   // Utility functions - now using trading state
   const getYesOutcome = tradingState.getYesOutcome
-  const primaryProbability = tradingState.primaryProbability
-
-  // Function to generate market context
-  async function generateMarketContext() {
-    setIsGeneratingContext(true)
-
-    // Simulate AI generation delay
-    await new Promise(resolve => setTimeout(resolve, 2000))
-
-    // Generate contextual content based on market title and type
-    const contextLines = [
-      `This market tracks ${event.title.toLowerCase()} with current probability trends indicating ${primaryProbability}% likelihood of the positive outcome.`,
-      `Historical data shows similar events have had volatility patterns with key decision points typically occurring near market resolution dates.`,
-      `Market sentiment and external factors including recent news developments, expert opinions, and related market movements may influence final outcomes.`,
-    ]
-
-    setGeneratedContext(contextLines)
-    setContextExpanded(true)
-    setIsGeneratingContext(false)
-  }
 
   // Auto-select outcome for all markets (binary and multi-outcome)
   useLayoutEffect(() => {
@@ -383,46 +361,7 @@ export default function EventDetail({ event }: EventDetailProps) {
             </div>
           )}
 
-          {/* Market Context */}
-          <div
-            className={`
-              mt-3 rounded-lg border border-border/50 transition-all duration-200 ease-in-out
-              dark:border-border/20
-            `}
-          >
-            <div className="flex items-center justify-between p-4 hover:bg-muted/50">
-              <span className="text-lg font-medium">Market Context</span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={generateMarketContext}
-                disabled={isGeneratingContext}
-              >
-                <SparklesIcon
-                  className={`h-3 w-3 ${
-                    isGeneratingContext ? 'animate-spin' : ''
-                  }`}
-                />
-                {isGeneratingContext ? 'Generating...' : 'Generate'}
-              </Button>
-            </div>
-
-            {contextExpanded && (
-              <div className="border-t border-border/30 px-3 pb-3">
-                <div className="space-y-2 pt-3">
-                  {generatedContext.map(line => (
-                    <p
-                      key={line}
-                      className="text-sm leading-relaxed text-muted-foreground"
-                    >
-                      {line}
-                    </p>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <EventMarketContext event={event} tradingState={tradingState} />
 
           {/* Rules */}
           <div
