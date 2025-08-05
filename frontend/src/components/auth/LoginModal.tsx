@@ -146,6 +146,7 @@ function LoginForm({
       <Button
         onClick={handleGoogleLogin}
         type="button"
+        className="h-12"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -159,7 +160,7 @@ function LoginForm({
       {/* Separator */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-300" />
+          <div className="w-full border-t border-gray-700" />
         </div>
         <div className="relative flex justify-center text-sm">
           <span className="bg-background px-2 text-gray-500">OR</span>
@@ -174,13 +175,13 @@ function LoginForm({
           value={email}
           onChange={e => setEmail(e.target.value)}
           disabled={isEmailLoading}
-          className="rounded-r-none bg-background"
+          className="h-12 rounded-r-none bg-background"
         />
         <Button
           onClick={handleEmailContinue}
           disabled={!email.trim() || isEmailLoading}
           type="button"
-          className="rounded-l-none"
+          className="h-12 rounded-l-none"
         >
           {isEmailLoading ? 'Sending...' : 'Continue'}
         </Button>
@@ -194,7 +195,7 @@ function LoginForm({
           size="icon"
           variant="outline"
           title="MetaMask"
-          className="w-auto"
+          className="h-12 w-auto"
         >
           <Image
             src="/icons/metamask.svg"
@@ -210,7 +211,7 @@ function LoginForm({
           type="button"
           size="icon"
           variant="outline"
-          className="w-auto"
+          className="h-12 w-auto"
           title="Coinbase Wallet"
         >
           <Image
@@ -227,7 +228,7 @@ function LoginForm({
           type="button"
           size="icon"
           variant="outline"
-          className="w-auto"
+          className="h-12 w-auto"
           title="Phantom"
         >
           <Image
@@ -244,7 +245,7 @@ function LoginForm({
           type="button"
           size="icon"
           variant="outline"
-          className="w-auto"
+          className="h-12 w-auto"
           title="WalletConnect"
         >
           <Image
