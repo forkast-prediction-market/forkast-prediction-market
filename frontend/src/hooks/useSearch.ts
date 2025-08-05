@@ -33,15 +33,18 @@ export function useSearch() {
         const data = await response.json()
         setResults(data)
         setShowResults(true)
-      } else {
+      }
+      else {
         setResults([])
         setShowResults(false)
       }
-    } catch (error) {
+    }
+    catch (error) {
       console.error('Search error:', error)
       setResults([])
       setShowResults(false)
-    } finally {
+    }
+    finally {
       setIsLoading(false)
     }
   }, [])
@@ -55,17 +58,17 @@ export function useSearch() {
     return () => clearTimeout(timer)
   }, [query, search])
 
-  const handleQueryChange = (newQuery: string) => {
+  function handleQueryChange(newQuery: string) {
     setQuery(newQuery)
   }
 
-  const clearSearch = () => {
+  function clearSearch() {
     setQuery('')
     setResults([])
     setShowResults(false)
   }
 
-  const hideResults = () => {
+  function hideResults() {
     setShowResults(false)
   }
 

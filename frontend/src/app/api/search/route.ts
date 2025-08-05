@@ -22,31 +22,6 @@ export async function GET(request: Request) {
       .ilike('title', `%${query}%`)
       .limit(5)
 
-    // Search markets by name and get their events
-    const { data: marketsByName, error: marketsSearchError } = await supabaseAdmin
-      .from('markets')
-      .select(`
-        condition_id,
-        name,
-        short_title,
-        slug,
-        event_id,
-        outcome_count,
-        is_active,
-        is_resolved,
-        icon_url,
-        events!inner(
-          id,
-          slug,
-          title,
-          icon_url
-        )
-      `)
-      .or(`name.ilike.%${query}%,short_title.ilike.%${query}%`)
-      .eq('is_active', true)
-      .eq('is_resolved', false)
-      .limit(5)
-
     // Combine and deduplicate events
     const allEvents = []
     const eventIdsSet = new Set()
@@ -61,20 +36,10 @@ export async function GET(request: Request) {
       }
     }
 
-    // Add events from market search
-    if (marketsByName) {
-      for (const market of marketsByName) {
-        if (!eventIdsSet.has(market.events.id)) {
-          allEvents.push(market.events)
-          eventIdsSet.add(market.events.id)
-        }
-      }
-    }
-
     const events = allEvents.slice(0, 10)
 
-    if (eventsError && marketsSearchError) {
-      console.error('Error searching:', eventsError, marketsSearchError)
+    if (eventsError) {
+      console.error('Error searching:', eventsError)
       return NextResponse.json({ error: 'Failed to search' }, { status: 500 })
     }
 
@@ -114,7 +79,7 @@ export async function GET(request: Request) {
         percentage: 50,
         displayText: '',
         outcomeCount: 2,
-        isMultipleMarkets: false
+        isMultipleMarkets: false,
       }))
       return NextResponse.json(searchResults)
     }
@@ -141,22 +106,23 @@ export async function GET(request: Request) {
 
     // Combine data and format results
     const searchResults = []
-    
+
     for (const event of events) {
       const eventMarkets = markets.filter(market => market.event_id === event.id)
-      
-      if (eventMarkets.length === 0) continue
+
+      if (eventMarkets.length === 0)
+        continue
 
       // Find the winning market (the one with the highest winning outcome probability)
       let bestMarket = null
       let bestPercentage = 0
       let bestDisplayText = ''
-      let bestWinningOutcome = null
 
       for (const market of eventMarkets) {
         const marketOutcomes = outcomes?.filter(outcome => outcome.condition_id === market.condition_id) || []
-        
-        if (marketOutcomes.length === 0) continue
+
+        if (marketOutcomes.length === 0)
+          continue
 
         let marketPercentage = 50
         let marketDisplayText = ''
@@ -164,28 +130,30 @@ export async function GET(request: Request) {
 
         if (marketOutcomes.length === 2) {
           // Binary market - check if it's Yes/No
-          const yesOutcome = marketOutcomes.find(o => 
-            o.outcome_text.toLowerCase() === 'yes' || 
-            o.outcome_text.toLowerCase() === 'sim'
+          const yesOutcome = marketOutcomes.find(o =>
+            o.outcome_text.toLowerCase() === 'yes'
+            || o.outcome_text.toLowerCase() === 'sim',
           )
-          const noOutcome = marketOutcomes.find(o => 
-            o.outcome_text.toLowerCase() === 'no' || 
-            o.outcome_text.toLowerCase() === 'não'
+          const noOutcome = marketOutcomes.find(o =>
+            o.outcome_text.toLowerCase() === 'no'
+            || o.outcome_text.toLowerCase() === 'não',
           )
-          
+
           if (yesOutcome && noOutcome) {
             // Yes/No market - show percentage of Yes option
             marketPercentage = Math.round((yesOutcome.current_price || 0.5) * 100)
             marketDisplayText = '' // Don't show text below for Yes/No
             winningOutcome = yesOutcome
-          } else {
+          }
+          else {
             // Binary but not Yes/No - show winning outcome
             const sortedOutcomes = marketOutcomes.sort((a, b) => (b.current_price || 0) - (a.current_price || 0))
             winningOutcome = sortedOutcomes[0]
             marketPercentage = Math.round((winningOutcome.current_price || 0.5) * 100)
             marketDisplayText = winningOutcome.outcome_text
           }
-        } else if (marketOutcomes.length > 2) {
+        }
+        else if (marketOutcomes.length > 2) {
           // Multiple outcomes - show the one with highest probability
           const sortedOutcomes = marketOutcomes.sort((a, b) => (b.current_price || 0) - (a.current_price || 0))
           winningOutcome = sortedOutcomes[0]
@@ -199,7 +167,6 @@ export async function GET(request: Request) {
           bestMarket = market
           bestPercentage = marketPercentage
           bestDisplayText = marketDisplayText
-          bestWinningOutcome = winningOutcome
         }
       }
 
@@ -222,13 +189,14 @@ export async function GET(request: Request) {
           percentage: bestPercentage,
           displayText: finalDisplayText,
           outcomeCount: bestMarket.outcome_count,
-          isMultipleMarkets: eventMarkets.length > 1
+          isMultipleMarkets: eventMarkets.length > 1,
         })
       }
     }
 
     return NextResponse.json(searchResults)
-  } catch (error) {
+  }
+  catch (error) {
     console.error('Error in search API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }

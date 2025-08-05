@@ -38,7 +38,7 @@ export default function Header() {
       ) {
         setShowUserMenu(false)
       }
-      
+
       if (
         searchRef.current
         && !searchRef.current.contains(event.target as Node)
