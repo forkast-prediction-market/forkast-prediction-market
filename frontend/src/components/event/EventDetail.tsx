@@ -4,14 +4,12 @@ import type { Event } from '@/types'
 import { RefreshCwIcon, SparklesIcon, TrendingDownIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useLayoutEffect, useState } from 'react'
-import EventActivity from '@/components/event/EventActivity'
 import EventChart from '@/components/event/EventChart'
-import EventComments from '@/components/event/EventComments'
 import EventFavorite from '@/components/event/EventFavorite'
 import EventMobileOrderPanel from '@/components/event/EventMobileOrderPanel'
 import RelatedEvents from '@/components/event/EventRelated'
 import EventShare from '@/components/event/EventShare'
-import EventTopHolders from '@/components/event/EventTopHolders'
+import { EventTabs } from '@/components/event/EventTabs'
 import OrderPanel from '@/components/event/OrderPanel'
 import { Button } from '@/components/ui/button'
 import { useTradingState } from '@/hooks/useTradingState'
@@ -23,11 +21,8 @@ interface EventDetailProps {
 }
 
 export default function EventDetail({ event }: EventDetailProps) {
-  // Use custom trading state hook
   const tradingState = useTradingState({ event })
 
-  // Component states
-  const [activeCommentsTab, setActiveCommentsTab] = useState('comments')
   const [rulesExpanded, setRulesExpanded] = useState(false)
   const [contextExpanded, setContextExpanded] = useState(false)
   const [isGeneratingContext, setIsGeneratingContext] = useState(false)
@@ -95,8 +90,6 @@ export default function EventDetail({ event }: EventDetailProps) {
     getYesOutcome,
     tradingState,
   ])
-
-  const { eventTabs } = mockMarketDetails
 
   return (
     <div>
@@ -501,26 +494,7 @@ export default function EventDetail({ event }: EventDetailProps) {
             )}
           </div>
 
-          {/* Comments tabs */}
-          <ul className="mt-8 flex h-12 gap-8 border-b border-border/50 text-sm font-semibold dark:border-border/20">
-            {eventTabs.map(tab => (
-              <li
-                key={tab}
-                className={`cursor-pointer transition-colors duration-200 ${
-                  activeCommentsTab === tab
-                    ? 'border-b-2 border-primary text-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-                onClick={() => setActiveCommentsTab(tab)}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </li>
-            ))}
-          </ul>
-
-          {activeCommentsTab === 'comments' && <EventComments />}
-          {activeCommentsTab === 'holders' && <EventTopHolders />}
-          {activeCommentsTab === 'activity' && <EventActivity />}
+          <EventTabs />
         </div>
 
         <div className="hidden gap-4 md:block lg:sticky lg:top-28 lg:grid lg:self-start">
