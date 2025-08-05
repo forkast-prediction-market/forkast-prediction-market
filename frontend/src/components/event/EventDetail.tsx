@@ -367,11 +367,7 @@ export default function EventDetail({ event }: EventDetailProps) {
             <div className="mt-6 overflow-hidden bg-background">
               {/* Header */}
               <div
-                className={`
-                  hidden items-center rounded-t-lg border-b border-border/50 bg-muted/10 py-3
-                  md:flex
-                  dark:border-border/20
-                `}
+                className="hidden items-center rounded-t-lg border-b bg-muted/10 py-3 md:flex dark:border-border/20"
               >
                 <div className="w-1/2">
                   <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
@@ -467,8 +463,12 @@ export default function EventDetail({ event }: EventDetailProps) {
                       {/* Row 2: Buttons */}
                       <div className="flex gap-2">
                         <Button
-                          size="sm"
+                          size="lg"
                           variant="yes"
+                          className={`flex-1 ${tradingState.selectedOutcomeForOrder === outcome.id
+                          && tradingState.yesNoSelection === 'yes'
+                            ? 'bg-yes text-white'
+                            : ''}`}
                           onClick={(e) => {
                             e.stopPropagation()
                             tradingState.setSelectedOutcomeForOrder(outcome.id)
@@ -483,8 +483,12 @@ export default function EventDetail({ event }: EventDetailProps) {
                           ¢
                         </Button>
                         <Button
-                          size="sm"
+                          size="lg"
                           variant="no"
+                          className={`flex-1 ${tradingState.selectedOutcomeForOrder === outcome.id
+                          && tradingState.yesNoSelection === 'no'
+                            ? 'bg-no text-white'
+                            : ''}`}
                           onClick={(e) => {
                             e.stopPropagation()
                             tradingState.setSelectedOutcomeForOrder(outcome.id)
@@ -552,6 +556,10 @@ export default function EventDetail({ event }: EventDetailProps) {
                         <Button
                           size="lg"
                           variant="yes"
+                          className={tradingState.selectedOutcomeForOrder === outcome.id
+                            && tradingState.yesNoSelection === 'yes'
+                            ? 'bg-yes text-white'
+                            : ''}
                           onClick={(e) => {
                             e.stopPropagation()
                             tradingState.setSelectedOutcomeForOrder(outcome.id)
@@ -574,6 +582,10 @@ export default function EventDetail({ event }: EventDetailProps) {
                         <Button
                           size="lg"
                           variant="no"
+                          className={tradingState.selectedOutcomeForOrder === outcome.id
+                            && tradingState.yesNoSelection === 'no'
+                            ? 'bg-no text-white'
+                            : ''}
                           onClick={(e) => {
                             e.stopPropagation()
                             tradingState.setSelectedOutcomeForOrder(outcome.id)
@@ -735,7 +747,7 @@ export default function EventDetail({ event }: EventDetailProps) {
 
         {/* Right column - Order panel (Sticky) - Hidden on mobile */}
         <div className="hidden gap-4 md:block lg:sticky lg:top-28 lg:grid lg:self-start">
-          <OrderPanel event={event} />
+          <OrderPanel event={event} tradingState={tradingState} />
           <RelatedEvents event={event} />
         </div>
       </main>
@@ -785,7 +797,7 @@ export default function EventDetail({ event }: EventDetailProps) {
             <DialogTitle>{event.title}</DialogTitle>
           </VisuallyHidden>
 
-          <OrderPanel event={event} isMobileVersion={true} />
+          <OrderPanel event={event} tradingState={tradingState} isMobileVersion={true} />
         </DrawerContent>
       </Drawer>
     </div>
