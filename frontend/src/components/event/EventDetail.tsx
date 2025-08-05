@@ -9,13 +9,13 @@ import EventFavorite from '@/components/event/EventFavorite'
 import EventMarketContext from '@/components/event/EventMarketContext'
 import EventMobileOrderPanel from '@/components/event/EventMobileOrderPanel'
 import RelatedEvents from '@/components/event/EventRelated'
+import EventRules from '@/components/event/EventRules'
 import EventShare from '@/components/event/EventShare'
 import { EventTabs } from '@/components/event/EventTabs'
 import OrderPanel from '@/components/event/OrderPanel'
 import { Button } from '@/components/ui/button'
 import { useTradingState } from '@/hooks/useTradingState'
-import { formatDate, formatVolume, mockMarketDetails } from '@/lib/mockData'
-import { formatOracleAddress, formatRules } from '@/lib/utils'
+import { formatDate, formatVolume } from '@/lib/mockData'
 
 interface Props {
   event: Event
@@ -24,7 +24,6 @@ interface Props {
 export default function EventDetail({ event }: Props) {
   const tradingState = useTradingState({ event })
 
-  const [rulesExpanded, setRulesExpanded] = useState(false)
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false)
 
   // Utility functions - now using trading state
@@ -362,77 +361,7 @@ export default function EventDetail({ event }: Props) {
           )}
 
           <EventMarketContext event={event} tradingState={tradingState} />
-
-          {/* Rules */}
-          <div
-            className={`
-              mt-3 rounded-lg border border-border/50 transition-all duration-200 ease-in-out
-              dark:border-border/20
-            `}
-          >
-            <div className="flex items-center justify-between p-4 hover:bg-muted/50">
-              <span className="text-lg font-medium">Rules</span>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={() => setRulesExpanded(!rulesExpanded)}
-              >
-                {rulesExpanded ? 'Show less ▴' : 'Show more ▾'}
-              </Button>
-            </div>
-
-            {rulesExpanded && (
-              <div className="border-t border-border/30 px-3 pb-3">
-                <div className="space-y-2 pt-3">
-                  {event.rules && (
-                    <div className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">
-                      {formatRules(event.rules)}
-                    </div>
-                  )}
-
-                  {/* Oracle Info */}
-                  <div className="mt-3 rounded-lg border border-border/50 p-3 dark:border-border/20">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-start gap-3">
-                        <div
-                          className={`h-10 w-10 bg-gradient-to-r ${mockMarketDetails.resolver.gradientColors}
-                            flex flex-shrink-0 items-center justify-center rounded-sm
-                          `}
-                        >
-                        </div>
-                        <div>
-                          <div className="text-xs text-muted-foreground">
-                            Resolver
-                          </div>
-                          <a
-                            href={
-                              event.oracle
-                                ? `https://polygonscan.com/address/${event.oracle}`
-                                : '#'
-                            }
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-primary hover:opacity-80"
-                          >
-                            {event.oracle
-                              ? formatOracleAddress(event.oracle)
-                              : ''}
-                          </a>
-                        </div>
-                      </div>
-
-                      {/* Propose resolution button aligned to the right */}
-                      <Button variant="outline" size="sm">
-                        Propose resolution
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
+          <EventRules event={event} />
           <EventTabs />
         </div>
 
