@@ -2,24 +2,20 @@
 
 import type { EventCategory } from '@/types'
 import { useSearchParams } from 'next/navigation'
-import { Suspense, useEffect, useLayoutEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useState } from 'react'
 import EventGrid from '@/components/event/EventGrid'
 import FilterToolbar from '@/components/layout/FilterToolbar'
 import Header from '@/components/layout/Header'
 import NavigationTabs from '@/components/layout/NavigationTabs'
 
-function HomePageContent() {
+export default function HomePage() {
   const searchParams = useSearchParams()
-  const categoryFromURL = searchParams?.get('category')
+  const categoryFromURL = searchParams?.get('category') || 'trending'
 
-  const [activeCategory, setActiveCategory] = useState<EventCategory>(
-    (categoryFromURL as EventCategory) || 'trending',
-  )
+  const [activeCategory, setActiveCategory] = useState<EventCategory>((categoryFromURL as EventCategory) || 'trending')
   const [searchQuery, setSearchQuery] = useState('')
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
-  const [favoriteMarkets, setFavoriteMarkets] = useState<Set<string>>(
-    () => new Set(),
-  )
+  const [favoriteMarkets, setFavoriteMarkets] = useState<Set<string>>(() => new Set())
 
   // Update category when URL params change
   useLayoutEffect(() => {
@@ -71,14 +67,9 @@ function HomePageContent() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Fixed Header */}
       <Header />
 
-      {/* Navigation Tabs */}
-      <NavigationTabs
-        activeCategory={activeCategory}
-        onCategoryChange={setActiveCategory}
-      />
+      <NavigationTabs activeCategory={activeCategory} />
 
       {/* Filter Toolbar */}
       <FilterToolbar
@@ -98,13 +89,5 @@ function HomePageContent() {
         onToggleFavorite={handleToggleFavorite}
       />
     </div>
-  )
-}
-
-export default function HomePage() {
-  return (
-    <Suspense>
-      <HomePageContent />
-    </Suspense>
   )
 }

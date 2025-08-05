@@ -1,8 +1,6 @@
 'use client'
 
 import type { Event } from '@/types'
-import { DialogTitle } from '@radix-ui/react-dialog'
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { RefreshCwIcon, SparklesIcon, TrendingDownIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useLayoutEffect, useState } from 'react'
@@ -10,14 +8,12 @@ import EventActivity from '@/components/event/EventActivity'
 import EventChart from '@/components/event/EventChart'
 import EventComments from '@/components/event/EventComments'
 import EventFavorite from '@/components/event/EventFavorite'
+import EventMobileOrderPanel from '@/components/event/EventMobileOrderPanel'
 import RelatedEvents from '@/components/event/EventRelated'
 import EventShare from '@/components/event/EventShare'
 import EventTopHolders from '@/components/event/EventTopHolders'
 import OrderPanel from '@/components/event/OrderPanel'
-import Header from '@/components/layout/Header'
-import NavigationTabs from '@/components/layout/NavigationTabs'
 import { Button } from '@/components/ui/button'
-import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import { useTradingState } from '@/hooks/useTradingState'
 import { formatDate, formatVolume, mockMarketDetails } from '@/lib/mockData'
 import { formatOracleAddress, formatRules } from '@/lib/utils'
@@ -41,8 +37,6 @@ export default function EventDetail({ event }: EventDetailProps) {
   // Utility functions - now using trading state
   const getYesOutcome = tradingState.getYesOutcome
   const primaryProbability = tradingState.primaryProbability
-  const yesPrice = tradingState.yesPrice
-  const noPrice = tradingState.noPrice
 
   // Function to generate market context
   async function generateMarketContext() {
@@ -105,13 +99,7 @@ export default function EventDetail({ event }: EventDetailProps) {
   const { eventTabs } = mockMarketDetails
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <NavigationTabs
-        activeCategory={event.category}
-        onCategoryChange={() => {}}
-      />
-
+    <div>
       <main className="container grid gap-8 pt-8 pb-12 md:pb-12 lg:grid-cols-[3fr_1fr] lg:gap-10">
         {/* Left column - Main content */}
         <div className="pb-20 md:pb-0">
@@ -535,60 +523,18 @@ export default function EventDetail({ event }: EventDetailProps) {
           {activeCommentsTab === 'activity' && <EventActivity />}
         </div>
 
-        {/* Right column - Order panel (Sticky) - Hidden on mobile */}
         <div className="hidden gap-4 md:block lg:sticky lg:top-28 lg:grid lg:self-start">
           <OrderPanel event={event} tradingState={tradingState} />
           <RelatedEvents event={event} />
         </div>
       </main>
 
-      {/* Floating buttons for mobile - only binary markets */}
-      {event.active_markets_count === 1 && (
-        <div className="fixed right-0 bottom-0 left-0 border-t border-border/50 bg-background p-4 md:hidden">
-          <div className="flex gap-2">
-            <Button
-              variant="yes"
-              size="lg"
-              className="flex-1"
-              onClick={() => {
-                tradingState.setYesNoSelection('yes')
-                setIsMobileModalOpen(true)
-              }}
-            >
-              Buy Yes
-              {' '}
-              {yesPrice}
-              ¢
-            </Button>
-            <Button
-              variant="no"
-              size="lg"
-              className="flex-1"
-              onClick={() => {
-                tradingState.setYesNoSelection('no')
-                setIsMobileModalOpen(true)
-              }}
-            >
-              Buy No
-              {' '}
-              {noPrice}
-              ¢
-            </Button>
-          </div>
-        </div>
-      )}
-      <Drawer
-        open={isMobileModalOpen}
-        onClose={() => setIsMobileModalOpen(false)}
-      >
-        <DrawerContent>
-          <VisuallyHidden>
-            <DialogTitle>{event.title}</DialogTitle>
-          </VisuallyHidden>
-
-          <OrderPanel event={event} tradingState={tradingState} isMobileVersion={true} />
-        </DrawerContent>
-      </Drawer>
+      <EventMobileOrderPanel
+        event={event}
+        tradingState={tradingState}
+        isMobileModalOpen={isMobileModalOpen}
+        setIsMobileModalOpen={setIsMobileModalOpen}
+      />
     </div>
   )
 }

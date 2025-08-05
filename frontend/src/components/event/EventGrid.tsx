@@ -8,7 +8,7 @@ import { getAllMarkets } from '@/lib/mockData'
 import EventCard from './EventCard'
 import EventCardSkeleton from './EventCardSkeleton'
 
-interface EventGridProps {
+interface Props {
   activeCategory: EventCategory
   searchQuery: string
   showFavoritesOnly: boolean
@@ -22,7 +22,7 @@ export default function EventGrid({
   showFavoritesOnly,
   favoriteMarkets,
   onToggleFavorite,
-}: EventGridProps) {
+}: Props) {
   const [isLoading, setIsLoading] = useState(true)
   const [openCardId, setOpenCardId] = useState<string | null>(null)
   const [events, setEvents] = useState<Event[]>([])

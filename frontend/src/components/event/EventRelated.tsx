@@ -3,11 +3,11 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
-interface EventDetailProps {
+interface Props {
   event: Event
 }
 
-export default function RelatedEvents({ event }: EventDetailProps) {
+export default function RelatedEvents({ event }: Props) {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
 
