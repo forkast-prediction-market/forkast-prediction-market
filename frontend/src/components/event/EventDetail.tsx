@@ -4,7 +4,6 @@ import type { Event } from '@/types'
 import { DialogTitle } from '@radix-ui/react-dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import {
-  BookmarkIcon,
   RefreshCwIcon,
   SparklesIcon,
   TrendingDownIcon,
@@ -14,6 +13,7 @@ import { useLayoutEffect, useState } from 'react'
 import PredictionChart from '@/components/charts/PredictionChart'
 import EventActivity from '@/components/event/EventActivity'
 import EventComments from '@/components/event/EventComments'
+import EventFavorite from '@/components/event/EventFavorite'
 import RelatedEvents from '@/components/event/EventRelated'
 import EventShare from '@/components/event/EventShare'
 import EventTopHolders from '@/components/event/EventTopHolders'
@@ -40,7 +40,6 @@ export default function EventDetail({ event }: EventDetailProps) {
   const [activeTimeRange, setActiveTimeRange] = useState('1D')
   const [activeCommentsTab, setActiveCommentsTab] = useState('comments')
   const [rulesExpanded, setRulesExpanded] = useState(false)
-  const [isFavorite, setIsFavorite] = useState(false)
   const [contextExpanded, setContextExpanded] = useState(false)
   const [isGeneratingContext, setIsGeneratingContext] = useState(false)
   const [generatedContext, setGeneratedContext] = useState<string[]>([])
@@ -137,21 +136,6 @@ export default function EventDetail({ event }: EventDetailProps) {
     setIsGeneratingContext(false)
   }
 
-  // Load favorite status from localStorage
-  useLayoutEffect(() => {
-    const siteName = process.env.NEXT_PUBLIC_SITE_NAME!.toLowerCase()
-    const stored = localStorage.getItem(`${siteName}-favorites`)
-    if (stored) {
-      try {
-        const favArray = JSON.parse(stored)
-        setIsFavorite(favArray.includes(event.id))
-      }
-      catch (error) {
-        console.error('Error loading favorites:', error)
-      }
-    }
-  }, [event.id])
-
   // Auto-select outcome for all markets (binary and multi-outcome)
   useLayoutEffect(() => {
     if (
@@ -191,34 +175,6 @@ export default function EventDetail({ event }: EventDetailProps) {
     tradingState,
   ])
 
-  // Handle favorite toggle
-  function handleFavoriteToggle() {
-    const siteName = process.env.NEXT_PUBLIC_SITE_NAME!.toLowerCase()
-    const stored = localStorage.getItem(`${siteName}-favorites`)
-    let favArray: string[] = []
-
-    if (stored) {
-      try {
-        favArray = JSON.parse(stored)
-      }
-      catch (error) {
-        console.error('Error parsing favorites:', error)
-      }
-    }
-
-    if (isFavorite) {
-      // Remove from favorites
-      favArray = favArray.filter(id => id !== event.id)
-    }
-    else {
-      // Add to favorites
-      favArray.push(event.id)
-    }
-
-    localStorage.setItem(`${siteName}-favorites`, JSON.stringify(favArray))
-    setIsFavorite(!isFavorite)
-  }
-
   const { timeRanges, eventTabs, trendingData } = mockMarketDetails
 
   return (
@@ -249,12 +205,7 @@ export default function EventDetail({ event }: EventDetailProps) {
               {event.title}
             </h1>
             <div className="flex gap-2 text-muted-foreground">
-              <BookmarkIcon
-                className={`h-4 w-4 cursor-pointer transition-colors hover:text-primary ${
-                  isFavorite ? 'fill-current text-primary' : ''
-                }`}
-                onClick={handleFavoriteToggle}
-              />
+              <EventFavorite event={event} />
               <EventShare />
             </div>
           </div>
