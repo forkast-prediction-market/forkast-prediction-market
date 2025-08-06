@@ -61,7 +61,6 @@ export function SearchResults({ results, isLoading, onResultClick }: SearchResul
                   )}
             </div>
 
-            {/* Event Title */}
             <div className="min-w-0 flex-1">
               <h3 className="truncate text-sm font-medium text-foreground">
                 {result.eventTitle}
@@ -69,7 +68,6 @@ export function SearchResults({ results, isLoading, onResultClick }: SearchResul
             </div>
           </div>
 
-          {/* Right side: Percentage and description */}
           <div className="flex flex-col items-end text-right">
             <span className="text-lg font-bold text-foreground">
               {result.percentage}

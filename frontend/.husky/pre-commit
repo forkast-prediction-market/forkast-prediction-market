@@ -1,2 +1,2 @@
 cd frontend
-npm run lint
+npx lint-staged
