@@ -2,7 +2,7 @@
 
 import type { Event } from '@/types'
 import Image from 'next/image'
-import { useLayoutEffect, useState } from 'react'
+import { useState } from 'react'
 import EventChart from '@/components/event/EventChart'
 import EventFavorite from '@/components/event/EventFavorite'
 import EventMarketContext from '@/components/event/EventMarketContext'
@@ -25,50 +25,8 @@ export default function EventDetail({ event }: Props) {
 
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false)
 
-  // Utility functions - now using trading state
-  const getYesOutcome = tradingState.getYesOutcome
-
-  // Auto-select outcome for all markets (binary and multi-outcome)
-  useLayoutEffect(() => {
-    if (
-      !tradingState.selectedOutcomeForOrder
-      && event.active_markets_count > 0
-    ) {
-      if (event.active_markets_count === 1) {
-        // For binary markets, select the "Yes" option (isYes = true)
-        const yesOutcome = getYesOutcome()
-        if (yesOutcome) {
-          tradingState.setSelectedOutcomeForOrder(yesOutcome.id)
-          tradingState.setYesNoSelection('yes')
-        }
-        else {
-          // If isYes not found, select first option
-          tradingState.setSelectedOutcomeForOrder(event.outcomes[0].id)
-          tradingState.setYesNoSelection('yes')
-        }
-      }
-      else if (event.active_markets_count > 1) {
-        // For multi-option markets, select option with highest probability
-        const sortedOutcomes = [...event.outcomes].sort(
-          (a, b) => b.probability - a.probability,
-        )
-        const highestProbOutcome = sortedOutcomes[0]
-        if (highestProbOutcome) {
-          tradingState.setSelectedOutcomeForOrder(highestProbOutcome.id)
-          tradingState.setYesNoSelection('yes')
-        }
-      }
-    }
-  }, [
-    event.active_markets_count,
-    event.outcomes,
-    tradingState.selectedOutcomeForOrder,
-    getYesOutcome,
-    tradingState,
-  ])
-
   return (
-    <div>
+    <>
       <main className="container grid gap-8 pt-8 pb-12 md:pb-12 lg:grid-cols-[3fr_1fr] lg:gap-10">
         {/* Left column - Main content */}
         <div className="pb-20 md:pb-0">
@@ -83,7 +41,7 @@ export default function EventDetail({ event }: Props) {
               alt={event.creator || 'Market creator'}
               width={64}
               height={64}
-              className="flex-shrink-0 rounded-xl"
+              className="flex-shrink-0 rounded-sm"
             />
             <h1 className="line-clamp-3 flex-1 text-lg leading-tight font-bold md:text-xl lg:text-2xl">
               {event.title}
@@ -128,6 +86,6 @@ export default function EventDetail({ event }: Props) {
         isMobileModalOpen={isMobileModalOpen}
         setIsMobileModalOpen={setIsMobileModalOpen}
       />
-    </div>
+    </>
   )
 }

@@ -1,6 +1,7 @@
 import type { Event } from '@/types'
 import { RefreshCwIcon, TrendingDownIcon } from 'lucide-react'
 import Image from 'next/image'
+import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 
 interface Props {
@@ -10,6 +11,33 @@ interface Props {
 }
 
 export default function EventMarkets({ event, tradingState, setIsMobileModalOpen }: Props) {
+  useEffect(() => {
+    if (!tradingState.selectedOutcomeForOrder && event.active_markets_count > 0) {
+      if (event.active_markets_count === 1) {
+        if (tradingState.yesOutcome) {
+          tradingState.setSelectedOutcomeForOrder(tradingState.yesOutcome.id)
+          tradingState.setYesNoSelection('yes')
+        }
+        else {
+          // If isYes not found, select first option
+          tradingState.setSelectedOutcomeForOrder(event.outcomes[0].id)
+          tradingState.setYesNoSelection('yes')
+        }
+      }
+      else if (event.active_markets_count > 1) {
+        // For multi-option markets, select option with highest probability
+        const sortedOutcomes = [...event.outcomes].sort(
+          (a, b) => b.probability - a.probability,
+        )
+        const highestProbOutcome = sortedOutcomes[0]
+        if (highestProbOutcome) {
+          tradingState.setSelectedOutcomeForOrder(highestProbOutcome.id)
+          tradingState.setYesNoSelection('yes')
+        }
+      }
+    }
+  }, [event, tradingState])
+
   if (event.active_markets_count <= 1) {
     return <></>
   }
