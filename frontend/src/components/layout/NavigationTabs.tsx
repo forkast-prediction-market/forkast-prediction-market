@@ -25,7 +25,7 @@ export default function NavigationTabs({ activeCategory }: Props) {
   }, [])
 
   return (
-    <nav className="sticky top-14 z-10 border-b bg-background">
+    <nav className="sticky top-16 z-10 border-b bg-background">
       <div className="container flex gap-6 overflow-x-auto py-1 text-sm font-medium">
         {categories.map((category, index) => (
           <div key={category.id} className="flex items-center">

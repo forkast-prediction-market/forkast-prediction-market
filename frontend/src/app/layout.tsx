@@ -4,7 +4,7 @@ import ProgressIndicator from '@/app/progress'
 import ThemeColor from '@/components/layout/ThemeColor'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/hooks/useTheme'
-import './globals.css'
+import './globals.css?v=3'
 
 export const metadata: Metadata = {
   title: `${process.env.NEXT_PUBLIC_SITE_NAME} - ${process.env.NEXT_PUBLIC_SITE_DESCRIPTION}`,

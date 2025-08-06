@@ -447,7 +447,7 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
       isMobileVersion
         ? ''
         : 'rounded-lg border'
-    } p-4 shadow-lg`
+    } p-4 shadow-xl/5`
 
     return (
       <div className={containerClasses}>

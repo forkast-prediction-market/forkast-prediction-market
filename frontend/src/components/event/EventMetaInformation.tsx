@@ -10,6 +10,7 @@ export default function EventMetaInformation({ event }: Props) {
     <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
       <span>
         Volume
+        {' '}
         {formatVolume(event.volume)}
       </span>
       <span>•</span>

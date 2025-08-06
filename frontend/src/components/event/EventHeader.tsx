@@ -21,8 +21,8 @@ export default function EventHeader({ event }: Props) {
   }, [])
 
   return (
-    <div className={`z-50 mb-6 flex transform items-center gap-4 transition-all duration-150 ease-linear ${scrolled
-      ? 'lg:sticky lg:top-[99px] lg:border-b lg:bg-background lg:py-3'
+    <div className={`z-50 mb-6 flex transform items-center gap-3 transition-all ease-in-out ${scrolled
+      ? 'sticky top-28 -translate-y-[5px] border-b bg-background py-3'
       : ''}`}
     >
       <Image
@@ -36,9 +36,9 @@ export default function EventHeader({ event }: Props) {
         className={`flex-shrink-0 rounded-sm ${scrolled ? 'size-10' : 'size-16'}`}
       />
 
-      <h1 className={`text-base font-bold ${scrolled
-        ? 'lg:text-base'
-        : `lg:text-2xl`}`}
+      <h1 className={`font-bold ${scrolled
+        ? 'text-xs lg:text-base'
+        : `text-sm lg:text-2xl`}`}
       >
         {event.title}
       </h1>
