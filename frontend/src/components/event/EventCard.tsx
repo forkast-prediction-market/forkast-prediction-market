@@ -249,7 +249,7 @@ export default function EventCard({
               <h3
                 className={`
                   line-clamp-2 text-sm leading-tight font-bold transition-all duration-200
-                  hover:text-foreground
+                  hover:line-clamp-none hover:text-foreground
                 `}
               >
                 {event.title}
