@@ -1,0 +1,52 @@
+import type { Event } from '@/types'
+import Image from 'next/image'
+import { useEffect, useState } from 'react'
+import EventFavorite from '@/components/event/EventFavorite'
+import EventShare from '@/components/event/EventShare'
+
+interface Props {
+  event: Event
+}
+
+export default function EventHeader({ event }: Props) {
+  const [scrolled, setScrolled] = useState(false)
+
+  useEffect(() => {
+    function onScroll() {
+      setScrolled(window.scrollY > 50)
+    }
+
+    window.addEventListener('scroll', onScroll)
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  return (
+    <div className={`z-50 mb-6 flex transform items-center gap-4 transition-all duration-150 ease-linear ${scrolled
+      ? 'lg:sticky lg:top-[99px] lg:border-b lg:bg-background lg:py-3'
+      : ''}`}
+    >
+      <Image
+        src={
+          event.creatorAvatar
+          || `https://avatar.vercel.sh/${event.title.charAt(0)}.png`
+        }
+        alt={event.creator || 'Market creator'}
+        width={64}
+        height={64}
+        className={`flex-shrink-0 rounded-sm ${scrolled ? 'size-10' : 'size-16'}`}
+      />
+
+      <h1 className={`text-base font-bold ${scrolled
+        ? 'lg:text-base'
+        : `lg:text-2xl`}`}
+      >
+        {event.title}
+      </h1>
+
+      <div className="ms-auto flex gap-2 text-muted-foreground">
+        <EventFavorite event={event} />
+        <EventShare />
+      </div>
+    </div>
+  )
+}
