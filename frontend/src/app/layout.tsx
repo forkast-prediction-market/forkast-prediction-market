@@ -1,13 +1,17 @@
 import type { Metadata } from 'next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import Script from 'next/script'
 import ProgressIndicator from '@/app/progress'
 import ThemeColor from '@/components/layout/ThemeColor'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/hooks/useTheme'
-import './globals.css?v=3'
+import './globals.css'
 
 export const metadata: Metadata = {
-  title: `${process.env.NEXT_PUBLIC_SITE_NAME} - ${process.env.NEXT_PUBLIC_SITE_DESCRIPTION}`,
+  title: {
+    template: `${process.env.NEXT_PUBLIC_SITE_NAME} | %s`,
+    default: `${process.env.NEXT_PUBLIC_SITE_NAME} - ${process.env.NEXT_PUBLIC_SITE_DESCRIPTION}`,
+  },
   description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION,
 }
 
@@ -18,17 +22,17 @@ export const viewport = {
   ],
 }
 
-export default function RootLayout({
-  children,
-}: {
+interface RootLayoutProps {
   children: React.ReactNode
-}) {
+}
+
+export default function RootLayout({ children }: RootLayoutProps) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
+      <Script
+        id="theme"
+        dangerouslySetInnerHTML={{
+          __html: `
               (function() {
                 try {
                   var theme = localStorage.getItem('theme');
@@ -55,10 +59,10 @@ export default function RootLayout({
                 }
               })();
             `,
-          }}
-        />
-      </head>
-      <body className="antialiased">
+        }}
+      />
+
+      <body className="font-sans antialiased">
         <ProgressIndicator>
           <ThemeProvider>
             <ThemeColor />

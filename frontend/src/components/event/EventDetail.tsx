@@ -36,7 +36,7 @@ export default function EventDetail({ event }: Props) {
           <EventTabs />
         </div>
 
-        <div className="hidden gap-4 md:block lg:sticky lg:top-28 lg:grid lg:self-start">
+        <div className="hidden gap-4 md:block lg:sticky lg:top-32 lg:grid lg:self-start">
           <OrderPanel event={event} tradingState={tradingState} />
           <RelatedEvents event={event} />
         </div>

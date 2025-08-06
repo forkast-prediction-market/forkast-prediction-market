@@ -1,5 +1,7 @@
+import type { Metadata } from 'next'
 import type { Event } from '@/types'
 import { notFound } from 'next/navigation'
+import { cache } from 'react'
 import EventDetail from '@/components/event/EventDetail'
 import Header from '@/components/layout/Header'
 import NavigationTabs from '@/components/layout/NavigationTabs'
@@ -11,7 +13,17 @@ interface EventPageProps {
   }>
 }
 
-function eventResource(event: any): Event {
+function eventResource(data: any): Event {
+  const event = {
+    ...data,
+    tags: data.event_tags?.map((et: any) => et.tag).filter(Boolean) || [],
+    markets: data.markets.map((market: any) => ({
+      ...market,
+      oracle: market.conditions?.oracle,
+      outcomes: market.conditions?.outcomes || [],
+    })),
+  }
+
   if (event.active_markets_count === 1) {
     const market = event.markets[0]
     const outcomes = market.outcomes.map((outcome: any) => ({
@@ -82,10 +94,8 @@ function eventResource(event: any): Event {
   }
 }
 
-export default async function EventPage({ params }: EventPageProps) {
-  const { slug } = await params
-
-  try {
+export async function getEvent(slug: string) {
+  return cache(async (slug: string) => {
     const { data, error } = await supabaseAdmin
       .from('events')
       .select(
@@ -123,21 +133,29 @@ export default async function EventPage({ params }: EventPageProps) {
       .single()
 
     if (error) {
-      console.error('Error fetching event:', error)
       notFound()
     }
 
-    const transformedData = {
-      ...data,
-      tags: data.event_tags?.map((et: any) => et.tag).filter(Boolean) || [],
-      markets: data.markets.map((market: any) => ({
-        ...market,
-        oracle: market.conditions?.oracle,
-        outcomes: market.conditions?.outcomes || [],
-      })),
-    }
+    return data as Event & any
+  })(slug)
+}
 
-    const event = eventResource(transformedData)
+export async function generateMetadata({ params }: EventPageProps): Promise<Metadata> {
+  const { slug } = await params
+  const event = await getEvent(slug)
+
+  return {
+    title: event.title,
+  }
+}
+
+export default async function EventPage({ params }: EventPageProps) {
+  const { slug } = await params
+
+  try {
+    const data = await getEvent(slug)
+
+    const event = eventResource(data)
 
     return (
       <div className="min-h-screen bg-background">
@@ -149,8 +167,7 @@ export default async function EventPage({ params }: EventPageProps) {
       </div>
     )
   }
-  catch (error) {
-    console.error('Error fetching event:', error)
+  catch {
     notFound()
   }
 }
