@@ -1,5 +1,3 @@
-'use client'
-
 import type { Event } from '@/types'
 import confetti from 'canvas-confetti'
 import { BanknoteIcon, CircleCheckIcon } from 'lucide-react'

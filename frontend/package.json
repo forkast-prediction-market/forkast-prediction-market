@@ -6,7 +6,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "prepare": "cd .. && husky frontend/.husky"
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
@@ -48,8 +49,13 @@
     "eslint-plugin-better-tailwindcss": "^3.7.2",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.1.4",
     "postcss": "^8.5.4",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.8.3"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,json}": "npm run lint"
   }
 }

@@ -1,5 +1,3 @@
-'use client'
-
 import { useState } from 'react'
 import EventActivity from '@/components/event/EventActivity'
 import EventTabSelector from '@/components/event/EventTabSelector'

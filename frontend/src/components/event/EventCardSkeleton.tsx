@@ -1,5 +1,3 @@
-'use client'
-
 export default function EventCardSkeleton() {
   return (
     <div className="h-[180px] animate-pulse rounded-lg border bg-card p-4">
