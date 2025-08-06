@@ -1,3 +1,5 @@
+'use client'
+
 import type { Event } from '@/types'
 import { SparklesIcon } from 'lucide-react'
 import { useState } from 'react'
