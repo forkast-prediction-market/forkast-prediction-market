@@ -233,10 +233,10 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                 <Button
                   size="lg"
                   variant="yes"
-                  className={tradingState.selectedOutcomeForOrder === outcome.id
-                    && tradingState.yesNoSelection === 'yes'
+                  className={`w-32 ${tradingState.selectedOutcomeForOrder === outcome.id
+                  && tradingState.yesNoSelection === 'yes'
                     ? 'bg-yes text-white'
-                    : ''}
+                    : ''}`}
                   onClick={(e) => {
                     e.stopPropagation()
                     tradingState.setSelectedOutcomeForOrder(outcome.id)
@@ -259,10 +259,10 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                 <Button
                   size="lg"
                   variant="no"
-                  className={tradingState.selectedOutcomeForOrder === outcome.id
-                    && tradingState.yesNoSelection === 'no'
+                  className={`w-32 ${tradingState.selectedOutcomeForOrder === outcome.id
+                  && tradingState.yesNoSelection === 'no'
                     ? 'bg-no text-white'
-                    : ''}
+                    : ''}`}
                   onClick={(e) => {
                     e.stopPropagation()
                     tradingState.setSelectedOutcomeForOrder(outcome.id)
