@@ -50,10 +50,10 @@
 }
 
 .dark {
-  --yes: oklch(62.7% 0.194 149.214);
-  --yes-foreground: oklch(52.7% 0.154 150.069);
-  --no: oklch(63.7% 0.237 25.331);
-  --no-foreground: oklch(50.5% 0.213 27.518);
+  --yes: oklch(0.6611 0.1419 153.41);
+  --yes-foreground: oklch(0.667 0.154 150.069);
+  --no: oklch(0.5999 0.2065 26.05);
+  --no-foreground: oklch(0.605 0.213 27.518);
   --background: oklch(0.28 0.04 260);
   --foreground: oklch(0.984 0.003 247.858);
   --card: oklch(0.32 0.04 257);

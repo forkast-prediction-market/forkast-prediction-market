@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import ProgressIndicator from '@/app/progress'
 import ThemeColor from '@/components/layout/ThemeColor'
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION,
 }
 
-export const viewport = {
+export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#ffffff' },
     { media: '(prefers-color-scheme: dark)', color: '#1e293b' },

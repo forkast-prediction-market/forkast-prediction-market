@@ -45,7 +45,7 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
   return (
     <div className="mt-6 overflow-hidden bg-background">
       <div
-        className="hidden items-center rounded-t-lg border-b bg-muted/10 py-3 md:flex dark:border-border/20"
+        className="hidden items-center rounded-t-lg border-b py-3 md:flex"
       >
         <div className="w-1/2">
           <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
@@ -74,7 +74,7 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
           <div
             key={outcome.id}
             className={`
-              flex cursor-pointer flex-col items-start rounded-lg px-3 py-4 transition-all duration-200 ease-in-out
+              flex cursor-pointer flex-col items-start px-3 py-4 transition-all duration-200 ease-in-out
               hover:bg-black/5
               md:flex-row md:items-center md:px-2
               dark:hover:bg-white/5
@@ -84,8 +84,8 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
             : ''
           } ${
             index !== sortedOutcomes.length - 1
-              ? 'border-b border-border/50 dark:border-border/20'
-              : 'rounded-b-lg'
+              ? 'border-b'
+              : ''
           }`}
             onClick={() => {
               tradingState.setSelectedOutcomeForOrder(outcome.id)
@@ -111,10 +111,10 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                     />
                   )}
                   <div>
-                    <div className="text-lg font-bold">
+                    <div className="text-xs font-bold">
                       {outcome.name}
                     </div>
-                    <div className="text-xs text-muted-foreground">
+                    <div className="text-[10px] text-muted-foreground">
                       $
                       {outcome.volume?.toLocaleString('en-US', {
                         minimumFractionDigits: 2,
@@ -126,7 +126,7 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold text-foreground">
+                  <span className="text-lg font-bold text-foreground">
                     {Math.round(outcome.probability)}
                     %
                   </span>
@@ -199,7 +199,7 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                   />
                 )}
                 <div>
-                  <div className="text-lg font-bold">
+                  <div className="font-bold">
                     {outcome.name}
                   </div>
                   <div className="text-xs text-muted-foreground">
@@ -215,9 +215,9 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
               </div>
 
               {/* Second column: Probability - 20% */}
-              <div className="flex w-3/5 justify-center">
+              <div className="flex w-2/5 justify-center">
                 <div className="flex items-center gap-2">
-                  <span className="text-4xl font-bold text-foreground">
+                  <span className="text-2xl font-bold text-foreground">
                     {Math.round(outcome.probability)}
                     %
                   </span>

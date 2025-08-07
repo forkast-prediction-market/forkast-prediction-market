@@ -220,8 +220,8 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
 
     const selectedClasses
       = type === 'yes'
-        ? 'bg-yes hover:bg-yes-foreground !text-white'
-        : 'bg-no hover:bg-no-foreground !text-white'
+        ? 'bg-yes hover:bg-yes-foreground text-white'
+        : 'bg-no hover:bg-no-foreground text-white'
 
     return (
       <Button
