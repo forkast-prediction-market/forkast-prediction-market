@@ -2,13 +2,13 @@
 
 import type { EventCategory } from '@/types'
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useLayoutEffect, useState } from 'react'
+import { Suspense, useEffect, useLayoutEffect, useState } from 'react'
 import EventGrid from '@/components/event/EventGrid'
 import FilterToolbar from '@/components/layout/FilterToolbar'
 import Header from '@/components/layout/Header'
 import NavigationTabs from '@/components/layout/NavigationTabs'
 
-export default function HomePage() {
+function HomePageContent() {
   const searchParams = useSearchParams()
   const categoryFromURL = searchParams?.get('category') || 'trending'
 
@@ -89,5 +89,13 @@ export default function HomePage() {
         onToggleFavorite={handleToggleFavorite}
       />
     </div>
+  )
+}
+
+export default function HomePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomePageContent />
+    </Suspense>
   )
 }

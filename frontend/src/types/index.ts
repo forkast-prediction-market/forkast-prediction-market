@@ -28,6 +28,18 @@ export interface MarketOutcome {
   volume: number
   isYes?: boolean // for binary markets
   avatar?: string // URL for outcome avatar/image
+  marketSlug?: string // For multi-markets reference
+  // For multi-markets: store both yes/no outcomes
+  yesOutcome?: {
+    id: string
+    name: string
+    outcome_index: number
+  } | null
+  noOutcome?: {
+    id: string
+    name: string
+    outcome_index: number
+  } | null
 }
 
 export type EventCategory = string // Dynamic categories from database

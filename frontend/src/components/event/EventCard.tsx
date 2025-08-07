@@ -115,7 +115,9 @@ export default function EventCard({
         // Show success toast in Polymarket style
         toast.success(
           `Buy $${tradeAmount} on ${
-            selectedOutcome.type === 'yes' ? 'Yes' : 'No'
+            selectedOutcome.type === 'yes'
+              ? selectedOutcome.name
+              : (isBinaryMarket ? selectedOutcome.name : `Against ${selectedOutcome.name}`)
           }`,
           {
             description: (
@@ -433,7 +435,9 @@ export default function EventCard({
                             <div>
                               Buy
                               {' '}
-                              {selectedOutcome.type === 'yes' ? 'Yes' : 'No'}
+                              {selectedOutcome.type === 'yes'
+                                ? selectedOutcome.name
+                                : (isBinaryMarket ? selectedOutcome.name : `Against ${selectedOutcome.name}`)}
                             </div>
                             <div className="text-xs opacity-90">
                               to win $
@@ -470,15 +474,17 @@ export default function EventCard({
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  handleTrade(outcome.id, 'yes')
+                                  handleTrade(outcome.yesOutcome?.id || outcome.id, 'yes')
                                   onToggle?.(true)
                                 }}
-                                title={`Yes: ${Math.round(outcome.probability)}%`}
+                                title={`${outcome.yesOutcome?.name || 'Yes'}: ${Math.round(outcome.probability)}%`}
                                 variant="yes"
                                 size="sm"
-                                className="group h-auto w-[32px] rounded px-2 py-1 text-[11px]"
+                                className="group h-auto w-[40px] rounded px-2 py-1 text-[11px]"
                               >
-                                <span className="group-hover:hidden">Yes</span>
+                                <span className="group-hover:hidden">
+                                  {outcome.yesOutcome?.name || 'Yes'}
+                                </span>
                                 <span className="hidden font-mono group-hover:inline">
                                   {Math.round(outcome.probability)}
                                   %
@@ -488,17 +494,19 @@ export default function EventCard({
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  handleTrade(outcome.id, 'no')
+                                  handleTrade(outcome.noOutcome?.id || outcome.id, 'no')
                                   onToggle?.(true)
                                 }}
-                                title={`No: ${
+                                title={`${outcome.noOutcome?.name || 'No'}: ${
                                   100 - Math.round(outcome.probability)
                                 }%`}
                                 variant="no"
                                 size="sm"
-                                className="group h-auto w-[32px] rounded px-2 py-1 text-[11px]"
+                                className="group h-auto w-[40px] rounded px-2 py-1 text-[11px]"
                               >
-                                <span className="group-hover:hidden">No</span>
+                                <span className="group-hover:hidden">
+                                  {outcome.noOutcome?.name || 'No'}
+                                </span>
                                 <span className="hidden font-mono group-hover:inline">
                                   {100 - Math.round(outcome.probability)}
                                   %
@@ -524,7 +532,9 @@ export default function EventCard({
                         disabled={isLoading}
                         variant="yes"
                       >
-                        Buy Yes
+                        Buy
+                        {' '}
+                        {yesOutcome.name}
                         {' '}
                         <ChevronsUp className="h-4 w-4" />
                       </Button>
@@ -538,7 +548,9 @@ export default function EventCard({
                         disabled={isLoading}
                         variant="no"
                       >
-                        Buy No
+                        Buy
+                        {' '}
+                        {noOutcome.name}
                         {' '}
                         <ChevronsDown className="h-4 w-4" />
                       </Button>

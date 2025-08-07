@@ -558,17 +558,38 @@ function convertEventToMarket(event: EventWithMarkets): Event {
     }
   }
 
-  // If the event has multiple markets, we create outcomes for each market
-  const outcomes = event.markets.map(market => ({
-    id: `${event.id}-${market.slug}`,
-    name: market.short_title || market.name,
-    probability: Math.random() * 100, // TODO: calculate real probability
-    price: Math.random() * 0.99 + 0.01, // TODO: calculate real price
-    volume: Math.random() * 100000, // TODO: real volume
-    avatar:
-      getSupabaseImageUrl(market.icon_url)
-      || `https://avatar.vercel.sh/${market.slug}.png`,
-  }))
+  // If the event has multiple markets, we create one outcome per market (representing the "Yes" option)
+  const outcomes = event.markets.map((market) => {
+    // Get the "Yes" outcome (index 0) for probability calculation
+    const yesOutcome = market.outcomes.find(o => o.outcome_index === 0)
+    const noOutcome = market.outcomes.find(o => o.outcome_index === 1)
+
+    return {
+      id: `${event.id}-${market.slug}`,
+      name: market.short_title || market.name, // Nome do market (ex: ">100k")
+      probability: Math.random() * 100, // TODO: calculate real probability based on yes outcome
+      price: Math.random() * 0.99 + 0.01, // TODO: calculate real price
+      volume: Math.random() * 100000, // TODO: real volume
+      isYes: true, // Representa a opção "Yes" deste market
+      avatar: getSupabaseImageUrl(market.icon_url) || `https://avatar.vercel.sh/${market.slug}.png`,
+      // Store both outcomes for the buttons
+      yesOutcome: yesOutcome
+        ? {
+            id: `${event.id}-${market.slug}-yes`,
+            name: yesOutcome.outcome_text,
+            outcome_index: yesOutcome.outcome_index,
+          }
+        : null,
+      noOutcome: noOutcome
+        ? {
+            id: `${event.id}-${market.slug}-no`,
+            name: noOutcome.outcome_text,
+            outcome_index: noOutcome.outcome_index,
+          }
+        : null,
+      marketSlug: market.slug,
+    }
+  })
 
   return {
     id: event.id.toString(),

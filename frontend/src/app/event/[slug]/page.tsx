@@ -94,7 +94,7 @@ function eventResource(data: any): Event {
   }
 }
 
-export async function getEvent(slug: string) {
+async function getEvent(slug: string) {
   return cache(async (slug: string) => {
     const { data, error } = await supabaseAdmin
       .from('events')
