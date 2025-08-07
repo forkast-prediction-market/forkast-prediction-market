@@ -37,7 +37,7 @@ Click the "Fork" button in the top right corner
 
 ### 2. Configure Your Environment & Services
 
-- Copy `frontend/.env.example` to `frontend/.env`
+- Copy `.env.example` to `.env`
 - Fill in your API keys and customize your site settings:
   - `NEXT_PUBLIC_SITE_NAME` - Your brand name
   - `NEXT_PUBLIC_SITE_DESCRIPTION` - Your site description
@@ -73,15 +73,14 @@ Click the "Fork" button in the top right corner
 ## 📁 Project Structure
 
 ```
-frontend/
-├── src/
-│   ├── app/          # Next.js app router
-│   ├── components/   # React components
-│   ├── hooks/        # Custom hooks
-│   ├── lib/          # Utilities and configs
-│   └── types/        # TypeScript definitions
-├── public/           # Static assets
-└── docs/             # Documentation
+src/
+├── app/          # Next.js app router
+├── components/   # React components
+├── hooks/        # Custom hooks
+├── lib/          # Utilities and configs
+└── types/        # TypeScript definitions
+public/           # Static assets
+docs/             # Documentation
 ```
 
 ## 🤝 Contributing
