@@ -30,7 +30,7 @@ export default function FilterToolbar({
     <div className="bg-background">
       <div className="container mx-auto flex items-center gap-4 py-2">
         <div className="relative w-48 shrink-0">
-          <Search className="absolute top-1/2 left-3 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search"
@@ -49,10 +49,10 @@ export default function FilterToolbar({
         >
           {showFavoritesOnly
             ? (
-                <Bookmark className="h-3.5 w-3.5 fill-current text-primary" />
+                <Bookmark className="size-3.5 fill-current text-primary" />
               )
             : (
-                <Bookmark className="h-3.5 w-3.5" />
+                <Bookmark className="size-3.5" />
               )}
         </button>
 

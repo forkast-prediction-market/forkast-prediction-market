@@ -416,7 +416,7 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
               {tradingState.claiming
                 ? (
                     <div className="flex items-center justify-center gap-2">
-                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent">
+                      <div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent">
                       </div>
                       <span>Confirming...</span>
                     </div>
@@ -614,8 +614,7 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
                       tradingState.setAmount(tradingState.formatValue(newValue))
                     }}
                     className={`
-                      flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-2xl font-bold
-                      transition-colors
+                      flex size-12 items-center justify-center rounded-lg bg-muted text-2xl font-bold transition-colors
                       hover:bg-muted/80
                     `}
                   >
@@ -695,8 +694,7 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
                       }
                     }}
                     className={`
-                      flex h-12 w-12 items-center justify-center rounded-lg bg-muted text-2xl font-bold
-                      transition-colors
+                      flex size-12 items-center justify-center rounded-lg bg-muted text-2xl font-bold transition-colors
                       hover:bg-muted/80
                     `}
                   >
@@ -838,7 +836,7 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
                 >
                   {tradingState.activeTab === 'sell' ? 'You\'ll receive' : 'To win'}
                   {!isMobileVersion && (
-                    <BanknoteIcon className="h-4 w-4 text-yes" />
+                    <BanknoteIcon className="size-4 text-yes" />
                   )}
                   {isMobileVersion && (
                     <span className="text-xl text-yes">💰</span>
@@ -905,7 +903,7 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
           {tradingState.isLoading
             ? (
                 <div className="flex items-center justify-center gap-2">
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                  <div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
                   <span>Processing...</span>
                 </div>
               )

@@ -93,7 +93,7 @@ export default function EventChart({ event, tradingState }: Props) {
 
                     {/* Red arrow with percentage */}
                     <div className="flex items-center gap-1 text-no">
-                      <TrendingDownIcon className="h-4 w-4" />
+                      <TrendingDownIcon className="size-4" />
                       <span className="text-xs font-semibold">
                         94
                         %
@@ -106,7 +106,7 @@ export default function EventChart({ event, tradingState }: Props) {
                     {getTopOutcomesForChart().map((outcome, index) => (
                       <div key={outcome.id} className="flex items-center gap-2">
                         <div
-                          className="h-3 w-3 rounded-full"
+                          className="size-3 rounded-full"
                           style={{
                             backgroundColor: POLYMARKET_COLORS[index % 4],
                           }}
@@ -123,7 +123,7 @@ export default function EventChart({ event, tradingState }: Props) {
           {/* Logo for prints - always present */}
           <div className="flex items-center gap-1 text-muted-foreground opacity-40">
             <div
-              className="h-6 w-6"
+              className="size-6"
               dangerouslySetInnerHTML={{
                 __html: sanitizeSvg(process.env.NEXT_PUBLIC_SITE_LOGO_SVG!),
               }}

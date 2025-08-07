@@ -50,7 +50,7 @@ export default function EventFavorite({ event }: Props) {
 
   return (
     <BookmarkIcon
-      className={`h-4 w-4 cursor-pointer transition-colors hover:text-primary ${
+      className={`size-4 cursor-pointer transition-colors hover:text-primary ${
         isFavorite ? 'fill-current text-primary' : ''
       }`}
       onClick={handleFavoriteToggle}

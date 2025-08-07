@@ -436,7 +436,7 @@ export function PredictionChart({
                 >
                   <div className="flex items-center gap-2">
                     <div
-                      className="h-3 w-3 rounded-full border border-muted"
+                      className="size-3 rounded-full border border-muted"
                       style={{ backgroundColor: seriesItem.color }}
                     />
                     <span className="text-muted-foreground">

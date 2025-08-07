@@ -60,7 +60,7 @@ export default function EventRules({ event }: Props) {
               <div className="flex items-center justify-between">
                 <div className="flex items-start gap-3">
                   <div
-                    className={`h-10 w-10 bg-gradient-to-r ${mockMarketDetails.resolver.gradientColors}
+                    className={`size-10 bg-gradient-to-r ${mockMarketDetails.resolver.gradientColors}
                       flex flex-shrink-0 items-center justify-center rounded-sm
                     `}
                   >

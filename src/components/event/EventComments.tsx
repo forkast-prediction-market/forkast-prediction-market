@@ -35,7 +35,7 @@ export default function EventComments() {
           dark:border-border/20
         `}
         >
-          <ShieldIcon className="h-3 w-3" />
+          <ShieldIcon className="size-3" />
           Beware of external links, they may be phishing attacks.
         </div>
       </div>
@@ -50,7 +50,7 @@ export default function EventComments() {
                 alt={`user${comment}`}
                 width={32}
                 height={32}
-                className="h-8 w-8 shrink-0 rounded-full object-cover"
+                className="size-8 shrink-0 rounded-full object-cover"
               />
               <div className="flex-1">
                 <div className="mb-1 flex items-center gap-2">
@@ -81,7 +81,7 @@ export default function EventComments() {
                       hover:text-foreground
                     `}
                   >
-                    <HeartIcon className="h-3 w-3" />
+                    <HeartIcon className="size-3" />
                   </button>
                 </div>
               </div>
@@ -89,7 +89,7 @@ export default function EventComments() {
                 type="button"
                 className="text-muted-foreground transition-colors hover:text-foreground"
               >
-                <MoreHorizontalIcon className="h-4 w-4" />
+                <MoreHorizontalIcon className="size-4" />
               </button>
             </div>
 
@@ -101,7 +101,7 @@ export default function EventComments() {
                   alt="replier1"
                   width={24}
                   height={24}
-                  className="h-6 w-6 shrink-0 rounded-full object-cover"
+                  className="size-6 shrink-0 rounded-full object-cover"
                 />
                 <div className="flex-1">
                   <div className="mb-1 flex items-center gap-2">
@@ -130,7 +130,7 @@ export default function EventComments() {
                         hover:text-foreground
                       `}
                     >
-                      <HeartIcon className="h-3 w-3" />
+                      <HeartIcon className="size-3" />
                     </button>
                   </div>
                 </div>

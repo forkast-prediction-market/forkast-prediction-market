@@ -45,7 +45,7 @@ export default function EventMarketContext({ event, tradingState }: Props) {
           disabled={isGeneratingContext}
         >
           <SparklesIcon
-            className={`h-3 w-3 ${
+            className={`size-3 ${
               isGeneratingContext ? 'animate-spin' : ''
             }`}
           />

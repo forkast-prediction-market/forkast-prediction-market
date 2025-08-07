@@ -63,7 +63,7 @@ Click the "Fork" button in the top right corner
 
 ## 🔧 Tech Stack
 
-- **Frontend:** Next.js 14, TypeScript, Tailwind CSS
+- **Frontend:** Next.js 15, TypeScript, Tailwind CSS
 - **Blockchain:** Polygon (Mainnet & Mumbai Testnet)
 - **Smart Contracts:** Solidity, Hardhat
 - **State Management:** React Hooks, Context API

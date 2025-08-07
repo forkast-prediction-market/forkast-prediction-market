@@ -60,7 +60,7 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
             href="#"
             className="text-muted-foreground transition-colors hover:text-foreground"
           >
-            <RefreshCwIcon className="h-3 w-3" />
+            <RefreshCwIcon className="size-3" />
           </a>
         </div>
         <div className="w-[24%]"></div>
@@ -131,7 +131,7 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                     %
                   </span>
                   <div className="flex items-center gap-1 text-no">
-                    <TrendingDownIcon className="h-3 w-3" />
+                    <TrendingDownIcon className="size-3" />
                     <span className="text-xs font-semibold">3%</span>
                   </div>
                 </div>
@@ -222,7 +222,7 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                     %
                   </span>
                   <div className="flex items-center gap-1 text-no">
-                    <TrendingDownIcon className="h-3 w-3" />
+                    <TrendingDownIcon className="size-3" />
                     <span className="text-xs font-semibold">3%</span>
                   </div>
                 </div>

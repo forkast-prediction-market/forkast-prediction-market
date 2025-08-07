@@ -91,10 +91,10 @@ export default function EventGrid({
           <div className="mb-2 flex justify-center text-muted-foreground">
             {searchQuery
               ? (
-                  <Search className="h-6 w-6" />
+                  <Search className="size-6" />
                 )
               : (
-                  <BarChart3 className="h-6 w-6" />
+                  <BarChart3 className="size-6" />
                 )}
           </div>
           <h3 className="mb-2 text-lg font-medium text-foreground">
@@ -126,7 +126,7 @@ export default function EventGrid({
             onClick={() => (window.location.href = '/')}
             className="inline-flex items-center gap-2"
           >
-            <X className="h-4 w-4" />
+            <X className="size-4" />
             Clear filters
           </Button>
         </div>

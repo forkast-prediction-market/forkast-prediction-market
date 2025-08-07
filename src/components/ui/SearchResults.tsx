@@ -15,7 +15,7 @@ export function SearchResults({ results, isLoading, onResultClick }: SearchResul
     return (
       <div className="absolute top-full right-0 left-0 z-50 mt-1 rounded-lg border bg-background shadow-lg">
         <div className="flex items-center justify-center p-4">
-          <LoaderIcon className="h-4 w-4 animate-spin text-muted-foreground" />
+          <LoaderIcon className="size-4 animate-spin text-muted-foreground" />
           <span className="ml-2 text-sm text-muted-foreground">Buscando...</span>
         </div>
       </div>
@@ -45,7 +45,7 @@ export function SearchResults({ results, isLoading, onResultClick }: SearchResul
         >
           <div className="flex min-w-0 flex-1 items-center gap-3">
             {/* Event Icon */}
-            <div className="h-8 w-8 flex-shrink-0 overflow-hidden rounded">
+            <div className="size-8 flex-shrink-0 overflow-hidden rounded">
               {result.iconUrl
                 ? (
                     <Image

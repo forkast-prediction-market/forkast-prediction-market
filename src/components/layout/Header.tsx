@@ -75,7 +75,7 @@ export default function Header() {
 
         {/* Search Bar */}
         <div className="relative mx-2 flex-1 sm:mx-4 sm:mr-6" ref={searchRef}>
-          <SearchIcon className="absolute top-1/2 left-3 z-10 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <SearchIcon className="absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search markets"
@@ -151,7 +151,7 @@ export default function Header() {
                 )}
           {/* Notifications */}
           <button type="button" className="p-1 text-muted-foreground hover:text-foreground">
-            <BellIcon className="h-5 w-5" />
+            <BellIcon className="size-5" />
           </button>
           {/* User Menu */}
           <div className="relative" ref={dropdownRef}>
@@ -167,7 +167,7 @@ export default function Header() {
                 height={24}
                 className="rounded-full"
               />
-              <ChevronDownIcon className="h-3 w-3" />
+              <ChevronDownIcon className="size-3" />
             </button>
 
             {/* Dropdown Menu */}
@@ -210,14 +210,14 @@ export default function Header() {
                                   e.stopPropagation()
                                   setTheme('light')
                                 }}
-                                className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+                                className={`flex size-7 items-center justify-center rounded-lg transition-colors ${
                                   theme === 'light'
                                     ? 'bg-primary text-primary-foreground'
                                     : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                                 }`}
                                 title="Light mode"
                               >
-                                <SunIcon className="h-3.5 w-3.5" />
+                                <SunIcon className="size-3.5" />
                               </button>
                               <button
                                 type="button"
@@ -225,14 +225,14 @@ export default function Header() {
                                   e.stopPropagation()
                                   setTheme('system')
                                 }}
-                                className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+                                className={`flex size-7 items-center justify-center rounded-lg transition-colors ${
                                   theme === 'system'
                                     ? 'bg-primary text-primary-foreground'
                                     : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                                 }`}
                                 title="System mode"
                               >
-                                <MonitorIcon className="h-3.5 w-3.5" />
+                                <MonitorIcon className="size-3.5" />
                               </button>
                               <button
                                 type="button"
@@ -240,14 +240,14 @@ export default function Header() {
                                   e.stopPropagation()
                                   setTheme('dark')
                                 }}
-                                className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+                                className={`flex size-7 items-center justify-center rounded-lg transition-colors ${
                                   theme === 'dark'
                                     ? 'bg-primary text-primary-foreground'
                                     : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                                 }`}
                                 title="Dark mode"
                               >
-                                <MoonIcon className="h-3.5 w-3.5" />
+                                <MoonIcon className="size-3.5" />
                               </button>
                             </div>
                           </div>
@@ -315,14 +315,14 @@ export default function Header() {
                                 e.stopPropagation()
                                 setTheme('light')
                               }}
-                              className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+                              className={`flex size-7 items-center justify-center rounded-lg transition-colors ${
                                 theme === 'light'
                                   ? 'bg-primary text-primary-foreground'
                                   : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                               }`}
                               title="Light mode"
                             >
-                              <SunIcon className="h-3.5 w-3.5" />
+                              <SunIcon className="size-3.5" />
                             </button>
                             <button
                               type="button"
@@ -330,14 +330,14 @@ export default function Header() {
                                 e.stopPropagation()
                                 setTheme('system')
                               }}
-                              className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+                              className={`flex size-7 items-center justify-center rounded-lg transition-colors ${
                                 theme === 'system'
                                   ? 'bg-primary text-primary-foreground'
                                   : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                               }`}
                               title="System mode"
                             >
-                              <MonitorIcon className="h-3.5 w-3.5" />
+                              <MonitorIcon className="size-3.5" />
                             </button>
                             <button
                               type="button"
@@ -345,14 +345,14 @@ export default function Header() {
                                 e.stopPropagation()
                                 setTheme('dark')
                               }}
-                              className={`flex h-7 w-7 items-center justify-center rounded-lg transition-colors ${
+                              className={`flex size-7 items-center justify-center rounded-lg transition-colors ${
                                 theme === 'dark'
                                   ? 'bg-primary text-primary-foreground'
                                   : 'bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                               }`}
                               title="Dark mode"
                             >
-                              <MoonIcon className="h-3.5 w-3.5" />
+                              <MoonIcon className="size-3.5" />
                             </button>
                           </div>
                         </div>

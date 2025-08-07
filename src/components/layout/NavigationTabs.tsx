@@ -37,7 +37,7 @@ export default function NavigationTabs({ activeCategory }: Props) {
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
             >
-              {category.id === 'trending' && <TrendingUp className="h-4 w-4" />}
+              {category.id === 'trending' && <TrendingUp className="size-4" />}
               <span>{category.label}</span>
             </Link>
 

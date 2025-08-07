@@ -224,7 +224,7 @@ export default function EventCard({
             {/* Creator Avatar */}
             <div
               className={`
-                flex h-10 w-10 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-muted
+                flex size-10 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-muted
                 text-muted-foreground
               `}
             >
@@ -269,7 +269,7 @@ export default function EventCard({
                     handleCancelTrade()
                   }}
                   className={`
-                    flex h-6 w-6 items-center justify-center rounded-lg bg-slate-200 text-slate-600 transition-colors
+                    flex size-6 items-center justify-center rounded-lg bg-slate-200 text-slate-600 transition-colors
                     hover:bg-slate-300
                     dark:bg-slate-600 dark:text-slate-400 dark:hover:bg-slate-500
                   `}
@@ -343,7 +343,7 @@ export default function EventCard({
                 <div className="flex-1 space-y-3">
                   <div className="relative">
                     <DollarSign
-                      className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-green-600 dark:text-green-400"
+                      className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-green-600 dark:text-green-400"
                     />
                     <input
                       type="number"
@@ -424,7 +424,7 @@ export default function EventCard({
                       ? (
                           <div className="flex items-center justify-center gap-2">
                             <div
-                              className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+                              className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
                             >
                             </div>
                             <span>Processing...</span>
@@ -536,7 +536,7 @@ export default function EventCard({
                         {' '}
                         {yesOutcome.name}
                         {' '}
-                        <ChevronsUp className="h-4 w-4" />
+                        <ChevronsUp className="size-4" />
                       </Button>
                       <Button
                         type="button"
@@ -552,7 +552,7 @@ export default function EventCard({
                         {' '}
                         {noOutcome.name}
                         {' '}
-                        <ChevronsDown className="h-4 w-4" />
+                        <ChevronsDown className="size-4" />
                       </Button>
                     </div>
                   )}
@@ -581,10 +581,10 @@ export default function EventCard({
               >
                 {isFavorited
                   ? (
-                      <Bookmark className="h-3.5 w-3.5 fill-current text-primary" />
+                      <Bookmark className="size-3.5 fill-current text-primary" />
                     )
                   : (
-                      <Bookmark className="h-3.5 w-3.5" />
+                      <Bookmark className="size-3.5" />
                     )}
               </button>
             </div>
