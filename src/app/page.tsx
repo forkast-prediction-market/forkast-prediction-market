@@ -5,8 +5,6 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useLayoutEffect, useState } from 'react'
 import EventGrid from '@/components/event/EventGrid'
 import FilterToolbar from '@/components/layout/FilterToolbar'
-import Header from '@/components/layout/Header'
-import NavigationTabs from '@/components/layout/NavigationTabs'
 
 function HomePageContent() {
   const searchParams = useSearchParams()
@@ -66,12 +64,7 @@ function HomePageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-
-      <NavigationTabs activeCategory={activeCategory} />
-
-      {/* Filter Toolbar */}
+    <>
       <FilterToolbar
         activeCategory={activeCategory}
         searchQuery={searchQuery}
@@ -80,7 +73,6 @@ function HomePageContent() {
         onToggleFavorites={handleToggleFavoritesFilter}
       />
 
-      {/* Main Content */}
       <EventGrid
         activeCategory={activeCategory}
         searchQuery={searchQuery}
@@ -88,7 +80,7 @@ function HomePageContent() {
         favoriteMarkets={favoriteMarkets}
         onToggleFavorite={handleToggleFavorite}
       />
-    </div>
+    </>
   )
 }
 

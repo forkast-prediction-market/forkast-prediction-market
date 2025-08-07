@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import ProgressIndicator from '@/app/progress'
+import Header from '@/components/layout/Header'
+import NavigationTabs from '@/components/layout/NavigationTabs'
 import ThemeColor from '@/components/layout/ThemeColor'
 import { Toaster } from '@/components/ui/sonner'
 import { ThemeProvider } from '@/hooks/useTheme'
@@ -61,7 +63,13 @@ export default function RootLayout({
         <ProgressIndicator>
           <ThemeProvider>
             <ThemeColor />
-            {children}
+
+            <div className="min-h-screen bg-background">
+              <Header />
+              <NavigationTabs />
+              {children}
+            </div>
+
             <Toaster />
             {process.env.NODE_ENV === 'production' && <SpeedInsights />}
           </ThemeProvider>

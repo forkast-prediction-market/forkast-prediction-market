@@ -3,8 +3,6 @@ import type { Event } from '@/types'
 import { notFound } from 'next/navigation'
 import { cache } from 'react'
 import EventDetail from '@/components/event/EventDetail'
-import Header from '@/components/layout/Header'
-import NavigationTabs from '@/components/layout/NavigationTabs'
 import { supabaseAdmin } from '@/lib/supabase'
 
 interface EventPageProps {
@@ -158,13 +156,7 @@ export default async function EventPage({ params }: EventPageProps) {
     const event = eventResource(data)
 
     return (
-      <div className="min-h-screen bg-background">
-        <Header />
-
-        <NavigationTabs activeCategory={event.category} />
-
-        <EventDetail event={event} />
-      </div>
+      <EventDetail event={event} />
     )
   }
   catch {

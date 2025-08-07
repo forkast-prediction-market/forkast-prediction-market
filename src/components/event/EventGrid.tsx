@@ -90,12 +90,8 @@ export default function EventGrid({
         <div className="py-12 text-center">
           <div className="mb-2 flex justify-center text-muted-foreground">
             {searchQuery
-              ? (
-                  <Search className="size-6" />
-                )
-              : (
-                  <BarChart3 className="size-6" />
-                )}
+              ? <Search className="size-6" />
+              : <BarChart3 className="size-6" />}
           </div>
           <h3 className="mb-2 text-lg font-medium text-foreground">
             {searchQuery ? 'No events found' : 'No events available'}

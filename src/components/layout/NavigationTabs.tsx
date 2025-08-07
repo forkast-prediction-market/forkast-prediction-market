@@ -3,14 +3,13 @@
 import type { EventCategory } from '@/types'
 import { TrendingUp } from 'lucide-react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { getMainCategories } from '@/lib/mockData'
 
-interface Props {
-  activeCategory: EventCategory
-}
-
-export default function NavigationTabs({ activeCategory }: Props) {
+export default function NavigationTabs() {
+  const searchParams = useSearchParams()
+  const categoryFromURL = searchParams?.get('category') || 'trending'
   const [categories, setCategories] = useState<
     { id: EventCategory, label: string }[]
   >([])
@@ -32,7 +31,7 @@ export default function NavigationTabs({ activeCategory }: Props) {
             <Link
               href={`/?category=${category.id}`}
               className={`flex items-center gap-1.5 border-b-2 py-2 pb-1 whitespace-nowrap transition-colors ${
-                activeCategory === category.id
+                categoryFromURL === category.id
                   ? 'border-primary text-foreground'
                   : 'border-transparent text-muted-foreground hover:text-foreground'
               }`}
