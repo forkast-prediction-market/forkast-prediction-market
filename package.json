@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --fix",
-    "prepare": "cd .. && husky frontend/.husky"
+    "prepare": "husky"
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
