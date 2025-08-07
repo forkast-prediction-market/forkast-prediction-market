@@ -1,6 +1,5 @@
 import type { Metadata } from 'next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
-import Script from 'next/script'
 import ProgressIndicator from '@/app/progress'
 import ThemeColor from '@/components/layout/ThemeColor'
 import { Toaster } from '@/components/ui/sonner'
@@ -22,45 +21,41 @@ export const viewport = {
   ],
 }
 
-interface RootLayoutProps {
+export default function RootLayout({
+  children,
+}: Readonly<{
   children: React.ReactNode
-}
-
-export default function RootLayout({ children }: RootLayoutProps) {
+}>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <Script
-        id="theme"
-        dangerouslySetInnerHTML={{
-          __html: `
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('theme');
-                  var resolvedTheme;
+                  const theme = localStorage.getItem('theme')
+                  const resolvedTheme = (theme === 'dark' || theme === 'light')
+                    ? theme
+                    : window.matchMedia('(prefers-color-scheme: dark)').matches
+                      ? 'dark'
+                      : 'light'
                   
-                  if (theme === 'dark' || theme === 'light') {
-                    resolvedTheme = theme;
-                  } else {
-                    // Check system preference
-                    var mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-                    resolvedTheme = mediaQuery.matches ? 'dark' : 'light';
-                  }
-                  
-                  // Apply theme immediately
-                  var root = document.documentElement;
+                  const root = document.documentElement
                   if (resolvedTheme === 'dark') {
-                    root.classList.add('dark');
+                    root.classList.add('dark')
                   } else {
-                    root.classList.remove('dark');
+                    root.classList.remove('dark')
                   }
                 } catch (e) {
-                  // Fallback to light theme if localStorage is not available
-                  document.documentElement.classList.remove('dark');
+                  document.documentElement.classList.remove('dark')
                 }
-              })();
+              })()
             `,
-        }}
-      />
+          }}
+        />
+        <title />
+      </head>
 
       <body className="font-sans antialiased">
         <ProgressIndicator>
