@@ -1,12 +1,29 @@
+'use client'
+
 import { SearchIcon } from 'lucide-react'
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { SearchResults } from '@/components/layout/SearchResults'
 import { Input } from '@/components/ui/input'
 import { useSearch } from '@/hooks/useSearch'
 
 export default function HeaderSearch() {
   const searchRef = useRef<HTMLDivElement>(null)
-  const { query, handleQueryChange, results, isLoading, showResults, clearSearch } = useSearch()
+  const { query, handleQueryChange, results, isLoading, showResults, clearSearch, hideResults } = useSearch()
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        hideResults()
+      }
+    }
+
+    if (showResults) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside)
+      }
+    }
+  }, [showResults, hideResults])
 
   return (
     <div className="relative mx-2 flex-1 sm:mx-4 sm:mr-6" ref={searchRef}>

@@ -15,7 +15,7 @@ interface Props {
   setShowLoginModal: Dispatch<SetStateAction<boolean>>
 }
 
-export default function HeaderUserMenuGuest({ setShowLoginModal }: Props) {
+export default function HeaderDropdownUserMenuGuest({ setShowLoginModal }: Props) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

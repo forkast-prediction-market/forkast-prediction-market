@@ -12,7 +12,6 @@
   "dependencies": {
     "@bprogress/next": "^3.2.12",
     "@fontsource/open-sauce-one": "^5.2.5",
-    "@radix-ui/react-dropdown-menu": "^2.1.15",
     "@supabase/supabase-js": "^2.50.3",
     "@vercel/speed-insights": "^1.2.0",
     "@visx/axis": "3.13.0-alpha.0",

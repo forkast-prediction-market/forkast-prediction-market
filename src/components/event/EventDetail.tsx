@@ -25,8 +25,8 @@ export default function EventDetail({ event }: Props) {
 
   return (
     <>
-      <main className="container grid gap-8 pt-8 pb-12 md:pb-12 lg:grid-cols-[3fr_1fr] lg:gap-10">
-        <div className="pb-20 md:pb-0">
+      <main className="container grid gap-8 pb-12 md:pb-12 lg:grid-cols-[3fr_1fr] lg:gap-10">
+        <div className="pt-4 pb-20 md:pb-0">
           <EventHeader event={event} />
           <EventMetaInformation event={event} />
           <EventChart event={event} tradingState={tradingState} />
@@ -36,7 +36,7 @@ export default function EventDetail({ event }: Props) {
           <EventTabs />
         </div>
 
-        <div className="hidden gap-4 md:block lg:sticky lg:top-32 lg:grid lg:self-start">
+        <div className="hidden gap-4 md:block lg:sticky lg:top-28 lg:grid lg:self-start">
           <OrderPanel event={event} tradingState={tradingState} />
           <RelatedEvents event={event} />
         </div>

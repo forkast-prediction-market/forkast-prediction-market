@@ -13,7 +13,7 @@ interface SearchResultsProps {
 export function SearchResults({ results, isLoading, onResultClick }: SearchResultsProps) {
   if (isLoading) {
     return (
-      <div className="absolute top-full right-0 left-0 z-50 mt-1 rounded-lg border bg-background shadow-lg">
+      <div className="absolute top-full right-0 left-0 z-50 mt-1 rounded-lg border bg-background shadow-lg sm:w-3/4">
         <div className="flex items-center justify-center p-4">
           <LoaderIcon className="size-4 animate-spin text-muted-foreground" />
           <span className="ml-2 text-sm text-muted-foreground">Buscando...</span>
@@ -29,6 +29,7 @@ export function SearchResults({ results, isLoading, onResultClick }: SearchResul
   return (
     <div className={`
       absolute top-full right-0 left-0 z-50 mt-1 max-h-96 overflow-y-auto rounded-lg border bg-background shadow-lg
+      sm:w-3/4
     `}
     >
       {results.map(result => (
@@ -56,9 +57,7 @@ export function SearchResults({ results, isLoading, onResultClick }: SearchResul
                       className="h-full w-full object-cover"
                     />
                   )
-                : (
-                    <div className="h-full w-full bg-muted"></div>
-                  )}
+                : <div className="h-full w-full bg-muted"></div>}
             </div>
 
             <div className="min-w-0 flex-1">

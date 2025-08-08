@@ -13,7 +13,7 @@ export default function EventHeader({ event }: Props) {
 
   useEffect(() => {
     function onScroll() {
-      setScrolled(window.scrollY > 50)
+      setScrolled(window.scrollY > 24)
     }
 
     window.addEventListener('scroll', onScroll)
@@ -22,7 +22,7 @@ export default function EventHeader({ event }: Props) {
 
   return (
     <div className={`z-50 mb-6 flex transform items-center gap-3 transition-all ease-in-out ${scrolled
-      ? 'sticky top-28 -translate-y-[5px] border-b bg-background py-3'
+      ? 'sticky top-24 translate-y-[3px] border-b bg-background py-3'
       : ''}`}
     >
       <Image

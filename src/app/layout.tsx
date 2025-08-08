@@ -42,7 +42,7 @@ export default function RootLayout({
                     : window.matchMedia('(prefers-color-scheme: dark)').matches
                       ? 'dark'
                       : 'light'
-                  
+
                   const root = document.documentElement
                   if (resolvedTheme === 'dark') {
                     root.classList.add('dark')
