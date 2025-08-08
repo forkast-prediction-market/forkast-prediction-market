@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation'
 interface Props {
   category: {
     id: string
-    label: string
+    name: string
   }
 }
 
@@ -25,7 +25,7 @@ export default function NavigationTab({ category }: Props) {
       }`}
     >
       {category.id === 'trending' && <TrendingUp className="size-4" />}
-      <span>{category.label}</span>
+      <span>{category.name}</span>
     </Link>
   )
 }
