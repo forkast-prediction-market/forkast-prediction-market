@@ -1,15 +1,13 @@
 'use client'
 
-import { BellIcon, ChevronDownIcon, MonitorIcon, MoonIcon, SearchIcon, SunIcon } from 'lucide-react'
+import { BellIcon, ChevronDownIcon, MonitorIcon, MoonIcon, SunIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { LoginModal } from '@/components/auth/LoginModal'
 import HeaderLogo from '@/components/layout/HeaderLogo'
+import HeaderSearch from '@/components/layout/HeaderSearch'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { SearchResults } from '@/components/ui/SearchResults'
 import { useAuth } from '@/hooks/useAuth'
-import { useSearch } from '@/hooks/useSearch'
 import { useTheme } from '@/hooks/useTheme'
 import { mockUser } from '@/lib/mockData'
 
@@ -19,10 +17,8 @@ export default function Header() {
   const { theme, setTheme } = useTheme()
   const { user, disconnect, isInitialized } = useAuth()
   const dropdownRef = useRef<HTMLDivElement>(null)
-  const searchRef = useRef<HTMLDivElement>(null)
-  const { query, results, isLoading, showResults, handleQueryChange, clearSearch, hideResults } = useSearch()
 
-  // Close dropdown and search when clicking outside
+  // Close dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -31,45 +27,21 @@ export default function Header() {
       ) {
         setShowUserMenu(false)
       }
-
-      if (
-        searchRef.current
-        && !searchRef.current.contains(event.target as Node)
-      ) {
-        hideResults()
-      }
     }
 
-    if (showUserMenu || showResults) {
+    if (showUserMenu) {
       document.addEventListener('mousedown', handleClickOutside)
       return () => {
         document.removeEventListener('mousedown', handleClickOutside)
       }
     }
-  }, [showUserMenu, showResults, hideResults])
+  }, [showUserMenu])
 
   return (
     <header className="sticky top-0 z-50 bg-background pt-2">
       <div className="container flex h-14 items-center">
         <HeaderLogo />
-
-        <div className="relative mx-2 flex-1 sm:mx-4 sm:mr-6" ref={searchRef}>
-          <SearchIcon className="absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search markets"
-            value={query}
-            onChange={e => handleQueryChange(e.target.value)}
-            className="w-full pl-9 text-sm sm:w-3/4"
-          />
-          {(showResults || isLoading) && (
-            <SearchResults
-              results={results}
-              isLoading={isLoading}
-              onResultClick={clearSearch}
-            />
-          )}
-        </div>
+        <HeaderSearch />
 
         {/* Right Section */}
         <div className="flex shrink-0 items-center gap-1 sm:gap-2 lg:gap-4">

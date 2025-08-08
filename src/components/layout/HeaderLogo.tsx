@@ -4,7 +4,6 @@ import { sanitizeSvg } from '@/lib/utils'
 export default function HeaderLogo() {
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME
   const logoSvg = process.env.NEXT_PUBLIC_SITE_LOGO_SVG
-
   const sanitizedLogoSvg = logoSvg ? sanitizeSvg(logoSvg) : ''
 
   return (
