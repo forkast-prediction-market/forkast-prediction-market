@@ -4,10 +4,15 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getTags } from '@/lib/db/tags'
 
 export default async function NavigationTabs() {
+  const tags = (await getTags())?.map(tag => ({
+    id: tag.slug,
+    name: tag.name,
+  }))
+
   const categories = [
     { id: 'trending', name: 'Trending' },
     { id: 'new', name: 'New' },
-    ...await getTags(true),
+    ...tags,
   ]
 
   return (

@@ -5,10 +5,16 @@ const cache = new Map<string, { data: unknown, timestamp: number }>()
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutos
 
 function getBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    return window.location.origin
+  }
+
+  // In production on Vercel
   if (process.env.VERCEL_URL) {
     return `https://${process.env.VERCEL_URL}`
   }
 
+  // Em desenvolvimento
   return 'http://localhost:3000'
 }
 

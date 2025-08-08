@@ -13,7 +13,7 @@ export default function EventHeader({ event }: Props) {
 
   useEffect(() => {
     function onScroll() {
-      setScrolled(window.scrollY > 24)
+      setScrolled(window.scrollY > 20)
     }
 
     window.addEventListener('scroll', onScroll)
