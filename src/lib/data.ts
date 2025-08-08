@@ -67,14 +67,13 @@ export async function fetchEvents(
     return cached
 
   try {
-    const baseUrl = getBaseUrl()
     const params = new URLSearchParams()
     if (category)
       params.append('category', category)
     if (limit)
       params.append('limit', limit.toString())
 
-    const url = `${baseUrl}/api/events${
+    const url = `http://localhost:3000/api/events${
       params.toString() ? `?${params.toString()}` : ''
     }`
     const response = await fetch(url)

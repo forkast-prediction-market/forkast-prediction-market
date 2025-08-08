@@ -8,7 +8,7 @@ export default async function Header() {
       <div className="container flex h-14 items-center">
         <HeaderLogo />
         <HeaderSearch />
-        <div className="flex shrink-0 items-center gap-1 sm:gap-2 lg:gap-4">
+        <div className="ms-auto flex shrink-0 items-center gap-1 sm:gap-2 lg:gap-4">
           <HeaderMenu />
         </div>
       </div>

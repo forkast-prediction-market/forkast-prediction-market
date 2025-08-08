@@ -26,7 +26,7 @@ export default function HeaderSearch() {
   }, [showResults, hideResults])
 
   return (
-    <div className="relative mx-2 flex-1 sm:mx-4 sm:mr-6" ref={searchRef}>
+    <div className="relative mx-2 hidden flex-1 sm:mx-4 sm:mr-6 sm:flex" ref={searchRef}>
       <SearchIcon className="absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         type="text"

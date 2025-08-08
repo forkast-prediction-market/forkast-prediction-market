@@ -1,93 +1,34 @@
-'use client'
-
-import type { EventCategory } from '@/types'
-import { useSearchParams } from 'next/navigation'
-import { Suspense, useEffect, useLayoutEffect, useState } from 'react'
+import React, { Suspense } from 'react'
+import EventCardSkeleton from '@/components/event/EventCardSkeleton'
 import EventGrid from '@/components/event/EventGrid'
-import FilterToolbar from '@/components/layout/FilterToolbar'
+import { index } from '@/lib/db/events'
 
-function HomePageContent() {
-  const searchParams = useSearchParams()
-  const categoryFromURL = searchParams?.get('category') || 'trending'
-
-  const [activeCategory, setActiveCategory] = useState<EventCategory>((categoryFromURL as EventCategory) || 'trending')
-  const [searchQuery, setSearchQuery] = useState('')
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false)
-  const [favoriteMarkets, setFavoriteMarkets] = useState<Set<string>>(() => new Set())
-
-  // Update category when URL params change
-  useLayoutEffect(() => {
-    if (categoryFromURL) {
-      setActiveCategory(categoryFromURL as EventCategory)
-    }
-  }, [categoryFromURL])
-
-  // Load favorites from localStorage on mount
-  useLayoutEffect(() => {
-    const siteName = process.env.NEXT_PUBLIC_SITE_NAME!.toLowerCase()
-    const stored = localStorage.getItem(`${siteName}-favorites`)
-    if (stored) {
-      try {
-        const favArray = JSON.parse(stored)
-        setFavoriteMarkets(new Set(favArray))
-      }
-      catch (error) {
-        console.error('Error loading favorites:', error)
-      }
-    }
-  }, [])
-
-  // Save favorites to localStorage whenever it changes
-  useEffect(() => {
-    const siteName = process.env.NEXT_PUBLIC_SITE_NAME!.toLowerCase()
-    localStorage.setItem(
-      `${siteName}-favorites`,
-      JSON.stringify(Array.from(favoriteMarkets)),
-    )
-  }, [favoriteMarkets])
-
-  function handleToggleFavorite(eventId: string) {
-    setFavoriteMarkets((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(eventId)) {
-        newSet.delete(eventId)
-      }
-      else {
-        newSet.add(eventId)
-      }
-      return newSet
-    })
-  }
-
-  function handleToggleFavoritesFilter() {
-    setShowFavoritesOnly(!showFavoritesOnly)
-  }
-
-  return (
-    <>
-      <FilterToolbar
-        activeCategory={activeCategory}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        showFavoritesOnly={showFavoritesOnly}
-        onToggleFavorites={handleToggleFavoritesFilter}
-      />
-
-      <EventGrid
-        activeCategory={activeCategory}
-        searchQuery={searchQuery}
-        showFavoritesOnly={showFavoritesOnly}
-        favoriteMarkets={favoriteMarkets}
-        onToggleFavorite={handleToggleFavorite}
-      />
-    </>
-  )
+interface Props {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
-export default function HomePage() {
+function HomePageSkeleton() {
+  const skeletons = Array.from({ length: 8 }, (_, i) => `skeleton-${i}`)
+  return skeletons.map(id => <EventCardSkeleton key={id} />)
+}
+
+export default async function HomePage({ searchParams }: Props) {
+  const category = (await searchParams).category as string ?? 'trending'
+  const events = await index(category)
+  const favoriteMarkets = new Set<string>()
+
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <HomePageContent />
-    </Suspense>
+    <main className="container mx-auto py-3">
+      <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <Suspense fallback={<HomePageSkeleton />}>
+          <EventGrid
+            events={events}
+            activeCategory={category}
+            searchQuery=""
+            favoriteMarkets={favoriteMarkets}
+          />
+        </Suspense>
+      </div>
+    </main>
   )
 }
