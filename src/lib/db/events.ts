@@ -1,4 +1,5 @@
-import type { Event } from '@/types'
+import type { Tag } from '@/lib/supabase'
+import type { Event, EventCategory } from '@/types'
 import { notFound } from 'next/navigation'
 import { supabaseAdmin } from '@/lib/supabase'
 
@@ -52,14 +53,33 @@ export async function index(category: string = 'trending', limit: number = 20) {
     throw error
   }
 
-  const transformedData = []
+  const events: any[] = []
   if (data && data.length > 0) {
     for (const event of data) {
-      transformedData.push(eventResource(event))
+      events.push(eventResource(event))
     }
   }
 
-  return transformedData
+  if (category === 'trending') {
+    return events.filter(market => market.isTrending)
+  }
+
+  // Sort by new if necessary (by events created_at)
+  if (category === 'new') {
+    return events.sort((a, b) => {
+      // Find the original event to get created_at
+      const eventA = events.find(e => e.id.toString() === a.id)
+      const eventB = events.find(e => e.id.toString() === b.id)
+      if (!eventA || !eventB)
+        return 0
+      return (
+        new Date(eventB.created_at).getTime()
+          - new Date(eventA.created_at).getTime()
+      )
+    })
+  }
+
+  return events
 }
 
 export async function show(slug: string) {
@@ -135,12 +155,12 @@ function eventResource(data: any): Event {
       slug: event.slug,
       title: market.short_title || market.name,
       description: market.description || event.description || '',
-      category: event.tags[0] || 'world',
+      category: getCategoryFromTags(event.tags),
       probability: outcomes[0]?.probability || 50,
       volume: Math.random() * 1000000,
       endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       isResolved: market.is_resolved,
-      isTrending: Math.random() > 0.7,
+      isTrending: Math.random() > 0.3,
       creator: '0x1234...5678',
       creatorAvatar: event.icon_url
         ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/forkast-assets/${event.icon_url}`
@@ -175,7 +195,7 @@ function eventResource(data: any): Event {
     volume: Math.random() * 1000000,
     endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     isResolved: false,
-    isTrending: Math.random() > 0.7,
+    isTrending: Math.random() > 0.3,
     creator: '0x1234...5678',
     creatorAvatar: event.icon_url
       ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/forkast-assets/${event.icon_url}`
@@ -185,4 +205,18 @@ function eventResource(data: any): Event {
     show_market_icons: event.show_market_icons,
     rules: event.rules || undefined,
   }
+}
+
+function getCategoryFromTags(tags: Tag[]): EventCategory {
+  const mainTag = tags.find(tag => tag.is_main_category)
+
+  if (mainTag) {
+    return mainTag.slug
+  }
+
+  if (tags.length > 0) {
+    return tags[0].slug
+  }
+
+  return 'world'
 }

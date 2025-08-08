@@ -213,9 +213,8 @@ export default function EventCard({
       className={`
         flex h-[180px] cursor-pointer flex-col transition-all
         hover:-translate-y-0.5 hover:shadow-lg
-        ${
-    isInTradingMode ? 'ring-2 ring-primary/20' : ''
-    }`}
+        ${isInTradingMode ? 'ring-2 ring-primary/20' : ''}
+      `}
     >
       <CardContent className="flex h-full flex-col p-3">
         {/* Unified Header */}
