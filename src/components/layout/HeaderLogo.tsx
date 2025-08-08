@@ -15,7 +15,7 @@ export default function HeaderLogo() {
         className="size-6 text-primary"
         dangerouslySetInnerHTML={{ __html: sanitizedLogoSvg! }}
       />
-      <span className="text-xl font-bold">{siteName!}</span>
+      <span className="text-xl font-bold">{siteName}</span>
     </Link>
   )
 }
