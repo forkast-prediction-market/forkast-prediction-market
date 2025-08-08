@@ -2,9 +2,9 @@
 
 import { BellIcon, ChevronDownIcon, MonitorIcon, MoonIcon, SearchIcon, SunIcon } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { LoginModal } from '@/components/auth/LoginModal'
+import HeaderLogo from '@/components/layout/HeaderLogo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { SearchResults } from '@/components/ui/SearchResults'
@@ -12,7 +12,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSearch } from '@/hooks/useSearch'
 import { useTheme } from '@/hooks/useTheme'
 import { mockUser } from '@/lib/mockData'
-import { sanitizeSvg } from '@/lib/utils'
 
 export default function Header() {
   const [showUserMenu, setShowUserMenu] = useState(false)
@@ -22,12 +21,6 @@ export default function Header() {
   const dropdownRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLDivElement>(null)
   const { query, results, isLoading, showResults, handleQueryChange, clearSearch, hideResults } = useSearch()
-
-  // Get site configuration from environment variables
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME
-  const logoSvg = process.env.NEXT_PUBLIC_SITE_LOGO_SVG
-
-  const sanitizedLogoSvg = logoSvg ? sanitizeSvg(logoSvg) : ''
 
   // Close dropdown and search when clicking outside
   useEffect(() => {
@@ -58,22 +51,8 @@ export default function Header() {
   return (
     <header className="sticky top-0 z-50 bg-background pt-2">
       <div className="container flex h-14 items-center">
-        {/* Logo */}
-        <Link
-          href="/"
-          className={`
-            flex shrink-0 items-center gap-2 font-semibold text-foreground transition-opacity
-            hover:opacity-80
-          `}
-        >
-          <div
-            className="size-6 text-primary"
-            dangerouslySetInnerHTML={{ __html: sanitizedLogoSvg! }}
-          />
-          <span className="text-xl font-bold">{siteName!}</span>
-        </Link>
+        <HeaderLogo />
 
-        {/* Search Bar */}
         <div className="relative mx-2 flex-1 sm:mx-4 sm:mr-6" ref={searchRef}>
           <SearchIcon className="absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
