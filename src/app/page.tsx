@@ -5,7 +5,7 @@ import EventsGrid from '@/components/event/EventsGrid'
 import FilterToolbar from '@/components/layout/FilterToolbar'
 import { index } from '@/lib/db/events'
 
-interface Props {
+interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }
 
@@ -14,7 +14,7 @@ function HomePageSkeleton() {
   return skeletons.map(id => <EventCardSkeleton key={id} />)
 }
 
-export default async function HomePage({ searchParams }: Props) {
+export default async function HomePage({ searchParams }: PageProps) {
   const params = await searchParams
   const search = (params.search as string) ?? ''
   const category = (params.category as string) ?? 'trending'
