@@ -22,7 +22,7 @@ export default function FilterToolbar({
   const filterPills = getFilterPillsByCategory(activeCategory)
 
   return (
-    <div className="flex items-center gap-4 py-2">
+    <div className="flex items-center gap-4">
       <FilterToolbarSearchInput search={searchQuery} />
 
       {/* Favorites Filter Button */}

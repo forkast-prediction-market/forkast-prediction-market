@@ -22,7 +22,7 @@ export default async function HomePage({ searchParams }: Props) {
   const favoriteMarkets = new Set<string>()
 
   return (
-    <main className="container pb-4">
+    <main className="container grid gap-4 py-4">
       <FilterToolbar
         activeCategory={category}
         searchQuery={search}
