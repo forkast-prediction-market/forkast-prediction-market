@@ -1,7 +1,7 @@
 import type { Event } from '@/types'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 interface Props {
   event: Event
@@ -14,8 +14,11 @@ export default function RelatedEvents({ event }: Props) {
   useEffect(() => {
     async function fetchEvents() {
       const res = await fetch(`/api/events/${event.slug}/related`)
-      const data = await res.json()
-      setEvents(data)
+      if (res.ok) {
+        const data = await res.json()
+        setEvents(data)
+      }
+
       setLoading(false)
     }
 
@@ -23,17 +26,8 @@ export default function RelatedEvents({ event }: Props) {
   }, [event.slug])
 
   if (loading) {
-    return (
-      <div className="animate-pulse rounded-lg border bg-card p-4">
-        <div className="flex items-start gap-2">
-          <div className="size-8 rounded bg-muted"></div>
-          <div className="flex-1 space-y-2">
-            <div className="h-4 w-3/4 rounded bg-muted"></div>
-            <div className="h-4 w-1/2 rounded bg-muted"></div>
-          </div>
-        </div>
-      </div>
-    )
+    const skeletons = Array.from({ length: 3 }, (_, i) => `skeleton-${i}`)
+    return skeletons.map(id => <RelatedEventSkeleton key={id} />)
   }
 
   return (
@@ -45,7 +39,7 @@ export default function RelatedEvents({ event }: Props) {
             className="flex items-center gap-3 rounded-lg p-2 hover:bg-border"
           >
             <Image
-              src={`https://avatar.vercel.sh/${e.creatorAvatar?.toLowerCase()}.png`}
+              src={e.icon_url}
               alt={e.title}
               width={42}
               height={42}
@@ -56,5 +50,19 @@ export default function RelatedEvents({ event }: Props) {
         </li>
       ))}
     </ul>
+  )
+}
+
+function RelatedEventSkeleton() {
+  return (
+    <div className="animate-pulse rounded-lg border bg-card p-4">
+      <div className="flex items-start gap-2">
+        <div className="size-8 rounded bg-muted"></div>
+        <div className="flex-1 space-y-2">
+          <div className="h-4 w-3/4 rounded bg-muted"></div>
+          <div className="h-4 w-1/2 rounded bg-muted"></div>
+        </div>
+      </div>
+    </div>
   )
 }

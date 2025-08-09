@@ -1,11 +1,12 @@
+'use cache'
+
 import type { Tag } from '@/lib/supabase'
 import type { Event, EventCategory } from '@/types'
 import { notFound } from 'next/navigation'
+import { getSupabaseImageUrl } from '@/lib/mockData'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function index(category: string = 'trending', search: string = '', limit: number = 20) {
-  'use cache'
-
   const query = supabaseAdmin
     .from('events')
     .select(`
@@ -89,8 +90,6 @@ export async function index(category: string = 'trending', search: string = '', 
 }
 
 export async function show(slug: string) {
-  'use cache'
-
   const { data, error } = await supabaseAdmin
     .from('events')
     .select(
@@ -170,6 +169,7 @@ function eventResource(data: any): Event {
       isResolved: market.is_resolved,
       isTrending: Math.random() > 0.3,
       creator: '0x1234...5678',
+      icon_url: `${getSupabaseImageUrl(`${event.icon_url}`)}`,
       creatorAvatar: event.icon_url
         ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/forkast-assets/${event.icon_url}`
         : 'https://avatar.vercel.sh/creator.png',
@@ -205,6 +205,7 @@ function eventResource(data: any): Event {
     isResolved: false,
     isTrending: Math.random() > 0.3,
     creator: '0x1234...5678',
+    icon_url: `${getSupabaseImageUrl(`${event.icon_url}`)}`,
     creatorAvatar: event.icon_url
       ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/forkast-assets/${event.icon_url}`
       : 'https://avatar.vercel.sh/creator.png',

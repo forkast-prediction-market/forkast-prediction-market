@@ -14,6 +14,7 @@ export interface Event {
   outcomes: MarketOutcome[]
   creator: string
   creatorAvatar?: string // URL for creator avatar
+  icon_url: string
   tags: string[]
   show_market_icons?: boolean // Control if market icons should be shown in lists
   rules?: string // Rules for market resolution
