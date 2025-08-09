@@ -3,8 +3,8 @@ import type { Event, EventCategory } from '@/types'
 import { notFound } from 'next/navigation'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export async function index(category: string = 'trending', limit: number = 20) {
-  let query = supabaseAdmin
+export async function index(category: string = 'trending', search: string = '', limit: number = 20) {
+  const query = supabaseAdmin
     .from('events')
     .select(`
     *,
@@ -39,11 +39,15 @@ export async function index(category: string = 'trending', limit: number = 20) {
     .order('created_at', { ascending: false })
 
   if (category && category !== 'trending' && category !== 'new') {
-    query = query.eq('event_tags.tag.slug', category)
+    query.eq('event_tags.tag.slug', category)
+  }
+
+  if (search) {
+    query.ilike('title', `%${search}%`)
   }
 
   if (limit) {
-    query = query.limit(limit)
+    query.limit(limit)
   }
 
   const { data, error } = await query
