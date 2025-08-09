@@ -2,6 +2,7 @@
 
 import type { Metadata, Viewport } from 'next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { openSauceOne } from '@/app/fonts'
 import ProgressIndicator from '@/app/progress'
 import Header from '@/components/layout/Header'
 import NavigationTabs from '@/components/layout/NavigationTabs'
@@ -31,7 +32,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" className={`${openSauceOne.variable}`} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
