@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function index(category: string = 'trending', search: string = '', limit: number = 20) {
+  'use cache'
+
   const query = supabaseAdmin
     .from('events')
     .select(`
@@ -87,6 +89,8 @@ export async function index(category: string = 'trending', search: string = '', 
 }
 
 export async function show(slug: string) {
+  'use cache'
+
   const { data, error } = await supabaseAdmin
     .from('events')
     .select(
