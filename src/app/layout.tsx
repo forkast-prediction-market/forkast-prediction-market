@@ -3,12 +3,12 @@
 import type { Metadata, Viewport } from 'next'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { openSauceOne } from '@/app/fonts'
-import ProgressIndicator from '@/app/progress'
 import Header from '@/components/layout/Header'
 import NavigationTabs from '@/components/layout/NavigationTabs'
-import ThemeColor from '@/components/layout/ThemeColor'
+import ProgressIndicator from '@/components/layout/ProgressIndicator'
+import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { Toaster } from '@/components/ui/sonner'
-import { ThemeProvider } from '@/hooks/useTheme'
+import { SET_THEME_ON_FIRST_LOAD } from '@/lib/utils'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -36,27 +36,7 @@ export default async function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                try {
-                  const theme = localStorage.getItem('theme')
-                  const resolvedTheme = (theme === 'dark' || theme === 'light')
-                    ? theme
-                    : window.matchMedia('(prefers-color-scheme: dark)').matches
-                      ? 'dark'
-                      : 'light'
-
-                  const root = document.documentElement
-                  if (resolvedTheme === 'dark') {
-                    root.classList.add('dark')
-                  } else {
-                    root.classList.remove('dark')
-                  }
-                } catch (e) {
-                  document.documentElement.classList.remove('dark')
-                }
-              })()
-            `,
+            __html: SET_THEME_ON_FIRST_LOAD,
           }}
         />
         <title />
@@ -65,8 +45,6 @@ export default async function RootLayout({
       <body className="font-sans antialiased">
         <ProgressIndicator>
           <ThemeProvider>
-            <ThemeColor />
-
             <div className="min-h-screen bg-background">
               <Header />
               <NavigationTabs />

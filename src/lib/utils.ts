@@ -14,3 +14,25 @@ export function sanitizeSvg(svg: string) {
     .replace(/javascript:/gi, '')
     .replace(/data:/gi, '')
 }
+
+export const SET_THEME_ON_FIRST_LOAD = `
+  (function() {
+    try {
+      const theme = localStorage.getItem('theme')
+      const resolvedTheme = (theme === 'dark' || theme === 'light')
+        ? theme
+        : window.matchMedia('(prefers-color-scheme: dark)').matches
+          ? 'dark'
+          : 'light'
+
+      const root = document.documentElement
+      if (resolvedTheme === 'dark') {
+        root.classList.add('dark')
+      } else {
+        root.classList.remove('dark')
+      }
+    } catch (e) {
+      document.documentElement.classList.remove('dark')
+    }
+  })()
+`
