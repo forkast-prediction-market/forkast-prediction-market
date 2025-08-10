@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   experimental: {
     useCache: true,
   },
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   images: {
     remotePatterns: [
       {

@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
-    "@supabase/supabase-js": "^2.50.3",
+    "@supabase/supabase-js": "^2.54.0",
     "@vercel/speed-insights": "^1.2.0",
     "@visx/axis": "3.13.0-alpha.0",
     "@visx/curve": "^3.12.0",
@@ -25,36 +25,36 @@
     "clsx": "^2.1.1",
     "d3-array": "^3.2.4",
     "lucide-react": "^0.513.0",
-    "magic-sdk": "^29.4.0",
-    "next": "^15.4.2",
+    "magic-sdk": "^29.4.1",
+    "next": "^15.4.6",
     "radix-ui": "^1.4.2",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "sonner": "^2.0.7",
-    "tailwind-merge": "^3.3.0",
-    "tw-animate-css": "^1.3.5",
+    "tailwind-merge": "^3.3.1",
+    "tw-animate-css": "^1.3.6",
     "vaul": "^1.1.2"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^5.0.0",
+    "@antfu/eslint-config": "^5.2.0",
     "@eslint-react/eslint-plugin": "^1.52.3",
-    "@next/eslint-plugin-next": "^15.4.5",
+    "@next/eslint-plugin-next": "^15.4.6",
     "@tailwindcss/postcss": "^4.1.11",
     "@types/canvas-confetti": "^1.9.0",
-    "@types/node": "^20",
+    "@types/node": "^20.19.10",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
-    "eslint": "^9.32.0",
-    "eslint-plugin-better-tailwindcss": "^3.7.2",
+    "eslint": "^9.33.0",
+    "eslint-plugin-better-tailwindcss": "^3.7.4",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "husky": "^9.1.7",
-    "lint-staged": "^16.1.4",
-    "postcss": "^8.5.4",
+    "lint-staged": "^16.1.5",
+    "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.2"
   },
   "lint-staged": {
-    "*.{ts,tsx,json}": "npm run lint"
+    "*": "eslint --fix"
   }
 }
