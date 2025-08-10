@@ -5,6 +5,7 @@ import { BookmarkIcon } from 'lucide-react'
 import { useState } from 'react'
 import FilterToolbarSearchInput from '@/components/layout/FilterToolbarSearchInput'
 import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
 import { getFilterPillsByCategory } from '@/lib/mockData'
 
 interface FilterToolbarProps {
@@ -13,11 +14,7 @@ interface FilterToolbarProps {
   showFavoritesOnly: boolean
 }
 
-export default function FilterToolbar({
-  activeCategory,
-  searchQuery,
-  showFavoritesOnly,
-}: FilterToolbarProps) {
+export default function FilterToolbar({ activeCategory, searchQuery, showFavoritesOnly }: FilterToolbarProps) {
   const [activePill, setActivePill] = useState('all')
   const filterPills = getFilterPillsByCategory(activeCategory)
 
@@ -36,8 +33,7 @@ export default function FilterToolbar({
           : <BookmarkIcon className="size-3.5" />}
       </button>
 
-      {/* Separator */}
-      <div className="h-6 w-px shrink-0 bg-border"></div>
+      <Separator orientation="vertical" />
 
       {/* Filter Pills */}
       <div className="scrollbar-hide flex items-center gap-2 overflow-x-auto">
