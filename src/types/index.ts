@@ -61,6 +61,11 @@ export interface FilterPill {
   isActive: boolean
 }
 
+export interface Tag {
+  name: string
+  slug: string
+}
+
 // Trading Types
 export interface TradeAction {
   marketId: string

@@ -1,28 +1,48 @@
 'use client'
 
-import type { FilterPill } from '@/types'
+import type { Tag } from '@/types'
 import { BookmarkIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import FilterToolbarSearchInput from '@/components/layout/FilterToolbarSearchInput'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
-import { getFilterPillsByCategory } from '@/lib/mockData'
 
-interface FilterToolbarProps {
-  activeCategory: string
-  searchQuery: string
-  showFavoritesOnly: boolean
+interface Props {
+  category: string
+  search: string
 }
 
-export default function FilterToolbar({ activeCategory, searchQuery, showFavoritesOnly }: FilterToolbarProps) {
-  const [activePill, setActivePill] = useState('all')
-  const filterPills = getFilterPillsByCategory(activeCategory)
+export default function FilterToolbar({ category, search }: Props) {
+  const [activeTag, setActiveTag] = useState('all')
+  const [tags, setTags] = useState<Tag[]>([])
+  const showFavoritesOnly = false
+  const router = useRouter()
+
+  useEffect(() => {
+    async function fetchChildTags() {
+      const res = await fetch(`/api/tags/${category}/child`)
+      if (res.ok) {
+        const data = await res.json()
+        setTags([{ name: 'All', slug: 'all' }, ...data])
+      }
+      else {
+        setTags([{ name: 'All', slug: 'all' }])
+      }
+    }
+
+    fetchChildTags().catch(() => setTags([{ name: 'All', slug: 'all' }]))
+  }, [category])
+
+  function changeCategory(category: string) {
+    router.push(`/?category=${category}`)
+    setActiveTag(category)
+  }
 
   return (
     <div className="flex items-center gap-4">
-      <FilterToolbarSearchInput search={searchQuery} />
+      <FilterToolbarSearchInput search={search} />
 
-      {/* Favorites Filter Button */}
       <button
         type="button"
         className="text-muted-foreground transition-colors hover:text-primary"
@@ -35,17 +55,16 @@ export default function FilterToolbar({ activeCategory, searchQuery, showFavorit
 
       <Separator orientation="vertical" />
 
-      {/* Filter Pills */}
       <div className="scrollbar-hide flex items-center gap-2 overflow-x-auto">
-        {filterPills.map((pill: FilterPill) => (
+        {tags.map((tag: Tag) => (
           <Button
-            key={pill.id}
-            variant={activePill === pill.id ? 'default' : 'ghost'}
+            key={tag.slug}
+            variant={activeTag === tag.slug ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => setActivePill(pill.id)}
+            onClick={() => changeCategory(tag.slug)}
             className="h-8 shrink-0 text-xs whitespace-nowrap"
           >
-            {pill.label}
+            {tag.name}
           </Button>
         ))}
       </div>

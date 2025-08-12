@@ -20,9 +20,8 @@ export default async function HomePage({ searchParams }: PageProps) {
   return (
     <main className="container grid gap-4 py-4">
       <FilterToolbar
-        activeCategory={category}
-        searchQuery={search}
-        showFavoritesOnly={false}
+        category={category}
+        search={search}
       />
 
       <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-4">
