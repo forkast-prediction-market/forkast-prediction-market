@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase'
 
-export async function getTags() {
+export async function getMainTags() {
   const query = supabaseAdmin
     .from('tags')
     .select('*')

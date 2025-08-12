@@ -3,7 +3,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import EventDetail from '@/components/event/EventDetail'
-import { show } from '@/lib/db/events'
+import { getEventBySlug } from '@/lib/db/events'
 
 interface PageProps {
   params: Promise<{
@@ -13,7 +13,7 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params
-  const event = await show(slug)
+  const event = await getEventBySlug(slug)
 
   return {
     title: event.title,
@@ -24,7 +24,7 @@ export default async function EventPage({ params }: PageProps) {
   const { slug } = await params
 
   try {
-    const event = await show(slug)
+    const event = await getEventBySlug(slug)
 
     return <EventDetail event={event} />
   }

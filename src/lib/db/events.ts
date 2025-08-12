@@ -6,7 +6,7 @@ import { notFound } from 'next/navigation'
 import { getSupabaseImageUrl } from '@/lib/mockData'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export async function index(category: string = 'trending', search: string = '', limit: number = 20) {
+export async function listEvents(category: string = 'trending', search: string = '', limit: number = 20) {
   const query = supabaseAdmin
     .from('events')
     .select(`
@@ -89,7 +89,7 @@ export async function index(category: string = 'trending', search: string = '', 
   return events
 }
 
-export async function show(slug: string) {
+export async function getEventBySlug(slug: string) {
   const { data, error } = await supabaseAdmin
     .from('events')
     .select(

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { index } from '@/lib/db/related-events'
+import { getRelatedEventsBySlug } from '@/lib/db/related-events'
 
 export const dynamic = 'force-static'
 
@@ -10,7 +10,7 @@ export async function GET(
   const { slug } = await params
 
   try {
-    const events = await index(slug)
+    const events = await getRelatedEventsBySlug(slug)
     return NextResponse.json(events)
   }
   catch {

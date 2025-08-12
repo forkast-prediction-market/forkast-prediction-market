@@ -3,7 +3,7 @@
 import { getSupabaseImageUrl } from '@/lib/mockData'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export async function index(slug: string) {
+export async function getRelatedEventsBySlug(slug: string) {
   const { data: currentEvent, error: errorEvent } = await supabaseAdmin
     .from('events')
     .select('id')
