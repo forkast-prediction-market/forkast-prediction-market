@@ -10,8 +10,8 @@ export async function GET(
   const { slug } = await params
 
   try {
-    const tags = await getChildTags(slug)
-    return NextResponse.json(tags)
+    const result = await getChildTags(slug)
+    return NextResponse.json(result)
   }
   catch {
     return NextResponse.json(

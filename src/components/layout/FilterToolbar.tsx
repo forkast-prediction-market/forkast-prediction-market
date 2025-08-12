@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function FilterToolbar({ category, search }: Props) {
-  const [activeTag, setActiveTag] = useState(category)
+  const [activeCategory, setActiveCategory] = useState('all')
   const [tags, setTags] = useState<Tag[]>([])
   const showFavoritesOnly = false
   const router = useRouter()
@@ -24,19 +24,21 @@ export default function FilterToolbar({ category, search }: Props) {
       const res = await fetch(`/api/tags/${category}/child`)
       if (res.ok) {
         const data = await res.json()
-        setTags([{ name: 'All', slug: 'all' }, ...data])
+        const parentSlug = (Array.isArray(data) && data.length > 0 && data[0].parent) ? data[0].parent : category
+        setTags([{ name: 'All', slug: 'all', parent: parentSlug }, ...data])
       }
       else {
-        setTags([{ name: 'All', slug: 'all' }])
+        setTags([{ name: 'All', slug: 'all', parent: category }])
       }
     }
 
-    fetchChildTags().catch(() => setTags([{ name: 'All', slug: 'all' }]))
+    fetchChildTags().catch(() => setTags([{ name: 'All', slug: 'all', parent: category }]))
   }, [category])
 
-  function changeCategory(tag: string) {
-    router.push(`/?category=${tag}`)
-    setActiveTag(tag)
+  function changeCategory(tag: Tag) {
+    const targetCategory = tag.slug === 'all' ? (tag.parent ?? tag.slug) : tag.slug
+    router.push(`/?category=${targetCategory}`)
+    setActiveCategory(tag.slug)
   }
 
   return (
@@ -59,9 +61,9 @@ export default function FilterToolbar({ category, search }: Props) {
         {tags.map((tag: Tag) => (
           <Button
             key={tag.slug}
-            variant={activeTag === tag.slug ? 'default' : 'ghost'}
+            variant={activeCategory === tag.slug ? 'default' : 'ghost'}
             size="sm"
-            onClick={() => changeCategory(tag.slug)}
+            onClick={() => changeCategory(tag)}
             className="h-8 shrink-0 text-xs whitespace-nowrap"
           >
             {tag.name}
