@@ -58,7 +58,7 @@ export default function FilterToolbarSearchInput({ search }: Props) {
         placeholder="Search"
         value={searchQuery}
         onChange={e => setSearchQuery(e.target.value)}
-        className="pl-10"
+        className="pl-10 focus-visible:ring-0"
       />
     </div>
   )

@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 export async function getMainTags() {
   const query = supabaseAdmin
     .from('tags')
-    .select('name, slug')
+    .select('name, slug, childs:tags!parent_tag_id(name, slug)')
     .eq('is_main_category', true)
     .order('display_order', { ascending: true })
     .order('name', { ascending: true })
@@ -19,20 +19,23 @@ export async function getMainTags() {
 }
 
 export async function getChildTags(slug: string) {
-  const { data: mainTag, error: mainTagError } = await supabaseAdmin
+  const { data: tag, error: tagError } = await supabaseAdmin
     .from('tags')
-    .select('id')
+    .select('id, slug, parent_tag_id')
     .eq('slug', slug)
-    .single()
+    .maybeSingle()
 
-  if (mainTagError)
-    throw mainTagError
+  if (tagError)
+    throw tagError
+
+  if (tag === null) {
+    return []
+  }
 
   const query = supabaseAdmin
     .from('tags')
     .select('name, slug')
-    .eq('parent_tag_id', mainTag.id)
-    .eq('is_main_category', false)
+    .eq('parent_tag_id', tag.parent_tag_id ?? tag.id)
     .order('display_order', { ascending: true })
 
   const { data, error } = await query
@@ -40,5 +43,8 @@ export async function getChildTags(slug: string) {
   if (error)
     throw error
 
-  return data
+  return data?.map(item => ({
+    ...item,
+    parent: tag.slug,
+  }))
 }

@@ -14,7 +14,7 @@ interface Props {
 }
 
 export default function FilterToolbar({ category, search }: Props) {
-  const [activeTag, setActiveTag] = useState('all')
+  const [activeTag, setActiveTag] = useState(category)
   const [tags, setTags] = useState<Tag[]>([])
   const showFavoritesOnly = false
   const router = useRouter()
@@ -34,13 +34,13 @@ export default function FilterToolbar({ category, search }: Props) {
     fetchChildTags().catch(() => setTags([{ name: 'All', slug: 'all' }]))
   }, [category])
 
-  function changeCategory(category: string) {
-    router.push(`/?category=${category}`)
-    setActiveTag(category)
+  function changeCategory(tag: string) {
+    router.push(`/?category=${tag}`)
+    setActiveTag(tag)
   }
 
   return (
-    <div className="flex items-center gap-4">
+    <div className="scrollbar-hide flex items-center gap-4 overflow-x-auto">
       <FilterToolbarSearchInput search={search} />
 
       <button
@@ -55,7 +55,7 @@ export default function FilterToolbar({ category, search }: Props) {
 
       <Separator orientation="vertical" />
 
-      <div className="scrollbar-hide flex items-center gap-2 overflow-x-auto">
+      <div className="flex items-center gap-2">
         {tags.map((tag: Tag) => (
           <Button
             key={tag.slug}
