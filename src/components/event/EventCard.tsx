@@ -2,29 +2,27 @@
 
 import type { Event } from '@/types'
 import confetti from 'canvas-confetti'
-import { Bookmark, ChevronsDown, ChevronsUp, DollarSign } from 'lucide-react'
+import { BookmarkIcon, ChevronsDownIcon, ChevronsUpIcon, DollarSignIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { use, useState } from 'react'
 import { toast } from 'sonner'
+import { OpenCardContext } from '@/components/event/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
 interface EventCardProps {
   event: Event
-  isOpen?: boolean
-  onToggle?: (isOpen: boolean) => void
   isFavorited?: boolean
   onToggleFavorite?: (eventId: string) => void
 }
 
 export default function EventCard({
   event,
-  isOpen = false,
-  onToggle,
   isFavorited = false,
   onToggleFavorite,
 }: EventCardProps) {
+  const { openCardId, setOpenCardId } = use(OpenCardContext)
   const [isLoading, setIsLoading] = useState(false)
   const [selectedOutcome, setSelectedOutcome] = useState<{
     id: string
@@ -32,6 +30,11 @@ export default function EventCard({
     name: string
   } | null>(null)
   const [tradeAmount, setTradeAmount] = useState('1')
+  const isOpen = openCardId === event.id
+
+  function onToggle() {
+    setOpenCardId(isOpen ? null : event.id)
+  }
 
   // Function to format monetary values with 2 decimal places
   function formatValue(value: number): string {
@@ -148,7 +151,7 @@ export default function EventCard({
   function handleCancelTrade() {
     setSelectedOutcome(null)
     setTradeAmount('1')
-    onToggle?.(false)
+    onToggle()
   }
 
   function calculateWinnings(amount: string) {
@@ -251,7 +254,7 @@ export default function EventCard({
               <h3
                 className={`
                   line-clamp-2 text-sm leading-tight font-bold transition-all duration-200
-                  hover:line-clamp-none hover:text-foreground hover:underline hover:decoration-2
+                  hover:line-clamp-none hover:text-foreground
                 `}
               >
                 {event.title}
@@ -342,7 +345,7 @@ export default function EventCard({
             ? (
                 <div className="flex-1 space-y-3">
                   <div className="relative">
-                    <DollarSign
+                    <DollarSignIcon
                       className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-green-600 dark:text-green-400"
                     />
                     <input
@@ -431,7 +434,7 @@ export default function EventCard({
                           </div>
                         )
                       : (
-                          <div className="text-center">
+                          <div className="line-clamp-3 text-center text-xs">
                             <div>
                               Buy
                               {' '}
@@ -475,7 +478,7 @@ export default function EventCard({
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   handleTrade(outcome.yesOutcome?.id || outcome.id, 'yes')
-                                  onToggle?.(true)
+                                  onToggle()
                                 }}
                                 title={`${outcome.yesOutcome?.name || 'Yes'}: ${Math.round(outcome.probability)}%`}
                                 variant="yes"
@@ -495,7 +498,7 @@ export default function EventCard({
                                 onClick={(e) => {
                                   e.stopPropagation()
                                   handleTrade(outcome.noOutcome?.id || outcome.id, 'no')
-                                  onToggle?.(true)
+                                  onToggle()
                                 }}
                                 title={`${outcome.noOutcome?.name || 'No'}: ${
                                   100 - Math.round(outcome.probability)
@@ -527,7 +530,7 @@ export default function EventCard({
                         onClick={(e) => {
                           e.stopPropagation()
                           handleTrade(yesOutcome.id, 'yes')
-                          onToggle?.(true)
+                          onToggle()
                         }}
                         disabled={isLoading}
                         variant="yes"
@@ -536,14 +539,14 @@ export default function EventCard({
                         {' '}
                         {yesOutcome.name}
                         {' '}
-                        <ChevronsUp className="size-4" />
+                        <ChevronsUpIcon className="size-4" />
                       </Button>
                       <Button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
                           handleTrade(noOutcome.id, 'no')
-                          onToggle?.(true)
+                          onToggle()
                         }}
                         disabled={isLoading}
                         variant="no"
@@ -552,7 +555,7 @@ export default function EventCard({
                         {' '}
                         {noOutcome.name}
                         {' '}
-                        <ChevronsDown className="size-4" />
+                        <ChevronsDownIcon className="size-4" />
                       </Button>
                     </div>
                   )}
@@ -580,12 +583,8 @@ export default function EventCard({
                 className="text-muted-foreground transition-colors hover:text-primary"
               >
                 {isFavorited
-                  ? (
-                      <Bookmark className="size-3.5 fill-current text-primary" />
-                    )
-                  : (
-                      <Bookmark className="size-3.5" />
-                    )}
+                  ? <BookmarkIcon className="size-3.5 fill-current text-primary" />
+                  : <BookmarkIcon className="size-3.5" />}
               </button>
             </div>
           </div>

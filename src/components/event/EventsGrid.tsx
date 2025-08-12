@@ -1,28 +1,24 @@
-'use client'
-
 import type { Event } from '@/types'
-import { useState } from 'react'
-import EventCard from './EventCard'
+import EventCard from '@/components/event/EventCard'
+import { OpenCardProvider } from '@/components/event/EventOpenCardContext'
+import EventsEmptyState from '@/components/event/EventsEmptyState'
+import { listEvents } from '@/lib/db/events'
 
-interface Props {
-  events: any
-  favoriteMarkets: Set<string>
+interface EventsContentProps {
+  category: string
+  search: string
 }
 
-export default function EventsGrid({
-  events,
-  favoriteMarkets,
-}: Props) {
-  const [openCardId, setOpenCardId] = useState<string | null>(null)
+export default async function EventsGrid({ category, search }: EventsContentProps) {
+  const events = await listEvents(category, search)
 
-  return events.map((event: Event) => (
-    <EventCard
-      key={event.id}
-      event={event}
-      isOpen={openCardId === event.id}
-      onToggle={isOpen => setOpenCardId(isOpen ? event.id : null)}
-      isFavorited={favoriteMarkets.has(event.id)}
-      onToggleFavorite={() => {}}
-    />
-  ))
+  if (events.length === 0) {
+    return <EventsEmptyState activeCategory={category} searchQuery={search} />
+  }
+
+  return (
+    <OpenCardProvider>
+      {events.map((event: Event) => <EventCard key={event.id} event={event} />)}
+    </OpenCardProvider>
+  )
 }

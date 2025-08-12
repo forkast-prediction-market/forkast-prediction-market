@@ -1,6 +1,6 @@
 import React, { Suspense } from 'react'
 import EventCardSkeleton from '@/components/event/EventCardSkeleton'
-import EventsContent from '@/components/event/EventsContent'
+import EventsGrid from '@/components/event/EventsGrid'
 import FilterToolbar from '@/components/layout/FilterToolbar'
 
 interface PageProps {
@@ -27,7 +27,7 @@ export default async function HomePage({ searchParams }: PageProps) {
 
       <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-4">
         <Suspense fallback={<HomePageSkeleton />}>
-          <EventsContent category={category} search={search} />
+          <EventsGrid category={category} search={search} />
         </Suspense>
       </div>
     </main>

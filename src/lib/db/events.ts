@@ -38,7 +38,6 @@ export async function listEvents(category: string = 'trending', search: string =
       )
     )
   `)
-    .order('active_markets_count', { ascending: false })
     .order('created_at', { ascending: false })
 
   if (category && category !== 'trending' && category !== 'new') {
