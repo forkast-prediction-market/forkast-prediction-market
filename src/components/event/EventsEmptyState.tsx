@@ -3,11 +3,11 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
 interface Props {
-  activeCategory: string
+  tag: string
   searchQuery: string
 }
 
-export default function EventsEmptyState({ searchQuery, activeCategory }: Props) {
+export default function EventsEmptyState({ searchQuery, tag }: Props) {
   return (
     <div className="col-span-4 py-12 text-center">
       <div className="mb-2 flex justify-center text-muted-foreground">
@@ -33,7 +33,7 @@ export default function EventsEmptyState({ searchQuery, activeCategory }: Props)
               <>
                 There are no events in the
                 {' '}
-                {activeCategory}
+                {tag}
                 {' '}
                 category with these
                 filters

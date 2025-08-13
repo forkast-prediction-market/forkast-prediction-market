@@ -4,21 +4,21 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { getMainTags } from '@/lib/db/tags'
 
 export default async function NavigationTabs() {
-  const tags = await getMainTags()
+  const mainTags = await getMainTags()
 
-  const categories = [
+  const tags = [
     { slug: 'trending', name: 'Trending', childs: [] },
     { slug: 'new', name: 'New', childs: [] },
-    ...tags,
+    ...mainTags,
   ]
 
   return (
     <nav className="sticky top-14 z-10 border-b bg-background">
       <div className="container flex gap-6 overflow-x-auto py-1 text-sm font-medium">
-        {categories.map((category, index) => (
-          <div key={category.slug} className="flex items-center">
+        {tags.map((tag, index) => (
+          <div key={tag.slug} className="flex items-center">
             <Suspense fallback={<Skeleton className="h-8 w-16 rounded" />}>
-              <NavigationTab category={category} />
+              <NavigationTab tag={tag} />
             </Suspense>
 
             {index === 1 && <div className="mr-0 ml-6 h-4 w-px bg-border" />}

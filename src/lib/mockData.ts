@@ -1,5 +1,3 @@
-import type { EventCategory, FilterPill } from '@/types'
-
 // Function to form complete URL for Supabase Storage images
 export function getSupabaseImageUrl(iconPath: string | null): string | null {
   if (!iconPath)
@@ -10,63 +8,6 @@ export function getSupabaseImageUrl(iconPath: string | null): string | null {
     return null
 
   return `${supabaseUrl}/storage/v1/object/public/forkast-assets/${iconPath}`
-}
-
-export function getFilterPillsByCategory(
-  category: EventCategory,
-): FilterPill[] {
-  const basePills: FilterPill[] = [
-    { id: 'all', label: 'All', category, isActive: true },
-  ]
-
-  switch (category) {
-    case 'politics':
-      return [
-        ...basePills,
-        {
-          id: 'trump-vs-elon',
-          label: 'Trump vs Elon',
-          category,
-          isActive: false,
-        },
-        {
-          id: '2024-elections',
-          label: '2024 Elections',
-          category,
-          isActive: false,
-        },
-        { id: 'geopolitics', label: 'Geopolitics', category, isActive: false },
-      ]
-    case 'crypto':
-      return [
-        ...basePills,
-        { id: 'bitcoin', label: 'Bitcoin', category, isActive: false },
-        { id: 'ethereum', label: 'Ethereum', category, isActive: false },
-        {
-          id: 'crypto-prices',
-          label: 'Crypto Prices',
-          category,
-          isActive: false,
-        },
-        { id: 'defi', label: 'DeFi', category, isActive: false },
-      ]
-    case 'tech':
-      return [
-        ...basePills,
-        { id: 'ai', label: 'AI', category, isActive: false },
-        { id: 'openai', label: 'OpenAI', category, isActive: false },
-        { id: 'tech-stocks', label: 'Tech Stocks', category, isActive: false },
-      ]
-    case 'sports':
-      return [
-        ...basePills,
-        { id: 'fifa', label: 'FIFA', category, isActive: false },
-        { id: 'nfl', label: 'NFL', category, isActive: false },
-        { id: 'olympics', label: 'Olympics', category, isActive: false },
-      ]
-    default:
-      return basePills
-  }
 }
 
 // Data for specific market sections

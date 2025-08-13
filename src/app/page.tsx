@@ -15,7 +15,7 @@ function HomePageSkeleton() {
 export default async function HomePage({ searchParams }: PageProps) {
   const params = await searchParams
   const search = (params.search as string) ?? ''
-  const category = (params.category as string) ?? 'trending'
+  const tag = (params.tag as string) ?? 'trending'
 
   return (
     <main className="container grid gap-4 py-4">
@@ -23,7 +23,7 @@ export default async function HomePage({ searchParams }: PageProps) {
 
       <div className="grid gap-3 md:grid-cols-3 lg:grid-cols-4">
         <Suspense fallback={<HomePageSkeleton />}>
-          <EventsGrid category={category} search={search} />
+          <EventsGrid tag={tag} search={search} />
         </Suspense>
       </div>
     </main>

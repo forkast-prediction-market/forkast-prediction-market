@@ -7,27 +7,26 @@ import { Teleport } from '@/components/layout/Teleport'
 import { Button } from '@/components/ui/button'
 
 interface Props {
-  category: {
+  tag: {
     slug: string
     name: string
     childs: { name: string, slug: string }[]
   }
 }
 
-export default function NavigationTab({ category }: Props) {
+export default function NavigationTab({ tag }: Props) {
   const searchParams = useSearchParams()
-  const categoryFromURL = searchParams?.get('category') || 'trending'
-
-  const isActive = categoryFromURL === category.slug || category.childs.some(child => categoryFromURL === child.slug)
+  const tagFromURL = searchParams?.get('tag') || 'trending'
+  const isActive = tagFromURL === tag.slug || tag.childs.some(child => tagFromURL === child.slug)
 
   return (
     <>
       {isActive && (
         <Teleport to="#navigation-tags">
-          {category.childs.map(subtag => (
-            <Link href={`/?category=${subtag.slug}`} key={subtag.slug}>
+          {tag.childs.map(subtag => (
+            <Link href={`/?tag=${subtag.slug}`} key={subtag.slug}>
               <Button
-                variant={categoryFromURL === subtag.slug ? 'default' : 'ghost'}
+                variant={tagFromURL === subtag.slug ? 'default' : 'ghost'}
                 size="sm"
                 className="h-8 shrink-0 text-xs whitespace-nowrap"
               >
@@ -39,15 +38,15 @@ export default function NavigationTab({ category }: Props) {
       )}
 
       <Link
-        href={`/?category=${category.slug}`}
+        href={`/?tag=${tag.slug}`}
         className={`flex items-center gap-1.5 border-b-2 py-2 pb-1 whitespace-nowrap transition-colors ${
           isActive
             ? 'border-primary text-foreground'
             : 'border-transparent text-muted-foreground hover:text-foreground'
         }`}
       >
-        {category.slug === 'trending' && <TrendingUpIcon className="size-4" />}
-        <span>{category.name}</span>
+        {tag.slug === 'trending' && <TrendingUpIcon className="size-4" />}
+        <span>{tag.name}</span>
       </Link>
     </>
   )
