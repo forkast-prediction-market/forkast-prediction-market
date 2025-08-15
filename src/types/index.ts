@@ -43,35 +43,12 @@ export interface MarketOutcome {
   } | null
 }
 
-export type EventCategory = string // Dynamic categories from database
+export type EventCategory = string
+export type AuthProvider = 'magic' | 'google' | 'metamask' | 'coinbase'
 
 // User Types
 export interface User {
   address: string
-  portfolio: number // Total portfolio value in USDC
-  cash: number // Available cash in USDC
-  isConnected: boolean
-}
-
-// UI Types
-export interface FilterPill {
-  id: string
-  label: string
-  category: EventCategory
-  isActive: boolean
-}
-
-export interface Tag {
-  name: string
-  slug: string
-  parent?: string
-}
-
-// Trading Types
-export interface TradeAction {
-  marketId: string
-  outcomeId: string
-  amount: number // in USDC
-  type: 'buy' | 'sell'
-  expectedShares: number
+  email: string
+  provider: AuthProvider
 }

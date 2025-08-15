@@ -7,7 +7,7 @@ export async function GET() {
 
   const didToken = cookieStore.get('session')?.value
   if (!didToken) {
-    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
   }
 
   try {
@@ -18,6 +18,6 @@ export async function GET() {
     return NextResponse.json({ email, publicAddress, issuer })
   }
   catch {
-    return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
   }
 }

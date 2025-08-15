@@ -33,6 +33,8 @@ export function LoginModal({
   const isDesktop = useMediaQuery('(min-width: 768px)')
 
   async function handleLoginWith(method: string) {
+    onClose()
+
     if (method === 'email') {
       await handleLoginWithEmailOTP()
     }
@@ -42,7 +44,6 @@ export function LoginModal({
     setIsLoading(true)
 
     try {
-      onClose()
       await loginWithEmailOTP(email)
     }
     catch {

@@ -8,11 +8,11 @@ import HeaderDropdownUserMenuGuest from '@/components/layout/HeaderDropdownUserM
 import HeaderNotifications from '@/components/layout/HeaderNotifications'
 import HeaderPortfolio from '@/components/layout/HeaderPortfolio'
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/hooks/useAuth'
+import { useUser } from '@/stores/useUser'
 
 export default function HeaderMenu() {
   const [showLoginModal, setShowLoginModal] = useState(false)
-  const { user } = useAuth()
+  const user = useUser()
 
   return (
     <>

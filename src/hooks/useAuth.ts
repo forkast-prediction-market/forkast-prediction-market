@@ -1,40 +1,28 @@
-import { useEffect, useState } from 'react'
-
-export type AuthProvider = 'magic' | 'google' | 'metamask' | 'coinbase'
-
-export interface User {
-  address?: string
-  email?: string
-  walletType?: AuthProvider
-  isConnected: boolean
-}
+import type { AuthProvider } from '@/types'
+import { useEffect } from 'react'
+import { toast } from 'sonner'
+import { useUser } from '@/stores/useUser'
 
 export function useAuth() {
-  const [user, setUser] = useState<User | null>(null)
-  const [isInitialized, setIsInitialized] = useState(false)
-
   async function fetchUser() {
     try {
       const res = await fetch('/api/me', { credentials: 'include' })
       if (res.ok) {
         const json = await res.json()
-        setUser({ ...json, isConnected: true })
+        useUser.setState(json)
       }
       else {
-        setUser(null)
+        useUser.setState(null)
       }
     }
-    catch (err) {
-      console.error('Error fetching user:', err)
-      setUser(null)
-    }
-    finally {
-      setIsInitialized(true)
+    catch {
+      toast.error('Sorry, something went wrong when fetching user.')
+      useUser.setState(null)
     }
   }
 
   useEffect(() => {
-    fetchUser()
+    fetchUser().catch(() => {})
   }, [])
 
   async function login(provider: AuthProvider, token: string) {
@@ -50,14 +38,12 @@ export function useAuth() {
 
       if (res.ok) {
         const json = await res.json()
-        console.log(json)
-        setUser({ ...json, isConnected: true })
+        useUser.setState(json)
       }
     }
-    catch (err) {
-      console.error('Login error:', err)
-      setUser(null)
-      throw err
+    catch {
+      toast.error('Sorry, something went wrong.')
+      useUser.setState(null)
     }
   }
 
@@ -69,13 +55,13 @@ export function useAuth() {
       })
 
       if (res.ok) {
-        setUser(null)
+        useUser.setState(null)
       }
     }
-    catch (err) {
-      console.error('Logout error:', err)
+    catch {
+      toast.error('Sorry, something went wrong.')
     }
   }
 
-  return { user, isInitialized, login, logout }
+  return { login, logout }
 }

@@ -1,10 +1,11 @@
 import { Button } from '@/components/ui/button'
-import { useAuth } from '@/hooks/useAuth'
+import { useUser } from '@/stores/useUser'
 
 export default function HeaderDeposit() {
-  const { isInitialized } = useAuth()
+  const user = useUser()
+
   return (
-    !isInitialized
+    !user
       ? <Button size="sm" className="hidden sm:inline-flex" disabled>Loading...</Button>
       : <Button size="sm">Deposit</Button>
   )

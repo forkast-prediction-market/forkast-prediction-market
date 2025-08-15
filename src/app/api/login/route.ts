@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         // validate Coinbase OAuth token
         break
       default:
-        return NextResponse.json({ error: 'Authentication failed' }, { status: 401 })
+        return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
 
     cookieStore.set({
@@ -45,6 +45,6 @@ export async function POST(request: Request) {
     return NextResponse.json(userData)
   }
   catch {
-    return NextResponse.json({ error: 'Authentication failed' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
   }
 }
