@@ -1,42 +1,50 @@
 import { Magic } from '@magic-sdk/admin'
+import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
-export async function POST(
-  request: Request,
-) {
-  const authHeader = request.headers.get('authorization') ?? ''
-  if (authHeader === '') {
-    return NextResponse.json(
-      { error: 'Missing authorization header' },
-      { status: 401 },
-    )
-  }
+export async function POST(request: Request) {
+  const { provider, token } = await request.json()
+  const cookieStore = await cookies()
+
+  let userData: any
 
   try {
-    const magic = new Magic(process.env.MAGIC_SECRET_KEY as string)
-    const didToken = magic.utils.parseAuthorizationHeader(authHeader)
-
-    if (!didToken) {
-      return NextResponse.json(
-        { error: 'Missing authorization header' },
-        { status: 401 },
-      )
+    switch (provider) {
+      case 'magic': {
+        const magic = new Magic(process.env.MAGIC_SECRET_KEY!)
+        magic.token.validate(token)
+        const { email, publicAddress } = await magic.users.getMetadataByToken(token)
+        userData = { email, publicAddress, walletType: 'magic' }
+        break
+      }
+      case 'metamask': {
+        const { address } = JSON.parse(token)
+        // validate signature on backend
+        userData = { address, walletType: 'metamask' }
+        break
+      }
+      case 'google':
+        // validate Google ID token
+        break
+      case 'coinbase':
+        // validate Coinbase OAuth token
+        break
+      default:
+        return NextResponse.json({ error: 'Authentication failed' }, { status: 401 })
     }
 
-    magic.token.validate(didToken)
-
-    const { email, publicAddress, issuer } = await magic.users.getMetadataByToken(didToken)
-
-    return NextResponse.json({
-      email,
-      publicAddress,
-      issuer,
+    cookieStore.set({
+      name: 'session',
+      value: token,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
     })
+
+    return NextResponse.json(userData)
   }
   catch {
-    return NextResponse.json(
-      { error: 'Failed to authenticate user' },
-      { status: 401 },
-    )
+    return NextResponse.json({ error: 'Authentication failed' }, { status: 401 })
   }
 }

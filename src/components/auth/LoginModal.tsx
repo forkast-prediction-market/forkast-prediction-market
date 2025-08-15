@@ -2,11 +2,12 @@
 
 import Image from 'next/image'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
-import { useAuth } from '@/hooks/useAuth'
+import { useMagic } from '@/hooks/useMagic'
 import { useMediaQuery } from '@/hooks/useMediaQuery'
 
 interface LoginModalProps {
@@ -17,10 +18,8 @@ interface LoginModalProps {
 interface LoginFormProps {
   email: string
   setEmail: (email: string) => void
-  isEmailLoading: boolean
-  handleGoogleLogin: () => void
-  handleEmailContinue: () => void
-  handleWalletConnect: (walletType: string) => void
+  isLoading: boolean
+  handleLoginWith: (method: string) => void
 }
 
 export function LoginModal({
@@ -28,62 +27,31 @@ export function LoginModal({
   onClose,
 }: LoginModalProps) {
   const [email, setEmail] = useState('')
-  const [isEmailLoading, setIsEmailLoading] = useState(false)
-  const {
-    connectMetaMask,
-    connectCoinbase,
-    connectPhantom,
-    loginWithMagicEmail,
-  } = useAuth()
-
-  function handleGoogleLogin() {
-    // TODO: Implement Google OAuth
-  }
-
-  async function handleEmailContinue() {
-    if (email.trim()) {
-      setIsEmailLoading(true)
-      try {
-        onClose()
-        await loginWithMagicEmail(email.trim())
-      }
-      catch (error) {
-        console.error('Error with email login:', error)
-        // TODO: Show error message to user
-      }
-      finally {
-        setIsEmailLoading(false)
-      }
-    }
-  }
-
-  async function handleWalletConnect(walletType: string) {
-    try {
-      switch (walletType) {
-        case 'metamask':
-          await connectMetaMask()
-          onClose()
-          break
-        case 'coinbase':
-          await connectCoinbase()
-          break
-        case 'walletconnect':
-          // WalletConnect disabled for now
-          break
-        case 'phantom':
-          await connectPhantom()
-          break
-        default:
-          console.error('Unknown wallet type:', walletType)
-      }
-    }
-    catch (error) {
-      console.error(`Error connecting to ${walletType}:`, error)
-      // TODO: Show error message to user
-    }
-  }
+  const [isLoading, setIsLoading] = useState(false)
+  const { loginWithEmailOTP } = useMagic()
 
   const isDesktop = useMediaQuery('(min-width: 768px)')
+
+  async function handleLoginWith(method: string) {
+    if (method === 'email') {
+      await handleLoginWithEmailOTP()
+    }
+  }
+
+  async function handleLoginWithEmailOTP() {
+    setIsLoading(true)
+
+    try {
+      onClose()
+      await loginWithEmailOTP(email)
+    }
+    catch {
+      toast.error('Email OTP failed')
+    }
+    finally {
+      setIsLoading(false)
+    }
+  }
 
   if (isDesktop) {
     return (
@@ -98,10 +66,8 @@ export function LoginModal({
           <LoginForm
             email={email}
             setEmail={setEmail}
-            isEmailLoading={isEmailLoading}
-            handleGoogleLogin={handleGoogleLogin}
-            handleEmailContinue={handleEmailContinue}
-            handleWalletConnect={handleWalletConnect}
+            isLoading={isLoading}
+            handleLoginWith={handleLoginWith}
           />
         </DialogContent>
       </Dialog>
@@ -121,10 +87,8 @@ export function LoginModal({
           <LoginForm
             email={email}
             setEmail={setEmail}
-            isEmailLoading={isEmailLoading}
-            handleGoogleLogin={handleGoogleLogin}
-            handleEmailContinue={handleEmailContinue}
-            handleWalletConnect={handleWalletConnect}
+            isLoading={isLoading}
+            handleLoginWith={handleLoginWith}
           />
         </div>
       </DrawerContent>
@@ -135,16 +99,14 @@ export function LoginModal({
 function LoginForm({
   email,
   setEmail,
-  isEmailLoading,
-  handleGoogleLogin,
-  handleEmailContinue,
-  handleWalletConnect,
+  isLoading,
+  handleLoginWith,
 }: LoginFormProps) {
   return (
     <div className="grid gap-6">
       {/* Google Login Button */}
       <Button
-        onClick={handleGoogleLogin}
+        onClick={() => handleLoginWith('google')}
         type="button"
         className="h-12"
       >
@@ -174,23 +136,23 @@ function LoginForm({
           placeholder="Enter your email"
           value={email}
           onChange={e => setEmail(e.target.value)}
-          disabled={isEmailLoading}
+          disabled={isLoading}
           className="h-12 rounded-r-none bg-background"
         />
         <Button
-          onClick={handleEmailContinue}
-          disabled={!email.trim() || isEmailLoading}
+          onClick={() => handleLoginWith('email')}
+          disabled={!email.trim() || isLoading}
           type="button"
           className="h-12 rounded-l-none"
         >
-          {isEmailLoading ? 'Sending...' : 'Continue'}
+          {isLoading ? 'Sending...' : 'Continue'}
         </Button>
       </div>
 
       {/* Wallet Buttons */}
       <div className="grid grid-cols-4 gap-2">
         <Button
-          onClick={() => handleWalletConnect('metamask')}
+          onClick={() => handleLoginWith('metamask')}
           type="button"
           size="icon"
           variant="outline"
@@ -207,7 +169,7 @@ function LoginForm({
         </Button>
 
         <Button
-          onClick={() => handleWalletConnect('coinbase')}
+          onClick={() => handleLoginWith('coinbase')}
           type="button"
           size="icon"
           variant="outline"
@@ -224,7 +186,7 @@ function LoginForm({
         </Button>
 
         <Button
-          onClick={() => handleWalletConnect('phantom')}
+          onClick={() => handleLoginWith('phantom')}
           type="button"
           size="icon"
           variant="outline"
@@ -241,7 +203,7 @@ function LoginForm({
         </Button>
 
         <Button
-          onClick={() => handleWalletConnect('walletconnect')}
+          onClick={() => handleLoginWith('walletconnect')}
           type="button"
           size="icon"
           variant="outline"

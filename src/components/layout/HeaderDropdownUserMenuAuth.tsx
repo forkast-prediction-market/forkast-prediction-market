@@ -10,10 +10,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useAuth } from '@/hooks/useAuth'
+import { useMagic } from '@/hooks/useMagic'
 
 export default function HeaderDropdownUserMenuAuth() {
-  const { disconnect } = useAuth()
+  const { disconnect } = useMagic()
 
   return (
     <DropdownMenu>
