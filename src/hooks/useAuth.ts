@@ -1,7 +1,7 @@
 'use client'
 
-import { Magic } from 'magic-sdk'
 import { useEffect, useState } from 'react'
+import { useMagic } from '@/hooks/useMagic'
 
 interface User {
   address: string
@@ -10,24 +10,11 @@ interface User {
   email?: string
 }
 
-// Create Magic instance
-let magic: Magic | null = null
-function getMagic() {
-  if (typeof window !== 'undefined' && !magic) {
-    magic = new Magic(process.env.NEXT_PUBLIC_MAGIC_PUBLISHABLE_KEY!, {
-      network: {
-        rpcUrl: 'https://rpc-amoy.polygon.technology/',
-        chainId: 80002,
-      },
-    })
-  }
-  return magic
-}
-
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
+  const magic = useMagic()
 
   // Helper function to update user state with persistence
   function updateUser(newUser: User | null) {
@@ -61,11 +48,10 @@ export function useAuth() {
 
         // Check if Magic user is logged in
         try {
-          const magicInstance = getMagic()
-          if (magicInstance) {
-            const isLoggedIn = await magicInstance.user.isLoggedIn()
+          if (magic) {
+            const isLoggedIn = await magic.user.isLoggedIn()
             if (isLoggedIn) {
-              const metadata = await magicInstance.user.getInfo()
+              const metadata = await magic.user.getInfo()
               if (metadata.email && metadata.publicAddress) {
                 const userData = {
                   address: metadata.publicAddress,
@@ -87,18 +73,16 @@ export function useAuth() {
     }
 
     initializeAuth()
-  }, [])
+  }, [magic])
 
   // Listen for Magic login events
   useEffect(() => {
     async function checkMagicLogin() {
       try {
-        const magicInstance = getMagic()
-
-        if (magicInstance) {
-          const isLoggedIn = await magicInstance.user.isLoggedIn()
+        if (magic) {
+          const isLoggedIn = await magic.user.isLoggedIn()
           if (isLoggedIn && (!user || user.walletType !== 'magic')) {
-            const metadata = await magicInstance.user.getInfo()
+            const metadata = await magic.user.getInfo()
             if (metadata.email && metadata.publicAddress) {
               const userData = {
                 address: metadata.publicAddress,
@@ -123,7 +107,7 @@ export function useAuth() {
     const interval = setInterval(checkMagicLogin, 1000)
 
     return () => clearInterval(interval)
-  }, [user])
+  }, [user, magic])
 
   // Check if MetaMask is installed
   function isMetaMaskInstalled() {
@@ -161,13 +145,8 @@ export function useAuth() {
         updateUser(userData)
         return accounts[0]
       }
-      else {
-        throw new Error('No accounts found')
-      }
-    }
-    catch (error) {
-      console.error('Error connecting to MetaMask:', error)
-      throw error
+
+      throw new Error('No accounts found')
     }
     finally {
       setIsLoading(false)
@@ -177,14 +156,11 @@ export function useAuth() {
   // Connect to other wallets (placeholder functions)
   async function connectCoinbase() {
     setIsLoading(true)
+
     try {
       // TODO: Implement Coinbase Wallet connection
       console.log('Connecting to Coinbase Wallet...')
       throw new Error('Coinbase Wallet connection not implemented yet')
-    }
-    catch (error) {
-      console.error('Error connecting to Coinbase Wallet:', error)
-      throw error
     }
     finally {
       setIsLoading(false)
@@ -198,14 +174,11 @@ export function useAuth() {
 
   async function connectPhantom() {
     setIsLoading(true)
+
     try {
       // TODO: Implement Phantom connection
       console.log('Connecting to Phantom...')
       throw new Error('Phantom connection not implemented yet')
-    }
-    catch (error) {
-      console.error('Error connecting to Phantom:', error)
-      throw error
     }
     finally {
       setIsLoading(false)
@@ -214,35 +187,40 @@ export function useAuth() {
 
   // Magic.link email login
   async function loginWithMagicEmail(email: string) {
-    const magicInstance = getMagic()
-    if (!magicInstance) {
+    if (!magic) {
       throw new Error('Magic not initialized')
     }
 
     setIsLoading(true)
+
     try {
-      const didToken = await magicInstance.auth.loginWithMagicLink({ email })
+      const didToken = await magic.auth.loginWithEmailOTP({ email })
 
       if (didToken) {
-        const metadata = await magicInstance.user.getInfo()
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${didToken}`,
+          },
+        })
 
-        if (metadata.email && metadata.publicAddress) {
+        if (res.ok) {
+          const json = await res.json()
           const userData = {
-            address: metadata.publicAddress,
             isConnected: true,
+            address: json.publicAddress,
             walletType: 'magic',
-            email: metadata.email,
+            email: json.email,
           }
+
           updateUser(userData)
-          return userData
+
+          return
         }
       }
 
-      throw new Error('Failed to get user metadata')
-    }
-    catch (error) {
-      console.error('Error logging in with Magic email:', error)
-      throw error
+      throw new Error('Failed to get user magic.link metadata')
     }
     finally {
       setIsLoading(false)
@@ -253,9 +231,8 @@ export function useAuth() {
   async function disconnect() {
     if (user?.walletType === 'magic') {
       try {
-        const magicInstance = getMagic()
-        if (magicInstance) {
-          await magicInstance.user.logout()
+        if (magic) {
+          await magic.user.logout()
         }
       }
       catch (error) {

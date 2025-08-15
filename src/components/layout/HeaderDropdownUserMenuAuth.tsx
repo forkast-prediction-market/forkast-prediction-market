@@ -62,9 +62,9 @@ export default function HeaderDropdownUserMenuAuth() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>
-          <Button variant="ghost" onClick={disconnect}>
+          <button type="button" className="w-full" onClick={disconnect}>
             Logout
-          </Button>
+          </button>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

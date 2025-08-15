@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
+    "@magic-sdk/admin": "^2.4.1",
     "@supabase/supabase-js": "^2.54.0",
     "@vercel/speed-insights": "^1.2.0",
     "@visx/axis": "3.13.0-alpha.0",

@@ -44,8 +44,8 @@ export function LoginModal({
     if (email.trim()) {
       setIsEmailLoading(true)
       try {
-        await loginWithMagicEmail(email.trim())
         onClose()
+        await loginWithMagicEmail(email.trim())
       }
       catch (error) {
         console.error('Error with email login:', error)
