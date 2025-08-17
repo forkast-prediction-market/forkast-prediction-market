@@ -1,3 +1,4 @@
+import { useDisconnect } from '@reown/appkit-controllers/react'
 import { ChevronDownIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -10,10 +11,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useMagic } from '@/hooks/useMagic'
 
 export default function HeaderDropdownUserMenuAuth() {
-  const { disconnect } = useMagic()
+  const { disconnect } = useDisconnect()
 
   return (
     <DropdownMenu>
@@ -35,10 +35,7 @@ export default function HeaderDropdownUserMenuAuth() {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-48" collisionPadding={16}>
         <DropdownMenuItem asChild>
-          <Link href="/">Profile</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/">Settings</Link>
+          <Link href="/settings">Profile</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/">Watchlist</Link>
@@ -62,7 +59,7 @@ export default function HeaderDropdownUserMenuAuth() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>
-          <button type="button" className="w-full" onClick={disconnect}>
+          <button type="button" className="w-full" onClick={() => disconnect()}>
             Logout
           </button>
         </DropdownMenuItem>

@@ -8,6 +8,7 @@ import NavigationTabs from '@/components/layout/NavigationTabs'
 import ProgressIndicator from '@/components/layout/ProgressIndicator'
 import { ThemeProvider } from '@/components/layout/ThemeProvider'
 import { Toaster } from '@/components/ui/sonner'
+import AppKit from '@/context/appkit'
 import { SET_THEME_ON_FIRST_LOAD } from '@/lib/utils'
 import './globals.css'
 
@@ -46,7 +47,9 @@ export default async function RootLayout({
         <ProgressIndicator>
           <ThemeProvider>
             <div className="min-h-screen bg-background">
-              <Header />
+              <AppKit>
+                <Header />
+              </AppKit>
               <NavigationTabs />
               {children}
             </div>

@@ -1,39 +1,46 @@
 'use client'
 
-import { useState } from 'react'
-import { LoginModal } from '@/components/auth/LoginModal'
-import HeaderDeposit from '@/components/layout/HeaderDeposit'
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { useEffect, useState } from 'react'
 import HeaderDropdownUserMenuAuth from '@/components/layout/HeaderDropdownUserMenuAuth'
 import HeaderDropdownUserMenuGuest from '@/components/layout/HeaderDropdownUserMenuGuest'
 import HeaderNotifications from '@/components/layout/HeaderNotifications'
 import HeaderPortfolio from '@/components/layout/HeaderPortfolio'
 import { Button } from '@/components/ui/button'
-import { useUser } from '@/stores/useUser'
+import { Skeleton } from '@/components/ui/skeleton'
 
 export default function HeaderMenu() {
-  const [showLoginModal, setShowLoginModal] = useState(false)
-  const user = useUser()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
+  const { open } = useAppKit()
+  const { isConnected, status } = useAppKitAccount()
+
+  if (!mounted || status === 'connecting') {
+    return (
+      <div className="flex gap-2">
+        <Skeleton className="h-9 w-16 rounded" />
+        <Skeleton className="h-9 w-20 rounded" />
+        <Skeleton className="h-9 w-20 rounded" />
+      </div>
+    )
+  }
 
   return (
     <>
-      {user && (
+      {isConnected && (
         <>
           <HeaderPortfolio />
-          <HeaderDeposit />
           <HeaderNotifications />
           <HeaderDropdownUserMenuAuth />
         </>
       )}
 
-      {!user && (
+      {!isConnected && (
         <>
-          <Button variant="link" onClick={() => setShowLoginModal(true)}>Log In</Button>
-          <Button onClick={() => setShowLoginModal(true)}>Sign Up</Button>
-          <HeaderDropdownUserMenuGuest setShowLoginModal={setShowLoginModal} />
-          <LoginModal
-            isOpen={showLoginModal}
-            onClose={() => setShowLoginModal(false)}
-          />
+          <Button variant="link" onClick={() => open()}>Log In</Button>
+          <Button onClick={() => open()}>Sign Up</Button>
+          <HeaderDropdownUserMenuGuest />
         </>
       )}
     </>
