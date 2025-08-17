@@ -11,7 +11,8 @@
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
-    "@magic-sdk/admin": "^2.4.1",
+    "@reown/appkit": "^1.7.19",
+    "@reown/appkit-adapter-ethers": "^1.7.19",
     "@supabase/supabase-js": "^2.54.0",
     "@vercel/speed-insights": "^1.2.0",
     "@visx/axis": "3.13.0-alpha.0",
@@ -25,8 +26,8 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "d3-array": "^3.2.4",
+    "ethers": "^6.15.0",
     "lucide-react": "^0.513.0",
-    "magic-sdk": "^29.4.1",
     "next": "^15.4.6",
     "radix-ui": "^1.4.2",
     "react": "^19.1.1",
@@ -52,6 +53,7 @@
     "eslint-plugin-react-refresh": "^0.4.20",
     "husky": "^9.1.7",
     "lint-staged": "^16.1.5",
+    "pino-pretty": "^13.1.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.9.2"

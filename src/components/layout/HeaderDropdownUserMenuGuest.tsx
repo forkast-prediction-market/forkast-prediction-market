@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction } from 'react'
+import { useAppKit } from '@reown/appkit/react'
 import { MenuIcon } from 'lucide-react'
 import Link from 'next/link'
 import ThemeSelector from '@/components/layout/ThemeSelector'
@@ -11,11 +11,9 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 
-interface Props {
-  setShowLoginModal: Dispatch<SetStateAction<boolean>>
-}
+export default function HeaderDropdownUserMenuGuest() {
+  const { open } = useAppKit()
 
-export default function HeaderDropdownUserMenuGuest({ setShowLoginModal }: Props) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -28,8 +26,8 @@ export default function HeaderDropdownUserMenuGuest({ setShowLoginModal }: Props
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-48" collisionPadding={16}>
-        <DropdownMenuItem onClick={() => setShowLoginModal(true)}>Sign Up</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setShowLoginModal(true)}>Log In</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => open()}>Sign Up</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => open()}>Log In</DropdownMenuItem>
 
         <DropdownMenuSeparator />
 
