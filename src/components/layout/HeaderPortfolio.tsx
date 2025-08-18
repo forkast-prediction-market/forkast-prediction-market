@@ -4,7 +4,7 @@ export default function HeaderPortfolio() {
   return (
     <div className="hidden items-center gap-6 text-xs lg:flex">
       <a
-        href="#"
+        href="/portfolio"
         className="rounded-lg p-2 text-center transition-colors hover:bg-black/5 dark:hover:bg-white/5"
       >
         <div className="font-medium text-muted-foreground">Portfolio</div>
@@ -16,7 +16,7 @@ export default function HeaderPortfolio() {
         </div>
       </a>
       <a
-        href="#"
+        href="/portfolio"
         className="rounded-lg p-2 text-center transition-colors hover:bg-black/5 dark:hover:bg-white/5"
       >
         <div className="font-medium text-muted-foreground">Cash</div>
