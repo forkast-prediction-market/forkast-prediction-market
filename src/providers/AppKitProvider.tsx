@@ -3,11 +3,11 @@
 import type { ReactNode } from 'react'
 import { EthersAdapter } from '@reown/appkit-adapter-ethers'
 import { polygonAmoy } from '@reown/appkit/networks'
-import { createAppKit } from '@reown/appkit/react'
-
-const projectId = process.env.NEXT_PUBLIC_APPKIT_PROJECT_ID!
+import { createAppKit, useAppKitTheme } from '@reown/appkit/react'
+import { useTheme } from 'next-themes'
 
 createAppKit({
+  projectId: process.env.NEXT_PUBLIC_APPKIT_PROJECT_ID!,
   adapters: [new EthersAdapter()],
   metadata: {
     name: process.env.NEXT_PUBLIC_SITE_NAME!,
@@ -20,13 +20,17 @@ createAppKit({
     '--w3m-accent': 'var(--primary)',
   },
   networks: [polygonAmoy],
-  projectId,
   defaultNetwork: polygonAmoy,
   features: {
-    analytics: false,
+    analytics: process.env.NODE_ENV === 'production',
   },
 })
 
-export default function AppKit({ children }: { children: ReactNode }) {
+export default function AppKitProvider({ children }: { children: ReactNode }) {
+  const { resolvedTheme } = useTheme()
+  const { setThemeMode } = useAppKitTheme()
+
+  setThemeMode(resolvedTheme as 'light' | 'dark')
+
   return <>{children}</>
 }

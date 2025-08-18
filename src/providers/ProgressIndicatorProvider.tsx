@@ -2,7 +2,7 @@
 
 import { ProgressProvider } from '@bprogress/next/app'
 
-function ProgressIndicator({ children }: { children: React.ReactNode }) {
+function ProgressIndicatorProvider({ children }: { children: React.ReactNode }) {
   return (
     <ProgressProvider
       height="2px"
@@ -15,4 +15,4 @@ function ProgressIndicator({ children }: { children: React.ReactNode }) {
   )
 }
 
-export default ProgressIndicator
+export default ProgressIndicatorProvider
