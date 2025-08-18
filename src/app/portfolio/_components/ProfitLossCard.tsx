@@ -53,8 +53,8 @@ export default function ProfitLossCard() {
   }
 
   return (
-    <Card className="relative h-auto p-5">
-      <CardContent className="flex flex-col p-0">
+    <Card>
+      <CardContent className="flex flex-col p-6">
         {/* Header with title and timeframe pills */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">

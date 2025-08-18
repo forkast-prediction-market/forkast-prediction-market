@@ -12,7 +12,7 @@ export default function PortfolioLayout({
 
   return (
     <main className="container py-4">
-      <div className="mx-auto grid max-w-4xl gap-6 px-4">
+      <div className="mx-auto grid max-w-4xl gap-6">
         {!isConnected && <PortfolioSkeleton />}
         {isConnected && children}
       </div>

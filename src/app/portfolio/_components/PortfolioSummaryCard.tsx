@@ -12,8 +12,8 @@ export default function PortfolioSummaryCard() {
   const { balance } = useBalance()
 
   return (
-    <Card className="h-auto p-5">
-      <CardContent className="flex flex-col p-0">
+    <Card>
+      <CardContent className="flex flex-col p-6">
         {/* Header with icon and balance chip */}
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
