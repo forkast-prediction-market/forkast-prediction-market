@@ -3,8 +3,8 @@
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import SettingsSkeleton from '@/app/settings/_components/SettingsSkeleton'
 import { useClientMounted } from '@/hooks/useClientMounted'
+import SettingsSkeleton from './_components/SettingsSkeleton'
 
 export default function SettingsLayout({
   children,

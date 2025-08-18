@@ -1,8 +1,8 @@
 import type { Event } from '@/types'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import EventFavorite from '@/components/event/EventFavorite'
-import EventShare from '@/components/event/EventShare'
+import EventFavorite from '@/app/event/[slug]/_components/EventFavorite'
+import EventShare from '@/app/event/[slug]/_components/EventShare'
 
 interface Props {
   event: Event

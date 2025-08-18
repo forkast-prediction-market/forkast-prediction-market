@@ -2,8 +2,8 @@
 
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import EventDetail from '@/components/event/EventDetail'
 import { getEventBySlug } from '@/lib/db/events'
+import EventDetail from './_components/EventDetail'
 
 interface PageProps {
   params: Promise<{

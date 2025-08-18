@@ -2,17 +2,17 @@
 
 import type { Event } from '@/types'
 import { useState } from 'react'
-import EventChart from '@/components/event/EventChart'
-import EventHeader from '@/components/event/EventHeader'
-import EventMarketContext from '@/components/event/EventMarketContext'
-import EventMarkets from '@/components/event/EventMarkets'
-import EventMetaInformation from '@/components/event/EventMetaInformation'
-import EventMobileOrderPanel from '@/components/event/EventMobileOrderPanel'
-import RelatedEvents from '@/components/event/EventRelated'
-import EventRules from '@/components/event/EventRules'
-import { EventTabs } from '@/components/event/EventTabs'
-import OrderPanel from '@/components/event/OrderPanel'
 import { useTradingState } from '@/hooks/useTradingState'
+import EventChart from './EventChart'
+import EventHeader from './EventHeader'
+import EventMarketContext from './EventMarketContext'
+import EventMarkets from './EventMarkets'
+import EventMetaInformation from './EventMetaInformation'
+import EventMobileOrderPanel from './EventMobileOrderPanel'
+import RelatedEvents from './EventRelated'
+import EventRules from './EventRules'
+import EventTabs from './EventTabs'
+import OrderPanel from './OrderPanel'
 
 interface Props {
   event: Event

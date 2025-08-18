@@ -1,7 +1,7 @@
 import type { Event } from '@/types'
+import EventsEmptyState from '@/app/event/[slug]/_components/EventsEmptyState'
 import EventCard from '@/components/event/EventCard'
 import { OpenCardProvider } from '@/components/event/EventOpenCardContext'
-import EventsEmptyState from '@/components/event/EventsEmptyState'
 import { listEvents } from '@/lib/db/events'
 
 interface EventsContentProps {

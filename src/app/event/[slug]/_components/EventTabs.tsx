@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import EventActivity from '@/components/event/EventActivity'
-import EventTabSelector from '@/components/event/EventTabSelector'
+import EventActivity from '@/app/event/[slug]/_components/EventActivity'
+import EventTabSelector from '@/app/event/[slug]/_components/EventTabSelector'
 import EventComments from './EventComments'
 import EventTopHolders from './EventTopHolders'
 
-export function EventTabs() {
+export default function EventTabs() {
   const [activeTab, setActiveTab] = useState('comments')
 
   return (

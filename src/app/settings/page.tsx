@@ -1,10 +1,10 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import SettingsSidebar from '@/app/settings/_components/SettingsSidebar'
 import ExportPrivateKey from './_components/ExportPrivateKey'
 import NotificationsSettings from './_components/NotificationsSettings'
 import ProfileSettings from './_components/ProfileSettings'
+import SettingsSidebar from './_components/SettingsSidebar'
 import TwoFactorAuth from './_components/TwoFactorAuth'
 
 export default function SettingsPage() {
