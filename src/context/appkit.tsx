@@ -15,6 +15,10 @@ createAppKit({
     url: `https://${process.env.VERCEL_URL}`,
     icons: ['https://avatar.vercel.com/'],
   },
+  themeVariables: {
+    '--w3m-border-radius-master': '2px',
+    '--w3m-accent': '#00a4e8',
+  },
   networks: [polygonAmoy],
   projectId,
   defaultNetwork: polygonAmoy,
