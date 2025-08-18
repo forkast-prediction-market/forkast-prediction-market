@@ -3,12 +3,13 @@
 import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { useBalance } from '@/hooks/useBalance'
 
 export default function PortfolioSummaryCard() {
-  const portfolioValue = 17.13
   const dailyChange = 0.00
   const dailyChangePercent = 0.00
   const isPositive = dailyChange >= 0
+  const { balance } = useBalance()
 
   return (
     <Card className="h-auto p-5">
@@ -41,8 +42,9 @@ export default function PortfolioSummaryCard() {
               <ellipse cx="9.5" cy="5.49951" rx="2.5" ry="1.5" fill="#3AB549"></ellipse>
             </svg>
             <span>
-              $
-              {portfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+              {balance?.data?.balance}
+              {' '}
+              {balance?.data?.symbol}
             </span>
           </div>
         </div>
@@ -50,8 +52,9 @@ export default function PortfolioSummaryCard() {
         {/* Main value */}
         <div className="mb-2">
           <div className="text-3xl font-bold text-foreground">
-            $
-            {portfolioValue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            {balance?.data?.balance}
+            {' '}
+            {balance?.data?.symbol}
           </div>
         </div>
 

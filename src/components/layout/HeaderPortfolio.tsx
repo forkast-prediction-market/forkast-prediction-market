@@ -1,32 +1,42 @@
-import { mockUser } from '@/lib/mockData'
+import { useAppKit } from '@reown/appkit/react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { useBalance } from '@/hooks/useBalance'
 
 export default function HeaderPortfolio() {
+  const { open } = useAppKit()
+  const { balance } = useBalance()
+
   return (
-    <div className="hidden items-center gap-6 text-xs lg:flex">
-      <a
-        href="/portfolio"
-        className="rounded-lg p-2 text-center transition-colors hover:bg-black/5 dark:hover:bg-white/5"
+    <div className="hidden items-center lg:flex">
+      <Link href="/portfolio">
+        <Button
+          type="button"
+          variant="ghost"
+          className="flex flex-col gap-0"
+        >
+          <div className="text-xs font-medium text-muted-foreground">Portfolio</div>
+          <div className="text-sm font-semibold text-primary">
+            {balance?.data?.balance}
+            {' '}
+            {balance?.data?.symbol}
+          </div>
+        </Button>
+      </Link>
+
+      <Button
+        type="button"
+        variant="ghost"
+        className="flex flex-col gap-0"
+        onClick={() => open()}
       >
-        <div className="font-medium text-muted-foreground">Portfolio</div>
+        <div className="text-xs font-medium text-muted-foreground">Cash</div>
         <div className="text-sm font-semibold text-primary">
-          $
-          {mockUser.portfolio.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-          })}
+          {balance?.data?.balance}
+          {' '}
+          {balance?.data?.symbol}
         </div>
-      </a>
-      <a
-        href="/portfolio"
-        className="rounded-lg p-2 text-center transition-colors hover:bg-black/5 dark:hover:bg-white/5"
-      >
-        <div className="font-medium text-muted-foreground">Cash</div>
-        <div className="text-sm font-semibold text-primary">
-          $
-          {mockUser.cash.toLocaleString('en-US', {
-            minimumFractionDigits: 2,
-          })}
-        </div>
-      </a>
+      </Button>
     </div>
   )
 }
