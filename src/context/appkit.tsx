@@ -17,7 +17,7 @@ createAppKit({
   },
   themeVariables: {
     '--w3m-border-radius-master': '2px',
-    '--w3m-accent': '#00a4e8',
+    '--w3m-accent': 'var(--primary)',
   },
   networks: [polygonAmoy],
   projectId,
