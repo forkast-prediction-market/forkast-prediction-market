@@ -25,7 +25,7 @@ export default function EventDetail({ event }: Props) {
 
   return (
     <>
-      <main className="container grid gap-8 pb-12 md:pb-12 lg:grid-cols-[3fr_1fr] lg:gap-10">
+      <main className="container grid gap-8 pb-12 lg:grid-cols-[3fr_1fr] lg:gap-10">
         <div className="pt-4 pb-20 md:pb-0">
           <EventHeader event={event} />
           <EventMetaInformation event={event} />

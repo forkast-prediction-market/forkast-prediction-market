@@ -17,9 +17,10 @@ const menuItems = [
 export default function SettingsSidebar({ activeTab, onTabChange }: Props) {
   return (
     <aside className="lg:sticky lg:top-28 lg:self-start">
-      <nav className="space-y-1">
+      <nav className="grid gap-1">
         {menuItems.map(item => (
           <button
+            type="button"
             key={item.id}
             onClick={() => onTabChange(item.id)}
             className={cn(
