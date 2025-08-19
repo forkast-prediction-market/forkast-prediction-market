@@ -52,3 +52,35 @@ export interface User {
   email: string
   provider: AuthProvider
 }
+
+// Public Profile Types
+export interface PublicProfile {
+  address: string
+  username?: string
+  avatar?: string
+  joinedAt: Date
+  stats: {
+    positionsValue: number
+    profitLoss: number
+    volumeTraded: number
+    marketsTraded: number
+  }
+}
+
+export type ActivityType = 'Buy' | 'Sell' | 'Redeem'
+
+export interface ActivityItem {
+  id: string
+  type: ActivityType
+  market: {
+    id: string
+    title: string
+    imageUrl: string
+    outcome: 'Yes' | 'No'
+    price: number // in cents
+  }
+  shares: number
+  amount: number // in USD
+  timestamp: Date
+  transactionHash: string
+}
