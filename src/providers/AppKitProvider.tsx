@@ -5,9 +5,12 @@ import { EthersAdapter } from '@reown/appkit-adapter-ethers'
 import { polygonAmoy } from '@reown/appkit/networks'
 import { createAppKit, useAppKitTheme } from '@reown/appkit/react'
 import { useTheme } from 'next-themes'
+import { siweConfig } from './siwe'
+
+const projectId = process.env.NEXT_PUBLIC_PROJECT_ID!
 
 createAppKit({
-  projectId: process.env.NEXT_PUBLIC_APPKIT_PROJECT_ID!,
+  projectId,
   adapters: [new EthersAdapter()],
   metadata: {
     name: process.env.NEXT_PUBLIC_SITE_NAME!,
@@ -21,6 +24,7 @@ createAppKit({
   },
   networks: [polygonAmoy],
   defaultNetwork: polygonAmoy,
+  siweConfig,
   features: {
     analytics: process.env.NODE_ENV === 'production',
   },

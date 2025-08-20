@@ -1,32 +1,35 @@
 import { betterAuth } from 'better-auth'
+import { generateRandomString } from 'better-auth/crypto'
 import { siwe } from 'better-auth/plugins'
-import { generateNonce, SiweMessage } from 'siwe'
+import { Pool } from 'pg'
+import { verifyMessage } from 'viem'
 
 export const auth = betterAuth({
-  database: {
-    provider: 'postgres',
-    url: process.env.DATABASE_URL!,
-  },
-  secret: process.env.BETTER_AUTH_SECRET!,
+  database: new Pool({
+    connectionString: process.env.POSTGRES_URL,
+  }),
+  secret: process.env.BETTER_AUTH_SECRET,
   plugins: [
     siwe({
       domain: typeof window !== 'undefined' ? window.location.host : 'localhost:3000',
-      getNonce: async () => {
-        return generateNonce()
-      },
-      verifyMessage: async ({ message, signature }) => {
+      anonymous: false,
+      getNonce: async () => generateRandomString(32),
+      verifyMessage: async ({ message, signature, address }) => {
         try {
-          const siweMessage = new SiweMessage(message)
-          const fields = await siweMessage.verify({ signature })
-          return fields.success
+          return await verifyMessage({
+            address: address as `0x${string}`,
+            message,
+            signature: signature as `0x${string}`,
+          })
         }
-        catch {
+        catch (error) {
+          console.error('SIWE verification failed:', error)
           return false
         }
       },
     }),
   ],
   session: {
-    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    expiresIn: 60 * 60 * 24 * 7,
   },
 })
