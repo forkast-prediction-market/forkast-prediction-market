@@ -17,7 +17,7 @@ export const siweConfig = createSIWEConfig({
   createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
   getNonce: async () => {
     const { data, error } = await authClient.siwe.nonce({
-      walletAddress: '0x507e69651c40d54c49198326e0f2cc4f79ddaa23',
+      walletAddress: '0xA87aB507Ba7b76b81dbAC2a6075eD9bb6F55180e',
       chainId: polygonAmoy.id,
     })
 

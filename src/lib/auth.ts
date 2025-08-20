@@ -1,8 +1,9 @@
+import { getChainIdFromMessage } from '@reown/appkit-siwe'
 import { betterAuth } from 'better-auth'
 import { generateRandomString } from 'better-auth/crypto'
 import { siwe } from 'better-auth/plugins'
 import { Pool } from 'pg'
-import { verifyMessage } from 'viem'
+import { createPublicClient, http } from 'viem'
 
 export const auth = betterAuth({
   database: new Pool({
@@ -15,17 +16,22 @@ export const auth = betterAuth({
       anonymous: true,
       getNonce: async () => generateRandomString(32),
       verifyMessage: async ({ message, signature, address }) => {
-        try {
-          return await verifyMessage({
-            address: address as `0x${string}`,
-            message,
-            signature: signature as `0x${string}`,
-          })
-        }
-        catch (error) {
-          console.error('SIWE verification failed:', error)
-          return false
-        }
+        const chainId = getChainIdFromMessage(message)
+        const projectId = process.env.NEXT_PUBLIC_PROJECT_ID!
+
+        const publicClient = createPublicClient(
+          {
+            transport: http(
+              `https://rpc.walletconnect.org/v1/?chainId=${chainId}&projectId=${projectId}`,
+            ),
+          },
+        )
+
+        return await publicClient.verifyMessage({
+          message,
+          address: address as `0x${string}`,
+          signature: signature as `0x${string}`,
+        })
       },
     }),
   ],
