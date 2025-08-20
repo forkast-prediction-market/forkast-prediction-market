@@ -5,7 +5,9 @@ import type {
 } from '@reown/appkit-siwe'
 import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/appkit-siwe'
 import { polygonAmoy } from '@reown/appkit/networks'
+import { generateNonce } from 'siwe'
 import { authClient } from '@/lib/auth-client'
+import { useUser } from '@/stores/useUser'
 
 export const siweConfig = createSIWEConfig({
   getMessageParams: async () => ({
@@ -16,16 +18,23 @@ export const siweConfig = createSIWEConfig({
   }),
   createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
   getNonce: async () => {
-    const { data, error } = await authClient.siwe.nonce({
-      walletAddress: '0xA87aB507Ba7b76b81dbAC2a6075eD9bb6F55180e',
+    if (localStorage.getItem('@appkit/connections') === null) {
+      return generateNonce()
+    }
+
+    const item = localStorage.getItem('@appkit/connections') as string
+    const address = JSON.parse(item).eip155[0].accounts[0].address
+
+    const { data } = await authClient.siwe.nonce({
+      walletAddress: address,
       chainId: polygonAmoy.id,
     })
 
     if (data) {
-      return data.nonce
+      return data?.nonce
     }
 
-    throw new Error(error.message)
+    return generateNonce()
   },
   getSession: async () => {
     const session = authClient.useSession()
@@ -48,10 +57,15 @@ export const siweConfig = createSIWEConfig({
       })
 
       if (data) {
-        console.log('Authentication successful:', data.user)
+        useUser.setState({
+          id: data.user.id,
+          address: data.user.walletAddress,
+        })
+
+        return Boolean(data.success)
       }
 
-      return Boolean(data?.success)
+      return false
     }
     catch {
       return false

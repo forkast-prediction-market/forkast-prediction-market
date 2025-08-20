@@ -44,13 +44,11 @@ export interface MarketOutcome {
 }
 
 export type EventCategory = string
-export type AuthProvider = 'magic' | 'google' | 'metamask' | 'coinbase'
 
 // User Types
 export interface User {
+  id: string
   address: string
-  email: string
-  provider: AuthProvider
 }
 
 // Public Profile Types
