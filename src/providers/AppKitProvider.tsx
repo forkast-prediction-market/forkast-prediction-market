@@ -26,6 +26,7 @@ createAppKit({
   defaultNetwork: polygonAmoy,
   siweConfig,
   features: {
+    email: false,
     analytics: process.env.NODE_ENV === 'production',
   },
 })

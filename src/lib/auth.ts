@@ -12,7 +12,7 @@ export const auth = betterAuth({
   plugins: [
     siwe({
       domain: typeof window !== 'undefined' ? window.location.host : 'localhost:3000',
-      anonymous: false,
+      anonymous: true,
       getNonce: async () => generateRandomString(32),
       verifyMessage: async ({ message, signature, address }) => {
         try {

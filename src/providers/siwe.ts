@@ -3,7 +3,7 @@ import type {
   SIWESession,
   SIWEVerifyMessageArgs,
 } from '@reown/appkit-siwe'
-import { createSIWEConfig, formatMessage } from '@reown/appkit-siwe'
+import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/appkit-siwe'
 import { polygonAmoy } from '@reown/appkit/networks'
 import { authClient } from '@/lib/auth-client'
 
@@ -16,16 +16,16 @@ export const siweConfig = createSIWEConfig({
   }),
   createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
   getNonce: async () => {
-    const { data } = await authClient.siwe.nonce({
-      walletAddress: '0x1234567890abcdef1234567890abcdef12345678',
+    const { data, error } = await authClient.siwe.nonce({
+      walletAddress: '0x507e69651c40d54c49198326e0f2cc4f79ddaa23',
       chainId: polygonAmoy.id,
     })
 
     if (data) {
-      console.log('Nonce:', data.nonce)
+      return data.nonce
     }
 
-    return new Promise(_ => data?.nonce)
+    throw new Error(error.message)
   },
   getSession: async () => {
     const session = authClient.useSession()
@@ -33,10 +33,8 @@ export const siweConfig = createSIWEConfig({
       return null
     }
 
-    console.log(session.data)
-
     return {
-      address: '',
+      address: session.data?.user?.email as string,
       chainId: polygonAmoy.id,
     } satisfies SIWESession
   },
@@ -44,10 +42,9 @@ export const siweConfig = createSIWEConfig({
     try {
       const { data } = await authClient.siwe.verify({
         message,
-        signature, // The signature from the user's wallet
-        walletAddress: '0x1234567890abcdef1234567890abcdef12345678',
-        chainId: polygonAmoy.id, // optional, defaults to 1
-        email: 'user@example.com', // optional, required if anonymous is false
+        signature,
+        walletAddress: getAddressFromMessage(message),
+        chainId: polygonAmoy.id,
       })
 
       if (data) {
