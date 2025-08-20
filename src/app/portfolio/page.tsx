@@ -5,6 +5,6 @@ export const metadata: Metadata = {
   title: 'Portfolio',
 }
 
-export default function PortfolioPage() {
+export default async function PortfolioPage() {
   return <Content />
 }

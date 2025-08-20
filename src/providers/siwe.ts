@@ -17,25 +17,7 @@ export const siweConfig = createSIWEConfig({
     statement: 'Please sign with your account',
   }),
   createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
-  getNonce: async () => {
-    if (localStorage.getItem('@appkit/connections') === null) {
-      return generateNonce()
-    }
-
-    const item = localStorage.getItem('@appkit/connections') as string
-    const address = JSON.parse(item).eip155[0].accounts[0].address
-
-    const { data } = await authClient.siwe.nonce({
-      walletAddress: address,
-      chainId: polygonAmoy.id,
-    })
-
-    if (data) {
-      return data?.nonce
-    }
-
-    return generateNonce()
-  },
+  getNonce: async () => generateNonce(),
   getSession: async () => {
     const session = authClient.useSession()
     if (!session) {
@@ -49,23 +31,21 @@ export const siweConfig = createSIWEConfig({
   },
   verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
     try {
-      const { data } = await authClient.siwe.verify({
-        message,
-        signature,
-        walletAddress: getAddressFromMessage(message),
+      const address = getAddressFromMessage(message)
+
+      await authClient.siwe.nonce({
+        walletAddress: address,
         chainId: polygonAmoy.id,
       })
 
-      if (data) {
-        useUser.setState({
-          id: data.user.id,
-          address: data.user.walletAddress,
-        })
+      const { data } = await authClient.siwe.verify({
+        message,
+        signature,
+        walletAddress: address,
+        chainId: polygonAmoy.id,
+      })
 
-        return Boolean(data.success)
-      }
-
-      return false
+      return Boolean(data?.success)
     }
     catch {
       return false
@@ -80,5 +60,13 @@ export const siweConfig = createSIWEConfig({
     catch {
       return false
     }
+  },
+  onSignIn: (session) => {
+    useUser.setState({
+      address: session?.address,
+    })
+  },
+  onSignOut: () => {
+    useUser.setState(null)
   },
 })

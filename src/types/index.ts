@@ -47,7 +47,6 @@ export type EventCategory = string
 
 // User Types
 export interface User {
-  id: string
   address: string
 }
 

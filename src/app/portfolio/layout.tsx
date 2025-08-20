@@ -1,20 +1,20 @@
-'use client'
+import PortfolioSummaryCard from '@/app/portfolio/_components/PortfolioSummaryCard'
+import ProfitLossCard from '@/app/portfolio/_components/ProfitLossCard'
 
-import { useRequireConnection } from '@/hooks/useRequireWalletConnection'
-import PortfolioSkeleton from './_components/PortfolioSkeleton'
-
-export default function PortfolioLayout({
+export default async function PortfolioLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const { isConnected } = useRequireConnection()
-
   return (
     <main className="container py-4">
       <div className="mx-auto grid max-w-4xl gap-6">
-        {!isConnected && <PortfolioSkeleton />}
-        {isConnected && children}
+        <div className="grid gap-6 md:grid-cols-2">
+          <PortfolioSummaryCard />
+          <ProfitLossCard />
+        </div>
+
+        {children}
       </div>
     </main>
   )

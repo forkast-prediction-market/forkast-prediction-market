@@ -5,6 +5,6 @@ export const metadata: Metadata = {
   title: 'Settings',
 }
 
-export default function SettingsPage() {
+export default async function SettingsPage() {
   return <Content />
 }
