@@ -1,11 +1,12 @@
-'use cache'
-
 import type { Metadata, Viewport } from 'next'
 import { openSauceOne } from '@/app/fonts'
 import Header from '@/components/layout/Header'
 import NavigationTabs from '@/components/layout/NavigationTabs'
 import { Providers } from '@/providers/Providers'
 import './globals.css'
+
+// Force dynamic rendering to avoid build-time Supabase calls
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: {
