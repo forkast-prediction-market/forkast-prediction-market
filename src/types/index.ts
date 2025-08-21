@@ -47,7 +47,7 @@ export type EventCategory = string
 
 // User Types
 export interface User {
-  address: string
+  email: string
 }
 
 // Public Profile Types

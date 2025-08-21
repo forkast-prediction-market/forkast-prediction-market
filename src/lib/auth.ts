@@ -35,6 +35,11 @@ export const auth = betterAuth({
       },
     }),
   ],
+  user: {
+    changeEmail: {
+      enabled: true,
+    },
+  },
   session: {
     expiresIn: 60 * 60 * 24 * 7,
   },

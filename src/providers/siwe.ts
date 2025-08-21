@@ -61,9 +61,12 @@ export const siweConfig = createSIWEConfig({
       return false
     }
   },
-  onSignIn: (session) => {
-    useUser.setState({
-      address: session?.address,
+  onSignIn: () => {
+    authClient.getSession().then((session) => {
+      const user = session.data?.user
+      useUser.setState({
+        email: user?.email,
+      })
     })
   },
   onSignOut: () => {

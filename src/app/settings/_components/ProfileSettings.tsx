@@ -1,23 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import type { User } from '@/types'
+import { useState, useTransition } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { authClient } from '@/lib/auth-client'
 
-export default function ProfileSettings() {
+export default function ProfileSettings({ user }: { user: User }) {
   const [formData, setFormData] = useState({
-    email: '',
+    email: user?.email ?? '',
     username: '',
     bio: '',
   })
+  const [isPending, startTransition] = useTransition()
 
   function handleChange(field: string, value: string) {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
   function handleSave() {
-    // TODO: Implement save functionality
-    console.log('Saving profile:', formData)
+    startTransition(async () => {
+      try {
+        await authClient.changeEmail({
+          newEmail: formData.email,
+        })
+        toast.success('Profile saved')
+      }
+      catch (e: any) {
+        toast.error(e.message || 'Failed to save')
+      }
+    })
   }
 
   return (
@@ -95,8 +108,8 @@ export default function ProfileSettings() {
 
         {/* Save Button */}
         <div className="flex justify-start">
-          <Button onClick={handleSave} className="w-36">
-            Save changes
+          <Button onClick={handleSave} disabled={isPending} className="w-36">
+            {isPending ? 'Saving...' : 'Save changes'}
           </Button>
         </div>
       </div>
