@@ -1,7 +1,7 @@
 import { getChainIdFromMessage } from '@reown/appkit-siwe'
 import { betterAuth } from 'better-auth'
 import { generateRandomString } from 'better-auth/crypto'
-import { siwe } from 'better-auth/plugins'
+import { siwe, twoFactor } from 'better-auth/plugins'
 import { Pool } from 'pg'
 import { createPublicClient, http } from 'viem'
 
@@ -10,7 +10,9 @@ export const auth = betterAuth({
     connectionString: process.env.POSTGRES_URL,
   }),
   secret: process.env.BETTER_AUTH_SECRET,
+  appName: process.env.NEXT_PUBLIC_SITE_NAME,
   plugins: [
+    twoFactor(),
     siwe({
       domain: typeof window !== 'undefined' ? window.location.host : 'localhost:3000',
       anonymous: true,
