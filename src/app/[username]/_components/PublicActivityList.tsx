@@ -114,7 +114,7 @@ function ActivityItemComponent({ item }: { item: ActivityItem }) {
   )
 }
 
-export default function ActivityList({ activity }: Props) {
+export default function PublicActivityList({ activity }: Props) {
   const [minAmountFilter] = useState<string>('All')
 
   return (

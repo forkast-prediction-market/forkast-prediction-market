@@ -2,23 +2,47 @@ import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase'
 
+export async function getProfileByUsername(username: string) {
+  'use cache'
+
+  const { data } = await supabaseAdmin
+    .from('user')
+    .select('name, username, image, createdAt')
+    .or(`username.eq.${username},name.eq.${username}`)
+    .maybeSingle()
+
+  if (data) {
+    return {
+      ...data,
+      address: data.name,
+      created_at: data.createdAt,
+    }
+  }
+
+  return data
+}
+
 export async function getCurrentUser() {
   const session = await auth.api.getSession({
     headers: await headers(),
   })
 
-  if (!session?.user)
+  if (!session?.user) {
     return null
+  }
 
-  return session.user
+  return {
+    ...session.user,
+    address: session.user.name,
+  }
 }
 
-export async function updateCurrentUser(userId: string, updates: any) {
+export async function updateCurrentUser(userId: string, input: any) {
   const { data, error } = await supabaseAdmin
     .from('user')
-    .update({ ...updates, updatedAt: new Date().toISOString() })
+    .update({ ...input, updatedAt: new Date().toISOString() })
     .eq('id', userId)
-    .select('*')
+    .select('id')
     .single()
 
   if (error) {

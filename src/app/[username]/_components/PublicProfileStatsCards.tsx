@@ -1,11 +1,11 @@
 'use client'
 
-import type { PublicProfile } from '@/types'
+import type { PublicProfileStats } from '@/types'
 import { ActivityIcon, BarChart2Icon, CheckCircle2Icon, TrendingDownIcon, TrendingUpIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Props {
-  stats: PublicProfile['stats']
+  stats: PublicProfileStats
 }
 
 interface StatCardProps {
@@ -30,7 +30,7 @@ function StatCard({ icon: Icon, label, value, isProfit }: StatCardProps) {
       </div>
       <div className={cn(
         'text-2xl font-bold',
-        isProfit !== undefined && (isProfit ? 'text-green-600' : 'text-red-600'),
+        isProfit !== undefined && (isProfit ? 'text-yes' : 'text-no'),
       )}
       >
         {value}
@@ -39,7 +39,7 @@ function StatCard({ icon: Icon, label, value, isProfit }: StatCardProps) {
   )
 }
 
-export default function StatsCards({ stats }: Props) {
+export default function PublicProfileStatsCards({ stats }: Props) {
   function formatCurrency(amount: number) {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',

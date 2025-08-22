@@ -147,11 +147,9 @@ export default function ProfileSettings({ user }: { user: User }) {
           </div>
         </div>
 
-        <div className="flex justify-start">
-          <Button type="submit" disabled={isPending} className="w-36">
-            {isPending ? 'Saving...' : 'Save changes'}
-          </Button>
-        </div>
+        <Button type="submit" disabled={isPending} className="w-36">
+          {isPending ? 'Saving...' : 'Save changes'}
+        </Button>
       </Form>
     </div>
   )

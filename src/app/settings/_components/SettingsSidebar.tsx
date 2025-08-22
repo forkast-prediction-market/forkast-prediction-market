@@ -1,8 +1,9 @@
-'use client'
-
-import { cn } from '@/lib/utils'
+import type { User } from '@/types'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 interface Props {
+  user: User
   activeTab: string
   onTabChange: (tab: string) => void
 }
@@ -14,25 +15,24 @@ const menuItems = [
   { id: 'export-key', label: 'Export Private Key' },
 ]
 
-export default function SettingsSidebar({ activeTab, onTabChange }: Props) {
+export default function SettingsSidebar({ user, activeTab, onTabChange }: Props) {
   return (
     <aside className="lg:sticky lg:top-28 lg:self-start">
       <nav className="grid gap-1">
         {menuItems.map(item => (
-          <button
+          <Button
             type="button"
             key={item.id}
             onClick={() => onTabChange(item.id)}
-            className={cn(
-              'w-full rounded-md px-4 py-3 text-left text-sm font-medium transition-colors',
-              activeTab === item.id
-                ? 'bg-accent text-accent-foreground'
-                : 'text-muted-foreground hover:bg-accent/50 hover:text-foreground',
-            )}
+            variant={activeTab === item.id ? 'secondary' : 'ghost'}
+            className="justify-start text-muted-foreground"
           >
             {item.label}
-          </button>
+          </Button>
         ))}
+        <Button variant="ghost" className="justify-start text-muted-foreground" asChild>
+          <Link href={user.username ? `/@${user.username}` : `/@${user.address}`}>See public profile</Link>
+        </Button>
       </nav>
     </aside>
   )

@@ -67,8 +67,9 @@ export const siweConfig = createSIWEConfig({
     authClient.getSession().then((session) => {
       const user = session.data?.user
       useUser.setState({
+        address: user?.name,
         email: user?.email,
-        image: user?.image || 'https://avatar.vercel.sh/bitcoin.png',
+        image: user?.image || `https://avatar.vercel.sh/${user?.name}.png`,
       })
     })
   },
