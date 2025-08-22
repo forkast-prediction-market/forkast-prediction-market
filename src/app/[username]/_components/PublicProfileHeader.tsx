@@ -6,33 +6,27 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useClipboard } from '@/hooks/useClipboard'
-import { cn, sanitizeSvg } from '@/lib/utils'
+import { sanitizeSvg } from '@/lib/utils'
+import { useUser } from '@/stores/useUser'
 
 interface Props {
   profile: PublicProfile
 }
 
-function formatWalletAddress(address: string): string {
-  return `${address.slice(0, 6)}…${address.slice(-4)}`
-}
-
-function formatJoinDate(date: Date): string {
-  return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-}
-
-export default function ProfileHeader({ profile }: Props) {
+export default function PublicProfileHeader({ profile }: Props) {
+  const user = useUser()
   const { copied, copy } = useClipboard()
 
   function handleCopyAddress() {
     copy(profile.address)
   }
 
-  // Use the same avatar pattern as the header
-  const avatarSrc = profile.avatar || `https://avatar.vercel.sh/${profile.username || 'user'}.png`
+  const address = `${profile.address.slice(0, 6)}…${profile.address.slice(-4)}`
+  const joinDate = new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+  const avatarSrc = profile.image || `https://avatar.vercel.sh/${profile.username || 'user'}.png`
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-8">
-      {/* Avatar */}
       <div className="size-28 overflow-hidden rounded-full border border-border shadow-sm">
         <Image
           src={avatarSrc}
@@ -43,54 +37,41 @@ export default function ProfileHeader({ profile }: Props) {
         />
       </div>
 
-      {/* Identity Block */}
       <div className="flex-1 space-y-3">
-        {/* Username */}
         <h1 className="text-3xl font-bold tracking-tight">
-          {profile.username || formatWalletAddress(profile.address)}
+          {profile.username || address}
         </h1>
 
-        {/* Secondary Info - all in one line */}
         <div className="flex items-center gap-4">
-          {/* Wallet Address with Copy Button */}
-          <button
+          <Button
+            variant="ghost"
             type="button"
+            size="sm"
             onClick={handleCopyAddress}
-            className={cn(
-              'flex items-center gap-2 text-sm text-muted-foreground transition-colors',
-              '-mx-2 -my-1 rounded px-2 py-1 hover:bg-accent hover:text-foreground',
-            )}
+            className="-ml-2"
             title={copied ? 'Copied!' : 'Copy address'}
           >
-            <span>{formatWalletAddress(profile.address)}</span>
-            {copied
-              ? (
-                  <CheckIcon className="size-3 text-green-600" />
-                )
-              : (
-                  <CopyIcon className="size-3" />
-                )}
-          </button>
+            <span className="text-muted-foreground">{address}</span>
+            {copied ? <CheckIcon className="size-3 text-yes" /> : <CopyIcon className="size-3" />}
+          </Button>
 
-          {/* Join Date */}
           <span className="text-sm text-muted-foreground">
             Joined
             {' '}
-            {formatJoinDate(profile.joinedAt)}
+            {joinDate}
           </span>
         </div>
       </div>
 
-      {/* Right side content */}
-      <div className="space-y-4 lg:self-start">
-        {/* Edit Profile Button - always show */}
-        <Button variant="outline" className="h-11" asChild>
-          <Link href="/settings">
-            Edit profile
-          </Link>
-        </Button>
+      <div className="flex flex-col gap-4 lg:self-start">
+        {user?.address === profile.address && (
+          <Button variant="outline" asChild>
+            <Link href="/settings">
+              Edit profile
+            </Link>
+          </Button>
+        )}
 
-        {/* Logo below Edit Profile */}
         <div className="flex items-center gap-2 text-muted-foreground opacity-40 select-none">
           <div
             className="size-8"

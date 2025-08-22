@@ -2,8 +2,8 @@
 
 import type { ActivityItem } from '@/types'
 import { useState } from 'react'
-import ActivityList from '@/components/profile/ActivityList'
-import PositionsEmpty from '@/components/profile/PositionsEmpty'
+import PublicActivityList from '@/app/[username]/_components/PublicActivityList'
+import PublicPositionsEmpty from '@/app/[username]/_components/PublicPositionsEmpty'
 import { cn, sanitizeSvg } from '@/lib/utils'
 
 interface Props {
@@ -17,7 +17,7 @@ const tabs = [
   { id: 'activity' as const, label: 'Activity' },
 ]
 
-export default function ProfileTabs({ activity }: Props) {
+export default function PublicProfileTabs({ activity }: Props) {
   const [activeTab, setActiveTab] = useState<TabType>('positions')
 
   return (
@@ -60,8 +60,8 @@ export default function ProfileTabs({ activity }: Props) {
 
       {/* Tab Content */}
       <div className="min-h-[400px]">
-        {activeTab === 'positions' && <PositionsEmpty />}
-        {activeTab === 'activity' && <ActivityList activity={activity} />}
+        {activeTab === 'positions' && <PublicPositionsEmpty />}
+        {activeTab === 'activity' && <PublicActivityList activity={activity} />}
       </div>
     </div>
   )

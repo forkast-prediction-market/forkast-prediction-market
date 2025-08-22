@@ -25,7 +25,7 @@ export default function Content({ user }: { user: User }) {
 
   return (
     <>
-      <SettingsSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+      <SettingsSidebar user={user} activeTab={activeTab} onTabChange={setActiveTab} />
       <div className="mx-auto max-w-2xl lg:mx-0">
         {content}
       </div>

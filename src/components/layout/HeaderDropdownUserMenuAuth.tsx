@@ -26,7 +26,7 @@ export default function HeaderDropdownUserMenuAuth() {
           size="icon"
         >
           <Image
-            src={user?.image || 'https://avatar.vercel.sh/bitcoin.png'}
+            src={user?.image || `https://avatar.vercel.sh/${user?.address}.png`}
             alt="User avatar"
             width={24}
             height={24}

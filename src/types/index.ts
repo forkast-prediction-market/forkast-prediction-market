@@ -47,24 +47,27 @@ export type EventCategory = string
 
 // User Types
 export interface User {
+  address: string
   email: string
   username?: string
   bio?: string
   image?: string | null
 }
 
+export interface PublicProfileStats {
+  positionsValue: number
+  profitLoss: number
+  volumeTraded: number
+  marketsTraded: number
+}
+
 // Public Profile Types
 export interface PublicProfile {
   address: string
   username?: string
-  avatar?: string
-  joinedAt: Date
-  stats: {
-    positionsValue: number
-    profitLoss: number
-    volumeTraded: number
-    marketsTraded: number
-  }
+  image?: string
+  created_at: Date
+  stats?: PublicProfileStats
 }
 
 export type ActivityType = 'Buy' | 'Sell' | 'Redeem'

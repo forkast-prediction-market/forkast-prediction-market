@@ -105,6 +105,7 @@ export async function updateUser(
       if (typeof result.error === 'string') {
         return { message: result.error }
       }
+
       return { errors: result.error }
     }
 
