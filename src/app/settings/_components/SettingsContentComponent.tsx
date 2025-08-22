@@ -8,7 +8,7 @@ import SettingsProfileTab from '@/app/settings/_components/SettingsProfileTab'
 import SettingsSidebar from '@/app/settings/_components/SettingsSidebar'
 import SettingsTwoFactorAuthTab from '@/app/settings/_components/SettingsTwoFactorAuthTab'
 
-export default function SettingsTabsClientComponent({ user }: { user: User }) {
+export default function SettingsContentComponent({ user }: { user: User }) {
   const [activeTab, setActiveTab] = useState('profile')
   const content = useMemo(() => {
     switch (activeTab) {

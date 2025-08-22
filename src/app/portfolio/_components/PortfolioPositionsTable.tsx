@@ -21,7 +21,7 @@ interface Position {
 
 const mockPositions: Position[] = []
 
-export default function PositionsTable({ searchQuery }: Props) {
+export default function PortfolioPositionsTable({ searchQuery }: Props) {
   const filteredPositions = mockPositions.filter(position =>
     position.market.toLowerCase().includes(searchQuery.toLowerCase()),
   )

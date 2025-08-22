@@ -1,5 +1,5 @@
+import PortfolioProfitLossCard from '@/app/portfolio/_components/PortfolioProfitLossCard'
 import PortfolioSummaryCard from '@/app/portfolio/_components/PortfolioSummaryCard'
-import ProfitLossCard from '@/app/portfolio/_components/ProfitLossCard'
 
 export default async function PortfolioLayout({
   children,
@@ -11,7 +11,7 @@ export default async function PortfolioLayout({
       <div className="mx-auto grid max-w-4xl gap-6">
         <div className="grid gap-6 md:grid-cols-2">
           <PortfolioSummaryCard />
-          <ProfitLossCard />
+          <PortfolioProfitLossCard />
         </div>
 
         {children}

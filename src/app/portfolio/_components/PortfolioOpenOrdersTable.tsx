@@ -20,7 +20,7 @@ interface OpenOrder {
 
 const mockOrders: OpenOrder[] = []
 
-export default function OpenOrdersTable({ searchQuery }: Props) {
+export default function PortfolioOpenOrdersTable({ searchQuery }: Props) {
   const filteredOrders = mockOrders.filter(order =>
     order.market.toLowerCase().includes(searchQuery.toLowerCase()),
   )

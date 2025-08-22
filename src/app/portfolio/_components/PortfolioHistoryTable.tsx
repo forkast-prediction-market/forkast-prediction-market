@@ -102,7 +102,7 @@ function getActivityIcon(activity: string) {
   }
 }
 
-export default function HistoryTable({ searchQuery }: Props) {
+export default function PortfolioHistoryTable({ searchQuery }: Props) {
   const filteredHistory = mockHistory.filter(item =>
     item.market.toLowerCase().includes(searchQuery.toLowerCase()),
   )

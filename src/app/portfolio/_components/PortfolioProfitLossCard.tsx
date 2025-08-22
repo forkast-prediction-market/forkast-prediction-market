@@ -33,7 +33,7 @@ function TimeframePills({ activeTimeframe, onTimeframeChange }: TimeframePillsPr
   )
 }
 
-export default function ProfitLossCard() {
+export default function PortfolioProfitLossCard() {
   const [activeTimeframe, setActiveTimeframe] = useState('ALL')
   const profitLoss = -0.89
   const isPositive = profitLoss > 0

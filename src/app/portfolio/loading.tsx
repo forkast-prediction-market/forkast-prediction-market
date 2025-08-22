@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton'
 
-export default function SettingsSkeleton() {
+export default function Loading() {
   return (
     <>
       <div className="grid gap-6 md:grid-cols-2">

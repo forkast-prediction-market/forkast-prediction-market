@@ -4,9 +4,9 @@ import { ArrowDownWideNarrow, ArrowUpDownIcon, CalendarIcon, DownloadIcon, Searc
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import HistoryTable from './HistoryTable'
-import OpenOrdersTable from './OpenOrdersTable'
-import PositionsTable from './PositionsTable'
+import PortfolioHistoryTable from './PortfolioHistoryTable'
+import PortfolioOpenOrdersTable from './PortfolioOpenOrdersTable'
+import PortfolioPositionsTable from './PortfolioPositionsTable'
 
 interface Props {
   activeTab: string
@@ -25,13 +25,13 @@ export default function PortfolioTabs({ activeTab, onTabChange }: Props) {
   function renderTabContent() {
     switch (activeTab) {
       case 'positions':
-        return <PositionsTable searchQuery={searchQuery} />
+        return <PortfolioPositionsTable searchQuery={searchQuery} />
       case 'open-orders':
-        return <OpenOrdersTable searchQuery={searchQuery} />
+        return <PortfolioOpenOrdersTable searchQuery={searchQuery} />
       case 'history':
-        return <HistoryTable searchQuery={searchQuery} />
+        return <PortfolioHistoryTable searchQuery={searchQuery} />
       default:
-        return <PositionsTable searchQuery={searchQuery} />
+        return <PortfolioPositionsTable searchQuery={searchQuery} />
     }
   }
 

@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import PortfolioTabs from './PortfolioTabs'
 
-export default function Content() {
+export default function PortfolioContent() {
   const [activeTab, setActiveTab] = useState('positions')
 
   return (
