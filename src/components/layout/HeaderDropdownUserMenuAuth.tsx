@@ -11,9 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useUser } from '@/stores/useUser'
 
 export default function HeaderDropdownUserMenuAuth() {
   const { disconnect } = useDisconnect()
+  const user = useUser()
 
   return (
     <DropdownMenu>
@@ -24,7 +26,7 @@ export default function HeaderDropdownUserMenuAuth() {
           size="icon"
         >
           <Image
-            src="https://avatar.vercel.sh/user.png"
+            src={user?.image || 'https://avatar.vercel.sh/bitcoin.png'}
             alt="User avatar"
             width={24}
             height={24}

@@ -2,16 +2,36 @@
 
 import type { User } from '@/types'
 import Form from 'next/form'
-import { useActionState } from 'react'
+import Image from 'next/image'
+import { useActionState, useEffect, useRef } from 'react'
+import { toast } from 'sonner'
 import { updateUser } from '@/app/settings/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { useUser } from '@/stores/useUser'
 
 export default function ProfileSettings({ user }: { user: User }) {
   const [state, formAction, isPending] = useActionState(updateUser, {})
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const prevPending = useRef(false)
+
+  useEffect(() => {
+    useUser.setState(user)
+  }, [user])
+
+  useEffect(() => {
+    if (prevPending.current && !isPending && !state.errors && !state.message) {
+      toast.success('Profile updated successfully!')
+    }
+    prevPending.current = isPending
+  }, [isPending, state])
+
+  function handleUploadClick() {
+    fileInputRef.current?.click()
+  }
 
   return (
     <div className="grid gap-8">
@@ -23,19 +43,60 @@ export default function ProfileSettings({ user }: { user: User }) {
         <p className="text-sm text-destructive">{state.message}</p>
       </div>
 
-      <Form action={formAction} className="grid gap-6">
+      <Form action={formAction} className="grid gap-6" formEncType="multipart/form-data">
         <div className="rounded-lg border p-6">
           <div className="flex items-center gap-4">
             <div className={`
-              flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/60
+              flex size-16 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary
+              to-primary/60
             `}
             >
-              <span className="text-lg font-semibold text-white">U</span>
+              {user.image
+                ? (
+                    <Image
+                      width={42}
+                      height={42}
+                      src={user.image}
+                      alt="Profile"
+                      className="size-full object-cover"
+                    />
+                  )
+                : (
+                    <span className="text-lg font-semibold text-white">
+                      U
+                    </span>
+                  )}
             </div>
-            <Button variant="outline" size="sm">
-              Upload
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleUploadClick}
+                disabled={isPending}
+              >
+                Upload
+              </Button>
+              {state.errors?.image && <InputError message={state.errors.image} />}
+              <p className="text-xs text-muted-foreground">Max 5MB, JPG/PNG only</p>
+            </div>
           </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            name="image"
+            className="hidden"
+            disabled={isPending}
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file && file.size > 5 * 1024 * 1024) {
+                toast.error('File too big! Max 5MB.')
+                e.target.value = ''
+              }
+            }}
+          />
         </div>
 
         <div className="grid gap-4">

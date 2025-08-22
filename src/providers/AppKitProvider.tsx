@@ -16,7 +16,7 @@ createAppKit({
     name: process.env.NEXT_PUBLIC_SITE_NAME!,
     description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION!,
     url: `https://${process.env.VERCEL_URL}`,
-    icons: ['https://avatar.vercel.com/bitcoin.png'],
+    icons: ['https://avatar.vercel.sh/bitcoin.png'],
   },
   themeVariables: {
     '--w3m-border-radius-master': '2px',

@@ -5,7 +5,7 @@ import type {
 } from '@reown/appkit-siwe'
 import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/appkit-siwe'
 import { polygonAmoy } from '@reown/appkit/networks'
-import { generateNonce } from 'siwe'
+import { generateRandomString } from 'better-auth/crypto'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
@@ -17,7 +17,7 @@ export const siweConfig = createSIWEConfig({
     statement: 'Please sign with your account',
   }),
   createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
-  getNonce: async () => generateNonce(),
+  getNonce: async () => generateRandomString(32),
   getSession: async () => {
     const session = authClient.useSession()
     if (!session) {
@@ -55,6 +55,8 @@ export const siweConfig = createSIWEConfig({
     try {
       await authClient.signOut()
 
+      window.location.reload()
+
       return true
     }
     catch {
@@ -66,6 +68,7 @@ export const siweConfig = createSIWEConfig({
       const user = session.data?.user
       useUser.setState({
         email: user?.email,
+        image: user?.image || 'https://avatar.vercel.sh/bitcoin.png',
       })
     })
   },
