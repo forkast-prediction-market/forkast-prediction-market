@@ -1,36 +1,29 @@
 'use client'
 
-import { useState } from 'react'
+import type { User } from '@/types'
+import Form from 'next/form'
+import { useActionState } from 'react'
+import { updateUser } from '@/app/settings/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { InputError } from '@/components/ui/input-error'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
-export default function ProfileSettings() {
-  const [formData, setFormData] = useState({
-    email: '',
-    username: '',
-    bio: '',
-  })
-
-  function handleChange(field: string, value: string) {
-    setFormData(prev => ({ ...prev, [field]: value }))
-  }
-
-  function handleSave() {
-    // TODO: Implement save functionality
-    console.log('Saving profile:', formData)
-  }
+export default function ProfileSettings({ user }: { user: User }) {
+  const [state, formAction, isPending] = useActionState(updateUser, {})
 
   return (
-    <div className="space-y-8">
+    <div className="grid gap-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Profile Settings</h1>
         <p className="mt-2 text-muted-foreground">
           Manage your account profile and preferences.
         </p>
+        <p className="text-sm text-destructive">{state.message}</p>
       </div>
 
-      <div className="space-y-6">
-        {/* Avatar Section */}
+      <Form action={formAction} className="grid gap-6">
         <div className="rounded-lg border p-6">
           <div className="flex items-center gap-4">
             <div className={`
@@ -45,61 +38,60 @@ export default function ProfileSettings() {
           </div>
         </div>
 
-        {/* Form Fields */}
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium">
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="email">
               Email
-            </label>
+            </Label>
             <Input
               id="email"
               type="email"
-              value={formData.email}
-              onChange={e => handleChange('email', e.target.value)}
+              name="email"
+              required
+              defaultValue={user.email}
+              disabled={isPending}
               placeholder="Enter your email"
             />
+            {state.errors?.email && <InputError message={state.errors.email} />}
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="username" className="text-sm font-medium">
+          <div className="grid gap-2">
+            <Label htmlFor="username">
               Username
-            </label>
+            </Label>
             <Input
               id="username"
-              value={formData.username}
-              onChange={e => handleChange('username', e.target.value)}
+              required
+              name="username"
+              defaultValue={user.username}
+              disabled={isPending}
               placeholder="Enter your username"
             />
+            {state.errors?.username && <InputError message={state.errors.username} />}
           </div>
 
-          <div className="space-y-2">
-            <label htmlFor="bio" className="text-sm font-medium">
+          <div className="grid gap-2">
+            <Label htmlFor="bio">
               Bio
-            </label>
-            <textarea
+            </Label>
+            <Textarea
               id="bio"
-              value={formData.bio}
-              onChange={e => handleChange('bio', e.target.value)}
+              name="bio"
+              defaultValue={user.bio}
               placeholder="Tell us about yourself"
-              className={`
-                flex min-h-[80px] w-full rounded-md border bg-input px-3 py-2 text-sm ring-offset-background
-                placeholder:text-muted-foreground
-                focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none
-                disabled:cursor-not-allowed disabled:opacity-50
-                dark:bg-input/30
-              `}
+              disabled={isPending}
               rows={4}
             />
+            {state.errors?.bio && <InputError message={state.errors.bio} />}
           </div>
         </div>
 
-        {/* Save Button */}
         <div className="flex justify-start">
-          <Button onClick={handleSave} className="w-36">
-            Save changes
+          <Button type="submit" disabled={isPending} className="w-36">
+            {isPending ? 'Saving...' : 'Save changes'}
           </Button>
         </div>
-      </div>
+      </Form>
     </div>
   )
 }
