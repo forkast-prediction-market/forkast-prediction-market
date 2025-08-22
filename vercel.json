@@ -2,12 +2,22 @@
   "functions": {
     "src/app/api/sync-events/route.ts": {
       "maxDuration": 300
+    },
+    "src/app/api/migrate/route.ts": {
+      "maxDuration": 300
+    },
+    "src/app/api/setup-db/route.ts": {
+      "maxDuration": 300
     }
   },
   "crons": [
     {
       "path": "/api/sync-events",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/migrate",
+      "schedule": "0 2 * * *"
     }
   ],
   "env": {
