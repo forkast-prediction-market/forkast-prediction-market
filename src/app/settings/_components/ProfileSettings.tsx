@@ -20,6 +20,7 @@ export default function ProfileSettings({ user }: { user: User }) {
         <p className="mt-2 text-muted-foreground">
           Manage your account profile and preferences.
         </p>
+        <p className="text-sm text-destructive">{state.message}</p>
       </div>
 
       <Form action={formAction} className="grid gap-6">
@@ -45,6 +46,7 @@ export default function ProfileSettings({ user }: { user: User }) {
             <Input
               id="email"
               type="email"
+              name="email"
               required
               defaultValue={user.email}
               disabled={isPending}
@@ -60,6 +62,7 @@ export default function ProfileSettings({ user }: { user: User }) {
             <Input
               id="username"
               required
+              name="username"
               defaultValue={user.username}
               disabled={isPending}
               placeholder="Enter your username"
@@ -73,6 +76,7 @@ export default function ProfileSettings({ user }: { user: User }) {
             </Label>
             <Textarea
               id="bio"
+              name="bio"
               defaultValue={user.bio}
               placeholder="Tell us about yourself"
               disabled={isPending}

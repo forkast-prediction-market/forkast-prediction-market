@@ -7,7 +7,7 @@ import { getCurrentUser, updateCurrentUser } from '@/lib/db/users'
 const updateUserSchema = z.object({
   email: z.string().email('Invalid email address'),
   username: z.string().min(2, 'Username must be at least 2 characters'),
-  bio: z.string().max(500, 'Bio must be less than 500 characters'),
+  bio: z.string().max(500, 'Bio must be less than 500 characters').nullable(),
 })
 
 export interface ActionState {
@@ -45,7 +45,6 @@ export async function updateUser(
     if (error instanceof z.ZodError) {
       const errors: ActionState['errors'] = {}
 
-      // Use 'issues' instead of 'errors'
       error.issues.forEach((issue) => {
         if (issue.path[0]) {
           errors[issue.path[0] as keyof typeof errors] = issue.message
