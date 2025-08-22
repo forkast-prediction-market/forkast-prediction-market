@@ -1,6 +1,8 @@
 'use server'
 
+import { Buffer } from 'node:buffer'
 import { revalidatePath } from 'next/cache'
+import sharp from 'sharp'
 import { z } from 'zod'
 import { getCurrentUser, updateCurrentUser } from '@/lib/db/users'
 import { supabaseAdmin } from '@/lib/supabase'
@@ -68,18 +70,20 @@ export async function updateUser(
       const fileExt = validatedData.image.name.split('.').pop()
       const fileName = `${user.id}-${Date.now()}.${fileExt}`
 
-      const { error } = await supabaseAdmin.storage
+      const buffer = Buffer.from(await validatedData.image.arrayBuffer())
+
+      const resizedBuffer = await sharp(buffer)
+        .resize(100, 100, { fit: 'cover' })
+        .jpeg({ quality: 90 })
+        .toBuffer()
+
+      await supabaseAdmin.storage
         .from('forkast-assets')
-        .upload(fileName, validatedData.image, {
+        .upload(fileName, resizedBuffer, {
           cacheControl: '3600',
           upsert: false,
+          contentType: validatedData.image.type,
         })
-
-      if (error) {
-        return {
-          errors: { image: 'Failed to upload image' },
-        }
-      }
 
       const { data: { publicUrl } } = supabaseAdmin.storage
         .from('forkast-assets')
@@ -95,7 +99,14 @@ export async function updateUser(
       ...(imageUrl && { image: imageUrl }),
     }
 
-    await updateCurrentUser(user.id, updateData)
+    const result = await updateCurrentUser(user.id, updateData)
+
+    if ('error' in result) {
+      if (typeof result.error === 'string') {
+        return { message: result.error }
+      }
+      return { errors: result.error }
+    }
 
     revalidatePath('/settings')
     return {}

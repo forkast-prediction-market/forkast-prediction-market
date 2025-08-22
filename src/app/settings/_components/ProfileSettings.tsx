@@ -4,6 +4,7 @@ import type { User } from '@/types'
 import Form from 'next/form'
 import Image from 'next/image'
 import { useActionState, useEffect, useRef } from 'react'
+import { toast } from 'sonner'
 import { updateUser } from '@/app/settings/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,10 +16,18 @@ import { useUser } from '@/stores/useUser'
 export default function ProfileSettings({ user }: { user: User }) {
   const [state, formAction, isPending] = useActionState(updateUser, {})
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const prevPending = useRef(false)
 
   useEffect(() => {
     useUser.setState(user)
   }, [user])
+
+  useEffect(() => {
+    if (prevPending.current && !isPending && !state.errors && !state.message) {
+      toast.success('Profile updated successfully!')
+    }
+    prevPending.current = isPending
+  }, [isPending, state])
 
   function handleUploadClick() {
     fileInputRef.current?.click()
@@ -77,9 +86,16 @@ export default function ProfileSettings({ user }: { user: User }) {
             ref={fileInputRef}
             type="file"
             name="image"
-            accept="image/*"
             className="hidden"
             disabled={isPending}
+            accept="image/png,image/jpeg,image/webp"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file && file.size > 5 * 1024 * 1024) {
+                toast.error('File too big! Max 5MB.')
+                e.target.value = ''
+              }
+            }}
           />
         </div>
 

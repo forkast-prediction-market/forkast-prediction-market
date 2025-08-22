@@ -5,7 +5,8 @@ import type {
 } from '@reown/appkit-siwe'
 import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/appkit-siwe'
 import { polygonAmoy } from '@reown/appkit/networks'
-import { generateNonce } from 'siwe'
+import { generateRandomString } from 'better-auth/crypto'
+import { redirect } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
@@ -17,7 +18,7 @@ export const siweConfig = createSIWEConfig({
     statement: 'Please sign with your account',
   }),
   createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
-  getNonce: async () => generateNonce(),
+  getNonce: async () => generateRandomString(32),
   getSession: async () => {
     const session = authClient.useSession()
     if (!session) {
@@ -72,5 +73,6 @@ export const siweConfig = createSIWEConfig({
   },
   onSignOut: () => {
     useUser.setState(null)
+    redirect('/')
   },
 })
