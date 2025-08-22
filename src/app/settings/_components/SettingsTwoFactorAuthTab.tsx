@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Switch } from '@/components/ui/switch'
 
-export default function TwoFactorAuth() {
+export default function SettingsTwoFactorAuthTab() {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
 
   return (

@@ -44,7 +44,7 @@ const updateUserSchema = z.object({
 })
 
 export async function updateUser(
-  prevState: ActionState,
+  _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {
   try {

@@ -1,7 +1,8 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+import React from 'react'
+import SettingsTabsClientComponent from '@/app/settings/_components/SettingsTabsClientComponent'
 import { getCurrentUser } from '@/lib/db/users'
-import Content from './_components/Content'
 
 export const metadata: Metadata = {
   title: 'Settings',
@@ -14,5 +15,5 @@ export default async function SettingsPage() {
     redirect('/')
   }
 
-  return <Content user={user} />
+  return <SettingsTabsClientComponent user={user} />
 }

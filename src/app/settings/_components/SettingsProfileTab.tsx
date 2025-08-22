@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useUser } from '@/stores/useUser'
 
-export default function ProfileSettings({ user }: { user: User }) {
+export default function SettingsProfileTab({ user }: { user: User }) {
   const [state, formAction, isPending] = useActionState(updateUser, {})
   const fileInputRef = useRef<HTMLInputElement>(null)
   const prevPending = useRef(false)

@@ -13,21 +13,17 @@ export function Teleport({ to, children }: TeleportProps) {
 
   useEffect(() => {
     (async function () {
-      let created = false
-      let target = document.querySelector(to) as HTMLElement | null
+      const target = document.querySelector(to) as HTMLElement | null
 
       if (!target) {
-        const cleanSelector = to.replace(/^#|\./, '')
-        target = document.createElement('div')
-        target.id = cleanSelector
-        document.body.appendChild(target)
-        created = true
+        setContainer(null)
+        return
       }
 
       setContainer(target)
 
       return () => {
-        if (created && target && document.body.contains(target)) {
+        if (target && document.body.contains(target)) {
           document.body.removeChild(target)
         }
       }

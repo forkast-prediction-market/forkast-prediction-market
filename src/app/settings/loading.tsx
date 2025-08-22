@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton'
 
-export default function SettingsSkeleton() {
+export default function Loading() {
   return (
     <>
       <aside className="lg:sticky lg:top-28 lg:self-start">
