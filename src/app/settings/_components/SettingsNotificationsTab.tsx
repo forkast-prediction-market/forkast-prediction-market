@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Switch } from '@/components/ui/switch'
 
-export default function NotificationsSettings() {
+export default function SettingsNotificationsTab() {
   const [emailSettings, setEmailSettings] = useState({
     resolutions: false,
   })

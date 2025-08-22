@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 
-export default function ExportPrivateKey() {
+export default function SettingsExportPrivateKeyTab() {
   const [isExporting, setIsExporting] = useState(false)
 
   function handleStartExport() {

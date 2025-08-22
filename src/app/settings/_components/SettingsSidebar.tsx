@@ -24,7 +24,7 @@ export default function SettingsSidebar({ user, activeTab, onTabChange }: Props)
             type="button"
             key={item.id}
             onClick={() => onTabChange(item.id)}
-            variant={activeTab === item.id ? 'secondary' : 'ghost'}
+            variant={activeTab === item.id ? 'outline' : 'ghost'}
             className="justify-start text-muted-foreground"
           >
             {item.label}
