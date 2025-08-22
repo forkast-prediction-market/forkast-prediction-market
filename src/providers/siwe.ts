@@ -6,7 +6,6 @@ import type {
 import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/appkit-siwe'
 import { polygonAmoy } from '@reown/appkit/networks'
 import { generateRandomString } from 'better-auth/crypto'
-import { redirect } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
@@ -56,6 +55,8 @@ export const siweConfig = createSIWEConfig({
     try {
       await authClient.signOut()
 
+      window.location.reload()
+
       return true
     }
     catch {
@@ -73,6 +74,5 @@ export const siweConfig = createSIWEConfig({
   },
   onSignOut: () => {
     useUser.setState(null)
-    redirect('/')
   },
 })
