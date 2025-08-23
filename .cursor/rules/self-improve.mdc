@@ -35,8 +35,8 @@ alwaysApply: true
   ```typescript
   // If you see repeated patterns like:
   const data = const { data } = await supabaseAdmin
-    .from('user')
-  
+    .from('users')
+
   // Consider adding to [supabase.mdc](mdc:.cursor/rules/supabase.mdc):
   // - Standard select fields
   // - Common where conditions
