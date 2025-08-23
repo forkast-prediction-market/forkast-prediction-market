@@ -88,6 +88,20 @@ export async function listEvents(category: string = 'trending', search: string =
   return events
 }
 
+export async function getEventIdBySlug(slug: string): Promise<number | null> {
+  const { data, error } = await supabaseAdmin
+    .from('events')
+    .select(`id`)
+    .eq('slug', slug)
+    .maybeSingle()
+
+  if (error) {
+    throw new Error(`Failed to get event by slug: ${error.message}`)
+  }
+
+  return data?.id
+}
+
 export async function getEventBySlug(slug: string) {
   const { data, error } = await supabaseAdmin
     .from('events')

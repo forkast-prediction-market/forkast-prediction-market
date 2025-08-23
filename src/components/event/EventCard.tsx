@@ -2,26 +2,21 @@
 
 import type { Event } from '@/types'
 import confetti from 'canvas-confetti'
-import { BookmarkIcon, ChevronsDownIcon, ChevronsUpIcon, DollarSignIcon } from 'lucide-react'
+import { ChevronsDownIcon, ChevronsUpIcon, DollarSignIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { use, useState } from 'react'
 import { toast } from 'sonner'
+import EventBookmark from '@/app/event/[slug]/_components/EventBookmark'
 import { OpenCardContext } from '@/components/event/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 
-interface EventCardProps {
+interface Props {
   event: Event
-  isFavorited?: boolean
-  onToggleFavorite?: (eventId: string) => void
 }
 
-export default function EventCard({
-  event,
-  isFavorited = false,
-  onToggleFavorite,
-}: EventCardProps) {
+export default function EventCard({ event }: Props) {
   const { openCardId, setOpenCardId } = use(OpenCardContext)
   const [isLoading, setIsLoading] = useState(false)
   const [selectedOutcome, setSelectedOutcome] = useState<{
@@ -30,10 +25,10 @@ export default function EventCard({
     name: string
   } | null>(null)
   const [tradeAmount, setTradeAmount] = useState('1')
-  const isOpen = openCardId === event.id
+  const isOpen = openCardId === `${event.id}`
 
   function onToggle() {
-    setOpenCardId(isOpen ? null : event.id)
+    setOpenCardId(isOpen ? null : `${event.id}`)
   }
 
   // Function to format monetary values with 2 decimal places
@@ -573,20 +568,7 @@ export default function EventCard({
                 Vol.
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  onToggleFavorite?.(event.id)
-                }}
-                className="text-muted-foreground transition-colors hover:text-primary"
-              >
-                {isFavorited
-                  ? <BookmarkIcon className="size-3.5 fill-current text-primary" />
-                  : <BookmarkIcon className="size-3.5" />}
-              </button>
-            </div>
+            <EventBookmark event={event} />
           </div>
         )}
       </CardContent>

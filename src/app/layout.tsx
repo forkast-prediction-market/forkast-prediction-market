@@ -5,9 +5,6 @@ import NavigationTabs from '@/components/layout/NavigationTabs'
 import { Providers } from '@/providers/Providers'
 import './globals.css'
 
-// Force dynamic rendering to avoid build-time Supabase calls
-export const dynamic = 'force-dynamic'
-
 export const metadata: Metadata = {
   title: {
     template: `${process.env.NEXT_PUBLIC_SITE_NAME} | %s`,

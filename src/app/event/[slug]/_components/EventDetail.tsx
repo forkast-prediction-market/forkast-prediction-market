@@ -20,7 +20,6 @@ interface Props {
 
 export default function EventDetail({ event }: Props) {
   const tradingState = useTradingState({ event })
-
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false)
 
   return (
