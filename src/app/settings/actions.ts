@@ -43,7 +43,7 @@ const updateUserSchema = z.object({
     }, { error: 'Only JPG, PNG, and WebP images are allowed' }),
 })
 
-export async function updateUser(
+export async function updateUserAction(
   _: ActionState,
   formData: FormData,
 ): Promise<ActionState> {

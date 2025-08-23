@@ -1,6 +1,6 @@
 // Market Types
 export interface Event {
-  id: string
+  id: number
   active_markets_count: number
   slug: string
   title: string

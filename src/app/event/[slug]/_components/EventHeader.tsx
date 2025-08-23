@@ -1,8 +1,8 @@
 import type { Event } from '@/types'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import EventFavorite from '@/app/event/[slug]/_components/EventFavorite'
-import EventShare from '@/app/event/[slug]/_components/EventShare'
+import EventBookmark from './EventBookmark'
+import EventShare from './EventShare'
 
 interface Props {
   event: Event
@@ -44,7 +44,7 @@ export default function EventHeader({ event }: Props) {
       </h1>
 
       <div className="ms-auto flex gap-2 text-muted-foreground">
-        <EventFavorite event={event} />
+        <EventBookmark event={event} />
         <EventShare />
       </div>
     </div>

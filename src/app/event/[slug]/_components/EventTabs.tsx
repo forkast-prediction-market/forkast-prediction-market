@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import EventActivity from '@/app/event/[slug]/_components/EventActivity'
-import EventTabSelector from '@/app/event/[slug]/_components/EventTabSelector'
+import EventActivity from './EventActivity'
 import EventComments from './EventComments'
+import EventTabSelector from './EventTabSelector'
 import EventTopHolders from './EventTopHolders'
 
 export default function EventTabs() {

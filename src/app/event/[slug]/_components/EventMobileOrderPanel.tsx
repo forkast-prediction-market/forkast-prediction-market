@@ -1,9 +1,9 @@
 import type { Event } from '@/types'
 import { DialogTitle } from '@radix-ui/react-dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
-import OrderPanel from '@/app/event/[slug]/_components/OrderPanel'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
+import OrderPanel from './OrderPanel'
 
 interface Props {
   event: Event

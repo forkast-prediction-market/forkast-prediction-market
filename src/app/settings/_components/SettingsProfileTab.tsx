@@ -5,7 +5,7 @@ import Form from 'next/form'
 import Image from 'next/image'
 import { useActionState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
-import { updateUser } from '@/app/settings/actions'
+import { updateUserAction } from '@/app/settings/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useUser } from '@/stores/useUser'
 
 export default function SettingsProfileTab({ user }: { user: User }) {
-  const [state, formAction, isPending] = useActionState(updateUser, {})
+  const [state, formAction, isPending] = useActionState(updateUserAction, {})
   const fileInputRef = useRef<HTMLInputElement>(null)
   const prevPending = useRef(false)
 

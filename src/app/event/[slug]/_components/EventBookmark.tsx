@@ -1,0 +1,48 @@
+'use client'
+
+import { BookmarkIcon } from 'lucide-react'
+import { useCallback, useState, useTransition } from 'react'
+import { bookmarkAction } from '@/app/event/[slug]/actions'
+import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+
+interface Props {
+  event: {
+    id: number
+    isBookmarked?: boolean
+  }
+}
+
+export default function EventBookmark({ event }: Props) {
+  const [isBookmarked, setIsBookmarked] = useState(event.isBookmarked || false)
+  const [isPending, startTransition] = useTransition()
+
+  const handleBookmark = useCallback(() => {
+    const previousState = isBookmarked
+    setIsBookmarked(!isBookmarked)
+
+    startTransition(async () => {
+      try {
+        await bookmarkAction(event.id)
+      }
+      catch {
+        setIsBookmarked(previousState)
+      }
+    })
+  }, [isBookmarked, event.id])
+
+  return (
+    <Button
+      size="icon"
+      variant="ghost"
+      onClick={handleBookmark}
+      disabled={isPending}
+      aria-pressed={isBookmarked}
+      className={cn({ 'opacity-50': isPending, 'size-auto p-0': true })}
+    >
+      <BookmarkIcon
+        className={cn({ 'fill-current text-primary': isBookmarked })}
+      />
+    </Button>
+  )
+}
