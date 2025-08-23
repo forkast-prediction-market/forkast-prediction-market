@@ -10,14 +10,17 @@ export const auth = betterAuth({
     connectionString: process.env.POSTGRES_URL,
   }),
   secret: process.env.BETTER_AUTH_SECRET,
-  logger: {
-    level: 'info',
+  advanced: {
+    database: {
+      useNumberId: true,
+      generateId: false,
+    },
   },
   plugins: [
     siwe({
       schema: {
         walletAddress: {
-          modelName: 'wallet_address',
+          modelName: 'wallets',
           fields: {
             userId: 'user_id',
             address: 'address',

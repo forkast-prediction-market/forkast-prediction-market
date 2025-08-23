@@ -29,7 +29,7 @@ export async function getCurrentUser() {
 export async function updateCurrentUser(userId: string, input: any) {
   const { data, error } = await supabaseAdmin
     .from('users')
-    .update({ ...input, updated_at: new Date().toISOString() })
+    .update({ ...input })
     .eq('id', userId)
     .select('id')
     .single()
