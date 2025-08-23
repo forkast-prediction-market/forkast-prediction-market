@@ -6,18 +6,10 @@ export async function getProfileByUsername(username: string) {
   'use cache'
 
   const { data } = await supabaseAdmin
-    .from('user')
-    .select('name, username, image, createdAt')
-    .or(`username.eq.${username},name.eq.${username}`)
+    .from('users')
+    .select('address, username, image, created_at')
+    .or(`username.eq.${username},address.eq.${username}`)
     .maybeSingle()
-
-  if (data) {
-    return {
-      ...data,
-      address: data.name,
-      created_at: data.createdAt,
-    }
-  }
 
   return data
 }
@@ -31,16 +23,13 @@ export async function getCurrentUser() {
     return null
   }
 
-  return {
-    ...session.user,
-    address: session.user.name,
-  }
+  return session.user
 }
 
 export async function updateCurrentUser(userId: string, input: any) {
   const { data, error } = await supabaseAdmin
-    .from('user')
-    .update({ ...input, updatedAt: new Date().toISOString() })
+    .from('users')
+    .update({ ...input })
     .eq('id', userId)
     .select('id')
     .single()

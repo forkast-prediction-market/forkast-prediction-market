@@ -10,8 +10,26 @@ export const auth = betterAuth({
     connectionString: process.env.POSTGRES_URL,
   }),
   secret: process.env.BETTER_AUTH_SECRET,
+  advanced: {
+    database: {
+      useNumberId: true,
+      generateId: false,
+    },
+  },
   plugins: [
     siwe({
+      schema: {
+        walletAddress: {
+          modelName: 'wallets',
+          fields: {
+            userId: 'user_id',
+            address: 'address',
+            chainId: 'chain_id',
+            isPrimary: 'is_primary',
+            createdAt: 'created_at',
+          },
+        },
+      },
       domain: typeof window !== 'undefined' ? window.location.host : 'localhost:3000',
       anonymous: true,
       getNonce: async () => generateRandomString(32),
@@ -36,6 +54,15 @@ export const auth = betterAuth({
     }),
   ],
   user: {
+    modelName: 'users',
+    fields: {
+      name: 'address',
+      email: 'email',
+      emailVerified: 'email_verified',
+      image: 'image',
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+    },
     additionalFields: {
       username: {
         type: 'string',
@@ -49,6 +76,41 @@ export const auth = betterAuth({
     },
   },
   session: {
-    expiresIn: 60 * 60 * 24 * 7,
+    modelName: 'sessions',
+    fields: {
+      userId: 'user_id',
+      token: 'token',
+      expiresAt: 'expires_at',
+      ipAddress: 'ip_address',
+      userAgent: 'user_agent',
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+    },
+  },
+  account: {
+    modelName: 'accounts',
+    fields: {
+      userId: 'user_id',
+      accountId: 'account_id',
+      providerId: 'provider_id',
+      accessToken: 'access_token',
+      refreshToken: 'refresh_token',
+      accessTokenExpiresAt: 'access_token_expires_at',
+      refreshTokenExpiresAt: 'refresh_token_expires_at',
+      scope: 'scope',
+      password: 'password',
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+    },
+  },
+  verification: {
+    modelName: 'verifications',
+    fields: {
+      identifier: 'identifier',
+      value: 'value',
+      expiresAt: 'expires_at',
+      createdAt: 'created_at',
+      updatedAt: 'updated_at',
+    },
   },
 })
