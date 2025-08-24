@@ -1,6 +1,7 @@
 // Market Types
 export interface Event {
   id: number
+  is_bookmarked: boolean
   active_markets_count: number
   slug: string
   title: string

@@ -1,3 +1,5 @@
+'use cache'
+
 import type { Metadata, Viewport } from 'next'
 import { openSauceOne } from '@/app/fonts'
 import Header from '@/components/layout/Header'
