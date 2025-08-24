@@ -9,7 +9,7 @@ import EventMarketContext from './EventMarketContext'
 import EventMarkets from './EventMarkets'
 import EventMetaInformation from './EventMetaInformation'
 import EventMobileOrderPanel from './EventMobileOrderPanel'
-import RelatedEvents from './EventRelated'
+import EventRelated from './EventRelated'
 import EventRules from './EventRules'
 import EventTabs from './EventTabs'
 import OrderPanel from './OrderPanel'
@@ -37,7 +37,7 @@ export default function EventDetail({ event }: Props) {
 
         <div className="hidden gap-4 md:block lg:sticky lg:top-28 lg:grid lg:self-start">
           <OrderPanel event={event} tradingState={tradingState} />
-          <RelatedEvents event={event} />
+          <EventRelated event={event} />
         </div>
       </main>
 

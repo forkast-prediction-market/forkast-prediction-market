@@ -7,7 +7,7 @@ interface Props {
   event: Event
 }
 
-export default function RelatedEvents({ event }: Props) {
+export default function EventRelated({ event }: Props) {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -27,7 +27,7 @@ export default function RelatedEvents({ event }: Props) {
 
   if (loading) {
     const skeletons = Array.from({ length: 3 }, (_, i) => `skeleton-${i}`)
-    return skeletons.map(id => <RelatedEventSkeleton key={id} />)
+    return skeletons.map(id => <EventRelatedSkeleton key={id} />)
   }
 
   return (
@@ -53,7 +53,7 @@ export default function RelatedEvents({ event }: Props) {
   )
 }
 
-function RelatedEventSkeleton() {
+function EventRelatedSkeleton() {
   return (
     <div className="animate-pulse rounded-lg border bg-card p-4">
       <div className="flex items-start gap-2">

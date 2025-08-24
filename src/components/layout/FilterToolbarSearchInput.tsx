@@ -16,6 +16,7 @@ export default function FilterToolbarSearchInput({ search, bookmarked = 'false' 
   const [isPending, startTransition] = useTransition()
   const isFirstRender = useRef(true)
   const prevSearch = useRef(search)
+  const bookmarkedRef = useRef(bookmarked)
 
   useEffect(() => {
     if (prevSearch.current !== search) {
@@ -24,6 +25,10 @@ export default function FilterToolbarSearchInput({ search, bookmarked = 'false' 
       return () => clearTimeout(id)
     }
   }, [search])
+
+  useEffect(() => {
+    bookmarkedRef.current = bookmarked
+  }, [bookmarked])
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -36,12 +41,13 @@ export default function FilterToolbarSearchInput({ search, bookmarked = 'false' 
         const url = new URL(window.location.href)
         if (searchQuery) {
           url.searchParams.set('search', searchQuery)
-          if (bookmarked === 'true') {
-            url.searchParams.set('bookmarked', bookmarked)
-          }
         }
         else {
           url.searchParams.delete('search')
+        }
+
+        if (bookmarkedRef.current === 'true') {
+          url.searchParams.set('bookmarked', bookmarkedRef.current)
         }
 
         router.replace(url.toString(), { scroll: false })
@@ -49,7 +55,7 @@ export default function FilterToolbarSearchInput({ search, bookmarked = 'false' 
     }, 500)
 
     return () => clearTimeout(handler)
-  }, [searchQuery, router, bookmarked])
+  }, [searchQuery, router])
 
   const iconClasses = 'absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground'
 
