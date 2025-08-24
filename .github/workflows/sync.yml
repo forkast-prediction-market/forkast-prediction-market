@@ -1,48 +1,50 @@
-name: Sync Fork
+name: Auto Commit (author = fork owner)
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 6 * * *'
+    - cron: '0 0 * * *'
+  push:
+    branches: [main, master]
+    paths-ignore:
+      - '.github/**'
+
+permissions:
+  contents: write
 
 jobs:
-  sync:
-    if: ${{ github.repository != 'forkast-prediction-market/forkast-prediction-market' }}
+  auto_commit:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout fork
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
+          persist-credentials: true
 
-      - name: Set safe directory
+      - name: Configure git author/committer
         run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git config user.name  "${{ github.actor }}"
+          git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
 
-      - name: Configure upstream and fetch
+      - name: Run task that may change files
         run: |
-          git remote get-url upstream || git remote add upstream https://github.com/forkast-prediction-market/forkast-prediction-market.git
-          git fetch upstream
+          echo "$(date -u) :: heartbeat" >> .auto/heartbeat.log
 
-      - name: Fix origin URL to fork
+      - name: Check for changes
+        id: diff
         run: |
-          git remote set-url origin https://github.com/${{ github.repository }}.git
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Merge upstream/main into fork
+      - name: Commit & push
+        if: steps.diff.outputs.changed == 'true'
         run: |
-          git checkout main
-          git merge upstream/main --no-edit || echo "Nothing to merge"
-
-      - name: Set git user
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Create dummy commit
-        run: |
-          git commit --allow-empty -m "chore: sync with forkast"
-
-      - name: Push changes to origin
-        run: |
-          git push origin main
+          branch="$(git rev-parse --abbrev-ref HEAD)"
+          git add -A
+          git commit -m "chore: auto-commit [skip ci]"
+          git push origin "$branch"
