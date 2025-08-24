@@ -37,17 +37,47 @@ Click the "Fork" button in the top right corner
 
 ### 2. Configure Your Environment & Services
 
-- Copy `.env.example` to `.env`
-- Fill in your API keys and customize your site settings:
-  - `NEXT_PUBLIC_SITE_NAME` - Your brand name
-  - `NEXT_PUBLIC_SITE_DESCRIPTION` - Your site description
-  - `NEXT_PUBLIC_SITE_LOGO_SVG` - Your custom logo (SVG format)
-  - Add your API keys for Web3 services
+Create a `.env.local` file with these variables:
 
-### 3. Deploy to Vercel
+```bash
+# Database
+POSTGRES_URL=postgresql://username:password@host:port/database
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Authentication
+BETTER_AUTH_SECRET=your-32-character-secret-key
+
+# Reown/WalletConnect
+NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID=your-reown-project-id
+
+# Site Branding
+NEXT_PUBLIC_SITE_NAME=Your Prediction Market
+NEXT_PUBLIC_SITE_DESCRIPTION=Your decentralized prediction market platform
+NEXT_PUBLIC_SITE_LOGO_SVG=<svg>...</svg>
+
+# Optional
+NEXT_PUBLIC_ACTIVITY_SUBGRAPH_URL=https://your-subgraph-url
+NEXT_PUBLIC_PNL_SUBGRAPH_URL=https://your-subgraph-url
+CRON_SECRET=your-cron-secret
+```
+
+**Quick Setup:**
+1. **Supabase**: Create project at [supabase.com](https://supabase.com)
+2. **Reown**: Get Project ID at [dashboard.reown.com](https://dashboard.reown.com)
+3. **Secret**: Generate 32+ character random string for BETTER_AUTH_SECRET
+
+### 3. Enable GitHub Actions (Required for Forks)
+
+After forking, go to your repository:
+1. **Settings** → **Actions** → **General**
+2. Select **"Allow all actions and reusable workflows"**
+3. **Save** - This enables automatic sync with the main repository
+
+### 4. Deploy to Vercel
 
 - **Connect your repo** to Vercel
-- **Add environment variables** from your `.env` file during deployment
+- **Add environment variables** from your `.env.local` file during deployment
 - **Point your domain** to Vercel
 
 **Ready!** Your prediction market will be online and ready to receive users.
