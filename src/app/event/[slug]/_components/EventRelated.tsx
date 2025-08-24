@@ -1,7 +1,7 @@
 import type { Event } from '@/types'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 
 interface Props {
   event: Event
@@ -10,24 +10,49 @@ interface Props {
 export default function EventRelated({ event }: Props) {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
-    async function fetchEvents() {
-      const res = await fetch(`/api/events/${event.slug}/related`)
-      if (res.ok) {
-        const data = await res.json()
-        setEvents(data)
-      }
-
-      setLoading(false)
+    let isMounted = true
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
     }
 
-    fetchEvents().catch(() => {})
+    abortControllerRef.current = new AbortController()
+
+    async function fetchEvents() {
+      try {
+        const res = await fetch(`/api/events/${event.slug}/related`, {
+          signal: abortControllerRef.current?.signal,
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          if (isMounted) {
+            setEvents(data)
+          }
+        }
+      }
+      catch {
+        // just don't show related events
+      }
+      finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchEvents().then(() => {})
+
+    return () => {
+      isMounted = false
+      abortControllerRef.current?.abort()
+    }
   }, [event.slug])
 
   if (loading) {
-    const skeletons = Array.from({ length: 3 }, (_, i) => `skeleton-${i}`)
-    return skeletons.map(id => <EventRelatedSkeleton key={id} />)
+    return Array.from({ length: 3 }, (_, i) => <EventRelatedSkeleton key={`skeleton-${event.slug}-${i}`} />)
   }
 
   return (
