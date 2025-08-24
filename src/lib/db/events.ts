@@ -1,17 +1,25 @@
-'use cache'
-
 import type { Tag } from '@/lib/supabase'
 import type { Event, EventCategory } from '@/types'
 import { notFound } from 'next/navigation'
 import { getSupabaseImageUrl } from '@/lib/mockData'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export async function listEvents(tag: string = 'trending', search: string = '', userId: number = 0) {
-  const query = supabaseAdmin
-    .from('events')
-    .select(`
-    *,
-    bookmarks(user_id),
+interface ListEventsProps {
+  tag: string
+  search?: string
+  userId?: string | undefined
+  bookmarked?: boolean
+}
+
+export async function listEvents({
+  tag = 'trending',
+  search = '',
+  userId = undefined,
+  bookmarked = false,
+}: ListEventsProps) {
+  const currentUserId = Number.parseInt(userId || '0')
+
+  const marketsSelect = `
     markets!inner(
       condition_id,
       name,
@@ -29,7 +37,10 @@ export async function listEvents(tag: string = 'trending', search: string = '', 
         oracle,
         outcomes(*)
       )
-    ),
+    )
+  `
+
+  const tagsSelect = `
     event_tags!inner(
       tag:tags!inner(
         id,
@@ -38,8 +49,17 @@ export async function listEvents(tag: string = 'trending', search: string = '', 
         is_main_category
       )
     )
-  `)
-    .order('created_at', { ascending: false })
+  `
+
+  const selectString = bookmarked && currentUserId
+    ? `*, bookmarks!inner(user_id), ${marketsSelect}, ${tagsSelect}`
+    : `*, bookmarks(user_id), ${marketsSelect}, ${tagsSelect}`
+
+  const query = supabaseAdmin.from('events').select(selectString)
+
+  if (bookmarked && currentUserId) {
+    query.eq('bookmarks.user_id', currentUserId)
+  }
 
   if (tag && tag !== 'trending' && tag !== 'new') {
     query.eq('event_tags.tag.slug', tag)
@@ -49,7 +69,7 @@ export async function listEvents(tag: string = 'trending', search: string = '', 
     query.ilike('title', `%${search}%`)
   }
 
-  query.limit(20)
+  query.order('created_at', { ascending: false }).limit(20)
 
   const { data, error } = await query
 
@@ -58,30 +78,17 @@ export async function listEvents(tag: string = 'trending', search: string = '', 
     throw error
   }
 
-  const events: any[] = []
-  if (data && data.length > 0) {
-    for (const event of data) {
-      events.push(eventResource(event, userId))
-    }
-  }
+  const events = data?.map(event => eventResource(event, currentUserId)) || []
 
   if (tag === 'trending') {
     return events.filter(market => market.isTrending)
   }
 
-  // Sort by new if necessary (by events created_at)
   if (tag === 'new') {
-    return events.sort((a, b) => {
-      // Find the original event to get created_at
-      const eventA = events.find(e => e.id.toString() === a.id)
-      const eventB = events.find(e => e.id.toString() === b.id)
-      if (!eventA || !eventB)
-        return 0
-      return (
-        new Date(eventB.created_at).getTime()
-          - new Date(eventA.created_at).getTime()
-      )
-    })
+    return events.sort(
+      (a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+    )
   }
 
   return events
@@ -193,6 +200,7 @@ function eventResource(data: any, currentUserId: number): Event {
       rules: event.rules || undefined,
       oracle: event.markets[0]?.oracle || null,
       is_bookmarked: event.is_bookmarked,
+      created_at: event.created_at,
     }
   }
 
@@ -229,6 +237,7 @@ function eventResource(data: any, currentUserId: number): Event {
     show_market_icons: event.show_market_icons,
     rules: event.rules || undefined,
     is_bookmarked: event.is_bookmarked,
+    created_at: event.created_at,
   }
 }
 

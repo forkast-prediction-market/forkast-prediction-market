@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input'
 
 interface Props {
   search: string
+  bookmarked: string
 }
 
-export default function FilterToolbarSearchInput({ search }: Props) {
+export default function FilterToolbarSearchInput({ search, bookmarked = 'false' }: Props) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState(search)
   const [isPending, startTransition] = useTransition()
@@ -35,6 +36,7 @@ export default function FilterToolbarSearchInput({ search }: Props) {
         const url = new URL(window.location.href)
         if (searchQuery) {
           url.searchParams.set('search', searchQuery)
+          url.searchParams.set('bookmarked', bookmarked)
         }
         else {
           url.searchParams.delete('search')
@@ -45,7 +47,7 @@ export default function FilterToolbarSearchInput({ search }: Props) {
     }, 500)
 
     return () => clearTimeout(handler)
-  }, [searchQuery, router])
+  }, [searchQuery, router, bookmarked])
 
   const iconClasses = 'absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground'
 
