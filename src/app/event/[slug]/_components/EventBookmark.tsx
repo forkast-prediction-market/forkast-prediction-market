@@ -9,12 +9,12 @@ import { cn } from '@/lib/utils'
 interface Props {
   event: {
     id: number
-    isBookmarked?: boolean
+    is_bookmarked: boolean
   }
 }
 
 export default function EventBookmark({ event }: Props) {
-  const [isBookmarked, setIsBookmarked] = useState(event.isBookmarked || false)
+  const [isBookmarked, setIsBookmarked] = useState(event.is_bookmarked)
   const [isPending, startTransition] = useTransition()
 
   const handleBookmark = useCallback(() => {
@@ -39,6 +39,7 @@ export default function EventBookmark({ event }: Props) {
       disabled={isPending}
       aria-pressed={isBookmarked}
       className={cn({ 'opacity-50': isPending, 'size-auto p-0': true })}
+      title={isBookmarked ? 'Remove Bookmark' : 'Bookmark'}
     >
       <BookmarkIcon
         className={cn({ 'fill-current text-primary': isBookmarked })}

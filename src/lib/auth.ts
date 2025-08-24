@@ -1,6 +1,7 @@
 import { getChainIdFromMessage } from '@reown/appkit-siwe'
 import { betterAuth } from 'better-auth'
 import { generateRandomString } from 'better-auth/crypto'
+import { nextCookies } from 'better-auth/next-js'
 import { siwe } from 'better-auth/plugins'
 import { Pool } from 'pg'
 import { createPublicClient, http } from 'viem'
@@ -52,6 +53,7 @@ export const auth = betterAuth({
         })
       },
     }),
+    nextCookies(),
   ],
   user: {
     modelName: 'users',

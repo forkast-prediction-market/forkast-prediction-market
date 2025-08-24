@@ -6,11 +6,12 @@ import { notFound } from 'next/navigation'
 import { getSupabaseImageUrl } from '@/lib/mockData'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export async function listEvents(category: string = 'trending', search: string = '', limit: number = 20) {
+export async function listEvents(tag: string = 'trending', search: string = '', userId: number = 0) {
   const query = supabaseAdmin
     .from('events')
     .select(`
     *,
+    bookmarks(user_id),
     markets!inner(
       condition_id,
       name,
@@ -40,17 +41,15 @@ export async function listEvents(category: string = 'trending', search: string =
   `)
     .order('created_at', { ascending: false })
 
-  if (category && category !== 'trending' && category !== 'new') {
-    query.eq('event_tags.tag.slug', category)
+  if (tag && tag !== 'trending' && tag !== 'new') {
+    query.eq('event_tags.tag.slug', tag)
   }
 
   if (search) {
     query.ilike('title', `%${search}%`)
   }
 
-  if (limit) {
-    query.limit(limit)
-  }
+  query.limit(20)
 
   const { data, error } = await query
 
@@ -62,16 +61,16 @@ export async function listEvents(category: string = 'trending', search: string =
   const events: any[] = []
   if (data && data.length > 0) {
     for (const event of data) {
-      events.push(eventResource(event))
+      events.push(eventResource(event, userId))
     }
   }
 
-  if (category === 'trending') {
+  if (tag === 'trending') {
     return events.filter(market => market.isTrending)
   }
 
   // Sort by new if necessary (by events created_at)
-  if (category === 'new') {
+  if (tag === 'new') {
     return events.sort((a, b) => {
       // Find the original event to get created_at
       const eventA = events.find(e => e.id.toString() === a.id)
@@ -88,26 +87,27 @@ export async function listEvents(category: string = 'trending', search: string =
   return events
 }
 
-export async function getEventIdBySlug(slug: string): Promise<number | null> {
+export async function getEventTitleBySlug(slug: string): Promise<string> {
   const { data, error } = await supabaseAdmin
     .from('events')
-    .select(`id`)
+    .select('title')
     .eq('slug', slug)
-    .maybeSingle()
+    .single()
 
   if (error) {
-    throw new Error(`Failed to get event by slug: ${error.message}`)
+    notFound()
   }
 
-  return data?.id
+  return data.title
 }
 
-export async function getEventBySlug(slug: string) {
+export async function getEventBySlug(slug: string, userId: number = 0) {
   const { data, error } = await supabaseAdmin
     .from('events')
     .select(
       `
         *,
+        bookmarks(user_id),
         markets!inner(
           condition_id,
           name,
@@ -143,10 +143,10 @@ export async function getEventBySlug(slug: string) {
     notFound()
   }
 
-  return eventResource(data) as Event & any
+  return eventResource(data, userId) as Event & any
 }
 
-function eventResource(data: any): Event {
+function eventResource(data: any, currentUserId: number): Event {
   const event = {
     ...data,
     tags: data.event_tags?.map((et: any) => et.tag?.slug).filter(Boolean) || [],
@@ -155,6 +155,7 @@ function eventResource(data: any): Event {
       oracle: market.conditions?.oracle,
       outcomes: market.conditions?.outcomes || [],
     })),
+    is_bookmarked: data.bookmarks?.some((bookmark: any) => bookmark.user_id === currentUserId) || false,
   }
 
   if (event.active_markets_count === 1) {
@@ -191,6 +192,7 @@ function eventResource(data: any): Event {
       show_market_icons: event.show_market_icons,
       rules: event.rules || undefined,
       oracle: event.markets[0]?.oracle || null,
+      is_bookmarked: event.is_bookmarked,
     }
   }
 
@@ -226,6 +228,7 @@ function eventResource(data: any): Event {
     outcomes,
     show_market_icons: event.show_market_icons,
     rules: event.rules || undefined,
+    is_bookmarked: event.is_bookmarked,
   }
 }
 
