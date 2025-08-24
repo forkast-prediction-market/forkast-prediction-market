@@ -40,6 +40,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# auto-sync logs
+.auto/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
