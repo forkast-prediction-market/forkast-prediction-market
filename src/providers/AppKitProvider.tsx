@@ -22,7 +22,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
     metadata: {
       name: process.env.NEXT_PUBLIC_SITE_NAME!,
       description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION!,
-      url: `https://${process.env.VERCEL_URL}`,
+      url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
       icons: ['https://avatar.vercel.sh/bitcoin.png'],
     },
     themeVariables: {
@@ -33,8 +33,8 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
     defaultNetwork: polygonAmoy,
     siweConfig: createSIWEConfig({
       getMessageParams: async () => ({
-        domain: process.env.VERCEL_URL ? process.env.VERCEL_URL : (typeof window !== 'undefined' ? window.location.host : 'localhost:3000'),
-        uri: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'),
+        domain: new URL(typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000').host,
+        uri: typeof window !== 'undefined' ? window.location.origin : '',
         chains: [polygonAmoy.id],
         statement: 'Please sign with your account',
       }),
