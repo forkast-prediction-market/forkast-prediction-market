@@ -20,6 +20,7 @@ export interface Event {
   show_market_icons?: boolean // Control if market icons should be shown in lists
   rules?: string // Rules for market resolution
   oracle?: string // Oracle address for resolution
+  created_at: string
 }
 
 export interface MarketOutcome {

@@ -8,11 +8,17 @@ import { getCurrentUser } from '@/lib/db/users'
 interface EventsContentProps {
   tag: string
   search: string
+  bookmarked: string
 }
 
-export default async function EventsGrid({ tag, search }: EventsContentProps) {
+export default async function EventsGrid({ tag, search, bookmarked }: EventsContentProps) {
   const user = await getCurrentUser()
-  const events = await listEvents(tag, search, Number.parseInt(user?.id ?? '0'))
+  const events = await listEvents({
+    tag,
+    search,
+    userId: user?.id,
+    bookmarked: bookmarked === 'true',
+  })
 
   if (events.length === 0) {
     return <EventsEmptyState tag={tag} searchQuery={search} />
