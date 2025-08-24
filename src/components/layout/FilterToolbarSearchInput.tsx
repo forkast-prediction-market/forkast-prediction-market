@@ -36,7 +36,9 @@ export default function FilterToolbarSearchInput({ search, bookmarked = 'false' 
         const url = new URL(window.location.href)
         if (searchQuery) {
           url.searchParams.set('search', searchQuery)
-          url.searchParams.set('bookmarked', bookmarked)
+          if (bookmarked === 'true') {
+            url.searchParams.set('bookmarked', bookmarked)
+          }
         }
         else {
           url.searchParams.delete('search')
