@@ -1,5 +1,6 @@
 'use client'
 
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { BookmarkIcon } from 'lucide-react'
 import { useCallback, useState, useTransition } from 'react'
 import { bookmarkAction } from '@/app/event/[slug]/actions'
@@ -14,6 +15,8 @@ interface Props {
 }
 
 export default function EventBookmark({ event }: Props) {
+  const { open } = useAppKit()
+  const { isConnected } = useAppKitAccount()
   const [isBookmarked, setIsBookmarked] = useState(event.is_bookmarked)
   const [isPending, startTransition] = useTransition()
 
@@ -33,9 +36,17 @@ export default function EventBookmark({ event }: Props) {
 
   return (
     <Button
+      type="button"
       size="icon"
       variant="ghost"
-      onClick={handleBookmark}
+      onClick={() => {
+        if (isConnected) {
+          handleBookmark()
+        }
+        else {
+          open()
+        }
+      }}
       disabled={isPending}
       aria-pressed={isBookmarked}
       className={cn({ 'opacity-50': isPending, 'size-auto p-0': true })}

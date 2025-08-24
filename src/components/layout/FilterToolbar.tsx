@@ -1,5 +1,6 @@
 'use client'
 
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { BookmarkIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import FilterToolbarSearchInput from '@/components/layout/FilterToolbarSearchInput'
@@ -12,6 +13,8 @@ interface Props {
 }
 
 export default function FilterToolbar({ search, bookmarked = 'false' }: Props) {
+  const { open } = useAppKit()
+  const { isConnected } = useAppKitAccount()
   const router = useRouter()
 
   function bookmark(bookmarked: boolean) {
@@ -37,7 +40,14 @@ export default function FilterToolbar({ search, bookmarked = 'false' }: Props) {
         size="icon"
         className="size-auto p-0"
         title={bookmarked === 'true' ? 'Show all' : 'Only bookmarks'}
-        onClick={() => bookmark(bookmarked !== 'true')}
+        onClick={() => {
+          if (isConnected) {
+            bookmark(bookmarked !== 'true')
+          }
+          else {
+            open()
+          }
+        }}
       >
         {bookmarked === 'true'
           ? <BookmarkIcon className="fill-current text-primary" />

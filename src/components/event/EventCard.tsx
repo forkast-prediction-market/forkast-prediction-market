@@ -244,7 +244,6 @@ export default function EventCard({ event }: Props) {
             <Link
               href={`/event/${event.slug}`}
               className="flex-1"
-              onClick={e => e.stopPropagation()}
             >
               <h3
                 className={`
