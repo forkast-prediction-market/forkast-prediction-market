@@ -11,8 +11,8 @@ import { useUser } from '@/stores/useUser'
 
 export const siweConfig = createSIWEConfig({
   getMessageParams: async () => ({
-    domain: typeof window !== 'undefined' ? window.location.host : '',
-    uri: typeof window !== 'undefined' ? window.location.origin : '',
+    domain: process.env.VERCEL_URL ? process.env.VERCEL_URL : (typeof window !== 'undefined' ? window.location.host : 'localhost:3000'),
+    uri: process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'),
     chains: [polygonAmoy.id],
     statement: 'Please sign with your account',
   }),

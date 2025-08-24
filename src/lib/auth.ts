@@ -31,7 +31,7 @@ export const auth = betterAuth({
           },
         },
       },
-      domain: typeof window !== 'undefined' ? window.location.host : 'localhost:3000',
+      domain: process.env.VERCEL_URL ? process.env.VERCEL_URL : (typeof window !== 'undefined' ? window.location.host : 'localhost:3000'),
       anonymous: true,
       getNonce: async () => generateRandomString(32),
       verifyMessage: async ({ message, signature, address }) => {
