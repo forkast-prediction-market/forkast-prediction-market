@@ -9,7 +9,7 @@ export async function toggleBookmark(userId: number, eventId: number) {
     .maybeSingle()
 
   if (error) {
-    console.error(error)
+    console.error('Could not find bookmark', error)
     return { error: 'Could not find bookmark' }
   }
 
@@ -34,7 +34,7 @@ export async function toggleBookmark(userId: number, eventId: number) {
       .select()
 
     if (error) {
-      console.error(error)
+      console.error('Could not insert bookmark', error)
       return { error: 'Could not insert bookmark' }
     }
 
