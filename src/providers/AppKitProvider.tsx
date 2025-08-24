@@ -13,7 +13,7 @@ import { useUser } from '@/stores/useUser'
 
 export default function AppKitProvider({ children }: { children: ReactNode }) {
   const { resolvedTheme } = useTheme()
-  const projectId = process.env.NEXT_PUBLIC_PROJECT_ID!
+  const projectId = process.env.NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID!
 
   createAppKit({
     projectId,

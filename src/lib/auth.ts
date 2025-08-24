@@ -36,7 +36,7 @@ export const auth = betterAuth({
       getNonce: async () => generateRandomString(32),
       verifyMessage: async ({ message, signature, address }) => {
         const chainId = getChainIdFromMessage(message)
-        const projectId = process.env.NEXT_PUBLIC_PROJECT_ID!
+        const projectId = process.env.NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID!
 
         const publicClient = createPublicClient(
           {
