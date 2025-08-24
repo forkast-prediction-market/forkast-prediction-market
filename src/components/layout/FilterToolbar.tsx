@@ -3,60 +3,107 @@
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { BookmarkIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useCallback, useMemo, useState, useTransition } from 'react'
 import FilterToolbarSearchInput from '@/components/layout/FilterToolbarSearchInput'
 import { Button } from '@/components/ui/button'
 import { Separator } from '@/components/ui/separator'
+import { cn } from '@/lib/utils'
 
-interface Props {
+interface FilterToolbarProps {
   search: string
   bookmarked: string
 }
 
-export default function FilterToolbar({ search, bookmarked = 'false' }: Props) {
+interface BookmarkToggleProps {
+  isBookmarked: boolean
+  isConnected: boolean
+  isLoading?: boolean
+  onToggle: () => void
+  onConnect: () => void
+}
+
+export default function FilterToolbar({ search, bookmarked }: FilterToolbarProps) {
   const { open } = useAppKit()
   const { isConnected } = useAppKitAccount()
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  const [optimisticBookmarked, setOptimisticBookmarked] = useState(bookmarked)
+  const isBookmarked = useMemo(() => optimisticBookmarked === 'true', [optimisticBookmarked])
 
-  function bookmark(bookmarked: boolean) {
-    const url = new URL(window.location.href)
+  const toggleBookmarkFilter = useCallback((shouldShowBookmarked: boolean) => {
+    try {
+      setOptimisticBookmarked(shouldShowBookmarked ? 'true' : 'false')
 
-    if (bookmarked) {
-      url.searchParams.set('bookmarked', 'true')
+      startTransition(() => {
+        const url = new URL(window.location.href)
+
+        if (shouldShowBookmarked) {
+          url.searchParams.set('bookmarked', 'true')
+        }
+        else {
+          url.searchParams.delete('bookmarked')
+        }
+
+        router.replace(url.toString(), { scroll: false })
+      })
     }
-    else {
-      url.searchParams.delete('bookmarked')
+    catch {
+      setOptimisticBookmarked(bookmarked)
     }
+  }, [router, bookmarked])
 
-    router.replace(url.toString(), { scroll: false })
-  }
+  useMemo(() => {
+    setOptimisticBookmarked(bookmarked)
+  }, [bookmarked])
+
+  const handleBookmarkToggle = useCallback(() => {
+    toggleBookmarkFilter(!isBookmarked)
+  }, [toggleBookmarkFilter, isBookmarked])
+
+  const handleConnect = useCallback(() => {
+    open()
+  }, [open])
 
   return (
     <div className="scrollbar-hide flex items-center gap-4 overflow-x-auto">
-      <FilterToolbarSearchInput search={search} bookmarked={bookmarked} />
+      <FilterToolbarSearchInput
+        search={search}
+        bookmarked={bookmarked}
+      />
 
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="size-auto p-0"
-        title={bookmarked === 'true' ? 'Show all' : 'Only bookmarks'}
-        onClick={() => {
-          if (isConnected) {
-            bookmark(bookmarked !== 'true')
-          }
-          else {
-            open()
-          }
-        }}
-      >
-        {bookmarked === 'true'
-          ? <BookmarkIcon className="fill-current text-primary" />
-          : <BookmarkIcon />}
-      </Button>
+      <BookmarkToggle
+        isBookmarked={isBookmarked}
+        isConnected={isConnected}
+        isLoading={isPending}
+        onToggle={handleBookmarkToggle}
+        onConnect={handleConnect}
+      />
 
       <Separator orientation="vertical" />
 
       <div id="navigation-tags" className="flex items-center gap-2" />
     </div>
+  )
+}
+
+function BookmarkToggle({ isBookmarked, isConnected, isLoading = false, onToggle, onConnect }: BookmarkToggleProps) {
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className="size-auto p-0"
+      title={isBookmarked ? 'Show all items' : 'Show only bookmarked items'}
+      aria-label={isBookmarked ? 'Remove bookmark filter' : 'Filter by bookmarks'}
+      disabled={isLoading}
+      onClick={isConnected ? onToggle : onConnect}
+    >
+      <BookmarkIcon
+        className={cn({
+          'fill-current text-primary': isBookmarked,
+          'animate-pulse opacity-50': isLoading,
+        })}
+      />
+    </Button>
   )
 }
