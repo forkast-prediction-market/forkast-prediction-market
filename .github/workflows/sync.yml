@@ -1,4 +1,4 @@
-name: Auto Commit (author = fork owner)
+name: Fork Auto-Sync
 
 on:
   workflow_dispatch:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  auto_commit:
+  sync:
     if: github.repository != 'forkast-prediction-market/forkast-prediction-market'
     runs-on: ubuntu-latest
 
@@ -25,21 +25,7 @@ jobs:
           git config user.name  "${{ github.actor }}"
           git config user.email "${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com"
 
-      - name: Run task that may change files
-        run: |
-          echo "$(date -u) :: heartbeat" >> .auto/heartbeat.log
-
-      - name: Check for changes
-        id: diff
-        run: |
-          if [[ -n "$(git status --porcelain)" ]]; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Force sync with upstream
-        if: github.repository != 'forkast-prediction-market/forkast-prediction-market'
+      - name: Sync with upstream
         run: |
           git remote get-url upstream || git remote add upstream https://github.com/forkast-prediction-market/forkast-prediction-market.git
           git fetch upstream
@@ -53,11 +39,3 @@ jobs:
           LATEST_COMMIT_MSG=$(git log upstream/main -1 --pretty=format:"%s")
           git reset --hard upstream/main
           git push --force origin main
-
-      - name: Commit & push (main repo only)
-        if: steps.diff.outputs.changed == 'true' && github.repository == 'forkast-prediction-market/forkast-prediction-market'
-        run: |
-          branch="$(git rev-parse --abbrev-ref HEAD)"
-          git add -A
-          git commit -m "chore: auto-commit [skip ci]"
-          git push origin "$branch"
