@@ -81,7 +81,6 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
 
               useUser.setState(null)
               sessionStorage.removeItem('signed')
-
               window.location.reload()
 
               return true
