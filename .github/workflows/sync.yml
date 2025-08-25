@@ -4,10 +4,6 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '*/15 * * * *'
-  push:
-    branches: [main, master]
-    paths-ignore:
-      - '.github/**'
 
 permissions:
   contents: write
@@ -47,9 +43,15 @@ jobs:
         run: |
           git remote get-url upstream || git remote add upstream https://github.com/forkast-prediction-market/forkast-prediction-market.git
           git fetch upstream
+          UPSTREAM_HASH=$(git rev-parse upstream/main)
+          LOCAL_HASH=$(git rev-parse HEAD)
+          if [ "$UPSTREAM_HASH" = "$LOCAL_HASH" ]; then
+            echo "Already synced with upstream. Skipping."
+            exit 0
+          fi
+          echo "Syncing with upstream..."
           LATEST_COMMIT_MSG=$(git log upstream/main -1 --pretty=format:"%s")
           git reset --hard upstream/main
-          git commit --allow-empty -m "$LATEST_COMMIT_MSG [synced from upstream]"
           git push --force origin main
 
       - name: Commit & push (main repo only)
