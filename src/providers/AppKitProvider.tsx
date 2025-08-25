@@ -31,74 +31,78 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
     },
     networks: [polygonAmoy],
     defaultNetwork: polygonAmoy,
-    siweConfig: createSIWEConfig({
-      getMessageParams: async () => ({
-        domain: new URL(typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000').host,
-        uri: typeof window !== 'undefined' ? window.location.origin : '',
-        chains: [polygonAmoy.id],
-        statement: 'Please sign with your account',
-      }),
-      createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
-      getNonce: async () => generateRandomString(32),
-      getSession: async () => {
-        const session = authClient.useSession()
-        if (!session) {
-          return null
-        }
+    siweConfig: typeof window === 'undefined' || sessionStorage.getItem('signed')
+      ? undefined
+      : createSIWEConfig({
+          getMessageParams: async () => ({
+            domain: new URL(typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000').host,
+            uri: typeof window !== 'undefined' ? window.location.origin : '',
+            chains: [polygonAmoy.id],
+            statement: 'Please sign with your account',
+          }),
+          createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
+          getNonce: async () => generateRandomString(32),
+          getSession: async () => {
+            const session = authClient.useSession()
+            if (!session) {
+              return null
+            }
 
-        return {
-          address: session.data?.user?.email as string,
-          chainId: polygonAmoy.id,
-        } satisfies SIWESession
-      },
-      verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
-        try {
-          const address = getAddressFromMessage(message)
+            return {
+              address: session.data?.user?.email as string,
+              chainId: polygonAmoy.id,
+            } satisfies SIWESession
+          },
+          verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
+            try {
+              const address = getAddressFromMessage(message)
 
-          await authClient.siwe.nonce({
-            walletAddress: address,
-            chainId: polygonAmoy.id,
-          })
+              await authClient.siwe.nonce({
+                walletAddress: address,
+                chainId: polygonAmoy.id,
+              })
 
-          const { data } = await authClient.siwe.verify({
-            message,
-            signature,
-            walletAddress: address,
-            chainId: polygonAmoy.id,
-          })
+              const { data } = await authClient.siwe.verify({
+                message,
+                signature,
+                walletAddress: address,
+                chainId: polygonAmoy.id,
+              })
 
-          return Boolean(data?.success)
-        }
-        catch {
-          return false
-        }
-      },
-      signOut: async () => {
-        try {
-          await authClient.signOut()
+              return Boolean(data?.success)
+            }
+            catch {
+              return false
+            }
+          },
+          signOut: async () => {
+            try {
+              await authClient.signOut()
 
-          window.location.reload()
+              useUser.setState(null)
+              sessionStorage.removeItem('signed')
 
-          return true
-        }
-        catch {
-          return false
-        }
-      },
-      onSignIn: () => {
-        authClient.getSession().then((session) => {
-          const user = session.data?.user
-          useUser.setState({
-            address: user?.name,
-            email: user?.email,
-            image: user?.image || `https://avatar.vercel.sh/${user?.name}.png`,
-          })
-        })
-      },
-      onSignOut: () => {
-        useUser.setState(null)
-      },
-    }),
+              window.location.reload()
+
+              return true
+            }
+            catch {
+              return false
+            }
+          },
+          onSignIn: () => {
+            authClient.getSession().then((session) => {
+              const user = session.data?.user
+              useUser.setState({
+                address: user?.name,
+                email: user?.email,
+                image: user?.image || `https://avatar.vercel.sh/${user?.name}.png`,
+              })
+            })
+
+            sessionStorage.setItem('signed', 'true')
+          },
+        }),
     features: {
       analytics: process.env.NODE_ENV === 'production',
     },
