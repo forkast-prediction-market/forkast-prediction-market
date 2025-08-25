@@ -60,6 +60,9 @@ NEXT_PUBLIC_SITE_LOGO_SVG=<svg>...</svg>
 NEXT_PUBLIC_ACTIVITY_SUBGRAPH_URL=https://your-subgraph-url
 NEXT_PUBLIC_PNL_SUBGRAPH_URL=https://your-subgraph-url
 CRON_SECRET=your-cron-secret
+
+# Analytics (Optional)
+NEXT_PUBLIC_GOOGLE_ANALYTICS=G-XXXXXXXXXX
 ```
 
 **Quick Setup:**

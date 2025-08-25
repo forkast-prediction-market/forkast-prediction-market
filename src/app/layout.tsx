@@ -2,6 +2,7 @@
 
 import type { Metadata, Viewport } from 'next'
 import { openSauceOne } from '@/app/fonts'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 import Header from '@/components/layout/Header'
 import NavigationTabs from '@/components/layout/NavigationTabs'
 import { Providers } from '@/providers/Providers'
@@ -35,6 +36,7 @@ export default async function RootLayout({
           <NavigationTabs />
           {children}
         </Providers>
+        <GoogleAnalytics />
       </body>
     </html>
   )
