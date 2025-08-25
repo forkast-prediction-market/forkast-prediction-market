@@ -16,7 +16,10 @@ interface Props {
 
 export default function NavigationTab({ tag }: Props) {
   const searchParams = useSearchParams()
-  const tagFromURL = searchParams?.get('tag') || 'trending'
+  const showBookmarkedOnly = searchParams?.get('bookmarked') === 'true'
+  const tagFromURL = showBookmarkedOnly && searchParams?.get('tag') === 'trending'
+    ? ''
+    : searchParams?.get('tag') || 'trending'
   const isActive = tagFromURL === tag.slug || tag.childs.some(child => tagFromURL === child.slug)
 
   return (

@@ -40,7 +40,7 @@ export default function HeaderDropdownUserMenuAuth() {
           <Link href="/settings">Profile</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/">Watchlist</Link>
+          <Link href="/?bookmarked=true">Watchlist</Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />

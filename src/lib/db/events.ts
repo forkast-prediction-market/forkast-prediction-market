@@ -80,7 +80,7 @@ export async function listEvents({
 
   const events = data?.map(event => eventResource(event, currentUserId)) || []
 
-  if (tag === 'trending') {
+  if (!bookmarked && tag === 'trending') {
     return events.filter(market => market.isTrending)
   }
 
