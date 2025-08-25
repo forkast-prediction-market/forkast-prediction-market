@@ -82,8 +82,9 @@ export function PredictionChart({
     (
       event: React.TouchEvent<SVGRectElement> | React.MouseEvent<SVGRectElement>,
     ) => {
-      if (!data.length || !series.length)
+      if (!data.length || !series.length) {
         return
+      }
 
       const { x } = localPoint(event) || { x: 0 }
       const innerWidth = width - margin.left - margin.right

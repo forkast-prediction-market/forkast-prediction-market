@@ -90,8 +90,9 @@ export default function EventCard({ event }: Props) {
   }
 
   async function handleConfirmTrade() {
-    if (!selectedOutcome || !tradeAmount)
+    if (!selectedOutcome || !tradeAmount) {
       return
+    }
 
     setIsLoading(true)
 
@@ -150,12 +151,14 @@ export default function EventCard({ event }: Props) {
   }
 
   function calculateWinnings(amount: string) {
-    if (!amount || !selectedOutcome)
+    if (!amount || !selectedOutcome) {
       return '0.00'
+    }
     const amountNum = Number.parseFloat(amount)
     const outcome = event.outcomes.find(o => o.id === selectedOutcome.id)
-    if (!outcome)
+    if (!outcome) {
       return '0.00'
+    }
 
     // Calculate potential winnings based on probability
     const probability = outcome.probability / 100

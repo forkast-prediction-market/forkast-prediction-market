@@ -110,8 +110,9 @@ export async function GET(request: Request) {
     for (const event of events) {
       const eventMarkets = markets.filter(market => market.event_id === event.id)
 
-      if (eventMarkets.length === 0)
+      if (eventMarkets.length === 0) {
         continue
+      }
 
       // Find the winning market (the one with the highest winning outcome probability)
       let bestMarket = null
@@ -121,8 +122,9 @@ export async function GET(request: Request) {
       for (const market of eventMarkets) {
         const marketOutcomes = outcomes?.filter(outcome => outcome.condition_id === market.condition_id) || []
 
-        if (marketOutcomes.length === 0)
+        if (marketOutcomes.length === 0) {
           continue
+        }
 
         let marketPercentage = 50
         let marketDisplayText = ''

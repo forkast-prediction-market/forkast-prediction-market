@@ -12,6 +12,7 @@ export default antfu({
     ...eslintPluginBetterTailwindcss.configs['recommended-error'].rules,
     'node/prefer-global/process': 'off',
     'no-console': 'off',
+    'curly': ['error', 'all'],
     'react-dom/no-dangerously-set-innerhtml': 'off',
     'react-refresh/only-export-components': 'off',
     'func-style': ['error', 'declaration', { allowArrowFunctions: false }],

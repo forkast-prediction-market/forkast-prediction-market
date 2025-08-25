@@ -23,12 +23,14 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
 
   // Function to calculate the amount the user will receive when selling shares
   function calculateSellAmount(sharesToSell: number) {
-    if (!tradingState.selectedOutcomeForOrder || !tradingState.yesNoSelection)
+    if (!tradingState.selectedOutcomeForOrder || !tradingState.yesNoSelection) {
       return 0
+    }
 
     const selectedOutcome = getSelectedOutcome()
-    if (!selectedOutcome)
+    if (!selectedOutcome) {
       return 0
+    }
 
     const sellPrice
         = tradingState.yesNoSelection === 'yes'
@@ -40,12 +42,14 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
 
   // Function to get the average selling price
   function getAvgSellPrice() {
-    if (!tradingState.selectedOutcomeForOrder || !tradingState.yesNoSelection)
+    if (!tradingState.selectedOutcomeForOrder || !tradingState.yesNoSelection) {
       return '0'
+    }
 
     const selectedOutcome = getSelectedOutcome()
-    if (!selectedOutcome)
+    if (!selectedOutcome) {
       return '0'
+    }
 
     const sellPrice
         = tradingState.yesNoSelection === 'yes'
@@ -94,8 +98,9 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
 
   // Handle confirm trade with loading
   async function handleConfirmTrade() {
-    if (!tradingState.amount || Number.parseFloat(tradingState.amount) <= 0 || !tradingState.yesNoSelection)
+    if (!tradingState.amount || Number.parseFloat(tradingState.amount) <= 0 || !tradingState.yesNoSelection) {
       return
+    }
 
     tradingState.setIsLoading(true)
     tradingState.setShowWinCard(false)
@@ -174,8 +179,9 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
 
   // Function to get user shares for the selected outcome
   function getUserShares() {
-    if (!tradingState.selectedOutcomeForOrder)
+    if (!tradingState.selectedOutcomeForOrder) {
       return 0
+    }
     const shareKey = tradingState.selectedOutcomeForOrder as keyof typeof mockUser.shares
     return mockUser.shares[shareKey] || 0
   }
@@ -274,8 +280,9 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
           }`}
           disabled={isDisabled}
           onClick={() => {
-            if (isDisabled)
+            if (isDisabled) {
               return
+            }
             const percentValue = Number.parseInt(percentage.replace('%', '')) / 100
             const newValue = tradingState.formatValue(userShares * percentValue)
             tradingState.setAmount(newValue)
@@ -329,8 +336,9 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
     function triggerBlueConfetti(
       event: React.MouseEvent<HTMLButtonElement>,
     ) {
-      if (!event || !event.currentTarget)
+      if (!event || !event.currentTarget) {
         return
+      }
       const rect = event.currentTarget.getBoundingClientRect()
       const x = (rect.left + rect.width / 2) / window.innerWidth
       const y = (rect.top + rect.height / 2) / window.innerHeight
@@ -436,8 +444,9 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
 
   // Function to render the order panel content
   function renderOrderPanel(isMobileVersion = false) {
-    if (tradingState.showWinCard)
+    if (tradingState.showWinCard) {
       return renderWinCard(isMobileVersion)
+    }
 
     const containerClasses = `${
       isMobileVersion ? 'w-full' : 'w-full lg:w-[320px]'
@@ -794,8 +803,9 @@ export default function OrderPanel({ event, tradingState, isMobileVersion = fals
             onClick={() => {
               if (tradingState.activeTab === 'sell') {
                 const userShares = getUserShares()
-                if (userShares <= 0)
+                if (userShares <= 0) {
                   return
+                }
                 tradingState.setAmount(tradingState.formatValue(userShares))
               }
               else {

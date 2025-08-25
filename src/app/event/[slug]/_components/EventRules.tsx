@@ -11,8 +11,9 @@ export default function EventRules({ event }: Props) {
   const [rulesExpanded, setRulesExpanded] = useState(false)
 
   function formatRules(rules: string): string {
-    if (!rules)
+    if (!rules) {
       return ''
+    }
 
     return rules
       .replace(/\\n/g, '\n')
@@ -22,8 +23,9 @@ export default function EventRules({ event }: Props) {
   }
 
   function formatOracleAddress(address: string): string {
-    if (!address || !address.startsWith('0x'))
+    if (!address || !address.startsWith('0x')) {
       return '0x0000...0000'
+    }
 
     const prefix = address.substring(0, 6)
     const suffix = address.substring(address.length - 4)

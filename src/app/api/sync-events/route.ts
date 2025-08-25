@@ -169,8 +169,9 @@ async function fetchFromActivitySubgraph() {
     else {
       allConditions = allConditions.concat(conditions)
       skip += first
-      if (conditions.length < first)
+      if (conditions.length < first) {
         hasMore = false
+      }
     }
   }
 
@@ -227,8 +228,9 @@ async function fetchFromPnLSubgraph() {
     else {
       allConditions = allConditions.concat(conditions)
       skip += first
-      if (conditions.length < first)
+      if (conditions.length < first) {
         hasMore = false
+      }
     }
   }
 
@@ -263,8 +265,9 @@ function mergeConditionsData(activityConditions: any[], pnlConditions: any[]) {
 }
 
 async function filterExistingConditions(conditions: any[]) {
-  if (conditions.length === 0)
+  if (conditions.length === 0) {
     return []
+  }
 
   const conditionIds = conditions.map(c => c.id)
 

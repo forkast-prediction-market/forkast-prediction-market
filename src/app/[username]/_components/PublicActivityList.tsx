@@ -15,27 +15,34 @@ function formatRelativeTime(date: Date): string {
   const now = new Date()
   const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
 
-  if (diffInDays === 0)
+  if (diffInDays === 0) {
     return 'Today'
-  if (diffInDays === 1)
+  }
+  if (diffInDays === 1) {
     return 'Yesterday'
-  if (diffInDays < 30)
+  }
+  if (diffInDays < 30) {
     return `${diffInDays} days ago`
+  }
 
   const diffInMonths = Math.floor(diffInDays / 30)
-  if (diffInMonths === 1)
+  if (diffInMonths === 1) {
     return '1 month ago'
-  if (diffInMonths < 12)
+  }
+  if (diffInMonths < 12) {
     return `${diffInMonths} months ago`
+  }
 
   return date.toLocaleDateString()
 }
 
 function formatShares(shares: number): string {
-  if (shares < 0.1)
+  if (shares < 0.1) {
     return '<0.1 shares'
-  if (shares === 1)
+  }
+  if (shares === 1) {
     return '1 share'
+  }
   return `${shares} shares`
 }
 

@@ -17,13 +17,17 @@ export function useBalance() {
 
   useEffect(() => {
     if (!isConnected || !address || !walletProvider) {
-      setBalance(null)
+      queueMicrotask(() => setBalance(null))
       return
     }
 
     let active = true
 
     async function fetchUSDCBalance() {
+      if (!active) {
+        return
+      }
+
       try {
         const provider = new BrowserProvider(walletProvider as any)
         const contract = new Contract(USDC_ADDRESS, ERC20_ABI, provider)
@@ -33,20 +37,15 @@ export function useBalance() {
           contract.decimals(),
         ])
 
-        if (!active)
-          return
-
         const balanceNumber = Number(balanceRaw) / (10 ** Number(decimals))
-        const balanceFormatted = balanceNumber < 0.01
-          ? balanceNumber.toFixed(6).replace(/\.?0+$/, '')
-          : balanceNumber.toFixed(2)
 
         const newBalance = {
           data: {
-            balance: balanceFormatted,
+            balance: balanceNumber.toFixed(2),
             symbol: 'USDC',
           },
         }
+
         setBalance(newBalance)
       }
       catch (error) {
@@ -57,7 +56,7 @@ export function useBalance() {
       }
     }
 
-    fetchUSDCBalance()
+    queueMicrotask(() => fetchUSDCBalance())
     const interval = setInterval(fetchUSDCBalance, 30000)
 
     return () => {
