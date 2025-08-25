@@ -44,12 +44,11 @@ jobs:
       - name: Force sync with upstream
         if: github.repository != 'forkast-prediction-market/forkast-prediction-market'
         run: |
-          # Add upstream remote if not exists
           git remote get-url upstream || git remote add upstream https://github.com/forkast-prediction-market/forkast-prediction-market.git
           git fetch upstream
-
-          # Force reset to upstream/main
+          LATEST_COMMIT_MSG=$(git log upstream/main -1 --pretty=format:"%s")
           git reset --hard upstream/main
+          git commit --allow-empty -m "$LATEST_COMMIT_MSG [synced from upstream]"
           git push --force origin main
 
       - name: Commit & push (main repo only)
