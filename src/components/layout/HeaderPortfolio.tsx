@@ -17,9 +17,8 @@ export default function HeaderPortfolio() {
         >
           <div className="text-xs font-medium text-muted-foreground">Portfolio</div>
           <div className="text-sm font-semibold text-primary">
-            {balance?.data?.balance}
-            {' '}
-            {balance?.data?.symbol}
+            $
+            {balance?.data?.balance || '0.00'}
           </div>
         </Button>
       </Link>
@@ -32,9 +31,8 @@ export default function HeaderPortfolio() {
       >
         <div className="text-xs font-medium text-muted-foreground">Cash</div>
         <div className="text-sm font-semibold text-primary">
-          {balance?.data?.balance}
-          {' '}
-          {balance?.data?.symbol}
+          $
+          {balance?.data?.balance || '0.00'}
         </div>
       </Button>
     </div>

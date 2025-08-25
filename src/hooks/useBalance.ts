@@ -1,35 +1,70 @@
-import { useAppKitAccount, useAppKitBalance } from '@reown/appkit/react'
-import { useEffect, useRef, useState } from 'react'
+import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react'
+import { BrowserProvider, Contract } from 'ethers'
+import { useEffect, useState } from 'react'
+
+const USDC_ADDRESS = '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582' // Polygon Amoy USDC
+const ERC20_ABI = [
+  'function balanceOf(address account) view returns (uint256)',
+  'function decimals() view returns (uint8)',
+  'function symbol() view returns (string)',
+  'function name() view returns (string)',
+]
 
 export function useBalance() {
-  const { fetchBalance } = useAppKitBalance()
-  const { isConnected } = useAppKitAccount()
-  const [balance, setBalance] = useState<any>()
-  const fetchBalanceRef = useRef(fetchBalance)
+  const { address, isConnected } = useAppKitAccount()
+  const { walletProvider } = useAppKitProvider('eip155')
+  const [balance, setBalance] = useState<any>(null)
 
   useEffect(() => {
-    if (!isConnected) {
+    if (!isConnected || !address || !walletProvider) {
+      setBalance(null)
       return
     }
 
     let active = true
 
-    function load() {
-      if (!active) {
-        return
-      }
+    async function fetchUSDCBalance() {
+      try {
+        const provider = new BrowserProvider(walletProvider as any)
+        const contract = new Contract(USDC_ADDRESS, ERC20_ABI, provider)
 
-      fetchBalanceRef.current().then(setBalance)
+        const [balanceRaw, decimals] = await Promise.all([
+          contract.balanceOf(address),
+          contract.decimals(),
+        ])
+
+        if (!active)
+          return
+
+        const balanceNumber = Number(balanceRaw) / (10 ** Number(decimals))
+        const balanceFormatted = balanceNumber < 0.01
+          ? balanceNumber.toFixed(6).replace(/\.?0+$/, '')
+          : balanceNumber.toFixed(2)
+
+        const newBalance = {
+          data: {
+            balance: balanceFormatted,
+            symbol: 'USDC',
+          },
+        }
+        setBalance(newBalance)
+      }
+      catch (error) {
+        console.error('Error fetching USDC balance:', error)
+        if (active) {
+          setBalance(null)
+        }
+      }
     }
 
-    load()
-    const interval = setInterval(load, 30000)
+    fetchUSDCBalance()
+    const interval = setInterval(fetchUSDCBalance, 30000)
 
     return () => {
       active = false
       clearInterval(interval)
     }
-  }, [isConnected])
+  }, [isConnected, address, walletProvider])
 
   return { balance }
 }
