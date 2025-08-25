@@ -14,6 +14,7 @@ permissions:
 
 jobs:
   auto_commit:
+    if: github.repository != 'forkast-prediction-market/forkast-prediction-market'
     runs-on: ubuntu-latest
 
     steps:
