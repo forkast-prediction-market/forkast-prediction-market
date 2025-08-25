@@ -39,6 +39,7 @@ These rules are designed to help the AI assistant understand and interact with t
   - `src/components/`: Reusable React components. Group related components within subdirectories (e.g., `src/components/ui/`).
   - `src/hooks/`: Custom React hooks for reusable logic.
   - `src/lib/`: Utility functions, configurations, and core logic.
+  - `src/lib/db/`: Supabase queries, use 'use cache' directive if queries do not rely on authenticated user.
   - `src/types/`: Centralized TypeScript type definitions.
   - `public/`: Static assets like images and fonts.
 - **API Routes (`src/app/api/`):** Follow Next.js API route conventions for backend logic.
