@@ -35,7 +35,7 @@ These rules are designed to help the AI assistant understand and interact with t
 ## 3. Project Structure and Conventions
 
 - **File Organization:**
-  - `src/app/`: Next.js pages and API routes. Prefer to colocate components that are only related to the page with a private folder called `_components`
+  - `src/app/`: Next.js pages and API routes. Prefer to colocate components that are only related to the page with a private folder called `_components` and actions to the same route folder.
   - `src/components/`: Reusable React components. Group related components within subdirectories (e.g., `src/components/ui/`).
   - `src/hooks/`: Custom React hooks for reusable logic.
   - `src/lib/`: Utility functions, configurations, and core logic.
