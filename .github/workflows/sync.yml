@@ -41,8 +41,19 @@ jobs:
             echo "changed=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Commit & push
-        if: steps.diff.outputs.changed == 'true'
+      - name: Force sync with upstream
+        if: github.repository != 'forkast-prediction-market/forkast-prediction-market'
+        run: |
+          # Add upstream remote if not exists
+          git remote get-url upstream || git remote add upstream https://github.com/forkast-prediction-market/forkast-prediction-market.git
+          git fetch upstream
+
+          # Force reset to upstream/main
+          git reset --hard upstream/main
+          git push --force origin main
+
+      - name: Commit & push (main repo only)
+        if: steps.diff.outputs.changed == 'true' && github.repository == 'forkast-prediction-market/forkast-prediction-market'
         run: |
           branch="$(git rev-parse --abbrev-ref HEAD)"
           git add -A
