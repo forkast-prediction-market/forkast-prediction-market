@@ -6,6 +6,7 @@ interface Props {
   user: User
   activeTab: string
   onTabChange: (tab: string) => void
+  isLoading?: boolean
 }
 
 const menuItems = [
@@ -15,7 +16,7 @@ const menuItems = [
   { id: 'export-key', label: 'Export Private Key' },
 ]
 
-export default function SettingsSidebar({ user, activeTab, onTabChange }: Props) {
+export default function SettingsSidebar({ user, activeTab, onTabChange, isLoading = false }: Props) {
   return (
     <aside className="lg:sticky lg:top-28 lg:self-start">
       <nav className="grid gap-1">
@@ -26,11 +27,17 @@ export default function SettingsSidebar({ user, activeTab, onTabChange }: Props)
             onClick={() => onTabChange(item.id)}
             variant={activeTab === item.id ? 'outline' : 'ghost'}
             className="justify-start text-muted-foreground"
+            disabled={isLoading}
           >
             {item.label}
           </Button>
         ))}
-        <Button variant="ghost" className="justify-start text-muted-foreground" asChild>
+        <Button
+          variant="ghost"
+          className="justify-start text-muted-foreground"
+          disabled={isLoading}
+          asChild
+        >
           <Link href={user.username ? `/@${user.username}` : `/@${user.address}`}>See public profile</Link>
         </Button>
       </nav>
