@@ -41,7 +41,7 @@ export default function EventsEmptyState({ searchQuery, tag }: Props) {
             )}
       </p>
 
-      <Link href="/public">
+      <Link href="/">
         <Button type="button">
           <XIcon />
           Clear filters
