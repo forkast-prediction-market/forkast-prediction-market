@@ -72,6 +72,9 @@ export const auth = betterAuth({
       bio: {
         type: 'string',
       },
+      notification_preferences: {
+        type: 'string',
+      },
     },
     changeEmail: {
       enabled: true,
