@@ -354,6 +354,53 @@ CREATE TABLE bookmarks (
 );
 
 -- ============================================================
+-- 💬 COMMENTS SYSTEM
+-- ============================================================
+CREATE TABLE IF NOT EXISTS comments (
+  id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  event_id INTEGER NOT NULL REFERENCES events (id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  parent_comment_id INTEGER REFERENCES comments (id) ON DELETE CASCADE,
+  content TEXT NOT NULL CHECK (length(content) >= 1 AND length(content) <= 2000),
+  is_edited BOOLEAN DEFAULT FALSE,
+  is_deleted BOOLEAN DEFAULT FALSE,
+  likes_count INTEGER DEFAULT 0 CHECK (likes_count >= 0),
+  replies_count INTEGER DEFAULT 0 CHECK (replies_count >= 0),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  -- Constraints
+  CHECK (
+    -- Root comments have no parent
+    (parent_comment_id IS NULL) OR 
+    -- Reply comments must have parent
+    (parent_comment_id IS NOT NULL)
+  )
+);
+
+-- Comment likes/reactions table
+CREATE TABLE IF NOT EXISTS comment_likes (
+  id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  comment_id INTEGER NOT NULL REFERENCES comments (id) ON DELETE CASCADE,
+  user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (comment_id, user_id)
+);
+
+-- Comment reports (for moderation)
+CREATE TABLE IF NOT EXISTS comment_reports (
+  id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  comment_id INTEGER NOT NULL REFERENCES comments (id) ON DELETE CASCADE,
+  reporter_user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  reason VARCHAR(50) NOT NULL CHECK (reason IN ('spam', 'abuse', 'inappropriate', 'other')),
+  description TEXT,
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'resolved', 'dismissed')),
+  reviewed_by INTEGER REFERENCES users (id),
+  reviewed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (comment_id, reporter_user_id)
+);
+
+-- ============================================================
 -- 1. 🏷️ TAGS TABLE
 -- ============================================================
 CREATE TABLE IF NOT EXISTS tags (
@@ -700,6 +747,23 @@ CREATE INDEX idx_event_tags_event_id ON event_tags (event_id);
 
 CREATE INDEX idx_event_tags_tag_id ON event_tags (tag_id);
 
+-- Comments - Optimized indexes for performance
+CREATE INDEX idx_comments_event_id ON comments (event_id);
+CREATE INDEX idx_comments_user_id ON comments (user_id);
+CREATE INDEX idx_comments_parent_comment_id ON comments (parent_comment_id);
+CREATE INDEX idx_comments_event_created ON comments (event_id, created_at DESC);
+CREATE INDEX idx_comments_parent_created ON comments (parent_comment_id, created_at ASC) WHERE parent_comment_id IS NOT NULL;
+CREATE INDEX idx_comments_root_popular ON comments (event_id, likes_count DESC, created_at DESC) WHERE parent_comment_id IS NULL;
+CREATE INDEX idx_comments_not_deleted ON comments (event_id, created_at DESC) WHERE is_deleted = FALSE;
+
+-- Comment likes - Indexes
+CREATE INDEX idx_comment_likes_comment_id ON comment_likes (comment_id);
+CREATE INDEX idx_comment_likes_user_id ON comment_likes (user_id);
+
+-- Comment reports - Indexes
+CREATE INDEX idx_comment_reports_comment_id ON comment_reports (comment_id);
+CREATE INDEX idx_comment_reports_status ON comment_reports (status) WHERE status = 'pending';
+
 -- Outcomes - Enhanced indexes
 CREATE INDEX idx_outcomes_condition_id ON outcomes (condition_id);
 
@@ -793,6 +857,10 @@ CREATE TRIGGER update_users_updated_at BEFORE
 UPDATE
   ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TRIGGER update_comments_updated_at BEFORE
+UPDATE
+  ON comments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- ============================================================
 -- 9. 📊 FUNCTIONS FOR COUNTER CACHING
 -- ============================================================
@@ -873,6 +941,71 @@ INSERT
   OR
 UPDATE
   OR DELETE ON event_tags FOR EACH ROW EXECUTE FUNCTION update_tag_markets_count();
+
+-- ============================================================
+-- 📊 COMMENT COUNTER FUNCTIONS
+-- ============================================================
+-- Function to update comment likes counter
+CREATE
+OR REPLACE FUNCTION update_comment_likes_count() RETURNS TRIGGER
+SET
+  search_path = 'public' AS $$
+begin
+    -- Update likes count for the comment
+    if TG_OP = 'INSERT' then
+        update public.comments
+        set likes_count = likes_count + 1
+        where id = NEW.comment_id;
+    elsif TG_OP = 'DELETE' then
+        update public.comments
+        set likes_count = greatest(likes_count - 1, 0)
+        where id = OLD.comment_id;
+    end if;
+
+    return coalesce(NEW, OLD);
+end;
+$$ LANGUAGE 'plpgsql';
+
+-- Function to update comment replies counter
+CREATE
+OR REPLACE FUNCTION update_comment_replies_count() RETURNS TRIGGER
+SET
+  search_path = 'public' AS $$
+begin
+    if TG_OP = 'INSERT' and NEW.parent_comment_id IS NOT NULL then
+        update public.comments
+        set replies_count = replies_count + 1
+        where id = NEW.parent_comment_id;
+    elsif TG_OP = 'DELETE' and OLD.parent_comment_id IS NOT NULL then
+        update public.comments
+        set replies_count = greatest(replies_count - 1, 0)
+        where id = OLD.parent_comment_id;
+    elsif TG_OP = 'UPDATE' and OLD.parent_comment_id != NEW.parent_comment_id then
+        -- Handle parent change (rare case)
+        if OLD.parent_comment_id IS NOT NULL then
+            update public.comments
+            set replies_count = greatest(replies_count - 1, 0)
+            where id = OLD.parent_comment_id;
+        end if;
+        if NEW.parent_comment_id IS NOT NULL then
+            update public.comments
+            set replies_count = replies_count + 1
+            where id = NEW.parent_comment_id;
+        end if;
+    end if;
+
+    return coalesce(NEW, OLD);
+end;
+$$ LANGUAGE 'plpgsql';
+
+-- Triggers for comment counters
+CREATE TRIGGER trigger_update_comment_likes_count
+AFTER INSERT OR DELETE ON comment_likes 
+FOR EACH ROW EXECUTE FUNCTION update_comment_likes_count();
+
+CREATE TRIGGER trigger_update_comment_replies_count
+AFTER INSERT OR UPDATE OR DELETE ON comments 
+FOR EACH ROW EXECUTE FUNCTION update_comment_replies_count();
 
 -- ============================================================
 -- 10. 📝 INITIAL DATA INSERTION
@@ -1103,6 +1236,55 @@ FROM
 WHERE
   upb.balance > 0;
 
+-- View for comments with user info and like status (optimized for loading)
+CREATE
+OR REPLACE VIEW v_comments_with_user WITH (security_invoker = TRUE) AS
+SELECT
+  c.id,
+  c.event_id,
+  c.user_id,
+  c.parent_comment_id,
+  c.content,
+  c.is_edited,
+  c.is_deleted,
+  c.likes_count,
+  c.replies_count,
+  c.created_at,
+  c.updated_at,
+  -- User info
+  u.username,
+  u.image as user_avatar,
+  u.address as user_address,
+  -- Aggregated reply info for root comments
+  CASE 
+    WHEN c.parent_comment_id IS NULL THEN (
+      SELECT json_agg(
+        json_build_object(
+          'id', r.id,
+          'content', r.content,
+          'user_id', r.user_id,
+          'username', ru.username,
+          'user_avatar', ru.image,
+          'user_address', ru.address,
+          'likes_count', r.likes_count,
+          'is_edited', r.is_edited,
+          'created_at', r.created_at
+        ) ORDER BY r.created_at ASC
+      )
+      FROM comments r
+      JOIN users ru ON r.user_id = ru.id
+      WHERE r.parent_comment_id = c.id 
+        AND r.is_deleted = FALSE
+      LIMIT 3  -- Show first 3 replies, rest via "Load more"
+    )
+    ELSE NULL
+  END as recent_replies
+FROM
+  comments c
+  JOIN users u ON c.user_id = u.id
+WHERE
+  c.is_deleted = FALSE;
+
 -- ============================================================
 -- 12. 🛡️ ROW LEVEL SECURITY
 -- ============================================================
@@ -1175,6 +1357,16 @@ ALTER TABLE
 
 ALTER TABLE
   wallets ENABLE ROW LEVEL SECURITY;
+
+-- Enable RLS on comment tables
+ALTER TABLE
+  comments ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE
+  comment_likes ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE
+  comment_reports ENABLE ROW LEVEL SECURITY;
 
 -- Public read policies for anonymous users
 CREATE POLICY "Markets are public" ON markets FOR
@@ -1262,6 +1454,42 @@ CREATE POLICY "Wallets are public" ON wallets FOR
 SELECT
   TO anon USING (TRUE);
 
+-- Comment policies - public read, authenticated write
+CREATE POLICY "Comments are public" ON comments FOR
+SELECT
+  TO anon USING (is_deleted = FALSE);
+
+CREATE POLICY "Users can create comments" ON comments FOR
+INSERT
+  TO authenticated WITH CHECK (user_id = (auth.jwt() ->> 'sub')::INTEGER);
+
+CREATE POLICY "Users can edit own comments" ON comments FOR
+UPDATE
+  TO authenticated USING (user_id = (auth.jwt() ->> 'sub')::INTEGER)
+  WITH CHECK (user_id = (auth.jwt() ->> 'sub')::INTEGER);
+
+-- Comment likes - authenticated users only
+CREATE POLICY "Comment likes are public" ON comment_likes FOR
+SELECT
+  TO anon USING (TRUE);
+
+CREATE POLICY "Users can like comments" ON comment_likes FOR
+INSERT
+  TO authenticated WITH CHECK (user_id = (auth.jwt() ->> 'sub')::INTEGER);
+
+CREATE POLICY "Users can unlike comments" ON comment_likes FOR
+DELETE
+  TO authenticated USING (user_id = (auth.jwt() ->> 'sub')::INTEGER);
+
+-- Comment reports - private to reporter and admins
+CREATE POLICY "Users can view own reports" ON comment_reports FOR
+SELECT
+  TO authenticated USING (reporter_user_id = (auth.jwt() ->> 'sub')::INTEGER);
+
+CREATE POLICY "Users can create reports" ON comment_reports FOR
+INSERT
+  TO authenticated WITH CHECK (reporter_user_id = (auth.jwt() ->> 'sub')::INTEGER);
+
 -- User position balances - users can only see their own
 CREATE POLICY "Users can see own positions" ON user_position_balances FOR
 SELECT
@@ -1317,6 +1545,13 @@ CREATE POLICY "service_role_all_fpmm_pool_memberships" ON fpmm_pool_memberships 
 CREATE POLICY "service_role_all_global_usdc_balance" ON global_usdc_balance FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
 
 CREATE POLICY "service_role_all_wallets" ON wallets FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+
+-- Service role policies for comment tables
+CREATE POLICY "service_role_all_comments" ON comments FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY "service_role_all_comment_likes" ON comment_likes FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY "service_role_all_comment_reports" ON comment_reports FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
 
 -- Admin policies for authenticated users (if needed)
 CREATE POLICY "Markets admin access" ON markets FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
