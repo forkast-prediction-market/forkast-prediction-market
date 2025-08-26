@@ -2,7 +2,7 @@
 
 import type { User } from '@/types'
 import Form from 'next/form'
-import { startTransition, useOptimistic, useRef } from 'react'
+import { startTransition, useOptimistic, useRef, useState } from 'react'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { updateNotificationsSettingsAction } from '../actions/notifications'
@@ -15,11 +15,15 @@ interface NotificationSettings {
 }
 
 export default function SettingsProfileTab({ user }: { user: User }) {
+  const [status, setStatus] = useState<{ error: string } | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
-  const initialSettings = user.notification_preferences
+  const initialSettings = user.settings?.notifications
 
-  const [optimisticSettings, updateOptimisticSettings] = useOptimistic(
-    initialSettings,
+  const [optimisticSettings, updateOptimisticSettings] = useOptimistic<
+    NotificationSettings,
+    Partial<NotificationSettings>
+  >(
+    initialSettings as NotificationSettings,
     (state, newSettings) => ({
       ...state,
       ...newSettings,
@@ -27,9 +31,26 @@ export default function SettingsProfileTab({ user }: { user: User }) {
   )
 
   function handleSwitchChange(field: keyof NotificationSettings, checked: boolean) {
+    const prev = optimisticSettings // snapshot before optimistic update
+
     startTransition(() => {
       updateOptimisticSettings({ [field]: checked })
-      queueMicrotask(() => formRef.current?.requestSubmit())
+    })
+
+    queueMicrotask(async () => {
+      const result = await updateNotificationsSettingsAction(
+        new FormData(formRef.current!),
+      )
+
+      if (result?.error) {
+        startTransition(() => {
+          updateOptimisticSettings(prev)
+        })
+        setStatus(result)
+      }
+      else {
+        setStatus(null)
+      }
     })
   }
 
@@ -42,8 +63,9 @@ export default function SettingsProfileTab({ user }: { user: User }) {
         </p>
       </div>
 
-      <Form ref={formRef} action={updateNotificationsSettingsAction} className="grid gap-6">
-        {/* Hidden inputs to maintain all current states */}
+      <p className="text-sm text-destructive">{status?.error}</p>
+
+      <Form ref={formRef} action={() => {}} className="grid gap-6">
         <input
           type="hidden"
           name="email_resolutions"
@@ -65,7 +87,6 @@ export default function SettingsProfileTab({ user }: { user: User }) {
           value={optimisticSettings?.inapp_resolutions ? 'on' : 'off'}
         />
 
-        {/* Email Notifications */}
         <div className="rounded-lg border p-6">
           <div className="grid gap-4">
             <h3 className="text-lg font-medium">Email</h3>
@@ -88,7 +109,6 @@ export default function SettingsProfileTab({ user }: { user: User }) {
           </div>
         </div>
 
-        {/* In-App Notifications */}
         <div className="rounded-lg border p-6">
           <div className="grid gap-4">
             <h3 className="text-lg font-medium">In-app</h3>

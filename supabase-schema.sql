@@ -295,6 +295,7 @@ CREATE TABLE IF NOT EXISTS users (
   email_verified BOOLEAN NOT NULL DEFAULT FALSE,
   bio TEXT,
   image TEXT,
+  settings JSONB NOT NULL DEFAULT '{}'::JSONB,
   created_at TIMESTAMPTZ DEFAULT now(),
   updated_at TIMESTAMPTZ DEFAULT now()
 );

@@ -15,5 +15,6 @@ export default async function SettingsPage() {
     redirect('/')
   }
 
+  // @ts-expect-error user.settings is a string in better-auth types
   return <SettingsContentComponent user={user} />
 }

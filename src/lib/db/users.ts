@@ -56,7 +56,7 @@ export async function updateCurrentUserNotificationPreferences(
 ) {
   const { data, error } = await supabaseAdmin
     .from('users')
-    .update({ notification_preferences: preferences })
+    .update({ settings: { notifications: preferences } })
     .eq('id', userId)
     .select('id')
     .single()

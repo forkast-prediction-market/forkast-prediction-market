@@ -13,18 +13,15 @@ export async function updateNotificationsSettingsAction(formData: FormData) {
     }
 
     const user = await getCurrentUser()
-
     if (!user) {
-      return { message: 'Not authenticated' }
+      return
     }
 
     await updateCurrentUserNotificationPreferences(user.id, preferences)
 
-    // Revalidate the settings page to reflect changes
     revalidatePath('/settings')
   }
-  catch (error) {
-    console.error('Failed to update notification settings:', error)
-    throw new Error('Failed to update notification settings')
+  catch {
+    return { error: 'Failed to update notification settings' }
   }
 }

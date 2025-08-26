@@ -54,11 +54,13 @@ export interface User {
   username?: string
   bio?: string
   image?: string | null
-  notification_preferences?: {
-    email_resolutions: boolean
-    inapp_order_fills: boolean
-    inapp_hide_small_fills: boolean
-    inapp_resolutions: boolean
+  settings?: {
+    notifications: {
+      email_resolutions: boolean
+      inapp_order_fills: boolean
+      inapp_hide_small_fills: boolean
+      inapp_resolutions: boolean
+    }
   }
 }
 
