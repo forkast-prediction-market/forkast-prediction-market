@@ -37,13 +37,14 @@ export default function EventComments({ eventSlug }: EventCommentsProps) {
   const { isConnected } = useAppKitAccount()
   const router = useRouter()
 
-  function navigateToProfile(username: string | null, address: string) {
+  function navigateToProfile(username: string | null, address: string | undefined) {
     if (username) {
       router.push(`/${username}`)
     }
-    else {
+    else if (address) {
       router.push(`/${address}`)
     }
+    // If neither username nor address, do nothing
   }
 
   async function handleDeleteComment(commentId: number) {
@@ -115,6 +116,14 @@ export default function EventComments({ eventSlug }: EventCommentsProps) {
       if (response.ok) {
         const newReply = await response.json()
 
+        // Ensure the new reply has the current user's data
+        const replyWithUserData = {
+          ...newReply,
+          username: user?.username || newReply.username,
+          user_avatar: user?.image || newReply.user_avatar,
+          user_address: user?.address || newReply.user_address,
+        }
+
         // Add reply to the parent comment
         setComments(prev => prev.map((comment) => {
           if (comment.id === parentCommentId) {
@@ -123,7 +132,7 @@ export default function EventComments({ eventSlug }: EventCommentsProps) {
               replies_count: comment.replies_count + 1,
               recent_replies: [
                 ...(comment.recent_replies || []),
-                newReply,
+                replyWithUserData,
               ].slice(-3), // Keep only last 3 replies visible
             }
           }
@@ -139,71 +148,50 @@ export default function EventComments({ eventSlug }: EventCommentsProps) {
     }
   }
 
-  // Fetch current user
+  // Fetch current user and comments together
   useEffect(() => {
-    async function fetchUser() {
-      if (isConnected) {
-        try {
-          const response = await fetch('/api/auth/get-session')
-          if (response.ok) {
-            const session = await response.json()
-            setUser(session?.user || null)
-          }
-        }
-        catch (error) {
-          console.error('Error fetching user:', error)
-        }
-      }
-      else {
-        setUser(null)
-      }
-    }
-    fetchUser()
-  }, [isConnected])
-
-  // Fetch comments
-  useEffect(() => {
-    async function fetchComments() {
+    async function fetchUserAndComments() {
       try {
         setLoading(true)
-        const response = await fetch(`/api/events/${eventSlug}/comments`)
-        if (response.ok) {
-          const data = await response.json()
-          setComments(data)
+
+        // Fetch user first if connected
+        let currentUser = null
+        if (isConnected) {
+          try {
+            const userResponse = await fetch('/api/auth/get-session')
+            if (userResponse.ok) {
+              const session = await userResponse.json()
+              currentUser = session?.user || null
+              setUser(currentUser)
+            }
+          }
+          catch (error) {
+            console.error('Error fetching user:', error)
+          }
         }
-      }
-      catch (error) {
-        console.error('Error fetching comments:', error)
-      }
-      finally {
-        setLoading(false)
-      }
-    }
+        else {
+          setUser(null)
+        }
 
-    if (eventSlug) {
-      fetchComments()
-    }
-  }, [eventSlug])
-
-  // Refetch comments only when user login status changes (not every session refresh)
-  useEffect(() => {
-    if (comments.length > 0 && isConnected) {
-      // Only refetch to update like status when user logs in
-      async function refetchForLikeStatus() {
-        try {
+        // Then fetch comments
+        if (eventSlug) {
           const response = await fetch(`/api/events/${eventSlug}/comments`)
           if (response.ok) {
             const data = await response.json()
             setComments(data)
           }
         }
-        catch (error) {
-          console.error('Error refetching comments for like status:', error)
-        }
       }
-      refetchForLikeStatus()
+      catch (error) {
+        console.error('Error fetching data:', error)
+      }
+      finally {
+        setLoading(false)
+      }
     }
-  }, [isConnected]) // Only when login status changes
+
+    fetchUserAndComments()
+  }, [eventSlug, isConnected]) // Refetch when slug or connection status changes
 
   // Helper function to check ownership
   function isCommentOwner(commentUserId: number) {
@@ -264,7 +252,16 @@ export default function EventComments({ eventSlug }: EventCommentsProps) {
 
       if (response.ok) {
         const newCommentData = await response.json()
-        setComments(prev => [newCommentData, ...prev])
+
+        // Ensure the new comment has the current user's data
+        const commentWithUserData = {
+          ...newCommentData,
+          username: user?.username || newCommentData.username,
+          user_avatar: user?.image || newCommentData.user_avatar,
+          user_address: user?.address || newCommentData.user_address,
+        }
+
+        setComments(prev => [commentWithUserData, ...prev])
         setNewComment('')
       }
     }
@@ -403,8 +400,8 @@ export default function EventComments({ eventSlug }: EventCommentsProps) {
                         className="shrink-0"
                       >
                         <Image
-                          src={comment.user_avatar || `https://avatar.vercel.sh/${comment.username || comment.user_address}.png`}
-                          alt={comment.username || comment.user_address}
+                          src={comment.user_avatar || `https://avatar.vercel.sh/${comment.username || comment.user_address || 'anonymous'}.png`}
+                          alt={comment.username || comment.user_address || 'Anonymous User'}
                           width={32}
                           height={32}
                           className="size-8 rounded-full object-cover transition-opacity hover:opacity-80"
@@ -419,7 +416,9 @@ export default function EventComments({ eventSlug }: EventCommentsProps) {
                           >
                             {comment.username
                               ? comment.username
-                              : `${comment.user_address.slice(0, 6)}...${comment.user_address.slice(-4)}`}
+                              : comment.user_address
+                                ? `${comment.user_address.slice(0, 6)}...${comment.user_address.slice(-4)}`
+                                : 'Anonymous User'}
                           </button>
                           <span className="text-[11px] text-muted-foreground">
                             {formatTimeAgo(comment.created_at)}
@@ -438,7 +437,7 @@ export default function EventComments({ eventSlug }: EventCommentsProps) {
                                 return
                               }
                               setReplyingTo(replyingTo === comment.id ? null : comment.id)
-                              setReplyText(`@${comment.username || `${comment.user_address.slice(0, 6)}...${comment.user_address.slice(-4)}`} `)
+                              setReplyText(`@${comment.username || (comment.user_address ? `${comment.user_address.slice(0, 6)}...${comment.user_address.slice(-4)}` : 'anonymous')} `)
                             }}
                           >
                             Reply
@@ -531,7 +530,7 @@ ${comment.user_has_liked
                                   placeholder:text-muted-foreground/70
                                   focus:border-blue-500 focus:ring-blue-500/20
                                 `}
-                                placeholder={`Reply to ${comment.username || `${comment.user_address.slice(0, 6)}...${comment.user_address.slice(-4)}`}`}
+                                placeholder={`Reply to ${comment.username || (comment.user_address ? `${comment.user_address.slice(0, 6)}...${comment.user_address.slice(-4)}` : 'anonymous')}`}
                                 value={replyText}
                                 onChange={e => setReplyText(e.target.value)}
                                 onKeyDown={(e) => {
@@ -583,8 +582,8 @@ ${comment.user_has_liked
                               className="shrink-0"
                             >
                               <Image
-                                src={reply.user_avatar || `https://avatar.vercel.sh/${reply.username || reply.user_address}.png`}
-                                alt={reply.username || reply.user_address}
+                                src={reply.user_avatar || `https://avatar.vercel.sh/${reply.username || reply.user_address || 'anonymous'}.png`}
+                                alt={reply.username || reply.user_address || 'Anonymous User'}
                                 width={24}
                                 height={24}
                                 className="size-6 rounded-full object-cover transition-opacity hover:opacity-80"
@@ -599,7 +598,9 @@ ${comment.user_has_liked
                                 >
                                   {reply.username
                                     ? reply.username
-                                    : `${reply.user_address.slice(0, 6)}...${reply.user_address.slice(-4)}`}
+                                    : reply.user_address
+                                      ? `${reply.user_address.slice(0, 6)}...${reply.user_address.slice(-4)}`
+                                      : 'Anonymous User'}
                                 </button>
                                 <span className="text-[11px] text-muted-foreground">
                                   {formatTimeAgo(reply.created_at)}
@@ -618,7 +619,7 @@ ${comment.user_has_liked
                                       return
                                     }
                                     setReplyingTo(replyingTo === reply.id ? null : reply.id)
-                                    setReplyText(`@${reply.username || `${reply.user_address.slice(0, 6)}...${reply.user_address.slice(-4)}`} `)
+                                    setReplyText(`@${reply.username || (reply.user_address ? `${reply.user_address.slice(0, 6)}...${reply.user_address.slice(-4)}` : 'anonymous')} `)
                                   }}
                                 >
                                   Reply
