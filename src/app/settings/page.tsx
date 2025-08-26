@@ -1,20 +1,26 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import React from 'react'
-import SettingsContentComponent from '@/app/settings/_components/SettingsContentComponent'
 import { getCurrentUser } from '@/lib/db/users'
+import SettingsContent from './_components/SettingsContent'
 
 export const metadata: Metadata = {
   title: 'Settings',
 }
 
-export default async function SettingsPage() {
+interface Props {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function SettingsPage({ searchParams }: Props) {
   const user = await getCurrentUser()
+  const params = await searchParams
+  const tab = (params.tab as string) ?? 'profile'
 
   if (!user) {
     redirect('/')
   }
 
   // @ts-expect-error user.settings is a string in better-auth types
-  return <SettingsContentComponent user={user} />
+  return <SettingsContent user={user} tab={tab} />
 }

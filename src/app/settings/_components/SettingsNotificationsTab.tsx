@@ -3,6 +3,7 @@
 import type { User } from '@/types'
 import Form from 'next/form'
 import { startTransition, useOptimistic, useRef, useState } from 'react'
+import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { updateNotificationsSettingsAction } from '../actions/notifications'
@@ -63,7 +64,7 @@ export default function SettingsProfileTab({ user }: { user: User }) {
         </p>
       </div>
 
-      <p className="text-sm text-destructive">{status?.error}</p>
+      {status?.error && <InputError message={status.error} />}
 
       <Form ref={formRef} action={() => {}} className="grid gap-6">
         <input
