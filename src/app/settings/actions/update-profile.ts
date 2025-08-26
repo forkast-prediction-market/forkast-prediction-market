@@ -24,7 +24,6 @@ const updateUserSchema = z.object({
     .regex(/^[\w.]+$/, 'Only letters, numbers, dots and underscores are allowed')
     .regex(/^(?!\.)/, 'Cannot start with a dot')
     .regex(/(?<!\.)$/, 'Cannot end with a dot'),
-  bio: z.string().max(500, { error: 'Bio must be less than 500 characters.' }),
   image: z
     .instanceof(File)
     .optional()
@@ -59,7 +58,6 @@ export async function updateUserAction(
     const rawData = {
       email: formData.get('email') as string,
       username: formData.get('username') as string,
-      bio: formData.get('bio') as string,
       image: imageFile && imageFile.size > 0 ? imageFile : undefined,
     }
 
@@ -68,7 +66,6 @@ export async function updateUserAction(
     const updateData = {
       email: validated.email,
       username: validated.username,
-      bio: validated.bio,
       image: user.image,
     }
 
