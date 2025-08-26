@@ -4,9 +4,7 @@ import { Button } from '@/components/ui/button'
 
 interface Props {
   user: User
-  activeTab: string
-  onTabChange: (tab: string) => void
-  isLoading?: boolean
+  tab: string
 }
 
 const menuItems = [
@@ -16,7 +14,7 @@ const menuItems = [
   { id: 'export-key', label: 'Export Private Key' },
 ]
 
-export default function SettingsSidebar({ user, activeTab, onTabChange, isLoading = false }: Props) {
+export default function SettingsSidebar({ user, tab }: Props) {
   return (
     <aside className="lg:sticky lg:top-28 lg:self-start">
       <nav className="grid gap-1">
@@ -24,18 +22,16 @@ export default function SettingsSidebar({ user, activeTab, onTabChange, isLoadin
           <Button
             type="button"
             key={item.id}
-            onClick={() => onTabChange(item.id)}
-            variant={activeTab === item.id ? 'outline' : 'ghost'}
+            variant={tab === item.id ? 'outline' : 'ghost'}
             className="justify-start text-muted-foreground"
-            disabled={isLoading}
+            asChild
           >
-            {item.label}
+            <Link href={`/settings?tab=${item.id}`}>{item.label}</Link>
           </Button>
         ))}
         <Button
           variant="ghost"
           className="justify-start text-muted-foreground"
-          disabled={isLoading}
           asChild
         >
           <Link href={user.username ? `/@${user.username}` : `/@${user.address}`}>See public profile</Link>

@@ -22,5 +22,5 @@ export default async function SettingsPage({ searchParams }: Props) {
   }
 
   // @ts-expect-error user.settings is a string in better-auth types
-  return <SettingsContent user={user} initialTab={tab} />
+  return <SettingsContent user={user} tab={tab} />
 }

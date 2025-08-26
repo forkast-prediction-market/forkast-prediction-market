@@ -2,7 +2,6 @@
 
 import type { User } from '@/types'
 import { useMemo } from 'react'
-import { useTabNavigation } from '@/hooks/useTabNavigation'
 import SettingsExportPrivateKeyTab from './SettingsExportPrivateKeyTab'
 import SettingsNotificationsTab from './SettingsNotificationsTab'
 import SettingsProfileTab from './SettingsProfileTab'
@@ -11,17 +10,12 @@ import SettingsTwoFactorAuthTab from './SettingsTwoFactorAuthTab'
 
 interface Props {
   user: User
-  initialTab: string
+  tab: string
 }
 
-export default function SettingsContent({ user, initialTab }: Props) {
-  const { activeTab, handleTabChange, isPending } = useTabNavigation({
-    defaultTab: 'profile',
-    initialTab,
-  })
-
+export default function SettingsContent({ user, tab }: Props) {
   const content = useMemo(() => {
-    switch (activeTab) {
+    switch (tab) {
       case 'notifications':
         return <SettingsNotificationsTab user={user} />
       case 'two-factor':
@@ -31,16 +25,11 @@ export default function SettingsContent({ user, initialTab }: Props) {
       default:
         return <SettingsProfileTab user={user} />
     }
-  }, [activeTab, user])
+  }, [user, tab])
 
   return (
     <>
-      <SettingsSidebar
-        user={user}
-        activeTab={activeTab}
-        onTabChange={handleTabChange}
-        isLoading={isPending}
-      />
+      <SettingsSidebar user={user} tab={tab} />
       <div className="mx-auto max-w-2xl lg:mx-0">
         {content}
       </div>
