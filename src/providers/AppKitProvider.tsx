@@ -50,7 +50,8 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
           }
 
           return {
-            address: session.data?.user.name,
+            // @ts-expect-error address not defined in address
+            address: session.data?.user.address,
             chainId: polygonAmoy.id,
           } satisfies SIWESession
         }
@@ -95,10 +96,13 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       },
       onSignIn: () => {
         authClient.getSession().then((session) => {
+          const user = session?.data?.user
+          // @ts-expect-error address not defined in address
+          const address = user?.address
           useUser.setState({
-            address: session?.data?.user.name,
+            address,
             email: session?.data?.user.email,
-            image: session?.data?.user.image || `https://avatar.vercel.sh/${session.data?.user.name}.png`,
+            image: session?.data?.user.image || `https://avatar.vercel.sh/${address}.png`,
           })
 
           redirect(window.location.pathname)

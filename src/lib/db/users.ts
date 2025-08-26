@@ -49,3 +49,21 @@ export async function updateCurrentUser(userId: string, input: any) {
 
   return data
 }
+
+export async function updateCurrentUserNotificationPreferences(
+  userId: string,
+  preferences: any,
+) {
+  const { data, error } = await supabaseAdmin
+    .from('users')
+    .update({ settings: { notifications: preferences } })
+    .eq('id', userId)
+    .select('id')
+    .single()
+
+  if (error) {
+    return { error: 'Failed to update notification preferences.' }
+  }
+
+  return data
+}

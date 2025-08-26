@@ -54,6 +54,14 @@ export interface User {
   username?: string
   bio?: string
   image?: string | null
+  settings?: {
+    notifications: {
+      email_resolutions: boolean
+      inapp_order_fills: boolean
+      inapp_hide_small_fills: boolean
+      inapp_resolutions: boolean
+    }
+  }
 }
 
 export interface PublicProfileStats {

@@ -66,10 +66,16 @@ export const auth = betterAuth({
       updatedAt: 'updated_at',
     },
     additionalFields: {
+      address: {
+        type: 'string',
+      },
       username: {
         type: 'string',
       },
       bio: {
+        type: 'string',
+      },
+      settings: {
         type: 'string',
       },
     },

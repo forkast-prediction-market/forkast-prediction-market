@@ -13,7 +13,7 @@ export default function SettingsContentComponent({ user }: { user: User }) {
   const content = useMemo(() => {
     switch (activeTab) {
       case 'notifications':
-        return <SettingsNotificationsTab />
+        return <SettingsNotificationsTab user={user} />
       case 'two-factor':
         return <SettingsTwoFactorAuthTab />
       case 'export-key':
