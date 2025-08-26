@@ -43,15 +43,24 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
       getNonce: async () => generateRandomString(32),
       getSession: async () => {
-        const session = authClient.useSession()
-        if (!session) {
+        try {
+          const session = await authClient.getSession()
+          if (!session.data?.user?.email) {
+            return null
+          }
+
+          // Extract wallet address from email format (address@domain)
+          const email = session.data.user.email as string
+          const address = email.includes('@') ? email.split('@')[0] : email
+
+          return {
+            address,
+            chainId: polygonAmoy.id,
+          } satisfies SIWESession
+        }
+        catch {
           return null
         }
-
-        return {
-          address: session.data?.user?.email as string,
-          chainId: polygonAmoy.id,
-        } satisfies SIWESession
       },
       verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
         try {
