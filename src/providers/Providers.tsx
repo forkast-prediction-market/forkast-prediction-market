@@ -2,6 +2,7 @@
 
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from 'next-themes'
+import GoogleAnalytics from '@/components/GoogleAnalytics'
 import { Toaster } from '@/components/ui/sonner'
 import AppKitProvider from '@/providers/AppKitProvider'
 import ProgressIndicatorProvider from '@/providers/ProgressIndicatorProvider'
@@ -16,6 +17,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           </div>
           <Toaster />
           {process.env.NODE_ENV === 'production' && <SpeedInsights />}
+          {process.env.NODE_ENV === 'production' && <GoogleAnalytics />}
         </AppKitProvider>
       </ThemeProvider>
     </ProgressIndicatorProvider>
