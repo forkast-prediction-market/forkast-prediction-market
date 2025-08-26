@@ -45,16 +45,12 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       getSession: async () => {
         try {
           const session = await authClient.getSession()
-          if (!session.data?.user?.email) {
+          if (!session.data?.user) {
             return null
           }
 
-          // Extract wallet address from email format (address@domain)
-          const email = session.data.user.email as string
-          const address = email.includes('@') ? email.split('@')[0] : email
-
           return {
-            address,
+            address: session.data?.user.name,
             chainId: polygonAmoy.id,
           } satisfies SIWESession
         }
@@ -99,13 +95,10 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       },
       onSignIn: () => {
         authClient.getSession().then((session) => {
-          const user = session.data?.user
           useUser.setState({
-          // @ts-expect-error type expects name
-            address: user?.address,
-            email: user?.email,
-            // @ts-expect-error type expects name
-            image: user?.image || `https://avatar.vercel.sh/${user?.address}.png`,
+            address: session?.data?.user.name,
+            email: session?.data?.user.email,
+            image: session?.data?.user.image || `https://avatar.vercel.sh/${session.data?.user.name}.png`,
           })
 
           redirect(window.location.pathname)
