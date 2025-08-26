@@ -5,13 +5,12 @@ import Form from 'next/form'
 import Image from 'next/image'
 import { useActionState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
-import { updateUserAction } from '@/app/settings/actions/profile'
+import { updateUserAction } from '@/app/settings/actions/update-profile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { useUser } from '@/stores/useUser'
 
 export default function SettingsProfileTab({ user }: { user: User }) {
   const [state, formAction, isPending] = useActionState(updateUserAction, {})
@@ -19,11 +18,7 @@ export default function SettingsProfileTab({ user }: { user: User }) {
   const prevPending = useRef(false)
 
   useEffect(() => {
-    useUser.setState(user)
-  }, [user])
-
-  useEffect(() => {
-    if (prevPending.current && !isPending && !state.errors && !state.message) {
+    if (prevPending.current && !isPending && !state.errors && !state.error) {
       toast.success('Profile updated successfully!')
     }
     prevPending.current = isPending
@@ -40,7 +35,7 @@ export default function SettingsProfileTab({ user }: { user: User }) {
         <p className="mt-2 text-muted-foreground">
           Manage your account profile and preferences.
         </p>
-        <p className="text-sm text-destructive">{state.message}</p>
+        <p className="text-sm text-destructive">{state.error}</p>
       </div>
 
       <Form action={formAction} className="grid gap-6" formEncType="multipart/form-data">

@@ -11,13 +11,8 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
 export interface ActionState {
-  message?: string
-  errors?: {
-    email?: string
-    username?: string
-    bio?: string
-    image?: string
-  }
+  error?: string
+  errors?: Record<string, string | undefined>
 }
 
 const updateUserSchema = z.object({
@@ -56,7 +51,7 @@ export async function updateUserAction(
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return { message: 'Not authenticated.' }
+      return { error: 'Not authenticated.' }
     }
 
     const imageFile = formData.get('image') as File
@@ -78,14 +73,14 @@ export async function updateUserAction(
     }
 
     if (validated.image && validated.image.size > 0) {
-      updateData.image = await uploadImage(user, validated)
+      updateData.image = await uploadImage(user, validated.image)
     }
 
     const result = await updateUserProfileById(user.id, updateData)
 
     if ('error' in result) {
       if (typeof result.error === 'string') {
-        return { message: result.error }
+        return { error: result.error }
       }
 
       return { errors: result.error }
@@ -107,28 +102,32 @@ export async function updateUserAction(
       return { errors }
     }
 
-    return { message: 'Failed to update user' }
+    return { error: 'Failed to update user.' }
   }
 }
 
-async function uploadImage(user: any, validatedData: any) {
-  const fileExt = validatedData.image.name.split('.').pop()
+async function uploadImage(user: any, image: File) {
+  const fileExt = image.name.split('.').pop()
   const fileName = `${user.id}-${Date.now()}.${fileExt}`
 
-  const buffer = Buffer.from(await validatedData.image.arrayBuffer())
+  const buffer = Buffer.from(await image.arrayBuffer())
 
   const resizedBuffer = await sharp(buffer)
     .resize(100, 100, { fit: 'cover' })
     .jpeg({ quality: 90 })
     .toBuffer()
 
-  await supabaseAdmin.storage
+  const { error } = await supabaseAdmin.storage
     .from('forkast-assets')
     .upload(fileName, resizedBuffer, {
       cacheControl: '3600',
       upsert: false,
-      contentType: validatedData.image.type,
+      contentType: image.type,
     })
+
+  if (error) {
+    return user.image
+  }
 
   const { data: { publicUrl } } = supabaseAdmin.storage
     .from('forkast-assets')

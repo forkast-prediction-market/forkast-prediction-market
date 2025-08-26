@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getCurrentUser, updateUserNotificationPreferencesById } from '@/lib/db/users'
 
-export async function updateNotificationsSettingsAction(formData: FormData) {
+export async function updateNotificationPreferencesAction(formData: FormData) {
   try {
     const preferences = {
       email_resolutions: formData.get('email_resolutions') === 'on',

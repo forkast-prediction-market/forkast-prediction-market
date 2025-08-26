@@ -6,7 +6,7 @@ import { startTransition, useOptimistic, useRef, useState } from 'react'
 import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { updateNotificationsSettingsAction } from '../actions/notifications'
+import { updateNotificationPreferencesAction } from '../actions/update-notifications-preferences'
 
 interface NotificationSettings {
   email_resolutions: boolean
@@ -39,7 +39,7 @@ export default function SettingsProfileTab({ user }: { user: User }) {
     })
 
     queueMicrotask(async () => {
-      const result = await updateNotificationsSettingsAction(
+      const result = await updateNotificationPreferencesAction(
         new FormData(formRef.current!),
       )
 
