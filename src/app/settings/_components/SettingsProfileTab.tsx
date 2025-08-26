@@ -124,6 +124,7 @@ export default function SettingsProfileTab({ user }: { user: User }) {
               id="username"
               required
               name="username"
+              maxLength={30}
               defaultValue={user.username}
               disabled={isPending}
               placeholder="Enter your username"

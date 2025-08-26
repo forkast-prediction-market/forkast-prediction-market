@@ -23,11 +23,16 @@ export async function getCurrentUser() {
     return null
   }
 
-  return session.user
+  const user = session.user
+  if (user.email.startsWith('0x') && user.email.includes('@http')) {
+    user.email = ''
+  }
+
+  return user
 }
 
-export async function updateCurrentUser(userId: string, input: any) {
-  const { data, error } = await supabaseAdmin
+export async function updateUserProfileById(userId: string, input: any) {
+  const { error } = await supabaseAdmin
     .from('users')
     .update({ ...input })
     .eq('id', userId)
@@ -37,24 +42,21 @@ export async function updateCurrentUser(userId: string, input: any) {
   if (error) {
     if (error.code === '23505') {
       if (error.details?.includes('email')) {
-        return { error: { email: 'Email is already taken' } }
+        return { error: { email: 'Email is already taken.' } }
       }
       if (error.details?.includes('username')) {
-        return { error: { username: 'Username is already taken' } }
+        return { error: { username: 'Username is already taken.' } }
       }
     }
 
-    return { error: 'Failed to update user' }
+    return { error: 'Failed to update user.' }
   }
 
-  return data
+  return {}
 }
 
-export async function updateCurrentUserNotificationPreferences(
-  userId: string,
-  preferences: any,
-) {
-  const { data, error } = await supabaseAdmin
+export async function updateUserNotificationPreferencesById(userId: string, preferences: any) {
+  const { error } = await supabaseAdmin
     .from('users')
     .update({ settings: { notifications: preferences } })
     .eq('id', userId)
@@ -65,5 +67,5 @@ export async function updateCurrentUserNotificationPreferences(
     return { error: 'Failed to update notification preferences.' }
   }
 
-  return data
+  return {}
 }

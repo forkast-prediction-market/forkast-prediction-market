@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { getCurrentUser, updateCurrentUserNotificationPreferences } from '@/lib/db/users'
+import { getCurrentUser, updateUserNotificationPreferencesById } from '@/lib/db/users'
 
 export async function updateNotificationsSettingsAction(formData: FormData) {
   try {
@@ -17,7 +17,7 @@ export async function updateNotificationsSettingsAction(formData: FormData) {
       return
     }
 
-    await updateCurrentUserNotificationPreferences(user.id, preferences)
+    await updateUserNotificationPreferencesById(user.id, preferences)
 
     revalidatePath('/settings')
   }

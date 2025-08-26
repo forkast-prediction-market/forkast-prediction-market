@@ -4,7 +4,7 @@ import { Buffer } from 'node:buffer'
 import { revalidatePath } from 'next/cache'
 import sharp from 'sharp'
 import { z } from 'zod'
-import { getCurrentUser, updateCurrentUser } from '@/lib/db/users'
+import { getCurrentUser, updateUserProfileById } from '@/lib/db/users'
 import { supabaseAdmin } from '@/lib/supabase'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
@@ -21,9 +21,15 @@ export interface ActionState {
 }
 
 const updateUserSchema = z.object({
-  email: z.email({ pattern: z.regexes.html5Email, error: 'Invalid email address' }),
-  username: z.string().min(2, { error: 'Username must be at least 2 characters' }),
-  bio: z.string().max(500, { error: 'Bio must be less than 500 characters' }),
+  email: z.email({ pattern: z.regexes.html5Email, error: 'Invalid email address.' }),
+  username: z
+    .string()
+    .min(1, 'Username must be at least 1 character long')
+    .max(30, 'Username must be at most 30 characters long')
+    .regex(/^[\w.]+$/, 'Only letters, numbers, dots and underscores are allowed')
+    .regex(/^(?!\.)/, 'Cannot start with a dot')
+    .regex(/(?<!\.)$/, 'Cannot end with a dot'),
+  bio: z.string().max(500, { error: 'Bio must be less than 500 characters.' }),
   image: z
     .instanceof(File)
     .optional()
@@ -49,9 +55,8 @@ export async function updateUserAction(
 ): Promise<ActionState> {
   try {
     const user = await getCurrentUser()
-
     if (!user) {
-      return { message: 'Not authenticated' }
+      return { message: 'Not authenticated.' }
     }
 
     const imageFile = formData.get('image') as File
@@ -63,43 +68,20 @@ export async function updateUserAction(
       image: imageFile && imageFile.size > 0 ? imageFile : undefined,
     }
 
-    const validatedData = updateUserSchema.parse(rawData)
-
-    let imageUrl
-    if (validatedData.image && validatedData.image.size > 0) {
-      const fileExt = validatedData.image.name.split('.').pop()
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`
-
-      const buffer = Buffer.from(await validatedData.image.arrayBuffer())
-
-      const resizedBuffer = await sharp(buffer)
-        .resize(100, 100, { fit: 'cover' })
-        .jpeg({ quality: 90 })
-        .toBuffer()
-
-      await supabaseAdmin.storage
-        .from('forkast-assets')
-        .upload(fileName, resizedBuffer, {
-          cacheControl: '3600',
-          upsert: false,
-          contentType: validatedData.image.type,
-        })
-
-      const { data: { publicUrl } } = supabaseAdmin.storage
-        .from('forkast-assets')
-        .getPublicUrl(fileName)
-
-      imageUrl = publicUrl
-    }
+    const validated = updateUserSchema.parse(rawData)
 
     const updateData = {
-      email: validatedData.email,
-      username: validatedData.username,
-      bio: validatedData.bio,
-      ...(imageUrl && { image: imageUrl }),
+      email: validated.email,
+      username: validated.username,
+      bio: validated.bio,
+      image: user.image,
     }
 
-    const result = await updateCurrentUser(user.id, updateData)
+    if (validated.image && validated.image.size > 0) {
+      updateData.image = await uploadImage(user, validated)
+    }
+
+    const result = await updateUserProfileById(user.id, updateData)
 
     if ('error' in result) {
       if (typeof result.error === 'string') {
@@ -127,4 +109,30 @@ export async function updateUserAction(
 
     return { message: 'Failed to update user' }
   }
+}
+
+async function uploadImage(user: any, validatedData: any) {
+  const fileExt = validatedData.image.name.split('.').pop()
+  const fileName = `${user.id}-${Date.now()}.${fileExt}`
+
+  const buffer = Buffer.from(await validatedData.image.arrayBuffer())
+
+  const resizedBuffer = await sharp(buffer)
+    .resize(100, 100, { fit: 'cover' })
+    .jpeg({ quality: 90 })
+    .toBuffer()
+
+  await supabaseAdmin.storage
+    .from('forkast-assets')
+    .upload(fileName, resizedBuffer, {
+      cacheControl: '3600',
+      upsert: false,
+      contentType: validatedData.image.type,
+    })
+
+  const { data: { publicUrl } } = supabaseAdmin.storage
+    .from('forkast-assets')
+    .getPublicUrl(fileName)
+
+  return publicUrl
 }
