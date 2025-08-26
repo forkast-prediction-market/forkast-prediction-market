@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 
 export default function SettingsProfileTab({ user }: { user: User }) {
   const [state, formAction, isPending] = useActionState(updateUserAction, {})
@@ -125,21 +124,6 @@ export default function SettingsProfileTab({ user }: { user: User }) {
               placeholder="Enter your username"
             />
             {state.errors?.username && <InputError message={state.errors.username} />}
-          </div>
-
-          <div className="grid gap-2">
-            <Label htmlFor="bio">
-              Bio
-            </Label>
-            <Textarea
-              id="bio"
-              name="bio"
-              defaultValue={user.bio}
-              placeholder="Tell us about yourself"
-              disabled={isPending}
-              rows={4}
-            />
-            {state.errors?.bio && <InputError message={state.errors.bio} />}
           </div>
         </div>
 
