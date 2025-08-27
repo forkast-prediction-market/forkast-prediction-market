@@ -1,6 +1,7 @@
 'use client'
 
 import type { Comment, User } from '@/types'
+import Form from 'next/form'
 import Image from 'next/image'
 import { useActionState, useEffect, useRef } from 'react'
 import { useFormStatus } from 'react-dom'
@@ -47,7 +48,7 @@ export default function EventCommentReplyForm({
   }, [state.comment, user, onReplyAddedAction])
 
   return (
-    <form ref={formRef} action={formAction} className="flex gap-3">
+    <Form ref={formRef} action={formAction} className="flex gap-3">
       <input type="hidden" name="parent_comment_id" value={parentCommentId} />
       <Image
         src={user?.image || `https://avatar.vercel.sh/${user?.username || user?.address}.png`}
@@ -80,7 +81,7 @@ export default function EventCommentReplyForm({
           </div>
         </div>
       </div>
-    </form>
+    </Form>
   )
 }
 

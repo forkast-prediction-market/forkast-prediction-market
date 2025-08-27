@@ -1,5 +1,6 @@
 'use client'
 
+import Form from 'next/form'
 import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -29,7 +30,7 @@ export default function EventCommentDeleteForm({ commentId, onDeleted }: Props) 
   }, [state.error])
 
   return (
-    <form action={formAction}>
+    <Form action={formAction}>
       <Button
         type="submit"
         size="sm"
@@ -39,6 +40,6 @@ export default function EventCommentDeleteForm({ commentId, onDeleted }: Props) 
       >
         {pending ? 'Deleting...' : 'Delete'}
       </Button>
-    </form>
+    </Form>
   )
 }
