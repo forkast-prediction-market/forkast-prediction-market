@@ -57,4 +57,76 @@ export const CommentModel = {
 
     return { data, error }
   },
+
+  async toggleLike(userId: string, commentId: number) {
+    // Check if user already liked this comment
+    const { data: existingLike } = await supabaseAdmin
+      .from('comment_likes')
+      .select('id')
+      .eq('comment_id', commentId)
+      .eq('user_id', userId)
+      .single()
+
+    if (existingLike) {
+      const { error: deleteError } = await supabaseAdmin
+        .from('comment_likes')
+        .delete()
+        .eq('comment_id', commentId)
+        .eq('user_id', userId)
+
+      if (deleteError) {
+        return { error: deleteError }
+      }
+
+      const { data: comment, error: fetchError } = await supabaseAdmin
+        .from('comments')
+        .select('likes_count')
+        .eq('id', commentId)
+        .single()
+
+      if (fetchError) {
+        return { error: fetchError }
+      }
+
+      return {
+        data: {
+          action: 'unliked' as const,
+          likes_count: comment.likes_count,
+          user_has_liked: false,
+        },
+        error: null,
+      }
+    }
+    else {
+      const { error: insertError } = await supabaseAdmin
+        .from('comment_likes')
+        .insert({
+          comment_id: commentId,
+          user_id: userId,
+        })
+
+      if (insertError) {
+        return { error: insertError }
+      }
+
+      const { data: comment, error: fetchError } = await supabaseAdmin
+        .from('comments')
+        .select('likes_count')
+        .eq('id', commentId)
+        .single()
+
+      if (fetchError) {
+        return { error: fetchError }
+      }
+
+      return {
+        data: {
+          action: 'liked' as const,
+          likes_count: comment.likes_count,
+          user_has_liked: true,
+        },
+        error: null,
+      }
+    }
+  },
 }
