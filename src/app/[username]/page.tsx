@@ -2,6 +2,7 @@
 
 import type { Metadata } from 'next'
 import React, { Suspense } from 'react'
+import { truncateAddress } from '@/lib/utils'
 import PublicProfileContent from './_components/PublicProfileContent'
 import PublicProfileSkeleton from './_components/PublicProfileSkeleton'
 
@@ -15,7 +16,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { username } = await params
 
   const isUsername = username.startsWith('@')
-  const displayName = isUsername ? username : `${username.slice(0, 6)}…${username.slice(-4)}`
+  const displayName = isUsername ? username : truncateAddress(username)
 
   return {
     title: `${displayName} - Profile`,

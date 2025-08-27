@@ -34,3 +34,7 @@ export function formatTimeAgo(dateString: string) {
 
   return `${Math.floor(diffInSeconds / 86400)}d ago`
 }
+
+export function truncateAddress(address: string) {
+  return `${address.slice(0, 6)}…${address.slice(-4)}`
+}
