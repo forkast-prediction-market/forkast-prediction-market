@@ -4,8 +4,9 @@ import { HeartIcon, MoreHorizontalIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
-import EventCommentForm from '@/app/event/[slug]/_components/EventCommentForm'
-import EventCommentReplyForm from '@/app/event/[slug]/_components/EventCommentReplyForm'
+import EventCommentDelete from './EventCommentDelete'
+import EventCommentForm from './EventCommentForm'
+import EventCommentReplyForm from './EventCommentReplyForm'
 
 interface Props {
   event: Event
@@ -31,50 +32,6 @@ export default function EventComments({ event, user }: Props) {
     }
     else if (address) {
       router.push(`/@${address}`)
-    }
-  }
-
-  async function handleDeleteComment(commentId: number) {
-    if (!user) {
-      queueMicrotask(() => open())
-      return
-    }
-
-    // eslint-disable-next-line no-alert
-    if (!confirm('Are you sure you want to delete this comment?')) {
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/comments/${commentId}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        // Remove comment from local state
-        setComments(prev => prev.filter((comment) => {
-          if (comment.id === commentId) {
-            return false
-          }
-
-          // Also filter out from replies
-          if (comment.recent_replies) {
-            comment.recent_replies = comment.recent_replies.filter(reply => reply.id !== commentId)
-          }
-
-          return true
-        }))
-        setOpenMenuId(null)
-      }
-      else {
-        // eslint-disable-next-line no-alert
-        alert('Error deleting comment')
-      }
-    }
-    catch (error) {
-      console.error('Error deleting comment:', error)
-      // eslint-disable-next-line no-alert
-      alert('Error deleting comment')
     }
   }
 
@@ -321,17 +278,23 @@ ${comment.user_has_liked
                                 Report
                               </button>
                               {comment.is_owner && (
-                                <button
-                                  type="button"
-                                  className={`
-                                    flex w-full items-center rounded-sm px-2 py-1.5 text-xs text-red-600
-                                    transition-colors
-                                    hover:bg-red-50 hover:text-red-700
-                                  `}
-                                  onClick={() => handleDeleteComment(comment.id)}
-                                >
-                                  Delete
-                                </button>
+                                <div className="p-0">
+                                  <EventCommentDelete
+                                    commentId={comment.id}
+                                    onDeleted={() => {
+                                      setComments(prev => prev.filter((c) => {
+                                        if (c.id === comment.id) {
+                                          return false
+                                        }
+                                        if (c.recent_replies) {
+                                          c.recent_replies = c.recent_replies.filter(r => r.id !== comment.id)
+                                        }
+                                        return true
+                                      }))
+                                      setOpenMenuId(null)
+                                    }}
+                                  />
+                                </div>
                               )}
                             </div>
                           </>
@@ -478,17 +441,24 @@ ${reply.user_has_liked
                                       Report
                                     </button>
                                     {reply.is_owner && (
-                                      <button
-                                        type="button"
-                                        className={`
-                                          flex w-full items-center rounded-sm px-2 py-1.5 text-xs text-red-600
-                                          transition-colors
-                                          hover:bg-red-50 hover:text-red-700
-                                        `}
-                                        onClick={() => handleDeleteComment(reply.id)}
-                                      >
-                                        Delete
-                                      </button>
+                                      <div className="p-0">
+                                        <EventCommentDelete
+                                          commentId={reply.id}
+                                          onDeleted={() => {
+                                            setComments(prev => prev.map((c) => {
+                                              if (c.id !== comment.id) {
+                                                return c
+                                              }
+                                              return {
+                                                ...c,
+                                                recent_replies: (c.recent_replies || []).filter(r => r.id !== reply.id),
+                                                replies_count: Math.max(0, c.replies_count - 1),
+                                              }
+                                            }))
+                                            setOpenMenuId(null)
+                                          }}
+                                        />
+                                      </div>
                                     )}
                                   </div>
                                 </>

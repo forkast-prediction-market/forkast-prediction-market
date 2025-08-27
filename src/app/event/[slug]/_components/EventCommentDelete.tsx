@@ -1,0 +1,44 @@
+'use client'
+
+import { useActionState, useEffect } from 'react'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { deleteCommentAction } from '../actions/delete-comment'
+
+interface Props {
+  commentId: number
+  onDeleted: () => void
+}
+
+export default function EventCommentDelete({ commentId, onDeleted }: Props) {
+  const [state, formAction, pending] = useActionState(
+    async (_: any, __: FormData) => {
+      const res = await deleteCommentAction(commentId)
+      if (res?.success) {
+        onDeleted()
+      }
+      return res
+    },
+    { error: '' },
+  ) as unknown as [any, (formData: FormData) => void, boolean]
+
+  useEffect(() => {
+    if (state.error) {
+      toast.error(state.error)
+    }
+  }, [state.error])
+
+  return (
+    <form action={formAction}>
+      <Button
+        type="submit"
+        size="sm"
+        variant="ghost"
+        className="w-full text-xs text-destructive"
+        disabled={pending}
+      >
+        {pending ? 'Deleting...' : 'Delete'}
+      </Button>
+    </form>
+  )
+}
