@@ -5,8 +5,7 @@ import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import EventCommentForm from '@/app/event/[slug]/_components/EventCommentForm'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import EventCommentReplyForm from '@/app/event/[slug]/_components/EventCommentReplyForm'
 
 interface Props {
   event: Event
@@ -76,63 +75,6 @@ export default function EventComments({ event, user }: Props) {
       console.error('Error deleting comment:', error)
       // eslint-disable-next-line no-alert
       alert('Error deleting comment')
-    }
-  }
-
-  async function handleSubmitReply(parentCommentId: number) {
-    if (!user) {
-      queueMicrotask(() => open())
-      return
-    }
-
-    if (!replyText.trim() || !user) {
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/events/${event.slug}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: replyText.trim(),
-          parent_comment_id: parentCommentId,
-        }),
-      })
-
-      if (response.ok) {
-        const newReply = await response.json()
-
-        // Ensure the new reply has the current user's data
-        const replyWithUserData = {
-          ...newReply,
-          username: user?.username || newReply.username,
-          user_avatar: user?.image || newReply.user_avatar,
-          user_address: user?.address || newReply.user_address,
-        }
-
-        // Add reply to the parent comment
-        setComments(prev => prev.map((comment) => {
-          if (comment.id === parentCommentId) {
-            return {
-              ...comment,
-              replies_count: comment.replies_count + 1,
-              recent_replies: [
-                ...(comment.recent_replies || []),
-                replyWithUserData,
-              ].slice(-3), // Keep only last 3 replies visible
-            }
-          }
-          return comment
-        }))
-
-        setReplyText('')
-        setReplyingTo(null)
-      }
-    }
-    catch (error) {
-      console.error('Error posting reply:', error)
     }
   }
 
@@ -401,60 +343,34 @@ ${comment.user_has_liked
                     {/* Reply input field */}
                     {replyingTo === comment.id && (
                       <div className="mt-3 ml-11">
-                        <div className="flex gap-3">
-                          <Image
-                            src={user?.image || `https://avatar.vercel.sh/${user?.username || user?.address}.png`}
-                            alt={user?.username || user?.address || 'User'}
-                            width={24}
-                            height={24}
-                            className="size-6 shrink-0 rounded-full object-cover"
-                          />
-                          <div className="flex-1 space-y-2">
-                            <div className="relative">
-                              <Input
-                                className={`
-                                  pr-20 text-sm
-                                  placeholder:text-muted-foreground/70
-                                  focus:border-blue-500 focus:ring-blue-500/20
-                                `}
-                                placeholder={`Reply to ${comment.username || (comment.user_address ? `${comment.user_address.slice(0, 6)}...${comment.user_address.slice(-4)}` : 'anonymous')}`}
-                                value={replyText}
-                                onChange={e => setReplyText(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault()
-                                    handleSubmitReply(comment.id)
-                                  }
-                                  if (e.key === 'Escape') {
-                                    setReplyingTo(null)
-                                    setReplyText('')
-                                  }
-                                }}
-                              />
-                              <div className="absolute top-1/2 right-2 flex -translate-y-1/2 gap-1">
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  className="h-6 px-2 text-xs"
-                                  onClick={() => {
-                                    setReplyingTo(null)
-                                    setReplyText('')
-                                  }}
-                                >
-                                  Cancel
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  className="h-6 px-2 text-xs"
-                                  disabled={!replyText.trim()}
-                                  onClick={() => handleSubmitReply(comment.id)}
-                                >
-                                  Reply
-                                </Button>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
+                        <EventCommentReplyForm
+                          user={user}
+                          eventId={event.id}
+                          parentCommentId={comment.id}
+                          placeholder={`Reply to ${comment.username || (comment.user_address ? `${comment.user_address.slice(0, 6)}...${comment.user_address.slice(-4)}` : 'anonymous')}`}
+                          initialValue={replyText}
+                          onCancel={() => {
+                            setReplyingTo(null)
+                            setReplyText('')
+                          }}
+                          onReplyAddedAction={(newReply) => {
+                            setComments(prev => prev.map((c) => {
+                              if (c.id === comment.id) {
+                                return {
+                                  ...c,
+                                  replies_count: c.replies_count + 1,
+                                  recent_replies: [
+                                    ...(c.recent_replies || []),
+                                    newReply,
+                                  ].slice(-3),
+                                }
+                              }
+                              return c
+                            }))
+                            setReplyingTo(null)
+                            setReplyText('')
+                          }}
+                        />
                       </div>
                     )}
 
@@ -584,60 +500,34 @@ ${reply.user_has_liked
                         {/* Reply input field for second level replies */}
                         {comment.recent_replies?.some(reply => replyingTo === reply.id) && (
                           <div className="mt-3">
-                            <div className="flex gap-3">
-                              <Image
-                                src={user?.image || `https://avatar.vercel.sh/${user?.username || user?.address}.png`}
-                                alt={user?.username || user?.address || 'User'}
-                                width={24}
-                                height={24}
-                                className="size-6 shrink-0 rounded-full object-cover"
-                              />
-                              <div className="flex-1 space-y-2">
-                                <div className="relative">
-                                  <Input
-                                    className={`
-                                      pr-20 text-sm
-                                      placeholder:text-muted-foreground/70
-                                      focus:border-blue-500 focus:ring-blue-500/20
-                                    `}
-                                    placeholder="Add a reply..."
-                                    value={replyText}
-                                    onChange={e => setReplyText(e.target.value)}
-                                    onKeyDown={(e) => {
-                                      if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault()
-                                        handleSubmitReply(comment.id) // Always reply to the main comment
-                                      }
-                                      if (e.key === 'Escape') {
-                                        setReplyingTo(null)
-                                        setReplyText('')
-                                      }
-                                    }}
-                                  />
-                                  <div className="absolute top-1/2 right-2 flex -translate-y-1/2 gap-1">
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      className="h-6 px-2 text-xs"
-                                      onClick={() => {
-                                        setReplyingTo(null)
-                                        setReplyText('')
-                                      }}
-                                    >
-                                      Cancel
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      className="h-6 px-2 text-xs"
-                                      disabled={!replyText.trim()}
-                                      onClick={() => handleSubmitReply(comment.id)} // Always reply to the main comment
-                                    >
-                                      Reply
-                                    </Button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
+                            <EventCommentReplyForm
+                              user={user}
+                              eventId={event.id}
+                              parentCommentId={comment.id}
+                              placeholder="Add a reply..."
+                              initialValue={replyText}
+                              onCancel={() => {
+                                setReplyingTo(null)
+                                setReplyText('')
+                              }}
+                              onReplyAddedAction={(newReply) => {
+                                setComments(prev => prev.map((c) => {
+                                  if (c.id === comment.id) {
+                                    return {
+                                      ...c,
+                                      replies_count: c.replies_count + 1,
+                                      recent_replies: [
+                                        ...(c.recent_replies || []),
+                                        newReply,
+                                      ].slice(-3),
+                                    }
+                                  }
+                                  return c
+                                }))
+                                setReplyingTo(null)
+                                setReplyText('')
+                              }}
+                            />
                           </div>
                         )}
 
