@@ -66,7 +66,7 @@ NEXT_PUBLIC_GOOGLE_ANALYTICS=G-XXXXXXXXXX
 ```
 
 **Quick Setup:**
-1. **Supabase**: Create project at [supabase.com](https://supabase.com)
+1. **Supabase**: Create directly from Vercel Dashboard → Storage → Create Supabase Database
 2. **Reown**: Get Project ID at [dashboard.reown.com](https://dashboard.reown.com)
 3. **Secret**: Generate 32+ character random string for BETTER_AUTH_SECRET
 
@@ -80,10 +80,11 @@ After forking, go to your repository:
 ### 4. Deploy to Vercel
 
 - **Connect your repo** to Vercel
-- **Add environment variables** from your `.env.local` file during deployment
+- **Create Supabase database** directly from Vercel Dashboard → Storage tab
+- **Add remaining environment variables** from your `.env.local` file
 - **Point your domain** to Vercel
 
-**Ready!** Your prediction market will be online and ready to receive users.
+**Ready!** Your prediction market will be online with automatic database setup.
 
 ## 🎯 Features
 
@@ -96,45 +97,41 @@ After forking, go to your repository:
 
 ## 🔧 Tech Stack
 
-- **Frontend:** Next.js 15, TypeScript, Tailwind CSS
-- **Blockchain:** Polygon (Mainnet & Mumbai Testnet)
-- **Smart Contracts:** Solidity, Hardhat
-- **State Management:** React Hooks, Context API
-- **Charts:** Chart.js, TradingView widgets
-- **Web3:** viem, wagmi
+- **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS
+- **Database:** PostgreSQL with Supabase
+- **Authentication:** Better Auth with SIWE
+- **Blockchain:** Polygon, Ethers.js, viem, wagmi
+- **State Management:** Zustand, React Hooks
+- **Charts:** @visx library
+- **Web3 Wallet:** Reown AppKit
 
 ## 📁 Project Structure
 
 ```
 src/
-├── app/          # Next.js app router
-├── components/   # React components
-├── hooks/        # Custom hooks
-├── lib/          # Utilities and configs
+├── app/          # Next.js app router (pages & API routes)
+├── components/   # Reusable React components
+├── hooks/        # Custom React hooks
+├── lib/          # Utilities, configs & database queries
+├── providers/    # Context providers
+├── stores/       # Zustand state management
 └── types/        # TypeScript definitions
 public/           # Static assets
-docs/             # Documentation
 ```
 
 ## 🤝 Contributing
 
 This is an open-source project and we rely on the community to grow. Feel free to open issues, send pull requests, or suggest improvements. Together, we can build the future of decentralized prediction markets!
 
-### Development Guidelines
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+Please see our [Contributing Guidelines](CONTRIBUTING.md) for detailed information on how to contribute to this project.
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🔗 Links
 
-- **Live Demo:** [Coming Soon]
+- **Live Demo:** [https://forka.st](https://forka.st)
 - **Documentation:** [Check /docs folder]
 - **Discord Community:** [Join us]
 - **Telegram:** [Connect with us]
