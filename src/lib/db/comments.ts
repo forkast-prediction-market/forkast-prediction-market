@@ -38,8 +38,7 @@ export const CommentModel = {
         user_id,
         likes_count,
         replies_count,
-        created_at,
-        users!inner(username, image, address)
+        created_at
       `)
       .single()
 
