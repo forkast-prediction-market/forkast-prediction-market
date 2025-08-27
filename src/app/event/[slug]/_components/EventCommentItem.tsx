@@ -174,21 +174,6 @@ export default function EventCommentItem({
             />
           ))}
 
-          {/* Reply input field for second level replies */}
-          {comment.recent_replies?.some(reply => replyingTo === reply.id) && (
-            <div className="mt-3">
-              <EventCommentReplyForm
-                user={user}
-                eventId={eventId}
-                parentCommentId={comment.id}
-                placeholder="Add a reply..."
-                initialValue={replyText}
-                onCancel={handleReplyCancel}
-                onReplyAddedAction={handleReplyAdded}
-              />
-            </div>
-          )}
-
           {comment.replies_count > 3 && !expandedComments.has(comment.id) && (
             <EventCommentsLoadMoreReplies
               comment={comment}

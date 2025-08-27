@@ -22,6 +22,8 @@ interface ReplyItemProps {
   replyText: string
   onSetReplyText: (text: string) => void
   onAddReply: (commentId: number, reply: Comment) => void
+  onReplyAddedAction?: (reply: Comment) => void
+  onCancelReply?: () => void
 }
 
 export default function EventCommentReplyItem({
@@ -71,62 +73,64 @@ export default function EventCommentReplyItem({
   }, [onSetReplyingTo, onSetReplyText])
 
   return (
-    <div className="flex gap-3">
-      <Link
-        href={reply.username ? `/@${reply.username}` : `/@${reply.user_address}`}
-        className="text-sm font-medium transition-colors hover:text-foreground"
-      >
-        <Image
-          src={reply.user_avatar || `https://avatar.vercel.sh/${reply.username || reply.user_address || 'anonymous'}.png`}
-          alt={reply.username || reply.user_address || 'Anonymous User'}
-          width={24}
-          height={24}
-          className="size-6 rounded-full object-cover transition-opacity hover:opacity-80"
-        />
-      </Link>
-      <div className="flex-1">
-        <div className="mb-1 flex items-center gap-2">
-          <Link
-            href={reply.username ? `/@${reply.username}` : `/@${reply.user_address}`}
-            className="text-sm font-medium transition-colors hover:text-foreground"
-          >
-            @
-            {reply.username || truncateAddress(reply.user_address)}
-          </Link>
-          <span className="text-xs text-muted-foreground">
-            {formatTimeAgo(reply.created_at)}
-          </span>
+    <div className="grid gap-3">
+      <div className="flex gap-3">
+        <Link
+          href={reply.username ? `/@${reply.username}` : `/@${reply.user_address}`}
+          className="text-sm font-medium transition-colors hover:text-foreground"
+        >
+          <Image
+            src={reply.user_avatar || `https://avatar.vercel.sh/${reply.username || reply.user_address || 'anonymous'}.png`}
+            alt={reply.username || reply.user_address || 'Anonymous User'}
+            width={24}
+            height={24}
+            className="size-6 rounded-full object-cover transition-opacity hover:opacity-80"
+          />
+        </Link>
+        <div className="flex-1">
+          <div className="mb-1 flex items-center gap-2">
+            <Link
+              href={reply.username ? `/@${reply.username}` : `/@${reply.user_address}`}
+              className="text-sm font-medium transition-colors hover:text-foreground"
+            >
+              @
+              {reply.username || truncateAddress(reply.user_address)}
+            </Link>
+            <span className="text-xs text-muted-foreground">
+              {formatTimeAgo(reply.created_at)}
+            </span>
+          </div>
+          <p className="text-sm">{reply.content}</p>
+          <div className="mt-2 flex items-center gap-3">
+            <button
+              type="button"
+              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+              onClick={handleReplyClick}
+            >
+              Reply
+            </button>
+            <EventCommentLikeForm
+              comment={reply}
+              onLikeToggled={handleLikeToggle}
+            />
+          </div>
         </div>
-        <p className="text-sm">{reply.content}</p>
-        <div className="mt-2 flex items-center gap-3">
+        <div className="relative">
           <button
             type="button"
-            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-            onClick={handleReplyClick}
+            className="text-muted-foreground transition-colors hover:text-foreground"
+            onClick={() => toggleMenu(reply.id)}
+            aria-label="Reply options"
           >
-            Reply
+            <MoreHorizontalIcon className="size-4" />
           </button>
-          <EventCommentLikeForm
+          <CommentMenu
             comment={reply}
-            onLikeToggled={handleLikeToggle}
+            isOpen={openMenuId === reply.id}
+            onClose={closeMenu}
+            onDelete={handleDelete}
           />
         </div>
-      </div>
-      <div className="relative">
-        <button
-          type="button"
-          className="text-muted-foreground transition-colors hover:text-foreground"
-          onClick={() => toggleMenu(reply.id)}
-          aria-label="Reply options"
-        >
-          <MoreHorizontalIcon className="size-4" />
-        </button>
-        <CommentMenu
-          comment={reply}
-          isOpen={openMenuId === reply.id}
-          onClose={closeMenu}
-          onDelete={handleDelete}
-        />
       </div>
 
       {/* Reply input field for second level replies */}
@@ -136,7 +140,7 @@ export default function EventCommentReplyItem({
             user={user}
             eventId={eventId}
             parentCommentId={commentId}
-            placeholder="Add a reply..."
+            placeholder={`Reply to ${reply.username || truncateAddress(reply.user_address)}`}
             initialValue={replyText}
             onCancel={handleReplyCancel}
             onReplyAddedAction={handleReplyAdded}
