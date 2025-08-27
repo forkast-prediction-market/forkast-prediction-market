@@ -1,6 +1,7 @@
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
+import { getEventIdBySlug } from '@/lib/db/events'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(
@@ -13,14 +14,9 @@ export async function GET(
     const limit = Number.parseInt(searchParams.get('limit') || '20')
     const offset = Number.parseInt(searchParams.get('offset') || '0')
 
-    // First, get the event ID from slug
-    const { data: event, error: eventError } = await supabaseAdmin
-      .from('events')
-      .select('id')
-      .eq('slug', slug)
-      .single()
+    const { data: event, error: eventError } = await getEventIdBySlug(slug)
 
-    if (eventError || !event) {
+    if (!event || eventError) {
       return NextResponse.json(
         { error: 'Event not found' },
         { status: 404 },
