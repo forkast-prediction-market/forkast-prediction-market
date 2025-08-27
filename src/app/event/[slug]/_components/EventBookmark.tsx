@@ -44,17 +44,18 @@ export default function EventBookmark({ event }: Props) {
           handleBookmark()
         }
         else {
-          open()
+          queueMicrotask(() => open())
         }
       }}
       disabled={isPending}
       aria-pressed={isBookmarked}
-      className={cn({ 'opacity-50': isPending, 'size-auto p-0': true })}
       title={isBookmarked ? 'Remove Bookmark' : 'Bookmark'}
+      className={cn({
+        'opacity-50': isPending,
+        'size-auto p-0': true,
+      })}
     >
-      <BookmarkIcon
-        className={cn({ 'fill-current text-primary': isBookmarked })}
-      />
+      <BookmarkIcon className={cn({ 'fill-current text-primary': isBookmarked })} />
     </Button>
   )
 }
