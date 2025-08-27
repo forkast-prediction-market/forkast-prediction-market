@@ -4,7 +4,7 @@ import { MoreHorizontalIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback } from 'react'
-import { useMenuState } from '@/hooks/useMenuState'
+import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { formatTimeAgo, truncateAddress } from '@/lib/utils'
 import CommentMenu from './CommentMenu'
 import EventCommentLikeForm from './EventCommentLikeForm'
@@ -40,7 +40,6 @@ export default function EventCommentReplyItem({
   onAddReply,
 }: ReplyItemProps) {
   const { open } = useAppKit()
-  const { openMenuId, toggleMenu, closeMenu } = useMenuState()
 
   const handleReplyClick = useCallback(() => {
     if (!user) {
@@ -58,8 +57,7 @@ export default function EventCommentReplyItem({
 
   const handleDelete = useCallback(() => {
     onDelete(commentId, reply.id)
-    closeMenu()
-  }, [commentId, reply.id, onDelete, closeMenu])
+  }, [commentId, reply.id, onDelete])
 
   const handleReplyAdded = useCallback((newReply: Comment) => {
     onAddReply(commentId, newReply)
@@ -116,20 +114,21 @@ export default function EventCommentReplyItem({
           </div>
         </div>
         <div className="relative">
-          <button
-            type="button"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-            onClick={() => toggleMenu(reply.id)}
-            aria-label="Reply options"
-          >
-            <MoreHorizontalIcon className="size-4" />
-          </button>
-          <CommentMenu
-            comment={reply}
-            isOpen={openMenuId === reply.id}
-            onClose={closeMenu}
-            onDelete={handleDelete}
-          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+                aria-label="Reply options"
+              >
+                <MoreHorizontalIcon className="size-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <CommentMenu
+              comment={reply}
+              onDelete={handleDelete}
+            />
+          </DropdownMenu>
         </div>
       </div>
 

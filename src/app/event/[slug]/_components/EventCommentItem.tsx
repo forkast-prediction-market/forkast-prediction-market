@@ -4,7 +4,7 @@ import { MoreHorizontalIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback } from 'react'
-import { useMenuState } from '@/hooks/useMenuState'
+import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { formatTimeAgo, truncateAddress } from '@/lib/utils'
 import CommentMenu from './CommentMenu'
 import EventCommentLikeForm from './EventCommentLikeForm'
@@ -46,7 +46,6 @@ export default function EventCommentItem({
   onUpdateReply,
 }: CommentItemProps) {
   const { open } = useAppKit()
-  const { openMenuId, toggleMenu, closeMenu } = useMenuState()
 
   const handleReplyClick = useCallback(() => {
     if (!user) {
@@ -64,8 +63,7 @@ export default function EventCommentItem({
 
   const handleDelete = useCallback(() => {
     onDelete(comment.id)
-    closeMenu()
-  }, [comment.id, onDelete, closeMenu])
+  }, [comment.id, onDelete])
 
   const handleReplyAdded = useCallback((newReply: Comment) => {
     onAddReply(comment.id, newReply)
@@ -122,20 +120,21 @@ export default function EventCommentItem({
           </div>
         </div>
         <div className="relative">
-          <button
-            type="button"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-            onClick={() => toggleMenu(comment.id)}
-            aria-label="Comment options"
-          >
-            <MoreHorizontalIcon className="size-4" />
-          </button>
-          <CommentMenu
-            comment={comment}
-            isOpen={openMenuId === comment.id}
-            onClose={closeMenu}
-            onDelete={handleDelete}
-          />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="text-muted-foreground transition-colors hover:text-foreground"
+                aria-label="Comment options"
+              >
+                <MoreHorizontalIcon className="size-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <CommentMenu
+              comment={comment}
+              onDelete={handleDelete}
+            />
+          </DropdownMenu>
         </div>
       </div>
 
