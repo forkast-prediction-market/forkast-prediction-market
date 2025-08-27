@@ -59,7 +59,6 @@ export const CommentModel = {
   },
 
   async toggleLike(userId: string, commentId: number) {
-    // Check if user already liked this comment
     const { data: existingLike } = await supabaseAdmin
       .from('comment_likes')
       .select('id')
@@ -90,7 +89,6 @@ export const CommentModel = {
 
       return {
         data: {
-          action: 'unliked' as const,
           likes_count: comment.likes_count,
           user_has_liked: false,
         },
@@ -121,7 +119,6 @@ export const CommentModel = {
 
       return {
         data: {
-          action: 'liked' as const,
           likes_count: comment.likes_count,
           user_has_liked: true,
         },
