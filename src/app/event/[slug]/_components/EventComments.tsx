@@ -20,7 +20,7 @@ export default function EventComments({ event, user }: Props) {
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [replyingTo, setReplyingTo] = useState<number | null>(null)
   const [replyText, setReplyText] = useState('')
-  const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set())
+  const [expandedComments, setExpandedComments] = useState<Set<number>>(() => new Set())
   const { open } = useAppKit()
   const router = useRouter()
   const handleCommentAdded = useCallback((newComment: Comment) => {

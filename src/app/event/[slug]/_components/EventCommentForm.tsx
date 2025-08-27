@@ -1,7 +1,9 @@
 'use client'
 
 import type { Comment, User } from '@/types'
+import { useAppKit } from '@reown/appkit/react'
 import { ShieldIcon } from 'lucide-react'
+import Form from 'next/form'
 import { useActionState, useEffect, useRef } from 'react'
 import { useFormStatus } from 'react-dom'
 import { Button } from '@/components/ui/button'
@@ -14,6 +16,7 @@ export default function EventCommentForm({ user, eventId, onCommentAddedAction }
   eventId: number
   onCommentAddedAction: (comment: Comment) => void
 }) {
+  const { open } = useAppKit()
   const formRef = useRef<HTMLFormElement>(null)
   const [state, formAction] = useActionState(
     (_: any, formData: any) => submitCommentAction(eventId, formData),
@@ -35,8 +38,18 @@ export default function EventCommentForm({ user, eventId, onCommentAddedAction }
   }, [state.comment, user, onCommentAddedAction])
 
   return (
-    <div className="mt-4 space-y-2">
-      <form ref={formRef} action={formAction} className="relative">
+    <div className="mt-4 grid gap-2">
+      <Form
+        ref={formRef}
+        action={formAction}
+        className="relative"
+        onSubmit={(e) => {
+          if (!user) {
+            e.preventDefault()
+            queueMicrotask(() => open())
+          }
+        }}
+      >
         <Input
           name="content"
           className="h-11 pr-16"
@@ -44,12 +57,12 @@ export default function EventCommentForm({ user, eventId, onCommentAddedAction }
           required
         />
         <SubmitButton user={user} />
-      </form>
+      </Form>
 
       {state.error && <InputError message={state.error} />}
 
       <div className={`
-        flex items-center gap-1 rounded-lg border border-border/50 px-3 py-1.5 text-[11px] text-muted-foreground
+        flex items-center gap-1 rounded-md border border-border/50 px-3 py-1.5 text-xs text-muted-foreground
         dark:border-border/20
       `}
       >
