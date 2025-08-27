@@ -30,7 +30,7 @@ export const CommentModel = {
         event_id: eventId,
         user_id: userId,
         content: content.trim(),
-        parent_comment_id: parentCommentId || null,
+        parent_comment_id: parentCommentId,
       })
       .select(`
         id,
@@ -41,6 +41,19 @@ export const CommentModel = {
         created_at
       `)
       .single()
+
+    return { data, error }
+  },
+
+  async delete(userId: string, commentId: number) {
+    const { data, error } = await supabaseAdmin
+      .from('comments')
+      .update({
+        is_deleted: true,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', commentId)
+      .eq('user_id', userId)
 
     return { data, error }
   },

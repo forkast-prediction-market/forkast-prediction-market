@@ -4,7 +4,8 @@ import { HeartIcon, MoreHorizontalIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
-import EventCommentDelete from './EventCommentDelete'
+import { formatTimeAgo } from '@/lib/utils'
+import EventCommentDeleteForm from './EventCommentDeleteForm'
 import EventCommentForm from './EventCommentForm'
 import EventCommentReplyForm from './EventCommentReplyForm'
 
@@ -135,23 +136,6 @@ export default function EventComments({ event, user }: Props) {
     }
   }
 
-  function formatTimeAgo(dateString: string) {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-
-    if (diffInSeconds < 60) {
-      return `${diffInSeconds}s ago`
-    }
-    if (diffInSeconds < 3600) {
-      return `${Math.floor(diffInSeconds / 60)}m ago`
-    }
-    if (diffInSeconds < 86400) {
-      return `${Math.floor(diffInSeconds / 3600)}h ago`
-    }
-    return `${Math.floor(diffInSeconds / 86400)}d ago`
-  }
-
   return (
     <>
       <EventCommentForm
@@ -161,7 +145,7 @@ export default function EventComments({ event, user }: Props) {
       />
 
       {/* List of Comments */}
-      <div className="mt-6 space-y-6">
+      <div className="mt-6 grid gap-6">
         {loading
           ? (
               <div className="text-center text-sm text-muted-foreground">
@@ -176,7 +160,7 @@ export default function EventComments({ event, user }: Props) {
               )
             : (
                 comments.map(comment => (
-                  <div key={comment.id} className="space-y-3">
+                  <div key={comment.id} className="grid gap-3">
                     <div className="flex gap-3">
                       <button
                         type="button"
@@ -279,7 +263,7 @@ ${comment.user_has_liked
                               </button>
                               {comment.is_owner && (
                                 <div className="p-0">
-                                  <EventCommentDelete
+                                  <EventCommentDeleteForm
                                     commentId={comment.id}
                                     onDeleted={() => {
                                       setComments(prev => prev.filter((c) => {
@@ -338,7 +322,7 @@ ${comment.user_has_liked
 
                     {/* Render replies if available */}
                     {comment.recent_replies && comment.recent_replies.length > 0 && (
-                      <div className="ml-11 space-y-3">
+                      <div className="ml-11 flex flex-col gap-3">
                         {comment.recent_replies.map(reply => (
                           <div key={reply.id} className="flex gap-3">
                             <button
@@ -442,7 +426,7 @@ ${reply.user_has_liked
                                     </button>
                                     {reply.is_owner && (
                                       <div className="p-0">
-                                        <EventCommentDelete
+                                        <EventCommentDeleteForm
                                           commentId={reply.id}
                                           onDeleted={() => {
                                             setComments(prev => prev.map((c) => {
@@ -504,7 +488,7 @@ ${reply.user_has_liked
                         {comment.replies_count > 3 && !expandedComments.has(comment.id) && (
                           <button
                             type="button"
-                            className="ml-9 text-xs text-muted-foreground transition-colors hover:text-foreground"
+                            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
                             onClick={() => loadMoreReplies(comment.id)}
                           >
                             View

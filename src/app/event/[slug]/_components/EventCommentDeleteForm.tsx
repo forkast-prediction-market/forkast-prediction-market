@@ -10,11 +10,11 @@ interface Props {
   onDeleted: () => void
 }
 
-export default function EventCommentDelete({ commentId, onDeleted }: Props) {
+export default function EventCommentDeleteForm({ commentId, onDeleted }: Props) {
   const [state, formAction, pending] = useActionState(
     async (_: any, __: FormData) => {
       const res = await deleteCommentAction(commentId)
-      if (res?.success) {
+      if (!res.error) {
         onDeleted()
       }
       return res
