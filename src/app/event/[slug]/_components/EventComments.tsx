@@ -19,6 +19,7 @@ export default function EventComments({ event }: Props) {
   const user = useUser()
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingReplies, setLoadingReplies] = useState(false)
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [replyingTo, setReplyingTo] = useState<number | null>(null)
   const [replyText, setReplyText] = useState('')
@@ -60,6 +61,8 @@ export default function EventComments({ event }: Props) {
   }, [event.slug])
 
   async function loadMoreReplies(commentId: number) {
+    setLoadingReplies(true)
+
     try {
       const response = await fetch(`/api/comments/${commentId}/replies`)
       if (response.ok) {
@@ -82,6 +85,9 @@ export default function EventComments({ event }: Props) {
     }
     catch (error) {
       console.error('Error loading more replies:', error)
+    }
+    finally {
+      setLoadingReplies(false)
     }
   }
 
@@ -159,7 +165,7 @@ export default function EventComments({ event }: Props) {
                           <button
                             type="button"
                             onClick={() => navigateToProfile(comment.username, comment.user_address)}
-                            className="text-[13px] font-medium transition-colors hover:text-foreground"
+                            className="text-sm font-medium transition-colors hover:text-foreground"
                           >
                             @
                             {comment.username
@@ -168,7 +174,7 @@ export default function EventComments({ event }: Props) {
                                 ? `${comment.user_address.slice(0, 6)}...${comment.user_address.slice(-4)}`
                                 : 'Anonymous User'}
                           </button>
-                          <span className="text-[10px] text-muted-foreground">
+                          <span className="text-xs text-muted-foreground">
                             {formatTimeAgo(comment.created_at)}
                           </span>
                         </div>
@@ -309,7 +315,7 @@ export default function EventComments({ event }: Props) {
                                 <button
                                   type="button"
                                   onClick={() => navigateToProfile(reply.username, reply.user_address)}
-                                  className="text-xs font-medium transition-colors hover:text-foreground"
+                                  className="text-sm font-medium transition-colors hover:text-foreground"
                                 >
                                   @
                                   {reply.username
@@ -318,11 +324,11 @@ export default function EventComments({ event }: Props) {
                                       ? `${reply.user_address.slice(0, 6)}...${reply.user_address.slice(-4)}`
                                       : 'Anonymous User'}
                                 </button>
-                                <span className="text-[10px] text-muted-foreground">
+                                <span className="text-xs text-muted-foreground">
                                   {formatTimeAgo(reply.created_at)}
                                 </span>
                               </div>
-                              <p className="text-xs text-muted-foreground">
+                              <p className="text-sm">
                                 {reply.content}
                               </p>
                               <div className="mt-2 flex items-center gap-3">
@@ -438,17 +444,28 @@ export default function EventComments({ event }: Props) {
                         )}
 
                         {comment.replies_count > 3 && !expandedComments.has(comment.id) && (
-                          <button
-                            type="button"
-                            className="text-left text-xs text-muted-foreground transition-colors hover:text-foreground"
-                            onClick={() => loadMoreReplies(comment.id)}
-                          >
-                            View
-                            {' '}
-                            {comment.replies_count - 3}
-                            {' '}
-                            more replies
-                          </button>
+                          loadingReplies
+                            ? (
+                                <div className="text-left text-xs text-muted-foreground">
+                                  Loading replies...
+                                </div>
+                              )
+                            : (
+                                <button
+                                  type="button"
+                                  className={`
+                                    text-left text-xs text-muted-foreground transition-colors
+                                    hover:text-foreground
+                                  `}
+                                  onClick={() => loadMoreReplies(comment.id)}
+                                >
+                                  View
+                                  {' '}
+                                  {comment.replies_count - 3}
+                                  {' '}
+                                  more replies
+                                </button>
+                              )
                         )}
                       </div>
                     )}
