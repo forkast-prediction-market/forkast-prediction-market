@@ -85,7 +85,7 @@ export default function EventComments({ event }: Props) {
     }
   }
 
-  function handleLikeToggled(commentId: number, action: 'liked' | 'unliked', newLikesCount: number, newUserHasLiked: boolean) {
+  function handleLikeToggled(commentId: number, newLikesCount: number, newUserHasLiked: boolean) {
     setComments(prev => prev.map((comment) => {
       if (comment.id === commentId) {
         return {
@@ -191,11 +191,9 @@ export default function EventComments({ event }: Props) {
                             Reply
                           </button>
                           <EventCommentLikeForm
-                            commentId={comment.id}
-                            initialLikesCount={comment.likes_count}
-                            initialUserHasLiked={comment.user_has_liked ?? false}
-                            onLikeToggled={(action, newLikesCount, newUserHasLiked) =>
-                              handleLikeToggled(comment.id, action, newLikesCount, newUserHasLiked)}
+                            comment={comment}
+                            onLikeToggled={(newLikesCount, newUserHasLiked) =>
+                              handleLikeToggled(comment.id, newLikesCount, newUserHasLiked)}
                           />
                         </div>
                       </div>
@@ -343,11 +341,8 @@ export default function EventComments({ event }: Props) {
                                   Reply
                                 </button>
                                 <EventCommentLikeForm
-                                  commentId={reply.id}
-                                  initialLikesCount={reply.likes_count}
-                                  initialUserHasLiked={reply.user_has_liked ?? false}
-                                  onLikeToggled={(action, newLikesCount, newUserHasLiked) =>
-                                    handleLikeToggled(reply.id, action, newLikesCount, newUserHasLiked)}
+                                  comment={reply}
+                                  onLikeToggled={(newLikesCount, newUserHasLiked) => handleLikeToggled(reply.id, newLikesCount, newUserHasLiked)}
                                 />
                               </div>
                             </div>
