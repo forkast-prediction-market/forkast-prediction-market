@@ -4,12 +4,11 @@ import EventCommentDeleteForm from './EventCommentDeleteForm'
 interface CommentMenuProps {
   comment: Comment
   isOpen: boolean
-  onToggle: () => void
   onClose: () => void
   onDelete: () => void
 }
 
-export default function CommentMenu({ comment, isOpen, onToggle, onClose, onDelete }: CommentMenuProps) {
+export default function CommentMenu({ comment, isOpen, onClose, onDelete }: CommentMenuProps) {
   if (!isOpen) {
     return null
   }

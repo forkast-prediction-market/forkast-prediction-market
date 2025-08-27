@@ -16,7 +16,6 @@ interface ReplyItemProps {
   eventId: number
   user: any
   onLikeToggle: (commentId: number, replyId: number, updates: Partial<Comment>) => void
-  onReply: (commentId: number, username: string) => void
   onDelete: (commentId: number, replyId: number) => void
   replyingTo: number | null
   onSetReplyingTo: (id: number | null) => void
@@ -25,13 +24,12 @@ interface ReplyItemProps {
   onAddReply: (commentId: number, reply: Comment) => void
 }
 
-export default function ReplyItem({
+export default function EventCommentReplyItem({
   reply,
   commentId,
   eventId,
   user,
   onLikeToggle,
-  onReply,
   onDelete,
   replyingTo,
   onSetReplyingTo,
@@ -126,7 +124,6 @@ export default function ReplyItem({
         <CommentMenu
           comment={reply}
           isOpen={openMenuId === reply.id}
-          onToggle={() => toggleMenu(reply.id)}
           onClose={closeMenu}
           onDelete={handleDelete}
         />

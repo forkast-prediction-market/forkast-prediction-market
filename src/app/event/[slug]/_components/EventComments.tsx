@@ -2,8 +2,8 @@ import type { Comment, Event } from '@/types'
 import { useCallback, useState } from 'react'
 import { useComments } from '@/hooks/useComments'
 import { useUser } from '@/stores/useUser'
-import CommentItem from './CommentItem'
 import EventCommentForm from './EventCommentForm'
+import EventCommentItem from './EventCommentItem'
 
 interface Props {
   event: Event
@@ -34,11 +34,6 @@ export default function EventComments({ event }: Props) {
   const handleLikeToggled = useCallback((commentId: number, newLikesCount: number, newUserHasLiked: boolean) => {
     updateComment(commentId, { likes_count: newLikesCount, user_has_liked: newUserHasLiked })
   }, [updateComment])
-
-  const handleReply = useCallback((commentId: number, username: string) => {
-    setReplyingTo(replyingTo === commentId ? null : commentId)
-    setReplyText(`@${username} `)
-  }, [replyingTo])
 
   const handleAddReply = useCallback((commentId: number, newReply: Comment) => {
     const comment = comments.find(c => c.id === commentId)
@@ -99,13 +94,12 @@ export default function EventComments({ event }: Props) {
               )
             : (
                 comments.map(comment => (
-                  <CommentItem
+                  <EventCommentItem
                     key={comment.id}
                     comment={comment}
                     eventId={event.id}
                     user={user}
                     onLikeToggle={handleLikeToggled}
-                    onReply={handleReply}
                     onDelete={handleDeleteComment}
                     replyingTo={replyingTo}
                     onSetReplyingTo={setReplyingTo}
