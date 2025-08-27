@@ -371,7 +371,7 @@ CREATE TABLE IF NOT EXISTS comments (
   -- Constraints
   CHECK (
     -- Root comments have no parent
-    (parent_comment_id IS NULL) OR 
+    (parent_comment_id IS NULL) OR
     -- Reply comments must have parent
     (parent_comment_id IS NOT NULL)
   )
@@ -1000,11 +1000,11 @@ $$ LANGUAGE 'plpgsql';
 
 -- Triggers for comment counters
 CREATE TRIGGER trigger_update_comment_likes_count
-AFTER INSERT OR DELETE ON comment_likes 
+AFTER INSERT OR DELETE ON comment_likes
 FOR EACH ROW EXECUTE FUNCTION update_comment_likes_count();
 
 CREATE TRIGGER trigger_update_comment_replies_count
-AFTER INSERT OR UPDATE OR DELETE ON comments 
+AFTER INSERT OR UPDATE OR DELETE ON comments
 FOR EACH ROW EXECUTE FUNCTION update_comment_replies_count();
 
 -- ============================================================
@@ -1256,29 +1256,40 @@ SELECT
   u.image as user_avatar,
   u.address as user_address,
   -- Aggregated reply info for root comments
-  CASE 
+  CASE
     WHEN c.parent_comment_id IS NULL THEN (
       SELECT json_agg(
-        json_build_object(
-          'id', r.id,
-          'content', r.content,
-          'user_id', r.user_id,
-          'username', ru.username,
-          'user_avatar', ru.image,
-          'user_address', ru.address,
-          'likes_count', r.likes_count,
-          'is_edited', r.is_edited,
-          'created_at', r.created_at
-        ) ORDER BY r.created_at ASC
-      )
-      FROM comments r
-      JOIN users ru ON r.user_id = ru.id
-      WHERE r.parent_comment_id = c.id 
-        AND r.is_deleted = FALSE
-      LIMIT 3  -- Show first 3 replies, rest via "Load more"
-    )
-    ELSE NULL
-  END as recent_replies
+               json_build_object(
+                 'id', r.id,
+                 'content', r.content,
+                 'user_id', r.user_id,
+                 'username', r.username,
+                 'user_avatar', r.user_avatar,
+                 'user_address', r.user_address,
+                 'likes_count', r.likes_count,
+                 'is_edited', r.is_edited,
+                 'created_at', r.created_at
+               ) ORDER BY r.created_at
+             )
+      FROM (
+             SELECT
+               r.id,
+               r.content,
+               r.user_id,
+               ru.username,
+               ru.image AS user_avatar,
+               ru.address AS user_address,
+               r.likes_count,
+               r.is_edited,
+               r.created_at
+             FROM comments r
+                    JOIN users ru ON r.user_id = ru.id
+             WHERE r.parent_comment_id = c.id
+               AND r.is_deleted = FALSE
+             ORDER BY r.created_at
+             LIMIT 3
+           ) r
+    ) END as recent_replies
 FROM
   comments c
   JOIN users u ON c.user_id = u.id
