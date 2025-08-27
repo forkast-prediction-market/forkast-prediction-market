@@ -22,7 +22,7 @@ export async function GET(
     }
 
     const user = await getCurrentUser()
-    const currentUserId = user?.id ? Number.parseInt(user.id) : null
+    const currentUserId = user?.id
 
     const { data: comments, error: rootCommentsError } = await CommentModel.getEventComments(event.id, limit, offset)
     if (rootCommentsError) {
@@ -51,9 +51,11 @@ export async function GET(
 
         commentsWithLikeStatus = comments.map(comment => ({
           ...comment,
+          is_owner: Number.parseInt(currentUserId) === comment.user_id,
           user_has_liked: likedIds.has(comment.id),
           recent_replies: comment.recent_replies?.map((reply: any) => ({
             ...reply,
+            is_owner: Number.parseInt(currentUserId) === reply.user_id,
             user_has_liked: likedIds.has(reply.id),
           })) || [],
         }))
@@ -107,7 +109,6 @@ export async function POST(
       )
     }
 
-    // Insert new comment
     const { data: newComment, error: errorInsert } = await CommentModel.store(user.id, event.id, content, parent_comment_id)
     if (!newComment || errorInsert) {
       return NextResponse.json(

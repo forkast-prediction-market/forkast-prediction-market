@@ -1,3 +1,4 @@
+import type { Comment, User } from '@/types'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { HeartIcon, MoreHorizontalIcon, ShieldIcon } from 'lucide-react'
 import Image from 'next/image'
@@ -6,29 +7,15 @@ import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-interface Comment {
-  id: number
-  content: string
-  user_id: number
-  username: string
-  user_avatar: string | null
-  user_address: string
-  likes_count: number
-  replies_count: number
-  created_at: string
-  user_has_liked?: boolean
-  recent_replies?: Comment[]
-}
-
-interface EventCommentsProps {
+interface Props {
   eventSlug: string
+  user: User | null
 }
 
-export default function EventComments({ eventSlug }: EventCommentsProps) {
+export default function EventComments({ eventSlug, user }: Props) {
   const [newComment, setNewComment] = useState('')
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
-  const [user, setUser] = useState<any>(null)
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [replyingTo, setReplyingTo] = useState<number | null>(null)
   const [replyText, setReplyText] = useState('')
@@ -153,27 +140,6 @@ export default function EventComments({ eventSlug }: EventCommentsProps) {
     async function fetchUserAndComments() {
       try {
         setLoading(true)
-
-        // Fetch user first if connected
-        let currentUser = null
-        if (isConnected) {
-          try {
-            const userResponse = await fetch('/api/auth/get-session')
-            if (userResponse.ok) {
-              const session = await userResponse.json()
-              currentUser = session?.user || null
-              setUser(currentUser)
-            }
-          }
-          catch (error) {
-            console.error('Error fetching user:', error)
-          }
-        }
-        else {
-          setUser(null)
-        }
-
-        // Then fetch comments
         if (eventSlug) {
           const response = await fetch(`/api/events/${eventSlug}/comments`)
           if (response.ok) {
@@ -190,18 +156,8 @@ export default function EventComments({ eventSlug }: EventCommentsProps) {
       }
     }
 
-    fetchUserAndComments()
-  }, [eventSlug, isConnected]) // Refetch when slug or connection status changes
-
-  // Helper function to check ownership
-  function isCommentOwner(commentUserId: number) {
-    if (!user || !user.id) {
-      return false
-    }
-    const userIdNum = Number(user.id)
-    const commentUserIdNum = Number(commentUserId)
-    return userIdNum === commentUserIdNum
-  }
+    queueMicrotask(() => fetchUserAndComments())
+  }, [eventSlug])
 
   async function loadMoreReplies(commentId: number) {
     try {
@@ -492,7 +448,7 @@ ${comment.user_has_liked
                               >
                                 Report
                               </button>
-                              {isCommentOwner(comment.user_id) && (
+                              {comment.is_owner && (
                                 <button
                                   type="button"
                                   className={`
@@ -674,7 +630,7 @@ ${reply.user_has_liked
                                     >
                                       Report
                                     </button>
-                                    {isCommentOwner(reply.user_id) && (
+                                    {reply.is_owner && (
                                       <button
                                         type="button"
                                         className={`
