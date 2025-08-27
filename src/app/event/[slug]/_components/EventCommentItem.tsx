@@ -9,15 +9,14 @@ import { formatTimeAgo, truncateAddress } from '@/lib/utils'
 import CommentMenu from './CommentMenu'
 import EventCommentLikeForm from './EventCommentLikeForm'
 import EventCommentReplyForm from './EventCommentReplyForm'
+import EventCommentReplyItem from './EventCommentReplyItem'
 import EventCommentsLoadMoreReplies from './EventCommentsLoadMoreReplies'
-import ReplyItem from './ReplyItem'
 
 interface CommentItemProps {
   comment: Comment
   eventId: number
   user: any
   onLikeToggle: (commentId: number, newLikesCount: number, newUserHasLiked: boolean) => void
-  onReply: (commentId: number, username: string) => void
   onDelete: (commentId: number) => void
   replyingTo: number | null
   onSetReplyingTo: (id: number | null) => void
@@ -30,12 +29,11 @@ interface CommentItemProps {
   onUpdateReply: (commentId: number, replyId: number, updates: Partial<Comment>) => void
 }
 
-export default function CommentItem({
+export default function EventCommentItem({
   comment,
   eventId,
   user,
   onLikeToggle,
-  onReply,
   onDelete,
   replyingTo,
   onSetReplyingTo,
@@ -135,7 +133,6 @@ export default function CommentItem({
           <CommentMenu
             comment={comment}
             isOpen={openMenuId === comment.id}
-            onToggle={() => toggleMenu(comment.id)}
             onClose={closeMenu}
             onDelete={handleDelete}
           />
@@ -161,14 +158,13 @@ export default function CommentItem({
       {comment.recent_replies && comment.recent_replies.length > 0 && (
         <div className="ml-11 flex flex-col gap-3">
           {comment.recent_replies.map(reply => (
-            <ReplyItem
+            <EventCommentReplyItem
               key={reply.id}
               reply={reply}
               commentId={comment.id}
               eventId={eventId}
               user={user}
               onLikeToggle={onUpdateReply}
-              onReply={onReply}
               onDelete={onDeleteReply}
               replyingTo={replyingTo}
               onSetReplyingTo={onSetReplyingTo}
