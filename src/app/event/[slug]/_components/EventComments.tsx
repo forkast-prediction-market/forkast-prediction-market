@@ -1,19 +1,19 @@
-import type { Comment, User } from '@/types'
+import type { Comment, Event, User } from '@/types'
 import { useAppKit } from '@reown/appkit/react'
-import { HeartIcon, MoreHorizontalIcon, ShieldIcon } from 'lucide-react'
+import { HeartIcon, MoreHorizontalIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import EventCommentForm from '@/app/event/[slug]/_components/EventCommentForm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 interface Props {
-  eventSlug: string
+  event: Event
   user: User | null
 }
 
-export default function EventComments({ eventSlug, user }: Props) {
-  const [newComment, setNewComment] = useState('')
+export default function EventComments({ event, user }: Props) {
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
@@ -87,7 +87,7 @@ export default function EventComments({ eventSlug, user }: Props) {
     }
 
     try {
-      const response = await fetch(`/api/events/${eventSlug}/comments`, {
+      const response = await fetch(`/api/events/${event.slug}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -138,12 +138,10 @@ export default function EventComments({ eventSlug, user }: Props) {
     async function fetchUserAndComments() {
       try {
         setLoading(true)
-        if (eventSlug) {
-          const response = await fetch(`/api/events/${eventSlug}/comments`)
-          if (response.ok) {
-            const data = await response.json()
-            setComments(data)
-          }
+        const response = await fetch(`/api/events/${event.slug}/comments`)
+        if (response.ok) {
+          const data = await response.json()
+          setComments(data)
         }
       }
       catch (error) {
@@ -155,7 +153,7 @@ export default function EventComments({ eventSlug, user }: Props) {
     }
 
     queueMicrotask(() => fetchUserAndComments())
-  }, [eventSlug])
+  }, [event.slug])
 
   async function loadMoreReplies(commentId: number) {
     try {
@@ -180,47 +178,6 @@ export default function EventComments({ eventSlug, user }: Props) {
     }
     catch (error) {
       console.error('Error loading more replies:', error)
-    }
-  }
-
-  async function handleSubmitComment() {
-    if (!user) {
-      queueMicrotask(() => open())
-      return
-    }
-
-    if (!newComment.trim() || !user) {
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/events/${eventSlug}/comments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          content: newComment.trim(),
-        }),
-      })
-
-      if (response.ok) {
-        const newCommentData = await response.json()
-
-        // Ensure the new comment has the current user's data
-        const commentWithUserData = {
-          ...newCommentData,
-          username: user?.username || newCommentData.username,
-          user_avatar: user?.image || newCommentData.user_avatar,
-          user_address: user?.address || newCommentData.user_address,
-        }
-
-        setComments(prev => [commentWithUserData, ...prev])
-        setNewComment('')
-      }
-    }
-    catch (error) {
-      console.error('Error posting comment:', error)
     }
   }
 
@@ -296,34 +253,11 @@ export default function EventComments({ eventSlug, user }: Props) {
 
   return (
     <>
-      <div className="mt-4 space-y-2">
-        <div className="relative">
-          <Input
-            className="h-11 pr-16"
-            placeholder="Add a comment"
-            value={newComment}
-            onChange={e => setNewComment(e.target.value)}
-          />
-          <Button
-            size="sm"
-            className="absolute top-1/2 right-2 -translate-y-1/2 text-xs font-medium"
-            disabled={!newComment.trim()}
-            onClick={handleSubmitComment}
-          >
-            {user
-              ? 'Post'
-              : 'Connect to Post'}
-          </Button>
-        </div>
-        <div className={`
-          flex items-center gap-1 rounded-lg border border-border/50 px-3 py-1.5 text-[11px] text-muted-foreground
-          dark:border-border/20
-        `}
-        >
-          <ShieldIcon className="size-3" />
-          Beware of external links, they may be phishing attacks.
-        </div>
-      </div>
+      <EventCommentForm
+        user={user}
+        eventId={event.id}
+        onCommentAddedAction={newComment => setComments(prev => [newComment, ...prev])}
+      />
 
       {/* List of Comments */}
       <div className="mt-6 space-y-6">
