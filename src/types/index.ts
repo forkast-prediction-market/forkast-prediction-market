@@ -91,7 +91,7 @@ export interface Comment {
   replies_count: number
   created_at: string
   is_owner: boolean
-  user_has_liked?: boolean
+  user_has_liked: boolean
   recent_replies?: Comment[]
 }
 

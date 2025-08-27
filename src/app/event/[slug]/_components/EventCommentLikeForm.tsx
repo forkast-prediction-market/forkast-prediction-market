@@ -4,6 +4,7 @@ import type { Comment } from '@/types'
 import { HeartIcon } from 'lucide-react'
 import Form from 'next/form'
 import { useActionState } from 'react'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { likeCommentAction } from '../actions/like-comment'
 
@@ -16,7 +17,7 @@ export default function EventCommentLikeForm({
   comment,
   onLikeToggled,
 }: Props) {
-  const [_, formAction, pending] = useActionState(
+  const [_, formAction, isPending] = useActionState(
     async (_: any, __: FormData) => {
       const res = await likeCommentAction(comment.id)
       if (res.data) {
@@ -24,24 +25,30 @@ export default function EventCommentLikeForm({
       }
       return res
     },
-    { error: '' },
+    { data: null, error: '' },
   ) as unknown as [any, (formData: FormData) => void, boolean]
 
   return (
     <Form action={formAction}>
-      <button
+      <Button
         type="submit"
-        className={cn(
-          'flex items-center gap-1 text-xs transition-colors',
-          comment.user_has_liked
-            ? 'text-destructive'
-            : 'text-muted-foreground hover:text-foreground',
-        )}
-        disabled={pending}
+        size="icon"
+        variant="ghost"
+        disabled={isPending}
+        aria-pressed={comment.user_has_liked}
+        title={comment.user_has_liked ? 'Remove like' : 'Like'}
+        className={cn({
+          'opacity-50': isPending,
+          'flex size-auto items-center gap-1 p-0 text-xs text-muted-foreground': true,
+        })}
       >
-        <HeartIcon className={`size-3 ${comment.user_has_liked ? 'fill-current' : ''}`} />
+        <HeartIcon className={cn({
+          'size-3': true,
+          'fill-current text-destructive': comment.user_has_liked,
+        })}
+        />
         {comment.likes_count > 0 && <span>{comment.likes_count}</span>}
-      </button>
+      </Button>
     </Form>
   )
 }
