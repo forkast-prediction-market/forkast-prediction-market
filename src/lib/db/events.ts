@@ -94,6 +94,20 @@ export async function listEvents({
   return events
 }
 
+export async function getEventIdBySlug(slug: string) {
+  const { data, error } = await supabaseAdmin
+    .from('events')
+    .select('id')
+    .eq('slug', slug)
+    .single()
+
+  if (error) {
+    return { data: null, error: 'Event not found' }
+  }
+
+  return { data, error: null }
+}
+
 export async function getEventTitleBySlug(slug: string): Promise<string> {
   const { data, error } = await supabaseAdmin
     .from('events')
