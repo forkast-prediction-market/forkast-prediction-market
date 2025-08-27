@@ -10,6 +10,7 @@ import EventCommentDeleteForm from './EventCommentDeleteForm'
 import EventCommentForm from './EventCommentForm'
 import EventCommentLikeForm from './EventCommentLikeForm'
 import EventCommentReplyForm from './EventCommentReplyForm'
+import EventCommentsLoadMoreReplies from './EventCommentsLoadMoreReplies'
 
 interface Props {
   event: Event
@@ -19,7 +20,6 @@ export default function EventComments({ event }: Props) {
   const user = useUser()
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
-  const [loadingReplies, setLoadingReplies] = useState(false)
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
   const [replyingTo, setReplyingTo] = useState<number | null>(null)
   const [replyText, setReplyText] = useState('')
@@ -60,35 +60,18 @@ export default function EventComments({ event }: Props) {
     queueMicrotask(() => fetchUserAndComments())
   }, [event.slug])
 
-  async function loadMoreReplies(commentId: number) {
-    setLoadingReplies(true)
-
-    try {
-      const response = await fetch(`/api/comments/${commentId}/replies`)
-      if (response.ok) {
-        const allReplies = await response.json()
-
-        // Update the specific comment with all replies
-        setComments(prev => prev.map((comment) => {
-          if (comment.id === commentId) {
-            return {
-              ...comment,
-              recent_replies: allReplies,
-            }
-          }
-          return comment
-        }))
-
-        // Mark this comment as expanded
-        setExpandedComments(prev => new Set([...prev, commentId]))
+  function handleRepliesLoaded(commentId: number, allReplies: Comment[]) {
+    setComments(prev => prev.map((comment) => {
+      if (comment.id === commentId) {
+        return {
+          ...comment,
+          recent_replies: allReplies,
+        }
       }
-    }
-    catch (error) {
-      console.error('Error loading more replies:', error)
-    }
-    finally {
-      setLoadingReplies(false)
-    }
+      return comment
+    }))
+
+    setExpandedComments(prev => new Set([...prev, commentId]))
   }
 
   function handleLikeToggled(commentId: number, newLikesCount: number, newUserHasLiked: boolean) {
@@ -444,28 +427,10 @@ export default function EventComments({ event }: Props) {
                         )}
 
                         {comment.replies_count > 3 && !expandedComments.has(comment.id) && (
-                          loadingReplies
-                            ? (
-                                <div className="text-left text-xs text-muted-foreground">
-                                  Loading replies...
-                                </div>
-                              )
-                            : (
-                                <button
-                                  type="button"
-                                  className={`
-                                    text-left text-xs text-muted-foreground transition-colors
-                                    hover:text-foreground
-                                  `}
-                                  onClick={() => loadMoreReplies(comment.id)}
-                                >
-                                  View
-                                  {' '}
-                                  {comment.replies_count - 3}
-                                  {' '}
-                                  more replies
-                                </button>
-                              )
+                          <EventCommentsLoadMoreReplies
+                            comment={comment}
+                            onRepliesLoaded={handleRepliesLoaded}
+                          />
                         )}
                       </div>
                     )}
