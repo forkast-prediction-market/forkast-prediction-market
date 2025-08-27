@@ -19,8 +19,8 @@ export default function EventCommentLikeForm({
   const [_, formAction, pending] = useActionState(
     async (_: any, __: FormData) => {
       const res = await likeCommentAction(comment.id)
-      if (res?.success) {
-        onLikeToggled(res.likes_count, res.user_has_liked)
+      if (res.data) {
+        onLikeToggled(res.data.likes_count, res.data.user_has_liked)
       }
       return res
     },

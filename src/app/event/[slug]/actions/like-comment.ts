@@ -7,22 +7,17 @@ export async function likeCommentAction(commentId: number) {
   try {
     const user = await getCurrentUser()
     if (!user) {
-      return { error: 'Unauthenticated.' }
+      return { data: null, error: 'Unauthenticated.' }
     }
 
-    const { data: result, error } = await CommentModel.toggleLike(user.id, commentId)
+    const { data, error } = await CommentModel.toggleLike(user.id, commentId)
     if (error) {
-      return { error: 'Failed to toggle like' }
+      return { data: null, error: 'Failed to toggle like.' }
     }
 
-    return {
-      success: true,
-      action: result.action,
-      likes_count: result.likes_count,
-      user_has_liked: result.user_has_liked,
-    }
+    return { data, error: null }
   }
   catch {
-    return { error: 'Internal server error' }
+    return { data: null, error: 'Internal server error.' }
   }
 }
