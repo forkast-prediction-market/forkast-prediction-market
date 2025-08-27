@@ -39,10 +39,10 @@ export default function EventComments({ eventSlug }: EventCommentsProps) {
 
   function navigateToProfile(username: string | null, address: string | undefined) {
     if (username) {
-      router.push(`/${username}`)
+      router.push(`/@${username}`)
     }
     else if (address) {
-      router.push(`/${address}`)
+      router.push(`/@${address}`)
     }
     // If neither username nor address, do nothing
   }
