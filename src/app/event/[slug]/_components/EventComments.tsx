@@ -3,7 +3,7 @@ import { useAppKit } from '@reown/appkit/react'
 import { HeartIcon, MoreHorizontalIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import EventCommentForm from '@/app/event/[slug]/_components/EventCommentForm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -22,6 +22,9 @@ export default function EventComments({ event, user }: Props) {
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set())
   const { open } = useAppKit()
   const router = useRouter()
+  const handleCommentAdded = useCallback((newComment: Comment) => {
+    setComments(prev => [newComment, ...prev])
+  }, [])
 
   function navigateToProfile(username: string | null, address: string | undefined) {
     if (username) {
@@ -256,7 +259,7 @@ export default function EventComments({ event, user }: Props) {
       <EventCommentForm
         user={user}
         eventId={event.id}
-        onCommentAddedAction={newComment => setComments(prev => [newComment, ...prev])}
+        onCommentAddedAction={handleCommentAdded}
       />
 
       {/* List of Comments */}
