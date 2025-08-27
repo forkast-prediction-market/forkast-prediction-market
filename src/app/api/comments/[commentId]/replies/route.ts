@@ -56,18 +56,18 @@ export async function GET(
 
       repliesWithLikeStatus = replies.map((reply: any) => ({
         ...reply,
-        username: reply.users[0]?.username,
-        user_avatar: reply.users[0]?.image,
-        user_address: reply.users[0]?.address,
+        username: reply.users?.username,
+        user_avatar: reply.users?.image,
+        user_address: reply.users?.address,
         user_has_liked: likedIds.has(reply.id),
       }))
     }
     else {
       repliesWithLikeStatus = replies?.map((reply: any) => ({
         ...reply,
-        username: reply.users[0]?.username,
-        user_avatar: reply.users[0]?.image,
-        user_address: reply.users[0]?.address,
+        username: reply.users?.username,
+        user_avatar: reply.users?.image,
+        user_address: reply.users?.address,
         user_has_liked: false,
       })) || []
     }

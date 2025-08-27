@@ -78,7 +78,6 @@ export default function EventComments({ event, user }: Props) {
     }
   }
 
-  // Fetch current user and comments together
   useEffect(() => {
     async function fetchUserAndComments() {
       try {
@@ -249,7 +248,7 @@ export default function EventComments({ event, user }: Props) {
                                 ? `${comment.user_address.slice(0, 6)}...${comment.user_address.slice(-4)}`
                                 : 'Anonymous User'}
                           </button>
-                          <span className="text-[11px] text-muted-foreground">
+                          <span className="text-[10px] text-muted-foreground">
                             {formatTimeAgo(comment.created_at)}
                           </span>
                         </div>
@@ -397,15 +396,16 @@ ${comment.user_has_liked
                                 <button
                                   type="button"
                                   onClick={() => navigateToProfile(reply.username, reply.user_address)}
-                                  className="text-[13px] font-medium transition-colors hover:text-foreground"
+                                  className="text-xs font-medium transition-colors hover:text-foreground"
                                 >
+                                  @
                                   {reply.username
                                     ? reply.username
                                     : reply.user_address
                                       ? `${reply.user_address.slice(0, 6)}...${reply.user_address.slice(-4)}`
                                       : 'Anonymous User'}
                                 </button>
-                                <span className="text-[11px] text-muted-foreground">
+                                <span className="text-[10px] text-muted-foreground">
                                   {formatTimeAgo(reply.created_at)}
                                 </span>
                               </div>
