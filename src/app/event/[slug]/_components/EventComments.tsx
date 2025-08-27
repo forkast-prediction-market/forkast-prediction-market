@@ -1,5 +1,5 @@
 import type { Comment, User } from '@/types'
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { useAppKit } from '@reown/appkit/react'
 import { HeartIcon, MoreHorizontalIcon, ShieldIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
@@ -21,7 +21,6 @@ export default function EventComments({ eventSlug, user }: Props) {
   const [replyText, setReplyText] = useState('')
   const [expandedComments, setExpandedComments] = useState<Set<number>>(new Set())
   const { open } = useAppKit()
-  const { isConnected } = useAppKitAccount()
   const router = useRouter()
 
   function navigateToProfile(username: string | null, address: string | undefined) {
@@ -31,12 +30,11 @@ export default function EventComments({ eventSlug, user }: Props) {
     else if (address) {
       router.push(`/@${address}`)
     }
-    // If neither username nor address, do nothing
   }
 
   async function handleDeleteComment(commentId: number) {
-    if (!isConnected || !user) {
-      open()
+    if (!user) {
+      queueMicrotask(() => open())
       return
     }
 
@@ -79,8 +77,8 @@ export default function EventComments({ eventSlug, user }: Props) {
   }
 
   async function handleSubmitReply(parentCommentId: number) {
-    if (!isConnected) {
-      open()
+    if (!user) {
+      queueMicrotask(() => open())
       return
     }
 
@@ -186,8 +184,8 @@ export default function EventComments({ eventSlug, user }: Props) {
   }
 
   async function handleSubmitComment() {
-    if (!isConnected) {
-      open() // Open wallet connection modal
+    if (!user) {
+      queueMicrotask(() => open())
       return
     }
 
@@ -227,8 +225,8 @@ export default function EventComments({ eventSlug, user }: Props) {
   }
 
   async function handleLikeComment(commentId: number) {
-    if (!isConnected) {
-      open() // Open wallet connection modal
+    if (!user) {
+      queueMicrotask(() => open())
       return
     }
 
@@ -301,23 +299,18 @@ export default function EventComments({ eventSlug, user }: Props) {
       <div className="mt-4 space-y-2">
         <div className="relative">
           <Input
-            className={`
-              h-11 w-full rounded-lg border border-border/50 px-3 pr-16 text-sm transition-all duration-200 ease-in-out
-              hover:border-border
-              focus:border-primary
-              dark:border-border/20
-            `}
+            className="h-11 pr-16"
             placeholder="Add a comment"
             value={newComment}
             onChange={e => setNewComment(e.target.value)}
           />
           <Button
             size="sm"
-            className="absolute top-1/2 right-3 -translate-y-1/2 text-xs font-medium"
+            className="absolute top-1/2 right-2 -translate-y-1/2 text-xs font-medium"
             disabled={!newComment.trim()}
             onClick={handleSubmitComment}
           >
-            {isConnected
+            {user
               ? 'Post'
               : 'Connect to Post'}
           </Button>
@@ -370,6 +363,7 @@ export default function EventComments({ eventSlug, user }: Props) {
                             onClick={() => navigateToProfile(comment.username, comment.user_address)}
                             className="text-[13px] font-medium transition-colors hover:text-foreground"
                           >
+                            @
                             {comment.username
                               ? comment.username
                               : comment.user_address
@@ -388,8 +382,8 @@ export default function EventComments({ eventSlug, user }: Props) {
                             type="button"
                             className="text-xs text-muted-foreground transition-colors hover:text-foreground"
                             onClick={() => {
-                              if (!isConnected) {
-                                open()
+                              if (!user) {
+                                queueMicrotask(() => open())
                                 return
                               }
                               setReplyingTo(replyingTo === comment.id ? null : comment.id)
@@ -403,7 +397,7 @@ export default function EventComments({ eventSlug, user }: Props) {
                             className={`
                         flex items-center gap-1 text-xs transition-colors
 ${comment.user_has_liked
-                    ? 'text-red-500 hover:text-red-600'
+                    ? 'text-destructive'
                     : 'text-muted-foreground hover:text-foreground'
                   }
                       `}
@@ -570,8 +564,8 @@ ${comment.user_has_liked
                                   type="button"
                                   className="text-xs text-muted-foreground transition-colors hover:text-foreground"
                                   onClick={() => {
-                                    if (!isConnected) {
-                                      open()
+                                    if (!user) {
+                                      queueMicrotask(() => open())
                                       return
                                     }
                                     setReplyingTo(replyingTo === reply.id ? null : reply.id)
@@ -585,7 +579,7 @@ ${comment.user_has_liked
                                   className={`
                               flex items-center gap-1 text-xs transition-colors
 ${reply.user_has_liked
-                            ? 'text-red-500 hover:text-red-600'
+                            ? 'text-destructive'
                             : 'text-muted-foreground hover:text-foreground'
                           }
                             `}
