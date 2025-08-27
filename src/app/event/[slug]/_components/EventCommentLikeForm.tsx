@@ -1,28 +1,26 @@
 'use client'
 
+import type { Comment } from '@/types'
 import { HeartIcon } from 'lucide-react'
 import Form from 'next/form'
 import { useActionState } from 'react'
+import { cn } from '@/lib/utils'
 import { likeCommentAction } from '../actions/like-comment'
 
 interface Props {
-  commentId: number
-  initialLikesCount: number
-  initialUserHasLiked: boolean
-  onLikeToggled: (action: 'liked' | 'unliked', newLikesCount: number, newUserHasLiked: boolean) => void
+  comment: Comment
+  onLikeToggled: (newLikesCount: number, newUserHasLiked: boolean) => void
 }
 
 export default function EventCommentLikeForm({
-  commentId,
-  initialLikesCount,
-  initialUserHasLiked,
+  comment,
   onLikeToggled,
 }: Props) {
-  const [state, formAction, pending] = useActionState(
+  const [_, formAction, pending] = useActionState(
     async (_: any, __: FormData) => {
-      const res = await likeCommentAction(commentId)
+      const res = await likeCommentAction(comment.id)
       if (res?.success) {
-        onLikeToggled(res.action, res.likes_count, res.user_has_liked)
+        onLikeToggled(res.likes_count, res.user_has_liked)
       }
       return res
     },
@@ -33,17 +31,16 @@ export default function EventCommentLikeForm({
     <Form action={formAction}>
       <button
         type="submit"
-        className={`
-          flex items-center gap-1 text-xs transition-colors
-          ${initialUserHasLiked
-      ? 'text-destructive'
-      : 'text-muted-foreground hover:text-foreground'
-    }
-        `}
+        className={cn(
+          'flex items-center gap-1 text-xs transition-colors',
+          comment.user_has_liked
+            ? 'text-destructive'
+            : 'text-muted-foreground hover:text-foreground',
+        )}
         disabled={pending}
       >
-        <HeartIcon className={`size-3 ${initialUserHasLiked ? 'fill-current' : ''}`} />
-        {initialLikesCount > 0 && <span>{initialLikesCount}</span>}
+        <HeartIcon className={`size-3 ${comment.user_has_liked ? 'fill-current' : ''}`} />
+        {comment.likes_count > 0 && <span>{comment.likes_count}</span>}
       </button>
     </Form>
   )
