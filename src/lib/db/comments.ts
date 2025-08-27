@@ -1,0 +1,48 @@
+import { supabaseAdmin } from '@/lib/supabase'
+
+export const CommentModel = {
+  async getEventComments(eventId: number, limit: number = 20, offset: number = 0) {
+    const { data, error } = await supabaseAdmin
+      .from('v_comments_with_user')
+      .select('*')
+      .eq('event_id', eventId)
+      .is('parent_comment_id', null)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    return { data, error }
+  },
+
+  async getCommentsIdsLikedByUser(userId: number, allIds: number[]) {
+    const { data, error } = await supabaseAdmin
+      .from('comment_likes')
+      .select('comment_id')
+      .eq('user_id', userId)
+      .in('comment_id', allIds)
+
+    return { data, error }
+  },
+
+  async store(userId: string, eventId: number, content: string, parentCommentId: number | null = null) {
+    const { data, error } = await supabaseAdmin
+      .from('comments')
+      .insert({
+        event_id: eventId,
+        user_id: userId,
+        content: content.trim(),
+        parent_comment_id: parentCommentId || null,
+      })
+      .select(`
+        id,
+        content,
+        user_id,
+        likes_count,
+        replies_count,
+        created_at,
+        users!inner(username, image, address)
+      `)
+      .single()
+
+    return { data, error }
+  },
+}
