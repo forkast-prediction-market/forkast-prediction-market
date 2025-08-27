@@ -322,7 +322,7 @@ export default function EventComments({ event }: Props) {
                                   {formatTimeAgo(reply.created_at)}
                                 </span>
                               </div>
-                              <p className="text-sm text-muted-foreground">
+                              <p className="text-xs text-muted-foreground">
                                 {reply.content}
                               </p>
                               <div className="mt-2 flex items-center gap-3">
