@@ -1,20 +1,21 @@
-import type { Comment, Event, User } from '@/types'
+import type { Comment, Event } from '@/types'
 import { useAppKit } from '@reown/appkit/react'
 import { HeartIcon, MoreHorizontalIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { formatTimeAgo } from '@/lib/utils'
+import { useUser } from '@/stores/useUser'
 import EventCommentDeleteForm from './EventCommentDeleteForm'
 import EventCommentForm from './EventCommentForm'
 import EventCommentReplyForm from './EventCommentReplyForm'
 
 interface Props {
   event: Event
-  user: User | null
 }
 
-export default function EventComments({ event, user }: Props) {
+export default function EventComments({ event }: Props) {
+  const user = useUser()
   const [comments, setComments] = useState<Comment[]>([])
   const [loading, setLoading] = useState(true)
   const [openMenuId, setOpenMenuId] = useState<number | null>(null)
