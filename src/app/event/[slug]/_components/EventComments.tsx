@@ -488,7 +488,7 @@ ${reply.user_has_liked
                         {comment.replies_count > 3 && !expandedComments.has(comment.id) && (
                           <button
                             type="button"
-                            className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                            className="text-left text-xs text-muted-foreground transition-colors hover:text-foreground"
                             onClick={() => loadMoreReplies(comment.id)}
                           >
                             View
@@ -496,32 +496,6 @@ ${reply.user_has_liked
                             {comment.replies_count - 3}
                             {' '}
                             more replies
-                          </button>
-                        )}
-
-                        {expandedComments.has(comment.id) && comment.replies_count > 3 && (
-                          <button
-                            type="button"
-                            className="ml-9 text-xs text-muted-foreground transition-colors hover:text-foreground"
-                            onClick={() => {
-                              setExpandedComments((prev) => {
-                                const newSet = new Set(prev)
-                                newSet.delete(comment.id)
-                                return newSet
-                              })
-                              // Reset to show only 3 replies
-                              setComments(prevComments => prevComments.map((c) => {
-                                if (c.id === comment.id) {
-                                  return {
-                                    ...c,
-                                    recent_replies: c.recent_replies?.slice(0, 3) || [],
-                                  }
-                                }
-                                return c
-                              }))
-                            }}
-                          >
-                            Hide replies
                           </button>
                         )}
                       </div>
