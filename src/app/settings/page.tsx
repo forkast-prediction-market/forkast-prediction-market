@@ -21,6 +21,5 @@ export default async function SettingsPage({ searchParams }: Props) {
     redirect('/')
   }
 
-  // @ts-expect-error user.settings is a string in better-auth types
   return <SettingsContent user={user} tab={tab} />
 }

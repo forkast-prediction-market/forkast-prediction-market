@@ -13,7 +13,7 @@ export const CommentModel = {
     return { data, error }
   },
 
-  async getCommentsIdsLikedByUser(userId: number, allIds: number[]) {
+  async getCommentsIdsLikedByUser(userId: string, allIds: number[]) {
     const { data, error } = await supabaseAdmin
       .from('comment_likes')
       .select('comment_id')

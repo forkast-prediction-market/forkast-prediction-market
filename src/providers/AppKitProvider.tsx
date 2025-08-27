@@ -97,12 +97,8 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       onSignIn: () => {
         authClient.getSession().then((session) => {
           const user = session?.data?.user
-          // @ts-expect-error address not defined in address
-          const address = user?.address
           useUser.setState({
-            address,
-            email: session?.data?.user.email,
-            image: session?.data?.user.image || `https://avatar.vercel.sh/${address}.png`,
+            ...user,
           })
 
           redirect(window.location.pathname)
