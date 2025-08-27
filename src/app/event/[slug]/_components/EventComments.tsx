@@ -1,6 +1,6 @@
 import type { Comment, Event } from '@/types'
 import { useAppKit } from '@reown/appkit/react'
-import { HeartIcon, MoreHorizontalIcon } from 'lucide-react'
+import { MoreHorizontalIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -8,6 +8,7 @@ import { formatTimeAgo } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 import EventCommentDeleteForm from './EventCommentDeleteForm'
 import EventCommentForm from './EventCommentForm'
+import EventCommentLikeForm from './EventCommentLikeForm'
 import EventCommentReplyForm from './EventCommentReplyForm'
 
 interface Props {
@@ -84,57 +85,34 @@ export default function EventComments({ event }: Props) {
     }
   }
 
-  async function handleLikeComment(commentId: number) {
-    if (!user) {
-      queueMicrotask(() => open())
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/comments/${commentId}/like`, {
-        method: 'POST',
-      })
-
-      if (response.ok) {
-        const result = await response.json()
-
-        // Update local state based on action
-        setComments(prev => prev.map((comment) => {
-          if (comment.id === commentId) {
-            return {
-              ...comment,
-              likes_count: result.action === 'liked'
-                ? comment.likes_count + 1
-                : Math.max(0, comment.likes_count - 1),
-              user_has_liked: result.action === 'liked',
-            }
-          }
-
-          // Also update if it's a reply
-          if (comment.recent_replies) {
-            return {
-              ...comment,
-              recent_replies: comment.recent_replies.map(reply =>
-                reply.id === commentId
-                  ? {
-                      ...reply,
-                      likes_count: result.action === 'liked'
-                        ? reply.likes_count + 1
-                        : Math.max(0, reply.likes_count - 1),
-                      user_has_liked: result.action === 'liked',
-                    }
-                  : reply,
-              ),
-            }
-          }
-
-          return comment
-        }))
+  function handleLikeToggled(commentId: number, action: 'liked' | 'unliked', newLikesCount: number, newUserHasLiked: boolean) {
+    setComments(prev => prev.map((comment) => {
+      if (comment.id === commentId) {
+        return {
+          ...comment,
+          likes_count: newLikesCount,
+          user_has_liked: newUserHasLiked,
+        }
       }
-    }
-    catch (error) {
-      console.error('Error liking comment:', error)
-    }
+
+      // Also update if it's a reply
+      if (comment.recent_replies) {
+        return {
+          ...comment,
+          recent_replies: comment.recent_replies.map(reply =>
+            reply.id === commentId
+              ? {
+                  ...reply,
+                  likes_count: newLikesCount,
+                  user_has_liked: newUserHasLiked,
+                }
+              : reply,
+          ),
+        }
+      }
+
+      return comment
+    }))
   }
 
   return (
@@ -212,24 +190,13 @@ export default function EventComments({ event }: Props) {
                           >
                             Reply
                           </button>
-                          <button
-                            type="button"
-                            className={`
-                        flex items-center gap-1 text-xs transition-colors
-${comment.user_has_liked
-                    ? 'text-destructive'
-                    : 'text-muted-foreground hover:text-foreground'
-                  }
-                      `}
-                            onClick={() => handleLikeComment(comment.id)}
-                          >
-                            <HeartIcon
-                              className={`size-3 ${comment.user_has_liked ? 'fill-current' : ''}`}
-                            />
-                            {comment.likes_count > 0 && (
-                              <span>{comment.likes_count}</span>
-                            )}
-                          </button>
+                          <EventCommentLikeForm
+                            commentId={comment.id}
+                            initialLikesCount={comment.likes_count}
+                            initialUserHasLiked={comment.user_has_liked ?? false}
+                            onLikeToggled={(action, newLikesCount, newUserHasLiked) =>
+                              handleLikeToggled(comment.id, action, newLikesCount, newUserHasLiked)}
+                          />
                         </div>
                       </div>
                       <div className="relative">
@@ -375,24 +342,13 @@ ${comment.user_has_liked
                                 >
                                   Reply
                                 </button>
-                                <button
-                                  type="button"
-                                  className={`
-                              flex items-center gap-1 text-xs transition-colors
-${reply.user_has_liked
-                            ? 'text-destructive'
-                            : 'text-muted-foreground hover:text-foreground'
-                          }
-                            `}
-                                  onClick={() => handleLikeComment(reply.id)}
-                                >
-                                  <HeartIcon
-                                    className={`size-3 ${reply.user_has_liked ? 'fill-current' : ''}`}
-                                  />
-                                  {reply.likes_count > 0 && (
-                                    <span>{reply.likes_count}</span>
-                                  )}
-                                </button>
+                                <EventCommentLikeForm
+                                  commentId={reply.id}
+                                  initialLikesCount={reply.likes_count}
+                                  initialUserHasLiked={reply.user_has_liked ?? false}
+                                  onLikeToggled={(action, newLikesCount, newUserHasLiked) =>
+                                    handleLikeToggled(reply.id, action, newLikesCount, newUserHasLiked)}
+                                />
                               </div>
                             </div>
                             <div className="relative">
