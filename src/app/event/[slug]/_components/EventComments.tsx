@@ -2,9 +2,9 @@ import type { Comment, Event } from '@/types'
 import { useAppKit } from '@reown/appkit/react'
 import { MoreHorizontalIcon } from 'lucide-react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
-import { formatTimeAgo } from '@/lib/utils'
+import { formatTimeAgo, truncateAddress } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 import EventCommentDeleteForm from './EventCommentDeleteForm'
 import EventCommentForm from './EventCommentForm'
@@ -25,19 +25,9 @@ export default function EventComments({ event }: Props) {
   const [replyText, setReplyText] = useState('')
   const [expandedComments, setExpandedComments] = useState<Set<number>>(() => new Set())
   const { open } = useAppKit()
-  const router = useRouter()
   const handleCommentAdded = useCallback((newComment: Comment) => {
     setComments(prev => [newComment, ...prev])
   }, [])
-
-  function navigateToProfile(username: string | null, address: string | undefined) {
-    if (username) {
-      router.push(`/@${username}`)
-    }
-    else if (address) {
-      router.push(`/@${address}`)
-    }
-  }
 
   useEffect(() => {
     async function fetchUserAndComments() {
@@ -130,10 +120,9 @@ export default function EventComments({ event }: Props) {
                 comments.map(comment => (
                   <div key={comment.id} className="grid gap-3">
                     <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => navigateToProfile(comment.username, comment.user_address)}
-                        className="shrink-0"
+                      <Link
+                        href={comment.username ? `/@${comment.username}` : `/@${comment.user_address}`}
+                        className="text-sm font-medium transition-colors hover:text-foreground"
                       >
                         <Image
                           src={comment.user_avatar || `https://avatar.vercel.sh/${comment.username || comment.user_address || 'anonymous'}.png`}
@@ -142,21 +131,16 @@ export default function EventComments({ event }: Props) {
                           height={32}
                           className="size-8 rounded-full object-cover transition-opacity hover:opacity-80"
                         />
-                      </button>
+                      </Link>
                       <div className="flex-1">
                         <div className="mb-1 flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={() => navigateToProfile(comment.username, comment.user_address)}
+                          <Link
+                            href={comment.username ? `/@${comment.username}` : `/@${comment.user_address}`}
                             className="text-sm font-medium transition-colors hover:text-foreground"
                           >
                             @
-                            {comment.username
-                              ? comment.username
-                              : comment.user_address
-                                ? `${comment.user_address.slice(0, 6)}...${comment.user_address.slice(-4)}`
-                                : 'Anonymous User'}
-                          </button>
+                            {comment.username || truncateAddress(comment.user_address)}
+                          </Link>
                           <span className="text-xs text-muted-foreground">
                             {formatTimeAgo(comment.created_at)}
                           </span>
@@ -174,7 +158,7 @@ export default function EventComments({ event }: Props) {
                                 return
                               }
                               setReplyingTo(replyingTo === comment.id ? null : comment.id)
-                              setReplyText(`@${comment.username || (comment.user_address ? `${comment.user_address.slice(0, 6)}...${comment.user_address.slice(-4)}` : 'anonymous')} `)
+                              setReplyText(`@${comment.username || truncateAddress(comment.user_address)} `)
                             }}
                           >
                             Reply
@@ -248,7 +232,7 @@ export default function EventComments({ event }: Props) {
                           user={user}
                           eventId={event.id}
                           parentCommentId={comment.id}
-                          placeholder={`Reply to ${comment.username || (comment.user_address ? `${comment.user_address.slice(0, 6)}...${comment.user_address.slice(-4)}` : 'anonymous')}`}
+                          placeholder={`Reply to ${comment.username || truncateAddress(comment.user_address)}`}
                           initialValue={replyText}
                           onCancel={() => {
                             setReplyingTo(null)
@@ -280,10 +264,9 @@ export default function EventComments({ event }: Props) {
                       <div className="ml-11 flex flex-col gap-3">
                         {comment.recent_replies.map(reply => (
                           <div key={reply.id} className="flex gap-3">
-                            <button
-                              type="button"
-                              onClick={() => navigateToProfile(reply.username, reply.user_address)}
-                              className="shrink-0"
+                            <Link
+                              href={reply.username ? `/@${reply.username}` : `/@${reply.user_address}`}
+                              className="text-sm font-medium transition-colors hover:text-foreground"
                             >
                               <Image
                                 src={reply.user_avatar || `https://avatar.vercel.sh/${reply.username || reply.user_address || 'anonymous'}.png`}
@@ -292,21 +275,16 @@ export default function EventComments({ event }: Props) {
                                 height={24}
                                 className="size-6 rounded-full object-cover transition-opacity hover:opacity-80"
                               />
-                            </button>
+                            </Link>
                             <div className="flex-1">
                               <div className="mb-1 flex items-center gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => navigateToProfile(reply.username, reply.user_address)}
+                                <Link
+                                  href={reply.username ? `/@${reply.username}` : `/@${reply.user_address}`}
                                   className="text-sm font-medium transition-colors hover:text-foreground"
                                 >
                                   @
-                                  {reply.username
-                                    ? reply.username
-                                    : reply.user_address
-                                      ? `${reply.user_address.slice(0, 6)}...${reply.user_address.slice(-4)}`
-                                      : 'Anonymous User'}
-                                </button>
+                                  {reply.username || truncateAddress(reply.user_address)}
+                                </Link>
                                 <span className="text-xs text-muted-foreground">
                                   {formatTimeAgo(reply.created_at)}
                                 </span>
@@ -324,7 +302,7 @@ export default function EventComments({ event }: Props) {
                                       return
                                     }
                                     setReplyingTo(replyingTo === reply.id ? null : reply.id)
-                                    setReplyText(`@${reply.username || (reply.user_address ? `${reply.user_address.slice(0, 6)}...${reply.user_address.slice(-4)}` : 'anonymous')} `)
+                                    setReplyText(`@${reply.username || truncateAddress(reply.user_address)} `)
                                   }}
                                 >
                                   Reply

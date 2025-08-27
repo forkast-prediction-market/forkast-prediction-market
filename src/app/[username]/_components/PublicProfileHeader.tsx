@@ -6,7 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useClipboard } from '@/hooks/useClipboard'
-import { sanitizeSvg } from '@/lib/utils'
+import { sanitizeSvg, truncateAddress } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 
 interface Props {
@@ -21,7 +21,7 @@ export default function PublicProfileHeader({ profile }: Props) {
     copy(profile.address)
   }
 
-  const address = `${profile.address.slice(0, 6)}…${profile.address.slice(-4)}`
+  const address = truncateAddress(profile.address)
   const joinDate = new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   const avatarSrc = profile.image || `https://avatar.vercel.sh/${profile.username || 'user'}.png`
 
