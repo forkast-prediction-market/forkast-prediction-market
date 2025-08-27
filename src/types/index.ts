@@ -47,22 +47,13 @@ export interface MarketOutcome {
 
 export type EventCategory = string
 
-// User Types
 export interface User {
   id: string
-  address?: string
+  address: string
   email: string
+  settings: string
   username?: string
-  bio?: string
   image?: string | null
-  settings?: string | {
-    notifications: {
-      email_resolutions: boolean
-      inapp_order_fills: boolean
-      inapp_hide_small_fills: boolean
-      inapp_resolutions: boolean
-    }
-  }
 }
 
 export interface PublicProfileStats {

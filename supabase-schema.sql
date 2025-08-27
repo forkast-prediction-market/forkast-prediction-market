@@ -293,7 +293,6 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT UNIQUE,
   email TEXT NOT NULL UNIQUE,
   email_verified BOOLEAN NOT NULL DEFAULT FALSE,
-  bio TEXT,
   image TEXT,
   settings JSONB NOT NULL DEFAULT '{}'::JSONB,
   created_at TIMESTAMPTZ DEFAULT now(),
