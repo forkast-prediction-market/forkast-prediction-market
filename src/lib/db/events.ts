@@ -254,3 +254,15 @@ function getCategoryFromTags(tags: Tag[]): EventCategory {
 
   return 'world'
 }
+
+export const EventModel = {
+  async getIdBySlug(slug: string) {
+    const { data, error } = await supabaseAdmin
+      .from('events')
+      .select('id')
+      .eq('slug', slug)
+      .single()
+
+    return { data, error }
+  },
+}

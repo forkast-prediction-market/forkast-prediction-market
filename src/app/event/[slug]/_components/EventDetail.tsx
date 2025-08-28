@@ -32,7 +32,7 @@ export default function EventDetail({ event }: Props) {
           <EventMarkets event={event} tradingState={tradingState} setIsMobileModalOpen={setIsMobileModalOpen} />
           <EventMarketContext event={event} tradingState={tradingState} />
           <EventRules event={event} />
-          <EventTabs />
+          <EventTabs event={event} />
         </div>
 
         <div className="hidden gap-4 md:block lg:sticky lg:top-28 lg:grid lg:self-start">

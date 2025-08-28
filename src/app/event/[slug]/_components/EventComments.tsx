@@ -1,143 +1,118 @@
-import { HeartIcon, MoreHorizontalIcon, ShieldIcon } from 'lucide-react'
-import Image from 'next/image'
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import type { Comment, Event } from '@/types'
+import { useCallback, useState } from 'react'
+import { useComments } from '@/hooks/useComments'
+import { useUser } from '@/stores/useUser'
+import EventCommentForm from './EventCommentForm'
+import EventCommentItem from './EventCommentItem'
 
-export default function EventComments() {
-  const [newComment, setNewComment] = useState('')
+interface Props {
+  event: Event
+}
+
+export default function EventComments({ event }: Props) {
+  const user = useUser()
+  const [replyingTo, setReplyingTo] = useState<number | null>(null)
+  const [replyText, setReplyText] = useState('')
+  const [expandedComments, setExpandedComments] = useState<Set<number>>(() => new Set())
+
+  const {
+    comments,
+    loading,
+    error,
+    addComment,
+    updateComment,
+    removeComment,
+    updateReply,
+    removeReply,
+  } = useComments(event.slug)
+
+  const handleRepliesLoaded = useCallback((commentId: number, allReplies: Comment[]) => {
+    updateComment(commentId, { recent_replies: allReplies })
+    setExpandedComments(prev => new Set([...prev, commentId]))
+  }, [updateComment])
+
+  const handleLikeToggled = useCallback((commentId: number, newLikesCount: number, newUserHasLiked: boolean) => {
+    updateComment(commentId, { likes_count: newLikesCount, user_has_liked: newUserHasLiked })
+  }, [updateComment])
+
+  const handleAddReply = useCallback((commentId: number, newReply: Comment) => {
+    const comment = comments.find(c => c.id === commentId)
+    if (comment) {
+      updateComment(commentId, {
+        replies_count: comment.replies_count + 1,
+        recent_replies: [
+          ...(comment.recent_replies || []),
+          newReply,
+        ].slice(-3),
+      })
+    }
+  }, [comments, updateComment])
+
+  const handleDeleteReply = useCallback((commentId: number, replyId: number) => {
+    removeReply(commentId, replyId)
+  }, [removeReply])
+
+  const handleUpdateReply = useCallback((commentId: number, replyId: number, updates: Partial<Comment>) => {
+    updateReply(commentId, replyId, updates)
+  }, [updateReply])
+
+  const handleDeleteComment = useCallback((commentId: number) => {
+    removeComment(commentId)
+  }, [removeComment])
+
+  if (error) {
+    return (
+      <div className="mt-6 text-center text-sm text-destructive">
+        Error loading comments:
+        {' '}
+        {error}
+      </div>
+    )
+  }
 
   return (
     <>
-      <div className="mt-4 space-y-2">
-        <div className="relative">
-          <Input
-            className={`
-              h-11 w-full rounded-lg border border-border/50 px-3 pr-16 text-sm transition-all duration-200 ease-in-out
-              hover:border-border
-              focus:border-primary
-              dark:border-border/20
-            `}
-            placeholder="Add a comment"
-            value={newComment}
-            onChange={e => setNewComment(e.target.value)}
-          />
-          <Button
-            size="sm"
-            className="absolute top-1/2 right-3 -translate-y-1/2 text-xs font-medium"
-            disabled={!newComment.trim()}
-          >
-            Post
-          </Button>
-        </div>
-        <div className={`
-          flex items-center gap-1 rounded-lg border border-border/50 px-3 py-1.5 text-[11px] text-muted-foreground
-          dark:border-border/20
-        `}
-        >
-          <ShieldIcon className="size-3" />
-          Beware of external links, they may be phishing attacks.
-        </div>
-      </div>
+      <EventCommentForm
+        user={user}
+        eventId={event.id}
+        onCommentAddedAction={addComment}
+      />
 
       {/* List of Comments */}
-      <div className="mt-6 space-y-6">
-        {[1, 2, 3].map(comment => (
-          <div key={comment} className="space-y-3">
-            <div className="flex gap-3">
-              <Image
-                src={`https://avatar.vercel.sh/user${comment}.png`}
-                alt={`user${comment}`}
-                width={32}
-                height={32}
-                className="size-8 shrink-0 rounded-full object-cover"
-              />
-              <div className="flex-1">
-                <div className="mb-1 flex items-center gap-2">
-                  <span className="text-[13px] font-medium">
-                    user
-                    {comment}
-                  </span>
-                  <span className="text-[11px] text-muted-foreground">
-                    2h ago
-                  </span>
-                </div>
-                <p className="text-sm">
-                  Great analysis! I think Bitcoin has a strong chance of
-                  reaching this target given the current market
-                  conditions.
-                </p>
-                <div className="mt-2 flex items-center gap-3">
-                  <button
-                    type="button"
-                    className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    Reply
-                  </button>
-                  <button
-                    type="button"
-                    className={`
-                      flex items-center gap-1 text-xs text-muted-foreground transition-colors
-                      hover:text-foreground
-                    `}
-                  >
-                    <HeartIcon className="size-3" />
-                  </button>
-                </div>
+      <div className="mt-6 grid gap-6">
+        {loading
+          ? (
+              <div className="text-center text-sm text-muted-foreground">
+                Loading comments...
               </div>
-              <button
-                type="button"
-                className="text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <MoreHorizontalIcon className="size-4" />
-              </button>
-            </div>
-
-            {/* Reply example for second comment */}
-            {comment === 2 && (
-              <div className="ml-11 flex gap-3">
-                <Image
-                  src="https://avatar.vercel.sh/replier1.png"
-                  alt="replier1"
-                  width={24}
-                  height={24}
-                  className="size-6 shrink-0 rounded-full object-cover"
-                />
-                <div className="flex-1">
-                  <div className="mb-1 flex items-center gap-2">
-                    <span className="text-[13px] font-medium">
-                      replier1
-                    </span>
-                    <span className="text-[11px] text-muted-foreground">
-                      1h ago
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">
-                    I agree! The institutional adoption has been
-                    accelerating this year.
-                  </p>
-                  <div className="mt-2 flex items-center gap-3">
-                    <button
-                      type="button"
-                      className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      Reply
-                    </button>
-                    <button
-                      type="button"
-                      className={`
-                        flex items-center gap-1 text-xs text-muted-foreground transition-colors
-                        hover:text-foreground
-                      `}
-                    >
-                      <HeartIcon className="size-3" />
-                    </button>
-                  </div>
+            )
+          : comments.length === 0
+            ? (
+                <div className="text-center text-sm text-muted-foreground">
+                  No comments yet. Be the first to comment!
                 </div>
-              </div>
-            )}
-          </div>
-        ))}
+              )
+            : (
+                comments.map(comment => (
+                  <EventCommentItem
+                    key={comment.id}
+                    comment={comment}
+                    eventId={event.id}
+                    user={user}
+                    onLikeToggle={handleLikeToggled}
+                    onDelete={handleDeleteComment}
+                    replyingTo={replyingTo}
+                    onSetReplyingTo={setReplyingTo}
+                    replyText={replyText}
+                    onSetReplyText={setReplyText}
+                    expandedComments={expandedComments}
+                    onRepliesLoaded={handleRepliesLoaded}
+                    onAddReply={handleAddReply}
+                    onDeleteReply={handleDeleteReply}
+                    onUpdateReply={handleUpdateReply}
+                  />
+                ))
+              )}
       </div>
     </>
   )

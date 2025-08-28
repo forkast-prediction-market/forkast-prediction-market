@@ -43,7 +43,7 @@ export default function EventRelated({ event }: Props) {
       }
     }
 
-    fetchEvents().then(() => {})
+    queueMicrotask(() => fetchEvents())
 
     return () => {
       isMounted = false

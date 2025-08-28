@@ -12,14 +12,6 @@ furnished to do so, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
-NETWORK COMPATIBILITY NOTICE: This software is designed to work optimally
-within the Forkast ecosystem and its supported blockchain networks. While you
-are free to modify and deploy the software on any network, certain features
-such as event synchronization, shared liquidity pools, and automated fee
-distribution are specifically configured for the official Forkast protocol.
-For full functionality and revenue sharing benefits, deployment on the
-designated Forkast-compatible networks is recommended.
-
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE

@@ -47,21 +47,13 @@ export interface MarketOutcome {
 
 export type EventCategory = string
 
-// User Types
 export interface User {
-  address?: string
+  id: string
+  address: string
   email: string
+  settings: string
   username?: string
-  bio?: string
   image?: string | null
-  settings?: {
-    notifications: {
-      email_resolutions: boolean
-      inapp_order_fills: boolean
-      inapp_hide_small_fills: boolean
-      inapp_resolutions: boolean
-    }
-  }
 }
 
 export interface PublicProfileStats {
@@ -71,13 +63,27 @@ export interface PublicProfileStats {
   marketsTraded: number
 }
 
-// Public Profile Types
 export interface PublicProfile {
   address: string
   username?: string
   image?: string
   created_at: Date
   stats?: PublicProfileStats
+}
+
+export interface Comment {
+  id: number
+  content: string
+  user_id: string
+  username: string
+  user_avatar: string | null
+  user_address: string
+  likes_count: number
+  replies_count: number
+  created_at: string
+  is_owner: boolean
+  user_has_liked: boolean
+  recent_replies?: Comment[]
 }
 
 export type ActivityType = 'Buy' | 'Sell' | 'Redeem'
