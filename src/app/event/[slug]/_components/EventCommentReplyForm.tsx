@@ -4,7 +4,6 @@ import type { Comment, User } from '@/types'
 import Form from 'next/form'
 import Image from 'next/image'
 import { useActionState, useEffect, useRef } from 'react'
-import { useFormStatus } from 'react-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { submitCommentAction } from '../actions/store-comment'
@@ -29,7 +28,7 @@ export default function EventCommentReplyForm({
   onReplyAddedAction,
 }: Props) {
   const formRef = useRef<HTMLFormElement>(null)
-  const [state, formAction] = useActionState(
+  const [state, formAction, isPending] = useActionState(
     (_: any, formData: any) => submitCommentAction(eventId, formData),
     { error: '' },
   )
@@ -59,7 +58,6 @@ export default function EventCommentReplyForm({
       />
       <div className="flex-1 space-y-2">
         <div className="relative">
-
           <Input
             name="content"
             className="pr-20 text-sm placeholder:text-muted-foreground/70 focus:border-blue-500 focus:ring-blue-500/20"
@@ -77,25 +75,17 @@ export default function EventCommentReplyForm({
             >
               Cancel
             </Button>
-            <SubmitButton user={user} />
+            <Button
+              type="submit"
+              size="sm"
+              className="h-6 px-2 text-xs"
+              disabled={isPending}
+            >
+              {isPending ? 'Posting...' : user ? 'Reply' : 'Connect to Reply'}
+            </Button>
           </div>
         </div>
       </div>
     </Form>
-  )
-}
-
-function SubmitButton({ user }: { user: User | null }) {
-  const { pending } = useFormStatus()
-
-  return (
-    <Button
-      type="submit"
-      size="sm"
-      className="h-6 px-2 text-xs"
-      disabled={pending}
-    >
-      {pending ? 'Posting...' : user ? 'Reply' : 'Connect to Reply'}
-    </Button>
   )
 }

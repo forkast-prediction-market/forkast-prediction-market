@@ -26,7 +26,7 @@ export default async function EventPage({ params }: PageProps) {
   try {
     const event = await getEventBySlug(slug, Number.parseInt(user?.id ?? '0'))
 
-    return <EventDetail event={event} key={`slug-${user?.id}`} />
+    return <EventDetail event={event} user={user} key={`is-bookmarked-${event.is_bookmarked}`} />
   }
   catch {
     notFound()
