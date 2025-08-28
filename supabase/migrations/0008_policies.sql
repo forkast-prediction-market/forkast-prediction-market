@@ -201,6 +201,13 @@ END $$;
 -- Bookmarks policies
 DO $$
 BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Public bookmark counts' AND tablename = 'bookmarks') THEN
+        CREATE POLICY "Public bookmark counts" ON bookmarks FOR SELECT TO anon USING (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can view own bookmarks' AND tablename = 'bookmarks') THEN
         CREATE POLICY "Users can view own bookmarks" ON bookmarks FOR SELECT TO authenticated USING (auth.uid()::text = user_id::text);
     END IF;
@@ -213,7 +220,14 @@ BEGIN
     END IF;
 END $$;
 
--- Wallets policies (users can only see their own)
+-- Wallets policies
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Wallets are public' AND tablename = 'wallets') THEN
+        CREATE POLICY "Wallets are public" ON wallets FOR SELECT TO anon USING (TRUE);
+    END IF;
+END $$;
+
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can view own wallets' AND tablename = 'wallets') THEN
@@ -445,5 +459,318 @@ DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can create reports' AND tablename = 'comment_reports') THEN
         CREATE POLICY "Users can create reports" ON comment_reports FOR INSERT TO authenticated WITH CHECK (reporter_user_id = auth.uid()::INTEGER);
+    END IF;
+END $$;
+
+-- ============================================================
+-- 🔧 ADMIN ACCESS POLICIES FOR AUTHENTICATED USERS
+-- ============================================================
+-- Admin policies for authenticated users (full access)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Markets admin access' AND tablename = 'markets') THEN
+        CREATE POLICY "Markets admin access" ON markets FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Events admin access' AND tablename = 'events') THEN
+        CREATE POLICY "Events admin access" ON events FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Tags admin access' AND tablename = 'tags') THEN
+        CREATE POLICY "Tags admin access" ON tags FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Event tags admin access' AND tablename = 'event_tags') THEN
+        CREATE POLICY "Event tags admin access" ON event_tags FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Outcomes admin access' AND tablename = 'outcomes') THEN
+        CREATE POLICY "Outcomes admin access" ON outcomes FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Conditions admin access' AND tablename = 'conditions') THEN
+        CREATE POLICY "Conditions admin access" ON conditions FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'User positions admin access' AND tablename = 'user_position_balances') THEN
+        CREATE POLICY "User positions admin access" ON user_position_balances FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Order fills admin access' AND tablename = 'order_fills') THEN
+        CREATE POLICY "Order fills admin access" ON order_fills FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+-- ============================================================
+-- 🔐 SERVICE ROLE POLICIES (CRITICAL FOR SYNC OPERATIONS)
+-- ============================================================
+-- Service role policies for all tables
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Sync status for service role' AND tablename = 'sync_status') THEN
+        CREATE POLICY "Sync status for service role" ON sync_status FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_sync_status' AND tablename = 'sync_status') THEN
+        CREATE POLICY "service_role_all_sync_status" ON sync_status FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_conditions' AND tablename = 'conditions') THEN
+        CREATE POLICY "service_role_all_conditions" ON conditions FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_markets' AND tablename = 'markets') THEN
+        CREATE POLICY "service_role_all_markets" ON markets FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_events' AND tablename = 'events') THEN
+        CREATE POLICY "service_role_all_events" ON events FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_tags' AND tablename = 'tags') THEN
+        CREATE POLICY "service_role_all_tags" ON tags FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_event_tags' AND tablename = 'event_tags') THEN
+        CREATE POLICY "service_role_all_event_tags" ON event_tags FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_outcomes' AND tablename = 'outcomes') THEN
+        CREATE POLICY "service_role_all_outcomes" ON outcomes FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_user_positions' AND tablename = 'user_position_balances') THEN
+        CREATE POLICY "service_role_all_user_positions" ON user_position_balances FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_order_fills' AND tablename = 'order_fills') THEN
+        CREATE POLICY "service_role_all_order_fills" ON order_fills FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+-- Service role policies for additional tables
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_orders_matched_global' AND tablename = 'orders_matched_global') THEN
+        CREATE POLICY "service_role_all_orders_matched_global" ON orders_matched_global FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_market_open_interest' AND tablename = 'market_open_interest') THEN
+        CREATE POLICY "service_role_all_market_open_interest" ON market_open_interest FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_global_open_interest' AND tablename = 'global_open_interest') THEN
+        CREATE POLICY "service_role_all_global_open_interest" ON global_open_interest FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_position_splits' AND tablename = 'position_splits') THEN
+        CREATE POLICY "service_role_all_position_splits" ON position_splits FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_position_merges' AND tablename = 'position_merges') THEN
+        CREATE POLICY "service_role_all_position_merges" ON position_merges FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_redemptions' AND tablename = 'redemptions') THEN
+        CREATE POLICY "service_role_all_redemptions" ON redemptions FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_market_resolutions' AND tablename = 'market_resolutions') THEN
+        CREATE POLICY "service_role_all_market_resolutions" ON market_resolutions FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_sports_games' AND tablename = 'sports_games') THEN
+        CREATE POLICY "service_role_all_sports_games" ON sports_games FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_sports_markets' AND tablename = 'sports_markets') THEN
+        CREATE POLICY "service_role_all_sports_markets" ON sports_markets FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_fpmms' AND tablename = 'fpmms') THEN
+        CREATE POLICY "service_role_all_fpmms" ON fpmms FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_collaterals' AND tablename = 'collaterals') THEN
+        CREATE POLICY "service_role_all_collaterals" ON collaterals FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_fpmm_pool_memberships' AND tablename = 'fpmm_pool_memberships') THEN
+        CREATE POLICY "service_role_all_fpmm_pool_memberships" ON fpmm_pool_memberships FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_global_usdc_balance' AND tablename = 'global_usdc_balance') THEN
+        CREATE POLICY "service_role_all_global_usdc_balance" ON global_usdc_balance FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_wallets' AND tablename = 'wallets') THEN
+        CREATE POLICY "service_role_all_wallets" ON wallets FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+-- Service role policies for comment tables
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_comments' AND tablename = 'comments') THEN
+        CREATE POLICY "service_role_all_comments" ON comments FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_comment_likes' AND tablename = 'comment_likes') THEN
+        CREATE POLICY "service_role_all_comment_likes" ON comment_likes FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_comment_reports' AND tablename = 'comment_reports') THEN
+        CREATE POLICY "service_role_all_comment_reports" ON comment_reports FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+-- Service role policies for auth tables
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access to users' AND tablename = 'users') THEN
+        CREATE POLICY "Service role full access to users" ON users FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access to sessions' AND tablename = 'sessions') THEN
+        CREATE POLICY "Service role full access to sessions" ON sessions FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access to accounts' AND tablename = 'accounts') THEN
+        CREATE POLICY "Service role full access to accounts" ON accounts FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access to verifications' AND tablename = 'verifications') THEN
+        CREATE POLICY "Service role full access to verifications" ON verifications FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role full access to bookmarks' AND tablename = 'bookmarks') THEN
+        CREATE POLICY "Service role full access to bookmarks" ON bookmarks FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+-- Additional user policies
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can insert own bookmarks' AND tablename = 'bookmarks') THEN
+        CREATE POLICY "Users can insert own bookmarks" ON bookmarks FOR INSERT TO authenticated WITH CHECK (auth.uid()::text = user_id::text);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can delete own bookmarks' AND tablename = 'bookmarks') THEN
+        CREATE POLICY "Users can delete own bookmarks" ON bookmarks FOR DELETE TO authenticated USING (auth.uid()::text = user_id::text);
+    END IF;
+END $$;
+
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can update own accounts' AND tablename = 'accounts') THEN
+        CREATE POLICY "Users can update own accounts" ON accounts FOR UPDATE TO authenticated USING (auth.uid()::text = user_id::text) WITH CHECK (auth.uid()::text = user_id::text);
     END IF;
 END $$;

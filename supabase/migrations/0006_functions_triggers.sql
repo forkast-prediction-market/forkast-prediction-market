@@ -75,6 +75,10 @@ CREATE OR REPLACE TRIGGER update_verifications_updated_at
 BEFORE UPDATE ON verifications 
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE OR REPLACE TRIGGER update_wallets_updated_at 
+BEFORE UPDATE ON wallets 
+FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Function to update active markets count per event
 CREATE OR REPLACE FUNCTION update_event_markets_count() 
 RETURNS TRIGGER 
