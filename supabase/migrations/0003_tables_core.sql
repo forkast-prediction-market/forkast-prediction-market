@@ -82,7 +82,7 @@ CREATE TABLE IF NOT EXISTS orders_matched_global (
   id TEXT PRIMARY KEY DEFAULT '',
   trades_quantity BIGINT NOT NULL DEFAULT 0,
   buys_quantity BIGINT NOT NULL DEFAULT 0,
-  sells_quantity BIGINT DEFAULT 0,
+  sells_quantity BIGINT NOT NULL DEFAULT 0,
   collateral_volume DECIMAL(20, 6) DEFAULT 0,
   scaled_collateral_volume DECIMAL(20, 6) DEFAULT 0,
   collateral_buy_volume DECIMAL(20, 6) DEFAULT 0,
