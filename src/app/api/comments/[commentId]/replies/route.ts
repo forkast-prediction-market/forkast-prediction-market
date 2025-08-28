@@ -19,29 +19,22 @@ export async function GET(
       )
     }
 
-    let repliesWithLikeStatus: any[] = []
+    let likedIds: Set<any>
     if (currentUserId && replies?.length) {
       const replyIds = replies.map(reply => reply.id)
       const { data: userLikes } = await CommentModel.getCommentsIdsLikedByUser(currentUserId, replyIds)
-      const likedIds = new Set(userLikes?.map(like => like.comment_id) || [])
+      if (userLikes) {
+        likedIds = new Set(userLikes?.map(like => like.comment_id) || [])
+      }
+    }
 
-      repliesWithLikeStatus = replies.map((reply: any) => ({
-        ...reply,
-        username: reply.users?.username,
-        user_avatar: reply.users?.image,
-        user_address: reply.users?.address,
-        user_has_liked: likedIds.has(reply.id),
-      }))
-    }
-    else {
-      repliesWithLikeStatus = replies?.map((reply: any) => ({
-        ...reply,
-        username: reply.users?.username,
-        user_avatar: reply.users?.image,
-        user_address: reply.users?.address,
-        user_has_liked: false,
-      })) || []
-    }
+    const repliesWithLikeStatus = replies?.map((reply: any) => ({
+      ...reply,
+      username: reply.users?.username,
+      user_avatar: reply.users?.image,
+      user_address: reply.users?.address,
+      user_has_liked: likedIds.has(reply.id),
+    })) || []
 
     return NextResponse.json(repliesWithLikeStatus)
   }
