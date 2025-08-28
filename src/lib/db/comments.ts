@@ -13,12 +13,32 @@ export const CommentModel = {
     return { data, error }
   },
 
-  async getCommentsIdsLikedByUser(userId: string, allIds: number[]) {
+  async getCommentsIdsLikedByUser(userId: string, ids: number[]) {
     const { data, error } = await supabaseAdmin
       .from('comment_likes')
       .select('comment_id')
       .eq('user_id', userId)
-      .in('comment_id', allIds)
+      .in('comment_id', ids)
+
+    return { data, error }
+  },
+
+  async getCommentReplies(commentId: string) {
+    const { data, error } = await supabaseAdmin
+      .from('comments')
+      .select(`
+        id,
+        content,
+        user_id,
+        likes_count,
+        replies_count,
+        created_at,
+        is_edited,
+        users!inner(username, image, address)
+      `)
+      .eq('parent_comment_id', commentId)
+      .eq('is_deleted', false)
+      .order('created_at', { ascending: true })
 
     return { data, error }
   },
