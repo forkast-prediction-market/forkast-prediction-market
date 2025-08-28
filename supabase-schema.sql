@@ -1369,7 +1369,21 @@ ALTER TABLE
 ALTER TABLE
   wallets ENABLE ROW LEVEL SECURITY;
 
--- Enable RLS on comment tables
+ALTER TABLE
+  users ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE
+  sessions ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE
+  accounts ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE
+  verifications ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE
+  bookmarks ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE
   comments ENABLE ROW LEVEL SECURITY;
 
@@ -1582,6 +1596,83 @@ CREATE POLICY "User positions admin access" ON user_position_balances FOR ALL TO
 CREATE POLICY "Order fills admin access" ON order_fills FOR ALL TO authenticated USING (TRUE) WITH CHECK (TRUE);
 
 -- ============================================================
+-- RLS POLICIES FOR AUTH TABLES
+-- ============================================================
+
+-- Users table policies
+CREATE POLICY "Users can view own profile" ON users 
+FOR SELECT TO authenticated 
+USING (id = (auth.jwt() ->> 'sub')::integer);
+
+CREATE POLICY "Users can update own profile" ON users 
+FOR UPDATE TO authenticated 
+USING (id = (auth.jwt() ->> 'sub')::integer)
+WITH CHECK (id = (auth.jwt() ->> 'sub')::integer);
+
+CREATE POLICY "Service role full access to users" ON users 
+FOR ALL TO service_role 
+USING (TRUE) 
+WITH CHECK (TRUE);
+
+-- Sessions table policies  
+CREATE POLICY "Users can view own sessions" ON sessions 
+FOR SELECT TO authenticated 
+USING (user_id = (auth.jwt() ->> 'sub')::integer);
+
+CREATE POLICY "Users can delete own sessions" ON sessions 
+FOR DELETE TO authenticated 
+USING (user_id = (auth.jwt() ->> 'sub')::integer);
+
+CREATE POLICY "Service role full access to sessions" ON sessions 
+FOR ALL TO service_role 
+USING (TRUE) 
+WITH CHECK (TRUE);
+
+-- Accounts table policies
+CREATE POLICY "Users can view own accounts" ON accounts 
+FOR SELECT TO authenticated 
+USING (user_id = (auth.jwt() ->> 'sub')::integer);
+
+CREATE POLICY "Users can update own accounts" ON accounts 
+FOR UPDATE TO authenticated 
+USING (user_id = (auth.jwt() ->> 'sub')::integer)
+WITH CHECK (user_id = (auth.jwt() ->> 'sub')::integer);
+
+CREATE POLICY "Service role full access to accounts" ON accounts 
+FOR ALL TO service_role 
+USING (TRUE) 
+WITH CHECK (TRUE);
+
+-- Verifications table policies (only service role access)
+CREATE POLICY "Service role full access to verifications" ON verifications 
+FOR ALL TO service_role 
+USING (TRUE) 
+WITH CHECK (TRUE);
+
+-- Bookmarks table policies
+CREATE POLICY "Users can view own bookmarks" ON bookmarks 
+FOR SELECT TO authenticated 
+USING (user_id = (auth.jwt() ->> 'sub')::integer);
+
+CREATE POLICY "Users can insert own bookmarks" ON bookmarks 
+FOR INSERT TO authenticated 
+WITH CHECK (user_id = (auth.jwt() ->> 'sub')::integer);
+
+CREATE POLICY "Users can delete own bookmarks" ON bookmarks 
+FOR DELETE TO authenticated 
+USING (user_id = (auth.jwt() ->> 'sub')::integer);
+
+CREATE POLICY "Service role full access to bookmarks" ON bookmarks 
+FOR ALL TO service_role 
+USING (TRUE) 
+WITH CHECK (TRUE);
+
+-- Public read access to bookmarks count (anonymous users can see bookmark counts)
+CREATE POLICY "Public bookmark counts" ON bookmarks 
+FOR SELECT TO anon 
+USING (TRUE);
+
+-- ============================================================
 -- 🔑 CRITICAL: GRANT PERMISSIONS TO SERVICE ROLE
 -- ============================================================
 -- This is essential for sync operations to work properly
@@ -1591,6 +1682,13 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
 
 GRANT usage ON SCHEMA public TO service_role;
+
+-- Additional explicit grants for auth tables
+GRANT ALL ON users TO service_role;
+GRANT ALL ON sessions TO service_role;
+GRANT ALL ON accounts TO service_role;
+GRANT ALL ON verifications TO service_role;
+GRANT ALL ON bookmarks TO service_role;
 
 -- ============================================================
 -- 13. 🗂️ STORAGE BUCKET SETUP
@@ -1647,3 +1745,49 @@ FROM
   STORAGE.buckets
 WHERE
   id = 'forkast-assets';
+
+-- ============================================================
+-- 🔍 RLS VALIDATION QUERIES
+-- ============================================================
+
+-- Verify all tables have RLS enabled
+SELECT 
+    schemaname,
+    tablename,
+    rowsecurity as rls_enabled,
+    CASE 
+        WHEN rowsecurity THEN 'RLS Enabled ✅'
+        ELSE 'RLS Missing ❌'
+    END as status
+FROM pg_tables 
+WHERE schemaname = 'public' 
+ORDER BY tablename;
+
+-- Verify policies exist for each table
+SELECT 
+    schemaname,
+    tablename,
+    COUNT(pol.*) as policy_count,
+    CASE 
+        WHEN COUNT(pol.*) > 0 THEN 'Has Policies ✅'
+        ELSE 'No Policies ❌'
+    END as policy_status
+FROM pg_tables t
+LEFT JOIN pg_policies pol ON t.tablename = pol.tablename AND t.schemaname = pol.schemaname
+WHERE t.schemaname = 'public'
+GROUP BY t.schemaname, t.tablename
+ORDER BY t.tablename;
+
+-- List all RLS policies for review
+SELECT 
+    schemaname,
+    tablename,
+    policyname,
+    permissive,
+    roles,
+    cmd,
+    qual,
+    with_check
+FROM pg_policies 
+WHERE schemaname = 'public'
+ORDER BY tablename, policyname;
