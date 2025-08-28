@@ -80,7 +80,7 @@ CREATE TABLE IF NOT EXISTS order_fills (
 -- Global Orders Matched - From Orderbook subgraph
 CREATE TABLE IF NOT EXISTS orders_matched_global (
   id TEXT PRIMARY KEY DEFAULT '',
-  trades_quantity BIGINT DEFAULT 0,
+  trades_quantity BIGINT NOT NULL DEFAULT 0,
   buys_quantity BIGINT DEFAULT 0,
   sells_quantity BIGINT DEFAULT 0,
   collateral_volume DECIMAL(20, 6) DEFAULT 0,
