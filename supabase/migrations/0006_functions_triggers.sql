@@ -4,9 +4,9 @@
 -- Database functions and triggers for automation
 
 -- Function for automatic updated_at
-CREATE OR REPLACE FUNCTION update_updated_at_column() 
-RETURNS TRIGGER 
-SET search_path = 'public' 
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER
+SET search_path = 'public'
 AS $$
 BEGIN
     NEW.updated_at = now();
@@ -15,74 +15,70 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 -- Triggers for updated_at
-CREATE OR REPLACE TRIGGER update_tags_updated_at 
-BEFORE UPDATE ON tags 
+CREATE OR REPLACE TRIGGER update_tags_updated_at
+BEFORE UPDATE ON tags
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_events_updated_at 
-BEFORE UPDATE ON events 
+CREATE OR REPLACE TRIGGER update_events_updated_at
+BEFORE UPDATE ON events
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_markets_updated_at 
-BEFORE UPDATE ON markets 
+CREATE OR REPLACE TRIGGER update_markets_updated_at
+BEFORE UPDATE ON markets
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_outcomes_updated_at 
-BEFORE UPDATE ON outcomes 
+CREATE OR REPLACE TRIGGER update_outcomes_updated_at
+BEFORE UPDATE ON outcomes
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_sync_status_updated_at 
-BEFORE UPDATE ON sync_status 
+CREATE OR REPLACE TRIGGER update_sync_status_updated_at
+BEFORE UPDATE ON sync_status
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_conditions_updated_at 
-BEFORE UPDATE ON conditions 
+CREATE OR REPLACE TRIGGER update_conditions_updated_at
+BEFORE UPDATE ON conditions
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_market_resolutions_updated_at 
-BEFORE UPDATE ON market_resolutions 
+CREATE OR REPLACE TRIGGER update_market_resolutions_updated_at
+BEFORE UPDATE ON market_resolutions
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_sports_games_updated_at 
-BEFORE UPDATE ON sports_games 
+CREATE OR REPLACE TRIGGER update_sports_games_updated_at
+BEFORE UPDATE ON sports_games
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_sports_markets_updated_at 
-BEFORE UPDATE ON sports_markets 
+CREATE OR REPLACE TRIGGER update_sports_markets_updated_at
+BEFORE UPDATE ON sports_markets
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_fpmms_updated_at 
-BEFORE UPDATE ON fpmms 
+CREATE OR REPLACE TRIGGER update_fpmms_updated_at
+BEFORE UPDATE ON fpmms
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_fpmm_pool_memberships_updated_at 
-BEFORE UPDATE ON fpmm_pool_memberships 
+CREATE OR REPLACE TRIGGER update_fpmm_pool_memberships_updated_at
+BEFORE UPDATE ON fpmm_pool_memberships
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_users_updated_at 
-BEFORE UPDATE ON users 
+CREATE OR REPLACE TRIGGER update_users_updated_at
+BEFORE UPDATE ON users
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_sessions_updated_at 
-BEFORE UPDATE ON sessions 
+CREATE OR REPLACE TRIGGER update_sessions_updated_at
+BEFORE UPDATE ON sessions
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_accounts_updated_at 
-BEFORE UPDATE ON accounts 
+CREATE OR REPLACE TRIGGER update_accounts_updated_at
+BEFORE UPDATE ON accounts
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE OR REPLACE TRIGGER update_verifications_updated_at 
-BEFORE UPDATE ON verifications 
-FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE OR REPLACE TRIGGER update_wallets_updated_at 
-BEFORE UPDATE ON wallets 
+CREATE OR REPLACE TRIGGER update_verifications_updated_at
+BEFORE UPDATE ON verifications
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Function to update active markets count per event
-CREATE OR REPLACE FUNCTION update_event_markets_count() 
-RETURNS TRIGGER 
-SET search_path = 'public' 
+CREATE OR REPLACE FUNCTION update_event_markets_count()
+RETURNS TRIGGER
+SET search_path = 'public'
 AS $$
 BEGIN
     -- Update affected event counter
@@ -119,13 +115,13 @@ $$ LANGUAGE 'plpgsql';
 
 -- Trigger for event counters
 CREATE OR REPLACE TRIGGER trigger_update_event_markets_count
-AFTER INSERT OR UPDATE OR DELETE ON markets 
+AFTER INSERT OR UPDATE OR DELETE ON markets
 FOR EACH ROW EXECUTE FUNCTION update_event_markets_count();
 
 -- Function to update markets count per tag
-CREATE OR REPLACE FUNCTION update_tag_markets_count() 
-RETURNS TRIGGER 
-SET search_path = 'public' 
+CREATE OR REPLACE FUNCTION update_tag_markets_count()
+RETURNS TRIGGER
+SET search_path = 'public'
 AS $$
 DECLARE
     affected_event_id INTEGER;
@@ -144,8 +140,8 @@ BEGIN
         AND m.is_resolved = false
     )
     WHERE id IN (
-        SELECT DISTINCT et.tag_id 
-        FROM public.event_tags et 
+        SELECT DISTINCT et.tag_id
+        FROM public.event_tags et
         WHERE et.event_id = affected_event_id
     );
 
@@ -155,25 +151,25 @@ $$ LANGUAGE 'plpgsql';
 
 -- Trigger for tag counters
 CREATE OR REPLACE TRIGGER trigger_update_tag_markets_count
-AFTER INSERT OR UPDATE OR DELETE ON markets 
+AFTER INSERT OR UPDATE OR DELETE ON markets
 FOR EACH ROW EXECUTE FUNCTION update_tag_markets_count();
 
 CREATE OR REPLACE TRIGGER trigger_update_tag_markets_count_event_tags
-AFTER INSERT OR UPDATE OR DELETE ON event_tags 
+AFTER INSERT OR UPDATE OR DELETE ON event_tags
 FOR EACH ROW EXECUTE FUNCTION update_tag_markets_count();
 
 -- Add missing trigger for comments updated_at
-CREATE OR REPLACE TRIGGER update_comments_updated_at 
-BEFORE UPDATE ON comments 
+CREATE OR REPLACE TRIGGER update_comments_updated_at
+BEFORE UPDATE ON comments
 FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================
 -- 📊 COMMENT COUNTER FUNCTIONS
 -- ============================================================
 -- Function to update comment likes counter
-CREATE OR REPLACE FUNCTION update_comment_likes_count() 
-RETURNS TRIGGER 
-SET search_path = 'public' 
+CREATE OR REPLACE FUNCTION update_comment_likes_count()
+RETURNS TRIGGER
+SET search_path = 'public'
 AS $$
 BEGIN
     -- Update likes count for the comment
@@ -192,9 +188,9 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 -- Function to update comment replies counter
-CREATE OR REPLACE FUNCTION update_comment_replies_count() 
-RETURNS TRIGGER 
-SET search_path = 'public' 
+CREATE OR REPLACE FUNCTION update_comment_replies_count()
+RETURNS TRIGGER
+SET search_path = 'public'
 AS $$
 BEGIN
     IF TG_OP = 'INSERT' AND NEW.parent_comment_id IS NOT NULL THEN

@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS users (
   id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   address TEXT UNIQUE,
   username TEXT UNIQUE,
-  email TEXT NOT NULL UNIQUE,
+  email CITEXT NOT NULL UNIQUE,
   email_verified BOOLEAN NOT NULL DEFAULT FALSE,
   image TEXT,
   settings JSONB NOT NULL DEFAULT '{}'::JSONB,
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS sessions (
   id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  expires_at TIMESTAMP NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
   token TEXT NOT NULL UNIQUE,
   ip_address TEXT,
   user_agent TEXT,
@@ -35,8 +35,8 @@ CREATE TABLE IF NOT EXISTS accounts (
   access_token TEXT,
   refresh_token TEXT,
   id_token TEXT,
-  access_token_expires_at TIMESTAMP,
-  refresh_token_expires_at TIMESTAMP,
+  access_token_expires_at TIMESTAMPTZ,
+  refresh_token_expires_at TIMESTAMPTZ,
   scope TEXT,
   password TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
@@ -213,14 +213,7 @@ CREATE TABLE IF NOT EXISTS comments (
   likes_count INTEGER DEFAULT 0 CHECK (likes_count >= 0),
   replies_count INTEGER DEFAULT 0 CHECK (replies_count >= 0),
   created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
-  -- Constraints
-  CHECK (
-    -- Root comments have no parent
-    (parent_comment_id IS NULL) OR
-    -- Reply comments must have parent
-    (parent_comment_id IS NOT NULL)
-  )
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
 -- Comment likes/reactions table
