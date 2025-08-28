@@ -2,12 +2,15 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
+  "packageManager": "pnpm@8.7.4+sha512.fdb4396d7a7c97b92b866d905d0546b8f8f3342fd9fe9d1f2b8930f1a22ba86d18b614d2f5a9112861e25b26875fadb7967b42ae21c16593ea85b5dccea48d56",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --fix",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:push": "supabase db push",
+    "db:status": "supabase db diff --linked false || true"
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
@@ -60,6 +63,7 @@
     "lint-staged": "^16.1.5",
     "pino-pretty": "^13.1.1",
     "postcss": "^8.5.6",
+    "supabase": "^2.39.2",
     "tailwindcss": "^4.1.11",
     "typescript": "^5.9.2"
   },
