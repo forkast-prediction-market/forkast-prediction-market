@@ -10,7 +10,7 @@
     "lint": "eslint . --fix",
     "prepare": "husky",
     "db:push": "supabase db push",
-    "db:status": "supabase db diff --linked false || true"
+    "db:status": "supabase db diff --linked false"
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
