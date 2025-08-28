@@ -101,7 +101,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
             ...user,
           })
 
-          redirect(window.location.pathname)
+          queueMicrotask(() => redirect(window.location.pathname))
         }).catch(() => {})
       },
     }),

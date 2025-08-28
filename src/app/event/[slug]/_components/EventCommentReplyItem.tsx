@@ -109,6 +109,7 @@ export default function EventCommentReplyItem({
             </button>
             <EventCommentLikeForm
               comment={reply}
+              user={user}
               onLikeToggled={handleLikeToggle}
             />
           </div>

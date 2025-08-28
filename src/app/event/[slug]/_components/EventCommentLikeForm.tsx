@@ -1,6 +1,7 @@
 'use client'
 
-import type { Comment } from '@/types'
+import type { Comment, User } from '@/types'
+import { useAppKit } from '@reown/appkit/react'
 import { HeartIcon } from 'lucide-react'
 import Form from 'next/form'
 import { useActionState } from 'react'
@@ -8,15 +9,18 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { likeCommentAction } from '../actions/like-comment'
 
-interface Props {
+interface EventCommentLikeFormProps {
   comment: Comment
+  user: User | null
   onLikeToggled: (newLikesCount: number, newUserHasLiked: boolean) => void
 }
 
 export default function EventCommentLikeForm({
   comment,
+  user,
   onLikeToggled,
-}: Props) {
+}: EventCommentLikeFormProps) {
+  const { open } = useAppKit()
   const [_, formAction, isPending] = useActionState(
     async (_: any, __: FormData) => {
       const res = await likeCommentAction(comment.id)
@@ -29,7 +33,15 @@ export default function EventCommentLikeForm({
   ) as unknown as [any, (formData: FormData) => void, boolean]
 
   return (
-    <Form action={formAction}>
+    <Form
+      action={formAction}
+      onSubmit={(e) => {
+        if (!user) {
+          e.preventDefault()
+          queueMicrotask(() => open())
+        }
+      }}
+    >
       <Button
         type="submit"
         size="icon"

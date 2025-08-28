@@ -1,16 +1,15 @@
-import type { Comment, Event } from '@/types'
+import type { Comment, Event, User } from '@/types'
 import { useCallback, useState } from 'react'
 import { useComments } from '@/hooks/useComments'
-import { useUser } from '@/stores/useUser'
 import EventCommentForm from './EventCommentForm'
 import EventCommentItem from './EventCommentItem'
 
-interface Props {
+interface EventCommentsProps {
   event: Event
+  user: User | null
 }
 
-export default function EventComments({ event }: Props) {
-  const user = useUser()
+export default function EventComments({ event, user }: EventCommentsProps) {
   const [replyingTo, setReplyingTo] = useState<number | null>(null)
   const [replyText, setReplyText] = useState('')
   const [expandedComments, setExpandedComments] = useState<Set<number>>(() => new Set())
@@ -73,8 +72,8 @@ export default function EventComments({ event }: Props) {
   return (
     <>
       <EventCommentForm
-        user={user}
         eventId={event.id}
+        user={user}
         onCommentAddedAction={addComment}
       />
 

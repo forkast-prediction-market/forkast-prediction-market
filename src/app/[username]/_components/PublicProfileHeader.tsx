@@ -64,14 +64,6 @@ export default function PublicProfileHeader({ profile }: Props) {
       </div>
 
       <div className="flex flex-col gap-4 lg:self-start">
-        {user?.address === profile.address && (
-          <Button variant="outline" asChild>
-            <Link href="/settings">
-              Edit profile
-            </Link>
-          </Button>
-        )}
-
         <div className="flex items-center gap-2 text-muted-foreground opacity-40 select-none">
           <div
             className="size-8"
@@ -83,6 +75,13 @@ export default function PublicProfileHeader({ profile }: Props) {
             {process.env.NEXT_PUBLIC_SITE_NAME}
           </span>
         </div>
+        {user?.address === profile.address && (
+          <Button variant="outline" asChild>
+            <Link href="/settings">
+              Edit profile
+            </Link>
+          </Button>
+        )}
       </div>
     </div>
   )

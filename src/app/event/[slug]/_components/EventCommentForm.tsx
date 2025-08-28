@@ -5,20 +5,21 @@ import { useAppKit } from '@reown/appkit/react'
 import { ShieldIcon } from 'lucide-react'
 import Form from 'next/form'
 import { useActionState, useEffect, useRef } from 'react'
-import { useFormStatus } from 'react-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
 import { submitCommentAction } from '../actions/store-comment'
 
-export default function EventCommentForm({ user, eventId, onCommentAddedAction }: {
-  user: User | null
+interface EventCommentFormProps {
   eventId: number
+  user: User | null
   onCommentAddedAction: (comment: Comment) => void
-}) {
+}
+
+export default function EventCommentForm({ eventId, user, onCommentAddedAction }: EventCommentFormProps) {
   const { open } = useAppKit()
   const formRef = useRef<HTMLFormElement>(null)
-  const [state, formAction] = useActionState(
+  const [state, formAction, isPending] = useActionState(
     (_: any, formData: any) => submitCommentAction(eventId, formData),
     { error: '' },
   )
@@ -56,7 +57,15 @@ export default function EventCommentForm({ user, eventId, onCommentAddedAction }
           placeholder="Add a comment"
           required
         />
-        <SubmitButton user={user} />
+
+        <Button
+          type="submit"
+          size="sm"
+          className="absolute top-1/2 right-2 -translate-y-1/2 text-xs font-medium"
+          disabled={isPending}
+        >
+          {isPending ? 'Posting...' : user ? 'Post' : 'Connect to Post'}
+        </Button>
       </Form>
 
       {state.error && <InputError message={state.error} />}
@@ -70,20 +79,5 @@ export default function EventCommentForm({ user, eventId, onCommentAddedAction }
         Beware of external links, they may be phishing attacks.
       </div>
     </div>
-  )
-}
-
-function SubmitButton({ user }: { user: User | null }) {
-  const { pending } = useFormStatus()
-
-  return (
-    <Button
-      type="submit"
-      size="sm"
-      className="absolute top-1/2 right-2 -translate-y-1/2 text-xs font-medium"
-      disabled={pending}
-    >
-      {pending ? 'Posting...' : user ? 'Post' : 'Connect to Post'}
-    </Button>
   )
 }

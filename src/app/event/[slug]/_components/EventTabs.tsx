@@ -1,21 +1,22 @@
-import type { Event } from '@/types'
+import type { Event, User } from '@/types'
 import { useState } from 'react'
 import EventActivity from './EventActivity'
 import EventComments from './EventComments'
 import EventTabSelector from './EventTabSelector'
 import EventTopHolders from './EventTopHolders'
 
-interface Props {
+interface EventTabsProps {
   event: Event
+  user: User | null
 }
 
-export default function EventTabs({ event }: Props) {
+export default function EventTabs({ event, user }: EventTabsProps) {
   const [activeTab, setActiveTab] = useState('comments')
 
   return (
     <>
       <EventTabSelector activeTab={activeTab} setActiveTab={setActiveTab} />
-      {activeTab === 'comments' && <EventComments event={event} />}
+      {activeTab === 'comments' && <EventComments event={event} user={user} />}
       {activeTab === 'holders' && <EventTopHolders />}
       {activeTab === 'activity' && <EventActivity />}
     </>
