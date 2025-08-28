@@ -1,57 +1,28 @@
-import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
-import { supabaseAdmin } from '@/lib/supabase'
+import { CommentModel } from '@/lib/db/comments'
+import { getCurrentUser } from '@/lib/db/users'
 
 export async function GET(
-  request: Request,
+  _: Request,
   { params }: { params: Promise<{ commentId: string }> },
 ) {
   try {
     const { commentId } = await params
+    const user = await getCurrentUser()
+    const currentUserId = user?.id
 
-    // Get current user session to check likes
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    })
-    const currentUserId = session?.user?.id ? Number.parseInt(session.user.id) : null
-
-    // Fetch all replies for this comment
-    const { data: replies, error } = await supabaseAdmin
-      .from('comments')
-      .select(`
-        id,
-        content,
-        user_id,
-        likes_count,
-        replies_count,
-        created_at,
-        is_edited,
-        users!inner(username, image, address)
-      `)
-      .eq('parent_comment_id', commentId)
-      .eq('is_deleted', false)
-      .order('created_at', { ascending: true })
-
-    if (error) {
-      console.error('Error fetching replies:', error)
+    const { data: replies, error: errorReplies } = await CommentModel.getCommentReplies(commentId)
+    if (errorReplies) {
       return NextResponse.json(
-        { error: 'Failed to fetch replies' },
+        { error: 'Failed to fetch replies.' },
         { status: 500 },
       )
     }
 
-    // If user is logged in, check which replies they've liked
     let repliesWithLikeStatus: any[] = []
     if (currentUserId && replies?.length) {
       const replyIds = replies.map(reply => reply.id)
-
-      const { data: userLikes } = await supabaseAdmin
-        .from('comment_likes')
-        .select('comment_id')
-        .eq('user_id', currentUserId)
-        .in('comment_id', replyIds)
-
+      const { data: userLikes } = await CommentModel.getCommentsIdsLikedByUser(currentUserId, replyIds)
       const likedIds = new Set(userLikes?.map(like => like.comment_id) || [])
 
       repliesWithLikeStatus = replies.map((reply: any) => ({
@@ -74,8 +45,7 @@ export async function GET(
 
     return NextResponse.json(repliesWithLikeStatus)
   }
-  catch (error) {
-    console.error('Error in replies API:', error)
+  catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 },
