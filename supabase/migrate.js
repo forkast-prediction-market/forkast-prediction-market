@@ -87,7 +87,7 @@ DO $$
   END $$;`
 
   const updatedSQL = sql
-    .replace('<<VERCEL_URL>>', process.env.VERCEL_URL)
+    .replace('<<VERCEL_URL>>', process.env.VERCEL_PROJECT_PRODUCTION_URL)
     .replace('<<CRON_SECRET>>', process.env.CRON_SECRET)
 
   await client.query(updatedSQL)
