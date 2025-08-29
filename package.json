@@ -8,8 +8,7 @@
     "start": "next start",
     "lint": "eslint . --fix",
     "prepare": "husky",
-    "db:push": "node src/lib/migrations/apply-migrations.js",
-    "db:status": "supabase db diff --linked false || true"
+    "db:push": "node supabase/migrate.mjs"
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
