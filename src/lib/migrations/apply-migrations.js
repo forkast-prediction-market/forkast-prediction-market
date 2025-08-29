@@ -5,6 +5,15 @@ const path = require('node:path')
 const { Client } = require('pg')
 
 async function applyMigrations() {
+  // Check if DATABASE_URL is configured
+  if (!process.env.DATABASE_URL) {
+    console.error('ERROR: DATABASE_URL environment variable is not set')
+    console.log('Please configure DATABASE_URL in your Vercel environment variables')
+    process.exit(1)
+  }
+
+  console.log('DATABASE_URL configured, connecting to database...')
+
   const client = new Client({
     connectionString: process.env.DATABASE_URL,
     ssl: { rejectUnauthorized: false },
@@ -22,8 +31,8 @@ async function applyMigrations() {
       )
     `)
 
-    // Get list of migration files
-    const migrationsDir = path.join(__dirname, '../supabase/migrations')
+    // Get list of migration files - path from src/lib/migrations to supabase/migrations
+    const migrationsDir = path.join(__dirname, '../../../supabase/migrations')
     const migrationFiles = fs.readdirSync(migrationsDir)
       .filter(file => file.endsWith('.sql'))
       .sort()
