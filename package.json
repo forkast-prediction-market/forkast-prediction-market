@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint . --fix",
     "prepare": "husky",
-    "db:push": "node supabase/migrate.mjs"
+    "db:push": "node supabase/migrate.js"
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
