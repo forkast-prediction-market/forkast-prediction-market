@@ -4,7 +4,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { Pool } from 'pg'
 
-(async () => {
+async function migrate() {
   const connectionString = process.env.POSTGRES_URL
   if (!connectionString) {
     console.error('ERROR: No database connection string found. Please configure one of: POSTGRES_URL.')
@@ -14,7 +14,7 @@ import { Pool } from 'pg'
   console.log('Database connection configured, connecting with admin privileges...')
 
   const client = new Pool({
-    connectionString: process.env.POSTGRES_URL,
+    connectionString,
   })
 
   try {
@@ -49,7 +49,6 @@ import { Pool } from 'pg'
         continue
       }
 
-      // Apply migration
       console.log(`🔄 Applying ${file}.`)
       const migrationSql = fs.readFileSync(
         path.join(migrationsDir, file),
@@ -57,21 +56,22 @@ import { Pool } from 'pg'
       )
 
       await client.query(migrationSql)
-
       await client.query(
         'INSERT INTO public.migrations (version) VALUES ($1)',
         [version],
       )
-
       console.log(`✅ Applied ${file}.`)
     }
 
     console.log('All migrations applied successfully.')
-    await client.end()
   }
   catch (error) {
     console.error('Migration failed:', error)
-    await client.end()
     process.exit(1)
   }
-})()
+  finally {
+    await client.end()
+  }
+}
+
+migrate()
