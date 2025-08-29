@@ -5,6 +5,10 @@
 
 -- Supabase provides common extensions by default (pgcrypto, uuid-ossp, etc.)
 
-create extension if not exists citext;
-create extension if not exists pg_cron;
-create extension if not exists pg_net;
+-- Create extensions schema first
+CREATE SCHEMA IF NOT EXISTS extensions;
+
+-- Create extensions in the extensions schema
+create extension if not exists citext schema extensions;
+create extension if not exists pg_cron schema extensions;
+create extension if not exists pg_net schema extensions;

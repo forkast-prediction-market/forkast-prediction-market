@@ -9,7 +9,8 @@ async function applyMigrations(client) {
 
   console.log('Creating migrations tracking table...')
   await client.query(`
-    CREATE TABLE IF NOT EXISTS public.migrations (
+    CREATE SCHEMA IF NOT EXISTS supabase_internal;
+    CREATE TABLE IF NOT EXISTS supabase_internal.migrations (
       version TEXT PRIMARY KEY,
       applied_at TIMESTAMPTZ DEFAULT NOW()
     )
@@ -27,7 +28,7 @@ async function applyMigrations(client) {
     const version = file.replace('.sql', '')
 
     const result = await client.query(
-      'SELECT version FROM public.migrations WHERE version = $1',
+      'SELECT version FROM supabase_internal.migrations WHERE version = $1',
       [version],
     )
 
@@ -46,7 +47,7 @@ async function applyMigrations(client) {
     try {
       await client.query(migrationSql)
       await client.query(
-        'INSERT INTO public.migrations (version) VALUES ($1)',
+        'INSERT INTO supabase_internal.migrations (version) VALUES ($1)',
         [version],
       )
       await client.query('COMMIT')
@@ -64,8 +65,8 @@ async function applyMigrations(client) {
 async function createSyncEventsCron(client) {
   console.log('Creating sync-events cron job...')
   const sql = `
-create extension if not exists pg_cron;
-create extension if not exists pg_net;
+create extension if not exists pg_cron schema extensions;
+create extension if not exists pg_net schema extensions;
 
 DO $$
   DECLARE
