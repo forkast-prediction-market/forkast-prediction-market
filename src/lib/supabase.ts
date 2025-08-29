@@ -6,7 +6,7 @@ export const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 )
 
-// Tipos do banco baseados no schema
+// Database types based on schema
 export interface Tag {
   id: number
   name: string
@@ -52,9 +52,9 @@ export interface Market {
   transaction_hash: string
   block_timestamp: string
   metadata: Record<string, unknown> | null
-  // NOVOS CAMPOS DE TRADING:
-  current_volume_24h: number // Volume 24h
-  total_volume: number // Volume total
+  // NEW TRADING FIELDS:
+  current_volume_24h: number // 24h volume
+  total_volume: number // Total volume
   open_interest: number // Open interest
   created_at: string
   updated_at: string
@@ -62,15 +62,15 @@ export interface Market {
 
 export interface Outcome {
   id: number
-  condition_id: string // MUDANÇA: era market_condition_id
+  condition_id: string // CHANGE: was market_condition_id
   outcome_text: string
   outcome_index: number
-  token_id: string // NOVO: token ID do ERC1155
+  token_id: string // NEW: ERC1155 token ID
   is_winning_outcome: boolean
-  payout_value: number | null // NOVO: valor final de payout
+  payout_value: number | null // NEW: final payout value
   current_price: number | null // NEW: current market price (0.0001 to 0.9999)
-  volume_24h: number // NOVO: volume 24h
-  total_volume: number // NOVO: volume total
+  volume_24h: number // NEW: 24h volume
+  total_volume: number // NEW: total volume
   created_at: string
   updated_at: string
 }
@@ -82,7 +82,7 @@ export interface EventTag {
   created_at: string
 }
 
-// NOVOS TIPOS PARA DADOS DE TRADING (SUBGRAPHS)
+// NEW TYPES FOR TRADING DATA (SUBGRAPHS)
 export interface Condition {
   id: string // condition_id
   oracle: string
@@ -135,7 +135,7 @@ export interface OrderFill {
   created_at: string
 }
 
-// Tipos para dados completos com joins
+// Types for complete data with joins
 export interface EventWithMarkets extends Event {
   markets: (Market & { outcomes: Outcome[] })[]
   tags: Tag[]

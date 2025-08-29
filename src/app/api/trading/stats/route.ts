@@ -20,7 +20,7 @@ export async function GET() {
       // Balance USDC global
       supabaseAdmin.from('global_usdc_balance').select('*').single(),
 
-      // Top 10 mercados por volume
+      // Top 10 markets by volume
       supabaseAdmin
         .from('markets')
         .select(
