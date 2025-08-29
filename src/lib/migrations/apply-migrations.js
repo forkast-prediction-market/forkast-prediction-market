@@ -5,17 +5,19 @@ const path = require('node:path')
 const { Client } = require('pg')
 
 async function applyMigrations() {
-  // Check if DATABASE_URL is configured
-  if (!process.env.DATABASE_URL) {
-    console.error('ERROR: DATABASE_URL environment variable is not set')
-    console.log('Please configure DATABASE_URL in your Vercel environment variables')
+  // Check if database connection string is configured
+  const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL
+
+  if (!connectionString) {
+    console.error('ERROR: No database connection string found')
+    console.log('Please configure one of: DATABASE_URL, POSTGRES_URL_NON_POOLING, or POSTGRES_URL')
     process.exit(1)
   }
 
-  console.log('DATABASE_URL configured, connecting to database...')
+  console.log('Database connection configured, connecting...')
 
   const client = new Client({
-    connectionString: process.env.DATABASE_URL,
+    connectionString,
     ssl: { rejectUnauthorized: false },
   })
 
