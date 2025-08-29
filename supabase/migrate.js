@@ -34,7 +34,7 @@ async function applyMigrations() {
     `)
     console.log('Migrations table ready')
 
-    const migrationsDir = path.join(__dirname, '../../../supabase/migrations')
+    const migrationsDir = path.join(__dirname, './migrations')
     const migrationFiles = fs.readdirSync(migrationsDir)
       .filter(file => file.endsWith('.sql'))
       .sort()
