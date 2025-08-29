@@ -64,9 +64,6 @@ async function applyMigrations(client) {
 async function createSyncEventsCron(client) {
   console.log('Creating sync-events cron job...')
   const sql = `
-create extension if not exists pg_cron;
-create extension if not exists pg_net;
-
 DO $$
   DECLARE
     job_id int;
