@@ -31,7 +31,7 @@ import { Pool } from 'pg'
     `)
     console.log('Migrations table ready.')
 
-    const migrationsDir = path.join(__dirname, './migrations')
+    const migrationsDir = new URL('./migrations', import.meta.url).pathname
     const migrationFiles = fs.readdirSync(migrationsDir)
       .filter(file => file.endsWith('.sql'))
       .sort()
