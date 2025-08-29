@@ -261,21 +261,21 @@ WHERE
 
 -- Verify all tables have RLS enabled
 SELECT 
-    schemaname,
-    tablename,
-    rowsecurity as rls_enabled,
+    t.schemaname,
+    t.tablename,
+    t.rowsecurity as rls_enabled,
     CASE 
-        WHEN rowsecurity THEN 'RLS Enabled ✅'
+        WHEN t.rowsecurity THEN 'RLS Enabled ✅'
         ELSE 'RLS Missing ❌'
     END as status
-FROM pg_tables 
-WHERE schemaname = 'public' 
-ORDER BY tablename;
+FROM pg_tables t
+WHERE t.schemaname = 'public' 
+ORDER BY t.tablename;
 
 -- Verify policies exist for each table
 SELECT 
-    schemaname,
-    tablename,
+    t.schemaname,
+    t.tablename,
     COUNT(pol.*) as policy_count,
     CASE 
         WHEN COUNT(pol.*) > 0 THEN 'Has Policies ✅'
@@ -289,14 +289,14 @@ ORDER BY t.tablename;
 
 -- List all RLS policies for review
 SELECT 
-    schemaname,
-    tablename,
-    policyname,
-    permissive,
-    roles,
-    cmd,
-    qual,
-    with_check
-FROM pg_policies 
-WHERE schemaname = 'public'
-ORDER BY tablename, policyname;
+    pol.schemaname,
+    pol.tablename,
+    pol.policyname,
+    pol.permissive,
+    pol.roles,
+    pol.cmd,
+    pol.qual,
+    pol.with_check
+FROM pg_policies pol
+WHERE pol.schemaname = 'public'
+ORDER BY pol.tablename, pol.policyname;

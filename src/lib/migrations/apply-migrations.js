@@ -6,6 +6,7 @@ const { Client } = require('pg')
 
 async function applyMigrations() {
   // Check if database connection string is configured
+  // For migrations, we need a connection with full privileges
   const connectionString = process.env.DATABASE_URL || process.env.POSTGRES_URL_NON_POOLING || process.env.POSTGRES_URL
 
   if (!connectionString) {
@@ -14,8 +15,9 @@ async function applyMigrations() {
     process.exit(1)
   }
 
-  console.log('Database connection configured, connecting...')
+  console.log('Database connection configured, connecting with admin privileges...')
 
+  // Use direct PostgreSQL connection with full privileges for migrations
   const client = new Client({
     connectionString,
     ssl: { rejectUnauthorized: false },
@@ -23,15 +25,17 @@ async function applyMigrations() {
 
   try {
     await client.connect()
-    console.log('Connected to database')
+    console.log('Connected to database successfully')
 
-    // Create migrations table if it doesn't exist
+    // Create migrations table in public schema if it doesn't exist
+    console.log('Creating migrations tracking table...')
     await client.query(`
-      CREATE TABLE IF NOT EXISTS supabase_migrations (
+      CREATE TABLE IF NOT EXISTS public.supabase_migrations (
         version TEXT PRIMARY KEY,
         applied_at TIMESTAMPTZ DEFAULT NOW()
       )
     `)
+    console.log('Migrations table ready')
 
     // Get list of migration files - path from src/lib/migrations to supabase/migrations
     const migrationsDir = path.join(__dirname, '../../../supabase/migrations')
@@ -46,7 +50,7 @@ async function applyMigrations() {
 
       // Check if migration already applied
       const result = await client.query(
-        'SELECT version FROM supabase_migrations WHERE version = $1',
+        'SELECT version FROM public.supabase_migrations WHERE version = $1',
         [version],
       )
 
@@ -66,7 +70,7 @@ async function applyMigrations() {
 
       // Record migration as applied
       await client.query(
-        'INSERT INTO supabase_migrations (version) VALUES ($1)',
+        'INSERT INTO public.supabase_migrations (version) VALUES ($1)',
         [version],
       )
 
