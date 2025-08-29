@@ -1,5 +1,5 @@
 {
-  "buildCommand": "next build && npm run db:push",
+  "buildCommand": "npm run db:push && next build",
   "functions": {
     "src/app/api/sync-events/route.ts": {
       "maxDuration": 300
