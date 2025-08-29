@@ -72,7 +72,7 @@ DO $$
     job_id int;
     cmd text := $c$
     SELECT net.http_get(
-      url := '<<VERCEL_URL>>/api/sync-events',
+      url := 'https://<<VERCEL_URL>>/api/sync-events',
       headers := '{"Content-Type": "application/json", "Authorization": "Bearer <<CRON_SECRET>>"}'
     )
   $c$;
