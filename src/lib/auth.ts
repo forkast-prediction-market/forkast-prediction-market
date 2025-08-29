@@ -31,7 +31,7 @@ export const auth = betterAuth({
           },
         },
       },
-      domain: process.env.VERCEL_PROJECT_PRODUCTION_URL ? new URL(process.env.VERCEL_PROJECT_PRODUCTION_URL).host : 'localhost:3000',
+      domain: process.env.VERCEL_PROJECT_PRODUCTION_URL ?? 'localhost:3000',
       anonymous: true,
       getNonce: async () => generateRandomString(32),
       verifyMessage: async ({ message, signature, address }) => {
