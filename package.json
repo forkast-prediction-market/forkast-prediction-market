@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint . --fix",
     "prepare": "husky",
-    "db:push": "supabase db push",
+    "db:push": "node src/lib/migrations/apply-migrations.js",
     "db:status": "supabase db diff --linked false || true"
   },
   "dependencies": {
