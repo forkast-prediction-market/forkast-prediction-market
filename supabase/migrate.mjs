@@ -5,12 +5,10 @@ import path from 'node:path'
 import { Pool } from 'pg'
 
 (async () => {
-  let exitCode = 1
-
   const connectionString = process.env.POSTGRES_URL
   if (!connectionString) {
     console.error('ERROR: No database connection string found. Please configure one of: POSTGRES_URL.')
-    process.exit(exitCode)
+    process.exit(1)
   }
 
   console.log('Database connection configured, connecting with admin privileges...')
@@ -69,13 +67,11 @@ import { Pool } from 'pg'
     }
 
     console.log('All migrations applied successfully.')
-    exitCode = 0
+    await client.end()
   }
   catch (error) {
     console.error('Migration failed:', error)
-  }
-  finally {
     await client.end()
-    process.exit(exitCode)
+    process.exit(1)
   }
 })()
