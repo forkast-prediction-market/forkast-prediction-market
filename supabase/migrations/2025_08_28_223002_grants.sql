@@ -1,22 +1,16 @@
 -- ============================================================
--- 0009_grants.sql - Service Role Permissions
+-- BROAD GRANTS - Foundation Permissions
 -- ============================================================
--- Critical grants for service role access
--- Note: Service role policies are defined in 0008_policies.sql
+-- Covers all tables and sequences for service role access
+-- Domain-specific explicit grants moved to their respective files
+-- ============================================================
 
--- ============================================================
--- 🔑 CRITICAL: GRANT PERMISSIONS TO SERVICE ROLE
--- ============================================================
--- This is essential for sync operations to work properly
--- RLS policies alone are not sufficient for service_role access
-
+-- Broad grants for all current and future tables
 GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO service_role;
 GRANT USAGE ON SCHEMA public TO service_role;
 
--- Additional explicit grants for auth tables
-GRANT ALL ON users TO service_role;
-GRANT ALL ON sessions TO service_role;
-GRANT ALL ON accounts TO service_role;
-GRANT ALL ON verifications TO service_role;
-GRANT ALL ON bookmarks TO service_role;
+-- ============================================================
+-- END OF BROAD GRANTS
+-- Explicit grants moved to domain files for better organization
+-- ============================================================

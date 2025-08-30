@@ -1,7 +1,9 @@
 -- ============================================================
--- 0010_seed.sql - Initial Data Insertion
+-- INITIAL SEED DATA - Application Bootstrap
 -- ============================================================
--- Insert initial seed data for the application
+-- Contains: Initial tags, sync configuration, collateral data
+-- Views moved to domain files for better organization
+-- ============================================================
 
 -- Insert initial sync status for all subgraphs
 INSERT INTO sync_status (service_name,
@@ -72,137 +74,6 @@ VALUES ('0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174',
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================================
--- 🔍 USEFUL VIEWS FOR QUERIES
--- ============================================================
--- View for markets with complete information (security invoker)
-CREATE OR REPLACE VIEW v_markets_full WITH (security_invoker = TRUE) AS
-SELECT m.condition_id,
-       m.name                                  AS market_name,
-       m.slug                                  AS market_slug,
-       m.outcome_count,
-       m.is_active,
-       m.is_resolved,
-       m.icon_url                              AS market_icon_url,
-       m.block_number,
-       m.block_timestamp,
-       m.current_volume_24h,
-       m.total_volume,
-       m.open_interest,
-       e.id                                    AS event_id,
-       e.title                                 AS event_title,
-       e.slug                                  AS event_slug,
-       e.icon_url                              AS event_icon_url,
-       c.oracle,
-       c.question_id,
-       c.outcome_slot_count,
-       c.resolved,
-       c.payout_numerators,
-       c.payout_denominator,
-       c.arweave_hash,
-       c.creator,
-       ARRAY_AGG(DISTINCT t.name)              AS tags,
-       ARRAY_AGG(DISTINCT t.slug)              AS tag_slugs,
-       (SELECT JSON_AGG(
-                 JSON_BUILD_OBJECT(
-                   'text', o.outcome_text,
-                   'index', o.outcome_index,
-                   'token_id', o.token_id,
-                   'is_winning', o.is_winning_outcome,
-                   'current_price', o.current_price,
-                   'volume_24h', o.volume_24h,
-                   'total_volume', o.total_volume
-                 )
-                 ORDER BY o.outcome_index
-               )
-        FROM outcomes o
-        WHERE o.condition_id = m.condition_id) AS outcomes
-FROM markets m
-       JOIN events e ON m.event_id = e.id
-       JOIN conditions c ON m.condition_id = c.id
-       LEFT JOIN event_tags et ON e.id = et.event_id
-       LEFT JOIN tags t ON et.tag_id = t.id
-GROUP BY m.condition_id, e.id, c.id;
-
--- View for tags with counters (security invoker)
-CREATE OR REPLACE VIEW v_tags_with_counts WITH (security_invoker = TRUE) AS
-SELECT t.*,
-       COALESCE(parent.name, '')          AS parent_tag_name,
-       (SELECT COUNT(*)
-        FROM tags child
-        WHERE child.parent_tag_id = t.id) AS child_tags_count
-FROM tags t
-       LEFT JOIN tags parent ON t.parent_tag_id = parent.id;
-
--- View for user positions with market context
-CREATE OR REPLACE VIEW v_user_positions_full WITH (security_invoker = TRUE) AS
-SELECT upb.*,
-       c.oracle,
-       c.question_id,
-       c.resolved,
-       m.name  AS market_name,
-       m.slug  AS market_slug,
-       e.title AS event_title,
-       o.outcome_text,
-       o.current_price
-FROM user_position_balances upb
-       JOIN conditions c ON upb.condition_id = c.id
-       LEFT JOIN markets m ON c.id = m.condition_id
-       LEFT JOIN events e ON m.event_id = e.id
-       LEFT JOIN outcomes o ON c.id = o.condition_id AND upb.outcome_index = o.outcome_index
-WHERE upb.balance > 0;
-
--- View for comments with user info and like status (optimized for loading)
-CREATE OR REPLACE VIEW v_comments_with_user WITH (security_invoker = TRUE) AS
-SELECT c.id,
-       c.event_id,
-       c.user_id,
-       c.parent_comment_id,
-       c.content,
-       c.is_edited,
-       c.is_deleted,
-       c.likes_count,
-       c.replies_count,
-       c.created_at,
-       c.updated_at,
-       -- User info
-       u.username,
-       u.image                                                        AS user_avatar,
-       u.address                                                      AS user_address,
-       -- Aggregated reply info for root comments
-       CASE
-         WHEN c.parent_comment_id IS NULL THEN (SELECT JSON_AGG(
-                                                         JSON_BUILD_OBJECT(
-                                                           'id', r.id,
-                                                           'content', r.content,
-                                                           'user_id', r.user_id,
-                                                           'username', r.username,
-                                                           'user_avatar', r.user_avatar,
-                                                           'user_address', r.user_address,
-                                                           'likes_count', r.likes_count,
-                                                           'is_edited', r.is_edited,
-                                                           'created_at', r.created_at
-                                                         ) ORDER BY r.created_at
-                                                       )
-                                                FROM (SELECT r.id,
-                                                             r.content,
-                                                             r.user_id,
-                                                             ru.username,
-                                                             ru.image   AS user_avatar,
-                                                             ru.address AS user_address,
-                                                             r.likes_count,
-                                                             r.is_edited,
-                                                             r.created_at
-                                                      FROM comments r
-                                                             JOIN users ru ON r.user_id = ru.id
-                                                      WHERE r.parent_comment_id = c.id
-                                                        AND r.is_deleted = FALSE
-                                                      ORDER BY r.created_at
-                                                      LIMIT 3) r) END AS recent_replies
-FROM comments c
-       JOIN users u ON c.user_id = u.id
-WHERE c.is_deleted = FALSE;
-
--- ============================================================
 -- 🔍 VALIDATION QUERIES
 -- ============================================================
 
@@ -257,3 +128,8 @@ SELECT pol.schemaname,
 FROM pg_policies pol
 WHERE pol.schemaname = 'public'
 ORDER BY pol.tablename, pol.policyname;
+
+-- ============================================================
+-- END OF SEED DATA
+-- Views moved to respective domain files for better organization
+-- ============================================================

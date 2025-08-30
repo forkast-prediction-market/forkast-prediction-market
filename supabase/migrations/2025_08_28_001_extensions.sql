@@ -1,12 +1,7 @@
--- ============================================================
--- 0001_extensions.sql - Database Extensions
--- ============================================================
--- Enable required PostgreSQL extensions
-
--- Supabase provides common extensions by default (pgcrypto, uuid-ossp, etc.)
-
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 CREATE EXTENSION IF NOT EXISTS pg_net;
+
+-- ============================================================
 
 -- pgulid is based on OK Log's Go implementation of the ULID spec
 --

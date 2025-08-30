@@ -1,7 +1,16 @@
 -- ============================================================
--- 0003_tables_core.sql - Core Blockchain Tables
+-- BLOCKCHAIN CORE - Complete Domain Implementation
 -- ============================================================
--- Core foundation tables for blockchain data
+-- Tables: conditions, user_position_balances, order_fills, orders_matched_global
+--         market_open_interest, global_open_interest, position_splits, position_merges
+--         redemptions, market_resolutions, sports_games, sports_markets
+--         fpmms, collaterals, fpmm_pool_memberships, global_usdc_balance
+-- Dependencies: None (foundational tables)
+-- ============================================================
+
+-- ===========================================
+-- 1. TABLE CREATION
+-- ===========================================
 
 -- Conditions table - Primary entity from Activity/PnL subgraphs
 CREATE TABLE IF NOT EXISTS conditions
@@ -277,3 +286,307 @@ CREATE TABLE IF NOT EXISTS global_usdc_balance
   last_updated TIMESTAMPTZ             DEFAULT NOW(),
   CHECK (balance >= 0)
 );
+
+-- ===========================================
+-- 2. ROW LEVEL SECURITY
+-- ===========================================
+
+-- Enable RLS on all blockchain tables
+ALTER TABLE conditions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_position_balances ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_fills ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders_matched_global ENABLE ROW LEVEL SECURITY;
+ALTER TABLE market_open_interest ENABLE ROW LEVEL SECURITY;
+ALTER TABLE global_open_interest ENABLE ROW LEVEL SECURITY;
+ALTER TABLE position_splits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE position_merges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE redemptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE market_resolutions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sports_games ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sports_markets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fpmms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE collaterals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fpmm_pool_memberships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE global_usdc_balance ENABLE ROW LEVEL SECURITY;
+
+-- ===========================================
+-- 3. SECURITY POLICIES
+-- ===========================================
+
+-- Conditions policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_conditions' AND tablename = 'conditions') THEN
+      CREATE POLICY "service_role_all_conditions" ON conditions FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- User position balances policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_user_positions' AND tablename = 'user_position_balances') THEN
+      CREATE POLICY "service_role_all_user_positions" ON user_position_balances FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Order fills policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_order_fills' AND tablename = 'order_fills') THEN
+      CREATE POLICY "service_role_all_order_fills" ON order_fills FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Orders matched global policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_orders_matched_global'
+                     AND tablename = 'orders_matched_global') THEN
+      CREATE POLICY "service_role_all_orders_matched_global" ON orders_matched_global FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Market open interest policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_market_open_interest'
+                     AND tablename = 'market_open_interest') THEN
+      CREATE POLICY "service_role_all_market_open_interest" ON market_open_interest FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Global open interest policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_global_open_interest'
+                     AND tablename = 'global_open_interest') THEN
+      CREATE POLICY "service_role_all_global_open_interest" ON global_open_interest FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Position splits policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_position_splits' AND tablename = 'position_splits') THEN
+      CREATE POLICY "service_role_all_position_splits" ON position_splits FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Position merges policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_position_merges' AND tablename = 'position_merges') THEN
+      CREATE POLICY "service_role_all_position_merges" ON position_merges FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Redemptions policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_redemptions' AND tablename = 'redemptions') THEN
+      CREATE POLICY "service_role_all_redemptions" ON redemptions FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Market resolutions policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_market_resolutions' AND tablename = 'market_resolutions') THEN
+      CREATE POLICY "service_role_all_market_resolutions" ON market_resolutions FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Sports games policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_sports_games' AND tablename = 'sports_games') THEN
+      CREATE POLICY "service_role_all_sports_games" ON sports_games FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Sports markets policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_sports_markets' AND tablename = 'sports_markets') THEN
+      CREATE POLICY "service_role_all_sports_markets" ON sports_markets FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- FPMMs policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_fpmms' AND tablename = 'fpmms') THEN
+      CREATE POLICY "service_role_all_fpmms" ON fpmms FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Collaterals policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_collaterals' AND tablename = 'collaterals') THEN
+      CREATE POLICY "service_role_all_collaterals" ON collaterals FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- FPMM pool memberships policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_fpmm_pool_memberships'
+                     AND tablename = 'fpmm_pool_memberships') THEN
+      CREATE POLICY "service_role_all_fpmm_pool_memberships" ON fpmm_pool_memberships FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Global USDC balance policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_global_usdc_balance' AND tablename = 'global_usdc_balance') THEN
+      CREATE POLICY "service_role_all_global_usdc_balance" ON global_usdc_balance FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- ===========================================
+-- 4. TRIGGERS
+-- ===========================================
+
+-- Function for automatic updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+  RETURNS TRIGGER
+  SET search_path = 'public'
+AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE 'plpgsql';
+
+-- Updated_at triggers for blockchain tables
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_conditions_updated_at') THEN
+      CREATE TRIGGER update_conditions_updated_at
+        BEFORE UPDATE
+        ON conditions
+        FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+  END
+$$;
+
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_market_resolutions_updated_at') THEN
+      CREATE TRIGGER update_market_resolutions_updated_at
+        BEFORE UPDATE
+        ON market_resolutions
+        FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+  END
+$$;
+
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_sports_games_updated_at') THEN
+      CREATE TRIGGER update_sports_games_updated_at
+        BEFORE UPDATE
+        ON sports_games
+        FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+  END
+$$;
+
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_sports_markets_updated_at') THEN
+      CREATE TRIGGER update_sports_markets_updated_at
+        BEFORE UPDATE
+        ON sports_markets
+        FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+  END
+$$;
+
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_fpmms_updated_at') THEN
+      CREATE TRIGGER update_fpmms_updated_at
+        BEFORE UPDATE
+        ON fpmms
+        FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+  END
+$$;
+
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_fpmm_pool_memberships_updated_at') THEN
+      CREATE TRIGGER update_fpmm_pool_memberships_updated_at
+        BEFORE UPDATE
+        ON fpmm_pool_memberships
+        FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+  END
+$$;
+
+-- ===========================================
+-- 5. GRANTS
+-- ===========================================
+
+-- All blockchain tables are covered by the broad grants in the main grants file
+-- No additional explicit grants needed for blockchain tables
+
+-- ============================================================
+-- END OF BLOCKCHAIN CORE MIGRATION
+-- Next: 2025_08_28_0003_events.sql
+-- ============================================================
