@@ -12,13 +12,11 @@
 
 -- Create main assets bucket with size and type restrictions
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-VALUES (
-  'forkast-assets',
-  'forkast-assets',
-  TRUE,
-  2097152,
-  ARRAY['image/jpeg', 'image/png', 'image/webp']
-)
+VALUES ('forkast-assets',
+        'forkast-assets',
+        TRUE,
+        2097152,
+        ARRAY ['image/jpeg', 'image/png', 'image/webp'])
 ON CONFLICT (id) DO NOTHING;
 
 -- ===========================================
@@ -30,7 +28,8 @@ ON CONFLICT (id) DO NOTHING;
 -- ===========================================
 
 -- Public read access for all assets (branding, icons, public content)
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1
                    FROM pg_policies
@@ -49,7 +48,8 @@ $$;
 -- ===========================================
 
 -- Service role full access (for sync scripts and automated uploads)
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1
                    FROM pg_policies

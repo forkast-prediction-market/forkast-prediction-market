@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS conditions
   id                     VARCHAR(66) PRIMARY KEY,
   oracle                 VARCHAR(42) NOT NULL,
   question_id            VARCHAR(66) NOT NULL,
-  outcome_slot_count     INTEGER     NOT NULL CHECK (outcome_slot_count >= 2),
+  outcome_slot_count     SMALLINT    NOT NULL CHECK (outcome_slot_count >= 2),
   -- Resolution data
   resolved               BOOLEAN         DEFAULT FALSE,
   payout_numerators      BIGINT[],
@@ -38,12 +38,12 @@ CREATE TABLE IF NOT EXISTS conditions
 -- Tags table - Hierarchical categorization system for events
 CREATE TABLE IF NOT EXISTS tags
 (
-  id                   SERIAL PRIMARY KEY,
+  id                   SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name                 VARCHAR(100) NOT NULL UNIQUE,
   slug                 VARCHAR(100) NOT NULL UNIQUE,
   is_main_category     BOOLEAN     DEFAULT FALSE,
-  display_order        INTEGER     DEFAULT 0,
-  parent_tag_id        INTEGER REFERENCES tags (id),
+  display_order        SMALLINT    DEFAULT 0,
+  parent_tag_id        SMALLINT REFERENCES tags (id),
   active_markets_count INTEGER     DEFAULT 0,
   created_at           TIMESTAMPTZ DEFAULT NOW(),
   updated_at           TIMESTAMPTZ DEFAULT NOW()
@@ -52,27 +52,25 @@ CREATE TABLE IF NOT EXISTS tags
 -- Events table - Core content structure for prediction markets
 CREATE TABLE IF NOT EXISTS events
 (
-  id                   SERIAL PRIMARY KEY,
+  id                   CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
   slug                 VARCHAR(255) NOT NULL UNIQUE,
   title                TEXT         NOT NULL,
   description          TEXT,
   creator              VARCHAR(42), -- Ethereum address of creator
   icon_url             TEXT,
-  show_market_icons    BOOLEAN     DEFAULT TRUE,
-  rules                TEXT,       -- Event-specific rules
-  active_markets_count INTEGER     DEFAULT 0,
-  total_markets_count  INTEGER     DEFAULT 0,
-  created_at           TIMESTAMPTZ DEFAULT NOW(),
-  updated_at           TIMESTAMPTZ DEFAULT NOW()
+  show_market_icons    BOOLEAN              DEFAULT TRUE,
+  rules                TEXT,        -- Event-specific rules
+  active_markets_count INTEGER              DEFAULT 0,
+  total_markets_count  INTEGER              DEFAULT 0,
+  created_at           TIMESTAMPTZ          DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ          DEFAULT NOW()
 );
 
 -- Event-Tag relationship table - Many-to-many between events and tags
 CREATE TABLE IF NOT EXISTS event_tags
 (
-  id         SERIAL PRIMARY KEY,
-  event_id   INTEGER NOT NULL REFERENCES events (id) ON DELETE CASCADE,
-  tag_id     INTEGER NOT NULL REFERENCES tags (id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ DEFAULT NOW(),
+  event_id CHAR(26) NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  tag_id   SMALLINT NOT NULL REFERENCES tags (id) ON DELETE CASCADE ON UPDATE CASCADE,
   UNIQUE (event_id, tag_id)
 );
 
@@ -80,17 +78,17 @@ CREATE TABLE IF NOT EXISTS event_tags
 CREATE TABLE IF NOT EXISTS markets
 (
   -- IDs and Identifiers
-  condition_id       VARCHAR(66) PRIMARY KEY REFERENCES conditions (id) ON DELETE CASCADE,
+  condition_id       VARCHAR(66) PRIMARY KEY REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
   question_id        VARCHAR(66)  NOT NULL, -- Derived from conditions table
   oracle             VARCHAR(42)  NOT NULL, -- Derived from conditions table
   -- Relationships
-  event_id           INTEGER      NOT NULL REFERENCES events (id),
+  event_id           CHAR(26)     NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
   -- Market Information
   name               TEXT         NOT NULL,
   slug               VARCHAR(255) NOT NULL,
   description        TEXT,
   short_title        VARCHAR(255),
-  outcome_count      INTEGER      NOT NULL CHECK (outcome_count >= 2),
+  outcome_count      SMALLINT     NOT NULL CHECK (outcome_count >= 2),
   -- Images
   icon_url           TEXT,                  -- markets/icons/market-slug.jpg
   -- Status and Data
@@ -120,21 +118,21 @@ CREATE TABLE IF NOT EXISTS markets
 -- Outcomes table - Individual market outcomes (belongs to markets via condition_id)
 CREATE TABLE IF NOT EXISTS outcomes
 (
-  id                 SERIAL PRIMARY KEY,
-  condition_id       VARCHAR(66) NOT NULL REFERENCES conditions (id) ON DELETE CASCADE,
+  id                 CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
+  condition_id       VARCHAR(66) NOT NULL REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
   outcome_text       TEXT        NOT NULL,
-  outcome_index      INTEGER     NOT NULL,         -- 0, 1, 2... outcome order
-  token_id           TEXT        NOT NULL,         -- ERC1155 token ID for this outcome
+  outcome_index      SMALLINT    NOT NULL,               -- 0, 1, 2... outcome order
+  token_id           TEXT        NOT NULL,               -- ERC1155 token ID for this outcome
   -- Resolution data
-  is_winning_outcome BOOLEAN        DEFAULT FALSE, -- When resolved
-  payout_value       DECIMAL(20, 6),               -- Final payout value
+  is_winning_outcome BOOLEAN              DEFAULT FALSE, -- When resolved
+  payout_value       DECIMAL(20, 6),                     -- Final payout value
   -- Trading metrics (cached from subgraphs)
-  current_price      DECIMAL(8, 4),                -- Current market price (0.0001 to 0.9999)
-  volume_24h         DECIMAL(20, 6) DEFAULT 0,
-  total_volume       DECIMAL(20, 6) DEFAULT 0,
+  current_price      DECIMAL(8, 4),                      -- Current market price (0.0001 to 0.9999)
+  volume_24h         DECIMAL(20, 6)       DEFAULT 0,
+  total_volume       DECIMAL(20, 6)       DEFAULT 0,
   -- Timestamps
-  created_at         TIMESTAMPTZ    DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ    DEFAULT NOW(),
+  created_at         TIMESTAMPTZ          DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ          DEFAULT NOW(),
   -- Constraints
   UNIQUE (condition_id, outcome_index),
   UNIQUE (token_id),
@@ -148,7 +146,7 @@ CREATE TABLE IF NOT EXISTS outcomes
 -- Sync status table - Blockchain synchronization tracking
 CREATE TABLE IF NOT EXISTS sync_status
 (
-  id                   SERIAL PRIMARY KEY,
+  id                   SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   service_name         VARCHAR(50) NOT NULL,              -- 'activity_sync', 'pnl_sync', etc.
   subgraph_name        VARCHAR(50) NOT NULL,              -- 'activity', 'pnl', 'oi', etc.
   last_processed_block BIGINT      DEFAULT 0,
@@ -173,29 +171,41 @@ CREATE TABLE IF NOT EXISTS sync_status
 -- ===========================================
 
 -- Enable RLS on all event, market, and tag-related tables
-ALTER TABLE conditions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE tags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE events ENABLE ROW LEVEL SECURITY;
-ALTER TABLE event_tags ENABLE ROW LEVEL SECURITY;
-ALTER TABLE markets ENABLE ROW LEVEL SECURITY;
-ALTER TABLE outcomes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE sync_status ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conditions
+  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tags
+  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE events
+  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE event_tags
+  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE markets
+  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE outcomes
+  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sync_status
+  ENABLE ROW LEVEL SECURITY;
 
 -- ===========================================
 -- 3. SECURITY POLICIES
 -- ===========================================
 
 -- Conditions policies
-DO $$
+DO
+$$
   BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_conditions' AND tablename = 'conditions') THEN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_conditions'
+                     AND tablename = 'conditions') THEN
       CREATE POLICY "service_role_all_conditions" ON conditions FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
     END IF;
   END
 $$;
 
 -- Tags policies
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_tags' AND tablename = 'tags') THEN
       CREATE POLICY "service_role_all_tags" ON tags FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
@@ -204,7 +214,8 @@ DO $$
 $$;
 
 -- Events policies
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_events' AND tablename = 'events') THEN
       CREATE POLICY "service_role_all_events" ON events FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
@@ -213,42 +224,52 @@ DO $$
 $$;
 
 -- Event tags policies
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1
                    FROM pg_policies
-                   WHERE policyname = 'service_role_all_event_tags' AND tablename = 'event_tags') THEN
+                   WHERE policyname = 'service_role_all_event_tags'
+                     AND tablename = 'event_tags') THEN
       CREATE POLICY "service_role_all_event_tags" ON event_tags FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
     END IF;
   END
 $$;
 
 -- Markets policies
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1
                    FROM pg_policies
-                   WHERE policyname = 'service_role_all_markets' AND tablename = 'markets') THEN
+                   WHERE policyname = 'service_role_all_markets'
+                     AND tablename = 'markets') THEN
       CREATE POLICY "service_role_all_markets" ON markets FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
     END IF;
   END
 $$;
 
 -- Outcomes policies
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1
                    FROM pg_policies
-                   WHERE policyname = 'service_role_all_outcomes' AND tablename = 'outcomes') THEN
+                   WHERE policyname = 'service_role_all_outcomes'
+                     AND tablename = 'outcomes') THEN
       CREATE POLICY "service_role_all_outcomes" ON outcomes FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
     END IF;
   END
 $$;
 
 -- Sync status policies
-DO $$
+DO
+$$
   BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_sync_status' AND tablename = 'sync_status') THEN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_sync_status'
+                     AND tablename = 'sync_status') THEN
       CREATE POLICY "service_role_all_sync_status" ON sync_status FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
     END IF;
   END
@@ -262,7 +283,8 @@ $$;
 CREATE OR REPLACE FUNCTION update_updated_at_column()
   RETURNS TRIGGER
   SET search_path = 'public'
-AS $$
+AS
+$$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
@@ -273,7 +295,8 @@ $$ LANGUAGE 'plpgsql';
 CREATE OR REPLACE FUNCTION update_event_markets_count()
   RETURNS TRIGGER
   SET search_path = 'public'
-AS $$
+AS
+$$
 BEGIN
   -- Update affected event counter
   IF TG_OP = 'INSERT' OR TG_OP = 'UPDATE' THEN
@@ -340,7 +363,8 @@ $$ LANGUAGE 'plpgsql';
 -- ===========================================
 
 -- Updated_at triggers for all tables
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_conditions_updated_at') THEN
       CREATE TRIGGER update_conditions_updated_at
@@ -352,7 +376,8 @@ DO $$
   END
 $$;
 
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_tags_updated_at') THEN
       CREATE TRIGGER update_tags_updated_at
@@ -364,7 +389,8 @@ DO $$
   END
 $$;
 
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_events_updated_at') THEN
       CREATE TRIGGER update_events_updated_at
@@ -376,7 +402,8 @@ DO $$
   END
 $$;
 
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_markets_updated_at') THEN
       CREATE TRIGGER update_markets_updated_at
@@ -388,7 +415,8 @@ DO $$
   END
 $$;
 
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_outcomes_updated_at') THEN
       CREATE TRIGGER update_outcomes_updated_at
@@ -400,7 +428,8 @@ DO $$
   END
 $$;
 
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_sync_status_updated_at') THEN
       CREATE TRIGGER update_sync_status_updated_at
@@ -413,7 +442,8 @@ DO $$
 $$;
 
 -- Business logic triggers for counting
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_event_markets_count') THEN
       CREATE TRIGGER trigger_update_event_markets_count
@@ -425,7 +455,8 @@ DO $$
   END
 $$;
 
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_tag_markets_count') THEN
       CREATE TRIGGER trigger_update_tag_markets_count
@@ -437,7 +468,8 @@ DO $$
   END
 $$;
 
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_tag_markets_count_event_tags') THEN
       CREATE TRIGGER trigger_update_tag_markets_count_event_tags
@@ -450,14 +482,7 @@ DO $$
 $$;
 
 -- ===========================================
--- 6. GRANTS
--- ===========================================
-
--- All tables covered by broad grants
--- No additional explicit grants needed
-
--- ===========================================
--- 7. VIEWS
+-- 6. VIEWS
 -- ===========================================
 
 -- View for tags with counters (security invoker)
@@ -519,8 +544,66 @@ FROM markets m
        LEFT JOIN tags t ON et.tag_id = t.id
 GROUP BY m.condition_id, e.id, c.id;
 
--- ============================================================
--- END OF EVENTS & MARKETS MIGRATION
--- Complete domain: events, markets, outcomes, tags, conditions, sync management
--- Dependencies: None (fully self-contained)
--- ============================================================
+-- ===========================================
+-- 7. SEED
+-- ===========================================
+
+-- Insert initial main tags
+INSERT INTO tags (name, slug, is_main_category, display_order)
+VALUES ('Politics', 'politics', TRUE, 1),
+       ('Middle East', 'middle-east', TRUE, 2),
+       ('Sports', 'sports', TRUE, 3),
+       ('Crypto', 'crypto', TRUE, 4),
+       ('Tech', 'tech', TRUE, 5),
+       ('Culture', 'culture', TRUE, 6),
+       ('World', 'world', TRUE, 7),
+       ('Economy', 'economy', TRUE, 8),
+       ('Trump', 'trump', TRUE, 9),
+       ('Elections', 'elections', TRUE, 10),
+       ('Mentions', 'mentions', TRUE, 11)
+ON CONFLICT (slug) DO NOTHING;
+
+-- Insert sub-tags of Sports
+INSERT INTO tags (name,
+                  slug,
+                  is_main_category,
+                  parent_tag_id,
+                  display_order)
+VALUES ('Tennis',
+        'tennis',
+        FALSE,
+        (SELECT id FROM tags WHERE slug = 'sports'),
+        1),
+       ('Football',
+        'football',
+        FALSE,
+        (SELECT id FROM tags WHERE slug = 'sports'),
+        2),
+       ('Basketball',
+        'basketball',
+        FALSE,
+        (SELECT id FROM tags WHERE slug = 'sports'),
+        3),
+       ('Baseball',
+        'baseball',
+        FALSE,
+        (SELECT id FROM tags WHERE slug = 'sports'),
+        4)
+ON CONFLICT (slug) DO NOTHING;
+
+-- Insert initial main tags
+INSERT INTO sync_status (service_name,
+                         subgraph_name,
+                         last_processed_block,
+                         sync_type,
+                         status)
+VALUES ('activity_sync', 'activity', 0, 'full', 'idle'),
+       ('pnl_sync', 'pnl', 0, 'full', 'idle'),
+       ('oi_sync', 'oi', 0, 'full', 'idle'),
+       ('sports_sync', 'sports', 0, 'full', 'idle'),
+       ('fpmm_sync', 'fpmm', 0, 'full', 'idle'),
+       ('orderbook_sync', 'orderbook', 0, 'full', 'idle'),
+       ('wallet_sync', 'wallet', 0, 'full', 'idle'),
+       ('resolution_sync', 'resolution', 0, 'full', 'idle'),
+       ('market_sync', 'activity', 0, 'full', 'idle')
+ON CONFLICT (service_name, subgraph_name) DO NOTHING;

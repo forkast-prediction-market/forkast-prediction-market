@@ -13,8 +13,8 @@
 -- Bookmarks table - User event bookmarks (depends on users + events)
 CREATE TABLE IF NOT EXISTS bookmarks
 (
-  user_id    INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-  event_id   INTEGER NOT NULL REFERENCES events (id) ON DELETE CASCADE,
+  user_id  CHAR(26) NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  event_id CHAR(26) NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
   UNIQUE (user_id, event_id)
 );
 
@@ -23,31 +23,22 @@ CREATE TABLE IF NOT EXISTS bookmarks
 -- ===========================================
 
 -- Enable RLS on bookmarks table
-ALTER TABLE bookmarks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bookmarks
+  ENABLE ROW LEVEL SECURITY;
 
 -- ===========================================
 -- 3. SECURITY POLICIES
 -- ===========================================
 
 -- Bookmarks policies
-DO $$
+DO
+$$
   BEGIN
     IF NOT EXISTS (SELECT 1
                    FROM pg_policies
-                   WHERE policyname = 'service_role_all_bookmarks' AND tablename = 'bookmarks') THEN
+                   WHERE policyname = 'service_role_all_bookmarks'
+                     AND tablename = 'bookmarks') THEN
       CREATE POLICY "service_role_all_bookmarks" ON bookmarks FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
     END IF;
   END
 $$;
-
--- ===========================================
--- 4. GRANTS
--- ===========================================
-
--- Explicit grant for bookmarks (user-related table)
-GRANT ALL ON bookmarks TO service_role;
-
--- ============================================================
--- END OF BOOKMARKS MIGRATION
--- User event bookmarking functionality
--- ============================================================
