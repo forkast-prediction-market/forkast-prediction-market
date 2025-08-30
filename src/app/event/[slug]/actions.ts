@@ -11,6 +11,6 @@ export async function bookmarkAction(eventId: number) {
     redirect('/')
   }
 
-  const userId = Number.parseInt(user.id)
+  const userId = user.id
   await toggleBookmark(userId, eventId)
 }

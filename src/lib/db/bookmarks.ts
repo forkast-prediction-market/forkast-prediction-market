@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase'
 
-export async function toggleBookmark(userId: number, eventId: number) {
+export async function toggleBookmark(userId: string, eventId: number) {
   const { data: existing, error } = await supabaseAdmin
     .from('bookmarks')
     .select('event_id')

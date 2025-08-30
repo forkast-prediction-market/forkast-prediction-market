@@ -13,7 +13,6 @@ export const auth = betterAuth({
   secret: process.env.BETTER_AUTH_SECRET,
   advanced: {
     database: {
-      useNumberId: true,
       generateId: false,
     },
   },
