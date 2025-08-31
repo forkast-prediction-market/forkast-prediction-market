@@ -1,0 +1,592 @@
+-- ============================================================
+-- BLOCKCHAIN CORE - Complete Domain Implementation
+-- ============================================================
+-- Tables: conditions, user_position_balances, order_fills, orders_matched_global
+--         market_open_interest, global_open_interest, position_splits, position_merges
+--         redemptions, market_resolutions, sports_games, sports_markets
+--         fpmms, collaterals, fpmm_pool_memberships, global_usdc_balance
+-- Dependencies: None (foundational tables)
+-- ============================================================
+
+-- ===========================================
+-- 1. TABLE CREATION
+-- ===========================================
+
+-- Conditions table - Primary entity from Activity/PnL subgraphs
+CREATE TABLE IF NOT EXISTS conditions
+(
+  id                     VARCHAR(66) PRIMARY KEY,
+  oracle                 VARCHAR(42) NOT NULL,
+  question_id            VARCHAR(66) NOT NULL,
+  outcome_slot_count     INTEGER     NOT NULL CHECK (outcome_slot_count >= 2),
+  -- Resolution data
+  resolved               BOOLEAN         DEFAULT FALSE,
+  payout_numerators      BIGINT[],
+  payout_denominator     BIGINT,
+  -- Metadata
+  arweave_hash           TEXT,        -- Arweave metadata hash
+  creator                VARCHAR(42), -- Market creator address
+  -- Cached aggregations for performance
+  total_volume           DECIMAL(20, 6)  DEFAULT 0,
+  open_interest          DECIMAL(30, 18) DEFAULT 0,
+  active_positions_count INTEGER         DEFAULT 0,
+  -- Timestamps
+  created_at             TIMESTAMPTZ     DEFAULT NOW(),
+  resolved_at            TIMESTAMPTZ,
+  updated_at             TIMESTAMPTZ     DEFAULT NOW()
+);
+
+-- User Position Balances - From PnL subgraph
+CREATE TABLE IF NOT EXISTS user_position_balances
+(
+  id                     TEXT PRIMARY KEY,         -- user_address + token_id
+  user_address           VARCHAR(42)     NOT NULL,
+  token_id               TEXT            NOT NULL, -- ERC1155 token ID (String from subgraph)
+  condition_id           VARCHAR(66)     NOT NULL REFERENCES conditions (id) ON DELETE CASCADE,
+  outcome_index          INTEGER         NOT NULL,
+  -- Balance data (18 decimals for tokens)
+  balance                DECIMAL(30, 18) NOT NULL DEFAULT 0,
+  wrapped_balance        DECIMAL(30, 18) NOT NULL DEFAULT 0,
+  -- Cost basis and PnL (6 decimals for USDC)
+  total_cost             DECIMAL(20, 6)  NOT NULL DEFAULT 0,
+  realized_pnl           DECIMAL(20, 6)  NOT NULL DEFAULT 0,
+  unrealized_pnl         DECIMAL(20, 6)  NOT NULL DEFAULT 0,
+  -- Timestamps
+  last_updated_timestamp TIMESTAMPTZ     NOT NULL,
+  created_at             TIMESTAMPTZ              DEFAULT NOW(),
+  -- Constraints
+  CHECK (outcome_index >= 0),
+  CHECK (balance >= 0),
+  CHECK (wrapped_balance >= 0)
+);
+
+-- Order Fills - From PnL and Orderbook subgraphs
+CREATE TABLE IF NOT EXISTS order_fills
+(
+  id                  TEXT PRIMARY KEY,
+  transaction_hash    VARCHAR(66)     NOT NULL,
+  order_hash          VARCHAR(66), -- From orderbook subgraph
+  block_number        BIGINT          NOT NULL,
+  timestamp           TIMESTAMPTZ     NOT NULL,
+  -- Trading parties
+  maker               VARCHAR(42)     NOT NULL,
+  taker               VARCHAR(42)     NOT NULL,
+  -- Asset details
+  maker_asset_id      TEXT            NOT NULL,
+  taker_asset_id      TEXT            NOT NULL,
+  maker_amount_filled DECIMAL(30, 18) NOT NULL,
+  taker_amount_filled DECIMAL(30, 18) NOT NULL,
+  -- Fee and pricing
+  fee                 DECIMAL(20, 6)  NOT NULL DEFAULT 0,
+  price               DECIMAL(8, 4),
+  -- Market context (derived from asset IDs)
+  condition_id        VARCHAR(66) REFERENCES conditions (id),
+  outcome_index       INTEGER,
+  created_at          TIMESTAMPTZ              DEFAULT NOW(),
+  -- Constraints
+  CHECK (maker_amount_filled > 0),
+  CHECK (taker_amount_filled > 0),
+  CHECK (fee >= 0)
+);
+
+-- Global Orders Matched - From Orderbook subgraph
+CREATE TABLE IF NOT EXISTS orders_matched_global
+(
+  id                            TEXT PRIMARY KEY DEFAULT '',
+  trades_quantity               BIGINT NOT NULL  DEFAULT 0,
+  buys_quantity                 BIGINT NOT NULL  DEFAULT 0,
+  sells_quantity                BIGINT NOT NULL  DEFAULT 0,
+  collateral_volume             DECIMAL(20, 6)   DEFAULT 0,
+  scaled_collateral_volume      DECIMAL(20, 6)   DEFAULT 0,
+  collateral_buy_volume         DECIMAL(20, 6)   DEFAULT 0,
+  scaled_collateral_buy_volume  DECIMAL(20, 6)   DEFAULT 0,
+  collateral_sell_volume        DECIMAL(20, 6)   DEFAULT 0,
+  scaled_collateral_sell_volume DECIMAL(20, 6)   DEFAULT 0,
+  last_updated                  TIMESTAMPTZ      DEFAULT NOW(),
+  CHECK (trades_quantity >= 0),
+  CHECK (buys_quantity >= 0),
+  CHECK (sells_quantity >= 0)
+);
+
+-- Market Open Interest - From OI subgraph
+CREATE TABLE IF NOT EXISTS market_open_interest
+(
+  condition_id VARCHAR(66) PRIMARY KEY REFERENCES conditions (id) ON DELETE CASCADE,
+  amount       DECIMAL(30, 18) NOT NULL DEFAULT 0,
+  last_updated TIMESTAMPTZ              DEFAULT NOW(),
+  CHECK (amount >= 0)
+);
+
+-- Global Open Interest - From OI subgraph
+CREATE TABLE IF NOT EXISTS global_open_interest
+(
+  id           TEXT PRIMARY KEY         DEFAULT '',
+  amount       DECIMAL(30, 18) NOT NULL DEFAULT 0,
+  last_updated TIMESTAMPTZ              DEFAULT NOW(),
+  CHECK (amount >= 0)
+);
+
+-- Position Activity Tables - From Activity subgraph
+CREATE TABLE IF NOT EXISTS position_splits
+(
+  id           VARCHAR(66) PRIMARY KEY,
+  timestamp    TIMESTAMPTZ     NOT NULL,
+  stakeholder  VARCHAR(42)     NOT NULL,
+  condition_id VARCHAR(66)     NOT NULL REFERENCES conditions (id) ON DELETE CASCADE,
+  amount       DECIMAL(30, 18) NOT NULL,
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  CHECK (amount > 0)
+);
+
+CREATE TABLE IF NOT EXISTS position_merges
+(
+  id           VARCHAR(66) PRIMARY KEY,
+  timestamp    TIMESTAMPTZ     NOT NULL,
+  stakeholder  VARCHAR(42)     NOT NULL,
+  condition_id VARCHAR(66)     NOT NULL REFERENCES conditions (id) ON DELETE CASCADE,
+  amount       DECIMAL(30, 18) NOT NULL,
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  CHECK (amount > 0)
+);
+
+CREATE TABLE IF NOT EXISTS redemptions
+(
+  id           VARCHAR(66) PRIMARY KEY,
+  timestamp    TIMESTAMPTZ     NOT NULL,
+  redeemer     VARCHAR(42)     NOT NULL,
+  condition_id VARCHAR(66)     NOT NULL REFERENCES conditions (id) ON DELETE CASCADE,
+  index_sets   BIGINT[]        NOT NULL,
+  payout       DECIMAL(30, 18) NOT NULL,
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  CHECK (payout >= 0)
+);
+
+-- Market Resolutions - From Resolution subgraph
+CREATE TABLE IF NOT EXISTS market_resolutions
+(
+  question_id           VARCHAR(66) PRIMARY KEY,
+  condition_id          VARCHAR(66) REFERENCES conditions (id),
+  -- Resolution metadata
+  author                VARCHAR(42) NOT NULL,
+  ancillary_data        BYTEA       NOT NULL,
+  last_update_timestamp TIMESTAMPTZ NOT NULL,
+  -- Status tracking
+  status                VARCHAR(20) NOT NULL DEFAULT 'initialized',
+  was_disputed          BOOLEAN              DEFAULT FALSE,
+  approved              BOOLEAN,
+  -- Price data (18 decimals to match UMA precision)
+  proposed_price        DECIMAL(30, 18),
+  reproposed_price      DECIMAL(30, 18),
+  final_price           DECIMAL(30, 18),
+  updates               TEXT,
+  transaction_hash      VARCHAR(66),
+  log_index             BIGINT,
+  created_at            TIMESTAMPTZ          DEFAULT NOW(),
+  updated_at            TIMESTAMPTZ          DEFAULT NOW(),
+  CHECK (status IN ('initialized', 'posed', 'proposed', 'challenged', 'reproposed', 'disputed', 'resolved'))
+);
+
+-- Sports Oracle Tables
+CREATE TABLE IF NOT EXISTS sports_games
+(
+  id             TEXT PRIMARY KEY,
+  ancillary_data TEXT        NOT NULL,
+  ordering       TEXT        NOT NULL,
+  state          VARCHAR(20) NOT NULL,
+  home_score     BIGINT      DEFAULT 0,
+  away_score     BIGINT      DEFAULT 0,
+  created_at     TIMESTAMPTZ DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ DEFAULT NOW(),
+  CHECK (home_score >= 0),
+  CHECK (away_score >= 0)
+);
+
+CREATE TABLE IF NOT EXISTS sports_markets
+(
+  id           TEXT PRIMARY KEY,
+  game_id      TEXT        NOT NULL REFERENCES sports_games (id) ON DELETE CASCADE,
+  condition_id VARCHAR(66) REFERENCES conditions (id),
+  state        VARCHAR(20) NOT NULL,
+  market_type  VARCHAR(50) NOT NULL,
+  underdog     VARCHAR(10),
+  line         BIGINT,
+  payouts      BIGINT[],
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ DEFAULT NOW(),
+  CHECK (underdog IS NULL OR underdog IN ('home', 'away'))
+);
+
+-- Collateral Tokens - From FPMM subgraph
+CREATE TABLE IF NOT EXISTS collaterals
+(
+  id         VARCHAR(42) PRIMARY KEY,
+  name       TEXT    NOT NULL,
+  symbol     TEXT    NOT NULL,
+  decimals   INTEGER NOT NULL,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  CHECK (decimals >= 0)
+);
+
+-- FPMM Tables - From FPMM subgraph
+CREATE TABLE IF NOT EXISTS fpmms
+(
+  id                            VARCHAR(42) PRIMARY KEY,
+  condition_id                  VARCHAR(66) REFERENCES conditions (id),
+  creator                       VARCHAR(42)     NOT NULL,
+  creation_timestamp            TIMESTAMPTZ     NOT NULL,
+  creation_transaction_hash     VARCHAR(66)     NOT NULL,
+  collateral_token_address      VARCHAR(42)     NOT NULL REFERENCES collaterals (id),
+  conditional_token_address     VARCHAR(42)     NOT NULL,
+  fee                           DECIMAL(30, 18) NOT NULL,
+  trades_quantity               BIGINT          DEFAULT 0,
+  buys_quantity                 BIGINT          DEFAULT 0,
+  sells_quantity                BIGINT          DEFAULT 0,
+  liquidity_add_quantity        BIGINT          DEFAULT 0,
+  liquidity_remove_quantity     BIGINT          DEFAULT 0,
+  collateral_volume             DECIMAL(30, 18) DEFAULT 0,
+  scaled_collateral_volume      DECIMAL(20, 6)  DEFAULT 0,
+  collateral_buy_volume         DECIMAL(30, 18) DEFAULT 0,
+  scaled_collateral_buy_volume  DECIMAL(20, 6)  DEFAULT 0,
+  collateral_sell_volume        DECIMAL(30, 18) DEFAULT 0,
+  scaled_collateral_sell_volume DECIMAL(20, 6)  DEFAULT 0,
+  fee_volume                    DECIMAL(30, 18) DEFAULT 0,
+  scaled_fee_volume             DECIMAL(20, 6)  DEFAULT 0,
+  liquidity_parameter           DECIMAL(30, 18) DEFAULT 0,
+  scaled_liquidity_parameter    DECIMAL(20, 6)  DEFAULT 0,
+  outcome_token_amounts         DECIMAL(30, 18)[],
+  outcome_token_prices          DECIMAL(8, 4)[],
+  outcome_slot_count            INTEGER,
+  total_supply                  DECIMAL(30, 18) DEFAULT 0,
+  last_active_day               TIMESTAMPTZ,
+  created_at                    TIMESTAMPTZ     DEFAULT NOW(),
+  updated_at                    TIMESTAMPTZ     DEFAULT NOW(),
+  CHECK (fee >= 0),
+  CHECK (trades_quantity >= 0),
+  CHECK (outcome_slot_count IS NULL OR outcome_slot_count >= 2)
+);
+
+-- FPMM Pool Memberships - From FPMM subgraph
+CREATE TABLE IF NOT EXISTS fpmm_pool_memberships
+(
+  id         TEXT PRIMARY KEY,
+  fpmm_id    VARCHAR(42)     NOT NULL REFERENCES fpmms (id) ON DELETE CASCADE,
+  funder     VARCHAR(42)     NOT NULL,
+  amount     DECIMAL(30, 18) NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ              DEFAULT NOW(),
+  updated_at TIMESTAMPTZ              DEFAULT NOW(),
+  CHECK (amount >= 0),
+  UNIQUE (fpmm_id, funder)
+);
+
+-- Global USDC Balance
+CREATE TABLE IF NOT EXISTS global_usdc_balance
+(
+  id           TEXT PRIMARY KEY        DEFAULT '',
+  balance      DECIMAL(20, 6) NOT NULL DEFAULT 0,
+  last_updated TIMESTAMPTZ             DEFAULT NOW(),
+  CHECK (balance >= 0)
+);
+
+-- ===========================================
+-- 2. ROW LEVEL SECURITY
+-- ===========================================
+
+-- Enable RLS on all blockchain tables
+ALTER TABLE conditions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_position_balances ENABLE ROW LEVEL SECURITY;
+ALTER TABLE order_fills ENABLE ROW LEVEL SECURITY;
+ALTER TABLE orders_matched_global ENABLE ROW LEVEL SECURITY;
+ALTER TABLE market_open_interest ENABLE ROW LEVEL SECURITY;
+ALTER TABLE global_open_interest ENABLE ROW LEVEL SECURITY;
+ALTER TABLE position_splits ENABLE ROW LEVEL SECURITY;
+ALTER TABLE position_merges ENABLE ROW LEVEL SECURITY;
+ALTER TABLE redemptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE market_resolutions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sports_games ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sports_markets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fpmms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE collaterals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE fpmm_pool_memberships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE global_usdc_balance ENABLE ROW LEVEL SECURITY;
+
+-- ===========================================
+-- 3. SECURITY POLICIES
+-- ===========================================
+
+-- Conditions policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_conditions' AND tablename = 'conditions') THEN
+      CREATE POLICY "service_role_all_conditions" ON conditions FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- User position balances policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_user_positions' AND tablename = 'user_position_balances') THEN
+      CREATE POLICY "service_role_all_user_positions" ON user_position_balances FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Order fills policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_order_fills' AND tablename = 'order_fills') THEN
+      CREATE POLICY "service_role_all_order_fills" ON order_fills FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Orders matched global policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_orders_matched_global'
+                     AND tablename = 'orders_matched_global') THEN
+      CREATE POLICY "service_role_all_orders_matched_global" ON orders_matched_global FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Market open interest policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_market_open_interest'
+                     AND tablename = 'market_open_interest') THEN
+      CREATE POLICY "service_role_all_market_open_interest" ON market_open_interest FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Global open interest policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_global_open_interest'
+                     AND tablename = 'global_open_interest') THEN
+      CREATE POLICY "service_role_all_global_open_interest" ON global_open_interest FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Position splits policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_position_splits' AND tablename = 'position_splits') THEN
+      CREATE POLICY "service_role_all_position_splits" ON position_splits FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Position merges policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_position_merges' AND tablename = 'position_merges') THEN
+      CREATE POLICY "service_role_all_position_merges" ON position_merges FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Redemptions policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_redemptions' AND tablename = 'redemptions') THEN
+      CREATE POLICY "service_role_all_redemptions" ON redemptions FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Market resolutions policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_market_resolutions' AND tablename = 'market_resolutions') THEN
+      CREATE POLICY "service_role_all_market_resolutions" ON market_resolutions FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Sports games policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_sports_games' AND tablename = 'sports_games') THEN
+      CREATE POLICY "service_role_all_sports_games" ON sports_games FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Sports markets policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_sports_markets' AND tablename = 'sports_markets') THEN
+      CREATE POLICY "service_role_all_sports_markets" ON sports_markets FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- FPMMs policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_fpmms' AND tablename = 'fpmms') THEN
+      CREATE POLICY "service_role_all_fpmms" ON fpmms FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Collaterals policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_collaterals' AND tablename = 'collaterals') THEN
+      CREATE POLICY "service_role_all_collaterals" ON collaterals FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- FPMM pool memberships policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_fpmm_pool_memberships'
+                     AND tablename = 'fpmm_pool_memberships') THEN
+      CREATE POLICY "service_role_all_fpmm_pool_memberships" ON fpmm_pool_memberships FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- Global USDC balance policies
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_global_usdc_balance' AND tablename = 'global_usdc_balance') THEN
+      CREATE POLICY "service_role_all_global_usdc_balance" ON global_usdc_balance FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- ===========================================
+-- 4. TRIGGERS
+-- ===========================================
+
+-- Function for automatic updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+  RETURNS TRIGGER
+  SET search_path = 'public'
+AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE 'plpgsql';
+
+-- Updated_at triggers for blockchain tables
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_conditions_updated_at') THEN
+      CREATE TRIGGER update_conditions_updated_at
+        BEFORE UPDATE
+        ON conditions
+        FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+  END
+$$;
+
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_market_resolutions_updated_at') THEN
+      CREATE TRIGGER update_market_resolutions_updated_at
+        BEFORE UPDATE
+        ON market_resolutions
+        FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+  END
+$$;
+
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_sports_games_updated_at') THEN
+      CREATE TRIGGER update_sports_games_updated_at
+        BEFORE UPDATE
+        ON sports_games
+        FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+  END
+$$;
+
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_sports_markets_updated_at') THEN
+      CREATE TRIGGER update_sports_markets_updated_at
+        BEFORE UPDATE
+        ON sports_markets
+        FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+  END
+$$;
+
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_fpmms_updated_at') THEN
+      CREATE TRIGGER update_fpmms_updated_at
+        BEFORE UPDATE
+        ON fpmms
+        FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+  END
+$$;
+
+DO $$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_fpmm_pool_memberships_updated_at') THEN
+      CREATE TRIGGER update_fpmm_pool_memberships_updated_at
+        BEFORE UPDATE
+        ON fpmm_pool_memberships
+        FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+  END
+$$;
+
+-- ===========================================
+-- 5. GRANTS
+-- ===========================================
+
+-- All blockchain tables are covered by the broad grants in the main grants file
+-- No additional explicit grants needed for blockchain tables
+
+-- ============================================================
+-- END OF BLOCKCHAIN CORE MIGRATION
+-- Next: 2025_08_28_0003_events.sql
+-- ============================================================

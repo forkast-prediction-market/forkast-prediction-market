@@ -41,6 +41,7 @@ These rules are designed to help the AI assistant understand and interact with t
   - `src/lib/`: Utility functions, configurations, and core logic.
   - `src/lib/db/`: Supabase queries, use 'use cache' directive if queries do not rely on authenticated user.
   - `src/types/`: Centralized TypeScript type definitions.
+  - `supabase/`: Database migrations and crons
   - `public/`: Static assets like images and fonts.
 - **API Routes (`src/app/api/`):** Follow Next.js API route conventions for backend logic.
   - `src/app/api/auth/[...all]/route.ts`: Authentication routes using `better-auth`.

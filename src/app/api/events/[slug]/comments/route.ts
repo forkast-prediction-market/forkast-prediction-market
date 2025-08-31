@@ -51,11 +51,11 @@ export async function GET(
 
         commentsWithLikeStatus = comments.map(comment => ({
           ...comment,
-          is_owner: Number.parseInt(currentUserId) === comment.user_id,
+          is_owner: currentUserId === comment.user_id,
           user_has_liked: likedIds.has(comment.id),
           recent_replies: comment.recent_replies?.map((reply: any) => ({
             ...reply,
-            is_owner: Number.parseInt(currentUserId) === reply.user_id,
+            is_owner: currentUserId === reply.user_id,
             user_has_liked: likedIds.has(reply.id),
           })) || [],
         }))

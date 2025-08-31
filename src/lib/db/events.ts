@@ -14,11 +14,9 @@ interface ListEventsProps {
 export async function listEvents({
   tag = 'trending',
   search = '',
-  userId = undefined,
+  userId = '',
   bookmarked = false,
 }: ListEventsProps) {
-  const currentUserId = Number.parseInt(userId || '0')
-
   const marketsSelect = `
     markets!inner(
       condition_id,
@@ -51,14 +49,14 @@ export async function listEvents({
     )
   `
 
-  const selectString = bookmarked && currentUserId
+  const selectString = bookmarked && userId
     ? `*, bookmarks!inner(user_id), ${marketsSelect}, ${tagsSelect}`
     : `*, bookmarks(user_id), ${marketsSelect}, ${tagsSelect}`
 
   const query = supabaseAdmin.from('events').select(selectString)
 
-  if (bookmarked && currentUserId) {
-    query.eq('bookmarks.user_id', currentUserId)
+  if (bookmarked && userId) {
+    query.eq('bookmarks.user_id', userId)
   }
 
   if (tag && tag !== 'trending' && tag !== 'new') {
@@ -78,7 +76,7 @@ export async function listEvents({
     throw error
   }
 
-  const events = data?.map(event => eventResource(event, currentUserId)) || []
+  const events = data?.map(event => eventResource(event, userId)) || []
 
   if (!bookmarked && tag === 'trending') {
     return events.filter(market => market.isTrending)
@@ -108,7 +106,7 @@ export async function getEventTitleBySlug(slug: string): Promise<string> {
   return data.title
 }
 
-export async function getEventBySlug(slug: string, userId: number = 0) {
+export async function getEventBySlug(slug: string, userId: string = '') {
   const { data, error } = await supabaseAdmin
     .from('events')
     .select(
@@ -153,7 +151,7 @@ export async function getEventBySlug(slug: string, userId: number = 0) {
   return eventResource(data, userId) as Event & any
 }
 
-function eventResource(data: any, currentUserId: number): Event {
+function eventResource(data: any, userId: string): Event {
   const event = {
     ...data,
     tags: data.event_tags?.map((et: any) => et.tag?.slug).filter(Boolean) || [],
@@ -162,7 +160,7 @@ function eventResource(data: any, currentUserId: number): Event {
       oracle: market.conditions?.oracle,
       outcomes: market.conditions?.outcomes || [],
     })),
-    is_bookmarked: data.bookmarks?.some((bookmark: any) => bookmark.user_id === currentUserId) || false,
+    is_bookmarked: data.bookmarks?.some((bookmark: any) => bookmark.user_id === userId) || false,
   }
 
   if (event.active_markets_count === 1) {

@@ -17,8 +17,8 @@ export const CommentModel = {
     const { data, error } = await supabaseAdmin
       .from('comment_likes')
       .select('comment_id')
-      .eq('user_id', userId)
       .in('comment_id', ids)
+      .eq('user_id', userId)
 
     return { data, error }
   },

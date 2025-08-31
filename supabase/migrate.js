@@ -9,10 +9,23 @@ async function applyMigrations(client) {
 
   console.log('Creating migrations tracking table...')
   await client.query(`
-    CREATE TABLE IF NOT EXISTS public.migrations (
+    CREATE TABLE IF NOT EXISTS migrations (
       version TEXT PRIMARY KEY,
       applied_at TIMESTAMPTZ DEFAULT NOW()
-    )
+    );
+
+    -- Enable Row Level Security
+    ALTER TABLE migrations ENABLE ROW LEVEL SECURITY;
+
+    -- Create policy for service role access only
+    DO
+    $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_migrations' AND tablename = 'migrations') THEN
+          CREATE POLICY "service_role_all_migrations" ON migrations FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+        END IF;
+      END
+    $$;
   `)
   console.log('Migrations table ready')
 
@@ -27,7 +40,7 @@ async function applyMigrations(client) {
     const version = file.replace('.sql', '')
 
     const result = await client.query(
-      'SELECT version FROM public.migrations WHERE version = $1',
+      'SELECT version FROM migrations WHERE version = $1',
       [version],
     )
 
@@ -46,7 +59,7 @@ async function applyMigrations(client) {
     try {
       await client.query(migrationSql)
       await client.query(
-        'INSERT INTO public.migrations (version) VALUES ($1)',
+        'INSERT INTO migrations (version) VALUES ($1)',
         [version],
       )
       await client.query('COMMIT')
@@ -64,9 +77,6 @@ async function applyMigrations(client) {
 async function createSyncEventsCron(client) {
   console.log('Creating sync-events cron job...')
   const sql = `
-create extension if not exists pg_cron;
-create extension if not exists pg_net;
-
 DO $$
   DECLARE
     job_id int;
@@ -95,12 +105,15 @@ DO $$
 }
 
 async function run() {
-  const connectionString = process.env.POSTGRES_URL
-  if (!connectionString) {
-    console.error('ERROR: No database connection string found. Please set POSTGRES_URL.')
-    process.exit(1)
+  const requiredEnvVars = ['POSTGRES_URL', 'VERCEL_PROJECT_PRODUCTION_URL', 'CRON_SECRET']
+  for (const envVar of requiredEnvVars) {
+    if (!process.env[envVar]) {
+      console.error(`ERROR: Required environment variable ${envVar} is not set.`)
+      process.exit(1)
+    }
   }
 
+  const connectionString = process.env.POSTGRES_URL
   const client = new Client({ connectionString })
 
   try {
