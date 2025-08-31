@@ -80,4 +80,4 @@ BEGIN
 
   RETURN output;
 END
-$$ LANGUAGE plpgsql VOLATILE;
+$$ LANGUAGE plpgsql VOLATILE SET search_path = 'extensions';
