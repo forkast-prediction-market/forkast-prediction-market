@@ -156,7 +156,7 @@ BEGIN
     UPDATE comments
     SET replies_count = GREATEST(replies_count - 1, 0)
     WHERE id = OLD.parent_comment_id;
-  ELSIF TG_OP = 'UPDATE' AND OLD.parent_comment_id != NEW.parent_comment_id THEN
+  ELSIF TG_OP = 'UPDATE' AND OLD.parent_comment_id IS DISTINCT FROM NEW.parent_comment_id THEN
     -- Handle parent change (rare case)
     IF OLD.parent_comment_id IS NOT NULL THEN
       UPDATE comments
