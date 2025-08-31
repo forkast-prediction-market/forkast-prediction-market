@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users
 (
   id             CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
   address        TEXT    NOT NULL UNIQUE,
-  username       TEXT    NOT NULL,
+  username       TEXT,
   email          TEXT    NOT NULL,
   email_verified BOOLEAN NOT NULL     DEFAULT FALSE,
   image          TEXT,
