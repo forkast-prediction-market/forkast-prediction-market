@@ -1,5 +1,15 @@
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-CREATE EXTENSION IF NOT EXISTS pg_net;
+CREATE SCHEMA IF NOT EXISTS net;
+CREATE SCHEMA IF NOT EXISTS cron;
+CREATE SCHEMA IF NOT EXISTS crypto;
+
+-- Grant usage on schemas to public and service_role
+GRANT USAGE ON SCHEMA net TO public, service_role;
+GRANT USAGE ON SCHEMA cron TO public, service_role;
+GRANT USAGE ON SCHEMA crypto TO public, service_role;
+
+CREATE EXTENSION IF NOT EXISTS pg_net SCHEMA net;
+CREATE EXTENSION IF NOT EXISTS pg_cron SCHEMA cron;
+CREATE EXTENSION IF NOT EXISTS pgcrypto SCHEMA crypto;
 
 -- ============================================================
 
@@ -21,8 +31,6 @@ CREATE EXTENSION IF NOT EXISTS pg_net;
 -- See the License for the specific language governing permissions and
 -- limitations under the License.
 
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
 CREATE OR REPLACE FUNCTION generate_ulid() RETURNS TEXT AS
 $$
 DECLARE
@@ -43,7 +51,7 @@ BEGIN
   timestamp = SET_BYTE(timestamp, 5, unix_time::BIT(8)::INTEGER);
 
   -- 10 entropy bytes
-  ulid = timestamp || gen_random_bytes(10);
+  ulid = timestamp || crypto.gen_random_bytes(10);
 
   -- Encode the timestamp
   output = output || CHR(GET_BYTE(encoding, (GET_BYTE(ulid, 0) & 224) >> 5));
