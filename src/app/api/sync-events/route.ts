@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
+export const maxDuration = 300 // This function can run for a maximum of 300 seconds
+
 const ACTIVITY_SUBGRAPH_URL = process.env.NEXT_PUBLIC_ACTIVITY_SUBGRAPH_URL!
 const PNL_SUBGRAPH_URL = process.env.NEXT_PUBLIC_PNL_SUBGRAPH_URL!
 const IRYS_GATEWAY = process.env.IRYS_GATEWAY || 'https://gateway.irys.xyz'

@@ -1,18 +1,4 @@
 {
-  "buildCommand": "npm run db:push && next build",
-  "functions": {
-    "src/app/api/sync-events/route.ts": {
-      "maxDuration": 300
-    }
-  },
-  "crons": [
-    {
-      "path": "/api/sync-events",
-      "schedule": "0 1 * * *"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "regions": ["iad1"]
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "npm run db:push && next build && npm run db:sync"
 }
