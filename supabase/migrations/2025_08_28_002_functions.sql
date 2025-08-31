@@ -1,5 +1,7 @@
 CREATE OR REPLACE FUNCTION lower_user_fields()
-  RETURNS TRIGGER AS
+  RETURNS TRIGGER
+  SET search_path = 'public'
+AS
 $$
 BEGIN
   NEW.email := LOWER(NEW.email);
