@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS bookmarks
 (
   user_id  CHAR(26) NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
   event_id CHAR(26) NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  UNIQUE (user_id, event_id)
+  PRIMARY KEY (user_id, event_id)
 );
 
 -- ===========================================

@@ -66,9 +66,9 @@ CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts (user_id);
 CREATE TABLE IF NOT EXISTS verifications
 (
   id         CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
-  identifier TEXT      NOT NULL,
-  value      TEXT      NOT NULL,
-  expires_at TIMESTAMP NOT NULL,
+  identifier TEXT        NOT NULL,
+  value      TEXT        NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
   created_at TIMESTAMPTZ          DEFAULT NOW(),
   updated_at TIMESTAMPTZ          DEFAULT NOW()
 );
@@ -174,18 +174,6 @@ $$;
 -- ===========================================
 -- 4. TRIGGERS
 -- ===========================================
-
--- Function for automatic updated_at (shared with blockchain domain)
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-  RETURNS TRIGGER
-  SET search_path = 'public'
-AS
-$$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE 'plpgsql';
 
 -- Updated_at triggers for auth tables
 DO

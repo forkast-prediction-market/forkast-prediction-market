@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS comment_likes
 (
   comment_id CHAR(26) NOT NULL REFERENCES comments (id) ON DELETE CASCADE ON UPDATE CASCADE,
   user_id    CHAR(26) NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  UNIQUE (comment_id, user_id)
+  PRIMARY KEY (comment_id, user_id)
 );
 
 -- Comment reports (for moderation) (depends on comments + users)
@@ -106,18 +106,6 @@ $$;
 -- ===========================================
 -- 4. BUSINESS LOGIC FUNCTIONS
 -- ===========================================
-
--- Function for automatic updated_at (shared across domains)
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-  RETURNS TRIGGER
-  SET search_path = 'public'
-AS
-$$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$ LANGUAGE 'plpgsql';
 
 -- Function to update comment likes counter
 CREATE OR REPLACE FUNCTION update_comment_likes_count()

@@ -1,4 +1,3 @@
--- Function for automatic updated_at
 CREATE OR REPLACE FUNCTION lower_user_fields()
   RETURNS TRIGGER AS
 $$
