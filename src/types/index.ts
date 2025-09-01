@@ -71,6 +71,18 @@ export interface PublicProfile {
   stats?: PublicProfileStats
 }
 
+export interface Tag {
+  id: number
+  name: string
+  slug: string
+  is_main_category: boolean
+  display_order: number
+  parent_tag_id: number | null
+  active_markets_count: number
+  created_at: string
+  updated_at: string
+}
+
 export interface Comment {
   id: string
   content: string

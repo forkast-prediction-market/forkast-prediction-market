@@ -1,7 +1,6 @@
 'use cache'
 
-import { getSupabaseImageUrl } from '@/lib/mockData'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getSupabaseImageUrl, supabaseAdmin } from '@/lib/supabase'
 
 export async function getRelatedEventsBySlug(slug: string) {
   const { data: currentEvent, error: errorEvent } = await supabaseAdmin
@@ -59,7 +58,7 @@ export async function getRelatedEventsBySlug(slug: string) {
         id: event.id,
         slug: event.slug,
         title: event.title,
-        icon_url: getSupabaseImageUrl(`${event.markets[0].icon_url}`),
+        icon_url: getSupabaseImageUrl(event.markets[0].icon_url),
         common_tags_count: commonTagsCount,
       }
     })

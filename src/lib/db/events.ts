@@ -1,8 +1,6 @@
-import type { Tag } from '@/lib/supabase'
-import type { Event, EventCategory } from '@/types'
+import type { Event, EventCategory, Tag } from '@/types'
 import { notFound } from 'next/navigation'
-import { getSupabaseImageUrl } from '@/lib/mockData'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getSupabaseImageUrl, supabaseAdmin } from '@/lib/supabase'
 
 interface ListEventsProps {
   tag: string
@@ -176,7 +174,7 @@ function eventResource(data: any, userId: string): Event {
     }))
 
     return {
-      id: event.id.toString(),
+      id: event.id,
       active_markets_count: event.active_markets_count,
       slug: event.slug,
       title: market.short_title || market.name,
@@ -188,10 +186,8 @@ function eventResource(data: any, userId: string): Event {
       isResolved: market.is_resolved,
       isTrending: Math.random() > 0.3,
       creator: '0x1234...5678',
-      icon_url: `${getSupabaseImageUrl(`${event.icon_url}`)}`,
-      creatorAvatar: event.icon_url
-        ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/forkast-assets/${event.icon_url}`
-        : 'https://avatar.vercel.sh/creator.png',
+      icon_url: getSupabaseImageUrl(event.icon_url),
+      creatorAvatar: getSupabaseImageUrl(event.icon_url),
       tags: event.tags,
       outcomes,
       show_market_icons: event.show_market_icons,
@@ -208,13 +204,11 @@ function eventResource(data: any, userId: string): Event {
     probability: Math.random() * 100,
     price: Math.random() * 0.99 + 0.01,
     volume: Math.random() * 100000,
-    avatar: market.icon_url
-      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/forkast-assets/${market.icon_url}`
-      : `https://avatar.vercel.sh/${market.slug}.png`,
+    avatar: getSupabaseImageUrl(market.icon_url),
   }))
 
   return {
-    id: event.id.toString(),
+    id: event.id,
     active_markets_count: event.active_markets_count,
     slug: event.slug,
     title: event.title,
@@ -226,10 +220,8 @@ function eventResource(data: any, userId: string): Event {
     isResolved: false,
     isTrending: Math.random() > 0.3,
     creator: '0x1234...5678',
-    icon_url: `${getSupabaseImageUrl(`${event.icon_url}`)}`,
-    creatorAvatar: event.icon_url
-      ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/forkast-assets/${event.icon_url}`
-      : 'https://avatar.vercel.sh/creator.png',
+    icon_url: getSupabaseImageUrl(event.icon_url),
+    creatorAvatar: getSupabaseImageUrl(event.icon_url),
     tags: event.tags,
     outcomes,
     show_market_icons: event.show_market_icons,

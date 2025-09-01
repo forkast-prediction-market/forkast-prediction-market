@@ -1,16 +1,4 @@
 // Function to form complete URL for Supabase Storage images
-export function getSupabaseImageUrl(iconPath: string | null): string | null {
-  if (!iconPath) {
-    return null
-  }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-  if (!supabaseUrl) {
-    return null
-  }
-
-  return `${supabaseUrl}/storage/v1/object/public/forkast-assets/${iconPath}`
-}
 
 // Data for specific market sections
 export const mockMarketDetails = {
