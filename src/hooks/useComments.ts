@@ -34,17 +34,17 @@ export function useComments(eventSlug: string) {
     setComments(prev => [newComment, ...prev])
   }, [])
 
-  const updateComment = useCallback((commentId: number, updates: Partial<Comment>) => {
+  const updateComment = useCallback((commentId: string, updates: Partial<Comment>) => {
     setComments(prev => prev.map(comment =>
       comment.id === commentId ? { ...comment, ...updates } : comment,
     ))
   }, [])
 
-  const removeComment = useCallback((commentId: number) => {
+  const removeComment = useCallback((commentId: string) => {
     setComments(prev => prev.filter(comment => comment.id !== commentId))
   }, [])
 
-  const updateReply = useCallback((commentId: number, replyId: number, updates: Partial<Comment>) => {
+  const updateReply = useCallback((commentId: string, replyId: string, updates: Partial<Comment>) => {
     setComments(prev => prev.map((comment) => {
       if (comment.id === commentId && comment.recent_replies) {
         return {
@@ -58,7 +58,7 @@ export function useComments(eventSlug: string) {
     }))
   }, [])
 
-  const removeReply = useCallback((commentId: number, replyId: number) => {
+  const removeReply = useCallback((commentId: string, replyId: string) => {
     setComments(prev => prev.map((comment) => {
       if (comment.id === commentId && comment.recent_replies) {
         return {

@@ -1,6 +1,6 @@
 // Market Types
 export interface Event {
-  id: number
+  id: string
   is_bookmarked: boolean
   active_markets_count: number
   slug: string
@@ -72,7 +72,7 @@ export interface PublicProfile {
 }
 
 export interface Comment {
-  id: number
+  id: string
   content: string
   user_id: string
   username: string

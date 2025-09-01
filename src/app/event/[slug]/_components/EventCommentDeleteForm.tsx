@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { deleteCommentAction } from '../actions/delete-comment'
 
 interface Props {
-  commentId: number
+  commentId: string
   onDeleted: () => void
 }
 

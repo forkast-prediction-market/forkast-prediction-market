@@ -3,7 +3,7 @@
 import { CommentModel } from '@/lib/db/comments'
 import { getCurrentUser } from '@/lib/db/users'
 
-export async function submitCommentAction(eventId: number, formData: FormData) {
+export async function submitCommentAction(eventId: string, formData: FormData) {
   try {
     const user = await getCurrentUser()
     if (!user) {
@@ -11,7 +11,7 @@ export async function submitCommentAction(eventId: number, formData: FormData) {
     }
 
     const content = formData.get('content') as string
-    const parent_comment_id = formData.get('parent_comment_id') as unknown as number
+    const parent_comment_id = formData.get('parent_comment_id') as string | null
 
     if (!content || content.trim().length === 0) {
       return { error: 'Comment content is required' }

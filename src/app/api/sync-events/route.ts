@@ -429,7 +429,7 @@ async function processEvent(eventData: any, creatorAddress: string) {
   return newEvent.id
 }
 
-async function processMarketData(market: any, metadata: any, eventId: number) {
+async function processMarketData(market: any, metadata: any, eventId: string) {
   if (!eventId) {
     throw new Error(`Invalid eventId: ${eventId}. Event must be created first.`)
   }
@@ -503,7 +503,7 @@ async function processOutcomes(conditionId: string, outcomes: any[]) {
   }
 }
 
-async function processTags(eventId: number, tagNames: any[]) {
+async function processTags(eventId: string, tagNames: any[]) {
   for (const tagName of tagNames) {
     if (typeof tagName !== 'string') {
       console.warn(`Skipping invalid tag:`, tagName)

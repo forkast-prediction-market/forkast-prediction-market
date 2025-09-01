@@ -10,9 +10,9 @@ interface EventCommentsProps {
 }
 
 export default function EventComments({ event, user }: EventCommentsProps) {
-  const [replyingTo, setReplyingTo] = useState<number | null>(null)
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [replyText, setReplyText] = useState('')
-  const [expandedComments, setExpandedComments] = useState<Set<number>>(() => new Set())
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(() => new Set())
 
   const {
     comments,
@@ -25,18 +25,36 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     removeReply,
   } = useComments(event.slug)
 
-  const handleRepliesLoaded = useCallback((commentId: number, allReplies: Comment[]) => {
+  const handleCommentAdded = useCallback((newComment: Comment) => {
+    if (user) {
+      addComment({
+        ...newComment,
+        user_address: user.address,
+        username: user.username ?? '',
+        user_avatar: user.image ?? '',
+      })
+    }
+  }, [addComment, user])
+
+  const handleRepliesLoaded = useCallback((commentId: string, allReplies: Comment[]) => {
     updateComment(commentId, { recent_replies: allReplies })
     setExpandedComments(prev => new Set([...prev, commentId]))
   }, [updateComment])
 
-  const handleLikeToggled = useCallback((commentId: number, newLikesCount: number, newUserHasLiked: boolean) => {
+  const handleLikeToggled = useCallback((commentId: string, newLikesCount: number, newUserHasLiked: boolean) => {
     updateComment(commentId, { likes_count: newLikesCount, user_has_liked: newUserHasLiked })
   }, [updateComment])
 
-  const handleAddReply = useCallback((commentId: number, newReply: Comment) => {
+  const handleAddReply = useCallback((commentId: string, newReply: Comment) => {
     const comment = comments.find(c => c.id === commentId)
-    if (comment) {
+    if (user && comment) {
+      newReply = {
+        ...newReply,
+        user_address: user.address,
+        username: user.username ?? '',
+        user_avatar: user.image ?? '',
+      }
+
       updateComment(commentId, {
         replies_count: comment.replies_count + 1,
         recent_replies: [
@@ -45,17 +63,17 @@ export default function EventComments({ event, user }: EventCommentsProps) {
         ].slice(-3),
       })
     }
-  }, [comments, updateComment])
+  }, [comments, updateComment, user])
 
-  const handleDeleteReply = useCallback((commentId: number, replyId: number) => {
+  const handleDeleteReply = useCallback((commentId: string, replyId: string) => {
     removeReply(commentId, replyId)
   }, [removeReply])
 
-  const handleUpdateReply = useCallback((commentId: number, replyId: number, updates: Partial<Comment>) => {
+  const handleUpdateReply = useCallback((commentId: string, replyId: string, updates: Partial<Comment>) => {
     updateReply(commentId, replyId, updates)
   }, [updateReply])
 
-  const handleDeleteComment = useCallback((commentId: number) => {
+  const handleDeleteComment = useCallback((commentId: string) => {
     removeComment(commentId)
   }, [removeComment])
 
@@ -74,7 +92,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
       <EventCommentForm
         eventId={event.id}
         user={user}
-        onCommentAddedAction={addComment}
+        onCommentAddedAction={handleCommentAdded}
       />
 
       {/* List of Comments */}

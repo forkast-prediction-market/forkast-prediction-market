@@ -1,7 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const CommentModel = {
-  async getEventComments(eventId: number, limit: number = 20, offset: number = 0) {
+  async getEventComments(eventId: string, limit: number = 20, offset: number = 0) {
     const { data, error } = await supabaseAdmin
       .from('v_comments_with_user')
       .select('*')
@@ -13,7 +13,7 @@ export const CommentModel = {
     return { data, error }
   },
 
-  async getCommentsIdsLikedByUser(userId: string, ids: number[]) {
+  async getCommentsIdsLikedByUser(userId: string, ids: string[]) {
     const { data, error } = await supabaseAdmin
       .from('comment_likes')
       .select('comment_id')
@@ -33,7 +33,6 @@ export const CommentModel = {
         likes_count,
         replies_count,
         created_at,
-        is_edited,
         users!inner(username, image, address)
       `)
       .eq('parent_comment_id', commentId)
@@ -43,7 +42,7 @@ export const CommentModel = {
     return { data, error }
   },
 
-  async store(userId: string, eventId: number, content: string, parentCommentId: number | null = null) {
+  async store(userId: string, eventId: string, content: string, parentCommentId: string | null = null) {
     const { data, error } = await supabaseAdmin
       .from('comments')
       .insert({
@@ -65,7 +64,7 @@ export const CommentModel = {
     return { data, error }
   },
 
-  async delete(userId: string, commentId: number) {
+  async delete(userId: string, commentId: string) {
     const { data, error } = await supabaseAdmin
       .from('comments')
       .update({
@@ -78,10 +77,10 @@ export const CommentModel = {
     return { data, error }
   },
 
-  async toggleLike(userId: string, commentId: number) {
+  async toggleLike(userId: string, commentId: string) {
     const { data: existingLike } = await supabaseAdmin
       .from('comment_likes')
-      .select('id')
+      .select('comment_id')
       .eq('comment_id', commentId)
       .eq('user_id', userId)
       .single()
