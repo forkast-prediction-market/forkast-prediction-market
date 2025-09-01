@@ -11,7 +11,7 @@ export async function submitCommentAction(eventId: string, formData: FormData) {
     }
 
     const content = formData.get('content') as string
-    const parent_comment_id = formData.get('parent_comment_id') as unknown as string
+    const parent_comment_id = formData.get('parent_comment_id') as string | null
 
     if (!content || content.trim().length === 0) {
       return { error: 'Comment content is required' }
