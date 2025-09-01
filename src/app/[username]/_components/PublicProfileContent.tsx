@@ -3,16 +3,15 @@ import { notFound } from 'next/navigation'
 import PublicProfileHeader from '@/app/[username]/_components/PublicProfileHeader'
 import PublicProfileStatsCards from '@/app/[username]/_components/PublicProfileStatsCards'
 import PublicProfileTabs from '@/app/[username]/_components/PublicProfileTabs'
-import { getProfileByUsername } from '@/lib/db/users'
+import { UserModel } from '@/lib/db/users'
 
 interface Props {
   username: string
 }
 
 export default async function PublicProfileContent({ username }: Props) {
-  const profile = await getProfileByUsername(username)
-
-  if (!profile) {
+  const { data: profile, error } = await UserModel.getProfileByUsername(username)
+  if (error || !profile) {
     notFound()
   }
 

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { getEventBySlug, getEventTitleBySlug } from '@/lib/db/events'
-import { getCurrentUser } from '@/lib/db/users'
+import { UserModel } from '@/lib/db/users'
 import EventDetail from './_components/EventDetail'
 
 interface PageProps {
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function EventPage({ params }: PageProps) {
-  const user = await getCurrentUser()
+  const user = await UserModel.getCurrentUser()
   const { slug } = await params
 
   try {

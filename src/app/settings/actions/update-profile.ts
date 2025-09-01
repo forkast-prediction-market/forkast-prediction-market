@@ -4,7 +4,7 @@ import { Buffer } from 'node:buffer'
 import { revalidatePath } from 'next/cache'
 import sharp from 'sharp'
 import { z } from 'zod'
-import { getCurrentUser, updateUserProfileById } from '@/lib/db/users'
+import { UserModel } from '@/lib/db/users'
 import { supabaseAdmin } from '@/lib/supabase'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
@@ -48,7 +48,7 @@ export async function updateUserAction(
   formData: FormData,
 ): Promise<ActionState> {
   try {
-    const user = await getCurrentUser()
+    const user = await UserModel.getCurrentUser()
     if (!user) {
       return { error: 'Not authenticated.' }
     }
@@ -73,14 +73,14 @@ export async function updateUserAction(
       updateData.image = await uploadImage(user, validated.image)
     }
 
-    const result = await updateUserProfileById(user.id, updateData)
+    const { error } = await UserModel.updateUserProfileById(user.id, updateData)
 
-    if ('error' in result) {
-      if (typeof result.error === 'string') {
-        return { error: result.error }
+    if (error) {
+      if (typeof error === 'string') {
+        return { error }
       }
 
-      return { errors: result.error }
+      return { errors: error }
     }
 
     revalidatePath('/settings')
