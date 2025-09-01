@@ -195,6 +195,7 @@ function eventResource(data: any, userId: string): Event {
       oracle: event.markets[0]?.oracle || null,
       is_bookmarked: event.is_bookmarked,
       created_at: event.created_at,
+      condition_id: event.condition_id,
     }
   }
 
@@ -228,6 +229,7 @@ function eventResource(data: any, userId: string): Event {
     rules: event.rules || undefined,
     is_bookmarked: event.is_bookmarked,
     created_at: event.created_at,
+    condition_id: event.condition_id,
   }
 }
 

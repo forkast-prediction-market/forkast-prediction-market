@@ -21,6 +21,7 @@ export interface Event {
   rules?: string // Rules for market resolution
   oracle?: string // Oracle address for resolution
   created_at: string
+  condition_id: string
 }
 
 export interface MarketOutcome {
