@@ -18,7 +18,6 @@ CREATE TABLE IF NOT EXISTS comments
   user_id           CHAR(26) NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
   parent_comment_id CHAR(26) REFERENCES comments (id) ON DELETE CASCADE ON UPDATE CASCADE,
   content           TEXT     NOT NULL CHECK (LENGTH(content) >= 1 AND LENGTH(content) <= 2000),
-  is_edited         BOOLEAN              DEFAULT FALSE,
   is_deleted        BOOLEAN              DEFAULT FALSE,
   likes_count       INTEGER              DEFAULT 0 CHECK (likes_count >= 0),
   replies_count     INTEGER              DEFAULT 0 CHECK (replies_count >= 0),
@@ -211,13 +210,15 @@ $$;
 -- 6. VIEWS
 -- ===========================================
 
-CREATE OR REPLACE VIEW v_comments_with_user WITH (security_invoker = TRUE) AS
+CREATE OR REPLACE VIEW v_comments_with_user
+    WITH
+    (security_invoker = TRUE)
+AS
 SELECT c.id,
        c.event_id,
        c.user_id,
        c.parent_comment_id,
        c.content,
-       c.is_edited,
        c.is_deleted,
        c.likes_count,
        c.replies_count,
@@ -225,22 +226,18 @@ SELECT c.id,
        c.updated_at,
        -- User info
        u.username,
-       u.image                                                        AS user_avatar,
-       u.address                                                      AS user_address,
+       u.image   AS user_avatar,
+       u.address AS user_address,
        -- Aggregated reply info for root comments
        CASE
          WHEN c.parent_comment_id IS NULL THEN (SELECT JSON_AGG(
-                                                         JSON_BUILD_OBJECT(
-                                                           'id', r.id,
-                                                           'content', r.content,
-                                                           'user_id', r.user_id,
-                                                           'username', r.username,
-                                                           'user_avatar', r.user_avatar,
-                                                           'user_address', r.user_address,
-                                                           'likes_count', r.likes_count,
-                                                           'is_edited', r.is_edited,
-                                                           'created_at', r.created_at
-                                                         ) ORDER BY r.created_at
+                                                         JSON_BUILD_OBJECT('id', r.id, 'content', r.content, 'user_id',
+                                                                           r.user_id, 'username', r.username,
+                                                                           'user_avatar', r.user_avatar, 'user_address',
+                                                                           r.user_address, 'likes_count', r.likes_count,
+                                                                           'created_at', r.created_at)
+                                                         ORDER BY
+                                                           r.created_at
                                                        )
                                                 FROM (SELECT r.id,
                                                              r.content,
@@ -249,15 +246,14 @@ SELECT c.id,
                                                              ru.image   AS user_avatar,
                                                              ru.address AS user_address,
                                                              r.likes_count,
-                                                             r.is_edited,
                                                              r.created_at
                                                       FROM comments r
                                                              JOIN users ru ON r.user_id = ru.id
                                                       WHERE r.parent_comment_id = c.id
                                                         AND r.is_deleted = FALSE
                                                       ORDER BY r.created_at
-                                                      LIMIT 3) r) END AS recent_replies
+                                                      LIMIT 3) r)
+         END     AS recent_replies
 FROM comments c
        JOIN users u ON c.user_id = u.id
 WHERE c.is_deleted = FALSE;
-

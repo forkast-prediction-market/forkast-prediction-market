@@ -33,7 +33,6 @@ export const CommentModel = {
         likes_count,
         replies_count,
         created_at,
-        is_edited,
         users!inner(username, image, address)
       `)
       .eq('parent_comment_id', commentId)
@@ -81,7 +80,7 @@ export const CommentModel = {
   async toggleLike(userId: string, commentId: string) {
     const { data: existingLike } = await supabaseAdmin
       .from('comment_likes')
-      .select('id')
+      .select('comment_id')
       .eq('comment_id', commentId)
       .eq('user_id', userId)
       .single()
