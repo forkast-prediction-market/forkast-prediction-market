@@ -25,6 +25,17 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     removeReply,
   } = useComments(event.slug)
 
+  const handleCommentAdded = useCallback((newComment: Comment) => {
+    if (user) {
+      addComment({
+        ...newComment,
+        user_address: user.address,
+        username: user.username ?? '',
+        user_avatar: user.image ?? '',
+      })
+    }
+  }, [addComment, user])
+
   const handleRepliesLoaded = useCallback((commentId: string, allReplies: Comment[]) => {
     updateComment(commentId, { recent_replies: allReplies })
     setExpandedComments(prev => new Set([...prev, commentId]))
@@ -36,7 +47,14 @@ export default function EventComments({ event, user }: EventCommentsProps) {
 
   const handleAddReply = useCallback((commentId: string, newReply: Comment) => {
     const comment = comments.find(c => c.id === commentId)
-    if (comment) {
+    if (user && comment) {
+      newReply = {
+        ...newReply,
+        user_address: user.address,
+        username: user.username ?? '',
+        user_avatar: user.image ?? '',
+      }
+
       updateComment(commentId, {
         replies_count: comment.replies_count + 1,
         recent_replies: [
@@ -45,7 +63,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
         ].slice(-3),
       })
     }
-  }, [comments, updateComment])
+  }, [comments, updateComment, user])
 
   const handleDeleteReply = useCallback((commentId: string, replyId: string) => {
     removeReply(commentId, replyId)
@@ -74,7 +92,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
       <EventCommentForm
         eventId={event.id}
         user={user}
-        onCommentAddedAction={addComment}
+        onCommentAddedAction={handleCommentAdded}
       />
 
       {/* List of Comments */}
