@@ -8,7 +8,7 @@ import { createPublicClient, http } from 'viem'
 
 export const auth = betterAuth({
   database: new Pool({
-    connectionString: process.env.POSTGRES_URL,
+    connectionString: process.env.POSTGRES_URL!.replace('require', 'disable'),
   }),
   secret: process.env.BETTER_AUTH_SECRET,
   advanced: {

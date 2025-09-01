@@ -51,9 +51,7 @@ NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID=your-reown-project-id
 # Random 32 characteres (REQUIRED), you can generate one on "generate secret" button https://www.better-auth.com/docs/installation#set-environment-variables
 BETTER_AUTH_SECRET=your-32-character-secret-key
 
-NODE_TLS_REJECT_UNAUTHORIZED=0
-
-# Type a random password with at least 8 chars
+# Vercel Cron Jobs (Type a random password with at least 8 chars) (REQUIRED)
 CRON_SECRET=your-cron-secret
 
 # Database
