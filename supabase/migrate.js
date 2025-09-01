@@ -113,7 +113,7 @@ async function run() {
     }
   }
 
-  const connectionString = process.env.POSTGRES_URL
+  const connectionString = process.env.POSTGRES_URL.replace('require', 'disable')
   const client = new Client({ connectionString })
 
   try {
