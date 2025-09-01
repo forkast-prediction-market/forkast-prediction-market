@@ -40,26 +40,30 @@ Click the "Fork" button in the top right corner
 Create a `.env.local` file with these variables:
 
 ```bash
-# Database
-POSTGRES_URL=postgresql://username:password@host:port/database
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
-
-# Authentication
-BETTER_AUTH_SECRET=your-32-character-secret-key
-
-# Reown/WalletConnect
-NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID=your-reown-project-id
-
 # Site Branding
 NEXT_PUBLIC_SITE_NAME=Your Prediction Market
 NEXT_PUBLIC_SITE_DESCRIPTION=Your decentralized prediction market platform
 NEXT_PUBLIC_SITE_LOGO_SVG=<svg>...</svg>
 
-# Optional
-NEXT_PUBLIC_ACTIVITY_SUBGRAPH_URL=https://your-subgraph-url
-NEXT_PUBLIC_PNL_SUBGRAPH_URL=https://your-subgraph-url
+# Reown/WalletConnect
+NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID=your-reown-project-id
+
+# Random 32 characteres (REQUIRED), you can generate one on "generate secret" button https://www.better-auth.com/docs/installation#set-environment-variables
+BETTER_AUTH_SECRET=your-32-character-secret-key
+
+NODE_TLS_REJECT_UNAUTHORIZED=0
+
+# Type a random password with at least 8 chars
 CRON_SECRET=your-cron-secret
+
+# Database
+POSTGRES_URL=postgresql://username:password@host:port/database
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Optional
+ACTIVITY_SUBGRAPH_URL=https://your-subgraph-url
+PNL_SUBGRAPH_URL=https://your-subgraph-url
 
 # Analytics (Optional)
 NEXT_PUBLIC_GOOGLE_ANALYTICS=G-XXXXXXXXXX

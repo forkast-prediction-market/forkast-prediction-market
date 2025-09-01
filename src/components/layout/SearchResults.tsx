@@ -2,7 +2,6 @@ import type { SearchResult } from '@/hooks/useSearch'
 import { LoaderIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { getSupabaseImageUrl } from '@/lib/mockData'
 
 interface SearchResultsProps {
   results: SearchResult[]
@@ -50,7 +49,7 @@ export function SearchResults({ results, isLoading, onResultClick }: SearchResul
               {result.iconUrl
                 ? (
                     <Image
-                      src={getSupabaseImageUrl(result.iconUrl) || '/placeholder-market.png'}
+                      src={result.iconUrl}
                       alt={result.eventTitle}
                       width={32}
                       height={32}
