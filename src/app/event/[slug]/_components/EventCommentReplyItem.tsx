@@ -12,16 +12,16 @@ import EventCommentReplyForm from './EventCommentReplyForm'
 
 interface ReplyItemProps {
   reply: Comment
-  commentId: number
-  eventId: number
+  commentId: string
+  eventId: string
   user: any
-  onLikeToggle: (commentId: number, replyId: number, updates: Partial<Comment>) => void
-  onDelete: (commentId: number, replyId: number) => void
-  replyingTo: number | null
-  onSetReplyingTo: (id: number | null) => void
+  onLikeToggle: (commentId: string, replyId: string, updates: Partial<Comment>) => void
+  onDelete: (commentId: string, replyId: string) => void
+  replyingTo: string | null
+  onSetReplyingTo: (id: string | null) => void
   replyText: string
   onSetReplyText: (text: string) => void
-  onAddReply: (commentId: number, reply: Comment) => void
+  onAddReply: (commentId: string, reply: Comment) => void
   onReplyAddedAction?: (reply: Comment) => void
   onCancelReply?: () => void
 }

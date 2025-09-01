@@ -10,9 +10,9 @@ interface EventCommentsProps {
 }
 
 export default function EventComments({ event, user }: EventCommentsProps) {
-  const [replyingTo, setReplyingTo] = useState<number | null>(null)
+  const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [replyText, setReplyText] = useState('')
-  const [expandedComments, setExpandedComments] = useState<Set<number>>(() => new Set())
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(() => new Set())
 
   const {
     comments,
@@ -25,16 +25,16 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     removeReply,
   } = useComments(event.slug)
 
-  const handleRepliesLoaded = useCallback((commentId: number, allReplies: Comment[]) => {
+  const handleRepliesLoaded = useCallback((commentId: string, allReplies: Comment[]) => {
     updateComment(commentId, { recent_replies: allReplies })
     setExpandedComments(prev => new Set([...prev, commentId]))
   }, [updateComment])
 
-  const handleLikeToggled = useCallback((commentId: number, newLikesCount: number, newUserHasLiked: boolean) => {
+  const handleLikeToggled = useCallback((commentId: string, newLikesCount: number, newUserHasLiked: boolean) => {
     updateComment(commentId, { likes_count: newLikesCount, user_has_liked: newUserHasLiked })
   }, [updateComment])
 
-  const handleAddReply = useCallback((commentId: number, newReply: Comment) => {
+  const handleAddReply = useCallback((commentId: string, newReply: Comment) => {
     const comment = comments.find(c => c.id === commentId)
     if (comment) {
       updateComment(commentId, {
@@ -47,15 +47,15 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     }
   }, [comments, updateComment])
 
-  const handleDeleteReply = useCallback((commentId: number, replyId: number) => {
+  const handleDeleteReply = useCallback((commentId: string, replyId: string) => {
     removeReply(commentId, replyId)
   }, [removeReply])
 
-  const handleUpdateReply = useCallback((commentId: number, replyId: number, updates: Partial<Comment>) => {
+  const handleUpdateReply = useCallback((commentId: string, replyId: string, updates: Partial<Comment>) => {
     updateReply(commentId, replyId, updates)
   }, [updateReply])
 
-  const handleDeleteComment = useCallback((commentId: number) => {
+  const handleDeleteComment = useCallback((commentId: string) => {
     removeComment(commentId)
   }, [removeComment])
 

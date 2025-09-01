@@ -14,19 +14,19 @@ import EventCommentsLoadMoreReplies from './EventCommentsLoadMoreReplies'
 
 interface CommentItemProps {
   comment: Comment
-  eventId: number
+  eventId: string
   user: any
-  onLikeToggle: (commentId: number, newLikesCount: number, newUserHasLiked: boolean) => void
-  onDelete: (commentId: number) => void
-  replyingTo: number | null
-  onSetReplyingTo: (id: number | null) => void
+  onLikeToggle: (commentId: string, newLikesCount: number, newUserHasLiked: boolean) => void
+  onDelete: (commentId: string) => void
+  replyingTo: string | null
+  onSetReplyingTo: (id: string | null) => void
   replyText: string
   onSetReplyText: (text: string) => void
-  expandedComments: Set<number>
-  onRepliesLoaded: (commentId: number, allReplies: Comment[]) => void
-  onAddReply: (commentId: number, reply: Comment) => void
-  onDeleteReply: (commentId: number, replyId: number) => void
-  onUpdateReply: (commentId: number, replyId: number, updates: Partial<Comment>) => void
+  expandedComments: Set<string>
+  onRepliesLoaded: (commentId: string, allReplies: Comment[]) => void
+  onAddReply: (commentId: string, reply: Comment) => void
+  onDeleteReply: (commentId: string, replyId: string) => void
+  onUpdateReply: (commentId: string, replyId: string, updates: Partial<Comment>) => void
 }
 
 export default function EventCommentItem({

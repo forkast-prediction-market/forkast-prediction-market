@@ -11,7 +11,7 @@ import { InputError } from '@/components/ui/input-error'
 import { submitCommentAction } from '../actions/store-comment'
 
 interface EventCommentFormProps {
-  eventId: number
+  eventId: string
   user: User | null
   onCommentAddedAction: (comment: Comment) => void
 }

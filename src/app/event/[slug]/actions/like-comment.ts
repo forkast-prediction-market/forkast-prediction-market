@@ -3,7 +3,7 @@
 import { CommentModel } from '@/lib/db/comments'
 import { getCurrentUser } from '@/lib/db/users'
 
-export async function likeCommentAction(commentId: number) {
+export async function likeCommentAction(commentId: string) {
   try {
     const user = await getCurrentUser()
     if (!user) {

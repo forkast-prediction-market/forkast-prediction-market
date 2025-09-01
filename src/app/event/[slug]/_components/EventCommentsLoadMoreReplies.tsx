@@ -3,13 +3,13 @@ import { useState } from 'react'
 
 interface Props {
   comment: Comment
-  onRepliesLoaded: (commentId: number, allReplies: Comment[]) => void
+  onRepliesLoaded: (commentId: string, allReplies: Comment[]) => void
 }
 
 export default function EventCommentsLoadMoreReplies({ comment, onRepliesLoaded }: Props) {
   const [loadingReplies, setLoadingReplies] = useState(false)
 
-  async function loadMoreReplies(commentId: number) {
+  async function loadMoreReplies(commentId: string) {
     setLoadingReplies(true)
 
     try {

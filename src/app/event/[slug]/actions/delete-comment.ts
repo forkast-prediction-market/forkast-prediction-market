@@ -3,7 +3,7 @@
 import { CommentModel } from '@/lib/db/comments'
 import { getCurrentUser } from '@/lib/db/users'
 
-export async function deleteCommentAction(commentId: number) {
+export async function deleteCommentAction(commentId: string) {
   try {
     const user = await getCurrentUser()
     if (!user) {

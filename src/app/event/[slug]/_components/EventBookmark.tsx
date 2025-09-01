@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 
 interface Props {
   event: {
-    id: number
+    id: string
     is_bookmarked: boolean
   }
 }

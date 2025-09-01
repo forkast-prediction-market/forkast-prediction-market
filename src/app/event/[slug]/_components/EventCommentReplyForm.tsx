@@ -10,8 +10,8 @@ import { submitCommentAction } from '../actions/store-comment'
 
 interface Props {
   user: User | null
-  eventId: number
-  parentCommentId: number
+  eventId: string
+  parentCommentId: string
   placeholder: string
   initialValue?: string
   onCancel: () => void
