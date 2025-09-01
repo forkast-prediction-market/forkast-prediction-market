@@ -1,15 +1,15 @@
 import { Suspense } from 'react'
 import NavigationTab from '@/components/layout/NavigationTab'
 import { Skeleton } from '@/components/ui/skeleton'
-import { getMainTags } from '@/lib/db/tags'
+import { TagModel } from '@/lib/db/tags'
 
 export default async function NavigationTabs() {
-  const mainTags = await getMainTags()
+  const { data } = await TagModel.getMainTags()
 
   const tags = [
     { slug: 'trending', name: 'Trending', childs: [] },
     { slug: 'new', name: 'New', childs: [] },
-    ...mainTags,
+    ...data ?? [],
   ]
 
   return (
