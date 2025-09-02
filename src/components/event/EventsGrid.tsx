@@ -2,7 +2,7 @@ import type { Event } from '@/types'
 import EventsEmptyState from '@/app/event/[slug]/_components/EventsEmptyState'
 import EventCard from '@/components/event/EventCard'
 import { OpenCardProvider } from '@/components/event/EventOpenCardContext'
-import { listEvents } from '@/lib/db/events'
+import { EventModel } from '@/lib/db/events'
 import { UserModel } from '@/lib/db/users'
 
 interface EventsContentProps {
@@ -13,7 +13,7 @@ interface EventsContentProps {
 
 export default async function EventsGrid({ tag, search, bookmarked }: EventsContentProps) {
   const user = await UserModel.getCurrentUser()
-  const events = await listEvents({
+  const events = await EventModel.listEvents({
     tag,
     search,
     userId: user?.id,
