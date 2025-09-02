@@ -247,6 +247,7 @@ function eventResource(data: any, userId: string): Event {
       volume: Math.random() * 100000,
       isYes: outcome.outcome_index === 0,
       avatar: `https://avatar.vercel.sh/${outcome.outcome_text.toLowerCase()}.png`,
+      outcome_index: outcome.outcome_index,
     }))
 
     return {
@@ -271,7 +272,7 @@ function eventResource(data: any, userId: string): Event {
       oracle: event.markets[0]?.oracle || null,
       is_bookmarked: event.is_bookmarked,
       created_at: event.created_at,
-      condition_id: event.condition_id,
+      condition_id: market.condition_id,
     }
   }
 
@@ -305,7 +306,7 @@ function eventResource(data: any, userId: string): Event {
     rules: event.rules || undefined,
     is_bookmarked: event.is_bookmarked,
     created_at: event.created_at,
-    condition_id: event.condition_id,
+    condition_id: event.markets[0].condition_id,
   }
 }
 

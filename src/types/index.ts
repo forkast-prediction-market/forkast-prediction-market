@@ -26,6 +26,7 @@ export interface Event {
 
 export interface MarketOutcome {
   id: string
+  outcome_index: number
   name: string
   probability: number
   price: number // in USDC cents (0.01 to 0.99)

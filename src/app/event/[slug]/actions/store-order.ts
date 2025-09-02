@@ -28,6 +28,7 @@ export async function storeOrderAction(formData: FormData) {
     amount: formData.get('amount'),
     price: formData.get('price'),
     order_type: formData.get('order_type'),
+    slug: formData.get('slug'),
   })
 
   if (!validated.success) {
@@ -45,12 +46,13 @@ export async function storeOrderAction(formData: FormData) {
     })
 
     if (error) {
-      return { error: 'Failed to create Order' }
+      console.error('Failed to create order.', error)
+      return { error: 'Failed to create order.' }
     }
 
     revalidatePath(`/event/${slug}`)
   }
   catch {
-    return { error: 'An unknown error occurred' }
+    return { error: 'An unknown error occurred.' }
   }
 }

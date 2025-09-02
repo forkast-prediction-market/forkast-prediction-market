@@ -21,8 +21,6 @@ export const OrderModel = {
         amount: orderData.amount,
         price: orderData.price,
         status: 'pending',
-        filled_amount: 0,
-        remaining_amount: orderData.amount,
       })
       .select()
       .single()

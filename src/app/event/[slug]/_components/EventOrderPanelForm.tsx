@@ -11,8 +11,6 @@ interface Props {
   tradingState: ReturnType<typeof import('@/hooks/useTradingState').useTradingState>
   isMobileVersion?: boolean
   handleConfirmTrade: () => Promise<void>
-  triggerYesConfetti: (event?: React.MouseEvent) => void
-  triggerNoConfetti: (event?: React.MouseEvent) => void
 }
 
 export default function EventOrderPanelForm({
@@ -20,8 +18,6 @@ export default function EventOrderPanelForm({
   tradingState,
   isMobileVersion = false,
   handleConfirmTrade,
-  triggerYesConfetti,
-  triggerNoConfetti,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const getSelectedOutcome = tradingState.getSelectedOutcome
@@ -386,16 +382,7 @@ export default function EventOrderPanelForm({
       <Button
         className="w-full"
         size="lg"
-        onClick={(e) => {
-          // Trigger confetti based on selection
-          if (tradingState.yesNoSelection === 'yes') {
-            triggerYesConfetti(e)
-          }
-          else {
-            triggerNoConfetti(e)
-          }
-          handleConfirmTrade()
-        }}
+        onClick={handleConfirmTrade}
         disabled={
           tradingState.isLoading
           || !tradingState.amount

@@ -1,8 +1,7 @@
 import type { Event } from '@/types'
-import confetti from 'canvas-confetti'
 import { toast } from 'sonner'
+import { storeOrderAction } from '@/app/event/[slug]/actions/store-order'
 import EventOrderPanelForm from './EventOrderPanelForm'
-import EventOrderPanelWinCard from './EventOrderPanelWinCard'
 
 interface Props {
   event: Event
@@ -54,43 +53,6 @@ export default function EventOrderPanel({ event, tradingState, isMobileVersion =
     return sellPrice.toString()
   }
 
-  // Confetti effects
-  function triggerYesConfetti(event?: React.MouseEvent) {
-    let origin: { x?: number, y: number } = { y: 0.6 }
-
-    if (event && event.currentTarget) {
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-      const x = (rect.left + rect.width / 2) / window.innerWidth
-      const y = (rect.top + rect.height / 2) / window.innerHeight
-      origin = { x, y }
-    }
-
-    confetti({
-      particleCount: 80,
-      spread: 60,
-      origin,
-      colors: ['#10b981', '#059669', '#047857', '#065f46'], // Green colors
-    })
-  }
-
-  function triggerNoConfetti(event?: React.MouseEvent) {
-    let origin: { x?: number, y: number } = { y: 0.6 }
-
-    if (event && event.currentTarget) {
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-      const x = (rect.left + rect.width / 2) / window.innerWidth
-      const y = (rect.top + rect.height / 2) / window.innerHeight
-      origin = { x, y }
-    }
-
-    confetti({
-      particleCount: 80,
-      spread: 60,
-      origin,
-      colors: ['#ef4444', '#dc2626', '#b91c1c', '#991b1b'], // Red colors
-    })
-  }
-
   // Handle confirm trade with loading
   async function handleConfirmTrade() {
     if (!tradingState.amount || Number.parseFloat(tradingState.amount) <= 0 || !tradingState.yesNoSelection) {
@@ -98,19 +60,49 @@ export default function EventOrderPanel({ event, tradingState, isMobileVersion =
     }
 
     tradingState.setIsLoading(true)
-    tradingState.setShowWinCard(false)
 
-    // Simulate API call
-    setTimeout(() => {
-      tradingState.setIsLoading(false)
+    try {
+      // Prepare FormData for the server action
+      const formData = new FormData()
+      formData.append('condition_id', event.condition_id)
+      formData.append('slug', event.slug)
+      formData.append('side', tradingState.activeTab)
+      formData.append('amount', tradingState.amount)
+      formData.append('order_type', 'market')
 
+      // Determine outcome_index based on selection
+      let outcomeIndex = 0
+      if (tradingState.isMultiMarket && tradingState.selectedOutcomeForOrder) {
+        const selectedOutcome = getSelectedOutcome()
+        outcomeIndex = selectedOutcome?.outcome_index || 0
+      }
+      else {
+        // Binary market: 0 for yes, 1 for no
+        outcomeIndex = tradingState.yesNoSelection === 'yes' ? 0 : 1
+      }
+      formData.append('outcome_index', outcomeIndex.toString())
+
+      // Add price (use current market price)
+      const price = tradingState.yesNoSelection === 'yes' ? yesPrice : noPrice
+      formData.append('price', (price / 100).toString()) // Convert cents to dollars
+
+      // Call the server action
+      const result = await storeOrderAction(formData)
+
+      if (result?.error) {
+        toast.error('Trade failed', {
+          description: result.error,
+        })
+        return
+      }
+
+      // Success - show appropriate toast
       const amountNum = Number.parseFloat(tradingState.amount)
 
       if (tradingState.activeTab === 'sell') {
         // Sell logic
         const sellValue = calculateSellAmount(amountNum)
 
-        // Show success toast for sell
         toast.success(
           `Sell ${tradingState.amount} shares on ${tradingState.yesNoSelection === 'yes' ? 'Yes' : 'No'}`,
           {
@@ -137,11 +129,10 @@ export default function EventOrderPanel({ event, tradingState, isMobileVersion =
         )
       }
       else {
-        // Buy logic (original)
+        // Buy logic
         const price = tradingState.yesNoSelection === 'yes' ? yesPrice : noPrice
         const shares = tradingState.formatValue((amountNum / price) * 100)
 
-        // Show success toast for buy
         toast.success(
           `Buy $${tradingState.amount} on ${tradingState.yesNoSelection === 'yes' ? 'Yes' : 'No'}`,
           {
@@ -167,19 +158,16 @@ export default function EventOrderPanel({ event, tradingState, isMobileVersion =
 
       // Reset states
       tradingState.setAmount('')
-      // Temporary workaround: displays victory card after 1.5s
-      setTimeout(() => tradingState.setShowWinCard(true), 1500)
-    }, 1000)
-  }
-
-  if (tradingState.showWinCard) {
-    return (
-      <EventOrderPanelWinCard
-        event={event}
-        tradingState={tradingState}
-        isMobileVersion={isMobileVersion}
-      />
-    )
+    }
+    catch (error) {
+      console.error('Trade error:', error)
+      toast.error('Trade failed', {
+        description: 'An unexpected error occurred. Please try again.',
+      })
+    }
+    finally {
+      tradingState.setIsLoading(false)
+    }
   }
 
   return (
@@ -188,8 +176,6 @@ export default function EventOrderPanel({ event, tradingState, isMobileVersion =
       tradingState={tradingState}
       isMobileVersion={isMobileVersion}
       handleConfirmTrade={handleConfirmTrade}
-      triggerYesConfetti={triggerYesConfetti}
-      triggerNoConfetti={triggerNoConfetti}
     />
   )
 }
