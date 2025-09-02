@@ -3,7 +3,7 @@ import { DialogTitle } from '@radix-ui/react-dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
-import OrderPanel from './OrderPanel'
+import EventOrderPanel from './EventOrderPanel'
 
 interface Props {
   event: Event
@@ -60,7 +60,7 @@ export default function EventMobileOrderPanel({ event, tradingState, isMobileMod
           <DialogTitle>{event.title}</DialogTitle>
         </VisuallyHidden>
 
-        <OrderPanel event={event} tradingState={tradingState} isMobileVersion={true} />
+        <EventOrderPanel event={event} tradingState={tradingState} isMobileVersion={true} />
       </DrawerContent>
     </Drawer>
   )

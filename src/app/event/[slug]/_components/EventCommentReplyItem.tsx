@@ -6,8 +6,8 @@ import Link from 'next/link'
 import { useCallback } from 'react'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { formatTimeAgo, truncateAddress } from '@/lib/utils'
-import CommentMenu from './CommentMenu'
 import EventCommentLikeForm from './EventCommentLikeForm'
+import EventCommentMenu from './EventCommentMenu'
 import EventCommentReplyForm from './EventCommentReplyForm'
 
 interface ReplyItemProps {
@@ -125,7 +125,7 @@ export default function EventCommentReplyItem({
                 <MoreHorizontalIcon className="size-4" />
               </button>
             </DropdownMenuTrigger>
-            <CommentMenu
+            <EventCommentMenu
               comment={reply}
               onDelete={handleDelete}
             />

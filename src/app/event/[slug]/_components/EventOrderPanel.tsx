@@ -13,7 +13,7 @@ interface Props {
   isMobileVersion?: boolean
 }
 
-export default function OrderPanel({ event, tradingState, isMobileVersion = false }: Props) {
+export default function EventOrderPanel({ event, tradingState, isMobileVersion = false }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   // Utility functions

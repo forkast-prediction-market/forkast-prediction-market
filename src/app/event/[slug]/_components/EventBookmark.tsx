@@ -3,9 +3,9 @@
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { BookmarkIcon } from 'lucide-react'
 import { useCallback, useState, useTransition } from 'react'
-import { bookmarkAction } from '@/app/event/[slug]/actions'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { toggleBookmarkAction } from '../actions/toggle-bookmark'
 
 interface Props {
   event: {
@@ -26,7 +26,7 @@ export default function EventBookmark({ event }: Props) {
 
     startTransition(async () => {
       try {
-        await bookmarkAction(event.id)
+        await toggleBookmarkAction(event.id)
       }
       catch {
         setIsBookmarked(previousState)

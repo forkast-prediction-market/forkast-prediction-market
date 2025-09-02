@@ -1,19 +1,18 @@
 'use client'
 
 import type { Event, User } from '@/types'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTradingState } from '@/hooks/useTradingState'
-import { useUser } from '@/stores/useUser'
 import EventChart from './EventChart'
 import EventHeader from './EventHeader'
 import EventMarketContext from './EventMarketContext'
 import EventMarkets from './EventMarkets'
 import EventMetaInformation from './EventMetaInformation'
 import EventMobileOrderPanel from './EventMobileOrderPanel'
+import EventOrderPanel from './EventOrderPanel'
 import EventRelated from './EventRelated'
 import EventRules from './EventRules'
 import EventTabs from './EventTabs'
-import OrderPanel from './OrderPanel'
 
 interface Props {
   event: Event
@@ -23,10 +22,6 @@ interface Props {
 export default function EventDetail({ event, user }: Props) {
   const tradingState = useTradingState({ event })
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false)
-
-  useEffect(() => {
-    useUser.setState(user)
-  }, [user])
 
   return (
     <>
@@ -42,7 +37,7 @@ export default function EventDetail({ event, user }: Props) {
         </div>
 
         <div className="hidden gap-4 md:block lg:sticky lg:top-28 lg:grid lg:self-start">
-          <OrderPanel event={event} tradingState={tradingState} />
+          <EventOrderPanel event={event} tradingState={tradingState} />
           <EventRelated event={event} />
         </div>
       </main>

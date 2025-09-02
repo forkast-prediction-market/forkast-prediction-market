@@ -10,7 +10,7 @@ interface CommentMenuProps {
   onDelete: () => void
 }
 
-export default function CommentMenu({ comment, onDelete }: CommentMenuProps) {
+export default function EventCommentMenu({ comment, onDelete }: CommentMenuProps) {
   return (
     <DropdownMenuContent className="w-32" align="end">
       {comment.is_owner && (
