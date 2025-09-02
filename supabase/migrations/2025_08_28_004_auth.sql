@@ -81,7 +81,6 @@ CREATE TABLE IF NOT EXISTS wallets
   id         CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
   user_id    CHAR(26) NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
   address    TEXT     NOT NULL,
-  balance    DECIMAL(20, 6)       DEFAULT 0,
   chain_id   INTEGER  NOT NULL,
   is_primary BOOLEAN  NOT NULL,
   created_at TIMESTAMPTZ          DEFAULT NOW()

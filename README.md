@@ -2,10 +2,6 @@
 
 Welcome to the open-source project that revolutionizes how you can launch and monetize your own Web3 prediction market, similar to Polymarket, but with complete control and transparency.
 
-## 🏷️ Keywords
-
-`polymarket clone` • `prediction market` • `polymarket fork` • `decentralized betting` • `web3 prediction` • `polygon defi` • `prediction protocol` • `polymarket alternative` • `decentralized trading` • `blockchain betting`
-
 ## ✨ Why Fork This Project?
 
 Tired of centralized platforms? Want to build your own business in the DeFi space? This project offers you:
