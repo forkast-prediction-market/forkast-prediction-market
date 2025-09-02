@@ -1,7 +1,7 @@
 'use client'
 
 import { AlertCircle, Calendar, CheckCircle2, Image, Loader2, Plus, Tag, Trash2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,14 +25,13 @@ interface MarketOutcome {
 interface Market {
   question: string
   description: string
-  end_date_iso: string
   icon: string
   market_slug: string
   outcomes: MarketOutcome[]
 }
 
 interface EventForm {
-  // Campos do evento
+  // Event fields
   event_id: string
   slug: string
   title: string
@@ -44,7 +43,7 @@ interface EventForm {
   show_market_icons: boolean
   resolution_source?: string
 
-  // Markets do evento
+  // Event markets
   markets: Market[]
 }
 
@@ -53,6 +52,11 @@ export default function CreateEventContent() {
   const [availableTags, setAvailableTags] = useState<EventTag[]>([])
   const [eventIconFile, setEventIconFile] = useState<File | null>(null)
   const [marketIconFiles, setMarketIconFiles] = useState<{ [key: number]: File | null }>({})
+
+  // Refs for debouncing slug generation
+  const eventTitleTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const tagTimeoutsRef = useRef<{ [key: number]: NodeJS.Timeout | null }>({})
+  const marketTimeoutsRef = useRef<{ [key: number]: NodeJS.Timeout | null }>({})
   const [form, setForm] = useState<EventForm>({
     event_id: '',
     slug: '',
@@ -67,12 +71,11 @@ export default function CreateEventContent() {
     markets: [{
       question: '',
       description: '',
-      end_date_iso: '',
       icon: '',
       market_slug: '',
       outcomes: [
-        { outcome: 'Yes' },
-        { outcome: 'No' },
+        { outcome: '' },
+        { outcome: '' },
       ],
     }],
   })
@@ -94,46 +97,103 @@ export default function CreateEventContent() {
     loadTags()
   }, [])
 
-  function generateSlug(text: string) {
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (eventTitleTimeoutRef.current) {
+        clearTimeout(eventTitleTimeoutRef.current)
+      }
+      Object.values(tagTimeoutsRef.current).forEach((timeout) => {
+        if (timeout) {
+          clearTimeout(timeout)
+        }
+      })
+      Object.values(marketTimeoutsRef.current).forEach((timeout) => {
+        if (timeout) {
+          clearTimeout(timeout)
+        }
+      })
+    }
+  }, [])
+
+  const generateSlug = useCallback((text: string) => {
     return text
       .toLowerCase()
-      .normalize('NFD') // Decompõe caracteres acentuados
-      .replace(/[\u0300-\u036F]/g, '') // Remove diacríticos (acentos)
-      .replace(/[^\w\s-]/g, '') // Remove caracteres especiais restantes
-      .replace(/\s+/g, '-') // Substitui espaços por hífens
-      .replace(/-+/g, '-') // Remove hífens duplicados
+      .normalize('NFD') // Decompose accented characters
+      .replace(/[\u0300-\u036F]/g, '') // Remove diacritics (accents)
+      .replace(/[^\w\s-]/g, '') // Remove remaining special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Remove duplicate hyphens
       .trim()
-  }
+  }, [])
 
-  function handleEventFieldChange(field: keyof EventForm, value: any) {
-    setForm((prev) => {
-      const updated = { ...prev, [field]: value }
+  const handleEventFieldChange = useCallback((field: keyof EventForm, value: any) => {
+    setForm(prev => ({ ...prev, [field]: value }))
+  }, [])
 
-      // Auto-gerar slugs quando título mudar
-      if (field === 'title') {
-        updated.slug = generateSlug(value)
-        updated.event_id = generateSlug(value)
+  // Debounced slug generation for event title
+  useEffect(() => {
+    if (eventTitleTimeoutRef.current) {
+      clearTimeout(eventTitleTimeoutRef.current)
+    }
+
+    eventTitleTimeoutRef.current = setTimeout(() => {
+      if (form.title.trim()) {
+        setForm(prev => ({
+          ...prev,
+          slug: generateSlug(form.title),
+          event_id: generateSlug(form.title),
+        }))
       }
+    }, 500) // 500ms delay
 
-      return updated
-    })
-  }
+    return () => {
+      if (eventTitleTimeoutRef.current) {
+        clearTimeout(eventTitleTimeoutRef.current)
+      }
+    }
+  }, [form.title, generateSlug])
 
-  function handleTagChange(index: number, field: keyof EventTag, value: any) {
+  const handleTagChange = useCallback((index: number, field: keyof EventTag, value: any) => {
     setForm(prev => ({
       ...prev,
       tags: prev.tags.map((tag, i) =>
         i === index
-          ? {
-              ...tag,
-              [field]: value,
-              // Auto-gerar slug da tag
-              ...(field === 'label' ? { slug: generateSlug(value) } : {}),
-            }
+          ? { ...tag, [field]: value }
           : tag,
       ),
     }))
-  }
+  }, [])
+
+  // Debounced slug generation for tags
+  useEffect(() => {
+    form.tags.forEach((tag, index) => {
+      if (tagTimeoutsRef.current[index]) {
+        clearTimeout(tagTimeoutsRef.current[index]!)
+      }
+
+      tagTimeoutsRef.current[index] = setTimeout(() => {
+        if (tag.label.trim()) {
+          setForm(prev => ({
+            ...prev,
+            tags: prev.tags.map((t, i) =>
+              i === index
+                ? { ...t, slug: generateSlug(tag.label) }
+                : t,
+            ),
+          }))
+        }
+      }, 300) // 300ms delay for tags
+    })
+
+    return () => {
+      Object.values(tagTimeoutsRef.current).forEach((timeout) => {
+        if (timeout) {
+          clearTimeout(timeout)
+        }
+      })
+    }
+  }, [form.tags.map(tag => tag.label).join('|'), generateSlug])
 
   function addTag() {
     setForm(prev => ({
@@ -193,23 +253,49 @@ export default function CreateEventContent() {
     }
   }
 
-  function handleMarketChange(marketIndex: number, field: keyof Market, value: any) {
+  const handleMarketChange = useCallback((marketIndex: number, field: keyof Market, value: any) => {
     setForm(prev => ({
       ...prev,
       markets: prev.markets.map((market, i) =>
         i === marketIndex
-          ? {
-              ...market,
-              [field]: value,
-              // Auto-gerar slug do market
-              ...(field === 'question' ? { market_slug: generateSlug(value) } : {}),
-            }
+          ? { ...market, [field]: value }
           : market,
       ),
     }))
-  }
+  }, [])
 
-  function handleOutcomeChange(marketIndex: number, outcomeIndex: number, value: string) {
+  // Debounced slug generation for markets
+  useEffect(() => {
+    form.markets.forEach((market, index) => {
+      if (marketTimeoutsRef.current[index]) {
+        clearTimeout(marketTimeoutsRef.current[index]!)
+      }
+
+      marketTimeoutsRef.current[index] = setTimeout(() => {
+        if (market.question.trim()) {
+          setForm(prev => ({
+            ...prev,
+            markets: prev.markets.map((m, i) =>
+              i === index
+                ? { ...m, market_slug: generateSlug(market.question) }
+                : m,
+            ),
+          }))
+        }
+      }, 300) // 300ms delay for markets
+    })
+
+    return () => {
+      Object.values(marketTimeoutsRef.current).forEach((timeout) => {
+        if (timeout) {
+          clearTimeout(timeout)
+        }
+      })
+    }
+  }, [form.markets.map(market => market.question).join('|'), generateSlug])
+
+  const handleOutcomeChange = useCallback((marketIndex: number, outcomeIndex: number, value: string) => {
+    // Update immediately without debouncing to prevent focus loss
     setForm(prev => ({
       ...prev,
       markets: prev.markets.map((market, i) =>
@@ -223,7 +309,7 @@ export default function CreateEventContent() {
           : market,
       ),
     }))
-  }
+  }, [])
 
   function addMarket() {
     setForm(prev => ({
@@ -231,12 +317,11 @@ export default function CreateEventContent() {
       markets: [...prev.markets, {
         question: '',
         description: '',
-        end_date_iso: prev.end_date_iso, // Usar mesma data do evento por padrão
         icon: '',
         market_slug: '',
         outcomes: [
-          { outcome: 'Yes' },
-          { outcome: 'No' },
+          { outcome: '' },
+          { outcome: '' },
         ],
       }],
     }))
@@ -291,9 +376,6 @@ export default function CreateEventContent() {
       }
       if (!market.description.trim()) {
         errors.push(`Market ${index + 1}: Description is required`)
-      }
-      if (!market.end_date_iso) {
-        errors.push(`Market ${index + 1}: End date is required`)
       }
       if (!marketIconFiles[index]) {
         errors.push(`Market ${index + 1}: Icon is required`)
@@ -356,12 +438,11 @@ export default function CreateEventContent() {
         markets: [{
           question: '',
           description: '',
-          end_date_iso: '',
           icon: '',
           market_slug: '',
           outcomes: [
-            { outcome: 'Yes' },
-            { outcome: 'No' },
+            { outcome: '' },
+            { outcome: '' },
           ],
         }],
       })
@@ -536,7 +617,7 @@ export default function CreateEventContent() {
               <div className="space-y-2">
                 <Label>Selected Tags *</Label>
                 {form.tags.map((tag, index) => (
-                  <div key={`tag-${index}-${tag.slug || 'empty'}`} className="flex items-center gap-4">
+                  <div key={`tag-${index}`} className="flex items-center gap-4">
                     <div className="grid flex-1 grid-cols-2 gap-2">
                       <Input
                         value={tag.label}
@@ -633,33 +714,23 @@ export default function CreateEventContent() {
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label>End Date *</Label>
+                    <div className="space-y-2">
+                      <Label>Market Icon *</Label>
+                      <div className="flex items-center gap-2">
                         <Input
-                          type="datetime-local"
-                          value={market.end_date_iso}
-                          onChange={e => handleMarketChange(marketIndex, 'end_date_iso', e.target.value)}
+                          type="file"
+                          accept="image/*"
+                          onChange={e => handleMarketIconUpload(marketIndex, e)}
+                          className={`
+                            file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1 file:text-sm
+                            file:text-primary-foreground
+                          `}
                         />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Market Icon *</Label>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={e => handleMarketIconUpload(marketIndex, e)}
-                            className={`
-                              file:mr-2 file:rounded-md file:border-0 file:bg-primary file:px-3 file:py-1 file:text-sm
-                              file:text-primary-foreground
-                            `}
-                          />
-                          {marketIconFiles[marketIndex] && (
-                            <span className="truncate text-sm text-muted-foreground">
-                              {marketIconFiles[marketIndex]?.name}
-                            </span>
-                          )}
-                        </div>
+                        {marketIconFiles[marketIndex] && (
+                          <span className="truncate text-sm text-muted-foreground">
+                            {marketIconFiles[marketIndex]?.name}
+                          </span>
+                        )}
                       </div>
                     </div>
 
@@ -669,7 +740,7 @@ export default function CreateEventContent() {
                       <div className="grid grid-cols-2 gap-4">
                         {market.outcomes.map((outcome, outcomeIndex) => (
                           <Input
-                            key={`outcome-${marketIndex}-${outcomeIndex}-${outcome.outcome || 'empty'}`}
+                            key={`outcome-${marketIndex}-${outcomeIndex}`}
                             value={outcome.outcome}
                             onChange={e => handleOutcomeChange(marketIndex, outcomeIndex, e.target.value)}
                             placeholder={outcomeIndex === 0 ? 'Yes' : 'No'}
