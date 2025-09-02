@@ -27,10 +27,6 @@ export const OrderModel = {
       .select()
       .single()
 
-    if (error) {
-      throw new Error(`Failed to create order: ${error.message}`)
-    }
-
     return { data, error }
   },
 
@@ -45,10 +41,6 @@ export const OrderModel = {
       .eq('status', 'pending')
       .select()
       .single()
-
-    if (error) {
-      throw new Error(`Failed to cancel order: ${error.message}`)
-    }
 
     return { data, error }
   },

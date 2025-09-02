@@ -14,7 +14,7 @@ export async function updateNotificationPreferencesAction(formData: FormData) {
 
     const user = await UserModel.getCurrentUser()
     if (!user) {
-      return
+      return { error: 'Unauthenticated.' }
     }
 
     await UserModel.updateUserNotificationPreferencesById(user.id, preferences)

@@ -15,7 +15,7 @@ export interface ActionState {
   errors?: Record<string, string | undefined>
 }
 
-const updateUserSchema = z.object({
+const UpdateUserSchema = z.object({
   email: z.email({ pattern: z.regexes.html5Email, error: 'Invalid email address.' }),
   username: z
     .string()
@@ -43,14 +43,11 @@ const updateUserSchema = z.object({
     }, { error: 'Only JPG, PNG, and WebP images are allowed' }),
 })
 
-export async function updateUserAction(
-  _: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
+export async function updateUserAction(formData: FormData): Promise<ActionState> {
   try {
     const user = await UserModel.getCurrentUser()
     if (!user) {
-      return { error: 'Not authenticated.' }
+      return { error: 'Unauthenticated.' }
     }
 
     const imageFile = formData.get('image') as File
@@ -61,20 +58,28 @@ export async function updateUserAction(
       image: imageFile && imageFile.size > 0 ? imageFile : undefined,
     }
 
-    const validated = updateUserSchema.parse(rawData)
+    const validated = UpdateUserSchema.safeParse(rawData)
+    if (!validated.success) {
+      const errors: ActionState['errors'] = {}
+      validated.error.issues.forEach((issue) => {
+        if (issue.path[0]) {
+          errors[issue.path[0] as keyof typeof errors] = issue.message
+        }
+      })
+
+      return { errors }
+    }
 
     const updateData = {
-      email: validated.email,
-      username: validated.username,
+      ...validated.data,
       image: user.image,
     }
 
-    if (validated.image && validated.image.size > 0) {
-      updateData.image = await uploadImage(user, validated.image)
+    if (validated.data.image && validated.data.image.size > 0) {
+      updateData.image = await uploadImage(user, validated.data.image)
     }
 
     const { error } = await UserModel.updateUserProfileById(user.id, updateData)
-
     if (error) {
       if (typeof error === 'string') {
         return { error }
@@ -86,19 +91,7 @@ export async function updateUserAction(
     revalidatePath('/settings')
     return {}
   }
-  catch (error) {
-    if (error instanceof z.ZodError) {
-      const errors: ActionState['errors'] = {}
-
-      error.issues.forEach((issue) => {
-        if (issue.path[0]) {
-          errors[issue.path[0] as keyof typeof errors] = issue.message
-        }
-      })
-
-      return { errors }
-    }
-
+  catch {
     return { error: 'Failed to update user.' }
   }
 }
