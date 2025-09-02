@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { CommentModel } from '@/lib/db/comments'
-import { getCurrentUser } from '@/lib/db/users'
+import { UserModel } from '@/lib/db/users'
 
 export async function GET(
   _: Request,
@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const { commentId } = await params
-    const user = await getCurrentUser()
+    const user = await UserModel.getCurrentUser()
     const currentUserId = user?.id
 
     const { data: replies, error: errorReplies } = await CommentModel.getCommentReplies(commentId)
@@ -19,7 +19,7 @@ export async function GET(
       )
     }
 
-    let likedIds: Set<any>
+    let likedIds: Set<string> = new Set<string>([])
     if (currentUserId && replies?.length) {
       const replyIds = replies.map(reply => reply.id)
       const { data: userLikes } = await CommentModel.getCommentsIdsLikedByUser(currentUserId, replyIds)

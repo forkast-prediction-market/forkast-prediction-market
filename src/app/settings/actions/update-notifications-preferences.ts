@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { getCurrentUser, updateUserNotificationPreferencesById } from '@/lib/db/users'
+import { UserModel } from '@/lib/db/users'
 
 export async function updateNotificationPreferencesAction(formData: FormData) {
   try {
@@ -12,12 +12,12 @@ export async function updateNotificationPreferencesAction(formData: FormData) {
       inapp_resolutions: formData.get('inapp_resolutions') === 'on',
     }
 
-    const user = await getCurrentUser()
+    const user = await UserModel.getCurrentUser()
     if (!user) {
-      return
+      return { error: 'Unauthenticated.' }
     }
 
-    await updateUserNotificationPreferencesById(user.id, preferences)
+    await UserModel.updateUserNotificationPreferencesById(user.id, preferences)
 
     revalidatePath('/settings')
   }

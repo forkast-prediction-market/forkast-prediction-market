@@ -12,7 +12,7 @@ import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
 
 export default function SettingsProfileTab({ user }: { user: User }) {
-  const [state, formAction, isPending] = useActionState(updateUserAction, {})
+  const [state, formAction, isPending] = useActionState((_: any, formData: any) => updateUserAction(formData), {})
   const fileInputRef = useRef<HTMLInputElement>(null)
   const prevPending = useRef(false)
 

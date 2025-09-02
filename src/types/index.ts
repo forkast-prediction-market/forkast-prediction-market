@@ -21,10 +21,12 @@ export interface Event {
   rules?: string // Rules for market resolution
   oracle?: string // Oracle address for resolution
   created_at: string
+  condition_id: string
 }
 
 export interface MarketOutcome {
   id: string
+  outcome_index: number
   name: string
   probability: number
   price: number // in USDC cents (0.01 to 0.99)
@@ -115,3 +117,7 @@ export interface ActivityItem {
   timestamp: Date
   transactionHash: string
 }
+
+export type QueryResult<T>
+= | { data: T, error: null }
+  | { data: null, error: string }

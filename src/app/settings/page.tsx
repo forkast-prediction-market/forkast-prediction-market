@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import React from 'react'
-import { getCurrentUser } from '@/lib/db/users'
+import { UserModel } from '@/lib/db/users'
 import SettingsContent from './_components/SettingsContent'
 
 export const metadata: Metadata = {
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default async function SettingsPage({ searchParams }: Props) {
-  const user = await getCurrentUser()
+  const user = await UserModel.getCurrentUser()
   const params = await searchParams
   const tab = (params.tab as string) ?? 'profile'
 

@@ -1,11 +1,11 @@
 'use server'
 
 import { CommentModel } from '@/lib/db/comments'
-import { getCurrentUser } from '@/lib/db/users'
+import { UserModel } from '@/lib/db/users'
 
-export async function submitCommentAction(eventId: string, formData: FormData) {
+export async function storeCommentAction(eventId: string, formData: FormData) {
   try {
-    const user = await getCurrentUser()
+    const user = await UserModel.getCurrentUser()
     if (!user) {
       return { error: 'Unauthenticated.' }
     }

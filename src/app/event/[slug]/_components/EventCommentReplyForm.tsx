@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useActionState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { submitCommentAction } from '../actions/store-comment'
+import { storeCommentAction } from '../actions/store-comment'
 
 interface Props {
   user: User | null
@@ -29,7 +29,7 @@ export default function EventCommentReplyForm({
 }: Props) {
   const formRef = useRef<HTMLFormElement>(null)
   const [state, formAction, isPending] = useActionState(
-    (_: any, formData: any) => submitCommentAction(eventId, formData),
+    (_: any, formData: any) => storeCommentAction(eventId, formData),
     { error: '' },
   )
 

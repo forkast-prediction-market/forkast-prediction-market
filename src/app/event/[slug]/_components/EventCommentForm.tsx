@@ -8,7 +8,7 @@ import { useActionState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
-import { submitCommentAction } from '../actions/store-comment'
+import { storeCommentAction } from '../actions/store-comment'
 
 interface EventCommentFormProps {
   eventId: string
@@ -20,7 +20,7 @@ export default function EventCommentForm({ eventId, user, onCommentAddedAction }
   const { open } = useAppKit()
   const formRef = useRef<HTMLFormElement>(null)
   const [state, formAction, isPending] = useActionState(
-    (_: any, formData: any) => submitCommentAction(eventId, formData),
+    (_: any, formData: any) => storeCommentAction(eventId, formData),
     { error: '' },
   )
 

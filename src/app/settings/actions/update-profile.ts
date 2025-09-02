@@ -4,7 +4,7 @@ import { Buffer } from 'node:buffer'
 import { revalidatePath } from 'next/cache'
 import sharp from 'sharp'
 import { z } from 'zod'
-import { getCurrentUser, updateUserProfileById } from '@/lib/db/users'
+import { UserModel } from '@/lib/db/users'
 import { supabaseAdmin } from '@/lib/supabase'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
@@ -15,7 +15,7 @@ export interface ActionState {
   errors?: Record<string, string | undefined>
 }
 
-const updateUserSchema = z.object({
+const UpdateUserSchema = z.object({
   email: z.email({ pattern: z.regexes.html5Email, error: 'Invalid email address.' }),
   username: z
     .string()
@@ -43,14 +43,11 @@ const updateUserSchema = z.object({
     }, { error: 'Only JPG, PNG, and WebP images are allowed' }),
 })
 
-export async function updateUserAction(
-  _: ActionState,
-  formData: FormData,
-): Promise<ActionState> {
+export async function updateUserAction(formData: FormData): Promise<ActionState> {
   try {
-    const user = await getCurrentUser()
+    const user = await UserModel.getCurrentUser()
     if (!user) {
-      return { error: 'Not authenticated.' }
+      return { error: 'Unauthenticated.' }
     }
 
     const imageFile = formData.get('image') as File
@@ -61,36 +58,10 @@ export async function updateUserAction(
       image: imageFile && imageFile.size > 0 ? imageFile : undefined,
     }
 
-    const validated = updateUserSchema.parse(rawData)
-
-    const updateData = {
-      email: validated.email,
-      username: validated.username,
-      image: user.image,
-    }
-
-    if (validated.image && validated.image.size > 0) {
-      updateData.image = await uploadImage(user, validated.image)
-    }
-
-    const result = await updateUserProfileById(user.id, updateData)
-
-    if ('error' in result) {
-      if (typeof result.error === 'string') {
-        return { error: result.error }
-      }
-
-      return { errors: result.error }
-    }
-
-    revalidatePath('/settings')
-    return {}
-  }
-  catch (error) {
-    if (error instanceof z.ZodError) {
+    const validated = UpdateUserSchema.safeParse(rawData)
+    if (!validated.success) {
       const errors: ActionState['errors'] = {}
-
-      error.issues.forEach((issue) => {
+      validated.error.issues.forEach((issue) => {
         if (issue.path[0]) {
           errors[issue.path[0] as keyof typeof errors] = issue.message
         }
@@ -99,6 +70,28 @@ export async function updateUserAction(
       return { errors }
     }
 
+    const updateData = {
+      ...validated.data,
+      image: user.image,
+    }
+
+    if (validated.data.image && validated.data.image.size > 0) {
+      updateData.image = await uploadImage(user, validated.data.image)
+    }
+
+    const { error } = await UserModel.updateUserProfileById(user.id, updateData)
+    if (error) {
+      if (typeof error === 'string') {
+        return { error }
+      }
+
+      return { errors: error }
+    }
+
+    revalidatePath('/settings')
+    return {}
+  }
+  catch {
     return { error: 'Failed to update user.' }
   }
 }

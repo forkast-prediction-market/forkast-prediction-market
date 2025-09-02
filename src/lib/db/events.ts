@@ -1,5 +1,4 @@
 import type { Event, EventCategory, Tag } from '@/types'
-import { notFound } from 'next/navigation'
 import { getSupabaseImageUrl, supabaseAdmin } from '@/lib/supabase'
 
 interface ListEventsProps {
@@ -9,13 +8,14 @@ interface ListEventsProps {
   bookmarked?: boolean
 }
 
-export async function listEvents({
-  tag = 'trending',
-  search = '',
-  userId = '',
-  bookmarked = false,
-}: ListEventsProps) {
-  const marketsSelect = `
+export const EventModel = {
+  async listEvents({
+    tag = 'trending',
+    search = '',
+    userId = '',
+    bookmarked = false,
+  }: ListEventsProps) {
+    const marketsSelect = `
     markets!inner(
       condition_id,
       name,
@@ -36,7 +36,7 @@ export async function listEvents({
     )
   `
 
-  const tagsSelect = `
+    const tagsSelect = `
     event_tags!inner(
       tag:tags!inner(
         id,
@@ -47,68 +47,74 @@ export async function listEvents({
     )
   `
 
-  const selectString = bookmarked && userId
-    ? `*, bookmarks!inner(user_id), ${marketsSelect}, ${tagsSelect}`
-    : `*, bookmarks(user_id), ${marketsSelect}, ${tagsSelect}`
+    const selectString = bookmarked && userId
+      ? `*, bookmarks!inner(user_id), ${marketsSelect}, ${tagsSelect}`
+      : `*, bookmarks(user_id), ${marketsSelect}, ${tagsSelect}`
 
-  const query = supabaseAdmin.from('events').select(selectString)
+    const query = supabaseAdmin.from('events').select(selectString)
 
-  if (bookmarked && userId) {
-    query.eq('bookmarks.user_id', userId)
-  }
+    if (bookmarked && userId) {
+      query.eq('bookmarks.user_id', userId)
+    }
 
-  if (tag && tag !== 'trending' && tag !== 'new') {
-    query.eq('event_tags.tag.slug', tag)
-  }
+    if (tag && tag !== 'trending' && tag !== 'new') {
+      query.eq('event_tags.tag.slug', tag)
+    }
 
-  if (search) {
-    query.ilike('title', `%${search}%`)
-  }
+    if (search) {
+      query.ilike('title', `%${search}%`)
+    }
 
-  query.order('created_at', { ascending: false }).limit(20)
+    query.order('created_at', { ascending: false }).limit(20)
 
-  const { data, error } = await query
+    const { data, error } = await query
 
-  if (error) {
-    console.error('Error fetching events:', error)
-    throw error
-  }
+    if (error) {
+      console.error('Error fetching events:', error)
+      throw error
+    }
 
-  const events = data?.map(event => eventResource(event, userId)) || []
+    const events = data?.map(event => eventResource(event, userId)) || []
 
-  if (!bookmarked && tag === 'trending') {
-    return events.filter(market => market.isTrending)
-  }
+    if (!bookmarked && tag === 'trending') {
+      return events.filter(market => market.isTrending)
+    }
 
-  if (tag === 'new') {
-    return events.sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-    )
-  }
+    if (tag === 'new') {
+      return events.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      )
+    }
 
-  return events
-}
+    return events
+  },
 
-export async function getEventTitleBySlug(slug: string): Promise<string> {
-  const { data, error } = await supabaseAdmin
-    .from('events')
-    .select('title')
-    .eq('slug', slug)
-    .single()
+  async getIdBySlug(slug: string) {
+    const { data, error } = await supabaseAdmin
+      .from('events')
+      .select('id')
+      .eq('slug', slug)
+      .single()
 
-  if (error) {
-    notFound()
-  }
+    return { data, error }
+  },
 
-  return data.title
-}
+  async getEventTitleBySlug(slug: string) {
+    const { data, error } = await supabaseAdmin
+      .from('events')
+      .select('title')
+      .eq('slug', slug)
+      .single()
 
-export async function getEventBySlug(slug: string, userId: string = '') {
-  const { data, error } = await supabaseAdmin
-    .from('events')
-    .select(
-      `
+    return { data, error }
+  },
+
+  async getEventBySlug(slug: string, userId: string = '') {
+    const { data, error } = await supabaseAdmin
+      .from('events')
+      .select(
+        `
         *,
         bookmarks(user_id),
         markets!inner(
@@ -138,15 +144,87 @@ export async function getEventBySlug(slug: string, userId: string = '') {
           )
         )
       `,
-    )
-    .eq('slug', slug)
-    .single()
+      )
+      .eq('slug', slug)
+      .single()
 
-  if (error) {
-    notFound()
-  }
+    if (error) {
+      return { data, error }
+    }
 
-  return eventResource(data, userId) as Event & any
+    const event = eventResource(data, userId) as Event & any
+
+    return { data: event, error }
+  },
+
+  async getRelatedEventsBySlug(slug: string) {
+    'use cache'
+
+    const { data: currentEvent, error: errorEvent } = await supabaseAdmin
+      .from('events')
+      .select('id')
+      .eq('slug', slug)
+      .single()
+
+    if (errorEvent) {
+      return { data: currentEvent, error: 'Could not retrieve event by slug.' }
+    }
+
+    const { data: currentTags, error: errorTags } = await supabaseAdmin
+      .from('event_tags')
+      .select('tag_id')
+      .eq('event_id', currentEvent.id)
+
+    if (errorTags) {
+      return { data: currentTags, error: 'Could not retrieve tags.' }
+    }
+
+    const currentTagIds = currentTags?.map(t => t.tag_id) || []
+    if (currentTagIds.length === 0) {
+      return { data: [], error: null }
+    }
+
+    const { data: relatedEvents, error: errorRelatedEvents } = await supabaseAdmin
+      .from('events')
+      .select(`
+        id,
+        slug,
+        title,
+        markets!inner(
+          icon_url
+        ),
+        event_tags!inner(
+          tag_id
+        )
+    `)
+      .neq('slug', slug)
+      .in('event_tags.tag_id', currentTagIds)
+      .limit(20)
+
+    if (errorRelatedEvents) {
+      return { data: null, error: 'Could not retrieve related event.' }
+    }
+
+    const response = (relatedEvents || [])
+      .filter(event => event.markets.length === 1)
+      .map((event) => {
+        const eventTagIds = event.event_tags.map(et => et.tag_id)
+        const commonTagsCount = eventTagIds.filter(t => currentTagIds.includes(t)).length
+
+        return {
+          id: event.id,
+          slug: event.slug,
+          title: event.title,
+          icon_url: getSupabaseImageUrl(event.markets[0].icon_url),
+          common_tags_count: commonTagsCount,
+        }
+      })
+      .filter(event => event.common_tags_count > 0)
+      .sort((a, b) => b.common_tags_count - a.common_tags_count)
+      .slice(0, 3)
+
+    return { data: response, error: null }
+  },
 }
 
 function eventResource(data: any, userId: string): Event {
@@ -171,6 +249,7 @@ function eventResource(data: any, userId: string): Event {
       volume: Math.random() * 100000,
       isYes: outcome.outcome_index === 0,
       avatar: `https://avatar.vercel.sh/${outcome.outcome_text.toLowerCase()}.png`,
+      outcome_index: outcome.outcome_index,
     }))
 
     return {
@@ -195,6 +274,7 @@ function eventResource(data: any, userId: string): Event {
       oracle: event.markets[0]?.oracle || null,
       is_bookmarked: event.is_bookmarked,
       created_at: event.created_at,
+      condition_id: market.condition_id,
     }
   }
 
@@ -228,6 +308,7 @@ function eventResource(data: any, userId: string): Event {
     rules: event.rules || undefined,
     is_bookmarked: event.is_bookmarked,
     created_at: event.created_at,
+    condition_id: event.markets[0].condition_id,
   }
 }
 
@@ -243,16 +324,4 @@ function getCategoryFromTags(tags: Tag[]): EventCategory {
   }
 
   return 'world'
-}
-
-export const EventModel = {
-  async getIdBySlug(slug: string) {
-    const { data, error } = await supabaseAdmin
-      .from('events')
-      .select('id')
-      .eq('slug', slug)
-      .single()
-
-    return { data, error }
-  },
 }

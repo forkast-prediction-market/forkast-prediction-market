@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { CommentModel } from '@/lib/db/comments'
 import { EventModel } from '@/lib/db/events'
-import { getCurrentUser } from '@/lib/db/users'
+import { UserModel } from '@/lib/db/users'
 
 export async function GET(
   request: Request,
@@ -21,7 +21,7 @@ export async function GET(
       )
     }
 
-    const user = await getCurrentUser()
+    const user = await UserModel.getCurrentUser()
     const currentUserId = user?.id
 
     const { data: comments, error: rootCommentsError } = await CommentModel.getEventComments(event.id, limit, offset)
