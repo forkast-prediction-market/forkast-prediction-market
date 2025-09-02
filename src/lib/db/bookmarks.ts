@@ -11,11 +11,11 @@ export const BookmarkModel = {
 
     if (error) {
       console.error('Could not find bookmark.', error)
-      return { data: existing, error: 'Could not find bookmark.' }
+      return { data: null, error: 'Could not find bookmark.' }
     }
 
     if (existing) {
-      const { data, error } = await supabaseAdmin
+      const { error } = await supabaseAdmin
         .from('bookmarks')
         .delete()
         .eq('user_id', userId)
@@ -23,23 +23,23 @@ export const BookmarkModel = {
 
       if (error) {
         console.error('Could not delete bookmark.', error)
-        return { data, error: 'Could not delete bookmark.' }
+        return { data: null, error: 'Could not delete bookmark.' }
       }
 
-      return { data, error }
+      return { data: null, error: null }
     }
     else {
-      const { data, error } = await supabaseAdmin
+      const { error } = await supabaseAdmin
         .from('bookmarks')
         .insert({ user_id: userId, event_id: eventId })
         .select()
 
       if (error) {
         console.error('Could not insert bookmark.', error)
-        return { data, error: 'Could not insert bookmark.' }
+        return { data: null, error: 'Could not insert bookmark.' }
       }
 
-      return { data, error }
+      return { data: null, error: null }
     }
   },
 }

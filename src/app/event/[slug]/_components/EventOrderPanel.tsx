@@ -110,7 +110,7 @@ export default function EventOrderPanel({ event, tradingState, isMobileVersion =
               <div>
                 <div className="font-medium">{event.title}</div>
                 <div className="mt-1 text-xs opacity-80">
-                  Received $$
+                  Received $
                   {tradingState.formatValue(sellValue)}
                   {' '}
                   @ $

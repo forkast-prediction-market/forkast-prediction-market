@@ -19,7 +19,7 @@ export async function GET(
       )
     }
 
-    let likedIds: Set<any>
+    let likedIds: Set<string> = new Set<string>([])
     if (currentUserId && replies?.length) {
       const replyIds = replies.map(reply => reply.id)
       const { data: userLikes } = await CommentModel.getCommentsIdsLikedByUser(currentUserId, replyIds)

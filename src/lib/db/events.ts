@@ -167,7 +167,7 @@ export const EventModel = {
       .single()
 
     if (errorEvent) {
-      return { data: currentEvent, error: errorEvent }
+      return { data: currentEvent, error: 'Could not retrieve event by slug.' }
     }
 
     const { data: currentTags, error: errorTags } = await supabaseAdmin
@@ -176,7 +176,7 @@ export const EventModel = {
       .eq('event_id', currentEvent.id)
 
     if (errorTags) {
-      return { data: currentTags, error: errorEvent }
+      return { data: currentTags, error: 'Could not retrieve tags.' }
     }
 
     const currentTagIds = currentTags?.map(t => t.tag_id) || []
@@ -187,25 +187,25 @@ export const EventModel = {
     const { data: relatedEvents, error: errorRelatedEvents } = await supabaseAdmin
       .from('events')
       .select(`
-      id,
-      slug,
-      title,
-      markets!inner(
-        icon_url
-      ),
-      event_tags!inner(
-        tag_id
-      )
+        id,
+        slug,
+        title,
+        markets!inner(
+          icon_url
+        ),
+        event_tags!inner(
+          tag_id
+        )
     `)
       .neq('slug', slug)
       .in('event_tags.tag_id', currentTagIds)
       .limit(20)
 
     if (errorRelatedEvents) {
-      return { data: null, error: errorRelatedEvents }
+      return { data: null, error: 'Could not retrieve related event.' }
     }
 
-    return (relatedEvents || [])
+    const response = (relatedEvents || [])
       .filter(event => event.markets.length === 1)
       .map((event) => {
         const eventTagIds = event.event_tags.map(et => et.tag_id)
@@ -222,6 +222,8 @@ export const EventModel = {
       .filter(event => event.common_tags_count > 0)
       .sort((a, b) => b.common_tags_count - a.common_tags_count)
       .slice(0, 3)
+
+    return { data: response, error: null }
   },
 }
 

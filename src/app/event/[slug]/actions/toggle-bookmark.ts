@@ -10,5 +10,5 @@ export async function toggleBookmarkAction(eventId: string) {
   }
 
   const userId = user.id
-  await BookmarkModel.toggleBookmark(userId, eventId)
+  return await BookmarkModel.toggleBookmark(userId, eventId)
 }

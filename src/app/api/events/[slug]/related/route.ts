@@ -5,7 +5,14 @@ export async function GET(_: Request, { params }: { params: Promise<{ slug: stri
   const { slug } = await params
 
   try {
-    const events = await EventModel.getRelatedEventsBySlug(slug)
+    const { data: events, error } = await EventModel.getRelatedEventsBySlug(slug)
+    if (error) {
+      return NextResponse.json(
+        { error: 'Failed to fetch related events.' },
+        { status: 500 },
+      )
+    }
+
     return NextResponse.json(events)
   }
   catch {

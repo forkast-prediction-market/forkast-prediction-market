@@ -26,7 +26,10 @@ export default function EventBookmark({ event }: Props) {
 
     startTransition(async () => {
       try {
-        await toggleBookmarkAction(event.id)
+        const response = await toggleBookmarkAction(event.id)
+        if (response.error) {
+          setIsBookmarked(previousState)
+        }
       }
       catch {
         setIsBookmarked(previousState)

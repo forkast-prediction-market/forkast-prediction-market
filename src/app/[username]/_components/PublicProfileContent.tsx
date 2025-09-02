@@ -10,8 +10,8 @@ interface Props {
 }
 
 export default async function PublicProfileContent({ username }: Props) {
-  const { data: profile, error } = await UserModel.getProfileByUsername(username)
-  if (error || !profile) {
+  const { data: profile } = await UserModel.getProfileByUsername(username)
+  if (!profile) {
     notFound()
   }
 
