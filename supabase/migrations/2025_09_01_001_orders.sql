@@ -57,17 +57,32 @@ ALTER TABLE orders
 -- ===========================================
 
 -- Orders policies - Service role only (authentication handled at API level)
-CREATE POLICY "service_role_all_orders" ON orders
-  FOR ALL TO service_role
-  USING (TRUE) WITH CHECK (TRUE);
+DO
+$$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_orders'
+                     AND tablename = 'orders') THEN
+      CREATE POLICY "service_role_all_orders" ON orders FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
 
 -- ===========================================
 -- 5. TRIGGERS
 -- ===========================================
 
 -- Updated_at trigger for orders
-CREATE TRIGGER update_orders_updated_at
-  BEFORE UPDATE
-  ON orders
-  FOR EACH ROW
-EXECUTE FUNCTION update_updated_at_column();
+DO
+$$
+  BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_orders_updated_at') THEN
+      CREATE TRIGGER update_orders_updated_at
+        BEFORE UPDATE
+        ON orders
+        FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+    END IF;
+  END
+$$;
