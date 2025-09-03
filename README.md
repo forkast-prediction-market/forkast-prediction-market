@@ -44,7 +44,7 @@ NEXT_PUBLIC_SITE_LOGO_SVG=<svg>...</svg>
 # Reown/WalletConnect
 NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID=your-reown-project-id
 
-# Random 32 characteres (REQUIRED), you can generate one on "generate secret" button
+# Random 32 characters (REQUIRED), you can generate one on "generate secret" button
 # https://www.better-auth.com/docs/installation#set-environment-variables
 BETTER_AUTH_SECRET=your-32-character-secret-key
 
