@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { EventModel } from '@/lib/db/events'
 import { UserModel } from '@/lib/db/users'
-import EventDetail from './_components/EventDetail'
+import EventContent from './_components/EventContent'
 
 interface PageProps {
   params: Promise<{
@@ -29,7 +29,7 @@ export default async function EventPage({ params }: PageProps) {
       notFound()
     }
 
-    return <EventDetail event={event} user={user} key={`is-bookmarked-${event.is_bookmarked}`} />
+    return <EventContent event={event} user={user} key={`is-bookmarked-${event.is_bookmarked}`} />
   }
   catch {
     notFound()

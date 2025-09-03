@@ -6,7 +6,7 @@ export default function GoogleAnalytics() {
   const gaId = process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS
 
   if (!gaId) {
-    return null
+    return <></>
   }
 
   return (

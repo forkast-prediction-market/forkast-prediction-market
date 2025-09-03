@@ -55,9 +55,8 @@ export default function EventCommentLikeForm({
         })}
       >
         <HeartIcon className={cn({
-          'size-3': true,
           'fill-current text-destructive': comment.user_has_liked,
-        })}
+        }, 'size-3')}
         />
         {comment.likes_count > 0 && <span>{comment.likes_count}</span>}
       </Button>

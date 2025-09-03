@@ -9,7 +9,7 @@ export default function EventTabSelector({ activeTab, setActiveTab }: Props) {
   const { eventTabs } = mockMarketDetails
 
   return (
-    <ul className="mt-8 flex h-12 gap-8 border-b border-border/50 text-sm font-semibold dark:border-border/20">
+    <ul className="mt-8 flex h-12 gap-8 border-b text-sm font-semibold">
       {eventTabs.map(tab => (
         <li
           key={tab}

@@ -221,7 +221,7 @@ export default function EventCard({ event }: Props) {
       <CardContent className="flex h-full flex-col p-3">
         {/* Unified Header */}
         <div className="mb-3 flex items-center justify-between">
-          <div className="flex flex-1 items-start gap-2 pr-2">
+          <Link href={`/event/${event.slug}`} className="flex flex-1 items-start gap-2 pr-2">
             {/* Creator Avatar */}
             <div
               className={`
@@ -244,20 +244,15 @@ export default function EventCard({ event }: Props) {
             </div>
 
             {/* Title */}
-            <Link
-              href={`/event/${event.slug}`}
-              className="flex-1"
+            <h3
+              className={`
+                line-clamp-2 text-sm leading-tight font-bold transition-all duration-200
+                hover:line-clamp-none hover:text-foreground
+              `}
             >
-              <h3
-                className={`
-                  line-clamp-2 text-sm leading-tight font-bold transition-all duration-200
-                  hover:line-clamp-none hover:text-foreground
-                `}
-              >
-                {event.title}
-              </h3>
-            </Link>
-          </div>
+              {event.title}
+            </h3>
+          </Link>
 
           {/* Right side - Probability badge OR Close button */}
           {isInTradingMode

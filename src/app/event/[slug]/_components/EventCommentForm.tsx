@@ -70,11 +70,7 @@ export default function EventCommentForm({ eventId, user, onCommentAddedAction }
 
       {state.error && <InputError message={state.error} />}
 
-      <div className={`
-        flex items-center gap-1 rounded-md border border-border/50 px-3 py-1.5 text-xs text-muted-foreground
-        dark:border-border/20
-      `}
-      >
+      <div className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
         <ShieldIcon className="size-3" />
         Beware of external links, they may be phishing attacks.
       </div>
