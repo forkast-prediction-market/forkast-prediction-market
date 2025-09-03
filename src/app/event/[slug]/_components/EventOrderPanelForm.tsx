@@ -132,10 +132,10 @@ export default function EventOrderPanelForm({
           {type === 'yes'
             ? tradingState.isMultiMarket
               ? 'Yes'
-              : event.outcomes[0].name
+              : event.markets[0].name
             : tradingState.isMultiMarket
               ? 'No'
-              : event.outcomes[1].name }
+              : event.markets[0].name }
         </span>
         <span className="font-bold">
           {price}
@@ -163,7 +163,7 @@ export default function EventOrderPanelForm({
           <div className="flex items-center gap-3">
             <Image
               src={
-                getSelectedOutcome()?.avatar
+                getSelectedOutcome()?.icon_url
                 || `https://avatar.vercel.sh/${getSelectedOutcome()?.name.toLowerCase()}.png`
               }
               alt={getSelectedOutcome()?.name || 'Selected outcome'}
@@ -184,9 +184,9 @@ export default function EventOrderPanelForm({
           <Image
             src={
               tradingState.selectedOutcomeForOrder
-                ? getSelectedOutcome()?.avatar
+                ? getSelectedOutcome()?.name
                 || `https://avatar.vercel.sh/${getSelectedOutcome()?.name.toLowerCase()}.png`
-                : event.creatorAvatar
+                : event.icon_url
                   || `https://avatar.vercel.sh/${event.title.charAt(0)}.png`
             }
             alt={
@@ -206,7 +206,7 @@ export default function EventOrderPanelForm({
               <span>
                 {tradingState.selectedOutcomeForOrder
                   ? getSelectedOutcome()?.name
-                  : tradingState.yesOutcome?.name || event.outcomes[0]?.name}
+                  : tradingState.yesOutcome?.name || event.markets[0]?.name}
               </span>
               <span>
                 Bal. $
@@ -402,11 +402,11 @@ export default function EventOrderPanelForm({
               <>
                 {tradingState.activeTab === 'sell'
                   ? tradingState.yesNoSelection === 'no'
-                    ? `Sell ${tradingState.isMultiMarket ? 'No' : event.outcomes[1].name}`
-                    : `Sell ${tradingState.isMultiMarket ? 'Yes' : event.outcomes[0].name}`
+                    ? `Sell ${tradingState.isMultiMarket ? 'No' : event.markets[0].name}`
+                    : `Sell ${tradingState.isMultiMarket ? 'Yes' : event.markets[0].name}`
                   : tradingState.yesNoSelection === 'no'
-                    ? `Buy ${tradingState.isMultiMarket ? 'No' : event.outcomes[1].name}`
-                    : `Buy ${tradingState.isMultiMarket ? 'Yes' : event.outcomes[0].name}`}
+                    ? `Buy ${tradingState.isMultiMarket ? 'No' : event.markets[0].name}`
+                    : `Buy ${tradingState.isMultiMarket ? 'Yes' : event.markets[0].name}`}
               </>
             )}
       </Button>

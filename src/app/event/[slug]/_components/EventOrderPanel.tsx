@@ -64,7 +64,7 @@ export default function EventOrderPanel({ event, tradingState, isMobileVersion =
     try {
       // Prepare FormData for the server action
       const formData = new FormData()
-      formData.append('condition_id', event.condition_id)
+      formData.append('condition_id', event.markets[0].condition_id)
       formData.append('slug', event.slug)
       formData.append('side', tradingState.activeTab)
       formData.append('amount', tradingState.amount)
@@ -73,8 +73,7 @@ export default function EventOrderPanel({ event, tradingState, isMobileVersion =
       // Determine outcome_index based on selection
       let outcomeIndex = 0
       if (tradingState.isMultiMarket && tradingState.selectedOutcomeForOrder) {
-        const selectedOutcome = getSelectedOutcome()
-        outcomeIndex = selectedOutcome?.outcome_index || 0
+        outcomeIndex = 0
       }
       else {
         // Binary market: 0 for yes, 1 for no

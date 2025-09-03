@@ -11,15 +11,16 @@ export default function EventMetaInformation({ event }: Props) {
       <span>
         Volume
         {' '}
-        {formatVolume(event.volume)}
+        {formatVolume(event.markets[0].total_volume)}
       </span>
       <span>•</span>
       <span>
         Expires
-        {formatDate(event.endDate)}
+        {' '}
+        {formatDate(new Date(event.created_at))}
       </span>
       <span>•</span>
-      <span>{event.category}</span>
+      <span>{event.tags[0] ?? ''}</span>
     </div>
   )
 }

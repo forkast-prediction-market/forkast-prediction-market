@@ -22,7 +22,7 @@ export default function EventChart({ event, tradingState }: Props) {
 
     // Generate series configuration based on actual outcomes
     const series = topOutcomes.map((outcome, index) => ({
-      key: `outcome_${outcome.id}`,
+      key: `outcome_${outcome.condition_id}`,
       name: outcome.name,
       color: POLYMARKET_COLORS[index] || '#8B5CF6',
     }))
@@ -36,7 +36,7 @@ export default function EventChart({ event, tradingState }: Props) {
 
       // For each outcome, generate a trend based on current probability
       topOutcomes.forEach((outcome) => {
-        const key = `outcome_${outcome.id}`
+        const key = `outcome_${outcome.condition_id}`
         const baseProbability = outcome.probability
 
         // Add temporal and random variation
@@ -52,13 +52,13 @@ export default function EventChart({ event, tradingState }: Props) {
 
       // Normalize so the sum is close to 100%
       const total = topOutcomes.reduce(
-        (sum, outcome) => sum + (dataPoint[`outcome_${outcome.id}`] as number),
+        (sum, outcome) => sum + (dataPoint[`outcome_${outcome.condition_id}`] as number),
         0,
       )
 
       if (total > 0) {
         topOutcomes.forEach((outcome) => {
-          const key = `outcome_${outcome.id}`
+          const key = `outcome_${outcome.condition_id}`
           const currentValue = dataPoint[key] as number
           dataPoint[key] = (currentValue / total) * 100
         })
@@ -74,7 +74,7 @@ export default function EventChart({ event, tradingState }: Props) {
   const chartConfig = generateChartData()
 
   function getTopOutcomesForChart() {
-    return [...event.outcomes].sort((a, b) => b.volume - a.volume).slice(0, 4)
+    return [...event.markets].sort((a, b) => b.total_volume - a.total_volume).slice(0, 4)
   }
 
   return (
@@ -104,7 +104,7 @@ export default function EventChart({ event, tradingState }: Props) {
               : (
                   <div className="flex flex-wrap items-center gap-4">
                     {getTopOutcomesForChart().map((outcome, index) => (
-                      <div key={outcome.id} className="flex items-center gap-2">
+                      <div key={outcome.condition_id} className="flex items-center gap-2">
                         <div
                           className="size-3 rounded-full"
                           style={{

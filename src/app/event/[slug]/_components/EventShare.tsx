@@ -1,4 +1,4 @@
-import { CheckIcon, ShareIcon } from 'lucide-react'
+import { CheckIcon, LinkIcon } from 'lucide-react'
 import { useState } from 'react'
 
 export default function EventShare() {
@@ -19,7 +19,7 @@ export default function EventShare() {
   return shareSuccess
     ? <CheckIcon className="size-4 text-primary" />
     : (
-        <ShareIcon
+        <LinkIcon
           className="size-4 cursor-pointer transition-colors hover:text-foreground"
           onClick={handleShare}
         />

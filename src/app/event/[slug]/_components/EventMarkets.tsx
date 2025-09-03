@@ -15,23 +15,23 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
     if (!tradingState.selectedOutcomeForOrder && event.active_markets_count > 0) {
       if (event.active_markets_count === 1) {
         if (tradingState.yesOutcome) {
-          tradingState.setSelectedOutcomeForOrder(tradingState.yesOutcome.id)
+          tradingState.setSelectedOutcomeForOrder(tradingState.yesOutcome.condition_id)
           tradingState.setYesNoSelection('yes')
         }
         else {
           // If isYes not found, select first option
-          tradingState.setSelectedOutcomeForOrder(event.outcomes[0].id)
+          tradingState.setSelectedOutcomeForOrder(event.markets[0].condition_id)
           tradingState.setYesNoSelection('yes')
         }
       }
       else if (event.active_markets_count > 1) {
         // For multi-option markets, select option with highest probability
-        const sortedOutcomes = [...event.outcomes].sort(
+        const sortedOutcomes = [...event.markets].sort(
           (a, b) => b.probability - a.probability,
         )
         const highestProbOutcome = sortedOutcomes[0]
         if (highestProbOutcome) {
-          tradingState.setSelectedOutcomeForOrder(highestProbOutcome.id)
+          tradingState.setSelectedOutcomeForOrder(highestProbOutcome.condition_id)
           tradingState.setYesNoSelection('yes')
         }
       }
@@ -48,12 +48,12 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
         className="hidden items-center rounded-t-lg border-b py-3 md:flex"
       >
         <div className="w-1/2">
-          <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+          <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             OUTCOMES
           </span>
         </div>
         <div className="flex w-3/5 items-center justify-center gap-1">
-          <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+          <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             CHANCE
           </span>
           <a
@@ -68,18 +68,18 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
       </div>
 
       {/* Items - Sorted by probability descending */}
-      {[...event.outcomes]
+      {[...event.markets]
         .sort((a, b) => b.probability - a.probability)
         .map((outcome, index, sortedOutcomes) => (
           <div
-            key={outcome.id}
+            key={outcome.condition_id}
             className={`
               flex cursor-pointer flex-col items-start px-3 py-4 transition-all duration-200 ease-in-out
               hover:bg-black/5
               md:flex-row md:items-center md:px-2
               dark:hover:bg-white/5
               ${
-          tradingState.selectedOutcomeForOrder === outcome.id
+          tradingState.selectedOutcomeForOrder === outcome.condition_id
             ? 'bg-muted dark:bg-black/10'
             : ''
           } ${
@@ -88,7 +88,7 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
               : ''
           }`}
             onClick={() => {
-              tradingState.setSelectedOutcomeForOrder(outcome.id)
+              tradingState.setSelectedOutcomeForOrder(outcome.condition_id)
               tradingState.setActiveTab('buy')
               tradingState.inputRef?.focus()
             }}
@@ -98,12 +98,9 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
               {/* Row 1: Name and probability */}
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  {event.show_market_icons !== false && (
+                  {event.show_market_icons && (
                     <Image
-                      src={
-                        outcome.avatar
-                        || `https://avatar.vercel.sh/${outcome.name.toLowerCase()}.png`
-                      }
+                      src={outcome.icon_url}
                       alt={outcome.name}
                       width={42}
                       height={42}
@@ -116,7 +113,7 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                     </div>
                     <div className="text-[10px] text-muted-foreground">
                       $
-                      {outcome.volume?.toLocaleString('en-US', {
+                      {outcome.total_volume?.toLocaleString('en-US', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       }) || '0.00'}
@@ -142,13 +139,13 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                 <Button
                   size="lg"
                   variant="yes"
-                  className={`flex-1 ${tradingState.selectedOutcomeForOrder === outcome.id
+                  className={`flex-1 ${tradingState.selectedOutcomeForOrder === outcome.condition_id
                   && tradingState.yesNoSelection === 'yes'
                     ? 'bg-yes text-white'
                     : ''}`}
                   onClick={(e) => {
                     e.stopPropagation()
-                    tradingState.setSelectedOutcomeForOrder(outcome.id)
+                    tradingState.setSelectedOutcomeForOrder(outcome.condition_id)
                     tradingState.setYesNoSelection('yes')
                     tradingState.setActiveTab('buy')
                     setIsMobileModalOpen(true)
@@ -162,13 +159,13 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                 <Button
                   size="lg"
                   variant="no"
-                  className={`flex-1 ${tradingState.selectedOutcomeForOrder === outcome.id
+                  className={`flex-1 ${tradingState.selectedOutcomeForOrder === outcome.condition_id
                   && tradingState.yesNoSelection === 'no'
                     ? 'bg-no text-white'
                     : ''}`}
                   onClick={(e) => {
                     e.stopPropagation()
-                    tradingState.setSelectedOutcomeForOrder(outcome.id)
+                    tradingState.setSelectedOutcomeForOrder(outcome.condition_id)
                     tradingState.setYesNoSelection('no')
                     tradingState.setActiveTab('buy')
                     setIsMobileModalOpen(true)
@@ -188,10 +185,7 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
               <div className="flex w-1/2 items-center gap-3">
                 {event.show_market_icons !== false && (
                   <Image
-                    src={
-                      outcome.avatar
-                      || `https://avatar.vercel.sh/${outcome.name.toLowerCase()}.png`
-                    }
+                    src={outcome.icon_url}
                     alt={outcome.name}
                     width={42}
                     height={42}
@@ -204,7 +198,7 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                   </div>
                   <div className="text-xs text-muted-foreground">
                     $
-                    {outcome.volume?.toLocaleString('en-US', {
+                    {outcome.total_volume?.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     }) || '0.00'}
@@ -233,13 +227,13 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                 <Button
                   size="lg"
                   variant="yes"
-                  className={`w-32 ${tradingState.selectedOutcomeForOrder === outcome.id
+                  className={`w-32 ${tradingState.selectedOutcomeForOrder === outcome.condition_id
                   && tradingState.yesNoSelection === 'yes'
                     ? 'bg-yes text-white'
                     : ''}`}
                   onClick={(e) => {
                     e.stopPropagation()
-                    tradingState.setSelectedOutcomeForOrder(outcome.id)
+                    tradingState.setSelectedOutcomeForOrder(outcome.condition_id)
                     tradingState.setYesNoSelection('yes')
                     tradingState.setActiveTab('buy')
                     tradingState.inputRef?.focus()
@@ -259,13 +253,13 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                 <Button
                   size="lg"
                   variant="no"
-                  className={`w-32 ${tradingState.selectedOutcomeForOrder === outcome.id
+                  className={`w-32 ${tradingState.selectedOutcomeForOrder === outcome.condition_id
                   && tradingState.yesNoSelection === 'no'
                     ? 'bg-no text-white'
                     : ''}`}
                   onClick={(e) => {
                     e.stopPropagation()
-                    tradingState.setSelectedOutcomeForOrder(outcome.id)
+                    tradingState.setSelectedOutcomeForOrder(outcome.condition_id)
                     tradingState.setYesNoSelection('no')
                     tradingState.setActiveTab('buy')
                     tradingState.inputRef?.focus()

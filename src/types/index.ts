@@ -1,53 +1,84 @@
-// Market Types
 export interface Event {
   id: string
-  is_bookmarked: boolean
-  active_markets_count: number
   slug: string
   title: string
   description: string
-  category: EventCategory
-  probability: number // 0-100
-  volume: number // in USDC
-  endDate: Date
-  isResolved: boolean
-  isTrending?: boolean
-  outcomes: MarketOutcome[]
   creator: string
-  creatorAvatar?: string // URL for creator avatar
   icon_url: string
-  tags: string[]
-  show_market_icons?: boolean // Control if market icons should be shown in lists
-  rules?: string // Rules for market resolution
-  oracle?: string // Oracle address for resolution
+  show_market_icons: boolean
+  rules?: string
+  active_markets_count: number
+  total_markets_count: number
   created_at: string
+  updated_at: string
+  markets: Market[]
+  tags: string[]
+  main_tag: string
+  is_bookmarked: boolean
+  is_trending: boolean
+}
+
+export interface Market {
   condition_id: string
-}
-
-export interface MarketOutcome {
-  id: string
-  outcome_index: number
+  question_id: string
+  oracle: string
+  event_id: string
   name: string
+  slug: string
+  description: string
+  short_title?: string
+  outcome_count: number
+  icon_url: string
+  is_active: boolean
+  is_resolved: boolean
+  resolution_data?: any // JSONB
+  block_number: number
+  transaction_hash: string
+  block_timestamp: string
+  metadata?: any // JSONB
+  current_volume_24h: number
+  total_volume: number
+  open_interest: number
+  created_at: string
+  updated_at: string
+  price: number
   probability: number
-  price: number // in USDC cents (0.01 to 0.99)
-  volume: number
-  isYes?: boolean // for binary markets
-  avatar?: string // URL for outcome avatar/image
-  marketSlug?: string // For multi-markets reference
-  // For multi-markets: store both yes/no outcomes
-  yesOutcome?: {
-    id: string
-    name: string
-    outcome_index: number
-  } | null
-  noOutcome?: {
-    id: string
-    name: string
-    outcome_index: number
-  } | null
+  outcomes: Outcome[]
+  condition?: Condition
 }
 
-export type EventCategory = string
+export interface Outcome {
+  id: string
+  condition_id: string
+  outcome_text: string
+  outcome_index: number
+  token_id: string
+  is_winning_outcome: boolean
+  payout_value?: number
+  current_price?: number
+  volume_24h: number
+  total_volume: number
+  created_at: string
+  updated_at: string
+}
+
+export interface Condition {
+  id: string
+  oracle: string
+  question_id: string
+  outcome_slot_count: number
+  resolved: boolean
+  payout_numerators?: number[]
+  payout_denominator?: number
+  arweave_hash?: string
+  creator?: string
+  total_volume: number
+  open_interest: number
+  active_positions_count: number
+  created_at: string
+  resolved_at?: string
+  updated_at: string
+}
 
 export interface User {
   id: string
@@ -59,10 +90,10 @@ export interface User {
 }
 
 export interface PublicProfileStats {
-  positionsValue: number
-  profitLoss: number
-  volumeTraded: number
-  marketsTraded: number
+  positions_value: number
+  profit_loss: number
+  volume_traded: number
+  markets_traded: number
 }
 
 export interface PublicProfile {
@@ -73,6 +104,7 @@ export interface PublicProfile {
   stats?: PublicProfileStats
 }
 
+// Content Types
 export interface Tag {
   id: number
   name: string
@@ -100,6 +132,7 @@ export interface Comment {
   recent_replies?: Comment[]
 }
 
+// Activity Types
 export type ActivityType = 'Buy' | 'Sell' | 'Redeem'
 
 export interface ActivityItem {
@@ -108,16 +141,16 @@ export interface ActivityItem {
   market: {
     id: string
     title: string
-    imageUrl: string
+    image_url: string
     outcome: 'Yes' | 'No'
-    price: number // in cents
+    price: number
   }
   shares: number
-  amount: number // in USD
+  amount: number
   timestamp: Date
-  transactionHash: string
+  transaction_hash: string
 }
 
 export type QueryResult<T>
-= | { data: T, error: null }
-  | { data: null, error: string }
+  = | { data: T, error: null }
+    | { data: null, error: string }
