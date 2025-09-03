@@ -1,6 +1,7 @@
 import type { Event } from '@/types'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
+import { cn } from '@/lib/utils'
 import EventBookmark from './EventBookmark'
 import EventShare from './EventShare'
 
@@ -21,9 +22,9 @@ export default function EventHeader({ event }: Props) {
   }, [])
 
   return (
-    <div className={`z-50 mb-6 flex transform items-center gap-3 transition-all ease-in-out ${scrolled
-      ? 'sticky top-24 translate-y-[3px] border-b bg-background py-3'
-      : ''}`}
+    <div className={cn({
+      'sticky top-24 translate-y-[3px] border-b bg-background py-3': scrolled,
+    }, 'z-50 mb-6 flex transform items-center gap-3 transition-all ease-in-out')}
     >
       <Image
         src={

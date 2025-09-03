@@ -55,8 +55,7 @@ export default function EventBookmark({ event }: Props) {
       title={isBookmarked ? 'Remove Bookmark' : 'Bookmark'}
       className={cn({
         'opacity-50': isPending,
-        'size-auto p-0': true,
-      })}
+      }, 'size-auto p-0')}
     >
       <BookmarkIcon className={cn({ 'fill-current text-primary': isBookmarked })} />
     </Button>

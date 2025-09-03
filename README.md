@@ -44,7 +44,8 @@ NEXT_PUBLIC_SITE_LOGO_SVG=<svg>...</svg>
 # Reown/WalletConnect
 NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID=your-reown-project-id
 
-# Random 32 characteres (REQUIRED), you can generate one on "generate secret" button https://www.better-auth.com/docs/installation#set-environment-variables
+# Random 32 characters (REQUIRED), you can generate one on "generate secret" button
+# https://www.better-auth.com/docs/installation#set-environment-variables
 BETTER_AUTH_SECRET=your-32-character-secret-key
 
 # Vercel Cron Jobs (Type a random password with at least 8 chars) (REQUIRED)
@@ -65,8 +66,9 @@ NEXT_PUBLIC_GOOGLE_ANALYTICS=G-XXXXXXXXXX
 
 **Quick Setup:**
 1. **Supabase**: Create directly from Vercel Dashboard → Storage → Create Supabase Database
-2. **Reown**: Get Project ID at [dashboard.reown.com](https://dashboard.reown.com)
-3. **Secret**: Generate 32+ character random string for BETTER_AUTH_SECRET
+2. **NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID**: Get Project Id at [dashboard.reown.com](https://dashboard.reown.com)
+3. **BETTER_AUTH_SECRET**: Generate 32+ character random string at [www.better-auth.com](https://www.better-auth.com/docs/installation#set-environment-variables)
+4. **CRON_SECRET**: Type a random password with at least 8 chars
 
 ### 3. Enable GitHub Actions (Required for Forks)
 

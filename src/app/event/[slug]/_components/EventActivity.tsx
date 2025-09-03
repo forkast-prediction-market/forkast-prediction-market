@@ -16,7 +16,7 @@ export default function EventActivity() {
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
               activityFilter === filter
                 ? 'bg-muted text-foreground'
-                : 'border border-border/50 hover:bg-muted/50'
+                : 'border hover:bg-muted/50'
             }`}
             onClick={() => setActivityFilter(filter)}
           >

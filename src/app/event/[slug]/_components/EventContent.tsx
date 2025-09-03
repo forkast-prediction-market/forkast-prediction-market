@@ -2,6 +2,7 @@
 
 import type { Event, User } from '@/types'
 import { useState } from 'react'
+import { Teleport } from '@/components/layout/Teleport'
 import { useTradingState } from '@/hooks/useTradingState'
 import EventChart from './EventChart'
 import EventHeader from './EventHeader'
@@ -19,28 +20,24 @@ interface Props {
   user: User | null
 }
 
-export default function EventDetail({ event, user }: Props) {
+export default function EventContent({ event, user }: Props) {
   const tradingState = useTradingState({ event })
   const [isMobileModalOpen, setIsMobileModalOpen] = useState(false)
 
   return (
     <>
-      <main className="container grid gap-8 pb-12 lg:grid-cols-[3fr_1fr] lg:gap-10">
-        <div className="pt-4 pb-20 md:pb-0">
-          <EventHeader event={event} />
-          <EventMetaInformation event={event} />
-          <EventChart event={event} tradingState={tradingState} />
-          <EventMarkets event={event} tradingState={tradingState} setIsMobileModalOpen={setIsMobileModalOpen} />
-          <EventMarketContext event={event} tradingState={tradingState} />
-          <EventRules event={event} />
-          <EventTabs event={event} user={user} />
-        </div>
+      <EventHeader event={event} />
+      <EventMetaInformation event={event} />
+      <EventChart event={event} tradingState={tradingState} />
+      <EventMarkets event={event} tradingState={tradingState} setIsMobileModalOpen={setIsMobileModalOpen} />
+      <EventMarketContext event={event} tradingState={tradingState} />
+      <EventRules event={event} />
+      <EventTabs event={event} user={user} />
 
-        <div className="hidden gap-4 md:block lg:sticky lg:top-28 lg:grid lg:self-start">
-          <EventOrderPanel event={event} tradingState={tradingState} />
-          <EventRelated event={event} />
-        </div>
-      </main>
+      <Teleport to="#event-order-panel">
+        <EventOrderPanel event={event} tradingState={tradingState} />
+        <EventRelated event={event} />
+      </Teleport>
 
       <EventMobileOrderPanel
         event={event}

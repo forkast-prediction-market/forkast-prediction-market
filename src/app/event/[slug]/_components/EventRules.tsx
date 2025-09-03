@@ -34,7 +34,7 @@ export default function EventRules({ event }: Props) {
 
   return (
     <div
-      className="mt-3 rounded-lg border border-border/50 transition-all duration-200 ease-in-out dark:border-border/20"
+      className="mt-3 rounded-lg border transition-all duration-200 ease-in-out"
     >
       <div className="flex items-center justify-between p-4 hover:bg-muted/50">
         <span className="text-lg font-medium">Rules</span>
@@ -58,7 +58,7 @@ export default function EventRules({ event }: Props) {
             )}
 
             {/* Oracle Info */}
-            <div className="mt-3 rounded-lg border border-border/50 p-3 dark:border-border/20">
+            <div className="mt-3 rounded-lg border p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-start gap-3">
                   <div
