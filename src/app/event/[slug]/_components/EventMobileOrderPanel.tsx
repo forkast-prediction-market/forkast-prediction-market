@@ -1,10 +1,10 @@
 import type { Event } from '@/types'
 import { DialogTitle } from '@radix-ui/react-dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+import EventOrderPanel from '@/app/event/[slug]/_components/EventOrderPanel'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
 import { useIsBinaryMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
-import EventOrderPanel from './EventOrderPanel'
 
 interface EventMobileOrderPanelProps {
   event: Event

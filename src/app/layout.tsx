@@ -22,11 +22,7 @@ export const viewport: Viewport = {
   ],
 }
 
-export default async function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode
-}>) {
+export default async function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="en" className={`${openSauceOne.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">

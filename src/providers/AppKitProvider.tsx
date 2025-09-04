@@ -1,6 +1,7 @@
 'use client'
 
 import type { SIWECreateMessageArgs, SIWESession, SIWEVerifyMessageArgs } from '@reown/appkit-siwe'
+import type { Route } from 'next'
 import type { ReactNode } from 'react'
 import { EthersAdapter } from '@reown/appkit-adapter-ethers'
 import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/appkit-siwe'
@@ -86,7 +87,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
           await authClient.signOut()
 
           useUser.setState(null)
-          queueMicrotask(() => redirect(window.location.pathname))
+          queueMicrotask(() => redirect(window.location.pathname as unknown as Route))
 
           return true
         }
@@ -101,7 +102,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
             ...user,
           })
 
-          queueMicrotask(() => redirect(window.location.pathname))
+          queueMicrotask(() => redirect(window.location.pathname as unknown as Route))
         }).catch(() => {})
       },
     }),

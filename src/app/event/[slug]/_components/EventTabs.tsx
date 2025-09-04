@@ -1,9 +1,9 @@
 import type { Event, User } from '@/types'
 import { useState } from 'react'
-import EventActivity from './EventActivity'
-import EventComments from './EventComments'
-import EventTabSelector from './EventTabSelector'
-import EventTopHolders from './EventTopHolders'
+import EventActivity from '@/app/event/[slug]/_components/EventActivity'
+import EventComments from '@/app/event/[slug]/_components/EventComments'
+import EventTabSelector from '@/app/event/[slug]/_components/EventTabSelector'
+import EventTopHolders from '@/app/event/[slug]/_components/EventTopHolders'
 
 interface EventTabsProps {
   event: Event

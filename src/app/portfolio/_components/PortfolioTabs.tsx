@@ -2,11 +2,11 @@
 
 import { ArrowDownWideNarrow, ArrowUpDownIcon, CalendarIcon, DownloadIcon, SearchIcon, SlidersHorizontalIcon } from 'lucide-react'
 import { useState } from 'react'
+import PortfolioHistoryTable from '@/app/portfolio/_components/PortfolioHistoryTable'
+import PortfolioOpenOrdersTable from '@/app/portfolio/_components/PortfolioOpenOrdersTable'
+import PortfolioPositionsTable from '@/app/portfolio/_components/PortfolioPositionsTable'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import PortfolioHistoryTable from './PortfolioHistoryTable'
-import PortfolioOpenOrdersTable from './PortfolioOpenOrdersTable'
-import PortfolioPositionsTable from './PortfolioPositionsTable'
 
 interface Props {
   activeTab: string

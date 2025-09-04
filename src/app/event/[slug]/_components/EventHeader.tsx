@@ -1,9 +1,9 @@
 import type { Event } from '@/types'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
+import EventBookmark from '@/app/event/[slug]/_components/EventBookmark'
+import EventShare from '@/app/event/[slug]/_components/EventShare'
 import { cn } from '@/lib/utils'
-import EventBookmark from './EventBookmark'
-import EventShare from './EventShare'
 
 interface Props {
   event: Event

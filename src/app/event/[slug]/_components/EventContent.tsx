@@ -2,18 +2,18 @@
 
 import type { Event, User } from '@/types'
 import { useEffect } from 'react'
+import EventChart from '@/app/event/[slug]/_components/EventChart'
+import EventHeader from '@/app/event/[slug]/_components/EventHeader'
+import EventMarketContext from '@/app/event/[slug]/_components/EventMarketContext'
+import EventMarkets from '@/app/event/[slug]/_components/EventMarkets'
+import EventMetaInformation from '@/app/event/[slug]/_components/EventMetaInformation'
+import EventMobileOrderPanel from '@/app/event/[slug]/_components/EventMobileOrderPanel'
+import EventOrderPanel from '@/app/event/[slug]/_components/EventOrderPanel'
+import EventRelated from '@/app/event/[slug]/_components/EventRelated'
+import EventRules from '@/app/event/[slug]/_components/EventRules'
+import EventTabs from '@/app/event/[slug]/_components/EventTabs'
 import { Teleport } from '@/components/layout/Teleport'
 import { useOrder } from '@/stores/useOrder'
-import EventChart from './EventChart'
-import EventHeader from './EventHeader'
-import EventMarketContext from './EventMarketContext'
-import EventMarkets from './EventMarkets'
-import EventMetaInformation from './EventMetaInformation'
-import EventMobileOrderPanel from './EventMobileOrderPanel'
-import EventOrderPanel from './EventOrderPanel'
-import EventRelated from './EventRelated'
-import EventRules from './EventRules'
-import EventTabs from './EventTabs'
 
 interface Props {
   event: Event

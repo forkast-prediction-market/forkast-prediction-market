@@ -1,8 +1,8 @@
 import type { Event } from '@/types'
 import Image from 'next/image'
 import Link from 'next/link'
-import React, { useEffect, useRef, useState } from 'react'
-import { EventRelatedSkeleton } from './EventRelatedSkeleton'
+import { useEffect, useRef, useState } from 'react'
+import EventRelatedSkeleton from '@/app/event/[slug]/_components/EventRelatedSkeleton'
 
 interface Props {
   event: Event

@@ -1,18 +1,13 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
-import React from 'react'
+import SettingsContent from '@/app/settings/_components/SettingsContent'
 import { UserModel } from '@/lib/db/users'
-import SettingsContent from './_components/SettingsContent'
 
 export const metadata: Metadata = {
   title: 'Settings',
 }
 
-interface Props {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}
-
-export default async function SettingsPage({ searchParams }: Props) {
+export default async function SettingsPage({ searchParams }: PageProps<'/settings'>) {
   const user = await UserModel.getCurrentUser()
   const params = await searchParams
   const tab = (params.tab as string) ?? 'profile'

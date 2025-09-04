@@ -5,9 +5,9 @@ import { useAppKit } from '@reown/appkit/react'
 import { HeartIcon } from 'lucide-react'
 import Form from 'next/form'
 import { useActionState } from 'react'
+import { likeCommentAction } from '@/app/event/[slug]/actions/like-comment'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { likeCommentAction } from '../actions/like-comment'
 
 interface EventCommentLikeFormProps {
   comment: Comment

@@ -1,18 +1,14 @@
-import React, { Suspense } from 'react'
+import { Suspense } from 'react'
 import EventCardSkeleton from '@/components/event/EventCardSkeleton'
 import EventsGrid from '@/components/event/EventsGrid'
 import FilterToolbar from '@/components/layout/FilterToolbar'
-
-interface PageProps {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
-}
 
 function HomePageSkeleton() {
   const skeletons = Array.from({ length: 8 }, (_, i) => `skeleton-${i}`)
   return skeletons.map(id => <EventCardSkeleton key={id} />)
 }
 
-export default async function HomePage({ searchParams }: PageProps) {
+export default async function HomePage({ searchParams }: PageProps<'/'>) {
   const params = await searchParams
   const search = (params.search as string) ?? ''
   const tag = (params.tag as string) ?? 'trending'

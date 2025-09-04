@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  typedRoutes: true,
   reactStrictMode: false,
   images: {
     unoptimized: true,

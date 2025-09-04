@@ -1,4 +1,4 @@
-export default function PublicProfileSkeleton() {
+export default function Loading() {
   return (
     <div className="grid animate-pulse gap-8">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-8">

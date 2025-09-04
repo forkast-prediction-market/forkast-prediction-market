@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import PortfolioTabs from '@/app/portfolio/_components/PortfolioTabs'
 import { Card, CardContent } from '@/components/ui/card'
-import PortfolioTabs from './PortfolioTabs'
 
 export default function PortfolioContent() {
   const [activeTab, setActiveTab] = useState('positions')

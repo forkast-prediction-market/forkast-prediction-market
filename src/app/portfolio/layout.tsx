@@ -1,11 +1,7 @@
 import PortfolioProfitLossCard from '@/app/portfolio/_components/PortfolioProfitLossCard'
 import PortfolioSummaryCard from '@/app/portfolio/_components/PortfolioSummaryCard'
 
-export default async function PortfolioLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function PortfolioLayout({ children }: LayoutProps<'/portfolio'>) {
   return (
     <main className="container py-8">
       <div className="mx-auto grid max-w-4xl gap-6">
