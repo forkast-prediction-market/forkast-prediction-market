@@ -1,25 +1,25 @@
 import type { RefObject } from 'react'
 import { mockUser } from '@/lib/mockData'
+import { useOrder } from '@/stores/useOrder'
 
-interface Props {
-  isMobileVersion: boolean
-  tradingState: ReturnType<typeof import('@/hooks/useTradingState').useTradingState>
+interface EventOrderPanelInputSectionProps {
+  isMobile: boolean
   inputRef: RefObject<HTMLInputElement | null>
   getUserShares: () => number
 }
 
 export default function EventOrderPanelInputSection({
-  isMobileVersion,
-  tradingState,
+  isMobile,
   inputRef,
   getUserShares,
-}: Props) {
+}: EventOrderPanelInputSectionProps) {
+  const state = useOrder()
   // Function to render action buttons (percentage and value)
   function renderActionButtons(isMobile: boolean) {
     const baseButtonClasses
       = 'h-7 px-3 rounded-lg border text-[11px] transition-all duration-200 ease-in-out'
 
-    if (tradingState.activeTab === 'sell') {
+    if (state.activeTab === 'sell') {
       const userShares = getUserShares()
       const isDisabled = userShares <= 0
 
@@ -38,8 +38,8 @@ export default function EventOrderPanelInputSection({
               return
             }
             const percentValue = Number.parseInt(percentage.replace('%', '')) / 100
-            const newValue = tradingState.formatValue(userShares * percentValue)
-            tradingState.setAmount(newValue)
+            const newValue = (userShares * percentValue).toFixed(2)
+            state.setAmount(newValue)
             inputRef?.current?.focus()
           }}
         >
@@ -59,11 +59,11 @@ export default function EventOrderPanelInputSection({
           className={`${baseButtonClasses} hover:border-border hover:bg-white/10 dark:hover:bg-white/5`}
           onClick={() => {
             const chipValue = Number.parseInt(chip.substring(2))
-            const currentValue = Number.parseFloat(tradingState.amount) || 0
+            const currentValue = Number.parseFloat(state.amount) || 0
             const newValue = currentValue + chipValue
 
             if (newValue <= 999999999) {
-              tradingState.setAmount(tradingState.formatValue(newValue))
+              state.setAmount(newValue.toFixed(2))
               inputRef?.current?.focus()
             }
           }}
@@ -77,19 +77,19 @@ export default function EventOrderPanelInputSection({
   return (
     <>
       {/* Amount/Shares */}
-      {isMobileVersion
+      {isMobile
         ? (
             <div className="mb-4">
               <div className="mb-4 flex items-center justify-center gap-4">
                 <button
                   type="button"
                   onClick={() => {
-                    const currentValue = Number.parseFloat(tradingState.amount) || 0
+                    const currentValue = Number.parseFloat(state.amount) || 0
                     const newValue = Math.max(
                       0,
-                      currentValue - (tradingState.activeTab === 'sell' ? 0.1 : 1),
+                      currentValue - (state.activeTab === 'sell' ? 0.1 : 1),
                     )
-                    tradingState.setAmount(tradingState.formatValue(newValue))
+                    state.setAmount(newValue.toFixed(2))
                   }}
                   className={`
                     flex size-12 items-center justify-center rounded-lg bg-muted text-2xl font-bold transition-colors
@@ -109,45 +109,43 @@ export default function EventOrderPanelInputSection({
                       placeholder-muted-foreground outline-hidden
                       [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
                     `}
-                    placeholder={tradingState.activeTab === 'sell' ? '0' : '$1.00'}
+                    placeholder={state.activeTab === 'sell' ? '0' : '$1.00'}
                     value={
-                      tradingState.activeTab === 'sell'
-                        ? tradingState.amount || ''
-                        : tradingState.amount
-                          ? `$${tradingState.amount}`
+                      state.activeTab === 'sell'
+                        ? state.amount || ''
+                        : state.amount
+                          ? `$${state.amount}`
                           : ''
                     }
                     onChange={(e) => {
-                      const rawValue
-                    = tradingState.activeTab === 'sell'
-                      ? e.target.value
-                      : e.target.value.replace(/[^0-9.]/g, '')
+                      const rawValue = state.activeTab === 'sell'
+                        ? e.target.value
+                        : e.target.value.replace(/[^0-9.]/g, '')
 
-                      const value
-                    = tradingState.activeTab === 'sell'
-                      ? tradingState.limitDecimalPlaces(rawValue, 2)
-                      : rawValue
+                      const value = state.activeTab === 'sell'
+                        ? Number.parseFloat(rawValue).toFixed(2)
+                        : rawValue
 
                       const numericValue = Number.parseFloat(value)
 
-                      if (tradingState.activeTab === 'sell') {
+                      if (state.activeTab === 'sell') {
                         // For sell, limit by the amount of shares the user has
                         const userShares = getUserShares()
                         if (numericValue <= userShares || value === '') {
-                          tradingState.setAmount(value)
+                          state.setAmount(value)
                         }
                       }
                       else {
                         // For buy, limit as before
                         if (numericValue <= 99999 || value === '') {
-                          tradingState.setAmount(value)
+                          state.setAmount(value)
                         }
                       }
                     }}
                     onBlur={(e) => {
                       const value = e.target.value.replace(/[^0-9.]/g, '')
                       if (value && !Number.isNaN(Number.parseFloat(value))) {
-                        tradingState.setAmount(tradingState.formatValue(Number.parseFloat(value)))
+                        state.setAmount(Number.parseFloat(value).toFixed(2))
                       }
                     }}
                   />
@@ -155,19 +153,18 @@ export default function EventOrderPanelInputSection({
                 <button
                   type="button"
                   onClick={() => {
-                    const currentValue = Number.parseFloat(tradingState.amount) || 0
-                    const newValue
-                  = currentValue + (tradingState.activeTab === 'sell' ? 0.1 : 1)
+                    const currentValue = Number.parseFloat(state.amount) || 0
+                    const newValue = currentValue + (state.activeTab === 'sell' ? 0.1 : 1)
 
-                    if (tradingState.activeTab === 'sell') {
+                    if (state.activeTab === 'sell') {
                       const userShares = getUserShares()
                       if (newValue <= userShares) {
-                        tradingState.setAmount(tradingState.formatValue(newValue))
+                        state.setAmount(newValue.toFixed(2))
                       }
                     }
                     else {
                       if (newValue <= 99999) {
-                        tradingState.setAmount(tradingState.formatValue(newValue))
+                        state.setAmount(newValue.toFixed(2))
                       }
                     }
                   }}
@@ -185,12 +182,12 @@ export default function EventOrderPanelInputSection({
             <div className="mb-2 flex items-center gap-3">
               <div className="shrink-0">
                 <div className="text-lg font-medium">
-                  {tradingState.activeTab === 'sell' ? 'Shares' : 'Amount'}
+                  {state.activeTab === 'sell' ? 'Shares' : 'Amount'}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {tradingState.activeTab === 'sell'
+                  {state.activeTab === 'sell'
                     ? ``
-                    : `Balance $${tradingState.formatValue(mockUser.cash)}`}
+                    : `Balance $${mockUser.cash.toFixed(2)}`}
                 </div>
               </div>
               <div className="relative flex-1">
@@ -205,44 +202,43 @@ export default function EventOrderPanelInputSection({
                     dark:text-slate-300 dark:placeholder-slate-500
                     [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
                   `}
-                  placeholder={tradingState.activeTab === 'sell' ? '0' : '$0.00'}
+                  placeholder={state.activeTab === 'sell' ? '0' : '$0.00'}
                   value={
-                    tradingState.activeTab === 'sell'
-                      ? tradingState.amount || ''
-                      : tradingState.amount
-                        ? `$${tradingState.amount}`
+                    state.activeTab === 'sell'
+                      ? state.amount || ''
+                      : state.amount
+                        ? `$${state.amount}`
                         : ''
                   }
                   onChange={(e) => {
-                    const rawValue
-                  = tradingState.activeTab === 'sell'
-                    ? e.target.value
-                    : e.target.value.replace(/[^0-9.]/g, '')
+                    const rawValue = state.activeTab === 'sell'
+                      ? e.target.value
+                      : e.target.value.replace(/[^0-9.]/g, '')
 
-                    const value = tradingState.activeTab === 'sell'
-                      ? tradingState.limitDecimalPlaces(rawValue, 2)
+                    const value = state.activeTab === 'sell'
+                      ? Number.parseFloat(rawValue).toFixed(2)
                       : rawValue
 
                     const numericValue = Number.parseFloat(value)
 
-                    if (tradingState.activeTab === 'sell') {
+                    if (state.activeTab === 'sell') {
                       // For sell, limit by the amount of shares the user has
                       const userShares = getUserShares()
                       if (numericValue <= userShares || value === '') {
-                        tradingState.setAmount(value)
+                        state.setAmount(value)
                       }
                     }
                     else {
                       // For buy, limit as before
                       if (numericValue <= 99999 || value === '') {
-                        tradingState.setAmount(value)
+                        state.setAmount(value)
                       }
                     }
                   }}
                   onBlur={(e) => {
                     const value = e.target.value.replace(/[^0-9.]/g, '')
                     if (value && !Number.isNaN(Number.parseFloat(value))) {
-                      tradingState.setAmount(tradingState.formatValue(Number.parseFloat(value)))
+                      state.setAmount(value)
                     }
                   }}
                 />
@@ -253,10 +249,10 @@ export default function EventOrderPanelInputSection({
       {/* Quick chips */}
       <div
         className={`mb-3 flex gap-2 ${
-          isMobileVersion ? 'justify-center' : 'justify-end'
+          isMobile ? 'justify-center' : 'justify-end'
         }`}
       >
-        {renderActionButtons(isMobileVersion)}
+        {renderActionButtons(isMobile)}
         {/* Max button */}
         <button
           type="button"
@@ -264,24 +260,24 @@ export default function EventOrderPanelInputSection({
             h-7 rounded-lg border px-3 text-[11px] font-semibold transition-all duration-200
             ease-in-out
             ${
-    tradingState.activeTab === 'sell' && getUserShares() <= 0
+    state.activeTab === 'sell' && getUserShares() <= 0
       ? 'cursor-not-allowed opacity-50'
       : 'hover:border-border hover:bg-white/10 dark:hover:bg-white/5'
     }`}
-          disabled={tradingState.activeTab === 'sell' && getUserShares() <= 0}
+          disabled={state.activeTab === 'sell' && getUserShares() <= 0}
           onClick={() => {
-            if (tradingState.activeTab === 'sell') {
+            if (state.activeTab === 'sell') {
               const userShares = getUserShares()
               if (userShares <= 0) {
                 return
               }
-              tradingState.setAmount(tradingState.formatValue(userShares))
+              state.setAmount(userShares.toFixed(2))
             }
             else {
               const maxBalance = mockUser.cash
               // Limit to 999,999,999
               const limitedBalance = Math.min(maxBalance, 999999999)
-              tradingState.setAmount(tradingState.formatValue(limitedBalance))
+              state.setAmount(limitedBalance.toFixed(2))
             }
             inputRef?.current?.focus()
           }}

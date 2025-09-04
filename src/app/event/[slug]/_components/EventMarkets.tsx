@@ -3,42 +3,34 @@ import { RefreshCwIcon, TrendingDownIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
-interface Props {
+interface EventMarketsProps {
   event: Event
-  tradingState: ReturnType<typeof import('@/hooks/useTradingState').useTradingState>
-  setIsMobileModalOpen: (isOpen: boolean) => void
 }
 
-export default function EventMarkets({ event, tradingState, setIsMobileModalOpen }: Props) {
+export default function EventMarkets({ event }: EventMarketsProps) {
+  const state = useOrder()
+  const isBinaryMarket = useIsBinaryMarket()
+
   useEffect(() => {
-    if (!tradingState.selectedOutcomeForOrder && event.active_markets_count > 0) {
-      if (event.active_markets_count === 1) {
-        if (tradingState.yesOutcome) {
-          tradingState.setSelectedOutcomeForOrder(tradingState.yesOutcome.condition_id)
-          tradingState.setYesNoSelection('yes')
-        }
-        else {
-          // If isYes not found, select first option
-          tradingState.setSelectedOutcomeForOrder(event.markets[0].condition_id)
-          tradingState.setYesNoSelection('yes')
-        }
+    if (!state.market) {
+      if (isBinaryMarket) {
+        state.setMarket(event.markets[0])
+        state.setOutcome(event.markets[0].outcomes[0])
       }
-      else if (event.active_markets_count > 1) {
-        // For multi-option markets, select option with highest probability
-        const sortedOutcomes = [...event.markets].sort(
+      else {
+        const highestProbabilityMarket = [...event.markets].sort(
           (a, b) => b.probability - a.probability,
-        )
-        const highestProbOutcome = sortedOutcomes[0]
-        if (highestProbOutcome) {
-          tradingState.setSelectedOutcomeForOrder(highestProbOutcome.condition_id)
-          tradingState.setYesNoSelection('yes')
-        }
+        )[0]
+        state.setMarket(highestProbabilityMarket)
+        state.setOutcome(highestProbabilityMarket.outcomes[0])
       }
     }
-  }, [event, tradingState])
+  }, [state, event.markets, isBinaryMarket])
 
-  if (event.active_markets_count <= 1) {
+  if (isBinaryMarket) {
     return <></>
   }
 
@@ -67,30 +59,24 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
         <div className="w-[24%]"></div>
       </div>
 
-      {/* Items - Sorted by probability descending */}
       {[...event.markets]
         .sort((a, b) => b.probability - a.probability)
-        .map((outcome, index, sortedOutcomes) => (
+        .map((market, index, sortedMarkets) => (
           <div
-            key={outcome.condition_id}
-            className={`
+            key={market.condition_id}
+            className={cn({
+              'bg-muted dark:bg-black/10': state.market?.condition_id === market.condition_id,
+              'border-b': index !== sortedMarkets.length - 1,
+            }, `
               flex cursor-pointer flex-col items-start px-3 py-4 transition-all duration-200 ease-in-out
               hover:bg-black/5
               md:flex-row md:items-center md:px-2
               dark:hover:bg-white/5
-              ${
-          tradingState.selectedOutcomeForOrder === outcome.condition_id
-            ? 'bg-muted dark:bg-black/10'
-            : ''
-          } ${
-            index !== sortedOutcomes.length - 1
-              ? 'border-b'
-              : ''
-          }`}
+            `)}
             onClick={() => {
-              tradingState.setSelectedOutcomeForOrder(outcome.condition_id)
-              tradingState.setActiveTab('buy')
-              tradingState.inputRef?.focus()
+              state.setMarket(market)
+              state.setActiveTab('buy')
+              state.inputRef?.focus()
             }}
           >
             {/* Mobile: Layout in column */}
@@ -100,8 +86,8 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                 <div className="flex items-center gap-3">
                   {event.show_market_icons && (
                     <Image
-                      src={outcome.icon_url}
-                      alt={outcome.name}
+                      src={market.icon_url}
+                      alt={market.name}
                       width={42}
                       height={42}
                       className="flex-shrink-0 rounded-full"
@@ -109,11 +95,11 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                   )}
                   <div>
                     <div className="text-xs font-bold">
-                      {outcome.name}
+                      {market.name}
                     </div>
                     <div className="text-[10px] text-muted-foreground">
                       $
-                      {outcome.total_volume?.toLocaleString('en-US', {
+                      {market.total_volume?.toLocaleString('en-US', {
                         minimumFractionDigits: 2,
                         maximumFractionDigits: 2,
                       }) || '0.00'}
@@ -124,7 +110,7 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-lg font-bold text-foreground">
-                    {Math.round(outcome.probability)}
+                    {Math.round(market.probability)}
                     %
                   </span>
                   <div className="flex items-center gap-1 text-no">
@@ -139,41 +125,39 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                 <Button
                   size="lg"
                   variant="yes"
-                  className={`flex-1 ${tradingState.selectedOutcomeForOrder === outcome.condition_id
-                  && tradingState.yesNoSelection === 'yes'
-                    ? 'bg-yes text-white'
-                    : ''}`}
+                  className={cn({
+                    'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 0,
+                  }, 'flex-1')}
                   onClick={(e) => {
                     e.stopPropagation()
-                    tradingState.setSelectedOutcomeForOrder(outcome.condition_id)
-                    tradingState.setYesNoSelection('yes')
-                    tradingState.setActiveTab('buy')
-                    setIsMobileModalOpen(true)
+                    state.setMarket(market)
+                    state.setOutcome(market.outcomes[0])
+                    state.setActiveTab('buy')
+                    state.setIsMobileOrderPanelOpen(true)
                   }}
                 >
                   Buy Yes
                   {' '}
-                  {Math.round(outcome.probability)}
+                  {Math.round(market.probability)}
                   ¢
                 </Button>
                 <Button
                   size="lg"
                   variant="no"
-                  className={`flex-1 ${tradingState.selectedOutcomeForOrder === outcome.condition_id
-                  && tradingState.yesNoSelection === 'no'
-                    ? 'bg-no text-white'
-                    : ''}`}
+                  className={cn({
+                    'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 1,
+                  }, 'flex-1')}
                   onClick={(e) => {
                     e.stopPropagation()
-                    tradingState.setSelectedOutcomeForOrder(outcome.condition_id)
-                    tradingState.setYesNoSelection('no')
-                    tradingState.setActiveTab('buy')
-                    setIsMobileModalOpen(true)
+                    state.setMarket(market)
+                    state.setOutcome(market.outcomes[1])
+                    state.setActiveTab('buy')
+                    state.setIsMobileOrderPanelOpen(true)
                   }}
                 >
                   Buy No
                   {' '}
-                  {100 - Math.round(outcome.probability)}
+                  {100 - Math.round(market.probability)}
                   ¢
                 </Button>
               </div>
@@ -183,10 +167,10 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
             <div className="hidden w-full items-center md:flex">
               {/* First column: Name and info - 50% */}
               <div className="flex w-1/2 items-center gap-3">
-                {event.show_market_icons !== false && (
+                {event.show_market_icons && (
                   <Image
-                    src={outcome.icon_url}
-                    alt={outcome.name}
+                    src={market.icon_url}
+                    alt={market.name}
                     width={42}
                     height={42}
                     className="flex-shrink-0 rounded-full"
@@ -194,11 +178,11 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                 )}
                 <div>
                   <div className="font-bold">
-                    {outcome.name}
+                    {market.name}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     $
-                    {outcome.total_volume?.toLocaleString('en-US', {
+                    {market.total_volume?.toLocaleString('en-US', {
                       minimumFractionDigits: 2,
                       maximumFractionDigits: 2,
                     }) || '0.00'}
@@ -212,7 +196,7 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
               <div className="flex w-2/5 justify-center">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-foreground">
-                    {Math.round(outcome.probability)}
+                    {Math.round(market.probability)}
                     %
                   </span>
                   <div className="flex items-center gap-1 text-no">
@@ -227,23 +211,22 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                 <Button
                   size="lg"
                   variant="yes"
-                  className={`w-32 ${tradingState.selectedOutcomeForOrder === outcome.condition_id
-                  && tradingState.yesNoSelection === 'yes'
-                    ? 'bg-yes text-white'
-                    : ''}`}
+                  className={cn({
+                    'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 0,
+                  }, 'w-32')}
                   onClick={(e) => {
                     e.stopPropagation()
-                    tradingState.setSelectedOutcomeForOrder(outcome.condition_id)
-                    tradingState.setYesNoSelection('yes')
-                    tradingState.setActiveTab('buy')
-                    tradingState.inputRef?.focus()
+                    state.setMarket(market)
+                    state.setOutcome(market.outcomes[0])
+                    state.setActiveTab('buy')
+                    state.inputRef?.focus()
                   }}
                 >
                   <div className="flex flex-col items-center">
                     <span>
                       Buy Yes
                       {' '}
-                      {Math.round(outcome.probability)}
+                      {Math.round(market.probability)}
                       ¢
                     </span>
                   </div>
@@ -253,23 +236,22 @@ export default function EventMarkets({ event, tradingState, setIsMobileModalOpen
                 <Button
                   size="lg"
                   variant="no"
-                  className={`w-32 ${tradingState.selectedOutcomeForOrder === outcome.condition_id
-                  && tradingState.yesNoSelection === 'no'
-                    ? 'bg-no text-white'
-                    : ''}`}
+                  className={cn({
+                    'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 1,
+                  }, 'w-32')}
                   onClick={(e) => {
                     e.stopPropagation()
-                    tradingState.setSelectedOutcomeForOrder(outcome.condition_id)
-                    tradingState.setYesNoSelection('no')
-                    tradingState.setActiveTab('buy')
-                    tradingState.inputRef?.focus()
+                    state.setMarket(market)
+                    state.setOutcome(market.outcomes[1])
+                    state.setActiveTab('buy')
+                    state.inputRef?.focus()
                   }}
                 >
                   <div className="flex flex-col items-center">
                     <span>
                       Buy No
                       {' '}
-                      {100 - Math.round(outcome.probability)}
+                      {100 - Math.round(market.probability)}
                       ¢
                     </span>
                   </div>

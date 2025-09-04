@@ -3,11 +3,11 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { mockMarketDetails } from '@/lib/mockData'
 
-interface Props {
+interface EventRulesProps {
   event: Event
 }
 
-export default function EventRules({ event }: Props) {
+export default function EventRules({ event }: EventRulesProps) {
   const [rulesExpanded, setRulesExpanded] = useState(false)
 
   function formatRules(rules: string): string {
@@ -72,18 +72,12 @@ export default function EventRules({ event }: Props) {
                       Resolver
                     </div>
                     <a
-                      href={
-                        event.oracle
-                          ? `https://polygonscan.com/address/${event.oracle}`
-                          : '#'
-                      }
+                      href={`https://polygonscan.com/address/${event.markets[0].oracle}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-primary hover:opacity-80"
                     >
-                      {event.oracle
-                        ? formatOracleAddress(event.oracle)
-                        : ''}
+                      {formatOracleAddress(event.markets[0].oracle)}
                     </a>
                   </div>
                 </div>

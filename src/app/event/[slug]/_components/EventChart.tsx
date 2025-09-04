@@ -3,13 +3,16 @@ import { TrendingDownIcon } from 'lucide-react'
 import { useState } from 'react'
 import PredictionChart from '@/components/charts/PredictionChart'
 import { sanitizeSvg } from '@/lib/utils'
+import { useIsBinaryMarket, useYesPrice } from '@/stores/useOrder'
 
 interface Props {
   event: Event
-  tradingState: ReturnType<typeof import('@/hooks/useTradingState').useTradingState>
 }
 
-export default function EventChart({ event, tradingState }: Props) {
+export default function EventChart({ event }: Props) {
+  const yesPrice = useYesPrice()
+  const isBinaryMarket = useIsBinaryMarket()
+
   const [activeTimeRange, setActiveTimeRange] = useState('1D')
   const timeRanges = ['1H', '6H', '1D', '1W', '1M', 'ALL']
   const POLYMARKET_COLORS = ['#2D9CDB', '#FF5952', '#27AE60', '#9B51E0']
@@ -79,19 +82,17 @@ export default function EventChart({ event, tradingState }: Props) {
 
   return (
     <>
-      {/* Probability tag or legend */}
       <div className="mt-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {event.active_markets_count === 1
+            {isBinaryMarket
               ? (
                   <>
                     <span className="inline-flex items-center gap-1 text-xl font-bold text-primary">
-                      {Math.round(tradingState.primaryProbability)}
+                      {Math.round(yesPrice)}
                       % chance
                     </span>
 
-                    {/* Red arrow with percentage */}
                     <div className="flex items-center gap-1 text-no">
                       <TrendingDownIcon className="size-4" />
                       <span className="text-xs font-semibold">
@@ -120,7 +121,6 @@ export default function EventChart({ event, tradingState }: Props) {
                 )}
           </div>
 
-          {/* Logo for prints - always present */}
           <div className="flex items-center gap-1 text-muted-foreground opacity-40">
             <div
               className="size-6"
@@ -135,7 +135,6 @@ export default function EventChart({ event, tradingState }: Props) {
         </div>
       </div>
 
-      {/* Price chart */}
       <div className="mt-4">
         <div className="relative h-72 w-full">
           <div className="absolute inset-0">

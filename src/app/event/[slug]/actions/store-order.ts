@@ -7,7 +7,7 @@ import { UserModel } from '@/lib/db/users'
 
 const StoreOrderSchema = z.object({
   condition_id: z.string(),
-  outcome_index: z.coerce.number().int().min(0),
+  outcome_index: z.coerce.number().int().min(0).max(1),
   side: z.enum(['buy', 'sell']),
   amount: z.coerce.number().positive(),
   price: z.coerce.number().positive().optional(),

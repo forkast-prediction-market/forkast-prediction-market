@@ -2,13 +2,15 @@ import type { Event } from '@/types'
 import { SparklesIcon } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { useOrder } from '@/stores/useOrder'
 
 interface Props {
   event: Event
-  tradingState: ReturnType<typeof import('@/hooks/useTradingState').useTradingState>
 }
 
-export default function EventMarketContext({ event, tradingState }: Props) {
+export default function EventMarketContext({ event }: Props) {
+  const state = useOrder()
   const [contextExpanded, setContextExpanded] = useState(false)
   const [isGeneratingContext, setIsGeneratingContext] = useState(false)
   const [generatedContext, setGeneratedContext] = useState<string[]>([])
@@ -21,7 +23,7 @@ export default function EventMarketContext({ event, tradingState }: Props) {
 
     // Generate contextual content based on market title and type
     const contextLines = [
-      `This market tracks ${event.title.toLowerCase()} with current probability trends indicating ${tradingState.primaryProbability}% likelihood of the positive outcome.`,
+      `This market tracks ${event.title.toLowerCase()} with current probability trends indicating ${state.market?.probability}% likelihood of the positive outcome.`,
       `Historical data shows similar events have had volatility patterns with key decision points typically occurring near market resolution dates.`,
       `Market sentiment and external factors including recent news developments, expert opinions, and related market movements may influence final outcomes.`,
     ]
@@ -32,9 +34,7 @@ export default function EventMarketContext({ event, tradingState }: Props) {
   }
 
   return (
-    <div
-      className="mt-3 rounded-lg border transition-all duration-200 ease-in-out"
-    >
+    <div className="mt-3 rounded-lg border transition-all duration-200 ease-in-out">
       <div className="flex items-center justify-between p-4 hover:bg-muted/50">
         <span className="text-lg font-medium">Market Context</span>
         <Button
@@ -44,11 +44,7 @@ export default function EventMarketContext({ event, tradingState }: Props) {
           onClick={generateMarketContext}
           disabled={isGeneratingContext}
         >
-          <SparklesIcon
-            className={`size-3 ${
-              isGeneratingContext ? 'animate-spin' : ''
-            }`}
-          />
+          <SparklesIcon className={cn({ 'animate-spin': isGeneratingContext }, 'size-3')} />
           {isGeneratingContext ? 'Generating...' : 'Generate'}
         </Button>
       </div>
