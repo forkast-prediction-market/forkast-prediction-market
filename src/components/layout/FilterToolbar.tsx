@@ -61,7 +61,7 @@ export default function FilterToolbar({ search, bookmarked }: FilterToolbarProps
   }, [toggleBookmarkFilter, isBookmarked])
 
   const handleConnect = useCallback(() => {
-    open()
+    queueMicrotask(() => open())
   }, [open])
 
   return (

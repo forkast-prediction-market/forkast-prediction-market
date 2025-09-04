@@ -1,9 +1,9 @@
 'use client'
 
 import type { Event, User } from '@/types'
-import { useState } from 'react'
+import { useEffect } from 'react'
 import { Teleport } from '@/components/layout/Teleport'
-import { useTradingState } from '@/hooks/useTradingState'
+import { useOrder } from '@/stores/useOrder'
 import EventChart from './EventChart'
 import EventHeader from './EventHeader'
 import EventMarketContext from './EventMarketContext'
@@ -21,30 +21,32 @@ interface Props {
 }
 
 export default function EventContent({ event, user }: Props) {
-  const tradingState = useTradingState({ event })
-  const [isMobileModalOpen, setIsMobileModalOpen] = useState(false)
+  const setEvent = useOrder(state => state.setEvent)
+  const setMarket = useOrder(state => state.setMarket)
+  const setOutcome = useOrder(state => state.setOutcome)
+
+  useEffect(() => {
+    setEvent(event)
+    setMarket(event.markets[0])
+    setOutcome(event.markets[0].outcomes[0])
+  }, [event, setEvent, setMarket, setOutcome])
 
   return (
     <>
       <EventHeader event={event} />
       <EventMetaInformation event={event} />
-      <EventChart event={event} tradingState={tradingState} />
-      <EventMarkets event={event} tradingState={tradingState} setIsMobileModalOpen={setIsMobileModalOpen} />
-      <EventMarketContext event={event} tradingState={tradingState} />
+      <EventChart event={event} />
+      <EventMarkets event={event} />
+      <EventMarketContext event={event} />
       <EventRules event={event} />
       <EventTabs event={event} user={user} />
 
       <Teleport to="#event-order-panel">
-        <EventOrderPanel event={event} tradingState={tradingState} />
+        <EventOrderPanel event={event} isMobile={false} />
         <EventRelated event={event} />
       </Teleport>
 
-      <EventMobileOrderPanel
-        event={event}
-        tradingState={tradingState}
-        isMobileModalOpen={isMobileModalOpen}
-        setIsMobileModalOpen={setIsMobileModalOpen}
-      />
+      <EventMobileOrderPanel event={event} />
     </>
   )
 }

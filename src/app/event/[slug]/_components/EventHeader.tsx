@@ -27,10 +27,7 @@ export default function EventHeader({ event }: Props) {
     }, 'z-50 mb-6 flex transform items-center gap-3 transition-all ease-in-out')}
     >
       <Image
-        src={
-          event.creatorAvatar
-          || `https://avatar.vercel.sh/${event.title.charAt(0)}.png`
-        }
+        src={event.icon_url}
         alt={event.creator || 'Market creator'}
         width={64}
         height={64}
@@ -44,9 +41,9 @@ export default function EventHeader({ event }: Props) {
         {event.title}
       </h1>
 
-      <div className="ms-auto flex gap-2 text-muted-foreground">
-        <EventBookmark event={event} />
+      <div className="ms-auto flex gap-3 text-muted-foreground">
         <EventShare />
+        <EventBookmark event={event} />
       </div>
     </div>
   )

@@ -3,23 +3,26 @@ import { DialogTitle } from '@radix-ui/react-dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
+import { useIsBinaryMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
 import EventOrderPanel from './EventOrderPanel'
 
-interface Props {
+interface EventMobileOrderPanelProps {
   event: Event
-  tradingState: ReturnType<typeof import('@/hooks/useTradingState').useTradingState>
-  isMobileModalOpen: boolean
-  setIsMobileModalOpen: (isOpen: boolean) => void
 }
 
-export default function EventMobileOrderPanel({ event, tradingState, isMobileModalOpen, setIsMobileModalOpen }: Props) {
+export default function EventMobileOrderPanel({ event }: EventMobileOrderPanelProps) {
+  const state = useOrder()
+  const isBinaryMarket = useIsBinaryMarket()
+  const yesPrice = useYesPrice()
+  const noPrice = useNoPrice()
+
   return (
     <Drawer
-      open={isMobileModalOpen}
-      onClose={() => setIsMobileModalOpen(false)}
+      open={state.isMobileOrderPanelOpen}
+      onClose={() => state.setIsMobileOrderPanelOpen(false)}
     >
       <DrawerTrigger asChild>
-        {event.active_markets_count === 1 && (
+        {isBinaryMarket && (
           <div className="fixed right-0 bottom-0 left-0 border-t bg-background p-4 md:hidden">
             <div className="flex gap-2">
               <Button
@@ -27,13 +30,17 @@ export default function EventMobileOrderPanel({ event, tradingState, isMobileMod
                 size="lg"
                 className="flex-1"
                 onClick={() => {
-                  tradingState.setYesNoSelection('yes')
-                  setIsMobileModalOpen(true)
+                  if (!state.market) {
+                    return
+                  }
+
+                  state.setOutcome(state.market.outcomes[0])
+                  state.setIsMobileOrderPanelOpen(true)
                 }}
               >
                 Buy Yes
                 {' '}
-                {tradingState.yesPrice}
+                {yesPrice}
                 ¢
               </Button>
               <Button
@@ -41,13 +48,17 @@ export default function EventMobileOrderPanel({ event, tradingState, isMobileMod
                 size="lg"
                 className="flex-1"
                 onClick={() => {
-                  tradingState.setYesNoSelection('no')
-                  setIsMobileModalOpen(true)
+                  if (!state.market) {
+                    return
+                  }
+
+                  state.setOutcome(state.market.outcomes[1])
+                  state.setIsMobileOrderPanelOpen(true)
                 }}
               >
                 Buy No
                 {' '}
-                {tradingState.noPrice}
+                {noPrice}
                 ¢
               </Button>
             </div>
@@ -60,7 +71,7 @@ export default function EventMobileOrderPanel({ event, tradingState, isMobileMod
           <DialogTitle>{event.title}</DialogTitle>
         </VisuallyHidden>
 
-        <EventOrderPanel event={event} tradingState={tradingState} isMobileVersion={true} />
+        <EventOrderPanel event={event} isMobile={true} />
       </DrawerContent>
     </Drawer>
   )

@@ -4,71 +4,60 @@ import Image from 'next/image'
 import { useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { calculateWinnings, mockUser } from '@/lib/mockData'
+import { useIsBinaryMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
 import EventOrderPanelInputSection from './EventOrderPanelInputSection'
 
-interface Props {
+interface EventOrderPanelFormProps {
   event: Event
-  tradingState: ReturnType<typeof import('@/hooks/useTradingState').useTradingState>
-  isMobileVersion?: boolean
+  isMobile: boolean
   handleConfirmTrade: () => Promise<void>
 }
 
 export default function EventOrderPanelForm({
   event,
-  tradingState,
-  isMobileVersion = false,
+  isMobile,
   handleConfirmTrade,
-}: Props) {
+}: EventOrderPanelFormProps) {
   const inputRef = useRef<HTMLInputElement>(null)
-  const getSelectedOutcome = tradingState.getSelectedOutcome
-  const yesPrice = tradingState.yesPrice
-  const noPrice = tradingState.noPrice
+  const state = useOrder()
+  const yesPrice = useYesPrice()
+  const noPrice = useNoPrice()
+  const isBinaryMarket = useIsBinaryMarket()
 
   // Function to calculate the amount the user will receive when selling shares
   function calculateSellAmount(sharesToSell: number) {
-    if (!tradingState.selectedOutcomeForOrder || !tradingState.yesNoSelection) {
-      return 0
-    }
-
-    const selectedOutcome = getSelectedOutcome()
-    if (!selectedOutcome) {
+    if (!state.market || !state.outcome) {
       return 0
     }
 
     const sellPrice
-        = tradingState.yesNoSelection === 'yes'
-          ? (selectedOutcome.probability / 100) * 0.95 // 5% spread for sell
-          : ((100 - selectedOutcome.probability) / 100) * 0.95
+      = state.outcome.outcome_index === 0
+        ? (state.market.probability / 100) * 0.95 // 5% spread for sell
+        : ((100 - state.market.probability) / 100) * 0.95
 
     return sharesToSell * sellPrice
   }
 
   // Function to get the average selling price
   function getAvgSellPrice() {
-    if (!tradingState.selectedOutcomeForOrder || !tradingState.yesNoSelection) {
-      return '0'
-    }
-
-    const selectedOutcome = getSelectedOutcome()
-    if (!selectedOutcome) {
-      return '0'
+    if (!state.market || !state.outcome) {
+      return 0
     }
 
     const sellPrice
-        = tradingState.yesNoSelection === 'yes'
-          ? Math.round(selectedOutcome.probability * 0.95) // 5% spread for sell
-          : Math.round((100 - selectedOutcome.probability) * 0.95)
+      = state.outcome.outcome_index === 0
+        ? Math.round(state.market.probability * 0.95) // 5% spread for sell
+        : Math.round((100 - state.market.probability) * 0.95)
 
     return sellPrice.toString()
   }
 
   // Function to get user shares for the selected outcome
   function getUserShares() {
-    if (!tradingState.selectedOutcomeForOrder) {
+    if (!state.market) {
       return 0
     }
-    const shareKey = tradingState.selectedOutcomeForOrder as keyof typeof mockUser.shares
-    return mockUser.shares[shareKey] || 0
+    return mockUser.shares['1-yes'] || 0
   }
 
   // Function to get shares for Yes outcome
@@ -107,7 +96,8 @@ export default function EventOrderPanelForm({
     price: number,
     forceTabChange = false,
   ) {
-    const isSelected = tradingState.yesNoSelection === type
+    const outcomeIndex = type === 'yes' ? 0 : 1
+    const isSelected = state.outcome?.outcome_index === outcomeIndex
 
     const selectedClasses
       = type === 'yes'
@@ -118,10 +108,15 @@ export default function EventOrderPanelForm({
       <Button
         type="button"
         onClick={() => {
-          tradingState.setYesNoSelection(type)
-          if (forceTabChange) {
-            tradingState.setActiveTab('buy')
+          if (!state.market) {
+            return
           }
+
+          state.setOutcome(state.market.outcomes[outcomeIndex])
+          if (forceTabChange) {
+            state.setActiveTab('buy')
+          }
+
           inputRef?.current?.focus()
         }}
         variant={isSelected ? type : 'outline'}
@@ -130,12 +125,12 @@ export default function EventOrderPanelForm({
       >
         <span className="opacity-70">
           {type === 'yes'
-            ? tradingState.isMultiMarket
-              ? 'Yes'
-              : event.outcomes[0].name
-            : tradingState.isMultiMarket
-              ? 'No'
-              : event.outcomes[1].name }
+            ? isBinaryMarket
+              ? event.markets[0].outcomes[0].outcome_text
+              : 'Yes'
+            : isBinaryMarket
+              ? event.markets[0].outcomes[1].outcome_text
+              : 'No'}
         </span>
         <span className="font-bold">
           {price}
@@ -146,54 +141,41 @@ export default function EventOrderPanelForm({
   }
 
   const containerClasses = `${
-    isMobileVersion ? 'w-full' : 'w-full lg:w-[320px]'
+    isMobile ? 'w-full' : 'w-full lg:w-[320px]'
   } ${
-    isMobileVersion
+    isMobile
       ? ''
       : 'rounded-lg border'
   } p-4 shadow-xl/5`
 
   return (
     <div className={containerClasses}>
-      {/* Display the selected option (only for multi-outcome) */}
-      {event.active_markets_count > 1
-        && tradingState.selectedOutcomeForOrder
-        && !isMobileVersion && (
+      {/* Display the selected option (only for multi-market) */}
+      {!isBinaryMarket
+        && state.market
+        && !isMobile && (
         <div className="mb-4 rounded-lg bg-muted/20">
           <div className="flex items-center gap-3">
             <Image
-              src={
-                getSelectedOutcome()?.avatar
-                || `https://avatar.vercel.sh/${getSelectedOutcome()?.name.toLowerCase()}.png`
-              }
-              alt={getSelectedOutcome()?.name || 'Selected outcome'}
+              src={state.market.icon_url}
+              alt={state.market.name}
               width={42}
               height={42}
               className="shrink-0 rounded-sm"
             />
             <span className="text-sm font-bold">
-              {getSelectedOutcome()?.name}
+              {state.market.name}
             </span>
           </div>
         </div>
       )}
 
       {/* Market info for mobile */}
-      {isMobileVersion && (
+      {isMobile && (
         <div className="mb-4 flex items-center gap-3">
           <Image
-            src={
-              tradingState.selectedOutcomeForOrder
-                ? getSelectedOutcome()?.avatar
-                || `https://avatar.vercel.sh/${getSelectedOutcome()?.name.toLowerCase()}.png`
-                : event.creatorAvatar
-                  || `https://avatar.vercel.sh/${event.title.charAt(0)}.png`
-            }
-            alt={
-              tradingState.selectedOutcomeForOrder
-                ? getSelectedOutcome()?.name || 'Selected outcome'
-                : event.creator || 'Market creator'
-            }
+            src={state.market!.icon_url}
+            alt={state.market!.name}
             width={32}
             height={32}
             className="shrink-0 rounded"
@@ -204,13 +186,11 @@ export default function EventOrderPanelForm({
             </div>
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>
-                {tradingState.selectedOutcomeForOrder
-                  ? getSelectedOutcome()?.name
-                  : tradingState.yesOutcome?.name || event.outcomes[0]?.name}
+                {state.market!.name}
               </span>
               <span>
                 Bal. $
-                {tradingState.formatValue(mockUser.cash)}
+                {mockUser.cash.toFixed(2)}
               </span>
             </div>
           </div>
@@ -222,12 +202,12 @@ export default function EventOrderPanelForm({
         <button
           type="button"
           onClick={() => {
-            tradingState.setActiveTab('buy')
-            tradingState.setAmount('') // Reset value when changing tab
+            state.setActiveTab('buy')
+            state.setAmount('') // Reset value when changing tab
             inputRef?.current?.focus()
           }}
           className={`flex-1 pb-2 transition-colors duration-200 ${
-            tradingState.activeTab === 'buy'
+            state.activeTab === 'buy'
               ? 'border-b-2 border-primary text-foreground'
               : 'border-b-2'
           }`}
@@ -237,12 +217,12 @@ export default function EventOrderPanelForm({
         <button
           type="button"
           onClick={() => {
-            tradingState.setActiveTab('sell')
-            tradingState.setAmount('') // Reset value when changing tab
+            state.setActiveTab('sell')
+            state.setAmount('') // Reset value when changing tab
             inputRef?.current?.focus()
           }}
           className={`flex-1 pb-2 transition-colors duration-200 ${
-            tradingState.activeTab === 'sell'
+            state.activeTab === 'sell'
               ? 'border-b-2 border-primary text-foreground'
               : 'border-b-2'
           }`}
@@ -258,13 +238,13 @@ export default function EventOrderPanelForm({
       </div>
 
       {/* Display available shares (only in Sell mode) */}
-      {tradingState.activeTab === 'sell' && tradingState.selectedOutcomeForOrder && (
+      {state.activeTab === 'sell' && state.market && (
         <div className="mb-4 flex gap-2">
           <div className="flex-1 text-center">
-            {getYesShares(tradingState.selectedOutcomeForOrder) > 0
+            {getYesShares(state.market.condition_id) > 0
               ? (
                   <span className="text-xs text-muted-foreground">
-                    {tradingState.formatValue(getYesShares(tradingState.selectedOutcomeForOrder))}
+                    {getYesShares(state.market.condition_id)}
                     {' '}
                     shares
                   </span>
@@ -276,10 +256,10 @@ export default function EventOrderPanelForm({
                 )}
           </div>
           <div className="flex-1 text-center">
-            {getNoShares(tradingState.selectedOutcomeForOrder) > 0
+            {getNoShares(state.market.condition_id) > 0
               ? (
                   <span className="text-xs text-muted-foreground">
-                    {tradingState.formatValue(getNoShares(tradingState.selectedOutcomeForOrder))}
+                    {getNoShares(state.market.condition_id)}
                     {' '}
                     shares
                   </span>
@@ -294,7 +274,7 @@ export default function EventOrderPanelForm({
       )}
 
       {/* Message when no outcome is selected in Sell mode */}
-      {tradingState.activeTab === 'sell' && !tradingState.selectedOutcomeForOrder && (
+      {state.activeTab === 'sell' && !state.market && (
         <div className="mb-4 rounded-lg border bg-muted/30 p-3">
           <p className="text-center text-sm text-muted-foreground">
             Select an outcome to sell shares
@@ -302,76 +282,75 @@ export default function EventOrderPanelForm({
         </div>
       )}
 
-      {tradingState.activeTab !== 'sell' && <div className="mb-4"></div>}
+      {state.activeTab !== 'sell' && <div className="mb-4"></div>}
 
       <EventOrderPanelInputSection
-        isMobileVersion={isMobileVersion}
-        tradingState={tradingState}
+        isMobile={isMobile}
         inputRef={inputRef}
         getUserShares={getUserShares}
       />
 
       {/* To Win / You'll receive Section */}
-      {tradingState.amount && Number.parseFloat(tradingState.amount) > 0 && tradingState.yesNoSelection && (
-        <div className={`${isMobileVersion ? 'mb-4 text-center' : 'mb-4'}`}>
-          {!isMobileVersion && (
+      {state.amount && Number.parseFloat(state.amount) > 0 && state.outcome && (
+        <div className={`${isMobile ? 'mb-4 text-center' : 'mb-4'}`}>
+          {!isMobile && (
             <hr className="mb-3 border" />
           )}
           <div
             className={`flex ${
-              isMobileVersion ? 'flex-col' : 'items-center justify-between'
+              isMobile ? 'flex-col' : 'items-center justify-between'
             }`}
           >
-            <div className={isMobileVersion ? 'mb-1' : ''}>
+            <div className={isMobile ? 'mb-1' : ''}>
               <div
                 className={`${
-                  isMobileVersion ? 'text-lg' : 'text-sm'
+                  isMobile ? 'text-lg' : 'text-sm'
                 } font-bold ${
-                  isMobileVersion
+                  isMobile
                     ? 'text-foreground'
                     : 'text-muted-foreground'
                 } flex items-center ${
-                  isMobileVersion ? 'justify-center' : ''
+                  isMobile ? 'justify-center' : ''
                 } gap-1`}
               >
-                {tradingState.activeTab === 'sell' ? 'You\'ll receive' : 'To win'}
-                {!isMobileVersion && (
+                {state.activeTab === 'sell' ? 'You\'ll receive' : 'To win'}
+                {!isMobile && (
                   <BanknoteIcon className="size-4 text-yes" />
                 )}
-                {isMobileVersion && (
+                {isMobile && (
                   <span className="text-xl text-yes">💰</span>
                 )}
-                {isMobileVersion && (
+                {isMobile && (
                   <span className="text-2xl font-bold text-yes">
-                    {tradingState.activeTab === 'sell'
-                      ? `$${tradingState.formatValue(
-                        calculateSellAmount(Number.parseFloat(tradingState.amount)),
-                      )}`
-                      : `$${tradingState.formatValue(
-                        calculateWinnings(Number.parseFloat(tradingState.amount), 0.72),
-                      )}`}
+                    {state.activeTab === 'sell'
+                      ? `$${
+                        calculateSellAmount(Number.parseFloat(state.amount)).toFixed(2)
+                      }`
+                      : `$${
+                        calculateWinnings(Number.parseFloat(state.amount), 0.72).toFixed(2)
+                      }`}
                   </span>
                 )}
               </div>
               <div
                 className={`${
-                  isMobileVersion ? 'text-sm' : 'text-xs'
+                  isMobile ? 'text-sm' : 'text-xs'
                 } text-muted-foreground ${
-                  isMobileVersion ? 'text-center' : ''
+                  isMobile ? 'text-center' : ''
                 }`}
               >
-                {tradingState.activeTab === 'sell'
+                {state.activeTab === 'sell'
                   ? `Avg. price ${getAvgSellPrice()}¢`
                   : 'Avg. Price 72¢'}
               </div>
             </div>
-            {!isMobileVersion && (
+            {!isMobile && (
               <div className="text-4xl font-bold text-yes">
-                {tradingState.activeTab === 'sell'
-                  ? `$${tradingState.formatValue(calculateSellAmount(Number.parseFloat(tradingState.amount)))}`
-                  : `$${tradingState.formatValue(
-                    calculateWinnings(Number.parseFloat(tradingState.amount), 0.26),
-                  )}`}
+                {state.activeTab === 'sell'
+                  ? `$${calculateSellAmount(Number.parseFloat(state.amount)).toFixed(2)}`
+                  : `$${
+                    calculateWinnings(Number.parseFloat(state.amount), 0.26).toFixed(2)
+                  }`}
               </div>
             )}
           </div>
@@ -384,14 +363,13 @@ export default function EventOrderPanelForm({
         size="lg"
         onClick={handleConfirmTrade}
         disabled={
-          tradingState.isLoading
-          || !tradingState.amount
-          || Number.parseFloat(tradingState.amount) <= 0
-          || !tradingState.yesNoSelection
-          || (tradingState.activeTab === 'sell' && Number.parseFloat(tradingState.amount) > getUserShares())
+          state.isLoading
+          || !state.amount
+          || !state.outcome
+          || (state.activeTab === 'sell' && Number.parseFloat(state.amount) > getUserShares())
         }
       >
-        {tradingState.isLoading
+        {state.isLoading
           ? (
               <div className="flex items-center justify-center gap-2">
                 <div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
@@ -400,13 +378,13 @@ export default function EventOrderPanelForm({
             )
           : (
               <>
-                {tradingState.activeTab === 'sell'
-                  ? tradingState.yesNoSelection === 'no'
-                    ? `Sell ${tradingState.isMultiMarket ? 'No' : event.outcomes[1].name}`
-                    : `Sell ${tradingState.isMultiMarket ? 'Yes' : event.outcomes[0].name}`
-                  : tradingState.yesNoSelection === 'no'
-                    ? `Buy ${tradingState.isMultiMarket ? 'No' : event.outcomes[1].name}`
-                    : `Buy ${tradingState.isMultiMarket ? 'Yes' : event.outcomes[0].name}`}
+                {state.activeTab === 'sell'
+                  ? state.outcome?.outcome_index === 1
+                    ? `Sell ${!isBinaryMarket ? 'No' : state.outcome?.outcome_text}`
+                    : `Sell ${!isBinaryMarket ? 'Yes' : state.outcome?.outcome_text}`
+                  : state.outcome?.outcome_index === 1
+                    ? `Buy ${!isBinaryMarket ? 'No' : state.outcome?.outcome_text}`
+                    : `Buy ${!isBinaryMarket ? 'Yes' : state.outcome?.outcome_text}`}
               </>
             )}
       </Button>

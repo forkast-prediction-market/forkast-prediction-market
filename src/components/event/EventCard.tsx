@@ -11,12 +11,13 @@ import EventBookmark from '@/app/event/[slug]/_components/EventBookmark'
 import { OpenCardContext } from '@/components/event/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { formatVolume } from '@/lib/utils'
 
-interface Props {
+interface EventCardProps {
   event: Event
 }
 
-export default function EventCard({ event }: Props) {
+export default function EventCard({ event }: EventCardProps) {
   const { openCardId, setOpenCardId } = use(OpenCardContext)
   const [isLoading, setIsLoading] = useState(false)
   const [selectedOutcome, setSelectedOutcome] = useState<{
@@ -31,7 +32,6 @@ export default function EventCard({ event }: Props) {
     setOpenCardId(isOpen ? null : `${event.id}`)
   }
 
-  // Function to format monetary values with 2 decimal places
   function formatValue(value: number): string {
     return value.toFixed(2)
   }
@@ -58,29 +58,18 @@ export default function EventCard({ event }: Props) {
   // Use external state control for opening/closing
   const isInTradingMode = isOpen && selectedOutcome
 
-  const isBinaryMarket
-    = event.outcomes.length === 2
-      && event.outcomes.some(o => o.isYes !== undefined)
-  const yesOutcome = event.outcomes.find(o => o.isYes === true)
-  const noOutcome = event.outcomes.find(o => o.isYes === false)
-
-  function formatVolume(volume: number) {
-    if (volume >= 1000000) {
-      return `$${(volume / 1000000).toFixed(1)}M`
-    }
-    else if (volume >= 1000) {
-      return `$${(volume / 1000).toFixed(0)}k`
-    }
-    return `$${volume.toFixed(0)}`
-  }
+  const isBinaryMarket = event.markets.length === 1
+  const yesOutcome = event.markets[0].outcomes[0]
+  const noOutcome = event.markets[0].outcomes[1]
 
   async function handleTrade(outcomeId: string, type: 'yes' | 'no') {
-    const outcome = event.outcomes.find(o => o.id === outcomeId)
+    const outcomes = event.markets.flatMap(market => market.outcomes)
+    const outcome = outcomes.find(o => o.id === outcomeId)
     if (outcome) {
       setSelectedOutcome({
         id: outcomeId,
         type,
-        name: outcome.name,
+        name: outcome.outcome_text,
       })
       // Keep current value or set to "1" if empty
       if (!tradeAmount) {
@@ -102,9 +91,9 @@ export default function EventCard({ event }: Props) {
 
       // Calculate shares and price
       const amountNum = Number.parseFloat(tradeAmount)
-      const outcome = event.outcomes.find(o => o.id === selectedOutcome.id)
+      const outcome = event.markets[0].outcomes.find(o => o.id === selectedOutcome.id)
       if (outcome) {
-        const probability = outcome.probability
+        const probability = event.markets[0].probability
         const price
           = selectedOutcome.type === 'yes'
             ? Math.round(probability)
@@ -155,7 +144,7 @@ export default function EventCard({ event }: Props) {
       return '0.00'
     }
     const amountNum = Number.parseFloat(amount)
-    const outcome = event.outcomes.find(o => o.id === selectedOutcome.id)
+    const outcome = event.markets.find(market => market.condition_id === selectedOutcome.id)
     if (!outcome) {
       return '0.00'
     }
@@ -230,12 +219,7 @@ export default function EventCard({ event }: Props) {
               `}
             >
               <Image
-                src={
-                  event.creatorAvatar
-                  || `https://avatar.vercel.sh/${
-                    event.creator || event.title.charAt(0)
-                  }.png`
-                }
+                src={event.icon_url}
                 alt={event.creator || 'Market creator'}
                 width={40}
                 height={40}
@@ -301,14 +285,14 @@ export default function EventCard({ event }: Props) {
                             strokeWidth="4"
                             strokeLinecap="round"
                             className={`transition-all duration-300 ${
-                              Math.round(yesOutcome.probability) < 40
+                              Math.round(event.markets[0].probability) < 40
                                 ? 'text-no'
-                                : Math.round(yesOutcome.probability) === 50
+                                : Math.round(event.markets[0].probability) === 50
                                   ? 'text-slate-400'
                                   : 'text-yes'
                             }`}
                             strokeDasharray={`${
-                              (Math.round(yesOutcome.probability) / 100) * 69.12
+                              (Math.round(event.markets[0].probability) / 100) * 69.12
                             } 69.12`}
                             strokeDashoffset="0"
                           />
@@ -316,7 +300,7 @@ export default function EventCard({ event }: Props) {
                         {/* Percentage number centered in arc */}
                         <div className="absolute inset-0 flex items-center justify-center pt-2">
                           <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                            {Math.round(yesOutcome.probability)}
+                            {Math.round(event.markets[0].probability)}
                             %
                           </span>
                         </div>
@@ -445,23 +429,23 @@ export default function EventCard({ event }: Props) {
               )
             : (
                 <>
-                  {/* Body - Show multi-outcome options only for non-binary markets */}
+                  {/* Show multi-market options only for non-binary markets */}
                   {!isBinaryMarket && (
                     <div className="mt-auto mb-1 scrollbar-hide max-h-18 space-y-2 overflow-y-auto">
-                      {event.outcomes.map(outcome => (
+                      {event.markets.map(market => (
                         <div
-                          key={outcome.id}
+                          key={market.condition_id}
                           className="flex items-center justify-between text-xs"
                         >
                           <span
                             className="truncate dark:text-white"
-                            title={outcome.name}
+                            title={market.short_title || market.name}
                           >
-                            {outcome.name}
+                            {market.short_title || market.name}
                           </span>
                           <div className="ml-2 flex items-center gap-2">
                             <span className="text-[11px] font-bold text-slate-900 dark:text-white">
-                              {Math.round(outcome.probability)}
+                              {Math.round(market.probability)}
                               %
                             </span>
                             <div className="flex gap-1">
@@ -469,19 +453,19 @@ export default function EventCard({ event }: Props) {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  handleTrade(outcome.yesOutcome?.id || outcome.id, 'yes')
+                                  handleTrade(market.outcomes[0].id, 'yes')
                                   onToggle()
                                 }}
-                                title={`${outcome.yesOutcome?.name || 'Yes'}: ${Math.round(outcome.probability)}%`}
+                                title={`${market.outcomes[0].outcome_text}: ${Math.round(market.probability)}%`}
                                 variant="yes"
                                 size="sm"
-                                className="group h-auto w-[40px] rounded px-2 py-1 text-[11px]"
+                                className="group h-auto w-[40px] rounded px-2 py-1 text-[10px]"
                               >
-                                <span className="group-hover:hidden">
-                                  {outcome.yesOutcome?.name || 'Yes'}
+                                <span className="truncate group-hover:hidden">
+                                  {market.outcomes[0].outcome_text}
                                 </span>
                                 <span className="hidden font-mono group-hover:inline">
-                                  {Math.round(outcome.probability)}
+                                  {Math.round(market.probability)}
                                   %
                                 </span>
                               </Button>
@@ -489,21 +473,19 @@ export default function EventCard({ event }: Props) {
                                 type="button"
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  handleTrade(outcome.noOutcome?.id || outcome.id, 'no')
+                                  handleTrade(market.outcomes[1].id, 'no')
                                   onToggle()
                                 }}
-                                title={`${outcome.noOutcome?.name || 'No'}: ${
-                                  100 - Math.round(outcome.probability)
-                                }%`}
+                                title={`${market.outcomes[1].outcome_text}: ${Math.round(market.probability)}%`}
                                 variant="no"
                                 size="sm"
-                                className="group h-auto w-[40px] rounded px-2 py-1 text-[11px]"
+                                className="group h-auto w-[40px] rounded px-2 py-1 text-[10px]"
                               >
-                                <span className="group-hover:hidden">
-                                  {outcome.noOutcome?.name || 'No'}
+                                <span className="truncate group-hover:hidden">
+                                  {market.outcomes[1].outcome_text}
                                 </span>
                                 <span className="hidden font-mono group-hover:inline">
-                                  {100 - Math.round(outcome.probability)}
+                                  {100 - Math.round(market.probability)}
                                   %
                                 </span>
                               </Button>
@@ -529,7 +511,7 @@ export default function EventCard({ event }: Props) {
                       >
                         Buy
                         {' '}
-                        {yesOutcome.name}
+                        {yesOutcome.outcome_text}
                         {' '}
                         <ChevronsUpIcon className="size-4" />
                       </Button>
@@ -545,7 +527,7 @@ export default function EventCard({ event }: Props) {
                       >
                         Buy
                         {' '}
-                        {noOutcome.name}
+                        {noOutcome.outcome_text}
                         {' '}
                         <ChevronsDownIcon className="size-4" />
                       </Button>
@@ -560,7 +542,7 @@ export default function EventCard({ event }: Props) {
           <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
               <span>
-                {formatVolume(event.volume)}
+                {formatVolume(event.markets[0].total_volume)}
                 {' '}
                 Vol.
               </span>

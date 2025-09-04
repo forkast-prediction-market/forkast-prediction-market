@@ -49,34 +49,34 @@ export default function PublicProfileStatsCards({ stats }: Props) {
     }).format(amount)
   }
 
-  const profitLossIcon = stats.profitLoss >= 0 ? TrendingUpIcon : TrendingDownIcon
-  const isProfitable = stats.profitLoss >= 0
+  const profitLossIcon = stats.profit_loss >= 0 ? TrendingUpIcon : TrendingDownIcon
+  const isProfitable = stats.profit_loss >= 0
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatCard
         icon={ActivityIcon}
         label="Positions value"
-        value={formatCurrency(stats.positionsValue)}
+        value={formatCurrency(stats.positions_value)}
       />
 
       <StatCard
         icon={profitLossIcon}
         label="Profit/loss"
-        value={formatCurrency(stats.profitLoss)}
+        value={formatCurrency(stats.profit_loss)}
         isProfit={isProfitable}
       />
 
       <StatCard
         icon={BarChart2Icon}
         label="Volume traded"
-        value={formatCurrency(stats.volumeTraded)}
+        value={formatCurrency(stats.volume_traded)}
       />
 
       <StatCard
         icon={CheckCircle2Icon}
         label="Markets traded"
-        value={stats.marketsTraded.toString()}
+        value={stats.markets_traded.toString()}
       />
     </div>
   )

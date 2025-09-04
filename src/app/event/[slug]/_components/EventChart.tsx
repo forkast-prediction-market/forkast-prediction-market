@@ -3,13 +3,16 @@ import { TrendingDownIcon } from 'lucide-react'
 import { useState } from 'react'
 import PredictionChart from '@/components/charts/PredictionChart'
 import { sanitizeSvg } from '@/lib/utils'
+import { useIsBinaryMarket, useYesPrice } from '@/stores/useOrder'
 
 interface Props {
   event: Event
-  tradingState: ReturnType<typeof import('@/hooks/useTradingState').useTradingState>
 }
 
-export default function EventChart({ event, tradingState }: Props) {
+export default function EventChart({ event }: Props) {
+  const yesPrice = useYesPrice()
+  const isBinaryMarket = useIsBinaryMarket()
+
   const [activeTimeRange, setActiveTimeRange] = useState('1D')
   const timeRanges = ['1H', '6H', '1D', '1W', '1M', 'ALL']
   const POLYMARKET_COLORS = ['#2D9CDB', '#FF5952', '#27AE60', '#9B51E0']
@@ -22,7 +25,7 @@ export default function EventChart({ event, tradingState }: Props) {
 
     // Generate series configuration based on actual outcomes
     const series = topOutcomes.map((outcome, index) => ({
-      key: `outcome_${outcome.id}`,
+      key: `outcome_${outcome.condition_id}`,
       name: outcome.name,
       color: POLYMARKET_COLORS[index] || '#8B5CF6',
     }))
@@ -36,7 +39,7 @@ export default function EventChart({ event, tradingState }: Props) {
 
       // For each outcome, generate a trend based on current probability
       topOutcomes.forEach((outcome) => {
-        const key = `outcome_${outcome.id}`
+        const key = `outcome_${outcome.condition_id}`
         const baseProbability = outcome.probability
 
         // Add temporal and random variation
@@ -52,13 +55,13 @@ export default function EventChart({ event, tradingState }: Props) {
 
       // Normalize so the sum is close to 100%
       const total = topOutcomes.reduce(
-        (sum, outcome) => sum + (dataPoint[`outcome_${outcome.id}`] as number),
+        (sum, outcome) => sum + (dataPoint[`outcome_${outcome.condition_id}`] as number),
         0,
       )
 
       if (total > 0) {
         topOutcomes.forEach((outcome) => {
-          const key = `outcome_${outcome.id}`
+          const key = `outcome_${outcome.condition_id}`
           const currentValue = dataPoint[key] as number
           dataPoint[key] = (currentValue / total) * 100
         })
@@ -74,24 +77,22 @@ export default function EventChart({ event, tradingState }: Props) {
   const chartConfig = generateChartData()
 
   function getTopOutcomesForChart() {
-    return [...event.outcomes].sort((a, b) => b.volume - a.volume).slice(0, 4)
+    return [...event.markets].sort((a, b) => b.total_volume - a.total_volume).slice(0, 4)
   }
 
   return (
     <>
-      {/* Probability tag or legend */}
       <div className="mt-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {event.active_markets_count === 1
+            {isBinaryMarket
               ? (
                   <>
                     <span className="inline-flex items-center gap-1 text-xl font-bold text-primary">
-                      {Math.round(tradingState.primaryProbability)}
+                      {Math.round(yesPrice)}
                       % chance
                     </span>
 
-                    {/* Red arrow with percentage */}
                     <div className="flex items-center gap-1 text-no">
                       <TrendingDownIcon className="size-4" />
                       <span className="text-xs font-semibold">
@@ -104,7 +105,7 @@ export default function EventChart({ event, tradingState }: Props) {
               : (
                   <div className="flex flex-wrap items-center gap-4">
                     {getTopOutcomesForChart().map((outcome, index) => (
-                      <div key={outcome.id} className="flex items-center gap-2">
+                      <div key={outcome.condition_id} className="flex items-center gap-2">
                         <div
                           className="size-3 rounded-full"
                           style={{
@@ -120,7 +121,6 @@ export default function EventChart({ event, tradingState }: Props) {
                 )}
           </div>
 
-          {/* Logo for prints - always present */}
           <div className="flex items-center gap-1 text-muted-foreground opacity-40">
             <div
               className="size-6"
@@ -135,7 +135,6 @@ export default function EventChart({ event, tradingState }: Props) {
         </div>
       </div>
 
-      {/* Price chart */}
       <div className="mt-4">
         <div className="relative h-72 w-full">
           <div className="absolute inset-0">
