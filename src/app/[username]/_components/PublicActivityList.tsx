@@ -66,7 +66,7 @@ function ActivityItemComponent({ item }: { item: ActivityItem }) {
       {/* Market */}
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <Image
-          src={item.market.imageUrl}
+          src={item.market.image_url}
           alt={item.market.title}
           width={48}
           height={48}
@@ -107,7 +107,7 @@ function ActivityItemComponent({ item }: { item: ActivityItem }) {
             {formatRelativeTime(item.timestamp)}
           </span>
           <a
-            href={`https://polygonscan.com/tx/${item.transactionHash}`}
+            href={`https://polygonscan.com/tx/${item.transaction_hash}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground transition-colors hover:text-foreground"

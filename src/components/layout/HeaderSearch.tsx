@@ -30,7 +30,7 @@ export default function HeaderSearch() {
       <SearchIcon className="absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         type="text"
-        placeholder="Search markets"
+        placeholder="Search events"
         value={query}
         onChange={e => handleQueryChange(e.target.value)}
         className="w-full pl-9 text-sm sm:w-3/4"

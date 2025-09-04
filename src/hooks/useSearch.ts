@@ -1,21 +1,9 @@
+import type { Event } from '@/types'
 import { useCallback, useEffect, useState } from 'react'
-
-export interface SearchResult {
-  id: number
-  eventSlug: string
-  marketSlug: string
-  eventTitle: string
-  marketTitle: string
-  iconUrl: string | null
-  percentage: number
-  displayText: string
-  outcomeCount: number
-  isMultipleMarkets: boolean
-}
 
 export function useSearch() {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<SearchResult[]>([])
+  const [results, setResults] = useState<Event[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [showResults, setShowResults] = useState(false)
 

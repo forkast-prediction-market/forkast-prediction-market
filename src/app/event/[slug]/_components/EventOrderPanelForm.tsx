@@ -126,10 +126,10 @@ export default function EventOrderPanelForm({
         <span className="opacity-70">
           {type === 'yes'
             ? isBinaryMarket
-              ? event.markets[0].name
+              ? event.markets[0].outcomes[0].outcome_text
               : 'Yes'
             : isBinaryMarket
-              ? event.markets[0].name
+              ? event.markets[0].outcomes[1].outcome_text
               : 'No'}
         </span>
         <span className="font-bold">
@@ -380,11 +380,11 @@ export default function EventOrderPanelForm({
               <>
                 {state.activeTab === 'sell'
                   ? state.outcome?.outcome_index === 1
-                    ? `Sell ${!isBinaryMarket ? 'No' : event.markets[0].name}`
-                    : `Sell ${!isBinaryMarket ? 'Yes' : event.markets[0].name}`
+                    ? `Sell ${!isBinaryMarket ? 'No' : state.outcome?.outcome_text}`
+                    : `Sell ${!isBinaryMarket ? 'Yes' : state.outcome?.outcome_text}`
                   : state.outcome?.outcome_index === 1
-                    ? `Buy ${!isBinaryMarket ? 'No' : event.markets[0].name}`
-                    : `Buy ${!isBinaryMarket ? 'Yes' : event.markets[0].name}`}
+                    ? `Buy ${!isBinaryMarket ? 'No' : state.outcome?.outcome_text}`
+                    : `Buy ${!isBinaryMarket ? 'Yes' : state.outcome?.outcome_text}`}
               </>
             )}
       </Button>

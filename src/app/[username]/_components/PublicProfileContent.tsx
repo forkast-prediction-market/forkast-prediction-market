@@ -16,10 +16,10 @@ export default async function PublicProfileContent({ username }: Props) {
   }
 
   const stats = {
-    positionsValue: 0.00,
-    profitLoss: 0.00,
-    volumeTraded: 3.50,
-    marketsTraded: 2,
+    positions_value: 0.00,
+    profit_loss: 0.00,
+    volume_traded: 3.50,
+    markets_traded: 2,
   }
 
   const activity: ActivityItem[] = [
@@ -29,14 +29,14 @@ export default async function PublicProfileContent({ username }: Props) {
       market: {
         id: 'bitcoin-100k',
         title: 'Will Bitcoin reach $100k by end of 2024?',
-        imageUrl: 'https://avatar.vercel.sh/bitcoin.png',
+        image_url: 'https://avatar.vercel.sh/bitcoin.png',
         outcome: 'Yes',
         price: 1, // 1¢
       },
       shares: 1,
       amount: 0.01,
       timestamp: new Date(Date.now() - 18 * 24 * 60 * 60 * 1000), // 18 days ago
-      transactionHash: '0x1234567890abcdef1234567890abcdef12345678',
+      transaction_hash: '0x1234567890abcdef1234567890abcdef12345678',
     },
     {
       id: '2',
@@ -44,14 +44,14 @@ export default async function PublicProfileContent({ username }: Props) {
       market: {
         id: 'us-election-2024',
         title: 'Will Democrats win the 2024 US Presidential Election?',
-        imageUrl: 'https://avatar.vercel.sh/election.png',
+        image_url: 'https://avatar.vercel.sh/election.png',
         outcome: 'No',
         price: 91, // 91¢
       },
       shares: 0.1,
       amount: 1.00,
       timestamp: new Date(Date.now() - 2 * 30 * 24 * 60 * 60 * 1000), // 2 months ago
-      transactionHash: '0xabcdef1234567890abcdef1234567890abcdef12',
+      transaction_hash: '0xabcdef1234567890abcdef1234567890abcdef12',
     },
   ]
 

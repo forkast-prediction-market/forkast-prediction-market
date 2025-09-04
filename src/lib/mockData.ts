@@ -140,25 +140,6 @@ export const mockMarketDetails = {
   },
 }
 
-// Utility functions that can be reused
-export function formatVolume(volume: number): string {
-  if (volume >= 1000000) {
-    return `$${(volume / 1000000).toFixed(1)}M`
-  }
-  else if (volume >= 1000) {
-    return `$${(volume / 1000).toFixed(0)}k`
-  }
-  return `$${volume.toFixed(0)}`
-}
-
-export function formatDate(date: Date): string {
-  return date.toLocaleDateString('pt-BR', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  })
-}
-
 export function calculateWinnings(amount: number, price: number): number {
   return amount / price - amount
 }

@@ -1,5 +1,5 @@
 import type { Event } from '@/types'
-import { formatDate, formatVolume } from '@/lib/mockData'
+import { formatDate, formatVolume } from '@/lib/utils'
 
 interface Props {
   event: Event

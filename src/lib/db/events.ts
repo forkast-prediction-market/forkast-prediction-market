@@ -72,23 +72,26 @@ export const EventModel = {
 
     if (error) {
       console.error('Error fetching events:', error)
-      throw error
+      return { data, error }
     }
 
     const events = data?.map(event => eventResource(event, userId)) || []
 
     if (!bookmarked && tag === 'trending') {
-      return events.filter(event => event.is_trending)
+      const trendingEvents = events.filter(event => event.is_trending)
+      return { data: trendingEvents, error }
     }
 
     if (tag === 'new') {
-      return events.sort(
+      const newEvents = events.sort(
         (a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       )
+
+      return { data: newEvents, error }
     }
 
-    return events
+    return { data: events, error }
   },
 
   async getIdBySlug(slug: string) {
