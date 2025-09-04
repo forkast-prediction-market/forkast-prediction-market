@@ -151,8 +151,7 @@ export default function EventCard({ event }: EventCardProps) {
 
     // Calculate potential winnings based on probability
     const probability = outcome.probability / 100
-    const odds
-      = selectedOutcome.type === 'yes' ? 1 / probability : 1 / (1 - probability)
+    const odds = selectedOutcome.type === 'yes' ? 1 / probability : 1 / (1 - probability)
     const winnings = amountNum * odds
     return winnings.toFixed(2)
   }

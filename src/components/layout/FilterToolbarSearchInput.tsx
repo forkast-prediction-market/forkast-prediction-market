@@ -1,5 +1,6 @@
 'use client'
 
+import type { Route } from 'next'
 import { LoaderIcon, SearchIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
@@ -50,7 +51,7 @@ export default function FilterToolbarSearchInput({ search, bookmarked = 'false' 
           url.searchParams.set('bookmarked', bookmarkedRef.current)
         }
 
-        router.replace(url.toString(), { scroll: false })
+        router.replace(url.toString() as unknown as Route, { scroll: false })
       })
     }, 500)
 

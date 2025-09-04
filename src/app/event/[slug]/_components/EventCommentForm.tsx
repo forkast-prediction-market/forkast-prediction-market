@@ -5,10 +5,10 @@ import { useAppKit } from '@reown/appkit/react'
 import { ShieldIcon } from 'lucide-react'
 import Form from 'next/form'
 import { useActionState, useEffect, useRef } from 'react'
+import { storeCommentAction } from '@/app/event/[slug]/actions/store-comment'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
-import { storeCommentAction } from '../actions/store-comment'
 
 interface EventCommentFormProps {
   eventId: string

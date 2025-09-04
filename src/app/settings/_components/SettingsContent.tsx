@@ -2,11 +2,11 @@
 
 import type { User } from '@/types'
 import { useMemo } from 'react'
-import SettingsExportPrivateKeyTab from './SettingsExportPrivateKeyTab'
-import SettingsNotificationsTab from './SettingsNotificationsTab'
-import SettingsProfileTab from './SettingsProfileTab'
-import SettingsSidebar from './SettingsSidebar'
-import SettingsTwoFactorAuthTab from './SettingsTwoFactorAuthTab'
+import SettingsExportPrivateKeyTab from '@/app/settings/_components/SettingsExportPrivateKeyTab'
+import SettingsNotificationsTab from '@/app/settings/_components/SettingsNotificationsTab'
+import SettingsProfileTab from '@/app/settings/_components/SettingsProfileTab'
+import SettingsSidebar from '@/app/settings/_components/SettingsSidebar'
+import SettingsTwoFactorAuthTab from '@/app/settings/_components/SettingsTwoFactorAuthTab'
 
 interface Props {
   user: User

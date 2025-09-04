@@ -1,6 +1,4 @@
-import React from 'react'
-
-export function EventRelatedSkeleton() {
+export default function EventRelatedSkeleton() {
   return (
     <div className="animate-pulse rounded-lg border bg-card p-4">
       <div className="flex items-start gap-2">

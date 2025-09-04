@@ -516,7 +516,6 @@ VALUES ('Tennis',
         4)
 ON CONFLICT (slug) DO NOTHING;
 
--- Insert initial main tags
 INSERT INTO sync_status (service_name,
                          subgraph_name,
                          last_processed_block,

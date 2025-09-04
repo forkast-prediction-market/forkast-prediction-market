@@ -1,10 +1,4 @@
-import React from 'react'
-
-export default async function EventLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function EventLayout({ children }: LayoutProps<'/event/[slug]'>) {
   return (
     <main className="container grid gap-8 pb-12 lg:grid-cols-[3fr_1fr] lg:gap-10">
       <div className="pt-4 pb-20 md:pb-0">{children}</div>

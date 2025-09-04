@@ -1,5 +1,6 @@
 'use client'
 
+import type { Route } from 'next'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { BookmarkIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -44,7 +45,7 @@ export default function FilterToolbar({ search, bookmarked }: FilterToolbarProps
           url.searchParams.delete('bookmarked')
         }
 
-        router.replace(url.toString(), { scroll: false })
+        router.replace(url.toString() as unknown as Route, { scroll: false })
       })
     }
     catch {

@@ -3,8 +3,8 @@
 import Form from 'next/form'
 import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
+import { deleteCommentAction } from '@/app/event/[slug]/actions/delete-comment'
 import { Button } from '@/components/ui/button'
-import { deleteCommentAction } from '../actions/delete-comment'
 
 interface Props {
   commentId: string

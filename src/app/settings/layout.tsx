@@ -1,15 +1,10 @@
 import type { Metadata } from 'next'
-import React from 'react'
 
 export const metadata: Metadata = {
   title: 'Settings',
 }
 
-export default async function SettingsLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function SettingsLayout({ children }: LayoutProps<'/settings'>) {
   return (
     <main className="container py-8">
       <div className="mx-auto max-w-6xl">

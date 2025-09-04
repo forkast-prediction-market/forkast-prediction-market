@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import PortfolioContent from './_components/PortfolioContent'
+import PortfolioContent from '@/app/portfolio/_components/PortfolioContent'
 
 export const metadata: Metadata = {
   title: 'Portfolio',

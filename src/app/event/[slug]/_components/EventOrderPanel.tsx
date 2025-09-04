@@ -1,8 +1,8 @@
 import type { Event } from '@/types'
 import { toast } from 'sonner'
+import EventOrderPanelForm from '@/app/event/[slug]/_components/EventOrderPanelForm'
+import { storeOrderAction } from '@/app/event/[slug]/actions/store-order'
 import { useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
-import { storeOrderAction } from '../actions/store-order'
-import EventOrderPanelForm from './EventOrderPanelForm'
 
 interface EventProps {
   event: Event
