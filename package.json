@@ -16,7 +16,7 @@
     "@reown/appkit": "^1.8.1",
     "@reown/appkit-adapter-ethers": "^1.8.2",
     "@reown/appkit-siwe": "^1.8.2",
-    "@supabase/supabase-js": "^2.56.0",
+    "@supabase/supabase-js": "^2.57.2",
     "@vercel/speed-insights": "^1.2.0",
     "@visx/axis": "3.13.0-alpha.0",
     "@visx/curve": "^3.12.0",
