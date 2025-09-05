@@ -21,9 +21,9 @@ export default function EventOrderPanel({ event, isMobile }: EventProps) {
     }
 
     const sellPrice
-        = state.outcome.outcome_index === 0
-          ? (state.market.probability / 100) * 0.95 // 5% spread for sell
-          : ((100 - state.market.probability) / 100) * 0.95
+      = state.outcome.outcome_index === 0
+        ? (state.market.probability / 100) * 0.95 // 5% spread for sell
+        : ((100 - state.market.probability) / 100) * 0.95
 
     return sharesToSell * sellPrice
   }
@@ -35,9 +35,9 @@ export default function EventOrderPanel({ event, isMobile }: EventProps) {
     }
 
     const sellPrice
-        = state.outcome.outcome_index === 0
-          ? Math.round(state.market.probability * 0.95) // 5% spread for sell
-          : Math.round((100 - state.market.probability) * 0.95)
+      = state.outcome.outcome_index === 0
+        ? Math.round(state.market.probability * 0.95) // 5% spread for sell
+        : Math.round((100 - state.market.probability) * 0.95)
 
     return sellPrice.toString()
   }

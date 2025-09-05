@@ -1,0 +1,38 @@
+import Image from 'next/image'
+import { useBalance } from '@/hooks/useBalance'
+import { useOrder } from '@/stores/useOrder'
+
+export default function EventOrderPanelMobileMarketInfo() {
+  const state = useOrder()
+  const { balance } = useBalance()
+
+  if (!state.event || !state.market) {
+    return <></>
+  }
+
+  return (
+    <div className="mb-4 flex items-center gap-3">
+      <Image
+        src={state.market.icon_url}
+        alt={state.market.name}
+        width={32}
+        height={32}
+        className="shrink-0 rounded"
+      />
+      <div className="flex-1">
+        <div className="line-clamp-2 text-sm font-medium">
+          {state.event.title}
+        </div>
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>
+            {state.market.name}
+          </span>
+          <span>
+            Bal. $
+            {balance?.data?.balance || '0.00'}
+          </span>
+        </div>
+      </div>
+    </div>
+  )
+}
