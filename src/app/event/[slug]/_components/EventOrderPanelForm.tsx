@@ -1,11 +1,13 @@
 import type { Event } from '@/types'
 import { BanknoteIcon } from 'lucide-react'
-import Image from 'next/image'
 import { useRef } from 'react'
+import EventOrderPanelInputSection from '@/app/event/[slug]/_components/EventOrderPanelInputSection'
+import EventOrderPanelMarketInfo from '@/app/event/[slug]/_components/EventOrderPanelMarketInfo'
+import EventOrderPanelMobileMarketInfo from '@/app/event/[slug]/_components/EventOrderPanelMobileMarketInfo'
 import { Button } from '@/components/ui/button'
 import { calculateWinnings, mockUser } from '@/lib/mockData'
+import { cn } from '@/lib/utils'
 import { useIsBinaryMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
-import EventOrderPanelInputSection from './EventOrderPanelInputSection'
 
 interface EventOrderPanelFormProps {
   event: Event
@@ -140,62 +142,13 @@ export default function EventOrderPanelForm({
     )
   }
 
-  const containerClasses = `${
-    isMobile ? 'w-full' : 'w-full lg:w-[320px]'
-  } ${
-    isMobile
-      ? ''
-      : 'rounded-lg border'
-  } p-4 shadow-xl/5`
-
   return (
-    <div className={containerClasses}>
-      {/* Display the selected option (only for multi-market) */}
-      {!isBinaryMarket
-        && state.market
-        && !isMobile && (
-        <div className="mb-4 rounded-lg bg-muted/20">
-          <div className="flex items-center gap-3">
-            <Image
-              src={state.market.icon_url}
-              alt={state.market.name}
-              width={42}
-              height={42}
-              className="shrink-0 rounded-sm"
-            />
-            <span className="text-sm font-bold">
-              {state.market.name}
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* Market info for mobile */}
-      {isMobile && (
-        <div className="mb-4 flex items-center gap-3">
-          <Image
-            src={state.market!.icon_url}
-            alt={state.market!.name}
-            width={32}
-            height={32}
-            className="shrink-0 rounded"
-          />
-          <div className="flex-1">
-            <div className="line-clamp-2 text-sm font-medium">
-              {event.title}
-            </div>
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
-              <span>
-                {state.market!.name}
-              </span>
-              <span>
-                Bal. $
-                {mockUser.cash.toFixed(2)}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
+    <div className={cn({
+      'rounded-lg border lg:w-[320px]': !isMobile,
+    }, 'w-full p-4 shadow-xl/5')}
+    >
+      {!isMobile && !isBinaryMarket && <EventOrderPanelMarketInfo />}
+      {isMobile && <EventOrderPanelMobileMarketInfo />}
 
       {/* Tabs Buy/Sell */}
       <div className="mb-4 flex text-sm font-semibold">
@@ -293,33 +246,18 @@ export default function EventOrderPanelForm({
       {/* To Win / You'll receive Section */}
       {state.amount && Number.parseFloat(state.amount) > 0 && state.outcome && (
         <div className={`${isMobile ? 'mb-4 text-center' : 'mb-4'}`}>
-          {!isMobile && (
-            <hr className="mb-3 border" />
-          )}
-          <div
-            className={`flex ${
-              isMobile ? 'flex-col' : 'items-center justify-between'
-            }`}
-          >
+          {!isMobile && <hr className="mb-3 border" />}
+          <div className={cn('flex', isMobile ? 'flex-col' : 'items-center justify-between')}>
             <div className={isMobile ? 'mb-1' : ''}>
               <div
-                className={`${
-                  isMobile ? 'text-lg' : 'text-sm'
-                } font-bold ${
-                  isMobile
-                    ? 'text-foreground'
-                    : 'text-muted-foreground'
-                } flex items-center ${
-                  isMobile ? 'justify-center' : ''
-                } gap-1`}
+                className={cn(
+                  'flex items-center gap-1 font-bold',
+                  isMobile ? 'justify-center text-lg text-foreground' : 'text-sm text-muted-foreground',
+                )}
               >
                 {state.activeTab === 'sell' ? 'You\'ll receive' : 'To win'}
-                {!isMobile && (
-                  <BanknoteIcon className="size-4 text-yes" />
-                )}
-                {isMobile && (
-                  <span className="text-xl text-yes">💰</span>
-                )}
+                {!isMobile && <BanknoteIcon className="size-4 text-yes" />}
+                {isMobile && <span className="text-xl text-yes">💰</span>}
                 {isMobile && (
                   <span className="text-2xl font-bold text-yes">
                     {state.activeTab === 'sell'
@@ -333,11 +271,10 @@ export default function EventOrderPanelForm({
                 )}
               </div>
               <div
-                className={`${
-                  isMobile ? 'text-sm' : 'text-xs'
-                } text-muted-foreground ${
-                  isMobile ? 'text-center' : ''
-                }`}
+                className={cn(
+                  'text-muted-foreground',
+                  isMobile ? 'text-center text-sm' : 'text-xs',
+                )}
               >
                 {state.activeTab === 'sell'
                   ? `Avg. price ${getAvgSellPrice()}¢`
@@ -378,13 +315,15 @@ export default function EventOrderPanelForm({
             )
           : (
               <>
-                {state.activeTab === 'sell'
-                  ? state.outcome?.outcome_index === 1
-                    ? `Sell ${!isBinaryMarket ? 'No' : state.outcome?.outcome_text}`
-                    : `Sell ${!isBinaryMarket ? 'Yes' : state.outcome?.outcome_text}`
-                  : state.outcome?.outcome_index === 1
-                    ? `Buy ${!isBinaryMarket ? 'No' : state.outcome?.outcome_text}`
-                    : `Buy ${!isBinaryMarket ? 'Yes' : state.outcome?.outcome_text}`}
+                {`${state.activeTab === 'sell' ? 'Sell' : 'Buy'} ${
+                  state.outcome?.outcome_index === 1
+                    ? !isBinaryMarket
+                        ? 'No'
+                        : state.outcome?.outcome_text
+                    : !isBinaryMarket
+                        ? 'Yes'
+                        : state.outcome?.outcome_text
+                }`}
               </>
             )}
       </Button>

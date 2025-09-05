@@ -1,4 +1,5 @@
 import type { RefObject } from 'react'
+import { useBalance } from '@/hooks/useBalance'
 import { mockUser } from '@/lib/mockData'
 import { useOrder } from '@/stores/useOrder'
 
@@ -14,6 +15,7 @@ export default function EventOrderPanelInputSection({
   getUserShares,
 }: EventOrderPanelInputSectionProps) {
   const state = useOrder()
+  const { balance } = useBalance()
   // Function to render action buttons (percentage and value)
   function renderActionButtons(isMobile: boolean) {
     const baseButtonClasses
@@ -187,7 +189,7 @@ export default function EventOrderPanelInputSection({
                 <div className="text-xs text-muted-foreground">
                   {state.activeTab === 'sell'
                     ? ``
-                    : `Balance $${mockUser.cash.toFixed(2)}`}
+                    : `Balance $${balance?.data?.balance || '0.00'}`}
                 </div>
               </div>
               <div className="relative flex-1">

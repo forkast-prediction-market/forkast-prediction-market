@@ -10,7 +10,7 @@ interface EventMobileOrderPanelProps {
   event: Event
 }
 
-export default function EventMobileOrderPanel({ event }: EventMobileOrderPanelProps) {
+export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelProps) {
   const state = useOrder()
   const isBinaryMarket = useIsBinaryMarket()
   const yesPrice = useYesPrice()
