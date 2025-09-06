@@ -1,25 +1,21 @@
-import type { RefObject } from 'react'
 import { useBalance } from '@/hooks/useBalance'
 import { mockUser } from '@/lib/mockData'
 import { useOrder } from '@/stores/useOrder'
 
 interface EventOrderPanelInputSectionProps {
   isMobile: boolean
-  inputRef: RefObject<HTMLInputElement | null>
   getUserShares: () => number
 }
 
 export default function EventOrderPanelInputSection({
   isMobile,
-  inputRef,
   getUserShares,
 }: EventOrderPanelInputSectionProps) {
   const state = useOrder()
   const { balance } = useBalance()
   // Function to render action buttons (percentage and value)
   function renderActionButtons(isMobile: boolean) {
-    const baseButtonClasses
-      = 'h-7 px-3 rounded-lg border text-[11px] transition-all duration-200 ease-in-out'
+    const baseButtonClasses = 'h-7 px-3 rounded-lg border text-[11px] transition-all duration-200 ease-in-out'
 
     if (state.activeTab === 'sell') {
       const userShares = getUserShares()
@@ -42,7 +38,7 @@ export default function EventOrderPanelInputSection({
             const percentValue = Number.parseInt(percentage.replace('%', '')) / 100
             const newValue = (userShares * percentValue).toFixed(2)
             state.setAmount(newValue)
-            inputRef?.current?.focus()
+            state.inputRef?.current?.focus()
           }}
         >
           {percentage}
@@ -66,7 +62,7 @@ export default function EventOrderPanelInputSection({
 
             if (newValue <= 999999999) {
               state.setAmount(newValue.toFixed(2))
-              inputRef?.current?.focus()
+              state.inputRef?.current?.focus()
             }
           }}
         >
@@ -102,7 +98,7 @@ export default function EventOrderPanelInputSection({
                 </button>
                 <div className="flex-1 text-center">
                   <input
-                    ref={inputRef}
+                    ref={state.inputRef}
                     type="text"
                     className={`
                       w-full
@@ -194,7 +190,7 @@ export default function EventOrderPanelInputSection({
               </div>
               <div className="relative flex-1">
                 <input
-                  ref={inputRef}
+                  ref={state.inputRef}
                   type="text"
                   className={`
                     h-14 w-full
@@ -281,7 +277,7 @@ export default function EventOrderPanelInputSection({
               const limitedBalance = Math.min(maxBalance, 999999999)
               state.setAmount(limitedBalance.toFixed(2))
             }
-            inputRef?.current?.focus()
+            state.inputRef?.current?.focus()
           }}
         >
           MAX

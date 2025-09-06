@@ -1,19 +1,13 @@
-import type { RefObject } from 'react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
-interface EventOrderPanelOutcomeButtonProps {
-  inputRef: RefObject<HTMLInputElement | null>
+interface Props {
   type: 'yes' | 'no'
   price: number
 }
 
-export default function EventOrderPanelOutcomeButton({
-  inputRef,
-  type,
-  price,
-}: EventOrderPanelOutcomeButtonProps) {
+export default function EventOrderPanelOutcomeButton({ type, price }: Props) {
   const state = useOrder()
   const isBinaryMarket = useIsBinaryMarket()
   const outcomeIndex = type === 'yes' ? 0 : 1
@@ -37,7 +31,7 @@ export default function EventOrderPanelOutcomeButton({
       )}
       onClick={() => {
         state.setOutcome(state.market!.outcomes[outcomeIndex])
-        inputRef?.current?.focus()
+        state.inputRef?.current?.focus()
       }}
     >
       <span className="opacity-70">

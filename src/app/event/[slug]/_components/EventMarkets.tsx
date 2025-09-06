@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
-interface EventMarketsProps {
+interface Props {
   event: Event
 }
 
-export default function EventMarkets({ event }: EventMarketsProps) {
+export default function EventMarkets({ event }: Props) {
   const state = useOrder()
   const isBinaryMarket = useIsBinaryMarket()
 
@@ -210,6 +210,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     state.setMarket(market)
                     state.setOutcome(market.outcomes[0])
                     state.setActiveTab('buy')
+                    state.inputRef?.current?.focus()
                   }}
                 >
                   <div className="flex flex-col items-center">
@@ -234,6 +235,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     state.setMarket(market)
                     state.setOutcome(market.outcomes[1])
                     state.setActiveTab('buy')
+                    state.inputRef?.current?.focus()
                   }}
                 >
                   <div className="flex flex-col items-center">

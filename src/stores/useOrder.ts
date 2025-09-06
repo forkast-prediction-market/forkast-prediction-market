@@ -1,3 +1,4 @@
+import type { RefObject } from 'react'
 import type { Event, Market, Outcome } from '@/types'
 import { create } from 'zustand'
 import { mockUser } from '@/lib/mockData'
@@ -11,6 +12,7 @@ interface OrderState {
   amount: string
   isLoading: boolean
   isMobileOrderPanelOpen: boolean
+  inputRef: RefObject<HTMLInputElement | null>
 
   // Actions
   setEvent: (event: Event) => void
@@ -31,6 +33,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   amount: '0.00',
   isLoading: false,
   isMobileOrderPanelOpen: false,
+  inputRef: { current: null as HTMLInputElement | null },
 
   setEvent: (event: Event) => set({ event }),
   setMarket: (market: Market) => set({ market }),
