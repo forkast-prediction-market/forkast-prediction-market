@@ -9,7 +9,7 @@ export default function EventOrderPanelMarketInfo() {
   }
 
   return (
-    <div className="mb-4 rounded-lg bg-muted/20">
+    <div className="mb-4">
       <div className="flex items-center gap-3">
         <Image
           src={state.market.icon_url}
@@ -19,7 +19,7 @@ export default function EventOrderPanelMarketInfo() {
           className="shrink-0 rounded-sm"
         />
         <span className="text-sm font-bold">
-          {state.market.name}
+          {state.market.short_title || state.market.name}
         </span>
       </div>
     </div>

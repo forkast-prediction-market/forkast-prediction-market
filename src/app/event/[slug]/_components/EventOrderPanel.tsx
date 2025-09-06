@@ -109,5 +109,5 @@ export default function EventOrderPanel({ event, isMobile }: EventProps) {
     }
   }
 
-  return <EventOrderPanelForm event={event} isMobile={isMobile} handleConfirmTrade={handleConfirmTrade} />
+  return <EventOrderPanelForm isMobile={isMobile} handleConfirmTrade={handleConfirmTrade} />
 }

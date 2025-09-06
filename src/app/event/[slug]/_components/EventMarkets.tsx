@@ -74,7 +74,6 @@ export default function EventMarkets({ event }: EventMarketsProps) {
             onClick={() => {
               state.setMarket(market)
               state.setActiveTab('buy')
-              state.inputRef?.focus()
             }}
           >
             {/* Mobile: Layout in column */}
@@ -211,7 +210,6 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     state.setMarket(market)
                     state.setOutcome(market.outcomes[0])
                     state.setActiveTab('buy')
-                    state.inputRef?.focus()
                   }}
                 >
                   <div className="flex flex-col items-center">
@@ -236,7 +234,6 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     state.setMarket(market)
                     state.setOutcome(market.outcomes[1])
                     state.setActiveTab('buy')
-                    state.inputRef?.focus()
                   }}
                 >
                   <div className="flex flex-col items-center">

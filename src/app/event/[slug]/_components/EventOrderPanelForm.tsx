@@ -1,9 +1,9 @@
-import type { Event } from '@/types'
 import { BanknoteIcon } from 'lucide-react'
 import { useRef } from 'react'
 import EventOrderPanelInputSection from '@/app/event/[slug]/_components/EventOrderPanelInputSection'
 import EventOrderPanelMarketInfo from '@/app/event/[slug]/_components/EventOrderPanelMarketInfo'
 import EventOrderPanelMobileMarketInfo from '@/app/event/[slug]/_components/EventOrderPanelMobileMarketInfo'
+import EventOrderPanelOutcomeButton from '@/app/event/[slug]/_components/EventOrderPanelOutcomeButton'
 import { Button } from '@/components/ui/button'
 import { calculateWinnings } from '@/lib/mockData'
 import { cn } from '@/lib/utils'
@@ -20,13 +20,11 @@ import {
 } from '@/stores/useOrder'
 
 interface EventOrderPanelFormProps {
-  event: Event
   isMobile: boolean
   handleConfirmTrade: () => Promise<void>
 }
 
 export default function EventOrderPanelForm({
-  event,
   isMobile,
   handleConfirmTrade,
 }: EventOrderPanelFormProps) {
@@ -35,56 +33,6 @@ export default function EventOrderPanelForm({
   const yesPrice = useYesPrice()
   const noPrice = useNoPrice()
   const isBinaryMarket = useIsBinaryMarket()
-
-  function renderYesNoButton(
-    type: 'yes' | 'no',
-    price: number,
-    forceTabChange = false,
-  ) {
-    const outcomeIndex = type === 'yes' ? 0 : 1
-    const isSelected = state.outcome?.outcome_index === outcomeIndex
-
-    return (
-      <Button
-        type="button"
-        variant={isSelected ? type : 'outline'}
-        size="lg"
-        className={cn(
-          'flex-1',
-          isSelected
-          && (type === 'yes'
-            ? 'bg-yes text-white hover:bg-yes-foreground'
-            : 'bg-no text-white hover:bg-no-foreground'),
-        )}
-        onClick={() => {
-          if (!state.market) {
-            return
-          }
-
-          state.setOutcome(state.market.outcomes[outcomeIndex])
-          if (forceTabChange) {
-            state.setActiveTab('buy')
-          }
-
-          inputRef?.current?.focus()
-        }}
-      >
-        <span className="opacity-70">
-          {type === 'yes'
-            ? isBinaryMarket
-              ? event.markets[0].outcomes[0].outcome_text
-              : 'Yes'
-            : isBinaryMarket
-              ? event.markets[0].outcomes[1].outcome_text
-              : 'No'}
-        </span>
-        <span className="font-bold">
-          {price}
-          ¢
-        </span>
-      </Button>
-    )
-  }
 
   return (
     <div className={cn({
@@ -128,8 +76,8 @@ export default function EventOrderPanelForm({
 
       {/* Yes/No buttons */}
       <div className="mb-2 flex gap-2">
-        {renderYesNoButton('yes', yesPrice)}
-        {renderYesNoButton('no', noPrice)}
+        <EventOrderPanelOutcomeButton inputRef={inputRef} type="yes" price={yesPrice} />
+        <EventOrderPanelOutcomeButton inputRef={inputRef} type="no" price={noPrice} />
       </div>
 
       {/* Display available shares (only in Sell mode) */}
