@@ -1,9 +1,10 @@
 import Image from 'next/image'
 import { useBalance } from '@/hooks/useBalance'
-import { useOrder } from '@/stores/useOrder'
+import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
 export default function EventOrderPanelMobileMarketInfo() {
   const state = useOrder()
+  const isBinaryMarket = useIsBinaryMarket()
   const { balance } = useBalance()
 
   if (!state.event || !state.market) {
@@ -24,9 +25,7 @@ export default function EventOrderPanelMobileMarketInfo() {
           {state.event.title}
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          <span>
-            {state.market.name}
-          </span>
+          {!isBinaryMarket && <span>{state.market.short_title || state.market.name}</span>}
           <span>
             Bal. $
             {balance?.data?.balance || '0.00'}

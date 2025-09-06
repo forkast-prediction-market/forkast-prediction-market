@@ -36,8 +36,8 @@ export default function EventContent({ event, user }: EventContentProps) {
   return (
     <>
       <div className="grid gap-3">
-        <EventHeader event={event} />
         <EventMetaInformation event={event} />
+        <EventHeader event={event} />
         <EventChart event={event} />
         <EventMarkets event={event} />
         <EventMarketContext event={event} />

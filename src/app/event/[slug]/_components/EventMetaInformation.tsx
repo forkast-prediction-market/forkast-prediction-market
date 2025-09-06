@@ -19,8 +19,6 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
         {' '}
         {formatDate(new Date(event.created_at))}
       </span>
-      <span>•</span>
-      <span>{event.tags[0] ?? ''}</span>
     </div>
   )
 }

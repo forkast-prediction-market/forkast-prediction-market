@@ -155,10 +155,9 @@ export default function EventOrderPanelForm({
         <Button
           type="button"
           variant="ghost"
-          className={cn(
-            'flex-1 rounded-none border-b-2 pb-2 transition-colors duration-200',
-            state.activeTab === 'buy' && 'border-primary text-foreground',
-          )}
+          className={cn({
+            'border-primary text-foreground': state.activeTab === 'buy',
+          }, 'flex-1 rounded-none border-b-2 pb-2 transition-colors duration-200')}
           onClick={() => {
             state.setActiveTab('buy')
             state.setAmount('') // Reset value when changing tab
@@ -170,10 +169,9 @@ export default function EventOrderPanelForm({
         <Button
           type="button"
           variant="ghost"
-          className={cn(
-            'flex-1 rounded-none border-b-2 pb-2 transition-colors duration-200',
-            state.activeTab === 'sell' && 'border-primary text-foreground',
-          )}
+          className={cn({
+            'border-primary text-foreground': state.activeTab === 'sell',
+          }, 'flex-1 rounded-none border-b-2 pb-2 transition-colors duration-200')}
           onClick={() => {
             state.setActiveTab('sell')
             state.setAmount('') // Reset value when changing tab
