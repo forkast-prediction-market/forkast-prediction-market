@@ -131,68 +131,6 @@ export function PredictionChart({
       setData(providedData)
       setSeries(providedSeries)
     }
-    else {
-      function generateMultiSeriesData() {
-        const now = new Date()
-        const generatedData: DataPoint[] = []
-
-        // Configure series with the 4 items with most volume
-        const defaultSeries: SeriesConfig[] = [
-          { key: 'yes', name: 'Elon Musk 2028', color: '#2D9CDB' }, // Polymarket Blue
-          { key: 'no', name: 'Bitcoin $150K', color: '#FF5952' }, // Polymarket Red
-          { key: 'maybe', name: 'GPT-5 Release', color: '#27AE60' }, // Polymarket Green
-          { key: 'unlikely', name: 'Taylor Grammy', color: '#9B51E0' }, // Polymarket Purple
-        ]
-
-        for (let i = 29; i >= 0; i--) {
-          const date = new Date(now)
-          date.setDate(date.getDate() - i)
-
-          // For Yes: increasing trend
-          const yesBase = 25 + (29 - i) * 1.2
-          const yesVariation = (Math.random() - 0.5) * 6
-          const yesValue = Math.max(5, Math.min(50, yesBase + yesVariation))
-
-          // For No: decreasing trend
-          const noBase = 45 - (29 - i) * 0.8
-          const noVariation = (Math.random() - 0.5) * 5
-          const noValue = Math.max(15, Math.min(60, noBase + noVariation))
-
-          // For Maybe: moderate oscillation
-          const maybeBase = 20 + Math.sin((29 - i) * 0.2) * 8
-          const maybeVariation = (Math.random() - 0.5) * 4
-          const maybeValue = Math.max(
-            10,
-            Math.min(35, maybeBase + maybeVariation),
-          )
-
-          // For Unlikely: low and stable value
-          const unlikelyBase = 10 + (Math.random() - 0.5) * 6
-          const unlikelyValue = Math.max(2, Math.min(20, unlikelyBase))
-
-          // Normalize to sum 100%
-          const total = yesValue + noValue + maybeValue + unlikelyValue
-          const normalizedYes = (yesValue / total) * 100
-          const normalizedNo = (noValue / total) * 100
-          const normalizedMaybe = (maybeValue / total) * 100
-          const normalizedUnlikely = (unlikelyValue / total) * 100
-
-          generatedData.push({
-            date,
-            yes: normalizedYes,
-            no: normalizedNo,
-            maybe: normalizedMaybe,
-            unlikely: normalizedUnlikely,
-          })
-        }
-
-        return { data: generatedData, series: defaultSeries }
-      }
-
-      const { data: genData, series: genSeries } = generateMultiSeriesData()
-      setData(genData)
-      setSeries(genSeries)
-    }
   }, [providedData, providedSeries])
 
   if (!isClient || data.length === 0 || series.length === 0) {

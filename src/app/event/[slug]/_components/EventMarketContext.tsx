@@ -34,7 +34,7 @@ export default function EventMarketContext({ event }: Props) {
   }
 
   return (
-    <div className="mt-3 rounded-lg border transition-all duration-200 ease-in-out">
+    <div className="rounded-lg border transition-all duration-200 ease-in-out">
       <div className="flex items-center justify-between p-4 hover:bg-muted/50">
         <span className="text-lg font-medium">Market Context</span>
         <Button

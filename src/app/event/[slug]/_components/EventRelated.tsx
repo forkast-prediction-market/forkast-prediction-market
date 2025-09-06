@@ -71,7 +71,7 @@ export default function EventRelated({ event }: Props) {
               height={42}
               className="shrink-0 rounded-sm"
             />
-            <strong>{e.title}</strong>
+            <strong className="text-sm">{e.title}</strong>
           </Link>
         </li>
       ))}

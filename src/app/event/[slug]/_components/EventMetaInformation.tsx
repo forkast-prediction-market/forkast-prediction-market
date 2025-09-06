@@ -7,7 +7,7 @@ interface EventMetaInformationProps {
 
 export default function EventMetaInformation({ event }: EventMetaInformationProps) {
   return (
-    <div className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+    <div className="flex items-center gap-1 text-xs text-muted-foreground">
       <span>
         Volume
         {' '}
