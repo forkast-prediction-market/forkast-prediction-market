@@ -2,7 +2,7 @@ import type { Event } from '@/types'
 import { toast } from 'sonner'
 import EventOrderPanelForm from '@/app/event/[slug]/_components/EventOrderPanelForm'
 import { storeOrderAction } from '@/app/event/[slug]/actions/store-order'
-import { useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
+import { calculateSellAmount, getAvgSellPrice, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
 
 interface EventProps {
   event: Event
@@ -13,34 +13,6 @@ export default function EventOrderPanel({ event, isMobile }: EventProps) {
   const state = useOrder()
   const yesPrice = useYesPrice()
   const noPrice = useNoPrice()
-
-  // Function to calculate the amount the user will receive when selling shares
-  function calculateSellAmount(sharesToSell: number) {
-    if (!state.market || !state.outcome) {
-      return 0
-    }
-
-    const sellPrice
-      = state.outcome.outcome_index === 0
-        ? (state.market.probability / 100) * 0.95 // 5% spread for sell
-        : ((100 - state.market.probability) / 100) * 0.95
-
-    return sharesToSell * sellPrice
-  }
-
-  // Function to get the average selling price
-  function getAvgSellPrice() {
-    if (!state.market || !state.outcome) {
-      return 0
-    }
-
-    const sellPrice
-      = state.outcome.outcome_index === 0
-        ? Math.round(state.market.probability * 0.95) // 5% spread for sell
-        : Math.round((100 - state.market.probability) * 0.95)
-
-    return sellPrice.toString()
-  }
 
   // Handle confirm trade with loading
   async function handleConfirmTrade() {

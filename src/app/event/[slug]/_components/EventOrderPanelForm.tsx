@@ -5,9 +5,19 @@ import EventOrderPanelInputSection from '@/app/event/[slug]/_components/EventOrd
 import EventOrderPanelMarketInfo from '@/app/event/[slug]/_components/EventOrderPanelMarketInfo'
 import EventOrderPanelMobileMarketInfo from '@/app/event/[slug]/_components/EventOrderPanelMobileMarketInfo'
 import { Button } from '@/components/ui/button'
-import { calculateWinnings, mockUser } from '@/lib/mockData'
+import { calculateWinnings } from '@/lib/mockData'
 import { cn } from '@/lib/utils'
-import { useIsBinaryMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
+import {
+  calculateSellAmount,
+  getAvgSellPrice,
+  getNoShares,
+  getUserShares,
+  getYesShares,
+  useIsBinaryMarket,
+  useNoPrice,
+  useOrder,
+  useYesPrice,
+} from '@/stores/useOrder'
 
 interface EventOrderPanelFormProps {
   event: Event
@@ -26,73 +36,6 @@ export default function EventOrderPanelForm({
   const noPrice = useNoPrice()
   const isBinaryMarket = useIsBinaryMarket()
 
-  // Function to calculate the amount the user will receive when selling shares
-  function calculateSellAmount(sharesToSell: number) {
-    if (!state.market || !state.outcome) {
-      return 0
-    }
-
-    const sellPrice
-      = state.outcome.outcome_index === 0
-        ? (state.market.probability / 100) * 0.95 // 5% spread for sell
-        : ((100 - state.market.probability) / 100) * 0.95
-
-    return sharesToSell * sellPrice
-  }
-
-  // Function to get the average selling price
-  function getAvgSellPrice() {
-    if (!state.market || !state.outcome) {
-      return 0
-    }
-
-    const sellPrice
-      = state.outcome.outcome_index === 0
-        ? Math.round(state.market.probability * 0.95) // 5% spread for sell
-        : Math.round((100 - state.market.probability) * 0.95)
-
-    return sellPrice.toString()
-  }
-
-  // Function to get user shares for the selected outcome
-  function getUserShares() {
-    if (!state.market) {
-      return 0
-    }
-    return mockUser.shares['1-yes'] || 0
-  }
-
-  // Function to get shares for Yes outcome
-  function getYesShares(outcomeId: string) {
-    if (outcomeId.includes('-yes')) {
-      const shareKey = outcomeId as keyof typeof mockUser.shares
-      return mockUser.shares[shareKey] || 0
-    }
-    if (outcomeId.includes('-no')) {
-      const baseId = outcomeId.replace('-no', '-yes')
-      const shareKey = baseId as keyof typeof mockUser.shares
-      return mockUser.shares[shareKey] || 0
-    }
-    const shareKey = `${outcomeId}-yes` as keyof typeof mockUser.shares
-    return mockUser.shares[shareKey] || 0
-  }
-
-  // Function to get shares for No outcome
-  function getNoShares(outcomeId: string) {
-    if (outcomeId.includes('-no')) {
-      const shareKey = outcomeId as keyof typeof mockUser.shares
-      return mockUser.shares[shareKey] || 0
-    }
-    if (outcomeId.includes('-yes')) {
-      const baseId = outcomeId.replace('-yes', '-no')
-      const shareKey = baseId as keyof typeof mockUser.shares
-      return mockUser.shares[shareKey] || 0
-    }
-    const shareKey = `${outcomeId}-no` as keyof typeof mockUser.shares
-    return mockUser.shares[shareKey] || 0
-  }
-
-  // Function to render Yes/No buttons
   function renderYesNoButton(
     type: 'yes' | 'no',
     price: number,
@@ -101,14 +44,18 @@ export default function EventOrderPanelForm({
     const outcomeIndex = type === 'yes' ? 0 : 1
     const isSelected = state.outcome?.outcome_index === outcomeIndex
 
-    const selectedClasses
-      = type === 'yes'
-        ? 'bg-yes hover:bg-yes-foreground text-white'
-        : 'bg-no hover:bg-no-foreground text-white'
-
     return (
       <Button
         type="button"
+        variant={isSelected ? type : 'outline'}
+        size="lg"
+        className={cn(
+          'flex-1',
+          isSelected
+          && (type === 'yes'
+            ? 'bg-yes text-white hover:bg-yes-foreground'
+            : 'bg-no text-white hover:bg-no-foreground'),
+        )}
         onClick={() => {
           if (!state.market) {
             return
@@ -121,9 +68,6 @@ export default function EventOrderPanelForm({
 
           inputRef?.current?.focus()
         }}
-        variant={isSelected ? type : 'outline'}
-        size="lg"
-        className={`flex-1 ${isSelected ? selectedClasses : ''}`}
       >
         <span className="opacity-70">
           {type === 'yes'
