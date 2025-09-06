@@ -152,36 +152,36 @@ export default function EventOrderPanelForm({
 
       {/* Tabs Buy/Sell */}
       <div className="mb-4 flex text-sm font-semibold">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          className={cn(
+            'flex-1 rounded-none border-b-2 pb-2 transition-colors duration-200',
+            state.activeTab === 'buy' && 'border-primary text-foreground',
+          )}
           onClick={() => {
             state.setActiveTab('buy')
             state.setAmount('') // Reset value when changing tab
             inputRef?.current?.focus()
           }}
-          className={`flex-1 pb-2 transition-colors duration-200 ${
-            state.activeTab === 'buy'
-              ? 'border-b-2 border-primary text-foreground'
-              : 'border-b-2'
-          }`}
         >
           Buy
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
+          className={cn(
+            'flex-1 rounded-none border-b-2 pb-2 transition-colors duration-200',
+            state.activeTab === 'sell' && 'border-primary text-foreground',
+          )}
           onClick={() => {
             state.setActiveTab('sell')
             state.setAmount('') // Reset value when changing tab
             inputRef?.current?.focus()
           }}
-          className={`flex-1 pb-2 transition-colors duration-200 ${
-            state.activeTab === 'sell'
-              ? 'border-b-2 border-primary text-foreground'
-              : 'border-b-2'
-          }`}
         >
           Sell
-        </button>
+        </Button>
       </div>
 
       {/* Yes/No buttons */}
@@ -261,12 +261,8 @@ export default function EventOrderPanelForm({
                 {isMobile && (
                   <span className="text-2xl font-bold text-yes">
                     {state.activeTab === 'sell'
-                      ? `$${
-                        calculateSellAmount(Number.parseFloat(state.amount)).toFixed(2)
-                      }`
-                      : `$${
-                        calculateWinnings(Number.parseFloat(state.amount), 0.72).toFixed(2)
-                      }`}
+                      ? `$${calculateSellAmount(Number.parseFloat(state.amount)).toFixed(2)}`
+                      : `$${calculateWinnings(Number.parseFloat(state.amount), 0.72).toFixed(2)}`}
                   </span>
                 )}
               </div>
@@ -285,9 +281,7 @@ export default function EventOrderPanelForm({
               <div className="text-4xl font-bold text-yes">
                 {state.activeTab === 'sell'
                   ? `$${calculateSellAmount(Number.parseFloat(state.amount)).toFixed(2)}`
-                  : `$${
-                    calculateWinnings(Number.parseFloat(state.amount), 0.26).toFixed(2)
-                  }`}
+                  : `$${calculateWinnings(Number.parseFloat(state.amount), 0.26).toFixed(2)}`}
               </div>
             )}
           </div>

@@ -13,17 +13,19 @@ import EventRelated from '@/app/event/[slug]/_components/EventRelated'
 import EventRules from '@/app/event/[slug]/_components/EventRules'
 import EventTabs from '@/app/event/[slug]/_components/EventTabs'
 import { Teleport } from '@/components/layout/Teleport'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { useOrder } from '@/stores/useOrder'
 
-interface Props {
+interface EventContentProps {
   event: Event
   user: User | null
 }
 
-export default function EventContent({ event, user }: Props) {
+export default function EventContent({ event, user }: EventContentProps) {
   const setEvent = useOrder(state => state.setEvent)
   const setMarket = useOrder(state => state.setMarket)
   const setOutcome = useOrder(state => state.setOutcome)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     setEvent(event)
@@ -33,20 +35,23 @@ export default function EventContent({ event, user }: Props) {
 
   return (
     <>
-      <EventHeader event={event} />
-      <EventMetaInformation event={event} />
-      <EventChart event={event} />
-      <EventMarkets event={event} />
-      <EventMarketContext event={event} />
-      <EventRules event={event} />
-      <EventTabs event={event} user={user} />
+      <div className="grid gap-3">
+        <EventHeader event={event} />
+        <EventMetaInformation event={event} />
+        <EventChart event={event} />
+        <EventMarkets event={event} />
+        <EventMarketContext event={event} />
+        <EventRules event={event} />
+        {isMobile && <EventRelated event={event} />}
+        <EventTabs event={event} user={user} />
+      </div>
 
       <Teleport to="#event-order-panel">
-        <EventOrderPanel event={event} isMobile={false} />
-        <EventRelated event={event} />
+        {!isMobile && <EventOrderPanel event={event} isMobile={false} />}
+        {!isMobile && <EventRelated event={event} />}
       </Teleport>
 
-      <EventOrderPanelMobile event={event} />
+      {isMobile && <EventOrderPanelMobile event={event} />}
     </>
   )
 }

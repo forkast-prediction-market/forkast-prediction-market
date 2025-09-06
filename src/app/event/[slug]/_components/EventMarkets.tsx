@@ -35,10 +35,8 @@ export default function EventMarkets({ event }: EventMarketsProps) {
   }
 
   return (
-    <div className="mt-6 overflow-hidden bg-background">
-      <div
-        className="hidden items-center rounded-t-lg border-b py-3 md:flex"
-      >
+    <div className="-mx-4 overflow-hidden bg-background lg:mx-0">
+      <div className="hidden items-center rounded-t-lg border-b py-3 md:flex">
         <div className="w-1/2">
           <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             OUTCOMES
@@ -94,10 +92,10 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     />
                   )}
                   <div>
-                    <div className="text-xs font-bold">
+                    <div className="text-sm font-bold">
                       {market.name}
                     </div>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                       $
                       {market.total_volume?.toLocaleString('en-US', {
                         minimumFractionDigits: 2,
@@ -108,16 +106,10 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-foreground">
-                    {Math.round(market.probability)}
-                    %
-                  </span>
-                  <div className="flex items-center gap-1 text-no">
-                    <TrendingDownIcon className="size-3" />
-                    <span className="text-xs font-semibold">3%</span>
-                  </div>
-                </div>
+                <span className="text-lg font-bold text-foreground">
+                  {Math.round(market.probability)}
+                  %
+                </span>
               </div>
 
               {/* Row 2: Buttons */}

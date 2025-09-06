@@ -2,7 +2,7 @@ import type { Event } from '@/types'
 import { TrendingDownIcon } from 'lucide-react'
 import { useState } from 'react'
 import PredictionChart from '@/components/charts/PredictionChart'
-import { sanitizeSvg } from '@/lib/utils'
+import { cn, sanitizeSvg } from '@/lib/utils'
 import { useIsBinaryMarket, useYesPrice } from '@/stores/useOrder'
 
 interface Props {
@@ -81,61 +81,59 @@ export default function EventChart({ event }: Props) {
   }
 
   return (
-    <>
-      <div className="mt-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {isBinaryMarket
-              ? (
-                  <>
-                    <span className="inline-flex items-center gap-1 text-xl font-bold text-primary">
-                      {Math.round(yesPrice)}
-                      % chance
-                    </span>
+    <div className="grid gap-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {isBinaryMarket
+            ? (
+                <>
+                  <span className="inline-flex items-center gap-1 text-xl font-bold text-primary">
+                    {Math.round(yesPrice)}
+                    % chance
+                  </span>
 
-                    <div className="flex items-center gap-1 text-no">
-                      <TrendingDownIcon className="size-4" />
-                      <span className="text-xs font-semibold">
-                        94
-                        %
+                  <div className="flex items-center gap-1 text-no">
+                    <TrendingDownIcon className="size-4" />
+                    <span className="text-xs font-semibold">
+                      94
+                      %
+                    </span>
+                  </div>
+                </>
+              )
+            : (
+                <div className="flex flex-wrap items-center gap-4">
+                  {getTopOutcomesForChart().map((outcome, index) => (
+                    <div key={outcome.condition_id} className="flex items-center gap-2">
+                      <div
+                        className="size-3 rounded-full"
+                        style={{
+                          backgroundColor: POLYMARKET_COLORS[index % 4],
+                        }}
+                      />
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {outcome.name}
                       </span>
                     </div>
-                  </>
-                )
-              : (
-                  <div className="flex flex-wrap items-center gap-4">
-                    {getTopOutcomesForChart().map((outcome, index) => (
-                      <div key={outcome.condition_id} className="flex items-center gap-2">
-                        <div
-                          className="size-3 rounded-full"
-                          style={{
-                            backgroundColor: POLYMARKET_COLORS[index % 4],
-                          }}
-                        />
-                        <span className="text-sm font-medium text-muted-foreground">
-                          {outcome.name}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-          </div>
+                  ))}
+                </div>
+              )}
+        </div>
 
-          <div className="flex items-center gap-1 text-muted-foreground opacity-40">
-            <div
-              className="size-6"
-              dangerouslySetInnerHTML={{
-                __html: sanitizeSvg(process.env.NEXT_PUBLIC_SITE_LOGO_SVG!),
-              }}
-            />
-            <span className="text-xl font-medium">
-              {process.env.NEXT_PUBLIC_SITE_NAME}
-            </span>
-          </div>
+        <div className="flex items-center gap-1 text-muted-foreground opacity-40">
+          <div
+            className="size-6"
+            dangerouslySetInnerHTML={{
+              __html: sanitizeSvg(process.env.NEXT_PUBLIC_SITE_LOGO_SVG!),
+            }}
+          />
+          <span className="text-xl font-medium">
+            {process.env.NEXT_PUBLIC_SITE_NAME}
+          </span>
         </div>
       </div>
 
-      <div className="mt-4">
+      <div>
         <div className="relative h-72 w-full">
           <div className="absolute inset-0">
             <PredictionChart
@@ -151,11 +149,12 @@ export default function EventChart({ event }: Props) {
           {timeRanges.map(range => (
             <li
               key={range}
-              className={`cursor-pointer transition-colors duration-200 ${
+              className={cn(
+                'cursor-pointer transition-colors duration-200',
                 activeTimeRange === range
                   ? 'border-b-2 border-foreground text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
               onClick={() => setActiveTimeRange(range)}
             >
               {range}
@@ -163,6 +162,6 @@ export default function EventChart({ event }: Props) {
           ))}
         </ul>
       </div>
-    </>
+    </div>
   )
 }
