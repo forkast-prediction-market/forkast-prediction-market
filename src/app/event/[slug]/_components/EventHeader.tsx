@@ -24,7 +24,7 @@ export default function EventHeader({ event }: Props) {
   return (
     <div className={cn({
       'sticky top-24 translate-y-[3px] border-b bg-background py-3': scrolled,
-    }, 'z-50 -mx-4 flex items-center gap-3 px-4 transition-all ease-in-out')}
+    }, 'z-10 -mx-4 flex items-center gap-3 px-4 transition-all ease-in-out')}
     >
       <Image
         src={event.icon_url}
