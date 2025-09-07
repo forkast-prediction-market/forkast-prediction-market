@@ -1,19 +1,15 @@
 import { Button } from '@/components/ui/button'
 import { getUserShares, useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
-interface EventOrderPanelSubmitButtonProps {
-  handleConfirmTrade: () => Promise<void>
-}
-
-export default function EventOrderPanelSubmitButton({ handleConfirmTrade }: EventOrderPanelSubmitButtonProps) {
+export default function EventOrderPanelSubmitButton() {
   const state = useOrder()
   const isBinaryMarket = useIsBinaryMarket()
 
   return (
     <Button
+      type="submit"
       className="w-full"
       size="lg"
-      onClick={handleConfirmTrade}
       disabled={
         state.isLoading
         || !state.amount

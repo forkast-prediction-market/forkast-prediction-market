@@ -7,7 +7,7 @@ interface EventOrderPanelInputSectionProps {
   getUserShares: () => number
 }
 
-export default function EventOrderPanelInputSection({
+export default function EventOrderPanelInput({
   isMobile,
   getUserShares,
 }: EventOrderPanelInputSectionProps) {

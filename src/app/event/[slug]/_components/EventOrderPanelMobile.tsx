@@ -1,7 +1,7 @@
 import type { Event } from '@/types'
 import { DialogTitle } from '@radix-ui/react-dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
-import EventOrderPanel from '@/app/event/[slug]/_components/EventOrderPanel'
+import EventOrderPanelForm from '@/app/event/[slug]/_components/EventOrderPanelForm'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
 import { useIsBinaryMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
@@ -71,7 +71,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
           <DialogTitle>{event.title}</DialogTitle>
         </VisuallyHidden>
 
-        <EventOrderPanel event={event} isMobile={true} />
+        <EventOrderPanelForm event={event} isMobile={true} />
       </DrawerContent>
     </Drawer>
   )

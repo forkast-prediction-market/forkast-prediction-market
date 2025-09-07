@@ -7,7 +7,7 @@ import EventHeader from '@/app/event/[slug]/_components/EventHeader'
 import EventMarketContext from '@/app/event/[slug]/_components/EventMarketContext'
 import EventMarkets from '@/app/event/[slug]/_components/EventMarkets'
 import EventMetaInformation from '@/app/event/[slug]/_components/EventMetaInformation'
-import EventOrderPanel from '@/app/event/[slug]/_components/EventOrderPanel'
+import EventOrderPanelForm from '@/app/event/[slug]/_components/EventOrderPanelForm'
 import EventOrderPanelMobile from '@/app/event/[slug]/_components/EventOrderPanelMobile'
 import EventRelated from '@/app/event/[slug]/_components/EventRelated'
 import EventRules from '@/app/event/[slug]/_components/EventRules'
@@ -47,7 +47,7 @@ export default function EventContent({ event, user }: EventContentProps) {
       </div>
 
       <Teleport to="#event-order-panel">
-        {!isMobile && <EventOrderPanel event={event} isMobile={false} />}
+        {!isMobile && <EventOrderPanelForm event={event} isMobile={false} />}
         {!isMobile && <EventRelated event={event} />}
       </Teleport>
 
