@@ -142,6 +142,10 @@
   [role="button"]:not([disabled]) {
     cursor: pointer;
   }
+
+  w3m-modal.open {
+    z-index: 50
+  }
 }
 
 @utility container {
