@@ -84,7 +84,7 @@ CREATE TABLE IF NOT EXISTS markets
   -- Relationships
   event_id           CHAR(26)     NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
   -- Market Information
-  name               TEXT         NOT NULL,
+  title              TEXT         NOT NULL,
   slug               VARCHAR(255) NOT NULL,
   description        TEXT,
   short_title        VARCHAR(255),

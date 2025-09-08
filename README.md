@@ -27,10 +27,10 @@ Click the **Fork** button in the top right corner
 
 ### 2. Create a New Project on Vercel
 
-1. Go to [Vercel](https://vercel.com)  
-2. Click **New Project**  
-3. Connect your **GitHub account**  
-4. Select your **forked repository**  
+1. Go to [Vercel](https://vercel.com)
+2. Click **New Project**
+3. Connect your **GitHub account**
+4. Select your **forked repository**
 
 ### 2. Configure Environment
 
@@ -43,7 +43,7 @@ Click the **Fork** button in the top right corner
    - **Settings** → **Environment Variables**
    - Click **"Import .env"** button
    - Select your edited `.env.example` file
-4. **Create Database**: 
+4. **Create Database**:
    - Go to your project dashboard
    - **Storage** → **Create Supabase Database** (connect to your project)
 
@@ -59,15 +59,14 @@ After forking, go to your repository:
 - **Connect your forked repo** to Vercel
 - **Add environment variables** from your `.env.local` file
 
-
 **Ready!** Your prediction market will be online with automatic database setup.
 
 ## 🎯 Features
-- 📱 Mobile Ready 
-- 🎨 Modern UI/UX (Polymarket-style) 
-- ⚡ Live Price Updates 
-- 💳 Web3 Wallets (MetaMask, Reown AppKit) 
-- 📊 Advanced Charts & Analytics 
+- 📱 Mobile Ready
+- 🎨 Modern UI/UX (Polymarket-style)
+- ⚡ Live Price Updates
+- 💳 Web3 Wallets (MetaMask, Reown AppKit)
+- 📊 Advanced Charts & Analytics
 - 🔒 Secure Smart Contracts
 
 ## 🔧 Tech Stack

@@ -18,7 +18,7 @@ export const EventModel = {
     const marketsSelect = `
       markets!inner(
         condition_id,
-        name,
+        title,
         slug,
         oracle,
         description,
@@ -122,7 +122,7 @@ export const EventModel = {
         bookmarks(user_id),
         markets!inner(
           condition_id,
-          name,
+          title,
           slug,
           oracle,
           description,
@@ -235,7 +235,7 @@ function eventResource(event: Event & any, userId: string): Event {
     ...event,
     markets: event.markets.map((market: any) => ({
       ...market,
-      title: market.short_title || market.name,
+      title: market.short_title || market.title,
       probability: Math.random() * 100,
       price: Math.random() * 0.99 + 0.01,
       volume: Math.random() * 100000,

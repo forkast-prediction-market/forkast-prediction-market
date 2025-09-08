@@ -438,9 +438,9 @@ export default function EventCard({ event }: EventCardProps) {
                         >
                           <span
                             className="truncate dark:text-white"
-                            title={market.short_title || market.name}
+                            title={market.short_title || market.title}
                           >
-                            {market.short_title || market.name}
+                            {market.short_title || market.title}
                           </span>
                           <div className="ml-2 flex items-center gap-2">
                             <span className="text-[11px] font-bold text-slate-900 dark:text-white">

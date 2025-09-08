@@ -461,7 +461,7 @@ async function processMarketData(market: any, metadata: any, eventId: string) {
     question_id: market.questionId,
     oracle: market.oracle,
     event_id: eventId,
-    name: metadata.name || `Market ${market.id.substring(0, 8)}`,
+    title: metadata.name || `Market ${market.id.substring(0, 8)}`,
     slug: metadata.slug
       ? `${metadata.slug}-${market.id.substring(0, 8)}`
       : `market-${market.id.substring(0, 8)}`,
@@ -522,7 +522,7 @@ async function processTags(eventId: string, tagNames: any[]) {
     if (!tag) {
       const { data: newTag, error } = await supabaseAdmin
         .from('tags')
-        .insert({ name: truncatedName, slug })
+        .insert({ title: truncatedName, slug })
         .select('id')
         .single()
 

@@ -13,13 +13,13 @@ export default function EventOrderPanelMarketInfo() {
       <div className="flex items-center gap-3">
         <Image
           src={state.market.icon_url}
-          alt={state.market.name}
+          alt={state.market.title}
           width={42}
           height={42}
           className="shrink-0 rounded-sm"
         />
         <span className="text-sm font-bold">
-          {state.market.short_title || state.market.name}
+          {state.market.short_title || state.market.title}
         </span>
       </div>
     </div>
