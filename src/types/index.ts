@@ -23,7 +23,7 @@ export interface Market {
   question_id: string
   oracle: string
   event_id: string
-  name: string
+  title: string
   slug: string
   description: string
   short_title?: string

@@ -84,7 +84,7 @@ export default function EventMarkets({ event }: Props) {
                   {event.show_market_icons && (
                     <Image
                       src={market.icon_url}
-                      alt={market.name}
+                      alt={market.title}
                       width={42}
                       height={42}
                       className="flex-shrink-0 rounded-full"
@@ -92,7 +92,7 @@ export default function EventMarkets({ event }: Props) {
                   )}
                   <div>
                     <div className="text-sm font-bold">
-                      {market.name}
+                      {market.title}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       $
@@ -165,7 +165,7 @@ export default function EventMarkets({ event }: Props) {
                 {event.show_market_icons && (
                   <Image
                     src={market.icon_url}
-                    alt={market.name}
+                    alt={market.title}
                     width={42}
                     height={42}
                     className="flex-shrink-0 rounded-full"
@@ -173,7 +173,7 @@ export default function EventMarkets({ event }: Props) {
                 )}
                 <div>
                   <div className="font-bold">
-                    {market.name}
+                    {market.title}
                   </div>
                   <div className="text-xs text-muted-foreground">
                     $

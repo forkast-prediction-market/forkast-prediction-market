@@ -15,7 +15,7 @@ export default function EventOrderPanelMobileMarketInfo() {
     <div className="mb-4 flex items-center gap-3">
       <Image
         src={state.market.icon_url}
-        alt={state.market.name}
+        alt={state.market.title}
         width={32}
         height={32}
         className="shrink-0 rounded"
@@ -25,7 +25,7 @@ export default function EventOrderPanelMobileMarketInfo() {
           {state.event.title}
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          {!isBinaryMarket && <span>{state.market.short_title || state.market.name}</span>}
+          {!isBinaryMarket && <span>{state.market.short_title || state.market.title}</span>}
           <span>
             Bal. $
             {balance?.data?.balance || '0.00'}
