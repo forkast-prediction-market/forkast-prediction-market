@@ -14,10 +14,16 @@ export function useBalance() {
   const { address, isConnected } = useAppKitAccount()
   const { walletProvider } = useAppKitProvider('eip155')
   const [balance, setBalance] = useState<any>(null)
+  const [isLoadingBalance, setIsLoadingBalance] = useState(false)
+  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   useEffect(() => {
     if (!isConnected || !address || !walletProvider) {
-      queueMicrotask(() => setBalance(null))
+      queueMicrotask(() => {
+        setBalance(null)
+        setIsLoadingBalance(false)
+        setIsInitialLoad(true)
+      })
       return
     }
 
@@ -26,6 +32,10 @@ export function useBalance() {
     async function fetchUSDCBalance() {
       if (!active) {
         return
+      }
+
+      if (isInitialLoad) {
+        setIsLoadingBalance(true)
       }
 
       try {
@@ -46,12 +56,17 @@ export function useBalance() {
           },
         }
 
-        setBalance(newBalance)
+        if (active) {
+          setBalance(newBalance)
+          setIsLoadingBalance(false)
+          setIsInitialLoad(false)
+        }
       }
-      catch (error) {
-        console.error('Error fetching USDC balance:', error)
+      catch {
         if (active) {
           setBalance(null)
+          setIsLoadingBalance(false)
+          setIsInitialLoad(false)
         }
       }
     }
@@ -63,7 +78,7 @@ export function useBalance() {
       active = false
       clearInterval(interval)
     }
-  }, [isConnected, address, walletProvider])
+  }, [isConnected, address, walletProvider, isInitialLoad])
 
-  return { balance }
+  return { balance, isLoadingBalance }
 }

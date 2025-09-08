@@ -1,15 +1,24 @@
 'use client'
 
+import { useAppKitAccount } from '@reown/appkit/react'
 import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useBalance } from '@/hooks/useBalance'
+import { useClientMounted } from '@/hooks/useClientMounted'
 
 export default function PortfolioSummaryCard() {
   const dailyChange = 0.00
   const dailyChangePercent = 0.00
   const isPositive = dailyChange >= 0
-  const { balance } = useBalance()
+  const isMounted = useClientMounted()
+  const { isLoadingBalance, balance } = useBalance()
+  const { status } = useAppKitAccount()
+
+  if (!isMounted || isLoadingBalance || status === 'connecting') {
+    return <Skeleton className="h-56 w-full" />
+  }
 
   return (
     <Card>
@@ -48,7 +57,6 @@ export default function PortfolioSummaryCard() {
           </div>
         </div>
 
-        {/* Main value */}
         <div className="mb-2">
           <div className="text-3xl font-bold text-foreground">
             $

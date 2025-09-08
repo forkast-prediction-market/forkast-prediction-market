@@ -1,11 +1,21 @@
 import { useAppKit } from '@reown/appkit/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useBalance } from '@/hooks/useBalance'
 
 export default function HeaderPortfolio() {
   const { open } = useAppKit()
-  const { balance } = useBalance()
+  const { isLoadingBalance, balance } = useBalance()
+
+  if (isLoadingBalance) {
+    return (
+      <div className="flex gap-2">
+        <Skeleton className="h-9 w-16 rounded" />
+        <Skeleton className="h-9 w-20 rounded" />
+      </div>
+    )
+  }
 
   return (
     <div className="hidden items-center lg:flex">
