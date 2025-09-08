@@ -19,14 +19,14 @@ export default function HeaderMenu() {
   useEffect(() => {
     let timeout: number
     if (status === 'connecting') {
-      timeout = window.setTimeout(() => {
+      timeout = setTimeout(() => {
         Object.keys(localStorage).forEach((key) => {
           if (key.startsWith('@appkit')) {
             localStorage.removeItem(key)
           }
         })
         location.reload()
-      }, 15000)
+      }, 15000) as unknown as number
     }
     return () => clearTimeout(timeout)
   }, [status])
