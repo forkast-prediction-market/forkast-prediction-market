@@ -24,7 +24,7 @@ export default function EventChart({ event }: Props) {
 
     const series = topMarkets.map((market, index) => ({
       key: `market_${market.condition_id}`,
-      name: market.title,
+      name: market.short_title || market.title,
       color: POLYMARKET_COLORS[index] || '#8B5CF6',
     }))
 
