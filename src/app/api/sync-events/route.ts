@@ -458,7 +458,7 @@ async function processMarketData(market: any, metadata: any, eventId: string) {
 
   const marketData = {
     condition_id: market.id,
-    question_id: market.questionId || market.id,
+    question_id: market.questionId,
     oracle: market.oracle,
     event_id: eventId,
     name: metadata.name || `Market ${market.id.substring(0, 8)}`,
