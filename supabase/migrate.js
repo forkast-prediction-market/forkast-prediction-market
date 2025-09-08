@@ -93,7 +93,7 @@ DO $$
       EXECUTE format('SELECT cron.unschedule(%s)', job_id);
     END IF;
 
-    EXECUTE format('SELECT cron.schedule(%L, %L, %L)', 'sync-events', '*/15 * * * *', cmd);
+    EXECUTE format('SELECT cron.schedule(%L, %L, %L)', 'sync-events', '*/5 * * * *', cmd);
   END $$;`
 
   const updatedSQL = sql
