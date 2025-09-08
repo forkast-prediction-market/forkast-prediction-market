@@ -127,7 +127,9 @@ export default function EventMarkets({ event }: Props) {
                     state.setIsMobileOrderPanelOpen(true)
                   }}
                 >
-                  Buy Yes
+                  Buy
+                  {' '}
+                  {market.outcomes[0].outcome_text}
                   {' '}
                   {Math.round(market.probability)}
                   ¢
@@ -146,7 +148,9 @@ export default function EventMarkets({ event }: Props) {
                     state.setIsMobileOrderPanelOpen(true)
                   }}
                 >
-                  Buy No
+                  Buy
+                  {' '}
+                  {market.outcomes[1].outcome_text}
                   {' '}
                   {100 - Math.round(market.probability)}
                   ¢
@@ -213,14 +217,12 @@ export default function EventMarkets({ event }: Props) {
                     state.inputRef?.current?.focus()
                   }}
                 >
-                  <div className="flex flex-col items-center">
-                    <span>
-                      Buy Yes
-                      {' '}
-                      {Math.round(market.probability)}
-                      ¢
-                    </span>
-                  </div>
+                  Buy
+                  {' '}
+                  {market.outcomes[0].outcome_text}
+                  {' '}
+                  {Math.round(market.probability)}
+                  ¢
                 </Button>
               </div>
               <div className="ml-2 w-[15%]">
@@ -238,14 +240,12 @@ export default function EventMarkets({ event }: Props) {
                     state.inputRef?.current?.focus()
                   }}
                 >
-                  <div className="flex flex-col items-center">
-                    <span>
-                      Buy No
-                      {' '}
-                      {100 - Math.round(market.probability)}
-                      ¢
-                    </span>
-                  </div>
+                  Buy
+                  {' '}
+                  {market.outcomes[1].outcome_text}
+                  {' '}
+                  {100 - Math.round(market.probability)}
+                  ¢
                 </Button>
               </div>
             </div>

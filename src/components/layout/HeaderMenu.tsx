@@ -52,8 +52,8 @@ export default function HeaderMenu() {
 
       {!isConnected && (
         <>
-          <Button variant="link" onClick={() => open()}>Log In</Button>
-          <Button onClick={() => open()}>Sign Up</Button>
+          <Button size="sm" variant="link" onClick={() => open()}>Log In</Button>
+          <Button size="sm" onClick={() => open()}>Sign Up</Button>
           <HeaderDropdownUserMenuGuest />
         </>
       )}
