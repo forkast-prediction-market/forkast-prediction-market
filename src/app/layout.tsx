@@ -10,9 +10,10 @@ import './globals.css'
 export const metadata: Metadata = {
   title: {
     template: `${process.env.NEXT_PUBLIC_SITE_NAME} | %s`,
-    default: `${process.env.NEXT_PUBLIC_SITE_NAME} - ${process.env.NEXT_PUBLIC_SITE_DESCRIPTION}`,
+    default: `${process.env.NEXT_PUBLIC_SITE_NAME} | ${process.env.NEXT_PUBLIC_SITE_DESCRIPTION}`,
   },
   description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION,
+  applicationName: process.env.NEXT_PUBLIC_SITE_NAME,
 }
 
 export const viewport: Viewport = {

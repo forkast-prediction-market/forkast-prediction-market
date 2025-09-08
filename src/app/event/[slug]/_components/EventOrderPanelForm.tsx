@@ -1,4 +1,5 @@
 import type { Event } from '@/types'
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import Form from 'next/form'
 import { toast } from 'sonner'
 import EventOrderPanelBuySellTabs from '@/app/event/[slug]/_components/EventOrderPanelBuySellTabs'
@@ -28,12 +29,19 @@ interface Props {
 }
 
 export default function EventOrderPanelForm({ event, isMobile }: Props) {
+  const { open } = useAppKit()
+  const { isConnected } = useAppKitAccount()
   const state = useOrder()
   const yesPrice = useYesPrice()
   const noPrice = useNoPrice()
   const isBinaryMarket = useIsBinaryMarket()
 
-  async function handleConfirmTrade(formData: FormData) {
+  async function onSubmit(formData: FormData) {
+    if (!isConnected) {
+      queueMicrotask(() => open())
+      return
+    }
+
     if (state.isLoading) {
       return
     }
@@ -132,7 +140,7 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
 
   return (
     <Form
-      action={handleConfirmTrade}
+      action={onSubmit}
       className={cn({
         'rounded-lg border lg:w-[320px]': !isMobile,
       }, 'w-full p-4 shadow-xl/5')}
@@ -142,7 +150,6 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
 
       <EventOrderPanelBuySellTabs />
 
-      {/* Yes/No buttons */}
       <div className="mb-2 flex gap-2">
         <EventOrderPanelOutcomeButton type="yes" price={yesPrice} />
         <EventOrderPanelOutcomeButton type="no" price={noPrice} />

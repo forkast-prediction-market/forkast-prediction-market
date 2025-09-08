@@ -66,9 +66,9 @@ export default function EventMarkets({ event }: Props) {
               'bg-muted dark:bg-black/10': state.market?.condition_id === market.condition_id,
               'border-b': index !== sortedMarkets.length - 1,
             }, `
-              flex cursor-pointer flex-col items-start px-3 py-4 transition-all duration-200 ease-in-out
+              flex cursor-pointer flex-col items-start p-4 transition-all duration-200 ease-in-out
               hover:bg-black/5
-              md:flex-row md:items-center md:px-2
+              md:flex-row md:items-center
               dark:hover:bg-white/5
             `)}
             onClick={() => {
