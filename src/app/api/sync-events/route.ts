@@ -522,7 +522,7 @@ async function processTags(eventId: string, tagNames: any[]) {
     if (!tag) {
       const { data: newTag, error } = await supabaseAdmin
         .from('tags')
-        .insert({ title: truncatedName, slug })
+        .insert({ name: truncatedName, slug })
         .select('id')
         .single()
 
