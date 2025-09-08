@@ -458,7 +458,7 @@ export default function EventCard({ event }: EventCardProps) {
                                 title={`${market.outcomes[0].outcome_text}: ${Math.round(market.probability)}%`}
                                 variant="yes"
                                 size="sm"
-                                className="group h-auto w-[40px] rounded px-2 py-1 text-[10px]"
+                                className="group h-auto w-[40px] rounded-xs px-2 py-1 text-[10px]"
                               >
                                 <span className="truncate group-hover:hidden">
                                   {market.outcomes[0].outcome_text}
@@ -478,7 +478,7 @@ export default function EventCard({ event }: EventCardProps) {
                                 title={`${market.outcomes[1].outcome_text}: ${Math.round(market.probability)}%`}
                                 variant="no"
                                 size="sm"
-                                className="group h-auto w-[40px] rounded px-2 py-1 text-[10px]"
+                                className="group h-auto w-[40px] rounded-xs px-2 py-1 text-[10px]"
                               >
                                 <span className="truncate group-hover:hidden">
                                   {market.outcomes[1].outcome_text}
