@@ -495,16 +495,14 @@ ON CONFLICT (slug) DO NOTHING;
 
 INSERT INTO sync_status (service_name,
                          subgraph_name,
-                         last_processed_block,
-                         sync_type,
                          status)
-VALUES ('activity_sync', 'activity', 0, 'full', 'idle'),
-       ('pnl_sync', 'pnl', 0, 'full', 'idle'),
-       ('oi_sync', 'oi', 0, 'full', 'idle'),
-       ('sports_sync', 'sports', 0, 'full', 'idle'),
-       ('fpmm_sync', 'fpmm', 0, 'full', 'idle'),
-       ('orderbook_sync', 'orderbook', 0, 'full', 'idle'),
-       ('wallet_sync', 'wallet', 0, 'full', 'idle'),
-       ('resolution_sync', 'resolution', 0, 'full', 'idle'),
-       ('market_sync', 'activity', 0, 'full', 'idle')
+VALUES ('activity_sync', 'activity', 'idle'),
+       ('pnl_sync', 'pnl', 'idle'),
+       ('oi_sync', 'oi', 'idle'),
+       ('sports_sync', 'sports', 'idle'),
+       ('fpmm_sync', 'fpmm', 'idle'),
+       ('orderbook_sync', 'orderbook', 'idle'),
+       ('wallet_sync', 'wallet', 'idle'),
+       ('resolution_sync', 'resolution', 'idle'),
+       ('market_sync', 'activity', 'idle')
 ON CONFLICT (service_name, subgraph_name) DO NOTHING;
