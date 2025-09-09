@@ -16,7 +16,7 @@ function getAllowedCreators(): string[] {
     ? MARKET_CREATORS_ADDRESS.split(',').map(addr => addr.trim()).filter(addr => addr.length > 0)
     : []
 
-  return [...new Set([...fixedCreators, ...envCreators])]
+  return [...new Set([...fixedCreators, ...envCreators].map(addr => addr.toLowerCase()))]
 }
 /**
  * 🔄 Market Synchronization Script for Vercel Functions
