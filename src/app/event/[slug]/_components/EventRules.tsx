@@ -70,12 +70,12 @@ export default function EventRules({ event }: EventRulesProps) {
                       Resolver
                     </div>
                     <a
-                      href={`https://polygonscan.com/address/${event.markets[0].oracle}`}
+                      href={`https://polygonscan.com/address/${event.markets[0].condition!.oracle}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-primary hover:opacity-80"
                     >
-                      {formatOracleAddress(event.markets[0].oracle)}
+                      {formatOracleAddress(event.markets[0].condition!.oracle)}
                     </a>
                   </div>
                 </div>

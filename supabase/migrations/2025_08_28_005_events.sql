@@ -14,25 +14,17 @@
 -- Conditions table - Primary entity from Activity/PnL subgraphs
 CREATE TABLE IF NOT EXISTS conditions
 (
-  id                     VARCHAR(66) PRIMARY KEY,
-  oracle                 VARCHAR(42) NOT NULL,
-  question_id            VARCHAR(66) NOT NULL,
-  outcome_slot_count     SMALLINT    NOT NULL CHECK (outcome_slot_count >= 2),
+  id           CHAR(66) PRIMARY KEY,
+  oracle       CHAR(42) NOT NULL,
+  question_id  CHAR(66) NOT NULL,
   -- Resolution data
-  resolved               BOOLEAN         DEFAULT FALSE,
-  payout_numerators      BIGINT[],
-  payout_denominator     BIGINT,
+  resolved     BOOLEAN     DEFAULT FALSE,
   -- Metadata
-  arweave_hash           TEXT,        -- Arweave metadata hash
-  creator                VARCHAR(42), -- Market creator address
-  -- Cached aggregations for performance
-  total_volume           DECIMAL(20, 6)  DEFAULT 0,
-  open_interest          DECIMAL(30, 18) DEFAULT 0,
-  active_positions_count INTEGER         DEFAULT 0,
+  arweave_hash TEXT,     -- Arweave metadata hash
+  creator      CHAR(42), -- Market creator address
   -- Timestamps
-  created_at             TIMESTAMPTZ     DEFAULT NOW(),
-  resolved_at            TIMESTAMPTZ,
-  updated_at             TIMESTAMPTZ     DEFAULT NOW()
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Tags table - Hierarchical categorization system for events
@@ -79,40 +71,31 @@ CREATE TABLE IF NOT EXISTS markets
 (
   -- IDs and Identifiers
   condition_id       VARCHAR(66) PRIMARY KEY REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  question_id        VARCHAR(66)  NOT NULL, -- Derived from conditions table
-  oracle             VARCHAR(42)  NOT NULL, -- Derived from conditions table
   -- Relationships
   event_id           CHAR(26)     NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
   -- Market Information
   title              TEXT         NOT NULL,
   slug               VARCHAR(255) NOT NULL,
-  description        TEXT,
-  short_title        VARCHAR(255),
-  outcome_count      SMALLINT     NOT NULL CHECK (outcome_count >= 2),
+  short_title        VARCHAR(50),
   -- Images
-  icon_url           TEXT,                  -- markets/icons/market-slug.jpg
+  icon_url           TEXT,  -- markets/icons/market-slug.jpg
   -- Status and Data
-  is_active          BOOLEAN         DEFAULT TRUE,
-  is_resolved        BOOLEAN         DEFAULT FALSE,
-  resolution_data    JSONB,                 -- Resolution data when resolved
+  is_active          BOOLEAN        DEFAULT TRUE,
+  is_resolved        BOOLEAN        DEFAULT FALSE,
   -- Blockchain Info
   block_number       BIGINT       NOT NULL,
-  transaction_hash   VARCHAR(66)  NOT NULL,
-  block_timestamp    TIMESTAMPTZ  NOT NULL,
   -- Metadata
-  metadata           JSONB,                 -- Metadata from Arweave
+  metadata           JSONB, -- Metadata from Arweave
   -- Cached Trading Metrics (from subgraphs)
-  current_volume_24h DECIMAL(20, 6)  DEFAULT 0,
-  total_volume       DECIMAL(20, 6)  DEFAULT 0,
-  open_interest      DECIMAL(30, 18) DEFAULT 0,
+  current_volume_24h DECIMAL(20, 6) DEFAULT 0,
+  total_volume       DECIMAL(20, 6) DEFAULT 0,
   -- Timestamps
-  created_at         TIMESTAMPTZ     DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ     DEFAULT NOW(),
+  created_at         TIMESTAMPTZ    DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ    DEFAULT NOW(),
   -- Constraints
   UNIQUE (event_id, slug),
   CHECK (current_volume_24h >= 0),
-  CHECK (total_volume >= 0),
-  CHECK (open_interest >= 0)
+  CHECK (total_volume >= 0)
 );
 
 -- Outcomes table - Individual market outcomes (belongs to markets via condition_id)
@@ -146,24 +129,18 @@ CREATE TABLE IF NOT EXISTS outcomes
 -- Sync status table - Blockchain synchronization tracking
 CREATE TABLE IF NOT EXISTS sync_status
 (
-  id                   SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  service_name         VARCHAR(50) NOT NULL,              -- 'activity_sync', 'pnl_sync', etc.
-  subgraph_name        VARCHAR(50) NOT NULL,              -- 'activity', 'pnl', 'oi', etc.
-  last_processed_block BIGINT      DEFAULT 0,
-  last_sync_timestamp  TIMESTAMPTZ DEFAULT NOW(),
-  sync_type            VARCHAR(20) DEFAULT 'incremental', -- 'full' or 'incremental'
-  status               VARCHAR(20) DEFAULT 'idle',        -- 'running', 'completed', 'error'
-  error_message        TEXT,
-  total_processed      INTEGER     DEFAULT 0,
-  processing_rate      DECIMAL(10, 2),                    -- records per second
-  created_at           TIMESTAMPTZ DEFAULT NOW(),
-  updated_at           TIMESTAMPTZ DEFAULT NOW(),
+  id              SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  service_name    VARCHAR(50) NOT NULL,       -- 'activity_sync', 'pnl_sync', etc.
+  subgraph_name   VARCHAR(50) NOT NULL,       -- 'activity', 'pnl', 'oi', etc.
+  status          VARCHAR(20) DEFAULT 'idle', -- 'running', 'completed', 'error'
+  total_processed INTEGER     DEFAULT 0,
+  error_message   TEXT,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW(),
   -- Constraints
   UNIQUE (service_name, subgraph_name),
   CHECK (status IN ('idle', 'running', 'completed', 'error')),
-  CHECK (sync_type IN ('full', 'incremental')),
-  CHECK (total_processed >= 0),
-  CHECK (processing_rate IS NULL OR processing_rate >= 0)
+  CHECK (total_processed >= 0)
 );
 
 -- ===========================================

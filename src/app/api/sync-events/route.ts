@@ -14,7 +14,6 @@ const IRYS_GATEWAY = process.env.IRYS_GATEWAY || 'https://gateway.irys.xyz'
  * - Fetches new markets from blockchain via subgraph (INCREMENTAL)
  * - Downloads metadata and images from Irys/Arweave
  * - Stores everything in Supabase database and storage
- * - Tracks last processed timestamp for incremental syncs
  */
 export async function GET(request: Request) {
   const auth = request.headers.get('authorization')
@@ -23,20 +22,32 @@ export async function GET(request: Request) {
   }
 
   try {
+    const isRunning = await checkSyncRunning()
+    if (isRunning) {
+      console.log('🚫 Sync already running, skipping...')
+      return NextResponse.json({
+        success: false,
+        message: 'Sync already running',
+        skipped: true,
+      }, { status: 409 })
+    }
+
+    await updateSyncStatus('running')
+
     console.log('🚀 Starting incremental market synchronization...')
 
-    const lastProcessedTimestamp = await getLastProcessedTimestamp()
-    console.log(`📊 Last processed timestamp: ${lastProcessedTimestamp}`)
+    const updatedAt = await getLastUpdatedAt()
+    console.log(`📊 Last processed at: ${updatedAt}`)
 
     const markets = await fetchNewMarkets()
     console.log(`🔍 Found ${markets.length} new markets to process`)
 
     if (markets.length === 0) {
+      await updateSyncStatus('completed', null, 0)
       return NextResponse.json({
         success: true,
         message: 'No new markets to process',
         processed: 0,
-        lastProcessedTimestamp,
       })
     }
 
@@ -58,11 +69,7 @@ export async function GET(request: Request) {
       }
     }
 
-    if (processedCount > 0) {
-      const currentTimestamp = Math.floor(Date.now() / 1000)
-      await updateLastProcessedTimestamp(currentTimestamp)
-      console.log(`📦 Updated last processed timestamp to: ${currentTimestamp}`)
-    }
+    await updateSyncStatus('completed', null, processedCount)
 
     const result = {
       success: true,
@@ -70,10 +77,6 @@ export async function GET(request: Request) {
       total: markets.length,
       errors: errors.length,
       errorDetails: errors,
-      lastProcessedTimestamp:
-        processedCount > 0
-          ? Math.floor(Date.now() / 1000)
-          : lastProcessedTimestamp,
     }
 
     console.log('🎉 Incremental synchronization completed:', result)
@@ -81,21 +84,23 @@ export async function GET(request: Request) {
   }
   catch (error: any) {
     console.error('💥 Sync failed:', error)
+
+    await updateSyncStatus('error', error.message)
+
     return NextResponse.json(
       {
         success: false,
         error: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },
       { status: 500 },
     )
   }
 }
 
-async function getLastProcessedTimestamp() {
+async function getLastUpdatedAt() {
   const { data, error } = await supabaseAdmin
     .from('sync_status')
-    .select('last_processed_block')
+    .select('updated_at')
     .eq('service_name', 'market_sync')
     .eq('subgraph_name', 'activity')
     .maybeSingle()
@@ -104,7 +109,7 @@ async function getLastProcessedTimestamp() {
     throw new Error(`Failed to get last processed timestamp: ${error.message}`)
   }
 
-  return data?.last_processed_block || 0
+  return data?.updated_at || 0
 }
 
 async function fetchNewMarkets() {
@@ -126,9 +131,9 @@ async function fetchNewMarkets() {
 }
 
 async function fetchFromActivitySubgraph() {
+  const first = 1000
   let allConditions: any[] = []
   let skip = 0
-  const first = 1000
   let hasMore = true
 
   while (hasMore) {
@@ -198,7 +203,6 @@ async function fetchFromPnLSubgraph() {
           id
           oracle
           questionId
-          outcomeSlotCount
           resolved
           arweaveHash
           creator
@@ -239,33 +243,6 @@ async function fetchFromPnLSubgraph() {
   return allConditions
 }
 
-function mergeConditionsData(activityConditions: any[], pnlConditions: any[]) {
-  const merged: any[] = []
-  const pnlMap = new Map<string, any>()
-
-  pnlConditions.forEach(condition => pnlMap.set(condition.id, condition))
-
-  activityConditions.forEach((activityCondition) => {
-    const pnlCondition = pnlMap.get(activityCondition.id)
-    if (pnlCondition && pnlCondition.oracle && pnlCondition.questionId) {
-      merged.push({
-        id: activityCondition.id,
-        arweaveHash: activityCondition.arweaveHash,
-        creator: activityCondition.creator,
-        oracle: pnlCondition.oracle,
-        questionId: pnlCondition.questionId,
-        outcomeSlotCount: pnlCondition.outcomeSlotCount,
-        resolved: pnlCondition.resolved,
-      })
-    }
-    else {
-      console.log(`⚠️ Skipping condition ${activityCondition.id} - missing required fields from PnL subgraph`)
-    }
-  })
-
-  return merged
-}
-
 async function filterExistingConditions(conditions: any[]) {
   if (conditions.length === 0) {
     return []
@@ -295,10 +272,7 @@ async function processMarket(market: any) {
   await processCondition(market)
   const metadata = await fetchMetadata(market.arweaveHash)
   const eventId = await processEvent(
-    metadata.event || {
-      slug: metadata.slug ? `${metadata.slug}-event` : `event-${market.id.substring(0, 8)}`,
-      title: metadata.name ? `${metadata.name} Event` : `Event ${market.id.substring(0, 8)}`,
-    },
+    metadata.event,
     market.creator,
   )
   await processMarketData(market, metadata, eventId)
@@ -314,17 +288,8 @@ async function fetchMetadata(arweaveHash: string) {
 
   const metadata = await response.json()
 
-  if (!metadata.name || !metadata.slug) {
+  if (!metadata.name || !metadata.slug || !metadata.event) {
     throw new Error(`Invalid metadata: missing required fields. Got: ${JSON.stringify(Object.keys(metadata))}`)
-  }
-
-  if (!metadata.event) {
-    console.warn(`⚠️ No event data in metadata for ${metadata.name}, creating default event`)
-    metadata.event = {
-      slug: `${metadata.slug}-event`,
-      title: `${metadata.name} Event`,
-      description: 'Auto-generated event',
-    }
   }
 
   return metadata
@@ -361,8 +326,7 @@ async function processCondition(market: any) {
     id: market.id,
     oracle: market.oracle,
     question_id: market.questionId,
-    outcome_slot_count: market.outcomeSlotCount || 2,
-    resolved: market.resolved || false,
+    resolved: market.resolved,
     arweave_hash: market.arweaveHash,
     creator: market.creator,
     created_at: new Date().toISOString(),
@@ -403,7 +367,6 @@ async function processEvent(eventData: any, creatorAddress: string) {
     .insert({
       slug: eventData.slug,
       title: eventData.title,
-      description: eventData.description || null,
       creator: creatorAddress,
       icon_url: iconUrl,
       show_market_icons: eventData.show_market_icons !== false,
@@ -458,22 +421,12 @@ async function processMarketData(market: any, metadata: any, eventId: string) {
 
   const marketData = {
     condition_id: market.id,
-    question_id: market.questionId,
-    oracle: market.oracle,
     event_id: eventId,
-    title: metadata.name || `Market ${market.id.substring(0, 8)}`,
-    slug: metadata.slug
-      ? `${metadata.slug}-${market.id.substring(0, 8)}`
-      : `market-${market.id.substring(0, 8)}`,
-    description: metadata.description || null,
-    short_title: metadata.short_title || null,
-    outcome_count: market.outcomeSlotCount || metadata.outcomes?.length || 2,
+    is_resolved: market.resolved,
+    title: metadata.name,
+    slug: metadata.slug,
+    short_title: metadata.short_title,
     icon_url: iconUrl,
-    block_number: 0,
-    transaction_hash: market.id,
-    block_timestamp: market.blockTimestamp
-      ? new Date(Number.parseInt(market.blockTimestamp) * 1000).toISOString()
-      : new Date().toISOString(),
     metadata,
   }
 
@@ -491,9 +444,9 @@ async function processMarketData(market: any, metadata: any, eventId: string) {
 async function processOutcomes(conditionId: string, outcomes: any[]) {
   const outcomeData = outcomes.map((outcome, index) => ({
     condition_id: conditionId,
-    outcome_text: outcome.outcome || outcome.title || `Outcome ${index + 1}`,
+    outcome_text: outcome.outcome,
     outcome_index: index,
-    token_id: `${conditionId}-${index}`,
+    token_id: outcome.token_id,
   }))
 
   const { error } = await supabaseAdmin.from('outcomes').insert(outcomeData)
@@ -552,7 +505,8 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
     const response = await fetch(imageUrl)
 
     if (!response.ok) {
-      throw new Error(`Failed to download image: ${response.statusText}`)
+      console.error(`Failed to download image: ${response.statusText}`)
+      return null
     }
 
     const imageBuffer = await response.arrayBuffer()
@@ -565,7 +519,8 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
       })
 
     if (error) {
-      throw new Error(`Failed to upload image: ${error.message}`)
+      console.error(`Failed to upload image: ${error.message}`)
+      return null
     }
 
     return storagePath
@@ -576,23 +531,74 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
   }
 }
 
-async function updateLastProcessedTimestamp(timestamp: number) {
-  const { error } = await supabaseAdmin.from('sync_status').upsert(
-    {
-      service_name: 'market_sync',
-      subgraph_name: 'activity',
-      last_processed_block: timestamp,
-      last_sync_timestamp: new Date().toISOString(),
-      sync_type: 'incremental',
-      status: 'completed',
-      total_processed: 1,
-    },
-    {
+async function checkSyncRunning(): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('sync_status')
+    .select('status')
+    .eq('service_name', 'market_sync')
+    .eq('subgraph_name', 'activity')
+    .maybeSingle()
+
+  if (error && error.code !== 'PGRST116') {
+    throw new Error(`Failed to check sync status: ${error.message}`)
+  }
+
+  return data?.status === 'running'
+}
+
+async function updateSyncStatus(
+  status: 'running' | 'completed' | 'error',
+  errorMessage?: string | null,
+  totalProcessed?: number,
+) {
+  const updateData: any = {
+    service_name: 'market_sync',
+    subgraph_name: 'activity',
+    status,
+    updated_at: new Date().toISOString(),
+  }
+
+  if (errorMessage !== undefined) {
+    updateData.error_message = errorMessage
+  }
+
+  if (totalProcessed !== undefined) {
+    updateData.total_processed = totalProcessed
+  }
+
+  const { error } = await supabaseAdmin
+    .from('sync_status')
+    .upsert(updateData, {
       onConflict: 'service_name,subgraph_name',
-    },
-  )
+    })
 
   if (error) {
-    throw new Error(`Failed to update sync status: ${error.message}`)
+    console.error(`Failed to update sync status to ${status}:`, error)
   }
+}
+
+function mergeConditionsData(activityConditions: any[], pnlConditions: any[]) {
+  const merged: any[] = []
+  const pnlMap = new Map<string, any>()
+
+  pnlConditions.forEach(condition => pnlMap.set(condition.id, condition))
+
+  activityConditions.forEach((activityCondition) => {
+    const pnlCondition = pnlMap.get(activityCondition.id)
+    if (pnlCondition && pnlCondition.oracle && pnlCondition.questionId) {
+      merged.push({
+        id: activityCondition.id,
+        arweaveHash: activityCondition.arweaveHash,
+        creator: activityCondition.creator,
+        oracle: pnlCondition.oracle,
+        questionId: pnlCondition.questionId,
+        resolved: pnlCondition.resolved,
+      })
+    }
+    else {
+      console.log(`⚠️ Skipping condition ${activityCondition.id} - missing required fields from PnL subgraph`)
+    }
+  })
+
+  return merged
 }
