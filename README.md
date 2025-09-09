@@ -26,33 +26,39 @@ Click the **Fork** button in the top right corner
 
 ### 2. Create a New Project on Vercel
 
-1. Go to [Vercel](https://vercel.com)
-2. Click **New Project**
+1. Go to [Vercel](https://vercel.com) dashboard
+2. Select **Add New** → **Project**
 3. Connect your **GitHub account**
 4. Import and Deploy your **forked repository**
-*Note: The first deploy may fail due to missing environment setup. This is normal. Just redeploy after completing Step 3.*
 
-### 3. Configure Your Environment
+*Note: The initial deployment may fail due to missing environment variables. This is expected.
+Complete Step 3 (Supabase) and Step 4 (environment) first, then redeploy from your project dashboard.*
 
-1. **Download** the `.env.example` file from this repository
-2. **Edit** it with your information (API keys, database URLs, etc.)
-- **Reown AppKit**: Get Project ID at [dashboard.reown.com](https://dashboard.reown.com)
-- **Better Auth**: Generate secret at [better-auth.com](https://www.better-auth.com/docs/installation#set-environment-variables)
-- **CRON_SECRET**: Create a random secret of at least 16 characters; use it to secure the market synchronization endpoint in your API or cron job configuration.
+### 3. Create Database (Supabase)
 
-   - Go to your project dashboard
-   - **Settings** → **Environment Variables**
-   - Click **"Import .env"** button
-   - Select your edited `.env.example` file
-3. **Create Database**:
-   - Go to your project dashboard
-   - **Storage** → **Create Supabase Database** (connect to your project)
+   1. Go to your project dashboard
+   2. Navitage to the **Storage** tab
+   3. Find **Supabase** in the database list and click **Create**
+   4. Keep all default settings and click **Create** in the final step
+   5. Once ready, click the **Connect Project** button to link to your project
 
-### 4. Redeploy your project
+### 4. Configure Your Environment
+
+   1. **Download** the `.env.example` file from this repository
+   2. **Edit** it with your configuration:
+      - **Reown AppKit**: Get Project ID at [dashboard.reown.com](https://dashboard.reown.com)
+      - **Better Auth**: Generate secret at [better-auth.com](https://www.better-auth.com/docs/installation#set-environment-variables)
+      - **CRON_SECRET**: Create a random secret of at least 16 characters
+   3. Go to your Vercel project dashboard
+   4. Navigate to **Settings** → **Environment Variables**
+   5. Click **"Import .env"** button
+   6. Select your edited `.env.example` file
+
+### 5. Redeploy your project
 
 *Optionally, add your custom domain in **Settings** → **Domains** on your project dashboard.*
 
-### 5. Sync Your Fork (via GitHub Actions)
+### 6. Sync Your Fork (via GitHub Actions)
 
 In your forked Forkast repository:
 1. Go to **Settings** → **Actions** → **General**
