@@ -38,7 +38,7 @@ Click the **Fork** button in the top right corner
 2. **Edit** it with your information (API keys, database URLs, etc.)
 - **Reown AppKit**: Get Project ID at [dashboard.reown.com](https://dashboard.reown.com)
 - **Better Auth**: Generate secret at [better-auth.com](https://www.better-auth.com/docs/installation#set-environment-variables)
-- **CRON_SECRET**: Enter a random secret of at least 16 characters. This value is created by you and is used by Vercel to secure the market synchronization endpoint.
+- **CRON_SECRET**: Create a random secret of at least 16 characters; use it to secure the market synchronization endpoint in your API or cron job configuration.
 
    - Go to your project dashboard
    - **Settings** → **Environment Variables**

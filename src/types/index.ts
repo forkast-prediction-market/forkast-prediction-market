@@ -21,24 +21,18 @@ export interface Event {
 export interface Market {
   condition_id: string
   question_id: string
-  oracle: string
   event_id: string
   title: string
   slug: string
-  description: string
   short_title?: string
-  outcome_count: number
   icon_url: string
   is_active: boolean
   is_resolved: boolean
-  resolution_data?: any // JSONB
   block_number: number
-  transaction_hash: string
   block_timestamp: string
   metadata?: any // JSONB
   current_volume_24h: number
   total_volume: number
-  open_interest: number
   created_at: string
   updated_at: string
   price: number
