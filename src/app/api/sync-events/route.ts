@@ -14,7 +14,6 @@ const IRYS_GATEWAY = process.env.IRYS_GATEWAY || 'https://gateway.irys.xyz'
  * - Fetches new markets from blockchain via subgraph (INCREMENTAL)
  * - Downloads metadata and images from Irys/Arweave
  * - Stores everything in Supabase database and storage
- * - Tracks last processed timestamp for incremental syncs
  */
 export async function GET(request: Request) {
   const auth = request.headers.get('authorization')
@@ -23,20 +22,32 @@ export async function GET(request: Request) {
   }
 
   try {
+    const isRunning = await checkSyncRunning()
+    if (isRunning) {
+      console.log('🚫 Sync already running, skipping...')
+      return NextResponse.json({
+        success: false,
+        message: 'Sync already running',
+        skipped: true,
+      }, { status: 409 })
+    }
+
+    await updateSyncStatus('running')
+
     console.log('🚀 Starting incremental market synchronization...')
 
-    const lastProcessedTimestamp = await getLastProcessedTimestamp()
-    console.log(`📊 Last processed timestamp: ${lastProcessedTimestamp}`)
+    const updatedAt = await getLastUpdatedAt()
+    console.log(`📊 Last processed at: ${updatedAt}`)
 
     const markets = await fetchNewMarkets()
     console.log(`🔍 Found ${markets.length} new markets to process`)
 
     if (markets.length === 0) {
+      await updateSyncStatus('completed', null, 0)
       return NextResponse.json({
         success: true,
         message: 'No new markets to process',
         processed: 0,
-        lastProcessedTimestamp,
       })
     }
 
@@ -58,12 +69,7 @@ export async function GET(request: Request) {
       }
     }
 
-    const currentTimestamp = Math.floor(Date.now() / 1000)
-
-    if (processedCount > 0) {
-      await updateLastProcessedTimestamp(currentTimestamp, processedCount)
-      console.log(`📦 Updated last processed timestamp to: ${currentTimestamp}`)
-    }
+    await updateSyncStatus('completed', null, processedCount)
 
     const result = {
       success: true,
@@ -71,7 +77,6 @@ export async function GET(request: Request) {
       total: markets.length,
       errors: errors.length,
       errorDetails: errors,
-      lastProcessedTimestamp: currentTimestamp,
     }
 
     console.log('🎉 Incremental synchronization completed:', result)
@@ -79,6 +84,9 @@ export async function GET(request: Request) {
   }
   catch (error: any) {
     console.error('💥 Sync failed:', error)
+
+    await updateSyncStatus('error', error.message)
+
     return NextResponse.json(
       {
         success: false,
@@ -89,10 +97,10 @@ export async function GET(request: Request) {
   }
 }
 
-async function getLastProcessedTimestamp() {
+async function getLastUpdatedAt() {
   const { data, error } = await supabaseAdmin
     .from('sync_status')
-    .select('last_processed_block')
+    .select('updated_at')
     .eq('service_name', 'market_sync')
     .eq('subgraph_name', 'activity')
     .maybeSingle()
@@ -101,7 +109,7 @@ async function getLastProcessedTimestamp() {
     throw new Error(`Failed to get last processed timestamp: ${error.message}`)
   }
 
-  return data?.last_processed_block || 0
+  return data?.updated_at || 0
 }
 
 async function fetchNewMarkets() {
@@ -233,32 +241,6 @@ async function fetchFromPnLSubgraph() {
   }
 
   return allConditions
-}
-
-function mergeConditionsData(activityConditions: any[], pnlConditions: any[]) {
-  const merged: any[] = []
-  const pnlMap = new Map<string, any>()
-
-  pnlConditions.forEach(condition => pnlMap.set(condition.id, condition))
-
-  activityConditions.forEach((activityCondition) => {
-    const pnlCondition = pnlMap.get(activityCondition.id)
-    if (pnlCondition && pnlCondition.oracle && pnlCondition.questionId) {
-      merged.push({
-        id: activityCondition.id,
-        arweaveHash: activityCondition.arweaveHash,
-        creator: activityCondition.creator,
-        oracle: pnlCondition.oracle,
-        questionId: pnlCondition.questionId,
-        resolved: pnlCondition.resolved,
-      })
-    }
-    else {
-      console.log(`⚠️ Skipping condition ${activityCondition.id} - missing required fields from PnL subgraph`)
-    }
-  })
-
-  return merged
 }
 
 async function filterExistingConditions(conditions: any[]) {
@@ -549,20 +531,74 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
   }
 }
 
-async function updateLastProcessedTimestamp(timestamp: number, processedCount: number) {
-  const { error } = await supabaseAdmin.from('sync_status').upsert(
-    {
-      service_name: 'market_sync',
-      subgraph_name: 'activity',
-      last_processed_block: timestamp,
-      last_sync_timestamp: new Date().toISOString(),
-      sync_type: 'incremental',
-      status: 'completed',
-      total_processed: processedCount,
-    },
-  )
+async function checkSyncRunning(): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('sync_status')
+    .select('status')
+    .eq('service_name', 'market_sync')
+    .eq('subgraph_name', 'activity')
+    .maybeSingle()
+
+  if (error && error.code !== 'PGRST116') {
+    throw new Error(`Failed to check sync status: ${error.message}`)
+  }
+
+  return data?.status === 'running'
+}
+
+async function updateSyncStatus(
+  status: 'running' | 'completed' | 'error',
+  errorMessage?: string | null,
+  totalProcessed?: number,
+) {
+  const updateData: any = {
+    service_name: 'market_sync',
+    subgraph_name: 'activity',
+    status,
+    updated_at: new Date().toISOString(),
+  }
+
+  if (errorMessage !== undefined) {
+    updateData.error_message = errorMessage
+  }
+
+  if (totalProcessed !== undefined) {
+    updateData.total_processed = totalProcessed
+  }
+
+  const { error } = await supabaseAdmin
+    .from('sync_status')
+    .upsert(updateData, {
+      onConflict: 'service_name,subgraph_name',
+    })
 
   if (error) {
-    throw new Error(`Failed to update sync status: ${error.message}`)
+    console.error(`Failed to update sync status to ${status}:`, error)
   }
+}
+
+function mergeConditionsData(activityConditions: any[], pnlConditions: any[]) {
+  const merged: any[] = []
+  const pnlMap = new Map<string, any>()
+
+  pnlConditions.forEach(condition => pnlMap.set(condition.id, condition))
+
+  activityConditions.forEach((activityCondition) => {
+    const pnlCondition = pnlMap.get(activityCondition.id)
+    if (pnlCondition && pnlCondition.oracle && pnlCondition.questionId) {
+      merged.push({
+        id: activityCondition.id,
+        arweaveHash: activityCondition.arweaveHash,
+        creator: activityCondition.creator,
+        oracle: pnlCondition.oracle,
+        questionId: pnlCondition.questionId,
+        resolved: pnlCondition.resolved,
+      })
+    }
+    else {
+      console.log(`⚠️ Skipping condition ${activityCondition.id} - missing required fields from PnL subgraph`)
+    }
+  })
+
+  return merged
 }

@@ -14,17 +14,17 @@
 -- Conditions table - Primary entity from Activity/PnL subgraphs
 CREATE TABLE IF NOT EXISTS conditions
 (
-  id                     CHAR(66) PRIMARY KEY,
-  oracle                 CHAR(42) NOT NULL,
-  question_id            CHAR(66) NOT NULL,
+  id           CHAR(66) PRIMARY KEY,
+  oracle       CHAR(42) NOT NULL,
+  question_id  CHAR(66) NOT NULL,
   -- Resolution data
-  resolved               BOOLEAN         DEFAULT FALSE,
+  resolved     BOOLEAN     DEFAULT FALSE,
   -- Metadata
-  arweave_hash           TEXT,     -- Arweave metadata hash
-  creator                CHAR(42), -- Market creator address
+  arweave_hash TEXT,     -- Arweave metadata hash
+  creator      CHAR(42), -- Market creator address
   -- Timestamps
-  created_at             TIMESTAMPTZ     DEFAULT NOW(),
-  updated_at             TIMESTAMPTZ     DEFAULT NOW()
+  created_at   TIMESTAMPTZ DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Tags table - Hierarchical categorization system for events
@@ -80,18 +80,18 @@ CREATE TABLE IF NOT EXISTS markets
   -- Images
   icon_url           TEXT,  -- markets/icons/market-slug.jpg
   -- Status and Data
-  is_active          BOOLEAN         DEFAULT TRUE,
-  is_resolved        BOOLEAN         DEFAULT FALSE,
+  is_active          BOOLEAN        DEFAULT TRUE,
+  is_resolved        BOOLEAN        DEFAULT FALSE,
   -- Blockchain Info
   block_number       BIGINT       NOT NULL,
   -- Metadata
   metadata           JSONB, -- Metadata from Arweave
   -- Cached Trading Metrics (from subgraphs)
-  current_volume_24h DECIMAL(20, 6)  DEFAULT 0,
-  total_volume       DECIMAL(20, 6)  DEFAULT 0,
+  current_volume_24h DECIMAL(20, 6) DEFAULT 0,
+  total_volume       DECIMAL(20, 6) DEFAULT 0,
   -- Timestamps
-  created_at         TIMESTAMPTZ     DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ     DEFAULT NOW(),
+  created_at         TIMESTAMPTZ    DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ    DEFAULT NOW(),
   -- Constraints
   UNIQUE (event_id, slug),
   CHECK (current_volume_24h >= 0),
@@ -129,21 +129,17 @@ CREATE TABLE IF NOT EXISTS outcomes
 -- Sync status table - Blockchain synchronization tracking
 CREATE TABLE IF NOT EXISTS sync_status
 (
-  id                   SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  service_name         VARCHAR(50) NOT NULL,              -- 'activity_sync', 'pnl_sync', etc.
-  subgraph_name        VARCHAR(50) NOT NULL,              -- 'activity', 'pnl', 'oi', etc.
-  last_processed_block BIGINT      DEFAULT 0,
-  last_sync_timestamp  TIMESTAMPTZ DEFAULT NOW(),
-  sync_type            VARCHAR(20) DEFAULT 'incremental', -- 'full' or 'incremental'
-  status               VARCHAR(20) DEFAULT 'idle',        -- 'running', 'completed', 'error'
-  error_message        TEXT,
-  total_processed      INTEGER     DEFAULT 0,
-  created_at           TIMESTAMPTZ DEFAULT NOW(),
-  updated_at           TIMESTAMPTZ DEFAULT NOW(),
+  id              SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  service_name    VARCHAR(50) NOT NULL,       -- 'activity_sync', 'pnl_sync', etc.
+  subgraph_name   VARCHAR(50) NOT NULL,       -- 'activity', 'pnl', 'oi', etc.
+  status          VARCHAR(20) DEFAULT 'idle', -- 'running', 'completed', 'error'
+  total_processed INTEGER     DEFAULT 0,
+  error_message   TEXT,
+  created_at      TIMESTAMPTZ DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ DEFAULT NOW(),
   -- Constraints
   UNIQUE (service_name, subgraph_name),
   CHECK (status IN ('idle', 'running', 'completed', 'error')),
-  CHECK (sync_type IN ('full', 'incremental')),
   CHECK (total_processed >= 0)
 );
 
