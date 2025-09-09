@@ -467,7 +467,7 @@ async function processOutcomes(conditionId: string, outcomes: any[]) {
     condition_id: conditionId,
     outcome_text: outcome.outcome,
     outcome_index: index,
-    token_id: outcome.token_id,
+    token_id: outcome.token_id || (`${outcome.token_id}${index}`),
   }))
 
   const { error } = await supabaseAdmin.from('outcomes').insert(outcomeData)
