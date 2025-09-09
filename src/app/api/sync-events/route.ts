@@ -58,9 +58,10 @@ export async function GET(request: Request) {
       }
     }
 
+    const currentTimestamp = Math.floor(Date.now() / 1000)
+
     if (processedCount > 0) {
-      const currentTimestamp = Math.floor(Date.now() / 1000)
-      await updateLastProcessedTimestamp(currentTimestamp)
+      await updateLastProcessedTimestamp(currentTimestamp, processedCount)
       console.log(`📦 Updated last processed timestamp to: ${currentTimestamp}`)
     }
 
@@ -70,10 +71,7 @@ export async function GET(request: Request) {
       total: markets.length,
       errors: errors.length,
       errorDetails: errors,
-      lastProcessedTimestamp:
-        processedCount > 0
-          ? Math.floor(Date.now() / 1000)
-          : lastProcessedTimestamp,
+      lastProcessedTimestamp: currentTimestamp,
     }
 
     console.log('🎉 Incremental synchronization completed:', result)
@@ -85,7 +83,6 @@ export async function GET(request: Request) {
       {
         success: false,
         error: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },
       { status: 500 },
     )
@@ -126,9 +123,9 @@ async function fetchNewMarkets() {
 }
 
 async function fetchFromActivitySubgraph() {
+  const first = 1000
   let allConditions: any[] = []
   let skip = 0
-  const first = 1000
   let hasMore = true
 
   while (hasMore) {
@@ -198,7 +195,6 @@ async function fetchFromPnLSubgraph() {
           id
           oracle
           questionId
-          outcomeSlotCount
           resolved
           arweaveHash
           creator
@@ -254,7 +250,6 @@ function mergeConditionsData(activityConditions: any[], pnlConditions: any[]) {
         creator: activityCondition.creator,
         oracle: pnlCondition.oracle,
         questionId: pnlCondition.questionId,
-        outcomeSlotCount: pnlCondition.outcomeSlotCount,
         resolved: pnlCondition.resolved,
       })
     }
@@ -295,10 +290,7 @@ async function processMarket(market: any) {
   await processCondition(market)
   const metadata = await fetchMetadata(market.arweaveHash)
   const eventId = await processEvent(
-    metadata.event || {
-      slug: metadata.slug ? `${metadata.slug}-event` : `event-${market.id.substring(0, 8)}`,
-      title: metadata.name ? `${metadata.name} Event` : `Event ${market.id.substring(0, 8)}`,
-    },
+    metadata.event,
     market.creator,
   )
   await processMarketData(market, metadata, eventId)
@@ -314,17 +306,8 @@ async function fetchMetadata(arweaveHash: string) {
 
   const metadata = await response.json()
 
-  if (!metadata.name || !metadata.slug) {
+  if (!metadata.name || !metadata.slug || !metadata.event) {
     throw new Error(`Invalid metadata: missing required fields. Got: ${JSON.stringify(Object.keys(metadata))}`)
-  }
-
-  if (!metadata.event) {
-    console.warn(`⚠️ No event data in metadata for ${metadata.name}, creating default event`)
-    metadata.event = {
-      slug: `${metadata.slug}-event`,
-      title: `${metadata.name} Event`,
-      description: 'Auto-generated event',
-    }
   }
 
   return metadata
@@ -361,8 +344,7 @@ async function processCondition(market: any) {
     id: market.id,
     oracle: market.oracle,
     question_id: market.questionId,
-    outcome_slot_count: market.outcomeSlotCount || 2,
-    resolved: market.resolved || false,
+    resolved: market.resolved,
     arweave_hash: market.arweaveHash,
     creator: market.creator,
     created_at: new Date().toISOString(),
@@ -403,7 +385,6 @@ async function processEvent(eventData: any, creatorAddress: string) {
     .insert({
       slug: eventData.slug,
       title: eventData.title,
-      description: eventData.description || null,
       creator: creatorAddress,
       icon_url: iconUrl,
       show_market_icons: eventData.show_market_icons !== false,
@@ -458,22 +439,12 @@ async function processMarketData(market: any, metadata: any, eventId: string) {
 
   const marketData = {
     condition_id: market.id,
-    question_id: market.questionId,
-    oracle: market.oracle,
     event_id: eventId,
-    title: metadata.name || `Market ${market.id.substring(0, 8)}`,
-    slug: metadata.slug
-      ? `${metadata.slug}-${market.id.substring(0, 8)}`
-      : `market-${market.id.substring(0, 8)}`,
-    description: metadata.description || null,
-    short_title: metadata.short_title || null,
-    outcome_count: market.outcomeSlotCount || metadata.outcomes?.length || 2,
+    is_resolved: market.resolved,
+    title: metadata.name,
+    slug: metadata.slug,
+    short_title: metadata.short_title,
     icon_url: iconUrl,
-    block_number: 0,
-    transaction_hash: market.id,
-    block_timestamp: market.blockTimestamp
-      ? new Date(Number.parseInt(market.blockTimestamp) * 1000).toISOString()
-      : new Date().toISOString(),
     metadata,
   }
 
@@ -491,9 +462,9 @@ async function processMarketData(market: any, metadata: any, eventId: string) {
 async function processOutcomes(conditionId: string, outcomes: any[]) {
   const outcomeData = outcomes.map((outcome, index) => ({
     condition_id: conditionId,
-    outcome_text: outcome.outcome || outcome.title || `Outcome ${index + 1}`,
+    outcome_text: outcome.outcome,
     outcome_index: index,
-    token_id: `${conditionId}-${index}`,
+    token_id: outcome.token_id,
   }))
 
   const { error } = await supabaseAdmin.from('outcomes').insert(outcomeData)
@@ -552,7 +523,8 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
     const response = await fetch(imageUrl)
 
     if (!response.ok) {
-      throw new Error(`Failed to download image: ${response.statusText}`)
+      console.error(`Failed to download image: ${response.statusText}`)
+      return null
     }
 
     const imageBuffer = await response.arrayBuffer()
@@ -565,7 +537,8 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
       })
 
     if (error) {
-      throw new Error(`Failed to upload image: ${error.message}`)
+      console.error(`Failed to upload image: ${error.message}`)
+      return null
     }
 
     return storagePath
@@ -576,7 +549,7 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
   }
 }
 
-async function updateLastProcessedTimestamp(timestamp: number) {
+async function updateLastProcessedTimestamp(timestamp: number, processedCount: number) {
   const { error } = await supabaseAdmin.from('sync_status').upsert(
     {
       service_name: 'market_sync',
@@ -585,10 +558,7 @@ async function updateLastProcessedTimestamp(timestamp: number) {
       last_sync_timestamp: new Date().toISOString(),
       sync_type: 'incremental',
       status: 'completed',
-      total_processed: 1,
-    },
-    {
-      onConflict: 'service_name,subgraph_name',
+      total_processed: processedCount,
     },
   )
 

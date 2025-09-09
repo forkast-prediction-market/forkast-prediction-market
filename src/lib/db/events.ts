@@ -19,17 +19,13 @@ export const EventModel = {
       markets!inner(
         condition_id,
         title,
-        slug,
-        oracle,
-        description,
         short_title,
-        outcome_count,
+        slug,
         icon_url,
         is_active,
         is_resolved,
         current_volume_24h,
         total_volume,
-        open_interest,
         conditions!markets_condition_id_fkey(
           oracle,
           outcomes(*)
@@ -123,17 +119,13 @@ export const EventModel = {
         markets!inner(
           condition_id,
           title,
-          slug,
-          oracle,
-          description,
           short_title,
-          outcome_count,
+          slug,
           icon_url,
           is_active,
           is_resolved,
           current_volume_24h,
           total_volume,
-          open_interest,
           conditions!markets_condition_id_fkey(
             oracle,
             outcomes(*)
