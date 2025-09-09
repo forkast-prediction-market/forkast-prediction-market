@@ -5,8 +5,19 @@ export const maxDuration = 300 // This function can run for a maximum of 300 sec
 
 const ACTIVITY_SUBGRAPH_URL = process.env.ACTIVITY_SUBGRAPH_URL!
 const PNL_SUBGRAPH_URL = process.env.PNL_SUBGRAPH_URL!
+const MARKET_CREATORS_ADDRESS = process.env.MARKET_CREATORS_ADDRESS
 const IRYS_GATEWAY = process.env.IRYS_GATEWAY || 'https://gateway.irys.xyz'
 
+function getAllowedCreators(): string[] {
+  const fixedCreators = [
+    '0xa4221e79Aa4c29c8AB2f76be76a4cc97579e542d', // Polymarket cloned markets on Amoy
+  ]
+  const envCreators = MARKET_CREATORS_ADDRESS
+    ? MARKET_CREATORS_ADDRESS.split(',').map(addr => addr.trim()).filter(addr => addr.length > 0)
+    : []
+
+  return [...new Set([...fixedCreators, ...envCreators].map(addr => addr.toLowerCase()))]
+}
 /**
  * 🔄 Market Synchronization Script for Vercel Functions
  *
@@ -124,7 +135,17 @@ async function fetchNewMarkets() {
   const mergedConditions = mergeConditionsData(activityConditions, pnlConditions)
   console.log(`🎯 Total merged conditions: ${mergedConditions.length}`)
 
-  const newConditions = await filterExistingConditions(mergedConditions)
+  const allowedCreators = getAllowedCreators()
+  const filteredConditions = mergedConditions.filter((condition) => {
+    const isAllowed = allowedCreators.includes(condition.creator?.toLowerCase())
+    if (!isAllowed) {
+      console.log(`🚫 Skipping market ${condition.id} - creator ${condition.creator} not in allowed list`)
+    }
+    return isAllowed
+  })
+  console.log(`🔒 Filtered by creators: ${mergedConditions.length} → ${filteredConditions.length}`)
+
+  const newConditions = await filterExistingConditions(filteredConditions)
   console.log(`🆕 New conditions to process: ${newConditions.length}`)
 
   return newConditions
