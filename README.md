@@ -2,7 +2,7 @@
 
 [![Forkast Banner](https://i.imgur.com/xZvOiEU.png)](https://forka.st)
 
-Open-source project to launch and monetize Web3 prediction markets — inspired by Polymarket, but with full transparency and control.
+Open-source project to launch and monetize Web3 prediction markets, inspired by Polymarket, but with full transparency and control.
 
 ## ✨ Core Benefits
 
@@ -11,9 +11,8 @@ Tired of centralized platforms? Want to build your own business in the DeFi spac
 - **⚡ Rapid Launch:** Get your prediction market website running in **minutes**, not months.
 - **📈 Ready Events & Liquidity:** We sync popular events from platforms like Polymarket, ensuring you have active markets with initial liquidity for your users.
 - **💰 Earn Fees Automatically:** Earn **1% of traded volume** on your fork, directly via smart contracts. Another 1% goes to maintain backend infrastructure, blockchain operations, and continuous development of the base protocol.
-- **🛠️ No Backend Hassle:** Infrastructure is managed for you — just focus on growing your community and marketing your fork.
+- **🛠️ Hassle-Free & Transparent:** Infrastructure is managed for you, while you keep full control over the code and operations. Focus on growing your community and contributing to a decentralized ecosystem.
 - **💸 Arbitrage Opportunities:** Your users can profit from price differences between your platform and other prediction markets like Polymarket, creating natural trading volume and liquidity.
-- **🔓 Open Source & Transparent:** Full control over your code and operations. Contribute to a decentralized ecosystem.
 - **⚡ Built on Polygon:** Fast transactions with minimal fees, ideal for traders and scaling your market.
 - **🗳️ Fair Event Resolution (via UMA/Oracles):** A global voting area ensures fairness and security of results.
 
@@ -30,36 +29,37 @@ Click the **Fork** button in the top right corner
 1. Go to [Vercel](https://vercel.com)
 2. Click **New Project**
 3. Connect your **GitHub account**
-4. Select your **forked repository**
+4. Import and Deploy your **forked repository**
+*Note: The first deploy may fail due to missing environment setup. This is normal. Just redeploy after completing Step 3.*
 
-### 2. Configure Environment
+### 3. Configure Your Environment
 
 1. **Download** the `.env.example` file from this repository
 2. **Edit** it with your information (API keys, database URLs, etc.)
 - **Reown AppKit**: Get Project ID at [dashboard.reown.com](https://dashboard.reown.com)
 - **Better Auth**: Generate secret at [better-auth.com](https://www.better-auth.com/docs/installation#set-environment-variables)
-3. **Upload** to Vercel:
+- **CRON_SECRET**: Create a random secret of at least 16 characters; use it to secure the market synchronization endpoint in your API or cron job configuration.
+
    - Go to your project dashboard
    - **Settings** → **Environment Variables**
    - Click **"Import .env"** button
    - Select your edited `.env.example` file
-4. **Create Database**:
+3. **Create Database**:
    - Go to your project dashboard
    - **Storage** → **Create Supabase Database** (connect to your project)
 
-### 3. Sync Your Fork (via GitHub Actions) (Required for Forks)
+### 4. Redeploy your project
 
-After forking, go to your repository:
-1. **Settings** → **Actions** → **General**
+*Optionally, add your custom domain in **Settings** → **Domains** on your project dashboard.*
+
+### 5. Sync Your Fork (via GitHub Actions)
+
+In your forked Forkast repository:
+1. Go to **Settings** → **Actions** → **General**
 2. Select **"Allow all actions and reusable workflows"**
-3. **Save** - This enables automatic sync with the main repository
+3. Click **Save** - This enables automatic sync with the main repository
 
-### 4. Deploy to Vercel
-
-- **Connect your forked repo** to Vercel
-- **Add environment variables** from your `.env.local` file
-
-**Ready!** Your prediction market will be online with automatic database setup.
+**Ready! 🎉** Your prediction market will be online with automatic database setup in a few minutes.
 
 ## 🎯 Features
 - 📱 Mobile Ready
