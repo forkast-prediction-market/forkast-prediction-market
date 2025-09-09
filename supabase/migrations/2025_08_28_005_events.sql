@@ -47,7 +47,6 @@ CREATE TABLE IF NOT EXISTS events
   id                   CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
   slug                 VARCHAR(255) NOT NULL UNIQUE,
   title                TEXT         NOT NULL,
-  description          TEXT,
   creator              VARCHAR(42), -- Ethereum address of creator
   icon_url             TEXT,
   show_market_icons    BOOLEAN              DEFAULT TRUE,
@@ -82,8 +81,6 @@ CREATE TABLE IF NOT EXISTS markets
   -- Status and Data
   is_active          BOOLEAN        DEFAULT TRUE,
   is_resolved        BOOLEAN        DEFAULT FALSE,
-  -- Blockchain Info
-  block_number       BIGINT       NOT NULL,
   -- Metadata
   metadata           JSONB, -- Metadata from Arweave
   -- Cached Trading Metrics (from subgraphs)

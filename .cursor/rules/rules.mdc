@@ -38,7 +38,7 @@ alwaysApply: true
   - Show examples of correct implementation
   - Reference existing code when possible
   - Keep rules DRY by referencing other rules
-  - Comments are in english only
+  - All comments and instruction files are in english only
 
 - **Rule Maintenance:**
   - Update rules when new patterns emerge
