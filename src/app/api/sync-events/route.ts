@@ -124,15 +124,11 @@ async function getLastUpdatedAt() {
 }
 
 async function fetchNewMarkets() {
-  console.log(`🔄 Fetching data from Activity subgraph...`)
-  const activityConditions = await fetchFromActivitySubgraph()
-  console.log(`📊 Activity subgraph: Found ${activityConditions.length} conditions`)
-
   console.log(`🔄 Fetching data from PnL subgraph...`)
   const pnlConditions = await fetchFromPnLSubgraph()
   console.log(`📊 PnL subgraph: Found ${pnlConditions.length} conditions`)
 
-  const mergedConditions = mergeConditionsData(activityConditions, pnlConditions)
+  const mergedConditions = [...pnlConditions]
   console.log(`🎯 Total merged conditions: ${mergedConditions.length}`)
 
   const allowedCreators = getAllowedCreators()
@@ -149,61 +145,6 @@ async function fetchNewMarkets() {
   console.log(`🆕 New conditions to process: ${newConditions.length}`)
 
   return newConditions
-}
-
-async function fetchFromActivitySubgraph() {
-  const first = 1000
-  let allConditions: any[] = []
-  let skip = 0
-  let hasMore = true
-
-  while (hasMore) {
-    const query = `
-      {
-        conditions(
-          first: ${first},
-          skip: ${skip},
-          orderBy: id,
-          orderDirection: asc
-        ) {
-          id
-          arweaveHash
-          creator
-        }
-      }
-    `
-
-    const response = await fetch(ACTIVITY_SUBGRAPH_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Activity subgraph request failed: ${response.statusText}`)
-    }
-
-    const result = await response.json()
-
-    if (result.errors) {
-      throw new Error(`Activity subgraph query error: ${result.errors[0].message}`)
-    }
-
-    const conditions = result.data.conditions || []
-
-    if (conditions.length === 0) {
-      hasMore = false
-    }
-    else {
-      allConditions = allConditions.concat(conditions)
-      skip += first
-      if (conditions.length < first) {
-        hasMore = false
-      }
-    }
-  }
-
-  return allConditions
 }
 
 async function fetchFromPnLSubgraph() {
@@ -350,7 +291,6 @@ async function processCondition(market: any) {
     resolved: market.resolved,
     arweave_hash: market.arweaveHash,
     creator: market.creator,
-    created_at: new Date().toISOString(),
   })
 
   if (error) {
@@ -467,7 +407,7 @@ async function processOutcomes(conditionId: string, outcomes: any[]) {
     condition_id: conditionId,
     outcome_text: outcome.outcome,
     outcome_index: index,
-    token_id: outcome.token_id || (`${outcome.token_id}${index}`),
+    token_id: outcome.token_id || (`${conditionId}${index}`),
   }))
 
   const { error } = await supabaseAdmin.from('outcomes').insert(outcomeData)
@@ -558,6 +498,7 @@ async function checkSyncRunning(): Promise<boolean> {
     .select('status')
     .eq('service_name', 'market_sync')
     .eq('subgraph_name', 'activity')
+    .lt('updated_at', new Date(Date.now() - 15 * 60 * 1000).toISOString())
     .maybeSingle()
 
   if (error && error.code !== 'PGRST116') {
@@ -576,7 +517,6 @@ async function updateSyncStatus(
     service_name: 'market_sync',
     subgraph_name: 'activity',
     status,
-    updated_at: new Date().toISOString(),
   }
 
   if (errorMessage !== undefined) {
@@ -596,30 +536,4 @@ async function updateSyncStatus(
   if (error) {
     console.error(`Failed to update sync status to ${status}:`, error)
   }
-}
-
-function mergeConditionsData(activityConditions: any[], pnlConditions: any[]) {
-  const merged: any[] = []
-  const pnlMap = new Map<string, any>()
-
-  pnlConditions.forEach(condition => pnlMap.set(condition.id, condition))
-
-  activityConditions.forEach((activityCondition) => {
-    const pnlCondition = pnlMap.get(activityCondition.id)
-    if (pnlCondition && pnlCondition.oracle && pnlCondition.questionId) {
-      merged.push({
-        id: activityCondition.id,
-        arweaveHash: activityCondition.arweaveHash,
-        creator: activityCondition.creator,
-        oracle: pnlCondition.oracle,
-        questionId: pnlCondition.questionId,
-        resolved: pnlCondition.resolved,
-      })
-    }
-    else {
-      console.log(`⚠️ Skipping condition ${activityCondition.id} - missing required fields from PnL subgraph`)
-    }
-  })
-
-  return merged
 }

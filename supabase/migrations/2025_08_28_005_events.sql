@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS markets
 CREATE TABLE IF NOT EXISTS outcomes
 (
   id                 CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
-  condition_id       VARCHAR(66) NOT NULL REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  condition_id       CHAR(66) NOT NULL REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
   outcome_text       TEXT        NOT NULL,
   outcome_index      SMALLINT    NOT NULL,               -- 0, 1, 2... outcome order
   token_id           TEXT        NOT NULL,               -- ERC1155 token ID for this outcome
