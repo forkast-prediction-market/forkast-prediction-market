@@ -168,7 +168,7 @@ export default function EventsGridContainer({
               isLoading={isLoading}
               hasMore={hasMore}
               isError={isError}
-              errorMessage={errorMessage}
+              errorMessage={errorMessage || undefined}
               retryCount={retryCount}
             />
           </div>
@@ -184,7 +184,7 @@ export default function EventsGridContainer({
               isLoading={isLoading}
               hasMore={hasMore}
               isError={isError}
-              errorMessage={errorMessage}
+              errorMessage={errorMessage || undefined}
               retryCount={retryCount}
             />
           </>
