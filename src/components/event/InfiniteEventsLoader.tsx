@@ -1,42 +1,50 @@
-'use client'
+"use client";
 
-import React, {
-  memo,
-  useCallback,
-  useEffect,
-  useState,
-} from 'react'
-import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
+import React, { memo, useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface InfiniteEventsLoaderProps {
-  onLoadMore: () => void
-  isLoading: boolean
-  hasMore: boolean
-  isError: boolean
-  errorMessage?: string
-  retryCount?: number
+  onLoadMore: () => void;
+  isLoading: boolean;
+  hasMore: boolean;
+  isError: boolean;
+  errorMessage?: string;
+  retryCount?: number;
+  triggerRef?: (element: HTMLElement | null) => void;
 }
 
-function InfiniteEventsLoader({ ref, onLoadMore, isLoading, hasMore, isError, errorMessage = 'Failed to load more events', retryCount = 0 }: InfiniteEventsLoaderProps & { ref?: React.RefObject<HTMLDivElement | null> }) {
-  const [isManualRetrying, setIsManualRetrying] = useState(false)
+function InfiniteEventsLoader({
+  onLoadMore,
+  isLoading,
+  hasMore,
+  isError,
+  errorMessage = "Failed to load more events",
+  retryCount = 0,
+  triggerRef,
+}: InfiniteEventsLoaderProps) {
+  const [isManualRetrying, setIsManualRetrying] = useState(false);
 
   const handleManualRetry = useCallback(async () => {
-    setIsManualRetrying(true)
+    setIsManualRetrying(true);
 
     // Small delay for UX feedback
-    await new Promise(resolve => setTimeout(resolve, 500))
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
-    onLoadMore()
-    setIsManualRetrying(false)
-  }, [onLoadMore])
+    onLoadMore();
+    setIsManualRetrying(false);
+  }, [onLoadMore]);
 
   // Reset manual retry state when loading starts
   useEffect(() => {
-    if (isLoading && isManualRetrying) {
-      setIsManualRetrying(false)
+    function resetRetrying() {
+      setIsManualRetrying(false);
     }
-  }, [isLoading, isManualRetrying])
+
+    if (isLoading && isManualRetrying) {
+      resetRetrying();
+    }
+  }, [isLoading, isManualRetrying]);
 
   // Loading state
   if (isLoading || isManualRetrying) {
@@ -49,7 +57,7 @@ function InfiniteEventsLoader({ ref, onLoadMore, isLoading, hasMore, isError, er
             aria-label="Loading"
           />
           <span className="text-sm text-muted-foreground">
-            {isManualRetrying ? 'Retrying...' : 'Loading more events...'}
+            {isManualRetrying ? "Retrying..." : "Loading more events..."}
           </span>
         </div>
 
@@ -60,7 +68,7 @@ function InfiniteEventsLoader({ ref, onLoadMore, isLoading, hasMore, isError, er
           <Skeleton className="h-4 w-1/2" data-testid="skeleton-3" />
         </div>
       </div>
-    )
+    );
   }
 
   // Error state
@@ -68,14 +76,10 @@ function InfiniteEventsLoader({ ref, onLoadMore, isLoading, hasMore, isError, er
     return (
       <div className="flex flex-col items-center justify-center space-y-4 py-8">
         <div className="space-y-2 text-center">
-          <p className="text-sm font-medium text-destructive">
-            {errorMessage}
-          </p>
+          <p className="text-sm font-medium text-destructive">{errorMessage}</p>
           {retryCount > 0 && (
             <p className="text-xs text-muted-foreground">
-              Automatic retry attempt
-              {' '}
-              {retryCount}
+              Automatic retry attempt {retryCount}
             </p>
           )}
         </div>
@@ -86,10 +90,10 @@ function InfiniteEventsLoader({ ref, onLoadMore, isLoading, hasMore, isError, er
           onClick={handleManualRetry}
           disabled={isManualRetrying}
         >
-          {isManualRetrying ? 'Retrying...' : 'Try Again'}
+          {isManualRetrying ? "Retrying..." : "Try Again"}
         </Button>
       </div>
-    )
+    );
   }
 
   // End of list state
@@ -105,22 +109,22 @@ function InfiniteEventsLoader({ ref, onLoadMore, isLoading, hasMore, isError, er
           </p>
         </div>
       </div>
-    )
+    );
   }
 
   // Trigger element for intersection observer
   // This element should be invisible but detectable by intersection observer
   return (
     <div
-      ref={ref}
+      ref={triggerRef}
       className="h-1 w-full"
       data-testid="infinite-loader-trigger"
       aria-hidden="true"
     />
-  )
+  );
 }
 
-InfiniteEventsLoader.displayName = 'InfiniteEventsLoader'
+InfiniteEventsLoader.displayName = "InfiniteEventsLoader";
 
 // Memoize the component to prevent unnecessary re-renders
-export default memo(InfiniteEventsLoader)
+export default memo(InfiniteEventsLoader);
