@@ -1,0 +1,156 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { performanceMonitor, getMemoryUsage } from "@/lib/performance";
+import { requestCache } from "@/lib/cache";
+
+interface PerformanceMonitorProps {
+  enabled?: boolean;
+}
+
+export default function PerformanceMonitor({
+  enabled = false,
+}: PerformanceMonitorProps) {
+  const [isVisible, setIsVisible] = useState(enabled);
+  const [stats, setStats] = useState<any>({});
+  const [memoryStats, setMemoryStats] = useState<any>(null);
+  const [cacheStats, setCacheStats] = useState<any>({});
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const updateStats = () => {
+      // Performance stats
+      const apiRequestStats = performanceMonitor.getStats("api_events_request");
+      const cacheHitStats = performanceMonitor.getStats("api_events_cache_hit");
+      const scrollTriggerStats = performanceMonitor.getStats("scroll_trigger");
+      const renderStats = performanceMonitor.getStats("events_render");
+
+      setStats({
+        apiRequest: apiRequestStats,
+        cacheHit: cacheHitStats,
+        scrollTrigger: scrollTriggerStats,
+        render: renderStats,
+      });
+
+      // Memory stats
+      const memory = getMemoryUsage();
+      setMemoryStats(memory);
+
+      // Cache stats
+      const cache = requestCache.getStats();
+      setCacheStats(cache);
+    };
+
+    updateStats();
+    const interval = setInterval(updateStats, 1000);
+
+    return () => clearInterval(interval);
+  }, [isVisible]);
+
+  // Keyboard shortcut to toggle visibility (Ctrl+Shift+P)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === "P") {
+        setIsVisible((prev) => !prev);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  if (!isVisible) {
+    return null;
+  }
+
+  return (
+    <div className="fixed bottom-4 right-4 bg-black/90 text-white p-4 rounded-lg text-xs font-mono max-w-md z-50">
+      <div className="flex justify-between items-center mb-2">
+        <h3 className="font-bold">Performance Monitor</h3>
+        <button
+          onClick={() => setIsVisible(false)}
+          className="text-gray-400 hover:text-white"
+        >
+          ×
+        </button>
+      </div>
+
+      {/* API Performance */}
+      <div className="mb-2">
+        <h4 className="text-yellow-400 font-semibold">API Performance</h4>
+        {stats.apiRequest ? (
+          <div className="ml-2">
+            <div>Requests: {stats.apiRequest.count}</div>
+            <div>Avg: {stats.apiRequest.avg}ms</div>
+            <div>P95: {stats.apiRequest.p95}ms</div>
+          </div>
+        ) : (
+          <div className="ml-2 text-gray-400">No data</div>
+        )}
+      </div>
+
+      {/* Cache Performance */}
+      <div className="mb-2">
+        <h4 className="text-green-400 font-semibold">Cache Performance</h4>
+        {stats.cacheHit ? (
+          <div className="ml-2">
+            <div>Cache Hits: {stats.cacheHit.count}</div>
+            <div>Avg: {stats.cacheHit.avg}ms</div>
+          </div>
+        ) : (
+          <div className="ml-2 text-gray-400">No cache hits</div>
+        )}
+        <div className="ml-2">
+          <div>Total Entries: {cacheStats.totalEntries || 0}</div>
+          <div>Valid: {cacheStats.validEntries || 0}</div>
+          <div>Expired: {cacheStats.expiredEntries || 0}</div>
+        </div>
+      </div>
+
+      {/* Scroll Performance */}
+      <div className="mb-2">
+        <h4 className="text-blue-400 font-semibold">Scroll Performance</h4>
+        {stats.scrollTrigger ? (
+          <div className="ml-2">
+            <div>Triggers: {stats.scrollTrigger.count}</div>
+          </div>
+        ) : (
+          <div className="ml-2 text-gray-400">No scroll events</div>
+        )}
+      </div>
+
+      {/* Render Performance */}
+      <div className="mb-2">
+        <h4 className="text-purple-400 font-semibold">Render Performance</h4>
+        {stats.render ? (
+          <div className="ml-2">
+            <div>Renders: {stats.render.count}</div>
+          </div>
+        ) : (
+          <div className="ml-2 text-gray-400">No render data</div>
+        )}
+      </div>
+
+      {/* Memory Usage */}
+      {memoryStats && (
+        <div className="mb-2">
+          <h4 className="text-red-400 font-semibold">Memory Usage</h4>
+          <div className="ml-2">
+            <div>
+              Used: {Math.round(memoryStats.usedJSHeapSize / 1024 / 1024)}MB
+            </div>
+            <div>
+              Total: {Math.round(memoryStats.totalJSHeapSize / 1024 / 1024)}MB
+            </div>
+            <div>Usage: {memoryStats.usagePercentage}%</div>
+          </div>
+        </div>
+      )}
+
+      <div className="text-gray-400 text-xs mt-2">
+        Press Ctrl+Shift+P to toggle
+      </div>
+    </div>
+  );
+}
