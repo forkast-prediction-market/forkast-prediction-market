@@ -1,20 +1,20 @@
-import { create } from "zustand";
+import { create } from 'zustand'
 
 interface PaginationState {
-  currentPage: number;
-  hasMore: boolean;
-  isLoading: boolean;
-  error: string | null;
+  currentPage: number
+  hasMore: boolean
+  isLoading: boolean
+  error: string | null
 
   // Actions
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
-  setHasMore: (hasMore: boolean) => void;
-  incrementPage: () => void;
-  reset: () => void;
+  setLoading: (loading: boolean) => void
+  setError: (error: string | null) => void
+  setHasMore: (hasMore: boolean) => void
+  incrementPage: () => void
+  reset: () => void
 }
 
-export const usePagination = create<PaginationState>()((set, get) => ({
+export const usePagination = create<PaginationState>()(set => ({
   currentPage: 0,
   hasMore: true,
   isLoading: false,
@@ -23,7 +23,7 @@ export const usePagination = create<PaginationState>()((set, get) => ({
   setLoading: (loading: boolean) => set({ isLoading: loading }),
   setError: (error: string | null) => set({ error }),
   setHasMore: (hasMore: boolean) => set({ hasMore }),
-  incrementPage: () => set((state) => ({ currentPage: state.currentPage + 1 })),
+  incrementPage: () => set(state => ({ currentPage: state.currentPage + 1 })),
   reset: () =>
     set({
       currentPage: 0,
@@ -31,4 +31,4 @@ export const usePagination = create<PaginationState>()((set, get) => ({
       isLoading: false,
       error: null,
     }),
-}));
+}))

@@ -1,30 +1,30 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 interface UseVirtualizationProps {
-  items: any[];
-  itemHeight: number;
-  containerHeight: number;
-  overscan?: number;
-  threshold?: number;
+  items: any[]
+  itemHeight: number
+  containerHeight: number
+  overscan?: number
+  threshold?: number
 }
 
 interface UseVirtualizationReturn {
   virtualItems: Array<{
-    index: number;
-    start: number;
-    end: number;
-    item: any;
-  }>;
-  totalHeight: number;
+    index: number
+    start: number
+    end: number
+    item: any
+  }>
+  totalHeight: number
   scrollElementProps: {
-    onScroll: (e: React.UIEvent<HTMLDivElement>) => void;
-    style: React.CSSProperties;
-  };
-  shouldVirtualize: boolean;
+    onScroll: (e: React.UIEvent<HTMLDivElement>) => void
+    style: React.CSSProperties
+  }
+  shouldVirtualize: boolean
 }
 
-const DEFAULT_THRESHOLD = 100;
-const DEFAULT_OVERSCAN = 5;
+const DEFAULT_THRESHOLD = 100
+const DEFAULT_OVERSCAN = 5
 
 export function useVirtualization({
   items,
@@ -33,16 +33,16 @@ export function useVirtualization({
   overscan = DEFAULT_OVERSCAN,
   threshold = DEFAULT_THRESHOLD,
 }: UseVirtualizationProps): UseVirtualizationReturn {
-  const [scrollTop, setScrollTop] = useState(0);
-  const scrollElementRef = useRef<HTMLDivElement>(null);
+  const [scrollTop, setScrollTop] = useState(0)
+  const scrollElementRef = useRef<HTMLDivElement>(null)
 
   // Determine if we should virtualize based on item count
-  const shouldVirtualize = items.length > threshold;
+  const shouldVirtualize = items.length > threshold
 
   // Calculate total height
   const totalHeight = useMemo(() => {
-    return items.length * itemHeight;
-  }, [items.length, itemHeight]);
+    return items.length * itemHeight
+  }, [items.length, itemHeight])
 
   // Calculate visible range
   const { startIndex, endIndex } = useMemo(() => {
@@ -50,16 +50,16 @@ export function useVirtualization({
       return {
         startIndex: 0,
         endIndex: items.length - 1,
-      };
+      }
     }
 
-    const start = Math.floor(scrollTop / itemHeight);
-    const visibleCount = Math.ceil(containerHeight / itemHeight);
+    const start = Math.floor(scrollTop / itemHeight)
+    const visibleCount = Math.ceil(containerHeight / itemHeight)
 
     return {
       startIndex: Math.max(0, start - overscan),
       endIndex: Math.min(items.length - 1, start + visibleCount + overscan),
-    };
+    }
   }, [
     scrollTop,
     itemHeight,
@@ -67,11 +67,11 @@ export function useVirtualization({
     overscan,
     items.length,
     shouldVirtualize,
-  ]);
+  ])
 
   // Generate virtual items
   const virtualItems = useMemo(() => {
-    const result = [];
+    const result = []
 
     for (let i = startIndex; i <= endIndex; i++) {
       result.push({
@@ -79,17 +79,17 @@ export function useVirtualization({
         start: i * itemHeight,
         end: (i + 1) * itemHeight,
         item: items[i],
-      });
+      })
     }
 
-    return result;
-  }, [startIndex, endIndex, itemHeight, items]);
+    return result
+  }, [startIndex, endIndex, itemHeight, items])
 
   // Handle scroll events
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
-    const scrollTop = e.currentTarget.scrollTop;
-    setScrollTop(scrollTop);
-  }, []);
+    const scrollTop = e.currentTarget.scrollTop
+    setScrollTop(scrollTop)
+  }, [])
 
   // Scroll element props
   const scrollElementProps = useMemo(
@@ -97,24 +97,24 @@ export function useVirtualization({
       onScroll: handleScroll,
       style: {
         height: containerHeight,
-        overflow: "auto" as const,
+        overflow: 'auto' as const,
       },
     }),
-    [handleScroll, containerHeight]
-  );
+    [handleScroll, containerHeight],
+  )
 
   // Reset scroll position when items change significantly
   useEffect(() => {
     if (scrollElementRef.current && items.length === 0) {
-      scrollElementRef.current.scrollTop = 0;
-      setScrollTop(0);
+      scrollElementRef.current.scrollTop = 0
+      setScrollTop(0)
     }
-  }, [items.length]);
+  }, [items.length])
 
   return {
     virtualItems,
     totalHeight,
     scrollElementProps,
     shouldVirtualize,
-  };
+  }
 }
