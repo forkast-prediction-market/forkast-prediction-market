@@ -114,9 +114,10 @@ export default function EventChart({ event }: Props) {
               )}
         </div>
 
-        <div className="flex items-center gap-1 text-muted-foreground opacity-40">
+        <div className="flex items-center gap-1 text-white opacity-40">
           <div
             className="size-6"
+            style={{ filter: 'brightness(0) invert(1)' }}
             dangerouslySetInnerHTML={{
               __html: sanitizeSvg(process.env.NEXT_PUBLIC_SITE_LOGO_SVG!),
             }}
