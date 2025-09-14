@@ -1,6 +1,6 @@
 # 🚀 Launch Your Decentralized Prediction Market in Minutes
 
-[![Forkast Banner](https://i.imgur.com/xZvOiEU.png)](https://forka.st)
+[![Forkast Banner](https://i.imgur.com/G9wM4Na.png)](https://forka.st)
 
 Open-source project to launch and monetize Web3 prediction markets, inspired by Polymarket, but with full transparency and control.
 
