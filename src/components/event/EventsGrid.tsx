@@ -91,13 +91,7 @@ export default function EventsGrid({
   }, [hasNextPage, fetchNextPage, isFetchingNextPage])
 
   if (status === 'pending' && initialEvents.length === 0) {
-    return (
-      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {Array.from({ length: 5 }, (_, i) => (
-          <EventCardSkeleton key={`skeleton-${i}`} />
-        ))}
-      </div>
-    )
+    return Array.from({ length: 5 }, (_, i) => <EventCardSkeleton key={`skeleton-${i}`} />)
   }
 
   if (status === 'error') {
@@ -114,29 +108,12 @@ export default function EventsGrid({
 
   return (
     <OpenCardProvider>
-      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {allEvents.map(event => (
-          <EventCard key={event.id} event={event} />
-        ))}
+      <>
+        {allEvents.map(event => <EventCard key={event.id} event={event} />)}
 
         {hasNextPage && (
-          <div
-            ref={observerTarget}
-            className="col-span-full flex justify-center py-4"
-          >
-            {isFetchingNextPage
-              ? (
-                  <div className="flex items-center gap-2">
-                    {Array.from({ length: 4 }, (_, i) => (
-                      <EventCardSkeleton key={`loader-${i}`} />
-                    ))}
-                  </div>
-                )
-              : (
-                  <div className="text-sm text-muted-foreground">
-                    Loading more...
-                  </div>
-                )}
+          <div ref={observerTarget}>
+            <EventCardSkeleton />
           </div>
         )}
 
@@ -145,7 +122,7 @@ export default function EventsGrid({
             Nothing more to load
           </div>
         )}
-      </div>
+      </>
     </OpenCardProvider>
   )
 }
