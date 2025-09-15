@@ -1,8 +1,9 @@
 'use client'
 
+import type { Event } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import EventsEmptyState from '@/app/event/[slug]/_components/EventsEmptyState'
 import EventCard from '@/components/event/EventCard'
 import EventCardSkeleton from '@/components/event/EventCardSkeleton'
@@ -12,11 +13,13 @@ interface EventsGridProps {
   tag: string
   search: string
   bookmarked: string
-  initialEvents?: any[]
+  initialEvents?: Event[]
 }
 
+const PAGE_SIZE = 5
+
 async function fetchEvents({
-  pageParam = 5,
+  pageParam = 0,
   tag,
   search,
   bookmarked,
@@ -25,14 +28,13 @@ async function fetchEvents({
   tag: string
   search: string
   bookmarked: string
-}) {
+}): Promise<Event[]> {
   const params = new URLSearchParams({
     tag,
     search,
     bookmarked,
     offset: pageParam.toString(),
   })
-
   const response = await fetch(`/api/events?${params}`)
   if (!response.ok) {
     throw new Error('Failed to fetch events')
@@ -46,6 +48,8 @@ export default function EventsGrid({
   bookmarked,
   initialEvents = [],
 }: EventsGridProps) {
+  const parentRef = useRef<HTMLDivElement | null>(null)
+
   const {
     status,
     data,
@@ -54,59 +58,75 @@ export default function EventsGrid({
     hasNextPage,
   } = useInfiniteQuery({
     queryKey: ['events', tag, search, bookmarked],
-    queryFn: ctx => fetchEvents({
-      pageParam: ctx.pageParam,
-      tag,
-      search,
-      bookmarked,
-    }),
-    getNextPageParam: (lastPage, allPages) => {
-      return lastPage.length === 5 ? (allPages.length * 5) + 5 : undefined
-    },
-    initialPageParam: 5,
+    queryFn: ({ pageParam }) => fetchEvents({ pageParam, tag, search, bookmarked }),
+    getNextPageParam: (lastPage, allPages) => lastPage.length === PAGE_SIZE ? allPages.length * PAGE_SIZE : undefined,
+    initialPageParam: 0,
   })
 
-  const allEvents = initialEvents.length > 0
-    ? [...initialEvents, ...(data ? data.pages.flatMap(page => page) : [])]
-    : data
-      ? data.pages.flatMap(page => page)
-      : []
+  const allEvents
+    = initialEvents.length > 0
+      ? [...initialEvents, ...(data ? data.pages.flat() : [])]
+      : data
+        ? data.pages.flat()
+        : []
 
-  const listRef = useRef<HTMLDivElement>(null)
+  function getColumnsCount() {
+    if (typeof window === 'undefined') {
+      return 4
+    }
 
-  const itemVirtualizer = useWindowVirtualizer({
-    count: hasNextPage ? allEvents.length + 4 : allEvents.length,
-    estimateSize: () => 200,
-    overscan: 5,
-    scrollMargin: listRef.current?.offsetTop ?? 0,
-  })
+    const width = window.innerWidth
+
+    if (width >= 1024) {
+      return 4
+    }
+
+    if (width >= 768) {
+      return 3
+    }
+
+    if (width >= 640) {
+      return 2
+    }
+
+    return 1
+  }
+
+  const [columns, setColumns] = useState(getColumnsCount())
 
   useEffect(() => {
-    const [lastItem] = [...itemVirtualizer.getVirtualItems()].reverse()
-
-    if (!lastItem) {
-      return
+    function handleResize() {
+      return setColumns(getColumnsCount())
     }
 
-    if (
-      lastItem.index >= allEvents.length - 1
-      && hasNextPage
-      && !isFetchingNextPage
-    ) {
-      fetchNextPage()
-    }
-  }, [
-    hasNextPage,
-    fetchNextPage,
-    allEvents.length,
-    isFetchingNextPage,
-    itemVirtualizer.getVirtualItems(),
-  ])
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
+
+  const rowsCount = Math.ceil(allEvents.length / columns)
+
+  const virtualizer = useWindowVirtualizer({
+    count: rowsCount,
+    estimateSize: () => 200,
+    scrollMargin: parentRef.current?.offsetTop ?? 0,
+    onChange: (instance) => {
+      const items = instance.getVirtualItems()
+      const last = items[items.length - 1]
+      if (
+        last
+        && last.index >= rowsCount - 2
+        && hasNextPage
+        && !isFetchingNextPage
+      ) {
+        fetchNextPage()
+      }
+    },
+  })
 
   if (status === 'pending' && initialEvents.length === 0) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        {Array.from({ length: 8 }, (_, i) => (
+      <div className="flex flex-col gap-4">
+        {Array.from({ length: 5 }).map((_, i) => (
           <EventCardSkeleton key={`skeleton-${i}`} />
         ))}
       </div>
@@ -115,10 +135,8 @@ export default function EventsGrid({
 
   if (status === 'error') {
     return (
-      <div className="py-8 text-center">
-        <p className="text-red-500">
-          Error:
-        </p>
+      <div className="col-span-full py-4 text-center text-sm text-muted-foreground">
+        Could not load more events.
       </div>
     )
   }
@@ -129,52 +147,55 @@ export default function EventsGrid({
 
   return (
     <OpenCardProvider>
-      <div ref={listRef}>
+      <div ref={parentRef} className="w-full">
         <div
-          className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
           style={{
-            height: `${itemVirtualizer.getTotalSize()}px`,
-            width: '100%',
+            height: `${virtualizer.getTotalSize()}px`,
             position: 'relative',
+            width: '100%',
           }}
         >
-          {itemVirtualizer.getVirtualItems().map((virtualItem) => {
-            const isLoaderItem = virtualItem.index >= allEvents.length
-            const event = allEvents[virtualItem.index]
-
-            if (isLoaderItem) {
-              return (
-                <div
-                  key={`loader-${virtualItem.index}`}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    transform: `translateY(${virtualItem.start - itemVirtualizer.options.scrollMargin}px)`,
-                  }}
-                >
-                  <EventCardSkeleton />
-                </div>
-              )
-            }
+          {virtualizer.getVirtualItems().map((virtualRow) => {
+            const start = virtualRow.index * columns
+            const end = Math.min(start + columns, allEvents.length)
+            const rowEvents = allEvents.slice(start, end)
 
             return (
               <div
-                key={event.id}
+                key={virtualRow.key}
                 style={{
                   position: 'absolute',
                   top: 0,
                   left: 0,
                   width: '100%',
-                  transform: `translateY(${virtualItem.start - itemVirtualizer.options.scrollMargin}px)`,
+                  height: `${virtualRow.size}px`,
+                  transform: `translateY(${
+                    virtualRow.start
+                    - (virtualizer.options.scrollMargin ?? 0)
+                  }px)`,
                 }}
               >
-                <EventCard event={event} />
+                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                  {rowEvents.map(event => (
+                    <EventCard key={event.id} event={event} />
+                  ))}
+                </div>
               </div>
             )
           })}
         </div>
+
+        {isFetchingNextPage && (
+          <div className="py-4">
+            <EventCardSkeleton />
+          </div>
+        )}
+
+        {!hasNextPage && allEvents.length > initialEvents.length && (
+          <div className="py-4 text-center text-sm text-muted-foreground">
+            Nothing more to load
+          </div>
+        )}
       </div>
     </OpenCardProvider>
   )
