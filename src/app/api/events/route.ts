@@ -6,7 +6,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const tag = searchParams.get('tag') || 'trending'
   const search = searchParams.get('search') || ''
-  const bookmarked = Boolean(searchParams.get('bookmarked') || 'false')
+  const bookmarked = searchParams.get('bookmarked') === 'true'
   const offset = Number.parseInt(searchParams.get('offset') || '0')
 
   const user = await UserModel.getCurrentUser()
