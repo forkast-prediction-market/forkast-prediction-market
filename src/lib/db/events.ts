@@ -6,6 +6,7 @@ interface ListEventsProps {
   search?: string
   userId?: string | undefined
   bookmarked?: boolean
+  offset?: number
 }
 
 export const EventModel = {
@@ -14,6 +15,7 @@ export const EventModel = {
     search = '',
     userId = '',
     bookmarked = false,
+    offset = 0,
   }: ListEventsProps) {
     const marketsSelect = `
       markets!inner(
@@ -62,7 +64,8 @@ export const EventModel = {
       query.ilike('title', `%${search}%`)
     }
 
-    query.order('created_at', { ascending: false }).limit(20)
+    const limit = 20
+    query.order('created_at', { ascending: false }).range(offset, offset + limit - 1)
 
     const { data, error } = await query
 
