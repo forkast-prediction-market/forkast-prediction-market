@@ -1,6 +1,7 @@
 'use client'
 
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { useEffect, useRef } from 'react'
 import EventsEmptyState from '@/app/event/[slug]/_components/EventsEmptyState'
 import EventCard from '@/components/event/EventCard'
@@ -71,33 +72,53 @@ export default function EventsGrid({
       ? data.pages.flatMap(page => page)
       : []
 
-  const observerTarget = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+
+  const itemVirtualizer = useWindowVirtualizer({
+    count: hasNextPage ? allEvents.length + 4 : allEvents.length,
+    estimateSize: () => 200,
+    overscan: 5,
+    scrollMargin: listRef.current?.offsetTop ?? 0,
+  })
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage()
-        }
-      },
-      { threshold: 1.0 },
-    )
+    const [lastItem] = [...itemVirtualizer.getVirtualItems()].reverse()
 
-    if (observerTarget.current) {
-      observer.observe(observerTarget.current)
+    if (!lastItem) {
+      return
     }
 
-    return () => observer.disconnect()
-  }, [hasNextPage, fetchNextPage, isFetchingNextPage])
+    if (
+      lastItem.index >= allEvents.length - 1
+      && hasNextPage
+      && !isFetchingNextPage
+    ) {
+      fetchNextPage()
+    }
+  }, [
+    hasNextPage,
+    fetchNextPage,
+    allEvents.length,
+    isFetchingNextPage,
+    itemVirtualizer.getVirtualItems(),
+  ])
 
   if (status === 'pending' && initialEvents.length === 0) {
-    return Array.from({ length: 5 }, (_, i) => <EventCardSkeleton key={`skeleton-${i}`} />)
+    return (
+      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        {Array.from({ length: 8 }, (_, i) => (
+          <EventCardSkeleton key={`skeleton-${i}`} />
+        ))}
+      </div>
+    )
   }
 
   if (status === 'error') {
     return (
-      <div className="col-span-full py-4 text-center text-sm text-muted-foreground">
-        Could not load more events.
+      <div className="py-8 text-center">
+        <p className="text-red-500">
+          Error:
+        </p>
       </div>
     )
   }
@@ -108,21 +129,53 @@ export default function EventsGrid({
 
   return (
     <OpenCardProvider>
-      <>
-        {allEvents.map(event => <EventCard key={event.id} event={event} />)}
+      <div ref={listRef}>
+        <div
+          className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+          style={{
+            height: `${itemVirtualizer.getTotalSize()}px`,
+            width: '100%',
+            position: 'relative',
+          }}
+        >
+          {itemVirtualizer.getVirtualItems().map((virtualItem) => {
+            const isLoaderItem = virtualItem.index >= allEvents.length
+            const event = allEvents[virtualItem.index]
 
-        {hasNextPage && (
-          <div ref={observerTarget}>
-            <EventCardSkeleton />
-          </div>
-        )}
+            if (isLoaderItem) {
+              return (
+                <div
+                  key={`loader-${virtualItem.index}`}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualItem.start - itemVirtualizer.options.scrollMargin}px)`,
+                  }}
+                >
+                  <EventCardSkeleton />
+                </div>
+              )
+            }
 
-        {!hasNextPage && allEvents.length > initialEvents.length && (
-          <div className="col-span-full py-4 text-center text-sm text-muted-foreground">
-            Nothing more to load
-          </div>
-        )}
-      </>
+            return (
+              <div
+                key={event.id}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${virtualItem.start - itemVirtualizer.options.scrollMargin}px)`,
+                }}
+              >
+                <EventCard event={event} />
+              </div>
+            )
+          })}
+        </div>
+      </div>
     </OpenCardProvider>
   )
 }
