@@ -17,6 +17,8 @@
     "@reown/appkit-adapter-ethers": "^1.8.2",
     "@reown/appkit-siwe": "^1.8.2",
     "@supabase/supabase-js": "^2.57.2",
+    "@tanstack/react-query": "^5.87.4",
+    "@tanstack/react-virtual": "^3.13.12",
     "@vercel/speed-insights": "^1.2.0",
     "@visx/axis": "3.13.0-alpha.0",
     "@visx/curve": "^3.12.0",

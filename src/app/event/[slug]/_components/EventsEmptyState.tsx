@@ -9,7 +9,7 @@ interface Props {
 
 export default function EventsEmptyState({ searchQuery, tag }: Props) {
   return (
-    <div className="col-span-4 py-12 text-center">
+    <div className="col-span-full py-12 text-center">
       <div className="mb-2 flex justify-center text-muted-foreground">
         {searchQuery
           ? <SearchIcon className="size-6" />
