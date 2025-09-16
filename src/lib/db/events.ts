@@ -65,7 +65,8 @@ export const EventModel = {
     }
 
     const limit = 20
-    query.order('created_at', { ascending: false }).range(offset, offset + limit - 1)
+    const validOffset = Number.isNaN(offset) || offset < 0 ? 0 : offset
+    query.order('id', { ascending: false }).range(validOffset, validOffset + limit - 1)
 
     const { data, error } = await query
 

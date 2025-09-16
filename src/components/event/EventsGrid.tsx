@@ -108,9 +108,9 @@ export default function EventsGrid({
 
   if (status === 'error') {
     return (
-      <div className="col-span-full py-4 text-center text-sm text-muted-foreground">
+      <p className="text-center text-sm text-muted-foreground">
         Could not load more events.
-      </div>
+      </p>
     )
   }
 

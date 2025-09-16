@@ -8,9 +8,9 @@ import { Toaster } from '@/components/ui/sonner'
 import AppKitProvider from '@/providers/AppKitProvider'
 import ProgressIndicatorProvider from '@/providers/ProgressIndicatorProvider'
 
-export function Providers({ children }: { children: React.ReactNode }) {
-  const queryClient = new QueryClient()
+const queryClient = new QueryClient()
 
+export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <ProgressIndicatorProvider>
       <ThemeProvider attribute="class">

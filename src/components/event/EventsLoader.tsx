@@ -20,7 +20,11 @@ export default async function EventsLoader({ tag, search, bookmarked }: EventsLo
   })
 
   if (error) {
-    return <></>
+    return (
+      <p className="text-center text-sm text-muted-foreground">
+        Could not load more events.
+      </p>
+    )
   }
 
   if (!events || events.length === 0) {
