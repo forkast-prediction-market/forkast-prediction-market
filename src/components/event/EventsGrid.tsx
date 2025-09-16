@@ -16,6 +16,7 @@ interface EventsGridProps {
   initialEvents?: Event[]
 }
 
+const EMPTY_EVENTS: Event[] = []
 const PAGE_SIZE = 20
 
 async function fetchEvents({
@@ -51,7 +52,7 @@ export default function EventsGrid({
   tag,
   search,
   bookmarked,
-  initialEvents = [],
+  initialEvents = EMPTY_EVENTS,
 }: EventsGridProps) {
   const parentRef = useRef<HTMLDivElement | null>(null)
 
