@@ -7,7 +7,6 @@ import { useRef } from 'react'
 import EventsEmptyState from '@/app/event/[slug]/_components/EventsEmptyState'
 import EventCard from '@/components/event/EventCard'
 import EventCardSkeleton from '@/components/event/EventCardSkeleton'
-import { OpenCardProvider } from '@/components/event/EventOpenCardContext'
 import { useColumns } from '@/hooks/useColumns'
 
 interface EventsGridProps {
@@ -17,7 +16,7 @@ interface EventsGridProps {
   initialEvents?: Event[]
 }
 
-const PAGE_SIZE = 5
+const PAGE_SIZE = 20
 
 async function fetchEvents({
   pageParam = 0,
@@ -43,6 +42,11 @@ async function fetchEvents({
   return response.json()
 }
 
+function HomePageSkeleton() {
+  const skeletons = Array.from({ length: 8 }, (_, i) => `skeleton-${i}`)
+  return skeletons.map(id => <EventCardSkeleton key={id} />)
+}
+
 export default function EventsGrid({
   tag,
   search,
@@ -61,7 +65,7 @@ export default function EventsGrid({
     queryKey: ['events', tag, search, bookmarked],
     queryFn: ({ pageParam }) => fetchEvents({ pageParam, tag, search, bookmarked }),
     getNextPageParam: (lastPage, allPages) => lastPage.length === PAGE_SIZE ? allPages.length * PAGE_SIZE : undefined,
-    initialPageParam: 0,
+    initialPageParam: 20,
   })
 
   const allEvents
@@ -94,7 +98,11 @@ export default function EventsGrid({
   })
 
   if (status === 'pending' && initialEvents.length === 0) {
-    return <EventCardSkeleton />
+    return (
+      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+        <HomePageSkeleton />
+      </div>
+    )
   }
 
   if (status === 'error') {
@@ -110,44 +118,42 @@ export default function EventsGrid({
   }
 
   return (
-    <OpenCardProvider>
-      <div ref={parentRef} className="w-full">
-        <div
-          style={{
-            height: `${virtualizer.getTotalSize()}px`,
-            position: 'relative',
-            width: '100%',
-          }}
-        >
-          {virtualizer.getVirtualItems().map((virtualRow) => {
-            const start = virtualRow.index * columns
-            const end = Math.min(start + columns, allEvents.length)
-            const rowEvents = allEvents.slice(start, end)
+    <div ref={parentRef} className="w-full">
+      <div
+        style={{
+          height: `${virtualizer.getTotalSize()}px`,
+          position: 'relative',
+          width: '100%',
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualRow) => {
+          const start = virtualRow.index * columns
+          const end = Math.min(start + columns, allEvents.length)
+          const rowEvents = allEvents.slice(start, end)
 
-            return (
-              <div
-                key={virtualRow.key}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${
-                    virtualRow.start
-                    - (virtualizer.options.scrollMargin ?? 0)
-                  }px)`,
-                }}
-              >
-                <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  {rowEvents.map(event => <EventCard key={event.id} event={event} />)}
-                  {isFetchingNextPage && <EventCardSkeleton />}
-                </div>
+          return (
+            <div
+              key={virtualRow.key}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: `${virtualRow.size}px`,
+                transform: `translateY(${
+                  virtualRow.start
+                  - (virtualizer.options.scrollMargin ?? 0)
+                }px)`,
+              }}
+            >
+              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+                {rowEvents.map(event => <EventCard key={event.id} event={event} />)}
+                {isFetchingNextPage && <EventCardSkeleton />}
               </div>
-            )
-          })}
-        </div>
+            </div>
+          )
+        })}
       </div>
-    </OpenCardProvider>
+    </div>
   )
 }

@@ -64,7 +64,7 @@ export const EventModel = {
       query.ilike('title', `%${search}%`)
     }
 
-    const limit = 5
+    const limit = 20
     query.order('created_at', { ascending: false }).range(offset, offset + limit - 1)
 
     const { data, error } = await query
