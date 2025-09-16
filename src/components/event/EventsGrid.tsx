@@ -107,7 +107,7 @@ export default function EventsGrid({
 
   const virtualizer = useWindowVirtualizer({
     count: rowsCount,
-    estimateSize: () => 200,
+    estimateSize: () => 195,
     scrollMargin: parentRef.current?.offsetTop ?? 0,
     onChange: (instance) => {
       const items = instance.getVirtualItems()
@@ -118,19 +118,13 @@ export default function EventsGrid({
         && hasNextPage
         && !isFetchingNextPage
       ) {
-        fetchNextPage()
+        queueMicrotask(() => fetchNextPage())
       }
     },
   })
 
   if (status === 'pending' && initialEvents.length === 0) {
-    return (
-      <div className="flex flex-col gap-4">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <EventCardSkeleton key={`skeleton-${i}`} />
-        ))}
-      </div>
-    )
+    return <EventCardSkeleton />
   }
 
   if (status === 'error') {
@@ -176,20 +170,13 @@ export default function EventsGrid({
                 }}
               >
                 <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-                  {rowEvents.map(event => (
-                    <EventCard key={event.id} event={event} />
-                  ))}
+                  {rowEvents.map(event => <EventCard key={event.id} event={event} />)}
+                  {isFetchingNextPage && <EventCardSkeleton />}
                 </div>
               </div>
             )
           })}
         </div>
-
-        {isFetchingNextPage && (
-          <div className="py-4">
-            <EventCardSkeleton />
-          </div>
-        )}
 
         {!hasNextPage && allEvents.length > initialEvents.length && (
           <div className="py-4 text-center text-sm text-muted-foreground">
