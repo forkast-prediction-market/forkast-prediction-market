@@ -107,7 +107,7 @@ export default function EventsGrid({
 
   const virtualizer = useWindowVirtualizer({
     count: rowsCount,
-    estimateSize: () => 195,
+    estimateSize: () => 194,
     scrollMargin: parentRef.current?.offsetTop ?? 0,
     onChange: (instance) => {
       const items = instance.getVirtualItems()
@@ -177,12 +177,6 @@ export default function EventsGrid({
             )
           })}
         </div>
-
-        {!hasNextPage && allEvents.length > initialEvents.length && (
-          <div className="py-4 text-center text-sm text-muted-foreground">
-            Nothing more to load
-          </div>
-        )}
       </div>
     </OpenCardProvider>
   )
