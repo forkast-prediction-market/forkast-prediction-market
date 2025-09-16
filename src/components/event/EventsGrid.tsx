@@ -3,11 +3,12 @@
 import type { Event } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
-import { useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
 import EventsEmptyState from '@/app/event/[slug]/_components/EventsEmptyState'
 import EventCard from '@/components/event/EventCard'
 import EventCardSkeleton from '@/components/event/EventCardSkeleton'
 import { OpenCardProvider } from '@/components/event/EventOpenCardContext'
+import { useColumns } from '@/hooks/useColumns'
 
 interface EventsGridProps {
   tag: string
@@ -70,38 +71,7 @@ export default function EventsGrid({
         ? data.pages.flat()
         : []
 
-  function getColumnsCount() {
-    if (typeof window === 'undefined') {
-      return 4
-    }
-
-    const width = window.innerWidth
-
-    if (width >= 1024) {
-      return 4
-    }
-
-    if (width >= 768) {
-      return 3
-    }
-
-    if (width >= 640) {
-      return 2
-    }
-
-    return 1
-  }
-
-  const [columns, setColumns] = useState(getColumnsCount())
-
-  useEffect(() => {
-    function handleResize() {
-      return setColumns(getColumnsCount())
-    }
-
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+  const columns = useColumns()
 
   const rowsCount = Math.ceil(allEvents.length / columns)
 
