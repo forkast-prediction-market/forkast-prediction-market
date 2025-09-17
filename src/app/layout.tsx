@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from 'next'
 import { openSauceOne } from '@/app/fonts'
 import Header from '@/components/layout/Header'
 import NavigationTabs from '@/components/layout/NavigationTabs'
+import UserInitializer from '@/components/UserInitializer'
 import { Providers } from '@/providers/Providers'
 import './globals.css'
 
@@ -28,6 +29,7 @@ export default async function RootLayout({ children }: LayoutProps<'/'>) {
     <html lang="en" className={`${openSauceOne.variable}`} suppressHydrationWarning>
       <body className="font-sans antialiased">
         <Providers>
+          <UserInitializer />
           <Header />
           <NavigationTabs />
           {children}

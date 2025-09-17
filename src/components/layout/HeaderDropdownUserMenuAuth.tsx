@@ -23,13 +23,13 @@ export default function HeaderDropdownUserMenuAuth() {
         <Button
           type="button"
           variant="ghost"
-          size="icon"
+          className="flex h-auto items-center gap-2 px-2 py-1"
         >
           <Image
             src={user?.image || `https://avatar.vercel.sh/${user?.address}.png`}
             alt="User avatar"
-            width={24}
-            height={24}
+            width={32}
+            height={32}
             className="rounded-full"
           />
           <ChevronDownIcon className="size-3" />

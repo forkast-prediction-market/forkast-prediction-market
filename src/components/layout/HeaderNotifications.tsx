@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 export default function HeaderNotifications() {
   return (
     <Button type="button" size="icon" variant="ghost">
-      <BellIcon />
+      <BellIcon className="size-5" />
     </Button>
   )
 }
