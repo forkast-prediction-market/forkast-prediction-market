@@ -1,8 +1,10 @@
 'use client'
 
 import type { User } from '@/types'
+import { ExternalLinkIcon } from 'lucide-react'
 import Form from 'next/form'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { updateUserAction } from '@/app/settings/actions/update-profile'
@@ -13,7 +15,10 @@ import { Label } from '@/components/ui/label'
 import { useUser } from '@/stores/useUser'
 
 export default function SettingsProfileTab({ user }: { user: User }) {
-  const [state, formAction, isPending] = useActionState((_: any, formData: any) => updateUserAction(formData), {})
+  const [state, formAction, isPending] = useActionState(
+    (_: any, formData: any) => updateUserAction(formData),
+    {},
+  )
   const fileInputRef = useRef<HTMLInputElement>(null)
   const prevPending = useRef(false)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
@@ -52,20 +57,27 @@ export default function SettingsProfileTab({ user }: { user: User }) {
   return (
     <div className="grid gap-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Profile Settings</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Profile Settings
+        </h1>
         <p className="mt-2 text-muted-foreground">
           Manage your account profile and preferences.
         </p>
         <p className="text-sm text-destructive">{state.error}</p>
       </div>
 
-      <Form action={formAction} className="grid gap-6" formEncType="multipart/form-data">
+      <Form
+        action={formAction}
+        className="grid gap-6"
+        formEncType="multipart/form-data"
+      >
         <div className="rounded-lg border p-6">
           <div className="flex items-center gap-4">
-            <div className={`
-              flex size-16 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary
-              to-primary/60
-            `}
+            <div
+              className={`
+                flex size-16 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary
+                to-primary/60
+              `}
             >
               {previewImage || user.image
                 ? (
@@ -78,9 +90,7 @@ export default function SettingsProfileTab({ user }: { user: User }) {
                     />
                   )
                 : (
-                    <span className="text-lg font-semibold text-white">
-                      U
-                    </span>
+                    <span className="text-lg font-semibold text-white">U</span>
                   )}
             </div>
             <div className="flex flex-col gap-2">
@@ -93,8 +103,12 @@ export default function SettingsProfileTab({ user }: { user: User }) {
               >
                 Upload
               </Button>
-              {state.errors?.image && <InputError message={state.errors.image} />}
-              <p className="text-xs text-muted-foreground">Max 5MB, JPG/PNG/WEBP only</p>
+              {state.errors?.image && (
+                <InputError message={state.errors.image} />
+              )}
+              <p className="text-xs text-muted-foreground">
+                Max 5MB, JPG/PNG/WEBP only
+              </p>
             </div>
           </div>
 
@@ -128,9 +142,7 @@ export default function SettingsProfileTab({ user }: { user: User }) {
 
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="email">
-              Email
-            </Label>
+            <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
@@ -144,9 +156,7 @@ export default function SettingsProfileTab({ user }: { user: User }) {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="username">
-              Username
-            </Label>
+            <Label htmlFor="username">Username</Label>
             <Input
               id="username"
               required
@@ -156,13 +166,28 @@ export default function SettingsProfileTab({ user }: { user: User }) {
               disabled={isPending}
               placeholder="Enter your username"
             />
-            {state.errors?.username && <InputError message={state.errors.username} />}
+            {state.errors?.username && (
+              <InputError message={state.errors.username} />
+            )}
           </div>
         </div>
 
-        <Button type="submit" disabled={isPending} className="w-36">
-          {isPending ? 'Saving...' : 'Save changes'}
-        </Button>
+        <div className="flex items-center justify-between">
+          <Button type="submit" disabled={isPending} className="w-36">
+            {isPending ? 'Saving...' : 'Save changes'}
+          </Button>
+
+          <Link
+            href={user.username ? `/@${user.username}` : `/@${user.address}`}
+            className={`
+              flex items-center gap-1.5 text-sm text-muted-foreground transition-colors duration-200
+              hover:text-foreground
+            `}
+          >
+            See public profile
+            <ExternalLinkIcon className="size-3.5" />
+          </Link>
+        </div>
       </Form>
     </div>
   )

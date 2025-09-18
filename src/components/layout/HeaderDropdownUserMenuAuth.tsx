@@ -1,21 +1,22 @@
-import { useDisconnect } from "@reown/appkit-controllers/react";
-import { ChevronDownIcon } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import ThemeSelector from "@/components/layout/ThemeSelector";
-import { Button } from "@/components/ui/button";
+import { useDisconnect } from '@reown/appkit-controllers/react'
+import { ChevronDownIcon } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import ThemeSelector from '@/components/layout/ThemeSelector'
+import UserInfoSection from '@/components/layout/UserInfoSection'
+import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useUser } from "@/stores/useUser";
+} from '@/components/ui/dropdown-menu'
+import { useUser } from '@/stores/useUser'
 
 export default function HeaderDropdownUserMenuAuth() {
-  const { disconnect } = useDisconnect();
-  const user = useUser();
+  const { disconnect } = useDisconnect()
+  const user = useUser()
 
   return (
     <DropdownMenu>
@@ -35,7 +36,13 @@ export default function HeaderDropdownUserMenuAuth() {
           <ChevronDownIcon className="size-3" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-48" collisionPadding={16}>
+      <DropdownMenuContent
+        className="w-56 sm:w-60 lg:w-64"
+        collisionPadding={16}
+      >
+        <UserInfoSection />
+        <DropdownMenuSeparator />
+
         <DropdownMenuItem asChild>
           <Link href="/settings">Profile</Link>
         </DropdownMenuItem>
@@ -70,5 +77,5 @@ export default function HeaderDropdownUserMenuAuth() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  );
+  )
 }
