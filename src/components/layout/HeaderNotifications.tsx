@@ -1,10 +1,5 @@
-import { BellIcon } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import NotificationsDropdown from '@/components/notifications/NotificationsDropdown'
 
 export default function HeaderNotifications() {
-  return (
-    <Button type="button" size="icon" variant="ghost">
-      <BellIcon className="size-5" />
-    </Button>
-  )
+  return <NotificationsDropdown />
 }
