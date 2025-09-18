@@ -1,21 +1,21 @@
-import { useDisconnect } from '@reown/appkit-controllers/react'
-import { ChevronDownIcon } from 'lucide-react'
-import Image from 'next/image'
-import Link from 'next/link'
-import ThemeSelector from '@/components/layout/ThemeSelector'
-import { Button } from '@/components/ui/button'
+import { useDisconnect } from "@reown/appkit-controllers/react";
+import { ChevronDownIcon } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import ThemeSelector from "@/components/layout/ThemeSelector";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { useUser } from '@/stores/useUser'
+} from "@/components/ui/dropdown-menu";
+import { useUser } from "@/stores/useUser";
 
 export default function HeaderDropdownUserMenuAuth() {
-  const { disconnect } = useDisconnect()
-  const user = useUser()
+  const { disconnect } = useDisconnect();
+  const user = useUser();
 
   return (
     <DropdownMenu>
@@ -38,6 +38,9 @@ export default function HeaderDropdownUserMenuAuth() {
       <DropdownMenuContent className="w-48" collisionPadding={16}>
         <DropdownMenuItem asChild>
           <Link href="/settings">Profile</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/settings?tab=affiliate">Affiliate</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/?bookmarked=true">Watchlist</Link>
@@ -67,5 +70,5 @@ export default function HeaderDropdownUserMenuAuth() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
+  );
 }
