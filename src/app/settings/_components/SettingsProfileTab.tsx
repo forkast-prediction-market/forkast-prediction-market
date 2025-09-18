@@ -3,25 +3,47 @@
 import type { User } from '@/types'
 import Form from 'next/form'
 import Image from 'next/image'
-import { useActionState, useEffect, useRef } from 'react'
+import { useActionState, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { updateUserAction } from '@/app/settings/actions/update-profile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
+import { useUser } from '@/stores/useUser'
 
 export default function SettingsProfileTab({ user }: { user: User }) {
   const [state, formAction, isPending] = useActionState((_: any, formData: any) => updateUserAction(formData), {})
   const fileInputRef = useRef<HTMLInputElement>(null)
   const prevPending = useRef(false)
+  const [previewImage, setPreviewImage] = useState<string | null>(null)
 
   useEffect(() => {
     if (prevPending.current && !isPending && !state.errors && !state.error) {
+      useUser.setState({ ...user })
       toast.success('Profile updated successfully!')
     }
     prevPending.current = isPending
-  }, [isPending, state])
+  }, [isPending, state, user])
+
+  useEffect(() => {
+    return () => {
+      if (previewImage) {
+        URL.revokeObjectURL(previewImage)
+      }
+    }
+  }, [previewImage])
+
+  function generatePreviewUrl(file: File): string {
+    return URL.createObjectURL(file)
+  }
+
+  function clearPreview() {
+    if (previewImage) {
+      URL.revokeObjectURL(previewImage)
+      setPreviewImage(null)
+    }
+  }
 
   function handleUploadClick() {
     fileInputRef.current?.click()
@@ -45,12 +67,12 @@ export default function SettingsProfileTab({ user }: { user: User }) {
               to-primary/60
             `}
             >
-              {user.image
+              {previewImage || user.image
                 ? (
                     <Image
                       width={42}
                       height={42}
-                      src={user.image}
+                      src={previewImage || user.image || ''}
                       alt="Profile"
                       className="size-full object-cover"
                     />
@@ -72,7 +94,7 @@ export default function SettingsProfileTab({ user }: { user: User }) {
                 Upload
               </Button>
               {state.errors?.image && <InputError message={state.errors.image} />}
-              <p className="text-xs text-muted-foreground">Max 5MB, JPG/PNG only</p>
+              <p className="text-xs text-muted-foreground">Max 5MB, JPG/PNG/WEBP only</p>
             </div>
           </div>
 
@@ -85,9 +107,20 @@ export default function SettingsProfileTab({ user }: { user: User }) {
             accept="image/png,image/jpeg,image/webp"
             onChange={(e) => {
               const file = e.target.files?.[0]
-              if (file && file.size > 5 * 1024 * 1024) {
-                toast.error('File too big! Max 5MB.')
-                e.target.value = ''
+              if (file) {
+                if (file.size > 5 * 1024 * 1024) {
+                  toast.error('File too big! Max 5MB.')
+                  e.target.value = ''
+                  clearPreview()
+                }
+                else {
+                  clearPreview()
+                  const previewUrl = generatePreviewUrl(file)
+                  setPreviewImage(previewUrl)
+                }
+              }
+              else {
+                clearPreview()
               }
             }}
           />
