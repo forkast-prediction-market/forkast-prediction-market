@@ -3,6 +3,7 @@ import { ChevronDownIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import ThemeSelector from '@/components/layout/ThemeSelector'
+import UserInfoSection from '@/components/layout/UserInfoSection'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -35,9 +36,17 @@ export default function HeaderDropdownUserMenuAuth() {
           <ChevronDownIcon className="size-3" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-48" collisionPadding={16}>
+      <DropdownMenuContent className="w-56 sm:w-60 lg:w-64" collisionPadding={16}>
+        <DropdownMenuItem asChild>
+          <UserInfoSection />
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+
         <DropdownMenuItem asChild>
           <Link href="/settings">Profile</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/settings?tab=affiliate">Affiliate</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/?bookmarked=true">Watchlist</Link>

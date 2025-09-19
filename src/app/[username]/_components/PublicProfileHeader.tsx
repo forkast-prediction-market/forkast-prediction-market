@@ -48,10 +48,10 @@ export default function PublicProfileHeader({ profile }: Props) {
             type="button"
             size="sm"
             onClick={handleCopyAddress}
-            className="-ml-2"
+            className="-ml-2 text-xs text-muted-foreground"
             title={copied ? 'Copied!' : 'Copy address'}
           >
-            <span className="text-muted-foreground">{address}</span>
+            <span className="font-mono">{address}</span>
             {copied ? <CheckIcon className="size-3 text-yes" /> : <CopyIcon className="size-3" />}
           </Button>
 
