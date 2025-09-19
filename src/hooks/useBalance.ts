@@ -32,7 +32,7 @@ export function useBalance() {
     [rpcProvider],
   )
 
-  const walletAddress = address || user?.address
+  const walletAddress = isConnected ? address : user?.address
 
   useEffect(() => {
     if (!walletAddress || !isConnected) {
