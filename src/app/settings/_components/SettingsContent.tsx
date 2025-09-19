@@ -2,6 +2,7 @@
 
 import type { User } from '@/types'
 import { useMemo } from 'react'
+import SettingsAffiliateTab from '@/app/settings/_components/SettingsAffiliateTab'
 import SettingsExportPrivateKeyTab from '@/app/settings/_components/SettingsExportPrivateKeyTab'
 import SettingsNotificationsTab from '@/app/settings/_components/SettingsNotificationsTab'
 import SettingsProfileTab from '@/app/settings/_components/SettingsProfileTab'
@@ -16,6 +17,8 @@ interface Props {
 export default function SettingsContent({ user, tab }: Props) {
   const content = useMemo(() => {
     switch (tab) {
+      case 'affiliate':
+        return <SettingsAffiliateTab />
       case 'notifications':
         return <SettingsNotificationsTab user={user} />
       case 'two-factor':
@@ -30,9 +33,7 @@ export default function SettingsContent({ user, tab }: Props) {
   return (
     <>
       <SettingsSidebar user={user} tab={tab} />
-      <div className="mx-auto max-w-2xl lg:mx-0">
-        {content}
-      </div>
+      <div className="mx-auto max-w-2xl lg:mx-0">{content}</div>
     </>
   )
 }

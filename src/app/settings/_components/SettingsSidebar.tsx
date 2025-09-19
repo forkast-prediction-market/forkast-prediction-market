@@ -10,6 +10,7 @@ interface Props {
 const menuItems = [
   { id: 'profile', label: 'Profile' },
   { id: 'notifications', label: 'Notifications' },
+  { id: 'affiliate', label: 'Affiliate' },
   { id: 'two-factor', label: 'Two-Factor Auth' },
   { id: 'export-key', label: 'Export Private Key' },
 ]
@@ -34,7 +35,11 @@ export default function SettingsSidebar({ user, tab }: Props) {
           className="justify-start text-muted-foreground"
           asChild
         >
-          <Link href={user.username ? `/@${user.username}` : `/@${user.address}`}>See public profile</Link>
+          <Link
+            href={user.username ? `/@${user.username}` : `/@${user.address}`}
+          >
+            See public profile
+          </Link>
         </Button>
       </nav>
     </aside>
