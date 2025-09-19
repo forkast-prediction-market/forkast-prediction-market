@@ -1,8 +1,11 @@
-import { useAppKitAccount, useAppKitProvider } from '@reown/appkit/react'
-import { BrowserProvider, Contract } from 'ethers'
-import { useEffect, useState } from 'react'
+import { polygonAmoy } from '@reown/appkit/networks'
+import { useAppKitAccount } from '@reown/appkit/react'
+import { Contract, JsonRpcProvider } from 'ethers'
+import { useEffect, useMemo, useState } from 'react'
+import { useUser } from '@/stores/useUser'
 
 const USDC_ADDRESS = '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582' // Polygon Amoy USDC
+const USDC_DECIMALS = 6
 const ERC20_ABI = [
   'function balanceOf(address account) view returns (uint256)',
   'function decimals() view returns (uint8)',
@@ -12,13 +15,27 @@ const ERC20_ABI = [
 
 export function useBalance() {
   const { address, isConnected } = useAppKitAccount()
-  const { walletProvider } = useAppKitProvider('eip155')
+  const user = useUser()
   const [balance, setBalance] = useState<any>(null)
   const [isLoadingBalance, setIsLoadingBalance] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
+  const rpcUrl = useMemo(() => {
+    return process.env.NEXT_PUBLIC_POLYGON_AMOY_RPC_URL
+      || polygonAmoy.rpcUrls.default.http[0]
+  }, [])
+
+  const rpcProvider = useMemo(() => new JsonRpcProvider(rpcUrl), [rpcUrl])
+
+  const usdcContract = useMemo(
+    () => new Contract(USDC_ADDRESS, ERC20_ABI, rpcProvider),
+    [rpcProvider],
+  )
+
+  const walletAddress = isConnected ? address : user?.address
+
   useEffect(() => {
-    if (!isConnected || !address || !walletProvider) {
+    if (!walletAddress || !isConnected) {
       queueMicrotask(() => {
         setBalance(null)
         setIsLoadingBalance(false)
@@ -39,15 +56,8 @@ export function useBalance() {
       }
 
       try {
-        const provider = new BrowserProvider(walletProvider as any)
-        const contract = new Contract(USDC_ADDRESS, ERC20_ABI, provider)
-
-        const [balanceRaw, decimals] = await Promise.all([
-          contract.balanceOf(address),
-          contract.decimals(),
-        ])
-
-        const balanceNumber = Number(balanceRaw) / (10 ** Number(decimals))
+        const balanceRaw = await usdcContract.balanceOf(walletAddress)
+        const balanceNumber = Number(balanceRaw) / (10 ** USDC_DECIMALS)
 
         const newBalance = {
           data: {
@@ -78,7 +88,7 @@ export function useBalance() {
       active = false
       clearInterval(interval)
     }
-  }, [isConnected, address, walletProvider, isInitialLoad])
+  }, [isConnected, walletAddress, usdcContract, isInitialLoad])
 
   return { balance, isLoadingBalance }
 }
