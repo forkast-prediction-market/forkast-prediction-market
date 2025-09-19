@@ -1,6 +1,7 @@
 'use client'
 
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { createAuthClient } from 'better-auth/react'
 import { useEffect } from 'react'
 import HeaderDropdownUserMenuAuth from '@/components/layout/HeaderDropdownUserMenuAuth'
 import HeaderDropdownUserMenuGuest from '@/components/layout/HeaderDropdownUserMenuGuest'
@@ -9,11 +10,15 @@ import HeaderPortfolio from '@/components/layout/HeaderPortfolio'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useClientMounted } from '@/hooks/useClientMounted'
+import { useUser } from '@/stores/useUser'
+
+const { useSession } = createAuthClient()
 
 export default function HeaderMenu() {
   const isMounted = useClientMounted()
   const { open } = useAppKit()
   const { isConnected, status } = useAppKitAccount()
+  const { data: session } = useSession()
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -29,6 +34,17 @@ export default function HeaderMenu() {
 
     return () => clearTimeout(timeout)
   }, [status])
+
+  useEffect(() => {
+    if (session?.user) {
+      useUser.setState({
+        ...session.user,
+      })
+    }
+    else {
+      useUser.setState(null)
+    }
+  }, [session?.user])
 
   if (!isMounted || status === 'connecting') {
     return (

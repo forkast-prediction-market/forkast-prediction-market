@@ -64,7 +64,7 @@ export const UserModel = {
     }
 
     const user = session.user
-    if (user.email.includes(process.env.VERCEL_PROJECT_PRODUCTION_URL!)) {
+    if (user.email.includes(process.env.VERCEL_PROJECT_PRODUCTION_URL!) || user.email.includes('vercel.app')) {
       user.email = ''
     }
 
