@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useUser } from '@/stores/useUser'
 
 const USDC_ADDRESS = '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582' // Polygon Amoy USDC
+const USDC_DECIMALS = 6
 const ERC20_ABI = [
   'function balanceOf(address account) view returns (uint256)',
   'function decimals() view returns (uint8)',
@@ -55,12 +56,8 @@ export function useBalance() {
       }
 
       try {
-        const [balanceRaw, decimals] = await Promise.all([
-          usdcContract.balanceOf(walletAddress),
-          usdcContract.decimals(),
-        ])
-
-        const balanceNumber = Number(balanceRaw) / (10 ** Number(decimals))
+        const balanceRaw = await usdcContract.balanceOf(walletAddress)
+        const balanceNumber = Number(balanceRaw) / (10 ** USDC_DECIMALS)
 
         const newBalance = {
           data: {
