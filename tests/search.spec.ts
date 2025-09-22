@@ -98,7 +98,7 @@ test.describe('Header Search', () => {
   test('show search results only on desktop (hidden on mobile)', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 })
 
-    const searchContainer = page.locator('.hidden.flex-1.sm\\:mx-4.sm\\:mr-6.sm\\:flex')
+    const searchContainer = page.getByTestId('header-search-container')
     await expect(searchContainer).toHaveClass(/hidden/)
   })
 })
