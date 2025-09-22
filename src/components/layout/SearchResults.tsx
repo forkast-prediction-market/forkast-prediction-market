@@ -26,16 +26,19 @@ export function SearchResults({ results, isLoading, onResultClick }: SearchResul
   }
 
   return (
-    <div className={`
-      absolute top-full right-0 left-0 z-50 mt-1 max-h-96 overflow-y-auto rounded-lg border bg-background shadow-lg
-      sm:w-3/4
-    `}
+    <div
+      data-testid="search-results"
+      className={`
+        absolute top-full right-0 left-0 z-50 mt-1 max-h-96 overflow-y-auto rounded-lg border bg-background shadow-lg
+        sm:w-3/4
+      `}
     >
       {results.map(result => (
         <Link
           key={`${result.id}-${result.slug}`}
           href={`/event/${result.slug}`}
           onClick={onResultClick}
+          data-testid="search-result-item"
           className={`
             flex items-center justify-between p-3 transition-colors
             first:rounded-t-lg
