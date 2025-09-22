@@ -21,7 +21,6 @@ jobs:
         run: npm run lint
 
   test:
-    if: github.repository == 'forkast-prediction-market/forkast-prediction-market'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -45,13 +44,6 @@ jobs:
 
       - name: Run Playwright tests
         run: NODE_ENV=test npx playwright test
-
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 3
 
   build:
     runs-on: ubuntu-latest
