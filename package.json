@@ -20,7 +20,7 @@
     "@bprogress/next": "^3.2.12",
     "@reown/appkit": "^1.8.2",
     "@reown/appkit-adapter-ethers": "^1.8.2",
-    "@reown/appkit-siwe": "^1.8.2",
+    "@reown/appkit-siwe": "^1.8.6",
     "@supabase/supabase-js": "^2.57.2",
     "@tanstack/react-query": "^5.87.4",
     "@tanstack/react-virtual": "^3.13.12",
