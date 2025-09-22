@@ -68,7 +68,7 @@
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.20",
     "husky": "^9.1.7",
-    "lint-staged": "^16.1.6",
+    "lint-staged": "^16.2.0",
     "pino-pretty": "^13.1.1",
     "postcss": "^8.5.6",
     "supabase": "^2.39.2",
