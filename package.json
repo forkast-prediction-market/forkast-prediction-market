@@ -1,8 +1,8 @@
 {
   "name": "forkast",
   "private": true,
-  "license": "MIT",
   "description": "Launch Your Own Decentralized Prediction Market in Minutes.",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "https://github.com/forkast-prediction-market/forkast-prediction-market.git"
