@@ -21,6 +21,7 @@ jobs:
         run: npm run lint
 
   test:
+    if: github.repository == 'forkast-prediction-market/forkast-prediction-market'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -37,7 +38,10 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Create .env.test
-        run: echo "${{ secrets.ENV_TEST }}" > .env.test
+        run: |
+          cat <<'EOF' > .env.test
+          ${{ secrets.ENV_TEST }}
+          EOF
 
       - name: Run Playwright tests
         run: NODE_ENV=test npx playwright test
