@@ -33,8 +33,23 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Run tests
-        run: npm test
+      - name: Cache Playwright browsers
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Create .env.test
+        run: |
+          cat <<'EOF' > .env.test
+          ${{ secrets.ENV_TEST }}
+          EOF
+
+      - name: Run Playwright tests
+        run: NODE_ENV=test npx playwright test
 
   build:
     runs-on: ubuntu-latest
