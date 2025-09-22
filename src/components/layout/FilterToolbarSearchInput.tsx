@@ -66,6 +66,7 @@ export default function FilterToolbarSearchInput({ search, bookmarked = 'false' 
       {isPending && <LoaderIcon className={`${iconClasses} animate-spin`} />}
       <Input
         type="text"
+        data-testid="filter-search-input"
         placeholder="Search"
         value={searchQuery}
         onChange={e => setSearchQuery(e.target.value)}
