@@ -38,7 +38,7 @@ export interface Market {
   price: number
   probability: number
   outcomes: Outcome[]
-  condition?: Condition
+  condition: Condition
 }
 
 export interface Outcome {

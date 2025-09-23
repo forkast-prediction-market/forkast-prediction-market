@@ -36,7 +36,7 @@ export default function HeaderDropdownUserMenuAuth() {
           <ChevronDownIcon className="size-3" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56 sm:w-60 lg:w-64" collisionPadding={16}>
+      <DropdownMenuContent className="w-64" collisionPadding={16}>
         <DropdownMenuItem asChild>
           <UserInfoSection />
         </DropdownMenuItem>
