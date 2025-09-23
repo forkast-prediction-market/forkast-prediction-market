@@ -1,10 +1,59 @@
 'use client'
 
-import { useState } from 'react'
+import Form from 'next/form'
+import { startTransition, useOptimistic, useRef, useState } from 'react'
+import QRCode from 'react-qr-code'
+import { enableTwoFactorAction } from '@/app/settings/actions/enable-two-factor'
+import { InputError } from '@/components/ui/input-error'
 import { Switch } from '@/components/ui/switch'
+import { useUser } from '@/stores/useUser'
+
+interface TwoFactorSettings {
+  two_factor_enabled: boolean
+}
 
 export default function SettingsTwoFactorAuthTab() {
+  const user = useUser()
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
+  const [status, setStatus] = useState<any | null>(null)
+  const formRef = useRef<HTMLFormElement>(null)
+  const initialSettings = {
+    two_factor_enabled: user?.two_factor_enabled || false,
+  }
+
+  const [optimisticSettings, updateOptimisticSettings] = useOptimistic<
+    TwoFactorSettings,
+    Partial<TwoFactorSettings>
+  >(
+    initialSettings as TwoFactorSettings,
+    (state, newSettings) => ({
+      ...state,
+      ...newSettings,
+    }),
+  )
+
+  function handleSwitchChange(field: keyof TwoFactorSettings, checked: boolean) {
+    const prev = optimisticSettings
+
+    startTransition(() => {
+      updateOptimisticSettings({ [field]: checked })
+    })
+
+    queueMicrotask(async () => {
+      const result = await enableTwoFactorAction()
+
+      if ('error' in result) {
+        startTransition(() => {
+          updateOptimisticSettings(prev)
+        })
+        setStatus(result)
+      }
+      else {
+        setTwoFactorEnabled(true)
+        setStatus(result)
+      }
+    })
+  }
 
   return (
     <div className="space-y-8">
@@ -15,7 +64,14 @@ export default function SettingsTwoFactorAuthTab() {
         </p>
       </div>
 
-      <div className="space-y-6">
+      {status?.error && <InputError message={status.error} />}
+
+      <Form ref={formRef} action={() => {}} className="space-y-6">
+        <input
+          type="hidden"
+          name="email_resolutions"
+          value={optimisticSettings?.two_factor_enabled ? 'on' : 'off'}
+        />
         <div className="rounded-lg border p-6">
           <div className="flex items-center justify-between">
             <div className="space-y-1">
@@ -25,8 +81,8 @@ export default function SettingsTwoFactorAuthTab() {
               </p>
             </div>
             <Switch
-              checked={twoFactorEnabled}
-              onCheckedChange={setTwoFactorEnabled}
+              checked={optimisticSettings?.two_factor_enabled}
+              onCheckedChange={checked => handleSwitchChange('two_factor_enabled', checked)}
             />
           </div>
         </div>
@@ -50,9 +106,13 @@ export default function SettingsTwoFactorAuthTab() {
                 </li>
               </ol>
             </div>
+
+            <div className="mt-6">
+              <QRCode value={status?.totpURI || ''} />
+            </div>
           </div>
         )}
-      </div>
+      </Form>
     </div>
   )
 }
