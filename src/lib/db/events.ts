@@ -28,7 +28,7 @@ export const EventModel = {
         is_resolved,
         current_volume_24h,
         total_volume,
-        conditions!markets_condition_id_fkey(
+        condition:conditions!markets_condition_id_fkey(
           oracle,
           outcomes(*)
         )
@@ -130,7 +130,7 @@ export const EventModel = {
           is_resolved,
           current_volume_24h,
           total_volume,
-          conditions!markets_condition_id_fkey(
+          condition:conditions!markets_condition_id_fkey(
             oracle,
             outcomes(*)
           )
@@ -235,7 +235,7 @@ function eventResource(event: Event & any, userId: string): Event {
       probability: Math.random() * 100,
       price: Math.random() * 0.99 + 0.01,
       volume: Math.random() * 100000,
-      outcomes: market.conditions?.outcomes || [],
+      outcomes: market.condition?.outcomes || [],
       icon_url: getSupabaseImageUrl(market.icon_url),
     })),
     tags: event.event_tags?.map((et: any) => et.tag?.slug).filter(Boolean) || [],

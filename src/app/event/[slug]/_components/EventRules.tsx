@@ -18,8 +18,8 @@ export default function EventRules({ event }: EventRulesProps) {
     return rules
       .replace(/\\n/g, '\n')
       .replace(/\\"/g, '"')
-      .replace(/^"/, '') // Remove quotes at the beginning
-      .replace(/"$/, '') // Remove quotes at the end
+      .replace(/^"/, '')
+      .replace(/"$/, '')
   }
 
   function formatOracleAddress(address: string): string {
@@ -55,7 +55,6 @@ export default function EventRules({ event }: EventRulesProps) {
               </div>
             )}
 
-            {/* Oracle Info */}
             <div className="mt-3 rounded-lg border p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-start gap-3">
@@ -70,17 +69,16 @@ export default function EventRules({ event }: EventRulesProps) {
                       Resolver
                     </div>
                     <a
-                      href={`https://polygonscan.com/address/${event.markets[0].condition!.oracle}`}
+                      href={`https://polygonscan.com/address/${event.markets[0].condition.oracle}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-primary hover:opacity-80"
                     >
-                      {formatOracleAddress(event.markets[0].condition!.oracle)}
+                      {formatOracleAddress(event.markets[0].condition.oracle)}
                     </a>
                   </div>
                 </div>
 
-                {/* Propose resolution button aligned to the right */}
                 <Button variant="outline" size="sm">
                   Propose resolution
                 </Button>

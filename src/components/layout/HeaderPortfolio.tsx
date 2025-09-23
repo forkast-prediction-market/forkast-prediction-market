@@ -11,8 +11,8 @@ export default function HeaderPortfolio() {
   if (isLoadingBalance) {
     return (
       <div className="flex gap-2">
-        <Skeleton className="h-9 w-16 rounded" />
-        <Skeleton className="h-9 w-20 rounded" />
+        <Skeleton className="hidden h-9 w-16 lg:block" />
+        <Skeleton className="hidden h-9 w-20 lg:block" />
       </div>
     )
   }
