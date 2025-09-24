@@ -75,20 +75,17 @@ async function applyMigrations(client) {
 async function createSyncEventsCron(client) {
   console.log('Creating sync-events cron job...')
   const sql = `
-DO $$
+  DO $$
   DECLARE
     job_id int;
     cmd text := $c$
-      DO $$
-      BEGIN
-        DELETE FROM cron.job_run_details
-        WHERE start_time < now() - interval '3 days';
+      DELETE FROM cron.job_run_details
+      WHERE start_time < now() - interval '3 days';
 
-        PERFORM net.http_get(
-          url := 'https://<<VERCEL_URL>>/api/sync-events',
-          headers := '{"Content-Type": "application/json", "Authorization": "Bearer <<CRON_SECRET>>"}'
-        );
-      END $$;
+      PERFORM net.http_get(
+        url := 'https://<<VERCEL_URL>>/api/sync-events',
+        headers := '{"Content-Type": "application/json", "Authorization": "Bearer <<CRON_SECRET>>"}'
+      );
     $c$;
   BEGIN
     SELECT jobid INTO job_id FROM cron.job WHERE jobname = 'sync-events';
