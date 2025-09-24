@@ -22,7 +22,7 @@ export default function SettingsContent({ user, tab }: Props) {
       case 'notifications':
         return <SettingsNotificationsTab user={user} />
       case 'two-factor':
-        return <SettingsTwoFactorAuthTab />
+        return <SettingsTwoFactorAuthTab user={user} />
       case 'export-key':
         return <SettingsExportPrivateKeyTab />
       default:

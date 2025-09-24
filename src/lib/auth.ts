@@ -2,7 +2,7 @@ import { getChainIdFromMessage } from '@reown/appkit-siwe'
 import { betterAuth } from 'better-auth'
 import { generateRandomString } from 'better-auth/crypto'
 import { nextCookies } from 'better-auth/next-js'
-import { siwe } from 'better-auth/plugins'
+import { siwe, twoFactor } from 'better-auth/plugins'
 import { Pool } from 'pg'
 import { createPublicClient, http } from 'viem'
 
@@ -10,6 +10,7 @@ export const auth = betterAuth({
   database: new Pool({
     connectionString: process.env.POSTGRES_URL!.replace('require', 'disable'),
   }),
+  appName: process.env.NEXT_PUBLIC_SITE_NAME,
   secret: process.env.BETTER_AUTH_SECRET,
   advanced: {
     database: {
@@ -17,6 +18,7 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    nextCookies(),
     siwe({
       schema: {
         walletAddress: {
@@ -53,7 +55,24 @@ export const auth = betterAuth({
         })
       },
     }),
-    nextCookies(),
+    twoFactor({
+      skipVerificationOnEnable: false,
+      schema: {
+        user: {
+          fields: {
+            twoFactorEnabled: 'two_factor_enabled',
+          },
+        },
+        twoFactor: {
+          modelName: 'two_factors',
+          fields: {
+            secret: 'secret',
+            backupCodes: 'backup_codes',
+            userId: 'user_id',
+          },
+        },
+      },
+    }),
   ],
   user: {
     modelName: 'users',
