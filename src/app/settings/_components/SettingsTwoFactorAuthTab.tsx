@@ -305,7 +305,7 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
                 </InputOTP>
 
                 <div className="text-center text-sm">
-                  Enter the code showed by your authenticator app.
+                  Enter the code shown by your authenticator app.
                 </div>
               </div>
 
