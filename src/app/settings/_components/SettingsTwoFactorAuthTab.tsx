@@ -239,7 +239,7 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
                       Trust Device
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Trust this device for 30 days after activate 2FA
+                      Trust this device for 30 days after activating 2FA
                     </p>
                   </div>
                   <Switch
