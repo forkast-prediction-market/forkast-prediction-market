@@ -239,7 +239,7 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
                       Trust Device
                     </Label>
                     <p className="text-sm text-muted-foreground">
-                      Trust this device for 30 days after activate 2FA
+                      Trust this device for 30 days after activating 2FA
                     </p>
                   </div>
                   <Switch
@@ -305,7 +305,7 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
                 </InputOTP>
 
                 <div className="text-center text-sm">
-                  Enter the code showed by your authenticator app.
+                  Enter the code shown by your authenticator app.
                 </div>
               </div>
 
