@@ -148,4 +148,37 @@ export const UserModel = {
 
     return user
   },
+
+  async listUsers(limit = 100) {
+    const { data, error, count } = await supabaseAdmin
+      .from('users')
+      .select(`
+        id,
+        username,
+        email,
+        address,
+        created_at,
+        image,
+        affiliate_code,
+        referred_by_user_id,
+        referred_at
+      `, { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    return { data, error, count }
+  },
+
+  async getUsersByIds(ids: string[]) {
+    if (!ids.length) {
+      return { data: [], error: null }
+    }
+
+    const { data, error } = await supabaseAdmin
+      .from('users')
+      .select('id, username, address, image')
+      .in('id', ids)
+
+    return { data, error }
+  },
 }

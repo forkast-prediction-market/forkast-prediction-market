@@ -62,7 +62,7 @@ export default function AdminForkSettingsForm({ tradeFeeBps, affiliateShareBps, 
             disabled={isPending}
           />
           <p className="text-xs text-muted-foreground">
-            Percentage applied on each filled order. Max 9%.
+            Extra fee over Forkast (max 9%)
           </p>
         </div>
         <div className="grid gap-2">
@@ -78,7 +78,7 @@ export default function AdminForkSettingsForm({ tradeFeeBps, affiliateShareBps, 
             disabled={isPending}
           />
           <p className="text-xs text-muted-foreground">
-            Portion of the trading fee forwarded to the referring affiliate.
+            Affiliate share of trading fee.
           </p>
         </div>
       </div>

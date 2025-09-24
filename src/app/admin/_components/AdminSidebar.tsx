@@ -2,7 +2,7 @@
 
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useSelectedLayoutSegment } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 
 interface AdminMenuItem {
@@ -12,12 +12,14 @@ interface AdminMenuItem {
 }
 
 const adminMenuItems: AdminMenuItem[] = [
-  { id: 'affiliate', label: 'Affiliate Settings', href: '/admin/affiliate' },
+  { id: 'users', label: 'Users', href: '/admin/users' as Route },
+  { id: 'affiliate', label: 'Affiliate Settings', href: '/admin/affiliate' as Route },
 ]
 
 export default function AdminSidebar() {
-  const segment = useSelectedLayoutSegment()
-  const active = segment ?? 'affiliate'
+  const pathname = usePathname()
+  const activeItem = adminMenuItems.find(item => pathname?.startsWith(item.href))
+  const active = activeItem?.id ?? 'users'
 
   return (
     <aside className="lg:sticky lg:top-28 lg:self-start">
