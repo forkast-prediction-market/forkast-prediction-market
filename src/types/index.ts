@@ -145,6 +145,39 @@ export interface ActivityItem {
   transaction_hash: string
 }
 
+// Notification Types
+export type NotificationCategory = 'trade' | 'system' | 'general'
+
+export type NotificationLinkType
+  = | 'none'
+    | 'market'
+    | 'event'
+    | 'order'
+    | 'settings'
+    | 'profile'
+    | 'external'
+    | 'custom'
+
+export interface Notification {
+  id: string
+  category: NotificationCategory
+  title: string
+  description: string
+  created_at: string
+  is_read: boolean
+  updated_at?: string
+  read_at?: string | null
+  user_avatar?: string | null
+  extra_info?: string
+  time_ago?: string
+  link_type?: NotificationLinkType
+  link_target?: string | null
+  link_url?: string | null
+  link_label?: string
+  metadata?: Record<string, unknown>
+  wallet_id?: string | null
+}
+
 export type QueryResult<T>
   = | { data: T, error: null }
     | { data: null, error: string }
