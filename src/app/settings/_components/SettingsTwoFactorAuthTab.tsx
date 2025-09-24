@@ -1,5 +1,6 @@
 'use client'
 
+import type { User } from '@/types'
 import { useState } from 'react'
 import QRCode from 'react-qr-code'
 import { toast } from 'sonner'
@@ -24,17 +25,19 @@ interface ComponentState {
   isEnabled: boolean
   trustDevice: boolean
   code: string
+  isVerifying: boolean
+  isDisabling: boolean
 }
 
-export default function SettingsTwoFactorAuthTab() {
-  const user = useUser()
-
+export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
   const [state, setState] = useState<ComponentState>({
     isLoading: false,
     setupData: null,
     isEnabled: user?.twoFactorEnabled || false,
     trustDevice: false,
     code: '',
+    isVerifying: false,
+    isDisabling: false,
   })
 
   function handleTrustDeviceChange(checked: boolean) {
@@ -44,60 +47,78 @@ export default function SettingsTwoFactorAuthTab() {
     }))
   }
 
-  function handleEnableTwoFactor() {
+  async function handleEnableTwoFactor() {
     setState(prev => ({ ...prev, isLoading: true, error: null }))
 
-    enableTwoFactorAction()
-      .then((result) => {
-        if ('error' in result) {
-          const errorMessage = result.error === 'Failed to enable two factor'
-            ? 'Unable to enable two-factor authentication. Please check your connection and try again.'
-            : result.error
+    try {
+      const result = await enableTwoFactorAction()
 
-          setState(prev => ({
-            ...prev,
-            isLoading: false,
-          }))
-
-          toast.error(errorMessage)
-        }
-        else {
-          setState(prev => ({
-            ...prev,
-            isLoading: false,
-            setupData: {
-              totpURI: result.totpURI,
-              backupCodes: result.backupCodes,
-            },
-            error: null,
-          }))
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to enable two factor:', error)
-        const errorMessage = 'An unexpected error occurred while enabling two-factor authentication. Please try again.'
+      if ('error' in result) {
+        const errorMessage = result.error === 'Failed to enable two factor'
+          ? 'Unable to enable two-factor authentication. Please check your connection and try again.'
+          : result.error
 
         setState(prev => ({
           ...prev,
           isLoading: false,
-          error: errorMessage,
         }))
 
         toast.error(errorMessage)
-      })
+      }
+      else {
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          setupData: {
+            totpURI: result.totpURI,
+            backupCodes: result.backupCodes,
+          },
+          error: null,
+        }))
+      }
+    }
+    catch {
+      const errorMessage = 'An unexpected error occurred while enabling two-factor authentication. Please try again.'
+
+      setState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage,
+      }))
+
+      toast.error(errorMessage)
+    }
   }
 
   async function handleDisableTwoFactor() {
+    setState(prev => ({ ...prev, isDisabling: true }))
+
     try {
       await disableTwoFactorAction()
       toast.success('Successfully disabled two-factor authentication.')
+
+      setState(prev => ({
+        ...prev,
+        isEnabled: false,
+        isDisabling: false,
+      }))
+
+      if (user) {
+        useUser.setState({
+          ...user,
+          twoFactorEnabled: false,
+        })
+      }
     }
     catch {
       toast.error('An unexpected error occurred while disabling two-factor authentication. Please try again.')
+      setState(prev => ({ ...prev, isDisabling: false }))
     }
   }
 
   async function verifyTotp() {
+    setState(prev => ({ ...prev, isVerifying: true }))
+
     try {
       const { error } = await authClient.twoFactor.verifyTotp({
         code: state.code,
@@ -106,10 +127,11 @@ export default function SettingsTwoFactorAuthTab() {
 
       if (error) {
         toast.error('Could not verify the code. Please try again.')
+
         setState(prev => ({
           ...prev,
           code: '',
-          error: null,
+          isVerifying: false,
         }))
       }
       else {
@@ -120,7 +142,7 @@ export default function SettingsTwoFactorAuthTab() {
           setupData: null,
           isEnabled: true,
           code: '',
-          error: null,
+          isVerifying: false,
         }))
 
         if (user) {
@@ -131,14 +153,13 @@ export default function SettingsTwoFactorAuthTab() {
         }
       }
     }
-    catch (error) {
-      console.error('Failed to verify TOTP:', error)
+    catch {
       toast.error('An unexpected error occurred during verification. Please try again.')
 
       setState(prev => ({
         ...prev,
         code: '',
-        error: null,
+        isVerifying: false,
       }))
     }
   }
@@ -153,11 +174,11 @@ export default function SettingsTwoFactorAuthTab() {
       </div>
 
       <form
+        className="space-y-6"
         onSubmit={(e) => {
           e.preventDefault()
           verifyTotp()
         }}
-        className="space-y-6"
       >
 
         <div className="rounded-lg border p-6">
@@ -167,7 +188,7 @@ export default function SettingsTwoFactorAuthTab() {
             <div className="grid gap-4">
               {!state.isEnabled && !state.setupData
                 ? (
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col justify-between gap-4">
                       <div className="grid gap-1">
                         <Label className="text-sm font-medium">
                           Enable 2FA
@@ -178,6 +199,7 @@ export default function SettingsTwoFactorAuthTab() {
                       </div>
                       <Button
                         type="button"
+                        className="ms-auto"
                         onClick={handleEnableTwoFactor}
                         disabled={state.isLoading}
                       >
@@ -192,7 +214,7 @@ export default function SettingsTwoFactorAuthTab() {
                       <div className="flex items-center justify-between">
                         <div className="grid gap-1">
                           <Label className="text-sm font-medium">
-                            Two-Factor Authentication
+                            2FA Enabled
                           </Label>
                           <p className="text-sm text-muted-foreground">
                             Two-factor authentication is now active on your account
@@ -202,8 +224,9 @@ export default function SettingsTwoFactorAuthTab() {
                           type="button"
                           variant="outline"
                           onClick={handleDisableTwoFactor}
+                          disabled={state.isDisabling}
                         >
-                          Disable 2FA
+                          {state.isDisabling ? 'Disabling...' : 'Disable 2FA'}
                         </Button>
                       </div>
                     )
@@ -289,9 +312,9 @@ export default function SettingsTwoFactorAuthTab() {
               <div className="ms-auto">
                 <Button
                   type="submit"
-                  disabled={state.code.length !== 6}
+                  disabled={state.code.length !== 6 || state.isVerifying}
                 >
-                  Submit
+                  {state.isVerifying ? 'Verifying...' : 'Submit'}
                 </Button>
               </div>
             </div>
