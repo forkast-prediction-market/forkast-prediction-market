@@ -3,13 +3,14 @@
 import Form from 'next/form'
 import { startTransition, useOptimistic, useState } from 'react'
 import QRCode from 'react-qr-code'
+import { toast } from 'sonner'
 import { enableTwoFactorAction } from '@/app/settings/actions/enable-two-factor'
-import { verifyTotp } from '@/app/settings/actions/verify-totp'
 import { Button } from '@/components/ui/button'
 import { InputError } from '@/components/ui/input-error'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
 interface TwoFactorSettings {
@@ -59,6 +60,20 @@ export default function SettingsTwoFactorAuthTab() {
         setStatus(result)
       }
     })
+  }
+
+  async function verifyTotp() {
+    const { error } = await authClient.twoFactor.verifyTotp({
+      code,
+      trustDevice: true,
+    })
+
+    if (error) {
+      toast.error('Could not verify the code. Please try again.')
+    }
+    else {
+      toast.success('2FA enabled successfully.')
+    }
   }
 
   return (

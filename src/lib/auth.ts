@@ -56,6 +56,7 @@ export const auth = betterAuth({
       },
     }),
     twoFactor({
+      skipVerificationOnEnable: false,
       schema: {
         user: {
           fields: {
