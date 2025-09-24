@@ -18,7 +18,7 @@ function getNotificationTimeLabel(notification: Notification) {
     return ''
   }
 
-  const diffMs = Date.now() - createdAt.getTime()
+  const diffMs = Math.max(0, Date.now() - createdAt.getTime())
   const diffMinutes = Math.floor(diffMs / (1000 * 60))
 
   if (diffMinutes < 1) {
