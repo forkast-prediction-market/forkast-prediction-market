@@ -79,7 +79,7 @@ export interface User {
   address: string
   email: string
   settings: string
-  twoFactorEnabled: boolean
+  twoFactorEnabled: boolean | null | undefined
   username?: string
   image?: string | null
 }
