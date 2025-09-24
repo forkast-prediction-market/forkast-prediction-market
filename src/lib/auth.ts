@@ -10,6 +10,7 @@ export const auth = betterAuth({
   database: new Pool({
     connectionString: process.env.POSTGRES_URL!.replace('require', 'disable'),
   }),
+  appName: process.env.NEXT_PUBLIC_SITE_NAME,
   secret: process.env.BETTER_AUTH_SECRET,
   advanced: {
     database: {
