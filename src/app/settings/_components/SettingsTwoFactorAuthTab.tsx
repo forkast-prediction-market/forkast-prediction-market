@@ -1,78 +1,144 @@
 'use client'
 
-import Form from 'next/form'
-import { startTransition, useOptimistic, useState } from 'react'
+import React, { useState } from 'react'
 import QRCode from 'react-qr-code'
 import { toast } from 'sonner'
 import { enableTwoFactorAction } from '@/app/settings/actions/enable-two-factor'
 import { Button } from '@/components/ui/button'
-import { InputError } from '@/components/ui/input-error'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
+import { TwoFactorSetupSkeleton } from './TwoFactorSetupSkeleton'
 
-interface TwoFactorSettings {
-  two_factor_enabled: boolean
-  trust_device: boolean
+interface SetupData {
+  totpURI: string
+  backupCodes?: string[]
 }
 
-export default function SettingsTwoFactorAuthTab() {
+interface ComponentState {
+  isLoading: boolean
+  setupData: SetupData | null
+  isEnabled: boolean
+  trustDevice: boolean
+  code: string
+  error: string | null
+}
+
+export default function SettingsTwoFactorAuthTab(): React.JSX.Element {
   const user = useUser()
-  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
-  const [status, setStatus] = useState<any | null>(null)
-  const [code, setCode] = useState('')
-  const initialSettings = {
-    trust_device: false,
-    two_factor_enabled: user?.two_factor_enabled || false,
+
+  const [state, setState] = useState<ComponentState>({
+    isLoading: false,
+    setupData: null,
+    isEnabled: user?.twoFactorEnabled || false,
+    trustDevice: false,
+    code: '',
+    error: null,
+  })
+
+  function handleTrustDeviceChange(checked: boolean) {
+    setState(prev => ({
+      ...prev,
+      trustDevice: checked,
+    }))
   }
 
-  const [optimisticSettings, updateOptimisticSettings] = useOptimistic<
-    TwoFactorSettings,
-    Partial<TwoFactorSettings>
-  >(
-    initialSettings as TwoFactorSettings,
-    (state, newSettings) => ({
-      ...state,
-      ...newSettings,
-    }),
-  )
+  function clearError(): void {
+    setState(prev => ({
+      ...prev,
+      error: null,
+    }))
+  }
 
-  function handleSwitchChange(field: keyof TwoFactorSettings, checked: boolean) {
-    const prev = optimisticSettings
+  function handleEnableTwoFactor(): void {
+    setState(prev => ({ ...prev, isLoading: true, error: null }))
 
-    startTransition(() => {
-      updateOptimisticSettings({ [field]: checked })
-    })
+    enableTwoFactorAction()
+      .then((result) => {
+        if ('error' in result) {
+          const errorMessage = result.error === 'Failed to enable two factor'
+            ? 'Unable to enable two-factor authentication. Please check your connection and try again.'
+            : result.error
 
-    queueMicrotask(async () => {
-      const result = await enableTwoFactorAction()
+          setState(prev => ({
+            ...prev,
+            isLoading: false,
+            error: errorMessage,
+          }))
 
-      if ('error' in result) {
-        startTransition(() => {
-          updateOptimisticSettings(prev)
-        })
-        setStatus(result)
+          toast.error(errorMessage)
+        }
+        else {
+          setState(prev => ({
+            ...prev,
+            isLoading: false,
+            setupData: {
+              totpURI: result.totpURI,
+              backupCodes: result.backupCodes,
+            },
+            error: null,
+          }))
+        }
+      })
+      .catch((error) => {
+        console.error('Failed to enable two factor:', error)
+        const errorMessage = 'An unexpected error occurred while enabling two-factor authentication. Please try again.'
+
+        setState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: errorMessage,
+        }))
+
+        toast.error(errorMessage)
+      })
+  }
+
+  async function verifyTotp(): Promise<void> {
+    try {
+      const { error } = await authClient.twoFactor.verifyTotp({
+        code: state.code,
+        trustDevice: state.trustDevice,
+      })
+
+      if (error) {
+        toast.error('Could not verify the code. Please try again.')
+        setState(prev => ({
+          ...prev,
+          code: '',
+          error: null,
+        }))
       }
       else {
-        setTwoFactorEnabled(true)
-        setStatus(result)
+        toast.success('2FA enabled successfully.')
+
+        setState(prev => ({
+          ...prev,
+          setupData: null,
+          isEnabled: true,
+          code: '',
+          error: null,
+        }))
+
+        if (user) {
+          useUser.setState({
+            ...user,
+            twoFactorEnabled: true,
+          })
+        }
       }
-    })
-  }
-
-  async function verifyTotp() {
-    const { error } = await authClient.twoFactor.verifyTotp({
-      code,
-      trustDevice: true,
-    })
-
-    if (error) {
-      toast.error('Could not verify the code. Please try again.')
     }
-    else {
-      toast.success('2FA enabled successfully.')
+    catch (error) {
+      console.error('Failed to verify TOTP:', error)
+      toast.error('An unexpected error occurred during verification. Please try again.')
+
+      setState(prev => ({
+        ...prev,
+        code: '',
+        error: null,
+      }))
     }
   }
 
@@ -85,45 +151,100 @@ export default function SettingsTwoFactorAuthTab() {
         </p>
       </div>
 
-      {status?.error && <InputError message={status.error} />}
+      {state.error && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
+          <div className="flex items-start justify-between">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-destructive" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-destructive">
+                  {state.error}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={clearError}
+              className={`
+                ml-auto flex-shrink-0 rounded-md bg-transparent p-1.5 text-destructive
+                hover:bg-destructive/20
+                focus:ring-2 focus:ring-destructive focus:ring-offset-2 focus:outline-none
+              `}
+            >
+              <span className="sr-only">Dismiss</span>
+              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
 
-      <Form action={verifyTotp} className="space-y-6">
-        <input
-          type="hidden"
-          name="two_factor_enabled"
-          value={optimisticSettings?.two_factor_enabled ? 'on' : 'off'}
-        />
-        <input
-          type="hidden"
-          name="trust_device"
-          value={optimisticSettings?.trust_device ? 'on' : 'off'}
-        />
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          verifyTotp()
+        }}
+        className="space-y-6"
+      >
 
         <div className="rounded-lg border p-6">
           <div className="grid gap-4">
             <h3 className="text-lg font-medium">Status</h3>
 
             <div className="grid gap-4">
-              <div className="flex items-center justify-between">
-                <div className="grid gap-1">
-                  <Label htmlFor="email-resolutions" className="text-sm font-medium">
-                    Enable 2FA
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Add an extra layer of security to your account using an authenticator app
-                  </p>
-                </div>
-                <Switch
-                  id="two-factor-enabled"
-                  checked={optimisticSettings?.two_factor_enabled}
-                  onCheckedChange={checked => handleSwitchChange('two_factor_enabled', checked)}
-                />
-              </div>
+              {!state.isEnabled && !state.setupData
+                ? (
+                    <div className="flex items-center justify-between">
+                      <div className="grid gap-1">
+                        <Label className="text-sm font-medium">
+                          Enable 2FA
+                        </Label>
+                        <p className="text-sm text-muted-foreground">
+                          Add an extra layer of security to your account using an authenticator app
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        onClick={handleEnableTwoFactor}
+                        disabled={state.isLoading}
+                      >
+                        {state.isLoading
+                          ? 'Enabling...'
+                          : 'Enable 2FA'}
+                      </Button>
+                    </div>
+                  )
+                : state.isEnabled
+                  ? (
+                      <div className="flex items-center justify-between">
+                        <div className="grid gap-1">
+                          <Label className="text-sm font-medium">
+                            Two-Factor Authentication
+                          </Label>
+                          <p className="text-sm text-muted-foreground">
+                            Two-factor authentication is now active on your account
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => { /* Placeholder for disable functionality */ }}
+                        >
+                          Disable 2FA
+                        </Button>
+                      </div>
+                    )
+                  : null}
 
-              {optimisticSettings?.two_factor_enabled && (
+              {state.setupData && (
                 <div className="flex items-center justify-between">
                   <div className="grid gap-1">
-                    <Label htmlFor="email-resolutions" className="text-sm font-medium">
+                    <Label className="text-sm font-medium">
                       Trust Device
                     </Label>
                     <p className="text-sm text-muted-foreground">
@@ -132,8 +253,8 @@ export default function SettingsTwoFactorAuthTab() {
                   </div>
                   <Switch
                     id="trust-device"
-                    checked={optimisticSettings?.trust_device}
-                    onCheckedChange={checked => handleSwitchChange('trust_device', checked)}
+                    checked={state.trustDevice}
+                    onCheckedChange={handleTrustDeviceChange}
                   />
                 </div>
               )}
@@ -141,7 +262,9 @@ export default function SettingsTwoFactorAuthTab() {
           </div>
         </div>
 
-        {twoFactorEnabled && (
+        {state.isLoading && <TwoFactorSetupSkeleton />}
+
+        {state.setupData && !state.isLoading && state.setupData.totpURI && (
           <div className="rounded-lg border p-6">
             <div className="space-y-4">
               <h4 className="text-lg font-medium">Setup Instructions</h4>
@@ -163,19 +286,22 @@ export default function SettingsTwoFactorAuthTab() {
 
             <div className="mt-6 grid gap-6">
               <div className="flex justify-center">
-                <QRCode value={status?.totpURI || ''} />
+                <QRCode value={state.setupData.totpURI} />
               </div>
 
-              <a href={status?.totpURI} className="text-center text-sm text-primary">
+              <a href={state.setupData.totpURI} className="text-center text-sm text-primary">
                 Or click here if you are on mobile and have an authenticator app installed.
               </a>
 
               <div className="flex flex-col items-center justify-center gap-2">
                 <InputOTP
                   maxLength={6}
-                  value={code}
-                  name="code"
-                  onChange={value => setCode(value)}
+                  value={state.code}
+                  onChange={(value: string) => setState(prev => ({
+                    ...prev,
+                    code: value,
+                    error: null,
+                  }))}
                 >
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
@@ -193,14 +319,17 @@ export default function SettingsTwoFactorAuthTab() {
               </div>
 
               <div className="ms-auto">
-                <Button type="submit">
+                <Button
+                  type="submit"
+                  disabled={state.code.length !== 6}
+                >
                   Submit
                 </Button>
               </div>
             </div>
           </div>
         )}
-      </Form>
+      </form>
     </div>
   )
 }
