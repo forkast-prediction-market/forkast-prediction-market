@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 }
 
 export default async function SettingsPage({ searchParams }: PageProps<'/settings'>) {
-  const user = await UserModel.getCurrentUser()
+  const user = await UserModel.getCurrentUser({ disableCookieCache: true })
   const params = await searchParams
   const tab = (params.tab as string) ?? 'profile'
 
