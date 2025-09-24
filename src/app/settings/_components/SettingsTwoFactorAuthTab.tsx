@@ -1,8 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useState } from 'react'
 import QRCode from 'react-qr-code'
 import { toast } from 'sonner'
+import { disableTwoFactorAction } from '@/app/settings/actions/disable-two-factor'
 import { enableTwoFactorAction } from '@/app/settings/actions/enable-two-factor'
 import { Button } from '@/components/ui/button'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
@@ -23,10 +24,9 @@ interface ComponentState {
   isEnabled: boolean
   trustDevice: boolean
   code: string
-  error: string | null
 }
 
-export default function SettingsTwoFactorAuthTab(): React.JSX.Element {
+export default function SettingsTwoFactorAuthTab() {
   const user = useUser()
 
   const [state, setState] = useState<ComponentState>({
@@ -35,7 +35,6 @@ export default function SettingsTwoFactorAuthTab(): React.JSX.Element {
     isEnabled: user?.twoFactorEnabled || false,
     trustDevice: false,
     code: '',
-    error: null,
   })
 
   function handleTrustDeviceChange(checked: boolean) {
@@ -45,14 +44,7 @@ export default function SettingsTwoFactorAuthTab(): React.JSX.Element {
     }))
   }
 
-  function clearError(): void {
-    setState(prev => ({
-      ...prev,
-      error: null,
-    }))
-  }
-
-  function handleEnableTwoFactor(): void {
+  function handleEnableTwoFactor() {
     setState(prev => ({ ...prev, isLoading: true, error: null }))
 
     enableTwoFactorAction()
@@ -65,7 +57,6 @@ export default function SettingsTwoFactorAuthTab(): React.JSX.Element {
           setState(prev => ({
             ...prev,
             isLoading: false,
-            error: errorMessage,
           }))
 
           toast.error(errorMessage)
@@ -96,7 +87,17 @@ export default function SettingsTwoFactorAuthTab(): React.JSX.Element {
       })
   }
 
-  async function verifyTotp(): Promise<void> {
+  async function handleDisableTwoFactor() {
+    try {
+      await disableTwoFactorAction()
+      toast.success('Successfully disabled two-factor authentication.')
+    }
+    catch {
+      toast.error('An unexpected error occurred while disabling two-factor authentication. Please try again.')
+    }
+  }
+
+  async function verifyTotp() {
     try {
       const { error } = await authClient.twoFactor.verifyTotp({
         code: state.code,
@@ -151,39 +152,6 @@ export default function SettingsTwoFactorAuthTab(): React.JSX.Element {
         </p>
       </div>
 
-      {state.error && (
-        <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-destructive" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <p className="text-sm font-medium text-destructive">
-                  {state.error}
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={clearError}
-              className={`
-                ml-auto flex-shrink-0 rounded-md bg-transparent p-1.5 text-destructive
-                hover:bg-destructive/20
-                focus:ring-2 focus:ring-destructive focus:ring-offset-2 focus:outline-none
-              `}
-            >
-              <span className="sr-only">Dismiss</span>
-              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
-
       <form
         onSubmit={(e) => {
           e.preventDefault()
@@ -233,7 +201,7 @@ export default function SettingsTwoFactorAuthTab(): React.JSX.Element {
                         <Button
                           type="button"
                           variant="outline"
-                          onClick={() => { /* Placeholder for disable functionality */ }}
+                          onClick={handleDisableTwoFactor}
                         >
                           Disable 2FA
                         </Button>
