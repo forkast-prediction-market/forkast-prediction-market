@@ -22,6 +22,6 @@ export async function disableTwoFactorAction() {
   }
   catch (error) {
     console.error('Failed to disable two-factor:', error)
-    return { error: 'Failed to enable two-factor' }
+    return { error: 'Failed to disable two-factor' }
   }
 }
