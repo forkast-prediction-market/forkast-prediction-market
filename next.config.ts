@@ -34,6 +34,9 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  env: {
+    NEXT_PUBLIC_ADMIN_WALLETS: process.env.ADMIN_WALLETS ?? '',
+  },
 }
 
 export default nextConfig

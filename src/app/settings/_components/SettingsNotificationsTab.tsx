@@ -18,8 +18,12 @@ interface NotificationSettings {
 export default function SettingsNotificationsTab({ user }: { user: User }) {
   const [status, setStatus] = useState<{ error: string } | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
-  // @ts-expect-error better-auth treat settings as string
-  const initialSettings = user.settings.notifications
+  const initialSettings = user.settings?.notifications ?? {
+    email_resolutions: false,
+    inapp_order_fills: false,
+    inapp_hide_small_fills: false,
+    inapp_resolutions: false,
+  }
 
   const [optimisticSettings, updateOptimisticSettings] = useOptimistic<
     NotificationSettings,

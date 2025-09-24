@@ -74,13 +74,27 @@ export interface Condition {
   updated_at: string
 }
 
+export interface UserSettings {
+  notifications?: {
+    email_resolutions?: boolean
+    inapp_order_fills?: boolean
+    inapp_hide_small_fills?: boolean
+    inapp_resolutions?: boolean
+  }
+  [key: string]: any
+}
+
 export interface User {
   id: string
   address: string
   email: string
-  settings: string
   username?: string
   image?: string | null
+  settings: UserSettings
+  affiliate_code?: string | null
+  referred_by_user_id?: string | null
+  referred_at?: string | null
+  isAdmin?: boolean
 }
 
 export interface PublicProfileStats {

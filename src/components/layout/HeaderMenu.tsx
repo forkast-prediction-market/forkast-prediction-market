@@ -1,5 +1,6 @@
 'use client'
 
+import type { User } from '@/types'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { createAuthClient } from 'better-auth/react'
 import { useEffect } from 'react'
@@ -10,15 +11,29 @@ import HeaderPortfolio from '@/components/layout/HeaderPortfolio'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useClientMounted } from '@/hooks/useClientMounted'
+import { buildUserFromSession, normalizeUserSettings } from '@/lib/user-client'
 import { useUser } from '@/stores/useUser'
 
 const { useSession } = createAuthClient()
 
-export default function HeaderMenu() {
+interface HeaderMenuProps {
+  initialUser?: User | null
+}
+
+export default function HeaderMenu({ initialUser }: HeaderMenuProps) {
   const isMounted = useClientMounted()
   const { open } = useAppKit()
   const { isConnected, status } = useAppKitAccount()
   const { data: session } = useSession()
+
+  useEffect(() => {
+    if (initialUser) {
+      useUser.setState({
+        ...initialUser,
+        settings: normalizeUserSettings(initialUser.settings),
+      })
+    }
+  }, [initialUser])
 
   useEffect(() => {
     const timeout = setTimeout(() => {
@@ -37,9 +52,8 @@ export default function HeaderMenu() {
 
   useEffect(() => {
     if (session?.user) {
-      useUser.setState({
-        ...session.user,
-      })
+      const normalized = buildUserFromSession(session.user)
+      useUser.setState(normalized)
     }
     else {
       useUser.setState(null)

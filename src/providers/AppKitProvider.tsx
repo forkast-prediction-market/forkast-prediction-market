@@ -11,6 +11,7 @@ import { generateRandomString } from 'better-auth/crypto'
 import { useTheme } from 'next-themes'
 import { redirect } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
+import { buildUserFromSession } from '@/lib/user-client'
 import { useUser } from '@/stores/useUser'
 
 export default function AppKitProvider({ children }: { children: ReactNode }) {
@@ -98,9 +99,9 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       onSignIn: () => {
         authClient.getSession().then((session) => {
           const user = session?.data?.user
-          useUser.setState({
-            ...user,
-          })
+          if (user) {
+            useUser.setState(buildUserFromSession(user))
+          }
 
           queueMicrotask(() => redirect(window.location.href as unknown as Route))
         }).catch(() => {})
