@@ -11,15 +11,15 @@ export function TwoFactorSetupSkeleton() {
         <div className="space-y-2">
           <div className="flex">
             <Skeleton className="mr-2 h-5 w-3" />
-            <Skeleton className="h-5 w-80" />
+            <Skeleton className="h-5 w-40 lg:w-80" />
           </div>
           <div className="flex">
             <Skeleton className="mr-2 h-5 w-3" />
-            <Skeleton className="h-5 w-64" />
+            <Skeleton className="h-5 w-32 lg:w-64" />
           </div>
           <div className="flex">
             <Skeleton className="mr-2 h-5 w-3" />
-            <Skeleton className="h-5 w-72" />
+            <Skeleton className="h-5 w-36 lg:w-72" />
           </div>
         </div>
       </div>
@@ -27,12 +27,12 @@ export function TwoFactorSetupSkeleton() {
       <div className="mt-6 grid gap-6">
         {/* QR Code Placeholder */}
         <div className="flex justify-center">
-          <Skeleton className="h-32 w-32" />
+          <Skeleton className="size-32" />
         </div>
 
         {/* Mobile Link Placeholder */}
         <div className="text-center">
-          <Skeleton className="mx-auto h-4 w-96" />
+          <Skeleton className="mx-auto h-4 w-full" />
         </div>
 
         {/* Input OTP Placeholder */}

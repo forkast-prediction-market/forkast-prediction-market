@@ -13,7 +13,7 @@ export async function disableTwoFactorAction() {
   try {
     const h = await headers()
 
-    await auth.api.disableTwoFactor({
+    return await auth.api.disableTwoFactor({
       body: {
         password: user.address,
       },
