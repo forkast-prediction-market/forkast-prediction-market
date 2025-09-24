@@ -27,7 +27,7 @@ export default function HeaderSearch() {
 
   return (
     <div
-      className="relative mx-2 hidden flex-1 sm:mx-4 sm:mr-6 sm:flex"
+      className="relative ms-2 me-2 hidden flex-1 sm:ms-4 sm:me-0 sm:flex sm:max-w-xl"
       ref={searchRef}
       data-testid="header-search-container"
     >
@@ -38,7 +38,7 @@ export default function HeaderSearch() {
         placeholder="Search events"
         value={query}
         onChange={e => handleQueryChange(e.target.value)}
-        className="w-full pl-9 text-sm sm:w-3/4"
+        className="w-full pl-9 text-sm"
       />
       {(showResults || isLoading) && (
         <SearchResults
