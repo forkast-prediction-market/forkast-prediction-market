@@ -46,7 +46,7 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
   function extractTotpSecret() {
     try {
       const url = new URL(state.setupData?.totpURI as string)
-      return url.searchParams.get('secret') as string
+      return url.searchParams.get('secret') ?? ''
     }
     catch {
       return ''
