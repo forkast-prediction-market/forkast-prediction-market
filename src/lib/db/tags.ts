@@ -2,6 +2,8 @@
 
 import { supabaseAdmin } from '@/lib/supabase'
 
+const EXCLUDED_SUB_SLUGS = new Set(['hide-from-new'])
+
 export const TagModel = {
   async getMainTags() {
     const query = supabaseAdmin
@@ -18,7 +20,7 @@ export const TagModel = {
     const { data, error } = await query
 
     if (error || !data) {
-      return { data, error }
+      return { data, error, globalChilds: [] }
     }
 
     const mainSlugs = data.map(tag => tag.slug)
@@ -30,14 +32,19 @@ export const TagModel = {
       .in('main_tag_slug', mainSlugs)
 
     if (viewError || !subcategories) {
-      return { data, error: viewError }
+      return { data, error: viewError, globalChilds: [] }
     }
 
     const grouped = new Map<string, { name: string, slug: string, count: number }[]>()
     const bestMainBySubSlug = new Map<string, { mainSlug: string, count: number }>()
+    const globalCounts = new Map<string, { name: string, slug: string, count: number }>()
 
     for (const subtag of subcategories) {
-      if (!subtag.sub_tag_slug || mainSlugSet.has(subtag.sub_tag_slug)) {
+      if (
+        !subtag.sub_tag_slug
+        || mainSlugSet.has(subtag.sub_tag_slug)
+        || EXCLUDED_SUB_SLUGS.has(subtag.sub_tag_slug)
+      ) {
         continue
       }
 
@@ -73,6 +80,13 @@ export const TagModel = {
           count: nextCount,
         })
       }
+
+      const globalExisting = globalCounts.get(subtag.sub_tag_slug)
+      globalCounts.set(subtag.sub_tag_slug, {
+        name: subtag.sub_tag_name,
+        slug: subtag.sub_tag_slug,
+        count: (globalExisting?.count ?? 0) + nextCount,
+      })
     }
 
     const enhanced = data.map(tag => ({
@@ -89,6 +103,16 @@ export const TagModel = {
         .map(({ name, slug }) => ({ name, slug })),
     }))
 
-    return { data: enhanced, error: null }
+    const globalChilds = Array.from(globalCounts.values())
+      .sort((a, b) => {
+        if (b.count === a.count) {
+          return a.name.localeCompare(b.name)
+        }
+        return b.count - a.count
+      })
+      .slice(0, 6)
+      .map(({ name, slug }) => ({ name, slug }))
+
+    return { data: enhanced, error: null, globalChilds }
   },
 }

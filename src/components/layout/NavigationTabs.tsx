@@ -4,11 +4,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { TagModel } from '@/lib/db/tags'
 
 export default async function NavigationTabs() {
-  const { data } = await TagModel.getMainTags()
+  const { data, globalChilds = [] } = await TagModel.getMainTags()
+
+  const sharedChilds = globalChilds.map(child => ({ ...child }))
 
   const tags = [
-    { slug: 'trending', name: 'Trending', childs: [] },
-    { slug: 'new', name: 'New', childs: [] },
+    { slug: 'trending', name: 'Trending', childs: sharedChilds },
+    { slug: 'new', name: 'New', childs: sharedChilds.map(child => ({ ...child })) },
     ...data ?? [],
   ]
 
