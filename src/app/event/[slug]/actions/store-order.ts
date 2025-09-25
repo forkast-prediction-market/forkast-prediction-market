@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { AffiliateModel } from '@/lib/db/affiliates'
 import { OrderModel } from '@/lib/db/orders'
 import { UserModel } from '@/lib/db/users'
 
@@ -40,9 +41,33 @@ export async function storeOrderAction(formData: FormData) {
   const { slug, ...orderPayload } = validated.data
 
   try {
+    const [{ data: forkSettings }, { data: referral }] = await Promise.all([
+      AffiliateModel.getForkSettings(),
+      AffiliateModel.getReferral(user.id),
+    ])
+
+    const tradeFeeBps = forkSettings?.trade_fee_bps ?? 0
+    const affiliateShareBps = forkSettings?.affiliate_share_bps ?? 0
+    const affiliateUserId = user.referred_by_user_id
+      || referral?.affiliate_user_id
+      || null
+
+    const tradeFeeDecimal = tradeFeeBps / 10000
+    const totalFeeAmount = Number((orderPayload.amount * tradeFeeDecimal).toFixed(6))
+    const affiliateShareDecimal = affiliateUserId ? (affiliateShareBps / 10000) : 0
+    const affiliateFeeAmount = affiliateUserId
+      ? Number((totalFeeAmount * affiliateShareDecimal).toFixed(6))
+      : 0
+    const forkFeeAmount = Math.max(0, Number((totalFeeAmount - affiliateFeeAmount).toFixed(6)))
+
     const { error } = await OrderModel.createOrder({
       ...orderPayload,
       user_id: user.id,
+      affiliate_user_id: affiliateUserId,
+      trade_fee_bps: tradeFeeBps,
+      affiliate_share_bps: affiliateUserId ? affiliateShareBps : 0,
+      fork_fee_amount: forkFeeAmount,
+      affiliate_fee_amount: affiliateFeeAmount,
     })
 
     if (error) {

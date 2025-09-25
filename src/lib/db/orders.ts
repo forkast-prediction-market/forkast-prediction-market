@@ -9,6 +9,11 @@ export const OrderModel = {
     amount: number
     price?: number
     order_type?: 'market' | 'limit'
+    affiliate_user_id?: string | null
+    trade_fee_bps?: number
+    affiliate_share_bps?: number
+    fork_fee_amount?: number
+    affiliate_fee_amount?: number
   }) {
     const { data, error } = await supabaseAdmin
       .from('orders')
@@ -21,6 +26,11 @@ export const OrderModel = {
         amount: orderData.amount,
         price: orderData.price,
         status: 'pending',
+        affiliate_user_id: orderData.affiliate_user_id ?? null,
+        trade_fee_bps: orderData.trade_fee_bps ?? 0,
+        affiliate_share_bps: orderData.affiliate_share_bps ?? 0,
+        fork_fee_amount: orderData.fork_fee_amount ?? 0,
+        affiliate_fee_amount: orderData.affiliate_fee_amount ?? 0,
       })
       .select()
       .single()

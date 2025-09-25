@@ -92,7 +92,16 @@ export const auth = betterAuth({
         type: 'string',
       },
       settings: {
+        type: 'json',
+      },
+      affiliate_code: {
         type: 'string',
+      },
+      referred_by_user_id: {
+        type: 'string',
+      },
+      referred_at: {
+        type: 'date',
       },
     },
     changeEmail: {
