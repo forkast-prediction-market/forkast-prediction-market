@@ -57,7 +57,7 @@ export default function SettingsContent({ user, tab, affiliateData }: Props) {
       case 'notifications':
         return <SettingsNotificationsTab user={user} />
       case 'two-factor':
-        return <SettingsTwoFactorAuthTab />
+        return <SettingsTwoFactorAuthTab user={user} />
       case 'export-key':
         return <SettingsExportPrivateKeyTab />
       default:

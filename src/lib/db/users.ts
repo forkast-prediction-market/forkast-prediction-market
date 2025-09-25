@@ -78,8 +78,11 @@ export const UserModel = {
     return { data, error }
   },
 
-  async getCurrentUser() {
+  async getCurrentUser({ disableCookieCache = false }: { disableCookieCache?: boolean } = {}) {
     const session = await auth.api.getSession({
+      query: {
+        disableCookieCache,
+      },
       headers: await headers(),
     })
 

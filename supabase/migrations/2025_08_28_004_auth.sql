@@ -1,7 +1,7 @@
 -- ============================================================
 -- AUTH & USERS - Complete Domain Implementation
 -- ============================================================
--- Tables: users, sessions, accounts, verifications, wallets
+-- Tables: users, sessions, accounts, verifications, wallets, two_factors
 -- Dependencies: None (independent domain)
 -- Integration: Better Auth (SIWE) for Web3 authentication
 -- ============================================================
@@ -13,15 +13,16 @@
 -- Users table - Core user identity
 CREATE TABLE IF NOT EXISTS users
 (
-  id             CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
-  address        TEXT    NOT NULL UNIQUE,
-  username       TEXT,
-  email          TEXT    NOT NULL,
-  email_verified BOOLEAN NOT NULL     DEFAULT FALSE,
-  image          TEXT,
-  settings       JSONB   NOT NULL     DEFAULT '{}'::JSONB,
-  created_at     TIMESTAMPTZ          DEFAULT NOW(),
-  updated_at     TIMESTAMPTZ          DEFAULT NOW()
+  id                 CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
+  address            TEXT    NOT NULL UNIQUE,
+  username           TEXT,
+  email              TEXT    NOT NULL,
+  email_verified     BOOLEAN NOT NULL     DEFAULT FALSE,
+  two_factor_enabled BOOLEAN NOT NULL     DEFAULT FALSE,
+  image              TEXT,
+  settings           JSONB   NOT NULL     DEFAULT '{}'::JSONB,
+  created_at         TIMESTAMPTZ          DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ          DEFAULT NOW()
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users (LOWER(email));
@@ -88,6 +89,17 @@ CREATE TABLE IF NOT EXISTS wallets
 
 CREATE INDEX IF NOT EXISTS idx_wallets_user_id ON wallets (user_id);
 
+-- two-factor authentication table
+CREATE TABLE two_factors
+(
+  id           CHAR(26) NOT NULL DEFAULT generate_ulid(),
+  secret       TEXT,
+  backup_codes TEXT,
+  user_id      CHAR(26) NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_two_factors_user_id ON two_factors (user_id);
+
 -- ===========================================
 -- 2. ROW LEVEL SECURITY
 -- ===========================================
@@ -102,6 +114,8 @@ ALTER TABLE accounts
 ALTER TABLE verifications
   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wallets
+  ENABLE ROW LEVEL SECURITY;
+ALTER TABLE two_factors
   ENABLE ROW LEVEL SECURITY;
 
 -- ===========================================
@@ -166,6 +180,19 @@ $$
                    WHERE policyname = 'service_role_all_wallets'
                      AND tablename = 'wallets') THEN
       CREATE POLICY "service_role_all_wallets" ON wallets FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+    END IF;
+  END
+$$;
+
+-- two-factor policies
+DO
+$$
+  BEGIN
+    IF NOT EXISTS (SELECT 1
+                   FROM pg_policies
+                   WHERE policyname = 'service_role_all_two_factors'
+                     AND tablename = 'two_factors') THEN
+      CREATE POLICY "service_role_all_two_factors" ON two_factors FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
     END IF;
   END
 $$;
