@@ -98,7 +98,6 @@ export interface PublicProfile {
   stats?: PublicProfileStats
 }
 
-// Content Types
 export interface Tag {
   id: number
   name: string
@@ -145,7 +144,6 @@ export interface ActivityItem {
   transaction_hash: string
 }
 
-// Notification Types
 export type NotificationCategory = 'trade' | 'system' | 'general'
 
 export type NotificationLinkType

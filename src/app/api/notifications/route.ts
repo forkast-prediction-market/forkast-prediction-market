@@ -17,15 +17,14 @@ export async function GET() {
 
     if (error) {
       return NextResponse.json(
-        { error },
+        { error: 'Internal server error' },
         { status: 500 },
       )
     }
 
     return NextResponse.json(notifications)
   }
-  catch (err) {
-    console.error('Unexpected error in GET /api/notifications:', err)
+  catch {
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 },

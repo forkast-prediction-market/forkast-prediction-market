@@ -20,19 +20,14 @@ export const useNotifications = create<NotificationsState>()((set, get) => ({
       const response = await fetch('/api/notifications')
 
       if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Unauthenticated.')
-        }
-        throw new Error(`Failed to fetch notifications: ${response.statusText}`)
+        throw new Error('Failed to fetch notifications')
       }
 
       const notifications: Notification[] = await response.json()
       set({ notifications, isLoading: false })
     }
-    catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch notifications'
-      set({ error: errorMessage, isLoading: false })
-      console.error('Error fetching notifications:', error)
+    catch {
+      set({ error: 'Failed to fetch notifications', isLoading: false })
     }
   },
   addNotification: (notification) => {
@@ -46,25 +41,14 @@ export const useNotifications = create<NotificationsState>()((set, get) => ({
       })
 
       if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error('Unauthenticated.')
-        }
-        if (response.status === 404) {
-          throw new Error('Notification not found')
-        }
-        if (response.status === 403) {
-          throw new Error('Not authorized to delete this notification')
-        }
-        throw new Error(`Failed to delete notification: ${response.statusText}`)
+        throw new Error('Failed to delete notification')
       }
 
       set({ notifications: get().notifications.filter(notification => notification.id !== notificationId) })
     }
-    catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to delete notification'
-      set({ error: errorMessage })
-      console.error('Error deleting notification:', error)
-      throw error
+    catch {
+      set({ error: 'Failed to delete notification' })
+      throw new Error('Failed to delete notification')
     }
   },
 }))
