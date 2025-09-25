@@ -41,7 +41,7 @@ export const AffiliateModel = {
       // Ensure default row exists
       const { data: inserted, error: insertError } = await supabaseAdmin
         .from('fork_settings')
-        .upsert({ singleton: true })
+        .upsert({ singleton: true }, { onConflict: 'singleton' })
         .select('trade_fee_bps, affiliate_share_bps, updated_at')
         .single()
 
@@ -58,7 +58,7 @@ export const AffiliateModel = {
         singleton: true,
         trade_fee_bps: input.trade_fee_bps,
         affiliate_share_bps: input.affiliate_share_bps,
-      })
+      }, { onConflict: 'singleton' })
       .select('trade_fee_bps, affiliate_share_bps, updated_at')
       .single()
 
