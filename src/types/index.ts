@@ -99,7 +99,6 @@ export interface PublicProfile {
   stats?: PublicProfileStats
 }
 
-// Content Types
 export interface Tag {
   id: number
   name: string
@@ -144,6 +143,34 @@ export interface ActivityItem {
   amount: number
   timestamp: Date
   transaction_hash: string
+}
+
+export type NotificationCategory = 'trade' | 'system' | 'general'
+
+export type NotificationLinkType
+  = | 'none'
+    | 'market'
+    | 'event'
+    | 'order'
+    | 'settings'
+    | 'profile'
+    | 'external'
+    | 'custom'
+
+export interface Notification {
+  id: string
+  category: NotificationCategory
+  title: string
+  description: string
+  created_at: string
+  user_avatar?: string | null
+  extra_info?: string
+  time_ago?: string
+  link_type?: NotificationLinkType
+  link_target?: string | null
+  link_url?: string | null
+  link_label?: string
+  metadata?: Record<string, unknown>
 }
 
 export type QueryResult<T>
