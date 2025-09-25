@@ -1,6 +1,7 @@
 'use client'
 
 import type { User } from '@/types'
+import { CheckIcon, CopyIcon } from 'lucide-react'
 import { useState } from 'react'
 import QRCode from 'react-qr-code'
 import { toast } from 'sonner'
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { useClipboard } from '@/hooks/useClipboard'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 import { TwoFactorSetupSkeleton } from './TwoFactorSetupSkeleton'
@@ -30,6 +32,7 @@ interface ComponentState {
 }
 
 export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
+  const { copied, copy } = useClipboard()
   const [state, setState] = useState<ComponentState>({
     isLoading: false,
     setupData: null,
@@ -39,6 +42,20 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
     isVerifying: false,
     isDisabling: false,
   })
+
+  function extractTotpSecret() {
+    try {
+      const url = new URL(state.setupData?.totpURI as string)
+      return url.searchParams.get('secret') ?? ''
+    }
+    catch {
+      return ''
+    }
+  }
+
+  function handleCopySecret() {
+    copy(extractTotpSecret())
+  }
 
   function handleTrustDeviceChange(checked: boolean) {
     setState(prev => ({
@@ -266,7 +283,7 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
                 </li>
                 <li className="flex">
                   <span className="mr-2 font-medium">2.</span>
-                  Scan the QR code with your authenticator app
+                  Scan the QR code with your authenticator app (or copy the code).
                 </li>
                 <li className="flex">
                   <span className="mr-2 font-medium">3.</span>
@@ -278,6 +295,22 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
             <div className="mt-6 grid gap-6">
               <div className="flex justify-center">
                 <QRCode value={state.setupData.totpURI} />
+              </div>
+
+              <div className="mx-auto">
+                <Button
+                  variant="ghost"
+                  type="button"
+                  size="sm"
+                  onClick={handleCopySecret}
+                  className="-ml-2 max-w-[18rem] text-xs text-muted-foreground"
+                  title={copied ? 'Copied!' : 'Copy address'}
+                >
+                  <span className="block min-w-0 break-words whitespace-normal">{extractTotpSecret()}</span>
+                  {copied
+                    ? <CheckIcon className="size-3.5 text-yes" data-testid="check-icon" />
+                    : <CopyIcon className="size-3.5" data-testid="copy-icon" />}
+                </Button>
               </div>
 
               <a href={state.setupData.totpURI} className="text-center text-sm text-primary">
@@ -295,12 +328,12 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
                   }))}
                 >
                   <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    <InputOTPSlot index={2} />
-                    <InputOTPSlot index={3} />
-                    <InputOTPSlot index={4} />
-                    <InputOTPSlot index={5} />
+                    <InputOTPSlot className="size-12 lg:size-14" index={0} />
+                    <InputOTPSlot className="size-12 lg:size-14" index={1} />
+                    <InputOTPSlot className="size-12 lg:size-14" index={2} />
+                    <InputOTPSlot className="size-12 lg:size-14" index={3} />
+                    <InputOTPSlot className="size-12 lg:size-14" index={4} />
+                    <InputOTPSlot className="size-12 lg:size-14" index={5} />
                   </InputOTPGroup>
                 </InputOTP>
 
