@@ -170,7 +170,6 @@ export interface Notification {
   link_url?: string | null
   link_label?: string
   metadata?: Record<string, unknown>
-  wallet_id?: string | null
 }
 
 export type QueryResult<T>
