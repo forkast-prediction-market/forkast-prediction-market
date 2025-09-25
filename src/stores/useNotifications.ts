@@ -3,43 +3,69 @@ import { create } from 'zustand'
 
 interface NotificationsState {
   notifications: Notification[]
-  setNotifications: (notifications: Notification[]) => void
+  setNotifications: () => Promise<void>
   addNotification: (notification: Notification) => void
-  removeNotification: (notificationId: string) => void
-  markAsRead: (notificationId: string) => void
-  markAllAsRead: () => void
+  removeNotification: (notificationId: string) => Promise<void>
+  isLoading: boolean
+  error: string | null
 }
 
 export const useNotifications = create<NotificationsState>()((set, get) => ({
   notifications: [],
-  setNotifications: notifications => set({ notifications }),
+  isLoading: false,
+  error: null,
+  setNotifications: async () => {
+    set({ isLoading: true, error: null })
+    try {
+      const response = await fetch('/api/notifications')
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Unauthenticated.')
+        }
+        throw new Error(`Failed to fetch notifications: ${response.statusText}`)
+      }
+
+      const notifications: Notification[] = await response.json()
+      set({ notifications, isLoading: false })
+    }
+    catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to fetch notifications'
+      set({ error: errorMessage, isLoading: false })
+      console.error('Error fetching notifications:', error)
+    }
+  },
   addNotification: (notification) => {
     set({ notifications: [notification, ...get().notifications] })
   },
-  removeNotification: (notificationId) => {
-    set({ notifications: get().notifications.filter(notification => notification.id !== notificationId) })
-  },
-  markAsRead: (notificationId) => {
-    const readTimestamp = new Date().toISOString()
+  removeNotification: async (notificationId) => {
+    set({ error: null })
+    try {
+      const response = await fetch(`/api/notifications/${notificationId}`, {
+        method: 'DELETE',
+      })
 
-    set({
-      notifications: get().notifications.map(notification =>
-        notification.id === notificationId && !notification.is_read
-          ? { ...notification, is_read: true, read_at: notification.read_at ?? readTimestamp }
-          : notification,
-      ),
-    })
-  },
-  markAllAsRead: () => {
-    const readTimestamp = new Date().toISOString()
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Unauthenticated.')
+        }
+        if (response.status === 404) {
+          throw new Error('Notification not found')
+        }
+        if (response.status === 403) {
+          throw new Error('Not authorized to delete this notification')
+        }
+        throw new Error(`Failed to delete notification: ${response.statusText}`)
+      }
 
-    set({
-      notifications: get().notifications.map(notification =>
-        notification.is_read
-          ? notification
-          : { ...notification, is_read: true, read_at: notification.read_at ?? readTimestamp },
-      ),
-    })
+      set({ notifications: get().notifications.filter(notification => notification.id !== notificationId) })
+    }
+    catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to delete notification'
+      set({ error: errorMessage })
+      console.error('Error deleting notification:', error)
+      throw error
+    }
   },
 }))
 
@@ -48,7 +74,13 @@ export function useNotificationList() {
 }
 
 export function useUnreadNotificationCount() {
-  return useNotifications(state =>
-    state.notifications.reduce((total, notification) => total + (notification.is_read ? 0 : 1), 0),
-  )
+  return useNotifications(state => state.notifications.length)
+}
+
+export function useNotificationsLoading() {
+  return useNotifications(state => state.isLoading)
+}
+
+export function useNotificationsError() {
+  return useNotifications(state => state.error)
 }

@@ -164,9 +164,6 @@ export interface Notification {
   title: string
   description: string
   created_at: string
-  is_read: boolean
-  updated_at?: string
-  read_at?: string | null
   user_avatar?: string | null
   extra_info?: string
   time_ago?: string

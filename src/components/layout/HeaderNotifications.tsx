@@ -3,9 +3,10 @@
 import type { Notification } from '@/types'
 import { BellIcon, ExternalLinkIcon } from 'lucide-react'
 import Image from 'next/image'
+import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { useNotificationList, useNotifications, useUnreadNotificationCount } from '@/stores/useNotifications'
+import { useNotificationList, useNotifications, useNotificationsError, useNotificationsLoading, useUnreadNotificationCount } from '@/stores/useNotifications'
 
 function getNotificationTimeLabel(notification: Notification) {
   if (notification.time_ago) {
@@ -60,8 +61,14 @@ function getNotificationTimeLabel(notification: Notification) {
 export default function HeaderNotifications() {
   const notifications = useNotificationList()
   const unreadCount = useUnreadNotificationCount()
-  const markAsRead = useNotifications(state => state.markAsRead)
+  const setNotifications = useNotifications(state => state.setNotifications)
+  const isLoading = useNotificationsLoading()
+  const error = useNotificationsError()
   const hasNotifications = notifications.length > 0
+
+  useEffect(() => {
+    queueMicrotask(() => setNotifications())
+  }, [setNotifications])
 
   return (
     <DropdownMenu>
@@ -92,14 +99,28 @@ export default function HeaderNotifications() {
         </div>
 
         <div className="max-h-[400px] overflow-y-auto">
-          {!hasNotifications && (
+          {isLoading && (
+            <div className="p-4 text-center text-muted-foreground">
+              <BellIcon className="mx-auto mb-2 h-8 w-8 animate-pulse opacity-50" />
+              <p className="text-sm">Loading notifications...</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="p-4 text-center text-muted-foreground">
+              <BellIcon className="mx-auto mb-2 h-8 w-8 opacity-50" />
+              <p className="text-sm text-destructive">Failed to load notifications</p>
+            </div>
+          )}
+
+          {!isLoading && !error && !hasNotifications && (
             <div className="p-4 text-center text-muted-foreground">
               <BellIcon className="mx-auto mb-2 h-8 w-8 opacity-50" />
               <p className="text-sm">You have no notifications.</p>
             </div>
           )}
 
-          {hasNotifications && (
+          {!isLoading && !error && hasNotifications && (
             <div className="divide-y divide-border">
               {notifications.map((notification) => {
                 const timeLabel = getNotificationTimeLabel(notification)
@@ -115,11 +136,6 @@ export default function HeaderNotifications() {
                   <div
                     key={notification.id}
                     className="flex cursor-pointer items-start gap-3 p-3 transition-colors hover:bg-accent/50"
-                    onClick={() => {
-                      if (!notification.is_read) {
-                        markAsRead(notification.id)
-                      }
-                    }}
                   >
                     <div className="flex-shrink-0">
                       {notification.user_avatar
