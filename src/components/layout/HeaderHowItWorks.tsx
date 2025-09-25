@@ -1,10 +1,10 @@
 'use client'
 
-import { useAppKit } from '@reown/appkit/react'
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import confetti from 'canvas-confetti'
-import { InfoIcon } from 'lucide-react'
+import { InfoIcon, XIcon } from 'lucide-react'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -46,11 +46,31 @@ const STEPS = [
 
 export default function HeaderHowItWorks() {
   const { open: openAuthModal } = useAppKit()
+  const { isConnected } = useAppKitAccount()
   const [isOpen, setIsOpen] = useState(false)
   const [activeStep, setActiveStep] = useState(0)
+  const [isMobileBannerDismissed, setIsMobileBannerDismissed] = useState(false)
 
   const currentStep = STEPS[activeStep]
   const isLastStep = activeStep === STEPS.length - 1
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const dismissed = window.localStorage.getItem('how_it_works_banner_dismissed')
+    if (dismissed === 'true') {
+      queueMicrotask(() => setIsMobileBannerDismissed(true))
+    }
+  }, [])
+
+  function handleDismissBanner() {
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('how_it_works_banner_dismissed', 'true')
+    }
+    setIsMobileBannerDismissed(true)
+  }
 
   function handleOpenChange(nextOpen: boolean) {
     setIsOpen(nextOpen)
@@ -80,6 +100,12 @@ export default function HeaderHowItWorks() {
     setActiveStep(step => Math.min(step + 1, STEPS.length - 1))
   }
 
+  if (isConnected) {
+    return null
+  }
+
+  const showMobileBanner = !isMobileBannerDismissed
+
   return (
     <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
@@ -87,12 +113,40 @@ export default function HeaderHowItWorks() {
           type="button"
           variant="link"
           size="sm"
-          className="flex-shrink-0 items-center gap-1.5"
+          className="hidden items-center gap-1.5 sm:inline-flex"
         >
           <InfoIcon className="size-4" />
           How it works
         </Button>
       </DialogTrigger>
+
+      {showMobileBanner && (
+        <div className="fixed right-0 bottom-0 left-0 z-40 border-t bg-background sm:hidden">
+          <div className="container flex items-center justify-between gap-2 py-3">
+            <DialogTrigger asChild>
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="flex-1 justify-center gap-2 text-primary no-underline"
+              >
+                <InfoIcon className="size-4" />
+                How it works
+              </Button>
+            </DialogTrigger>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="size-8"
+              onClick={handleDismissBanner}
+            >
+              <XIcon className="size-4" />
+              <span className="sr-only">Dismiss</span>
+            </Button>
+          </div>
+        </div>
+      )}
 
       <DialogContent className="max-h-[95vh] gap-0 overflow-y-auto p-0 sm:max-w-md">
         <div className="overflow-hidden rounded-t-lg">
