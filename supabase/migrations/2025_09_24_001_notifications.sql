@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS notifications
 
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications (user_id);
 CREATE INDEX IF NOT EXISTS idx_notifications_category ON notifications (category);
-CREATE INDEX IF NOT EXISTS idx_notifications_created_at ON notifications (created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_created_at ON notifications (user_id, created_at DESC);
 
 -- ===========================================
 -- 3. ROW LEVEL SECURITY
