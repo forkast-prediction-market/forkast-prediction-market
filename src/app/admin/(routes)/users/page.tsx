@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import AdminUsersTable from '@/app/admin/_components/AdminUsersTable'
 import { isAdminWallet } from '@/lib/admin'
 import { UserModel } from '@/lib/db/users'
@@ -6,7 +7,7 @@ import { truncateAddress } from '@/lib/utils'
 export default async function AdminUsersPage() {
   const currentUser = await UserModel.getCurrentUser()
   if (!currentUser || !currentUser.isAdmin) {
-    return null
+    redirect('/')
   }
 
   const { data, count } = await UserModel.listUsers(100)
@@ -20,10 +21,7 @@ export default async function AdminUsersPage() {
   )
 
   const baseProfileUrl = (() => {
-    const raw = process.env.NEXT_PUBLIC_SITE_URL
-      || process.env.VERCEL_PROJECT_PRODUCTION_URL
-      || process.env.NEXT_PUBLIC_VERCEL_URL
-      || 'https://forka.st'
+    const raw = process.env.NEXT_PUBLIC_SITE_URL!
 
     return raw.startsWith('http') ? raw : `https://${raw}`
   })()
@@ -39,8 +37,7 @@ export default async function AdminUsersPage() {
         })
 
     const profilePath = user.username ?? user.address
-    const avatarSource = user.image
-      || (user.username ? `https://avatar.vercel.sh/${user.username}.png` : `https://avatar.vercel.sh/${user.address}.png`)
+    const avatarSource = user.image || `https://avatar.vercel.sh/${profilePath}.png`
 
     const referredSource = user.referred_by_user_id
       ? referredMap.get(user.referred_by_user_id)

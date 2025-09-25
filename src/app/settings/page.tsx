@@ -29,16 +29,9 @@ export default async function SettingsPage({ searchParams }: PageProps<'/setting
   const commissionPercent = Number(((forkSettings?.trade_fee_bps ?? 100) / 100) * ((forkSettings?.affiliate_share_bps ?? 5000) / 10000))
 
   function resolveBaseUrl() {
-    const raw = process.env.VERCEL_PROJECT_PRODUCTION_URL
-      || process.env.NEXT_PUBLIC_SITE_URL
-      || process.env.NEXT_PUBLIC_VERCEL_URL
-      || 'http://localhost:3000'
+    const raw = process.env.NEXT_PUBLIC_SITE_URL!
 
-    if (raw.startsWith('http')) {
-      return raw
-    }
-
-    return `https://${raw}`
+    return raw.startsWith('http') ? raw : `https://${raw}`
   }
 
   const affiliateData = affiliateCode

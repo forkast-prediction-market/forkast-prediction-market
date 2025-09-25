@@ -11,7 +11,7 @@ import HeaderPortfolio from '@/components/layout/HeaderPortfolio'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useClientMounted } from '@/hooks/useClientMounted'
-import { buildUserFromSession, normalizeUserSettings } from '@/lib/user-client'
+import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
 const { useSession } = createAuthClient()
@@ -28,16 +28,14 @@ export default function HeaderMenu({ initialUser }: HeaderMenuProps) {
 
   useEffect(() => {
     if (initialUser) {
-      useUser.setState({
-        ...initialUser,
-        settings: normalizeUserSettings(initialUser.settings),
-      })
+      useUser.setState(initialUser)
     }
   }, [initialUser])
 
   useEffect(() => {
     const timeout = setTimeout(() => {
       if (status === 'connecting') {
+        authClient.signOut()
         Object.keys(localStorage).forEach((key) => {
           if (key.startsWith('@appkit')) {
             localStorage.removeItem(key)
@@ -45,15 +43,14 @@ export default function HeaderMenu({ initialUser }: HeaderMenuProps) {
         })
         location.reload()
       }
-    }, 15000)
+    }, 20000)
 
     return () => clearTimeout(timeout)
   }, [status])
 
   useEffect(() => {
     if (session?.user) {
-      const normalized = buildUserFromSession(session.user)
-      useUser.setState(normalized)
+      useUser.setState(session.user)
     }
     else {
       useUser.setState(null)

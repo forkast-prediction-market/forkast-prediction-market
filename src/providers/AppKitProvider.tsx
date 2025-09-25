@@ -11,7 +11,6 @@ import { generateRandomString } from 'better-auth/crypto'
 import { useTheme } from 'next-themes'
 import { redirect } from 'next/navigation'
 import { authClient } from '@/lib/auth-client'
-import { buildUserFromSession } from '@/lib/user-client'
 import { useUser } from '@/stores/useUser'
 
 export default function AppKitProvider({ children }: { children: ReactNode }) {
@@ -25,7 +24,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
     metadata: {
       name: process.env.NEXT_PUBLIC_SITE_NAME!,
       description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION!,
-      url: typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000',
+      url: process.env.NEXT_PUBLIC_SITE_URL!,
       icons: ['https://avatar.vercel.sh/bitcoin.png'],
     },
     themeVariables: {
@@ -37,7 +36,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
     siweConfig: createSIWEConfig({
       signOutOnAccountChange: true,
       getMessageParams: async () => ({
-        domain: new URL(typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000').host,
+        domain: new URL(process.env.NEXT_PUBLIC_SITE_URL!).host,
         uri: typeof window !== 'undefined' ? window.location.origin : '',
         chains: [polygonAmoy.id],
         statement: 'Please sign with your account',
@@ -100,7 +99,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
         authClient.getSession().then((session) => {
           const user = session?.data?.user
           if (user) {
-            useUser.setState(buildUserFromSession(user))
+            useUser.setState(user)
           }
 
           queueMicrotask(() => redirect(window.location.href as unknown as Route))

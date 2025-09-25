@@ -1,18 +1,11 @@
 import type { Metadata } from 'next'
-import { redirect } from 'next/navigation'
 import AdminSidebar from '@/app/admin/_components/AdminSidebar'
-import { UserModel } from '@/lib/db/users'
 
 export const metadata: Metadata = {
   title: 'Admin',
 }
 
 export default async function AdminLayout({ children }: LayoutProps<'/admin'>) {
-  const user = await UserModel.getCurrentUser()
-  if (!user || !user.isAdmin) {
-    redirect('/')
-  }
-
   return (
     <main className="container py-8">
       <div className="mx-auto max-w-6xl">

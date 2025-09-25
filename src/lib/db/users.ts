@@ -104,8 +104,7 @@ export const UserModel = {
       }
     }
 
-    const isAdmin = isAdminWallet(user.address)
-    user.isAdmin = isAdmin
+    user.isAdmin = isAdminWallet(user.address)
 
     if (!user.affiliate_code) {
       try {
