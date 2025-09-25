@@ -82,7 +82,7 @@ async function createSyncEventsCron(client) {
       DELETE FROM cron.job_run_details
       WHERE start_time < now() - interval '3 days';
 
-      PERFORM net.http_get(
+      SELECT net.http_get(
         url := 'https://<<VERCEL_URL>>/api/sync-events',
         headers := '{"Content-Type": "application/json", "Authorization": "Bearer <<CRON_SECRET>>"}'
       );
@@ -91,10 +91,10 @@ async function createSyncEventsCron(client) {
     SELECT jobid INTO job_id FROM cron.job WHERE jobname = 'sync-events';
 
     IF job_id IS NOT NULL THEN
-      EXECUTE format('SELECT cron.unschedule(%s)', job_id);
+      PERFORM cron.unschedule(job_id);
     END IF;
 
-    EXECUTE format('SELECT cron.schedule(%L, %L, %L)', 'sync-events', '*/5 * * * *', cmd);
+    PERFORM cron.schedule('sync-events', '*/5 * * * *', cmd);
   END $$;`
 
   const updatedSQL = sql
