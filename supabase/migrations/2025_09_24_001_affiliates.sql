@@ -22,8 +22,20 @@ CREATE TABLE IF NOT EXISTS fork_settings
   CHECK (affiliate_share_bps >= 0 AND affiliate_share_bps <= 10000)
 );
 
-ALTER TABLE fork_settings
-  ADD CONSTRAINT fork_settings_singleton_unique UNIQUE (singleton);
+DO
+$$
+  BEGIN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_constraint
+      WHERE conname = 'fork_settings_singleton_unique'
+        AND conrelid = 'fork_settings'::regclass
+    ) THEN
+      ALTER TABLE fork_settings
+        ADD CONSTRAINT fork_settings_singleton_unique UNIQUE (singleton);
+    END IF;
+  END
+$$;
 
 -- Affiliate referral attribution table
 CREATE TABLE IF NOT EXISTS affiliate_referrals
@@ -55,11 +67,35 @@ ALTER TABLE orders
   ADD COLUMN IF NOT EXISTS fork_fee_amount DECIMAL(20, 6) NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS affiliate_fee_amount DECIMAL(20, 6) NOT NULL DEFAULT 0;
 
-ALTER TABLE orders
-  ADD CONSTRAINT orders_trade_fee_bps_check CHECK (trade_fee_bps >= 0 AND trade_fee_bps <= 1000);
+DO
+$$
+  BEGIN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_constraint
+      WHERE conname = 'orders_trade_fee_bps_check'
+        AND conrelid = 'orders'::regclass
+    ) THEN
+      ALTER TABLE orders
+        ADD CONSTRAINT orders_trade_fee_bps_check CHECK (trade_fee_bps >= 0 AND trade_fee_bps <= 1000);
+    END IF;
+  END
+$$;
 
-ALTER TABLE orders
-  ADD CONSTRAINT orders_affiliate_share_bps_check CHECK (affiliate_share_bps >= 0 AND affiliate_share_bps <= 10000);
+DO
+$$
+  BEGIN
+    IF NOT EXISTS (
+      SELECT 1
+      FROM pg_constraint
+      WHERE conname = 'orders_affiliate_share_bps_check'
+        AND conrelid = 'orders'::regclass
+    ) THEN
+      ALTER TABLE orders
+        ADD CONSTRAINT orders_affiliate_share_bps_check CHECK (affiliate_share_bps >= 0 AND affiliate_share_bps <= 10000);
+    END IF;
+  END
+$$;
 
 -- ===========================================
 -- 3. ROW LEVEL SECURITY / POLICIES
@@ -118,6 +154,7 @@ CREATE OR REPLACE FUNCTION get_affiliate_stats(target_user_id CHAR(26))
   )
   LANGUAGE SQL
   STABLE
+  SET search_path = public
 AS
 $$
   SELECT
@@ -157,6 +194,7 @@ CREATE OR REPLACE FUNCTION get_affiliate_overview()
   )
   LANGUAGE SQL
   STABLE
+  SET search_path = public
 AS
 $$
   SELECT
@@ -191,4 +229,3 @@ VALUES (TRUE, 100, 5000)
 ON CONFLICT (singleton) DO UPDATE SET
   trade_fee_bps = EXCLUDED.trade_fee_bps,
   affiliate_share_bps = EXCLUDED.affiliate_share_bps;
-
