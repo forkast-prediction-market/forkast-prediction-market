@@ -6,7 +6,7 @@ import { truncateAddress } from '@/lib/utils'
 
 export default async function AdminUsersPage() {
   const currentUser = await UserModel.getCurrentUser()
-  if (!currentUser || !currentUser.isAdmin) {
+  if (!currentUser || !currentUser.is_admin) {
     redirect('/')
   }
 
@@ -53,7 +53,7 @@ export default async function AdminUsersPage() {
 
     return {
       ...user,
-      isAdmin: isAdminWallet(user.address),
+      is_admin: isAdminWallet(user.address),
       avatarUrl: avatarSource,
       referred_by_display: referredDisplay,
       referred_by_profile_url: referredProfile,

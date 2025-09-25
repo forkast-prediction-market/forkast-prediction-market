@@ -20,7 +20,7 @@ export async function updateForkSettingsAction(
   formData: FormData,
 ): Promise<ForkSettingsActionState> {
   const user = await UserModel.getCurrentUser()
-  if (!user || !user.isAdmin) {
+  if (!user || !user.is_admin) {
     return { error: 'Not authorized.' }
   }
 

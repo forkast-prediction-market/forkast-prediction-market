@@ -95,7 +95,7 @@ export interface User {
   affiliate_code?: string | null
   referred_by_user_id?: string | null
   referred_at?: string | null
-  isAdmin?: boolean
+  is_admin: boolean
 }
 
 export interface PublicProfileStats {

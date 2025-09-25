@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
 import { MailIcon } from 'lucide-react'
 import Image from 'next/image'
+import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 
 interface AdminUserRow {
@@ -12,21 +12,13 @@ interface AdminUserRow {
   affiliate_code?: string | null
   referred_by_display?: string | null
   referred_by_profile_url?: string | null
-  isAdmin: boolean
+  is_admin: boolean
   avatarUrl: string
   profileUrl: string
 }
 
 function formatAddress(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-6)}`
-}
-
-function Pill({ children }: { children: ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs text-muted-foreground">
-      {children}
-    </span>
-  )
 }
 
 export default function AdminUsersTable({ users }: { users: AdminUserRow[] }) {
@@ -63,7 +55,7 @@ export default function AdminUsersTable({ users }: { users: AdminUserRow[] }) {
                       >
                         <span className="inline-flex items-center gap-2">
                           <span>{user.username ?? formatAddress(user.address)}</span>
-                          {user.isAdmin && <Pill>Admin</Pill>}
+                          {user.is_admin && <Badge variant="outline">Admin</Badge>}
                         </span>
                       </a>
                     </div>

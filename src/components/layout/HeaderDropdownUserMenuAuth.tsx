@@ -48,7 +48,7 @@ export default function HeaderDropdownUserMenuAuth() {
         <DropdownMenuItem asChild>
           <Link href="/settings?tab=affiliate">Affiliate</Link>
         </DropdownMenuItem>
-        {user?.isAdmin && (
+        {user?.is_admin && (
           <DropdownMenuItem asChild>
             <Link href="/admin">Admin</Link>
           </DropdownMenuItem>

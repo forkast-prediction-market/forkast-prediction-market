@@ -31,7 +31,7 @@ interface RowSummary {
 
 export default async function AdminSettingsPage() {
   const user = await UserModel.getCurrentUser()
-  if (!user || !user.isAdmin) {
+  if (!user || !user.is_admin) {
     return null
   }
 
