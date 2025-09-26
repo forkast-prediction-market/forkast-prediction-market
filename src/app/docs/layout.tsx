@@ -2,7 +2,7 @@ import { DocsLayout } from 'fumadocs-ui/layouts/docs'
 import { RootProvider } from 'fumadocs-ui/provider'
 import { baseOptions } from '@/lib/layout.shared'
 import { source } from '@/lib/source'
-import './globals.css'
+import '../(platform)/globals.css'
 
 export default async function Layout({ children }: LayoutProps<'/docs'>) {
   return (
