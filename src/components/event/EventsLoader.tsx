@@ -1,4 +1,4 @@
-import EventsEmptyState from '@/app/event/[slug]/_components/EventsEmptyState'
+import EventsEmptyState from '@/app/(platform)/event/[slug]/_components/EventsEmptyState'
 import { OpenCardProvider } from '@/components/event/EventOpenCardContext'
 import EventsGrid from '@/components/event/EventsGrid'
 import { EventModel } from '@/lib/db/events'
