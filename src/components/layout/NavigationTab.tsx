@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Teleport } from '@/components/layout/Teleport'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface Props {
   tag: {
@@ -12,15 +13,17 @@ interface Props {
     name: string
     childs: { name: string, slug: string }[]
   }
+  childParentMap: Record<string, string>
 }
 
-export default function NavigationTab({ tag }: Props) {
+export default function NavigationTab({ tag, childParentMap }: Props) {
   const searchParams = useSearchParams()
   const showBookmarkedOnly = searchParams?.get('bookmarked') === 'true'
   const tagFromURL = showBookmarkedOnly && searchParams?.get('tag') === 'trending'
     ? ''
     : searchParams?.get('tag') || 'trending'
-  const isActive = tagFromURL === tag.slug || tag.childs.some(child => tagFromURL === child.slug)
+  const activeParentSlug = childParentMap[tagFromURL] ?? tagFromURL
+  const isActive = activeParentSlug === tag.slug
 
   return (
     <>
@@ -42,7 +45,10 @@ export default function NavigationTab({ tag }: Props) {
             <Button
               variant={tagFromURL === tag.slug ? 'default' : 'ghost'}
               size="sm"
-              className="h-8 shrink-0 text-xs whitespace-nowrap"
+              className={cn(
+                'h-8 shrink-0 text-sm whitespace-nowrap',
+                tagFromURL === tag.slug ? undefined : 'text-muted-foreground hover:text-foreground',
+              )}
             >
               All
             </Button>
@@ -53,7 +59,10 @@ export default function NavigationTab({ tag }: Props) {
               <Button
                 variant={tagFromURL === subtag.slug ? 'default' : 'ghost'}
                 size="sm"
-                className="h-8 shrink-0 text-xs whitespace-nowrap"
+                className={cn(
+                  'h-8 shrink-0 text-sm whitespace-nowrap',
+                  tagFromURL === subtag.slug ? undefined : 'text-muted-foreground hover:text-foreground',
+                )}
               >
                 {subtag.name}
               </Button>

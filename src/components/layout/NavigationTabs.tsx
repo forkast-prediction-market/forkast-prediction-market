@@ -7,11 +7,19 @@ export default async function NavigationTabs() {
   const { data, globalChilds = [] } = await TagModel.getMainTags()
 
   const sharedChilds = globalChilds.map(child => ({ ...child }))
+  const baseTags = (data ?? []).map(tag => ({
+    ...tag,
+    childs: (tag.childs ?? []).map(child => ({ ...child })),
+  }))
+
+  const childParentMap = Object.fromEntries(
+    baseTags.flatMap(tag => tag.childs.map(child => [child.slug, tag.slug])),
+  ) as Record<string, string>
 
   const tags = [
     { slug: 'trending', name: 'Trending', childs: sharedChilds },
     { slug: 'new', name: 'New', childs: sharedChilds.map(child => ({ ...child })) },
-    ...data ?? [],
+    ...baseTags,
   ]
 
   return (
@@ -20,7 +28,7 @@ export default async function NavigationTabs() {
         {tags.map((tag, index) => (
           <div key={tag.slug} className="flex items-center">
             <Suspense fallback={<Skeleton className="h-8 w-16 rounded" />}>
-              <NavigationTab tag={tag} />
+              <NavigationTab tag={tag} childParentMap={childParentMap} />
             </Suspense>
 
             {index === 1 && <div className="mr-0 ml-6 h-4 w-px bg-border" />}
