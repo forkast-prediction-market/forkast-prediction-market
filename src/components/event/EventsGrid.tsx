@@ -1,8 +1,9 @@
 'use client'
 
 import type { Event } from '@/types'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
-import { useCallback, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import EventsEmptyState from '@/app/event/[slug]/_components/EventsEmptyState'
 import EventCard from '@/components/event/EventCard'
 import EventCardSkeleton from '@/components/event/EventCardSkeleton'
@@ -18,12 +19,12 @@ interface EventsGridProps {
 const EMPTY_EVENTS: Event[] = []
 
 async function fetchEvents({
-  offset = 0,
+  pageParam = 0,
   tag,
   search,
   bookmarked,
 }: {
-  offset: number
+  pageParam: number
   tag: string
   search: string
   bookmarked: string
@@ -32,7 +33,7 @@ async function fetchEvents({
     tag,
     search,
     bookmarked,
-    offset: offset.toString(),
+    offset: pageParam.toString(),
   })
   const response = await fetch(`/api/events?${params}`)
   if (!response.ok) {
@@ -48,43 +49,31 @@ export default function EventsGrid({
   initialEvents = EMPTY_EVENTS,
 }: EventsGridProps) {
   const parentRef = useRef<HTMLDivElement | null>(null)
-  const [events, setEvents] = useState<Event[]>(initialEvents)
-  const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [hasMore, setHasMore] = useState(true)
   const [hasInitialized, setHasInitialized] = useState(false)
+  const PAGE_SIZE = 25
 
-  const loadMore = useCallback(async () => {
-    if (isLoadingMore || !hasMore) {
-      return
-    }
+  const {
+    status,
+    data,
+    isFetchingNextPage,
+    fetchNextPage,
+    hasNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['events', tag, search, bookmarked],
+    queryFn: ({ pageParam }) => fetchEvents({ pageParam, tag, search, bookmarked }),
+    getNextPageParam: (lastPage, allPages) => lastPage.length === PAGE_SIZE ? allPages.length * PAGE_SIZE : undefined,
+    initialPageParam: 0,
+    initialData: initialEvents.length > 0 ? { pages: [initialEvents], pageParams: [0] } : undefined,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+  })
 
-    setIsLoadingMore(true)
-    try {
-      const nextOffset = events.length
-      const newEvents = await fetchEvents({
-        offset: nextOffset,
-        tag,
-        search,
-        bookmarked,
-      })
-
-      if (newEvents.length < initialEvents.length) {
-        setHasMore(false)
-      }
-
-      setEvents(prev => [...prev, ...newEvents])
-    }
-    catch (error) {
-      console.error('Failed to load more events:', error)
-      setHasMore(false)
-    }
-    finally {
-      setIsLoadingMore(false)
-    }
-  }, [events.length, isLoadingMore, hasMore, tag, search, bookmarked, initialEvents])
+  const allEvents = data ? data.pages.flat() : []
 
   const columns = useColumns()
-  const rowsCount = Math.ceil(events.length / columns)
+
+  const rowsCount = Math.ceil(allEvents.length / columns)
 
   const virtualizer = useWindowVirtualizer({
     count: rowsCount,
@@ -101,16 +90,23 @@ export default function EventsGrid({
       if (
         last
         && last.index >= rowsCount - 1
-        && events.length >= initialEvents.length
-        && hasMore
-        && !isLoadingMore
+        && hasNextPage
+        && !isFetchingNextPage
       ) {
-        loadMore()
+        queueMicrotask(() => fetchNextPage())
       }
     },
   })
 
-  if (events.length === 0) {
+  if (status === 'error') {
+    return (
+      <p className="text-center text-sm text-muted-foreground">
+        Could not load more events.
+      </p>
+    )
+  }
+
+  if (!allEvents || allEvents.length === 0) {
     return <EventsEmptyState tag={tag} searchQuery={search} />
   }
 
@@ -125,8 +121,8 @@ export default function EventsGrid({
       >
         {virtualizer.getVirtualItems().map((virtualRow) => {
           const start = virtualRow.index * columns
-          const end = Math.min(start + columns, events.length)
-          const rowEvents = events.slice(start, end)
+          const end = Math.min(start + columns, allEvents.length)
+          const rowEvents = allEvents.slice(start, end)
 
           return (
             <div
@@ -145,7 +141,7 @@ export default function EventsGrid({
             >
               <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                 {rowEvents.map(event => <EventCard key={event.id} event={event} />)}
-                {isLoadingMore && <EventCardSkeleton />}
+                {isFetchingNextPage && <EventCardSkeleton />}
               </div>
             </div>
           )
