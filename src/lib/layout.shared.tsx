@@ -6,6 +6,7 @@ export function baseOptions(): BaseLayoutProps {
     nav: {
       title: `${process.env.NEXT_PUBLIC_SITE_NAME} Docs`,
     },
+    githubUrl: 'https://github.com/forkast-prediction-market/forkast-prediction-market',
     links: [
       {
         type: 'main',
