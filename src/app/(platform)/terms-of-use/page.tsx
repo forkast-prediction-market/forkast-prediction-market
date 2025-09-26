@@ -11,7 +11,7 @@ export default function TermsOfUsePage() {
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL?.trim()?.replace(/\/$/, '') ?? '') || undefined
 
   return (
-    <main className="container mx-auto prose prose-sm max-w-4xl space-y-10 py-12 lg:prose-base dark:prose-invert">
+    <main className="prose-sm lg:prose-base dark:prose-invert container mx-auto prose max-w-4xl space-y-10 py-12">
       <header>
         <h1>
           {siteName}

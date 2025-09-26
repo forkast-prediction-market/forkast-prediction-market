@@ -1,0 +1,6 @@
+{
+  "title": "Authentication",
+  "icon": "LockKeyhole",
+  "pages": ["email", "wallets"],
+  "defaultOpen": false
+}

@@ -1,10 +1,5 @@
 import type { Metadata } from 'next'
-import {
-  DocsBody,
-  DocsDescription,
-  DocsPage,
-  DocsTitle,
-} from 'fumadocs-ui/page'
+import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/page'
 import { notFound } from 'next/navigation'
 import { source } from '@/lib/source'
 import { getMDXComponents } from '@/mdx-components'
@@ -19,7 +14,16 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const MDX = page.data.body
 
   return (
-    <DocsPage toc={page.data.toc} full={page.data.full}>
+    <DocsPage
+      toc={page.data.toc}
+      full={page.data.full}
+      editOnGithub={{
+        owner: 'forkast-prediction-market',
+        repo: 'forkast-prediction-market',
+        sha: 'main',
+        path: `/docs/${page.path}`,
+      }}
+    >
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>
       <DocsBody>
@@ -33,9 +37,7 @@ export async function generateStaticParams() {
   return source.generateParams()
 }
 
-export async function generateMetadata(
-  props: PageProps<'/docs/[[...slug]]'>,
-): Promise<Metadata> {
+export async function generateMetadata(props: PageProps<'/docs/[[...slug]]'>): Promise<Metadata> {
   const params = await props.params
   const page = source.getPage(params.slug)
   if (!page) {
