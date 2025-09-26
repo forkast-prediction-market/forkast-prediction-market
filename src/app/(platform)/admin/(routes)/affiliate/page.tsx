@@ -96,23 +96,23 @@ export default async function AdminSettingsPage() {
         <div className="grid gap-4 rounded-lg border p-6">
           <div>
             <h2 className="text-xl font-semibold">Totals</h2>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
               Consolidated affiliate performance across your platform.
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div className="bg-muted/40 rounded-lg p-4">
-              <p className="text-muted-foreground text-xs uppercase">Total referrals</p>
+            <div className="rounded-lg bg-muted/40 p-4">
+              <p className="text-xs text-muted-foreground uppercase">Total referrals</p>
               <p className="mt-1 text-2xl font-semibold">{aggregate.totalReferrals}</p>
             </div>
-            <div className="bg-muted/40 rounded-lg p-4">
-              <p className="text-muted-foreground text-xs uppercase">Volume</p>
+            <div className="rounded-lg bg-muted/40 p-4">
+              <p className="text-xs text-muted-foreground uppercase">Volume</p>
               <p className="mt-1 text-2xl font-semibold">
                 {currencyFormatter.format(aggregate.totalVolume)}
               </p>
             </div>
-            <div className="bg-muted/40 rounded-lg p-4">
-              <p className="text-muted-foreground text-xs uppercase">Affiliate fees</p>
+            <div className="rounded-lg bg-muted/40 p-4">
+              <p className="text-xs text-muted-foreground uppercase">Affiliate fees</p>
               <p className="mt-1 text-2xl font-semibold">
                 {currencyFormatter.format(aggregate.totalAffiliateFees)}
               </p>

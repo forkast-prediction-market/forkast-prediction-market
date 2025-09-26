@@ -62,7 +62,7 @@ export default function EventRelated({ event }: Props) {
         <li key={e.id}>
           <Link
             href={`/event/${e.slug}`}
-            className="hover:bg-border flex items-center gap-3 rounded-lg p-2"
+            className="flex items-center gap-3 rounded-lg p-2 hover:bg-border"
           >
             <Image
               src={e.icon_url}

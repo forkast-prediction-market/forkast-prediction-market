@@ -21,7 +21,7 @@ export default async function EventsLoader({ tag, search, bookmarked }: EventsLo
 
   if (error) {
     return (
-      <p className="text-muted-foreground text-center text-sm">
+      <p className="text-center text-sm text-muted-foreground">
         Could not load more events.
       </p>
     )

@@ -36,11 +36,11 @@ export default function AdminForkSettingsForm({ tradeFeeBps, affiliateShareBps, 
     <Form action={formAction} className="grid gap-6 rounded-lg border p-6">
       <div>
         <h2 className="text-xl font-semibold">Trading Fees</h2>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           Configure the trading fee charged on your platform and the share paid to affiliates.
         </p>
         {updatedAtLabel && (
-          <p className="text-muted-foreground mt-1 text-xs">
+          <p className="mt-1 text-xs text-muted-foreground">
             Last updated
             {' '}
             {updatedAtLabel}
@@ -61,7 +61,7 @@ export default function AdminForkSettingsForm({ tradeFeeBps, affiliateShareBps, 
             defaultValue={(tradeFeeBps / 100).toFixed(2)}
             disabled={isPending}
           />
-          <p className="text-muted-foreground text-xs">
+          <p className="text-xs text-muted-foreground">
             Extra fee over Forkast (max 9%)
           </p>
         </div>
@@ -77,7 +77,7 @@ export default function AdminForkSettingsForm({ tradeFeeBps, affiliateShareBps, 
             defaultValue={(affiliateShareBps / 100).toFixed(2)}
             disabled={isPending}
           />
-          <p className="text-muted-foreground text-xs">
+          <p className="text-xs text-muted-foreground">
             Affiliate share of trading fee.
           </p>
         </div>

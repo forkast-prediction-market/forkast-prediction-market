@@ -53,18 +53,18 @@ export default function SettingsProfileTab({ user }: { user: User }) {
     <div className="grid gap-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Profile Settings</h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="mt-2 text-muted-foreground">
           Manage your account profile and preferences.
         </p>
-        <p className="text-destructive text-sm">{state.error}</p>
+        <p className="text-sm text-destructive">{state.error}</p>
       </div>
 
       <Form action={formAction} className="grid gap-6" formEncType="multipart/form-data">
         <div className="rounded-lg border p-6">
           <div className="flex items-center gap-4">
             <div className={`
-              from-primary to-primary/60 flex size-16 items-center justify-center overflow-hidden rounded-full
-              bg-gradient-to-br
+              flex size-16 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-primary
+              to-primary/60
             `}
             >
               {previewImage || user.image
@@ -94,7 +94,7 @@ export default function SettingsProfileTab({ user }: { user: User }) {
                 Upload
               </Button>
               {state.errors?.image && <InputError message={state.errors.image} />}
-              <p className="text-muted-foreground text-xs">Max 5MB, JPG/PNG/WEBP only</p>
+              <p className="text-xs text-muted-foreground">Max 5MB, JPG/PNG/WEBP only</p>
             </div>
           </div>
 

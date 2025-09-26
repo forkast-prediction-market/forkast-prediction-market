@@ -11,7 +11,7 @@ export default function Loading() {
         <Skeleton className="size-14 shrink-0" />
         <Skeleton className="h-8 w-2/3" />
 
-        <div className="text-muted-foreground ms-auto flex gap-2">
+        <div className="ms-auto flex gap-2 text-muted-foreground">
           <Skeleton className="size-4" />
           <Skeleton className="size-4" />
         </div>

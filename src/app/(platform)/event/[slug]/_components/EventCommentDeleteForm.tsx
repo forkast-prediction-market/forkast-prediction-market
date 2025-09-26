@@ -35,7 +35,7 @@ export default function EventCommentDeleteForm({ commentId, onDeleted }: Props) 
         type="submit"
         size="sm"
         variant="ghost"
-        className="text-destructive w-full text-xs"
+        className="w-full text-xs text-destructive"
         disabled={pending}
       >
         {pending ? 'Deleting...' : 'Delete'}

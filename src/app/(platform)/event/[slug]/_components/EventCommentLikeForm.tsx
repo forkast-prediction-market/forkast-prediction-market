@@ -51,11 +51,11 @@ export default function EventCommentLikeForm({
         title={comment.user_has_liked ? 'Remove like' : 'Like'}
         className={cn({
           'opacity-50': isPending,
-          'text-muted-foreground flex size-auto items-center gap-1 p-0 text-xs': true,
+          'flex size-auto items-center gap-1 p-0 text-xs text-muted-foreground': true,
         })}
       >
         <HeartIcon className={cn({
-          'text-destructive fill-current': comment.user_has_liked,
+          'fill-current text-destructive': comment.user_has_liked,
         }, 'size-3')}
         />
         {comment.likes_count > 0 && <span>{comment.likes_count}</span>}

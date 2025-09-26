@@ -23,7 +23,7 @@ export default function EventHeader({ event }: Props) {
 
   return (
     <div className={cn({
-      'bg-background sticky top-24 translate-y-[3px] border-b py-3': scrolled,
+      'sticky top-24 translate-y-[3px] border-b bg-background py-3': scrolled,
     }, 'z-10 -mx-4 flex items-center gap-3 px-4 transition-all duration-500 ease-in-out')}
     >
       <Image
@@ -45,7 +45,7 @@ export default function EventHeader({ event }: Props) {
         {event.title}
       </h1>
 
-      <div className="text-muted-foreground ms-auto flex gap-3">
+      <div className="ms-auto flex gap-3 text-muted-foreground">
         <EventShare />
         <EventBookmark event={event} />
       </div>

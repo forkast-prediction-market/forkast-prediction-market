@@ -38,7 +38,7 @@ export default function PortfolioTabs({ activeTab, onTabChange }: Props) {
   return (
     <div className="space-y-6">
       {/* Tab selector */}
-      <div className="border-border/50 border-b">
+      <div className="border-b border-border/50">
         <div className="flex gap-8">
           {tabs.map(tab => (
             <button
@@ -47,7 +47,7 @@ export default function PortfolioTabs({ activeTab, onTabChange }: Props) {
               onClick={() => onTabChange(tab.id)}
               className={`pb-3 text-sm font-semibold transition-colors ${
                 activeTab === tab.id
-                  ? 'border-primary text-foreground border-b-2'
+                  ? 'border-b-2 border-primary text-foreground'
                   : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -60,7 +60,7 @@ export default function PortfolioTabs({ activeTab, onTabChange }: Props) {
       {/* Search bar and controls */}
       <div className="flex flex-col gap-4 sm:flex-row">
         <div className="relative flex-1">
-          <SearchIcon className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+          <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder="Search"
             value={searchQuery}

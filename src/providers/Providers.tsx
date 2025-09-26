@@ -16,7 +16,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider attribute="class">
         <QueryClientProvider client={queryClient}>
           <AppKitProvider>
-            <div className="bg-background min-h-screen">
+            <div className="min-h-screen bg-background">
               {children}
             </div>
             <Toaster />

@@ -100,7 +100,7 @@ export default function EventsGrid({
 
   if (status === 'error') {
     return (
-      <p className="text-muted-foreground text-center text-sm">
+      <p className="text-center text-sm text-muted-foreground">
         Could not load more events.
       </p>
     )

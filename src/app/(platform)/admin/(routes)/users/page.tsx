@@ -67,7 +67,7 @@ export default async function AdminUsersPage() {
       <section className="grid gap-4">
         <div className="grid gap-2">
           <h1 className="text-2xl font-semibold">Users</h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             Showing
             {' '}
             {users.length}

@@ -24,7 +24,7 @@ export default function PublicProfileTabs({ activity }: Props) {
     <div className="space-y-8">
       {/* Tab Navigation */}
       <div className="relative">
-        <div className="border-border flex space-x-8 border-b">
+        <div className="flex space-x-8 border-b border-border">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -33,7 +33,7 @@ export default function PublicProfileTabs({ activity }: Props) {
               className={cn(
                 'relative py-3 text-sm font-medium transition-colors',
                 activeTab === tab.id
-                  ? 'border-primary text-foreground border-b-2'
+                  ? 'border-b-2 border-primary text-foreground'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
@@ -44,7 +44,7 @@ export default function PublicProfileTabs({ activity }: Props) {
 
         {/* Forkast Watermark */}
         <div className="pointer-events-none absolute top-0 right-0">
-          <div className="text-muted-foreground flex items-center gap-2 opacity-40 select-none">
+          <div className="flex items-center gap-2 text-muted-foreground opacity-40 select-none">
             <div
               className="size-6"
               dangerouslySetInnerHTML={{

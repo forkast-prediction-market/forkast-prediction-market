@@ -185,7 +185,7 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Two-Factor Authentication</h1>
-        <p className="text-muted-foreground mt-2">
+        <p className="mt-2 text-muted-foreground">
           Add an extra layer of security to your account.
         </p>
       </div>
@@ -210,7 +210,7 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
                         <Label className="text-sm font-medium">
                           Enable 2FA
                         </Label>
-                        <p className="text-muted-foreground text-sm">
+                        <p className="text-sm text-muted-foreground">
                           Add an extra layer of security to your account using an authenticator app
                         </p>
                       </div>
@@ -233,7 +233,7 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
                           <Label className="text-sm font-medium">
                             2FA Enabled
                           </Label>
-                          <p className="text-muted-foreground text-sm">
+                          <p className="text-sm text-muted-foreground">
                             Two-factor authentication is now active on your account
                           </p>
                         </div>
@@ -255,7 +255,7 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
                     <Label className="text-sm font-medium">
                       Trust Device
                     </Label>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-sm text-muted-foreground">
                       Trust this device for 30 days after activating 2FA
                     </p>
                   </div>
@@ -276,7 +276,7 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
           <div className="rounded-lg border p-6">
             <div className="space-y-4">
               <h4 className="text-lg font-medium">Setup Instructions</h4>
-              <ol className="text-muted-foreground space-y-2 text-sm">
+              <ol className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex">
                   <span className="mr-2 font-medium">1.</span>
                   Download an authenticator app like Google Authenticator or Authy
@@ -303,17 +303,17 @@ export default function SettingsTwoFactorAuthTab({ user }: { user: User }) {
                   type="button"
                   size="sm"
                   onClick={handleCopySecret}
-                  className="text-muted-foreground -ml-2 max-w-[18rem] text-xs"
+                  className="-ml-2 max-w-[18rem] text-xs text-muted-foreground"
                   title={copied ? 'Copied!' : 'Copy address'}
                 >
                   <span className="block min-w-0 break-words whitespace-normal">{extractTotpSecret()}</span>
                   {copied
-                    ? <CheckIcon className="text-yes size-3.5" data-testid="check-icon" />
+                    ? <CheckIcon className="size-3.5 text-yes" data-testid="check-icon" />
                     : <CopyIcon className="size-3.5" data-testid="copy-icon" />}
                 </Button>
               </div>
 
-              <a href={state.setupData.totpURI} className="text-primary text-center text-sm">
+              <a href={state.setupData.totpURI} className="text-center text-sm text-primary">
                 Or click here if you are on mobile and have an authenticator app installed.
               </a>
 
