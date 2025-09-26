@@ -1,6 +1,8 @@
 import type { Event, Tag } from '@/types'
 import { getSupabaseImageUrl, supabaseAdmin } from '@/lib/supabase'
 
+const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
+
 interface ListEventsProps {
   tag: string
   search?: string
@@ -77,13 +79,17 @@ export const EventModel = {
 
     const events = data?.map(event => eventResource(event, userId)) || []
 
+    const sanitizedEvents = tag === 'new'
+      ? events.filter(event => !event.tags.includes(HIDE_FROM_NEW_TAG_SLUG))
+      : events
+
     if (!bookmarked && tag === 'trending') {
-      const trendingEvents = events.filter(event => event.is_trending)
+      const trendingEvents = sanitizedEvents.filter(event => event.is_trending)
       return { data: trendingEvents, error }
     }
 
     if (tag === 'new') {
-      const newEvents = events.sort(
+      const newEvents = sanitizedEvents.sort(
         (a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       )
@@ -91,7 +97,7 @@ export const EventModel = {
       return { data: newEvents, error }
     }
 
-    return { data: events, error }
+    return { data: sanitizedEvents, error }
   },
 
   async getIdBySlug(slug: string) {
