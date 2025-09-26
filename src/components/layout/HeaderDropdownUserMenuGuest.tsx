@@ -38,7 +38,7 @@ export default function HeaderDropdownUserMenuGuest() {
           <Link href="/">Documentation</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/">Terms of Use</Link>
+          <Link href="/terms-of-use">Terms of Use</Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
