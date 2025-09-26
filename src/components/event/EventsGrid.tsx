@@ -51,6 +51,7 @@ export default function EventsGrid({
   const [events, setEvents] = useState<Event[]>(initialEvents)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true)
+  const [hasInitialized, setHasInitialized] = useState(false)
 
   const loadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore) {
@@ -90,11 +91,17 @@ export default function EventsGrid({
     estimateSize: () => 194,
     scrollMargin: parentRef.current?.offsetTop ?? 0,
     onChange: (instance) => {
+      if (!hasInitialized) {
+        setHasInitialized(true)
+        return
+      }
+
       const items = instance.getVirtualItems()
       const last = items[items.length - 1]
       if (
         last
-        && last.index >= rowsCount - 2
+        && last.index >= rowsCount - 1
+        && events.length >= initialEvents.length
         && hasMore
         && !isLoadingMore
       ) {
