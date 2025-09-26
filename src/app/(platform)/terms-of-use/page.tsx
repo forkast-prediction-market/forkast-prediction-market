@@ -11,9 +11,9 @@ export default function TermsOfUsePage() {
   const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL?.trim()?.replace(/\/$/, '') ?? '') || undefined
 
   return (
-    <main className="prose-sm lg:prose-base dark:prose-invert container mx-auto prose max-w-4xl space-y-10 py-12">
-      <header>
-        <h1>
+    <main className="container mx-auto max-w-4xl space-y-10 py-12 leading-relaxed text-foreground dark:text-foreground">
+      <header className="space-y-4">
+        <h1 className="text-3xl font-bold tracking-tight lg:text-4xl">
           {siteName}
           {' '}
           Terms of Use
@@ -26,8 +26,8 @@ export default function TermsOfUsePage() {
         </p>
       </header>
 
-      <section>
-        <h2>Introduction</h2>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Introduction</h2>
         <p>
           These Terms of Use ("Terms") govern how you, whether personally or on behalf of an entity, may access, use, or
           otherwise interact with the interfaces, websites, applications, and related features made available through
@@ -42,7 +42,7 @@ export default function TermsOfUsePage() {
           {' '}
           (collectively, the "Interfaces" and "Features"), you agree to be bound by this Agreement.
         </p>
-        <p>
+        <p className="font-medium">
           NOTICE: PLEASE READ THESE TERMS CAREFULLY. BY ACCESSING OR USING ANY INTERFACE OR FEATURE (INCLUDING CONNECTING A
           SELF-HOSTED WALLET OR CREATING AN IDENTIFIER), YOU REPRESENT THAT YOU CAN ENTER INTO A BINDING AGREEMENT AND THAT
           YOU HAVE READ, UNDERSTOOD, AND AGREE TO BE BOUND BY THESE TERMS, INCLUDING THE BINDING ARBITRATION AND CLASS
@@ -50,9 +50,9 @@ export default function TermsOfUsePage() {
         </p>
       </section>
 
-      <section>
-        <h2>Scope and Description of the Interfaces and Features</h2>
-        <ul>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Scope and Description of the Interfaces and Features</h2>
+        <ul className="ml-6 list-disc space-y-2">
           <li>
             Content Features (optional): Some Interfaces may provide informational content, data, or commentary on markets,
             events, or other topics ("Content Features"). Such information is provided for general informational purposes
@@ -75,7 +75,7 @@ export default function TermsOfUsePage() {
           data displayed via the Interfaces is informational and not an offer, solicitation, recommendation, or advice.
         </p>
         <p>When you choose to connect a Wallet, you understand and agree that:</p>
-        <ul>
+        <ul className="ml-6 list-disc space-y-2">
           <li>You control your Wallet and are solely responsible for safeguarding private keys, seed phrases, passwords, and security settings.</li>
           <li>
             {siteName}
@@ -93,13 +93,13 @@ export default function TermsOfUsePage() {
         </ul>
       </section>
 
-      <section>
-        <h2>Eligibility; Sanctions; Restricted Jurisdictions</h2>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Eligibility; Sanctions; Restricted Jurisdictions</h2>
         <p>
           You represent and warrant that you are at least 18 years old (or the age of majority in your jurisdiction) and have
           the authority to enter into this Agreement. You further represent and warrant that you are not:
         </p>
-        <ul>
+        <ul className="ml-6 list-disc space-y-2">
           <li>The subject of economic or trade sanctions, and that you comply with applicable anti-money laundering and counter-terrorist financing laws.</li>
           <li>
             Accessing, using, or attempting to use the Technology Features (including trading Contracts) from any jurisdiction
@@ -115,9 +115,9 @@ export default function TermsOfUsePage() {
         <p>If any of the above becomes untrue, you must immediately stop accessing the Technology Features.</p>
       </section>
 
-      <section>
-        <h2>Your Acknowledgements; Risks</h2>
-        <ul>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Your Acknowledgements; Risks</h2>
+        <ul className="ml-6 list-disc space-y-2">
           <li>Information Only. Content Features are for informational purposes only; you should independently verify information before relying on it.</li>
           <li>No Advice or Fiduciary Duty. Nothing on the Interfaces or via the Features constitutes investment, legal, tax, accounting, or other professional advice, and no fiduciary duties are created by your use of the Interfaces or Features. Seek independent professional advice before making decisions.</li>
           <li>Experimental or Risky Technology. Interacting with blockchain technology involves significant risks, including smart-contract vulnerabilities, UI or UX bugs, hacks, phishing, social-engineering attacks, volatility, and irreversible transactions. You may lose some or all of the assets you use in connection with Contracts.</li>
@@ -138,8 +138,8 @@ export default function TermsOfUsePage() {
         </ul>
       </section>
 
-      <section>
-        <h2>Modifications to the Terms and to the Interfaces or Features</h2>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Modifications to the Terms and to the Interfaces or Features</h2>
         <p>
           We may update these Terms and modify, suspend, or discontinue any Interface or Feature (in whole or in part) at our
           discretion, with or without notice, including restricting access (for example, placing Features in a close-only mode).
@@ -148,10 +148,10 @@ export default function TermsOfUsePage() {
         </p>
       </section>
 
-      <section>
-        <h2>Your Responsibilities and Prohibited Conduct</h2>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Your Responsibilities and Prohibited Conduct</h2>
         <p>You agree to use the Interfaces and Features lawfully and appropriately. Without limitation, you must not:</p>
-        <ul>
+        <ul className="ml-6 list-disc space-y-2">
           <li>Violate any applicable law, regulation, or order.</li>
           <li>Use the Technology Features from a Restricted Jurisdiction or for or on behalf of a restricted person.</li>
           <li>Use VPNs or similar tools to circumvent geoblocking or access controls.</li>
@@ -166,8 +166,8 @@ export default function TermsOfUsePage() {
         <p>We may investigate suspected violations and take any action we deem appropriate, including suspending or terminating access and cooperating with law enforcement.</p>
       </section>
 
-      <section>
-        <h2>Additional Information; Verification</h2>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Additional Information; Verification</h2>
         <p>
           We or compliance vendors acting on our behalf may request information to confirm your eligibility (for example, that
           you are not a restricted person). Failure to provide satisfactory information may result in denial or loss of access to
@@ -175,9 +175,9 @@ export default function TermsOfUsePage() {
         </p>
       </section>
 
-      <section>
-        <h2>Ownership; License; Your Feedback and Content</h2>
-        <ul>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Ownership; License; Your Feedback and Content</h2>
+        <ul className="ml-6 list-disc space-y-2">
           <li>
             Ownership. Except for rights expressly granted to you,
             {' '}
@@ -202,8 +202,8 @@ export default function TermsOfUsePage() {
         </ul>
       </section>
 
-      <section>
-        <h2>Third-Party Services and Links</h2>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Third-Party Services and Links</h2>
         <p>
           The Interfaces and Features may integrate with or link to third-party sites, applications, services, protocols, or
           content ("Third-Party Services"). Your use of Third-Party Services is at your sole risk and is subject to their terms
@@ -216,8 +216,8 @@ export default function TermsOfUsePage() {
         </p>
       </section>
 
-      <section>
-        <h2>Indemnification</h2>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Indemnification</h2>
         <p>
           You agree to defend, indemnify, and hold harmless
           {' '}
@@ -232,8 +232,8 @@ export default function TermsOfUsePage() {
         </p>
       </section>
 
-      <section>
-        <h2>Disclaimers</h2>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Disclaimers</h2>
         <p>
           THE INTERFACES AND FEATURES ARE PROVIDED "AS IS" AND "AS AVAILABLE." TO THE MAXIMUM EXTENT PERMITTED BY LAW,
           {' '}
@@ -243,8 +243,8 @@ export default function TermsOfUsePage() {
         </p>
       </section>
 
-      <section>
-        <h2>Limitation of Liability</h2>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Limitation of Liability</h2>
         <p>
           TO THE MAXIMUM EXTENT PERMITTED BY LAW: (A) IN NO EVENT WILL
           {' '}
@@ -260,9 +260,9 @@ export default function TermsOfUsePage() {
         </p>
       </section>
 
-      <section>
-        <h2>Governing Law; Dispute Resolution; Class Action Waiver</h2>
-        <ul>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Governing Law; Dispute Resolution; Class Action Waiver</h2>
+        <ul className="ml-6 list-disc space-y-2">
           <li>
             Governing Law. These Terms and any dispute or claim arising out of or relating to them or the Interfaces or Features will be governed by the laws of the jurisdiction where
             {' '}
@@ -283,13 +283,13 @@ export default function TermsOfUsePage() {
         <p>If a court finds the class action waiver unenforceable, then the entirety of the arbitration agreement shall be null and void, and the dispute will proceed in court.</p>
       </section>
 
-      <section>
-        <h2>Taxes</h2>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Taxes</h2>
         <p>You are solely responsible for determining and fulfilling any tax obligations arising from your activities via the Interfaces or Features and for complying with applicable tax laws and reporting requirements.</p>
       </section>
 
-      <section>
-        <h2>Termination</h2>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">Termination</h2>
         <p>
           We may suspend or terminate your access to some or all Interfaces or Features at any time for any reason, including if
           we believe you have violated these Terms or applicable law. Upon termination, your right to use the Interfaces or
@@ -298,9 +298,9 @@ export default function TermsOfUsePage() {
         </p>
       </section>
 
-      <section>
-        <h2>General Terms</h2>
-        <ul>
+      <section className="space-y-4">
+        <h2 className="text-xl font-semibold tracking-tight lg:text-2xl">General Terms</h2>
+        <ul className="ml-6 list-disc space-y-2">
           <li>
             Entire Agreement. These Terms (including documents incorporated by reference) are the entire agreement between you and
             {' '}
