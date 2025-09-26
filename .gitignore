@@ -41,12 +41,7 @@ yarn-error.log*
 
 # vercel
 .vercel
-
-# auto-sync heartbeat log (keep file but ignore updates)
-.auto/heartbeat.log
-
-# auto-sync logs
-.auto/
+.source
 
 # typescript
 *.tsbuildinfo

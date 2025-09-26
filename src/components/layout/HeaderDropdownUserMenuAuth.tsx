@@ -60,7 +60,7 @@ export default function HeaderDropdownUserMenuAuth() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>
-          <Link href="/">Documentation</Link>
+          <Link href="/docs">Documentation</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/terms-of-use">Terms of Use</Link>

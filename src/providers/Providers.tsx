@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+import { RootProvider as DocsProvider } from 'fumadocs-ui/provider'
 import { ThemeProvider } from 'next-themes'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
 import { Toaster } from '@/components/ui/sonner'
@@ -16,12 +17,14 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <ThemeProvider attribute="class">
         <QueryClientProvider client={queryClient}>
           <AppKitProvider>
-            <div className="min-h-screen bg-background">
-              {children}
-            </div>
-            <Toaster />
-            {process.env.NODE_ENV === 'production' && <SpeedInsights />}
-            {process.env.NODE_ENV === 'production' && <GoogleAnalytics />}
+            <DocsProvider>
+              <div className="min-h-screen bg-background">
+                {children}
+              </div>
+              <Toaster />
+              {process.env.NODE_ENV === 'production' && <SpeedInsights />}
+              {process.env.NODE_ENV === 'production' && <GoogleAnalytics />}
+            </DocsProvider>
           </AppKitProvider>
         </QueryClientProvider>
       </ThemeProvider>
