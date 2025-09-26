@@ -61,7 +61,7 @@ export default function EventsGrid({
   } = useInfiniteQuery({
     queryKey: ['events', tag, search, bookmarked],
     queryFn: ({ pageParam }) => fetchEvents({ pageParam, tag, search, bookmarked }),
-    getNextPageParam: (lastPage, allPages) => lastPage.length === PAGE_SIZE ? allPages.length * PAGE_SIZE : undefined,
+    getNextPageParam: (lastPage, allPages) => lastPage.length > 0 ? allPages.length * PAGE_SIZE : undefined,
     initialPageParam: 0,
     initialData: initialEvents.length > 0 ? { pages: [initialEvents], pageParams: [0] } : undefined,
     refetchOnMount: false,
