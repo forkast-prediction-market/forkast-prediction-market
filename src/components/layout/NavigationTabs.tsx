@@ -24,7 +24,7 @@ export default async function NavigationTabs() {
 
   return (
     <nav className="sticky top-14 z-10 border-b bg-background">
-      <div className="container flex gap-6 overflow-x-auto py-1 text-sm font-medium">
+      <div className="container scrollbar-hide flex gap-6 overflow-x-auto py-1 text-sm font-medium">
         {tags.map((tag, index) => (
           <div key={tag.slug} className="flex items-center">
             <Suspense fallback={<Skeleton className="h-8 w-16 rounded" />}>
