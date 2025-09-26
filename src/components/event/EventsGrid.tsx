@@ -3,7 +3,7 @@
 import type { Event } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import EventsEmptyState from '@/app/event/[slug]/_components/EventsEmptyState'
 import EventCard from '@/components/event/EventCard'
 import EventCardSkeleton from '@/components/event/EventCardSkeleton'
@@ -13,11 +13,10 @@ interface EventsGridProps {
   tag: string
   search: string
   bookmarked: string
-  initialEvents?: Event[]
+  initialEvents: Event[]
 }
 
 const EMPTY_EVENTS: Event[] = []
-const PAGE_SIZE = 20
 
 async function fetchEvents({
   pageParam = 0,
@@ -43,11 +42,6 @@ async function fetchEvents({
   return response.json()
 }
 
-function HomePageSkeleton() {
-  const skeletons = Array.from({ length: 8 }, (_, i) => `skeleton-${i}`)
-  return skeletons.map(id => <EventCardSkeleton key={id} />)
-}
-
 export default function EventsGrid({
   tag,
   search,
@@ -55,6 +49,8 @@ export default function EventsGrid({
   initialEvents = EMPTY_EVENTS,
 }: EventsGridProps) {
   const parentRef = useRef<HTMLDivElement | null>(null)
+  const [hasInitialized, setHasInitialized] = useState(false)
+  const PAGE_SIZE = 25
 
   const {
     status,
@@ -66,15 +62,14 @@ export default function EventsGrid({
     queryKey: ['events', tag, search, bookmarked],
     queryFn: ({ pageParam }) => fetchEvents({ pageParam, tag, search, bookmarked }),
     getNextPageParam: (lastPage, allPages) => lastPage.length === PAGE_SIZE ? allPages.length * PAGE_SIZE : undefined,
-    initialPageParam: 20,
+    initialPageParam: 0,
+    initialData: initialEvents.length > 0 ? { pages: [initialEvents], pageParams: [0] } : undefined,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
   })
 
-  const allEvents
-    = initialEvents.length > 0
-      ? [...initialEvents, ...(data ? data.pages.flat() : [])]
-      : data
-        ? data.pages.flat()
-        : []
+  const allEvents = data ? data.pages.flat() : []
 
   const columns = useColumns()
 
@@ -85,11 +80,16 @@ export default function EventsGrid({
     estimateSize: () => 194,
     scrollMargin: parentRef.current?.offsetTop ?? 0,
     onChange: (instance) => {
+      if (!hasInitialized) {
+        setHasInitialized(true)
+        return
+      }
+
       const items = instance.getVirtualItems()
       const last = items[items.length - 1]
       if (
         last
-        && last.index >= rowsCount - 2
+        && last.index >= rowsCount - 1
         && hasNextPage
         && !isFetchingNextPage
       ) {
@@ -97,14 +97,6 @@ export default function EventsGrid({
       }
     },
   })
-
-  if (status === 'pending' && initialEvents.length === 0) {
-    return (
-      <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-        <HomePageSkeleton />
-      </div>
-    )
-  }
 
   if (status === 'error') {
     return (
