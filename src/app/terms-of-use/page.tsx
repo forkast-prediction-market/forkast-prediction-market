@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 export default function TermsOfUsePage() {
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME?.trim() ?? 'this site'
   const siteNameUpper = siteName.toUpperCase()
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, '') ?? '') || undefined
+  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL?.trim()?.replace(/\/$/, '') ?? '') || undefined
 
   return (
     <main className="container mx-auto prose prose-sm max-w-4xl space-y-10 py-12 lg:prose-base dark:prose-invert">
