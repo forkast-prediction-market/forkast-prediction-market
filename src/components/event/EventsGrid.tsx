@@ -4,7 +4,7 @@ import type { Event } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { useRef, useState } from 'react'
-import EventsEmptyState from '@/app/event/[slug]/_components/EventsEmptyState'
+import EventsEmptyState from '@/app/(platform)/event/[slug]/_components/EventsEmptyState'
 import EventCard from '@/components/event/EventCard'
 import EventCardSkeleton from '@/components/event/EventCardSkeleton'
 import { useColumns } from '@/hooks/useColumns'
@@ -100,7 +100,7 @@ export default function EventsGrid({
 
   if (status === 'error') {
     return (
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-center text-sm">
         Could not load more events.
       </p>
     )

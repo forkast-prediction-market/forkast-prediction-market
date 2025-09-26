@@ -1,11 +1,25 @@
 import { DocsLayout } from 'fumadocs-ui/layouts/docs'
+import { RootProvider } from 'fumadocs-ui/provider'
 import { baseOptions } from '@/lib/layout.shared'
 import { source } from '@/lib/source'
+import './globals.css'
 
-export default function Layout({ children }: LayoutProps<'/docs'>) {
+export default async function Layout({ children }: LayoutProps<'/docs'>) {
   return (
-    <DocsLayout tree={source.pageTree} {...baseOptions()}>
-      {children}
-    </DocsLayout>
+    <html lang="en" suppressHydrationWarning>
+      <body
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: '100vh',
+        }}
+      >
+        <RootProvider>
+          <DocsLayout tree={source.pageTree} {...baseOptions()}>
+            {children}
+          </DocsLayout>
+        </RootProvider>
+      </body>
+    </html>
   )
 }

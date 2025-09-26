@@ -7,7 +7,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { use, useState } from 'react'
 import { toast } from 'sonner'
-import EventBookmark from '@/app/event/[slug]/_components/EventBookmark'
+import EventBookmark from '@/app/(platform)/event/[slug]/_components/EventBookmark'
 import { OpenCardContext } from '@/components/event/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -202,7 +202,7 @@ export default function EventCard({ event }: EventCardProps) {
       className={`
         flex h-[180px] cursor-pointer flex-col transition-all
         hover:-translate-y-0.5 hover:shadow-lg
-        ${isInTradingMode ? 'ring-2 ring-primary/20' : ''}
+        ${isInTradingMode ? 'ring-primary/20 ring-2' : ''}
         overflow-hidden
       `}
     >
@@ -213,8 +213,8 @@ export default function EventCard({ event }: EventCardProps) {
             {/* Creator Avatar */}
             <div
               className={`
-                flex size-10 flex-shrink-0 items-center justify-center overflow-hidden rounded bg-muted
-                text-muted-foreground
+                bg-muted text-muted-foreground flex size-10 flex-shrink-0 items-center justify-center overflow-hidden
+                rounded
               `}
             >
               <Image
@@ -229,8 +229,8 @@ export default function EventCard({ event }: EventCardProps) {
             {/* Title */}
             <h3
               className={`
+                hover:text-foreground hover:line-clamp-none
                 line-clamp-2 text-sm leading-tight font-bold transition-all duration-200
-                hover:line-clamp-none hover:text-foreground
               `}
             >
               {event.title}
@@ -430,7 +430,7 @@ export default function EventCard({ event }: EventCardProps) {
                 <>
                   {/* Show multi-market options only for non-binary markets */}
                   {!isBinaryMarket && (
-                    <div className="mt-auto mb-1 scrollbar-hide max-h-18 space-y-2 overflow-y-auto">
+                    <div className="scrollbar-hide mt-auto mb-1 max-h-18 space-y-2 overflow-y-auto">
                       {event.markets.map(market => (
                         <div
                           key={market.condition_id}
@@ -538,7 +538,7 @@ export default function EventCard({ event }: EventCardProps) {
 
         {/* Unified Footer - Always at bottom */}
         {!isInTradingMode && (
-          <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+          <div className="text-muted-foreground mt-1 flex items-center justify-between text-xs">
             <div className="flex items-center gap-2">
               <span>
                 {formatVolume(event.markets[0].total_volume)}

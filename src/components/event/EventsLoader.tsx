@@ -1,4 +1,4 @@
-import EventsEmptyState from '@/app/event/[slug]/_components/EventsEmptyState'
+import EventsEmptyState from '@/app/(platform)/event/[slug]/_components/EventsEmptyState'
 import { OpenCardProvider } from '@/components/event/EventOpenCardContext'
 import EventsGrid from '@/components/event/EventsGrid'
 import { EventModel } from '@/lib/db/events'
@@ -21,7 +21,7 @@ export default async function EventsLoader({ tag, search, bookmarked }: EventsLo
 
   if (error) {
     return (
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="text-muted-foreground text-center text-sm">
         Could not load more events.
       </p>
     )
