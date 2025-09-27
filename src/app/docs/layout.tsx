@@ -16,6 +16,20 @@ export default async function Layout({ children }: LayoutProps<'/docs'>) {
       >
         <RootProvider>
           <DocsLayout
+            sidebar={{
+              tabs: [
+                {
+                  title: 'API',
+                  description: 'API documentation and reference',
+                  url: '/docs/api',
+                },
+                {
+                  title: 'Platform',
+                  description: 'Platform guides and features',
+                  url: '/docs/platform',
+                },
+              ],
+            }}
             tree={source.pageTree}
             {...baseOptions()}
           >
