@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import AdminSidebar from '@/app/(platform)/admin/_components/AdminSidebar'
+import AdminSidebar from '@/app/admin/_components/AdminSidebar'
 
 export const metadata: Metadata = {
   title: 'Admin',

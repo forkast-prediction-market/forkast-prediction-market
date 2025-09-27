@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import AdminUsersTable from '@/app/(platform)/admin/_components/AdminUsersTable'
+import AdminUsersTable from '@/app/admin/_components/AdminUsersTable'
 import { isAdminWallet } from '@/lib/admin'
 import { UserModel } from '@/lib/db/users'
 import { truncateAddress } from '@/lib/utils'
