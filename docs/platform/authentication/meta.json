@@ -1,5 +1,6 @@
 {
   "title": "Authentication",
+  "description": "Authentication methods and setup",
   "icon": "LockKeyhole",
   "pages": ["email", "wallets"],
   "defaultOpen": false

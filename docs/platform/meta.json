@@ -1,0 +1,7 @@
+{
+  "title": "Platform",
+  "description": "Platform guides and features",
+  "icon": "Settings",
+  "pages": ["index", "authentication", "getting-started"],
+  "root": true
+}

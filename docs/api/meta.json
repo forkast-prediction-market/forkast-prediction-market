@@ -1,0 +1,7 @@
+{
+  "title": "API",
+  "description": "API documentation and reference",
+  "icon": "SquareTerminal",
+  "pages": ["index", "keys"],
+  "root": true
+}

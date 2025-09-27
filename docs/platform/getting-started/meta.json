@@ -1,0 +1,7 @@
+{
+  "title": "Getting Started",
+  "description": "Installation and setup guides",
+  "icon": "CirclePlay",
+  "pages": ["installation"],
+  "defaultOpen": false
+}

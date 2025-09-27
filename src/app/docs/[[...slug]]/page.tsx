@@ -1,14 +1,22 @@
+import type { MDXComponents } from 'mdx/types'
 import type { Metadata } from 'next'
+import defaultMdxComponents from 'fumadocs-ui/mdx'
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/page'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import { source } from '@/lib/source'
-import { getMDXComponents } from '@/mdx-components'
+
+function getMDXComponents(components?: MDXComponents): MDXComponents {
+  return {
+    ...defaultMdxComponents,
+    ...components,
+  }
+}
 
 export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const params = await props.params
   const page = source.getPage(params.slug)
   if (!page) {
-    notFound()
+    redirect('/docs/platform/getting-started/installation')
   }
 
   const MDX = page.data.body
