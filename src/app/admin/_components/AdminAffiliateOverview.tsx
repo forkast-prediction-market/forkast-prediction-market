@@ -22,7 +22,7 @@ function formatCurrency(value: number) {
     return '$0.00'
   }
 
-  return `$${value.toFixed(2)}`
+  return `${value.toFixed(2)}`
 }
 
 export default function AdminAffiliateOverview({ rows }: Props) {

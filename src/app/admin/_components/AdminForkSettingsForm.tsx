@@ -3,7 +3,7 @@
 import Form from 'next/form'
 import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { updateForkSettingsAction } from '@/app/(platform)/admin/actions/update-fork-settings'
+import { updateForkSettingsAction } from '@/app/admin/actions/update-fork-settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'

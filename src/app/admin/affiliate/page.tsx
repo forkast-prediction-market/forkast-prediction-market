@@ -1,5 +1,5 @@
-import AdminAffiliateOverview from '@/app/(platform)/admin/_components/AdminAffiliateOverview'
-import AdminForkSettingsForm from '@/app/(platform)/admin/_components/AdminForkSettingsForm'
+import AdminAffiliateOverview from '@/app/admin/_components/AdminAffiliateOverview'
+import AdminForkSettingsForm from '@/app/admin/_components/AdminForkSettingsForm'
 import { AffiliateModel } from '@/lib/db/affiliates'
 import { UserModel } from '@/lib/db/users'
 

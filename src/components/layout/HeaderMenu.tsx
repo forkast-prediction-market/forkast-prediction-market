@@ -3,6 +3,7 @@
 import type { User } from '@/types'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { createAuthClient } from 'better-auth/react'
+import { router } from 'next/client'
 import { useEffect } from 'react'
 import HeaderDropdownUserMenuAuth from '@/components/layout/HeaderDropdownUserMenuAuth'
 import HeaderDropdownUserMenuGuest from '@/components/layout/HeaderDropdownUserMenuGuest'
@@ -33,15 +34,20 @@ export default function HeaderMenu({ initialUser }: HeaderMenuProps) {
   }, [initialUser])
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
+    const timeout = setTimeout(async () => {
       if (status === 'connecting') {
-        authClient.signOut()
-        Object.keys(localStorage).forEach((key) => {
-          if (key.startsWith('@appkit')) {
-            localStorage.removeItem(key)
-          }
+        await authClient.signOut({
+          fetchOptions: {
+            onSuccess: () => {
+              Object.keys(localStorage).forEach((key) => {
+                if (key.startsWith('@appkit')) {
+                  localStorage.removeItem(key)
+                }
+              })
+              router.push('/')
+            },
+          },
         })
-        location.reload()
       }
     }, 20000)
 
