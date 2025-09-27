@@ -15,7 +15,13 @@ export default async function Layout({ children }: LayoutProps<'/docs'>) {
           minHeight: '100vh',
         }}
       >
-        <RootProvider>
+        <RootProvider
+          search={{
+            options: {
+              api: '/docs/search',
+            },
+          }}
+        >
           <DocsLayout
             nav={{
               title: (
