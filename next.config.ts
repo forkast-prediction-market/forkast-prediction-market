@@ -1,11 +1,7 @@
+import type { NextConfig } from 'next'
 import { createMDX } from 'fumadocs-mdx/next'
 
-const withMDX = createMDX({
-  configPath: 'src/source.config.ts',
-})
-
-/** @type {import('next').NextConfig} */
-const config = {
+const config: NextConfig = {
   experimental: {
     useCache: true,
   },
@@ -48,5 +44,9 @@ const config = {
           : 'http://localhost:3000',
   },
 }
+
+const withMDX = createMDX({
+  configPath: 'docs.config.ts',
+})
 
 export default withMDX(config)

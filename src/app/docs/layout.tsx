@@ -3,7 +3,6 @@ import { RootProvider } from 'fumadocs-ui/provider'
 import { BookOpenIcon, CodeIcon, ExternalLinkIcon } from 'lucide-react'
 import { source } from '@/lib/source'
 import { sanitizeSvg } from '@/lib/utils'
-import '../globals.css'
 
 export default async function Layout({ children }: LayoutProps<'/docs'>) {
   return (

@@ -5,7 +5,6 @@ import confetti from 'canvas-confetti'
 import { InfoIcon, XIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
