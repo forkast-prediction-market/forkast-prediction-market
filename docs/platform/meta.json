@@ -2,6 +2,6 @@
   "title": "Platform",
   "description": "Platform guides and features",
   "icon": "Settings",
-  "pages": ["authentication", "getting-started"],
+  "pages": ["index", "authentication", "getting-started"],
   "root": true
 }
