@@ -20,16 +20,16 @@ export default async function Layout({ children }: LayoutProps<'/docs'>) {
             sidebar={{
               tabs: [
                 {
-                  title: 'API',
-                  description: 'API documentation and reference',
-                  url: '/docs/api',
-                  icon: <CodeIcon className="size-4" />,
-                },
-                {
                   title: 'Platform',
                   description: 'Platform guides and features',
                   url: '/docs/platform',
                   icon: <BookOpenIcon className="size-4" />,
+                },
+                {
+                  title: 'API',
+                  description: 'API documentation and keys',
+                  url: '/docs/api',
+                  icon: <CodeIcon className="size-4" />,
                 },
               ],
             }}
