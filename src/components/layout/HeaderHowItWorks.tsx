@@ -151,13 +151,13 @@ export default function HeaderHowItWorks() {
       )}
 
       <DialogContent className="max-h-[95vh] gap-0 overflow-y-auto p-0 sm:max-w-md">
-        <div className="overflow-hidden rounded-t-lg">
+        <div className="h-[340px] overflow-hidden rounded-t-lg">
           <Image
             src={currentStep.image}
             alt={currentStep.imageAlt}
             width={448}
             height={252}
-            className="h-auto w-full object-cover"
+            className="size-full object-cover"
           />
         </div>
 
