@@ -89,10 +89,9 @@ export default function HeaderNotifications() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
-        className="max-h-[400px] w-[380px] overflow-hidden"
+        className="max-h-[400px] w-[340px] overflow-hidden lg:w-[380px]"
         align="end"
-        sideOffset={8}
-        alignOffset={-20}
+        collisionPadding={32}
       >
         <div className="border-b border-border px-3 py-2">
           <h3 className="text-sm font-semibold text-foreground">Notifications</h3>

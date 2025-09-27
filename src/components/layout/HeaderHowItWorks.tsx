@@ -15,6 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { useClientMounted } from '@/hooks/useClientMounted'
 import { cn } from '@/lib/utils'
 
 const STEPS = [
@@ -45,8 +46,9 @@ const STEPS = [
 ] as const
 
 export default function HeaderHowItWorks() {
+  const isMounted = useClientMounted()
   const { open: openAuthModal } = useAppKit()
-  const { isConnected } = useAppKitAccount()
+  const { isConnected, status } = useAppKitAccount()
   const [isOpen, setIsOpen] = useState(false)
   const [activeStep, setActiveStep] = useState(0)
   const [isMobileBannerDismissed, setIsMobileBannerDismissed] = useState(false)
@@ -100,8 +102,8 @@ export default function HeaderHowItWorks() {
     setActiveStep(step => Math.min(step + 1, STEPS.length - 1))
   }
 
-  if (isConnected) {
-    return null
+  if (!isMounted || status === 'connecting' || isConnected) {
+    return <></>
   }
 
   const showMobileBanner = !isMobileBannerDismissed
@@ -149,13 +151,13 @@ export default function HeaderHowItWorks() {
       )}
 
       <DialogContent className="max-h-[95vh] gap-0 overflow-y-auto p-0 sm:max-w-md">
-        <div className="overflow-hidden rounded-t-lg">
+        <div className="h-[340px] overflow-hidden rounded-t-lg">
           <Image
             src={currentStep.image}
             alt={currentStep.imageAlt}
             width={448}
             height={252}
-            className="h-auto w-full object-cover"
+            className="size-full object-cover"
           />
         </div>
 

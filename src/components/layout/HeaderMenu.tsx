@@ -66,10 +66,10 @@ export default function HeaderMenu({ initialUser }: HeaderMenuProps) {
   if (!isMounted || status === 'connecting') {
     return (
       <div className="flex gap-2">
-        <Skeleton className="hidden h-9 w-16 lg:block" />
-        <Skeleton className="hidden h-9 w-16 lg:block" />
-        <Skeleton className="h-9 w-14" />
-        <Skeleton className="h-9 w-16" />
+        <Skeleton className="hidden h-9 w-20 lg:block" />
+        <Skeleton className="hidden h-9 w-20 lg:block" />
+        <Skeleton className="h-9 w-10" />
+        <Skeleton className="h-9 w-20" />
       </div>
     )
   }
