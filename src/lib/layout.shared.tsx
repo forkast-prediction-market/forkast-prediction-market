@@ -25,7 +25,7 @@ export function baseOptions(): BaseLayoutProps {
       {
         type: 'main',
         url: '/',
-        text: 'forkast.st',
+        text: 'forka.st',
         icon: <ExternalLinkIcon />,
       },
     ],

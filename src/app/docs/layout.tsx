@@ -21,12 +21,12 @@ export default async function Layout({ children }: LayoutProps<'/docs'>) {
                 {
                   title: 'API',
                   description: 'API documentation and reference',
-                  url: '/docs/api',
+                  url: '/docs/api/keys',
                 },
                 {
                   title: 'Platform',
                   description: 'Platform guides and features',
-                  url: '/docs/platform',
+                  url: '/docs/platform/getting-started/installation',
                 },
               ],
             }}
