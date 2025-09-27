@@ -21,7 +21,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${openSauceOne.variable}`} suppressHydrationWarning>
-      <body className="font-sans antialiased">
+      <body className="flex min-h-screen flex-col font-sans antialiased">
         {children}
       </body>
     </html>

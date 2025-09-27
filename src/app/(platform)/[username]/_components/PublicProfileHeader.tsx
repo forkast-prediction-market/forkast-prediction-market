@@ -6,7 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useClipboard } from '@/hooks/useClipboard'
-import { sanitizeSvg, truncateAddress } from '@/lib/utils'
+import { truncateAddress } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 
 interface Props {
@@ -64,23 +64,12 @@ export default function PublicProfileHeader({ profile }: Props) {
       </div>
 
       <div className="flex flex-col gap-4 lg:self-start">
-        <div className="flex items-center gap-2 text-muted-foreground opacity-40 select-none">
-          <div
-            className="size-8"
-            dangerouslySetInnerHTML={{
-              __html: sanitizeSvg(process.env.NEXT_PUBLIC_SITE_LOGO_SVG!),
-            }}
-          />
-          <span className="text-xl font-bold">
-            {process.env.NEXT_PUBLIC_SITE_NAME}
-          </span>
-        </div>
         {user?.address === profile.address && (
-          <Button variant="outline" asChild>
-            <Link href="/settings">
+          <Link href="/settings">
+            <Button variant="outline">
               Edit profile
-            </Link>
-          </Button>
+            </Button>
+          </Link>
         )}
       </div>
     </div>
