@@ -81,6 +81,9 @@
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2"
   },
+  "overrides": {
+    "pino": "^9.12.0"
+  },
   "lint-staged": {
     "*": "eslint --fix"
   }
