@@ -25,6 +25,7 @@ export default function HeaderDropdownUserMenuAuth() {
           type="button"
           variant="ghost"
           className="flex h-auto items-center gap-2 px-2 py-1"
+          data-testid="header-menu-button"
         >
           <Image
             src={user?.image || `https://avatar.vercel.sh/${user?.address}.png`}
@@ -60,10 +61,10 @@ export default function HeaderDropdownUserMenuAuth() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>
-          <Link href="/docs">Documentation</Link>
+          <Link href="/docs" data-testid="header-docs-link">Documentation</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/terms-of-use">Terms of Use</Link>
+          <Link href="/terms-of-use" data-testid="header-terms-link">Terms of Use</Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />

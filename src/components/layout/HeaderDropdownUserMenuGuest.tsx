@@ -21,6 +21,7 @@ export default function HeaderDropdownUserMenuGuest() {
           type="button"
           variant="ghost"
           size="icon"
+          data-testid="header-menu-button"
         >
           <MenuIcon />
         </Button>
@@ -35,10 +36,10 @@ export default function HeaderDropdownUserMenuGuest() {
           <Link href="/">Rewards</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/docs">Documentation</Link>
+          <Link href="/docs" data-testid="header-docs-link">Documentation</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/terms-of-use">Terms of Use</Link>
+          <Link href="/terms-of-use" data-testid="header-terms-link">Terms of Use</Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />

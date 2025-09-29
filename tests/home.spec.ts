@@ -24,9 +24,27 @@ test.describe('desktop and mobile', () => {
 
     await expect(modal).toBeVisible()
   })
+
+  test('redirects to docs from header menu', async ({ page }) => {
+    await page.getByTestId('header-menu-button').click()
+    await page.getByTestId('header-docs-link').click()
+
+    await page.waitForURL('/docs')
+
+    expect(page.url()).toContain('/docs')
+  })
+
+  test('redirects to terms from header menu', async ({ page }) => {
+    await page.getByTestId('header-menu-button').click()
+    await page.getByTestId('header-terms-link').click()
+
+    await page.waitForURL('/terms-of-use')
+
+    expect(page.url()).toContain('/terms-of-use')
+  })
 })
 
-test.describe('how it works dialog on desktop', () => {
+test.describe('desktop only', () => {
   test.beforeEach(async ({ browserName, page }) => {
     test.skip(browserName !== 'chromium')
     await page.goto('/')
@@ -98,7 +116,7 @@ test.describe('how it works dialog on desktop', () => {
   })
 })
 
-test.describe('how it works dialog on mobile', () => {
+test.describe('mobile only', () => {
   test.beforeEach(async ({ browserName, page }) => {
     test.skip(browserName !== 'webkit')
     await page.goto('/')
