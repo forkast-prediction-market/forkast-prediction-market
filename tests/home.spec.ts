@@ -1,15 +1,15 @@
 import { expect, test } from '@playwright/test'
 
 test.describe('desktop and mobile', () => {
-  test('has title', async ({ page }) => {
+  test.beforeEach(async ({ page }) => {
     await page.goto('/')
+  })
 
+  test('has title', async ({ page }) => {
     await expect(page).toHaveTitle('Forkast | Decentralized Prediction Markets')
   })
 
   test('shows appkit modal with log in button', async ({ page }) => {
-    await page.goto('/')
-
     await page.getByTestId('header-login-button').click()
 
     const modal = page.getByText('Connect Wallet')
@@ -18,8 +18,6 @@ test.describe('desktop and mobile', () => {
   })
 
   test('shows appkit modal with sign up button', async ({ page }) => {
-    await page.goto('/')
-
     await page.getByTestId('header-signup-button').click()
 
     const modal = page.getByText('Connect Wallet')
@@ -48,8 +46,6 @@ test.describe('how it works dialog on desktop', () => {
   })
 
   test('navigates through all steps in how it works dialog', async ({ page }) => {
-    await page.goto('/')
-
     // Open dialog
     await page.getByTestId('how-it-works-trigger-desktop').click()
     const dialog = page.getByTestId('how-it-works-dialog')
