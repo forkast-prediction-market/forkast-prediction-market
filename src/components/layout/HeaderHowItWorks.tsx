@@ -115,6 +115,7 @@ export default function HeaderHowItWorks() {
           variant="link"
           size="sm"
           className="hidden items-center gap-1.5 sm:inline-flex"
+          data-testid="how-it-works-trigger-desktop"
         >
           <InfoIcon className="size-4" />
           How it works
@@ -122,7 +123,7 @@ export default function HeaderHowItWorks() {
       </DialogTrigger>
 
       {showMobileBanner && (
-        <div className="fixed right-0 bottom-0 left-0 z-40 border-t bg-background sm:hidden">
+        <div className="fixed right-0 bottom-0 left-0 z-40 border-t bg-background sm:hidden" data-testid="how-it-works-mobile-banner">
           <div className="container flex items-center justify-between gap-2 py-3">
             <DialogTrigger asChild>
               <Button
@@ -130,6 +131,7 @@ export default function HeaderHowItWorks() {
                 variant="link"
                 size="sm"
                 className="flex-1 justify-center gap-2 text-primary no-underline"
+                data-testid="how-it-works-trigger-mobile"
               >
                 <InfoIcon className="size-4" />
                 How it works
@@ -141,6 +143,7 @@ export default function HeaderHowItWorks() {
               size="icon"
               className="size-8"
               onClick={handleDismissBanner}
+              data-testid="how-it-works-dismiss-banner"
             >
               <XIcon className="size-4" />
               <span className="sr-only">Dismiss</span>
@@ -149,7 +152,7 @@ export default function HeaderHowItWorks() {
         </div>
       )}
 
-      <DialogContent className="max-h-[95vh] gap-0 overflow-y-auto p-0 sm:max-w-md">
+      <DialogContent className="max-h-[95vh] gap-0 overflow-y-auto p-0 sm:max-w-md" data-testid="how-it-works-dialog">
         <div className="h-[340px] overflow-hidden rounded-t-lg">
           <Image
             src={currentStep.image}
@@ -182,7 +185,7 @@ export default function HeaderHowItWorks() {
             </DialogDescription>
           </DialogHeader>
 
-          <Button size="lg" className="h-11 w-full" onClick={handleNext}>
+          <Button size="lg" className="h-11 w-full" onClick={handleNext} data-testid="how-it-works-next-button">
             {currentStep.ctaLabel}
           </Button>
         </div>
