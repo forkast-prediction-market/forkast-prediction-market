@@ -77,7 +77,7 @@
     "lint-staged": "^16.2.3",
     "pino-pretty": "^13.1.1",
     "postcss": "^8.5.6",
-    "supabase": "^2.39.2",
+    "supabase": "^2.47.2",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2"
   },
