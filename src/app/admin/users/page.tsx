@@ -89,7 +89,9 @@ export default async function AdminUsersPage() {
             total accounts.
           </p>
         </div>
-        <AdminUsersTable users={users} />
+        <div className="min-w-0">
+          <AdminUsersTable users={users} />
+        </div>
       </section>
 
     </div>

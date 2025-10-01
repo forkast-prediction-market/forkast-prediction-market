@@ -223,13 +223,13 @@ export function DataTable<TData, TValue>({
         enableSelection={enableSelection}
       />
       <div className="overflow-x-auto rounded-md border">
-        <Table className="w-full table-fixed sm:table-auto">
+        <Table className="w-full">
           <TableHeader>
             {table.getHeaderGroups().map(headerGroup => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} colSpan={header.colSpan}>
+                    <TableHead key={header.id} colSpan={header.colSpan} className="px-1 sm:px-2">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -251,7 +251,7 @@ export function DataTable<TData, TValue>({
                       data-state={row.getIsSelected() && 'selected'}
                     >
                       {row.getVisibleCells().map(cell => (
-                        <TableCell key={cell.id}>
+                        <TableCell key={cell.id} className="px-1 sm:px-2">
                           {flexRender(
                             cell.column.columnDef.cell,
                             cell.getContext(),

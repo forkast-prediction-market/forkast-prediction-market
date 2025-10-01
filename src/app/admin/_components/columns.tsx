@@ -6,6 +6,7 @@ import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
+import { truncateAddress } from '@/lib/utils'
 
 interface AdminUserRow {
   id: string
@@ -19,13 +20,8 @@ interface AdminUserRow {
   is_admin: boolean
   avatarUrl: string
   profileUrl: string
-  // Enhanced fields for TanStack Table functionality
-  created_at: string // Raw ISO date for proper sorting
-  search_text: string // Computed field for global search across username, email, and address
-}
-
-function formatAddress(address: string) {
-  return `${address.slice(0, 4)}…${address.slice(-6)}`
+  created_at: string
+  search_text: string
 }
 
 export const columns: ColumnDef<AdminUserRow>[] = [
@@ -50,7 +46,6 @@ export const columns: ColumnDef<AdminUserRow>[] = [
     ),
     enableSorting: false,
     enableHiding: false,
-    size: 40, // Fixed width for checkbox column
   },
   {
     accessorKey: 'username',
@@ -70,25 +65,24 @@ export const columns: ColumnDef<AdminUserRow>[] = [
     cell: ({ row }) => {
       const user = row.original
       return (
-        <div className="flex min-w-0 items-start gap-3">
+        <div className="flex min-w-44 items-start gap-2">
           <Image
             src={user.avatarUrl}
             alt={user.username ?? user.address}
-            width={32}
-            height={32}
-            className="flex-shrink-0 rounded-full sm:h-10 sm:w-10"
+            width={28}
+            height={28}
+            className="flex-shrink-0 rounded-full sm:size-8"
           />
-          <div className="flex min-w-0 flex-col gap-1">
+          <div className="min-w-44 flex-1">
             <a
               href={user.profileUrl}
               target="_blank"
-              rel="noreferrer"
-              className="font-medium text-foreground hover:text-primary"
+              className="flex items-center gap-1 font-medium text-foreground hover:text-primary"
             >
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                <span className="truncate text-sm">{user.username ?? formatAddress(user.address)}</span>
-                {user.is_admin && <Badge variant="outline" className="w-fit text-xs">Admin</Badge>}
-              </div>
+              <span>
+                {user.username ?? truncateAddress(user.address)}
+              </span>
+              {user.is_admin && <Badge variant="outline" className="mt-1 text-xs">Admin</Badge>}
             </a>
           </div>
         </div>
@@ -100,7 +94,6 @@ export const columns: ColumnDef<AdminUserRow>[] = [
       return a.localeCompare(b)
     },
     enableHiding: false, // User column should always be visible
-    minSize: 200, // Minimum width for user column
   },
   {
     accessorKey: 'email',
@@ -139,7 +132,6 @@ export const columns: ColumnDef<AdminUserRow>[] = [
         </div>
       )
     },
-    size: 80, // Fixed width for email column
   },
   {
     accessorKey: 'referred_by_display',
@@ -167,9 +159,9 @@ export const columns: ColumnDef<AdminUserRow>[] = [
                   target={user.referred_by_profile_url ? '_blank' : undefined}
                   rel={user.referred_by_profile_url ? 'noreferrer' : undefined}
                   className={`
-                    block max-w-[120px] touch-manipulation truncate text-xs font-medium text-foreground
+                    block max-w-[60px] touch-manipulation truncate text-xs font-medium text-foreground
                     hover:text-primary
-                    sm:max-w-none
+                    sm:max-w-[100px]
                   `}
                 >
                   {user.referred_by_display}
@@ -181,7 +173,6 @@ export const columns: ColumnDef<AdminUserRow>[] = [
         </div>
       )
     },
-    size: 120, // Fixed width for referral column
   },
   {
     accessorKey: 'created_at',
@@ -213,6 +204,5 @@ export const columns: ColumnDef<AdminUserRow>[] = [
       const b = new Date(rowB.original.created_at).getTime()
       return a - b
     },
-    size: 100, // Fixed width for created date column
   },
 ]
