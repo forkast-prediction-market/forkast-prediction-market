@@ -2,7 +2,7 @@
 
 import { useAdminUsersTable } from '@/hooks/useAdminUsers'
 import { columns } from './columns'
-import { ServerDataTable } from './server-data-table'
+import { DataTable } from './DataTable'
 
 export default function AdminUsersTable() {
   const {
@@ -23,7 +23,7 @@ export default function AdminUsersTable() {
   } = useAdminUsersTable()
 
   return (
-    <ServerDataTable
+    <DataTable
       columns={columns}
       data={users}
       totalCount={totalCount}

@@ -11,7 +11,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { useCallback, useMemo, useState } from 'react'
-import { ServerDataTableToolbar } from '@/app/admin/_components/server-data-table-toolbar'
+import { DataTableToolbar } from '@/app/admin/_components/DataTableToolbar'
 import {
   Table,
   TableBody,
@@ -20,10 +20,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { DataTablePagination } from './data-table-pagination'
-import { DataTableSkeleton } from './data-table-skeleton'
+import { DataTablePagination } from './DataTablePagination'
+import { DataTableSkeleton } from './DataTableSkeleton'
 
-interface ServerDataTableProps<TData, TValue> {
+interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
   totalCount: number
@@ -46,7 +46,7 @@ interface ServerDataTableProps<TData, TValue> {
   onPageSizeChange: (pageSize: number) => void
 }
 
-export function ServerDataTable<TData, TValue>({
+export function DataTable<TData, TValue>({
   columns,
   data,
   totalCount,
@@ -66,7 +66,7 @@ export function ServerDataTable<TData, TValue>({
   pageSize,
   onPageChange,
   onPageSizeChange,
-}: ServerDataTableProps<TData, TValue>) {
+}: DataTableProps<TData, TValue>) {
   const [rowSelection, setRowSelection] = useState({})
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -122,7 +122,7 @@ export function ServerDataTable<TData, TValue>({
   if (error) {
     return (
       <div className="space-y-4">
-        <ServerDataTableToolbar
+        <DataTableToolbar
           search={search}
           onSearchChange={onSearchChange}
           searchPlaceholder={searchPlaceholder}
@@ -173,7 +173,7 @@ export function ServerDataTable<TData, TValue>({
 
   return (
     <div className="space-y-4">
-      <ServerDataTableToolbar
+      <DataTableToolbar
         search={search}
         onSearchChange={onSearchChange}
         searchPlaceholder={searchPlaceholder}

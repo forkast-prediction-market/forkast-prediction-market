@@ -4,9 +4,9 @@ import type { Table } from '@tanstack/react-table'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { DataTableViewOptions } from './data-table-view-options'
+import { DataTableViewOptions } from './DataTableViewOptions'
 
-interface ServerDataTableToolbarProps<TData> {
+interface DataTableToolbarProps<TData> {
   table: Table<TData>
   search: string
   onSearchChange: (search: string) => void
@@ -16,7 +16,7 @@ interface ServerDataTableToolbarProps<TData> {
   isLoading?: boolean
 }
 
-export function ServerDataTableToolbar<TData>({
+export function DataTableToolbar<TData>({
   table,
   search,
   onSearchChange,
@@ -24,7 +24,7 @@ export function ServerDataTableToolbar<TData>({
   enableColumnVisibility = true,
   enableSelection = false,
   isLoading = false,
-}: ServerDataTableToolbarProps<TData>) {
+}: DataTableToolbarProps<TData>) {
   const isFiltered = search.length > 0
   const selectedRowsCount = table.getFilteredSelectedRowModel().rows.length
 
