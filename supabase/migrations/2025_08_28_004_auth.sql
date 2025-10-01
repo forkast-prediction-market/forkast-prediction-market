@@ -1,3 +1,5 @@
+BEGIN;
+
 -- ============================================================
 -- AUTH & USERS - Complete Domain Implementation
 -- ============================================================
@@ -10,23 +12,27 @@
 -- 1. TABLE CREATION
 -- ===========================================
 
--- Users table - Core user identity
+-- Users table - Core user identity with affiliate functionality
 CREATE TABLE IF NOT EXISTS users
 (
-  id                 CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
-  address            TEXT    NOT NULL UNIQUE,
-  username           TEXT,
-  email              TEXT    NOT NULL,
-  email_verified     BOOLEAN NOT NULL     DEFAULT FALSE,
-  two_factor_enabled BOOLEAN NOT NULL     DEFAULT FALSE,
-  image              TEXT,
-  settings           JSONB   NOT NULL     DEFAULT '{}'::JSONB,
-  created_at         TIMESTAMPTZ          DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ          DEFAULT NOW()
+  id                  CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
+  address             TEXT        NOT NULL UNIQUE,
+  username            TEXT,
+  email               TEXT        NOT NULL,
+  email_verified      BOOLEAN     NOT NULL DEFAULT FALSE,
+  two_factor_enabled  BOOLEAN     NOT NULL DEFAULT FALSE,
+  image               TEXT,
+  settings            JSONB       NOT NULL DEFAULT '{}'::JSONB,
+  affiliate_code      TEXT,                                                 -- Unique referral code for this user
+  referred_by_user_id CHAR(26)    REFERENCES users (id) ON DELETE SET NULL, -- User who referred this user
+  referred_at         TIMESTAMPTZ,                                          -- When the referral occurred
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users (LOWER(email));
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username ON users (LOWER(username));
+CREATE UNIQUE INDEX IF NOT EXISTS idx_users_affiliate_code ON users (LOWER(affiliate_code));
 
 -- Sessions table - Better Auth session management
 CREATE TABLE IF NOT EXISTS sessions
@@ -37,8 +43,8 @@ CREATE TABLE IF NOT EXISTS sessions
   ip_address TEXT,
   user_agent TEXT,
   user_id    CHAR(26)    NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  created_at TIMESTAMPTZ          DEFAULT NOW(),
-  updated_at TIMESTAMPTZ          DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions (user_id);
@@ -47,9 +53,9 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions (user_id);
 CREATE TABLE IF NOT EXISTS accounts
 (
   id                       CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
-  account_id               TEXT     NOT NULL,
-  provider_id              TEXT     NOT NULL,
-  user_id                  CHAR(26) NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  account_id               TEXT        NOT NULL,
+  provider_id              TEXT        NOT NULL,
+  user_id                  CHAR(26)    NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
   access_token             TEXT,
   refresh_token            TEXT,
   id_token                 TEXT,
@@ -57,8 +63,8 @@ CREATE TABLE IF NOT EXISTS accounts
   refresh_token_expires_at TIMESTAMPTZ,
   scope                    TEXT,
   password                 TEXT,
-  created_at               TIMESTAMPTZ          DEFAULT NOW(),
-  updated_at               TIMESTAMPTZ          DEFAULT NOW()
+  created_at               TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at               TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts (user_id);
@@ -70,8 +76,8 @@ CREATE TABLE IF NOT EXISTS verifications
   identifier TEXT        NOT NULL,
   value      TEXT        NOT NULL,
   expires_at TIMESTAMPTZ NOT NULL,
-  created_at TIMESTAMPTZ          DEFAULT NOW(),
-  updated_at TIMESTAMPTZ          DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_verifications_identifier ON verifications (identifier);
@@ -80,11 +86,11 @@ CREATE INDEX IF NOT EXISTS idx_verifications_identifier ON verifications (identi
 CREATE TABLE IF NOT EXISTS wallets
 (
   id         CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
-  user_id    CHAR(26) NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  address    TEXT     NOT NULL,
-  chain_id   INTEGER  NOT NULL,
-  is_primary BOOLEAN  NOT NULL,
-  created_at TIMESTAMPTZ          DEFAULT NOW()
+  user_id    CHAR(26)    NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  address    TEXT        NOT NULL,
+  chain_id   INTEGER     NOT NULL,
+  is_primary BOOLEAN     NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_wallets_user_id ON wallets (user_id);
@@ -253,3 +259,5 @@ $$
     END IF;
   END
 $$;
+
+COMMIT;

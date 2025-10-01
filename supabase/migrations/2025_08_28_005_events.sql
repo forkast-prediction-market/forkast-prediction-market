@@ -1,3 +1,5 @@
+BEGIN;
+
 -- ============================================================
 -- EVENTS & MARKETS - Complete Domain Implementation
 -- ============================================================
@@ -15,16 +17,16 @@
 CREATE TABLE IF NOT EXISTS conditions
 (
   id           CHAR(66) PRIMARY KEY,
-  oracle       CHAR(42) NOT NULL,
-  question_id  CHAR(66) NOT NULL,
+  oracle       CHAR(42)    NOT NULL,
+  question_id  CHAR(66)    NOT NULL,
   -- Resolution data
-  resolved     BOOLEAN     DEFAULT FALSE,
+  resolved     BOOLEAN              DEFAULT FALSE,
   -- Metadata
   arweave_hash TEXT,     -- Arweave metadata hash
   creator      CHAR(42), -- Market creator address
   -- Timestamps
-  created_at   TIMESTAMPTZ DEFAULT NOW(),
-  updated_at   TIMESTAMPTZ DEFAULT NOW()
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Tags table - Hierarchical categorization system for events
@@ -33,28 +35,28 @@ CREATE TABLE IF NOT EXISTS tags
   id                   SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name                 VARCHAR(100) NOT NULL UNIQUE,
   slug                 VARCHAR(100) NOT NULL UNIQUE,
-  is_main_category     BOOLEAN     DEFAULT FALSE,
-  display_order        SMALLINT    DEFAULT 0,
+  is_main_category     BOOLEAN               DEFAULT FALSE,
+  display_order        SMALLINT              DEFAULT 0,
   parent_tag_id        SMALLINT REFERENCES tags (id),
-  active_markets_count INTEGER     DEFAULT 0,
-  created_at           TIMESTAMPTZ DEFAULT NOW(),
-  updated_at           TIMESTAMPTZ DEFAULT NOW()
+  active_markets_count INTEGER               DEFAULT 0,
+  created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
 -- Events table - Core content structure for prediction markets
 CREATE TABLE IF NOT EXISTS events
 (
-  id                   CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
+  id                   CHAR(26) PRIMARY KEY  DEFAULT generate_ulid(),
   slug                 VARCHAR(255) NOT NULL UNIQUE,
   title                TEXT         NOT NULL,
   creator              VARCHAR(42), -- Ethereum address of creator
   icon_url             TEXT,
-  show_market_icons    BOOLEAN              DEFAULT TRUE,
+  show_market_icons    BOOLEAN               DEFAULT TRUE,
   rules                TEXT,        -- Event-specific rules
-  active_markets_count INTEGER              DEFAULT 0,
-  total_markets_count  INTEGER              DEFAULT 0,
-  created_at           TIMESTAMPTZ          DEFAULT NOW(),
-  updated_at           TIMESTAMPTZ          DEFAULT NOW()
+  active_markets_count INTEGER               DEFAULT 0,
+  total_markets_count  INTEGER               DEFAULT 0,
+  created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
 
 -- Event-Tag relationship table - Many-to-many between events and tags
@@ -79,16 +81,16 @@ CREATE TABLE IF NOT EXISTS markets
   -- Images
   icon_url           TEXT,  -- markets/icons/market-slug.jpg
   -- Status and Data
-  is_active          BOOLEAN        DEFAULT TRUE,
-  is_resolved        BOOLEAN        DEFAULT FALSE,
+  is_active          BOOLEAN               DEFAULT TRUE,
+  is_resolved        BOOLEAN               DEFAULT FALSE,
   -- Metadata
   metadata           JSONB, -- Metadata from Arweave
   -- Cached Trading Metrics (from subgraphs)
-  current_volume_24h DECIMAL(20, 6) DEFAULT 0,
-  total_volume       DECIMAL(20, 6) DEFAULT 0,
+  current_volume_24h DECIMAL(20, 6)        DEFAULT 0,
+  total_volume       DECIMAL(20, 6)        DEFAULT 0,
   -- Timestamps
-  created_at         TIMESTAMPTZ    DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ    DEFAULT NOW(),
+  created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   -- Constraints
   UNIQUE (event_id, slug),
   CHECK (current_volume_24h >= 0),
@@ -99,7 +101,7 @@ CREATE TABLE IF NOT EXISTS markets
 CREATE TABLE IF NOT EXISTS outcomes
 (
   id                 CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
-  condition_id       CHAR(66) NOT NULL REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  condition_id       CHAR(66)    NOT NULL REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
   outcome_text       TEXT        NOT NULL,
   outcome_index      SMALLINT    NOT NULL,               -- 0, 1, 2... outcome order
   token_id           TEXT        NOT NULL,               -- ERC1155 token ID for this outcome
@@ -111,8 +113,8 @@ CREATE TABLE IF NOT EXISTS outcomes
   volume_24h         DECIMAL(20, 6)       DEFAULT 0,
   total_volume       DECIMAL(20, 6)       DEFAULT 0,
   -- Timestamps
-  created_at         TIMESTAMPTZ          DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ          DEFAULT NOW(),
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   -- Constraints
   UNIQUE (condition_id, outcome_index),
   UNIQUE (token_id),
@@ -127,13 +129,13 @@ CREATE TABLE IF NOT EXISTS outcomes
 CREATE TABLE IF NOT EXISTS sync_status
 (
   id              SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  service_name    VARCHAR(50) NOT NULL,       -- 'activity_sync', 'pnl_sync', etc.
-  subgraph_name   VARCHAR(50) NOT NULL,       -- 'activity', 'pnl', 'oi', etc.
-  status          VARCHAR(20) DEFAULT 'idle', -- 'running', 'completed', 'error'
-  total_processed INTEGER     DEFAULT 0,
+  service_name    VARCHAR(50) NOT NULL,                -- 'activity_sync', 'pnl_sync', etc.
+  subgraph_name   VARCHAR(50) NOT NULL,                -- 'activity', 'pnl', 'oi', etc.
+  status          VARCHAR(20)          DEFAULT 'idle', -- 'running', 'completed', 'error'
+  total_processed INTEGER              DEFAULT 0,
   error_message   TEXT,
-  created_at      TIMESTAMPTZ DEFAULT NOW(),
-  updated_at      TIMESTAMPTZ DEFAULT NOW(),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   -- Constraints
   UNIQUE (service_name, subgraph_name),
   CHECK (status IN ('idle', 'running', 'completed', 'error')),
@@ -503,3 +505,5 @@ VALUES ('activity_sync', 'activity', 'idle'),
        ('resolution_sync', 'resolution', 'idle'),
        ('market_sync', 'activity', 'idle')
 ON CONFLICT (service_name, subgraph_name) DO NOTHING;
+
+COMMIT;
