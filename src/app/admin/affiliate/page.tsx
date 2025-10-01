@@ -46,7 +46,15 @@ export default async function AdminSettingsPage() {
   const profiles = (profilesData ?? []) as AffiliateProfile[]
 
   let updatedAtLabel: string | undefined
-  const latestUpdatedAt = affiliateSettings?.trade_fee_bps?.updated_at || affiliateSettings?.affiliate_share_bps?.updated_at
+  const tradeFeeUpdatedAt = affiliateSettings?.trade_fee_bps?.updated_at
+  const shareUpdatedAt = affiliateSettings?.affiliate_share_bps?.updated_at
+  const latestUpdatedAt
+    = tradeFeeUpdatedAt && shareUpdatedAt
+      ? new Date(tradeFeeUpdatedAt) > new Date(shareUpdatedAt)
+        ? tradeFeeUpdatedAt
+        : shareUpdatedAt
+      : tradeFeeUpdatedAt || shareUpdatedAt
+
   if (latestUpdatedAt) {
     const date = new Date(latestUpdatedAt)
     if (!Number.isNaN(date.getTime())) {
