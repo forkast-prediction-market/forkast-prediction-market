@@ -1,5 +1,5 @@
 import type { Column } from '@tanstack/react-table'
-import { ArrowDownIcon, ArrowUpIcon, CaretSortIcon, EyeNoneIcon } from '@radix-ui/react-icons'
+import { ArrowDownIcon, ArrowUpIcon, ChevronsUpDownIcon, EyeOffIcon } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -45,7 +45,7 @@ export function DataTableColumnHeader<TData, TValue>({
                     <ArrowUpIcon className="ml-2 h-4 w-4" />
                   )
                 : (
-                    <CaretSortIcon className="ml-2 h-4 w-4" />
+                    <ChevronsUpDownIcon className="ml-2 h-4 w-4" />
                   )}
           </Button>
         </DropdownMenuTrigger>
@@ -60,7 +60,7 @@ export function DataTableColumnHeader<TData, TValue>({
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => column.toggleVisibility(false)}>
-            <EyeNoneIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
+            <EyeOffIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground/70" />
             Hide
           </DropdownMenuItem>
         </DropdownMenuContent>
