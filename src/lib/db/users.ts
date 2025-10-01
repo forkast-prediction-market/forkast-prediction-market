@@ -151,8 +151,22 @@ export const UserModel = {
     return user
   },
 
-  async listUsers(limit = 100) {
-    const { data, error, count } = await supabaseAdmin
+  async listUsers(params: {
+    limit?: number
+    offset?: number
+    search?: string
+    sortBy?: 'username' | 'email' | 'address' | 'created_at'
+    sortOrder?: 'asc' | 'desc'
+  } = {}) {
+    const {
+      limit = 100,
+      offset = 0,
+      search,
+      sortBy = 'created_at',
+      sortOrder = 'desc',
+    } = params
+
+    let query = supabaseAdmin
       .from('users')
       .select(`
         id,
@@ -165,8 +179,32 @@ export const UserModel = {
         referred_by_user_id,
         referred_at
       `, { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .limit(limit)
+
+    if (search && search.trim()) {
+      const searchTerm = search.trim()
+      const sanitizedSearchTerm = searchTerm
+        .replace(/[,()]/g, ' ')
+        .replace(/['"]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+
+      if (sanitizedSearchTerm) {
+        query = query.or(`username.ilike.%${sanitizedSearchTerm}%,email.ilike.%${sanitizedSearchTerm}%,address.ilike.%${sanitizedSearchTerm}%`)
+      }
+    }
+
+    if (sortBy === 'username') {
+      const ascending = sortOrder === 'asc'
+      query = query.order('username', { ascending, nullsFirst: false })
+      query = query.order('address', { ascending })
+    }
+    else {
+      query = query.order(sortBy, { ascending: sortOrder === 'asc' })
+    }
+
+    query = query.range(offset, offset + limit - 1)
+
+    const { data, error, count } = await query
 
     return { data, error, count }
   },
