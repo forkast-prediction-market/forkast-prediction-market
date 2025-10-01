@@ -33,7 +33,7 @@ export function DataTablePagination<TData>({
   const pageCount = table.getPageCount()
   const isServerSide = totalCount !== undefined
 
-  const handlePageChange = (newPageIndex: number) => {
+  function handlePageChange(newPageIndex: number) {
     if (onPageChange) {
       onPageChange(newPageIndex)
     }
@@ -42,7 +42,7 @@ export function DataTablePagination<TData>({
     }
   }
 
-  const handlePageSizeChange = (newPageSize: string) => {
+  function handlePageSizeChange(newPageSize: string) {
     const size = Number.parseInt(newPageSize)
     if (onPageSizeChange) {
       onPageSizeChange(size)

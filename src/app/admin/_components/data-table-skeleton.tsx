@@ -41,8 +41,8 @@ export function DataTableSkeleton({
         <Table className="min-w-full">
           <TableHeader>
             <TableRow>
-              {Array.from({ length: columnCount }).map((_, index) => (
-                <TableHead key={index} className="whitespace-nowrap">
+              {Array.from({ length: columnCount }).map((_, i) => (
+                <TableHead key={`skeleton-col-${i + 1}`} className="whitespace-nowrap">
                   <Skeleton className="h-4 w-[80px]" />
                 </TableHead>
               ))}
@@ -50,37 +50,38 @@ export function DataTableSkeleton({
           </TableHeader>
           <TableBody>
             {Array.from({ length: rowCount }).map((_, rowIndex) => (
-              <TableRow key={rowIndex}>
+              <TableRow key={`row-${rowIndex + 1}`}>
                 {Array.from({ length: columnCount }).map((_, cellIndex) => (
-                  <TableCell key={cellIndex} className="whitespace-nowrap">
-                    {cellIndex === 0 ? (
-                      // Checkbox column
-                      <Skeleton className="h-4 w-4" />
-                    ) : cellIndex === 1 ? (
-                      // User column with avatar and name
-                      <div className="flex min-w-[200px] items-start gap-3">
-                        <Skeleton className="h-10 w-10 flex-shrink-0 rounded-full" />
-                        <div className="flex min-w-0 flex-col gap-1">
-                          <Skeleton className="h-4 w-[120px]" />
-                          <Skeleton className="h-3 w-[60px]" />
-                        </div>
-                      </div>
-                    ) : cellIndex === 2 ? (
-                      // Email column
-                      <div className="min-w-[80px]">
-                        <Skeleton className="h-4 w-4" />
-                      </div>
-                    ) : cellIndex === 3 ? (
-                      // Referral column
-                      <div className="min-w-[100px]">
-                        <Skeleton className="h-4 w-[80px]" />
-                      </div>
-                    ) : (
-                      // Created column
-                      <div className="min-w-[100px] text-right">
-                        <Skeleton className="ml-auto h-4 w-[80px]" />
-                      </div>
-                    )}
+                  <TableCell key={`cell-${cellIndex + 1}`} className="whitespace-nowrap">
+                    {cellIndex === 0
+                      ? <Skeleton className="h-4 w-4" />
+                      : cellIndex === 1
+                        ? (
+                            <div className="flex min-w-[200px] items-start gap-3">
+                              <Skeleton className="h-10 w-10 flex-shrink-0 rounded-full" />
+                              <div className="flex min-w-0 flex-col gap-1">
+                                <Skeleton className="h-4 w-[120px]" />
+                                <Skeleton className="h-3 w-[60px]" />
+                              </div>
+                            </div>
+                          )
+                        : cellIndex === 2
+                          ? (
+                              <div className="min-w-[80px]">
+                                <Skeleton className="h-4 w-4" />
+                              </div>
+                            )
+                          : cellIndex === 3
+                            ? (
+                                <div className="min-w-[100px]">
+                                  <Skeleton className="h-4 w-[80px]" />
+                                </div>
+                              )
+                            : (
+                                <div className="min-w-[100px] text-right">
+                                  <Skeleton className="ml-auto h-4 w-[80px]" />
+                                </div>
+                              )}
                   </TableCell>
                 ))}
               </TableRow>
