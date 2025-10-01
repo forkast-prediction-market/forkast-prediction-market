@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import SettingsContent from '@/app/(platform)/settings/_components/SettingsContent'
 import { AffiliateModel } from '@/lib/db/affiliates'
+import { SettingsModel } from '@/lib/db/settings'
 import { UserModel } from '@/lib/db/users'
 
 export const metadata: Metadata = {
@@ -17,16 +18,18 @@ export default async function SettingsPage({ searchParams }: PageProps<'/setting
     redirect('/')
   }
 
-  const affiliateCode = user.affiliate_code
-    ?? (await AffiliateModel.ensureUserAffiliateCode(user.id)).data
+  const affiliateCode = user.affiliate_code ?? (await AffiliateModel.ensureUserAffiliateCode(user.id)).data
 
-  const { data: forkSettings } = await AffiliateModel.getForkSettings()
+  const { data: allSettings } = await SettingsModel.getSettings()
+  const affiliateSettings = allSettings?.affiliate
   const { data: statsData } = await AffiliateModel.getUserAffiliateStats(user.id)
   const { data: referralsData } = await AffiliateModel.listReferralsByAffiliate(user.id)
 
-  const tradeFeePercent = (forkSettings?.trade_fee_bps ?? 100) / 100
-  const affiliateSharePercent = (forkSettings?.affiliate_share_bps ?? 5000) / 100
-  const commissionPercent = Number(((forkSettings?.trade_fee_bps ?? 100) / 100) * ((forkSettings?.affiliate_share_bps ?? 5000) / 10000))
+  const tradeFeeBps = Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '100', 10)
+  const affiliateShareBps = Number.parseInt(affiliateSettings?.affiliate_share_bps?.value || '5000', 10)
+  const tradeFeePercent = tradeFeeBps / 100
+  const affiliateSharePercent = affiliateShareBps / 100
+  const commissionPercent = Number((tradeFeeBps / 100) * (affiliateShareBps / 10000))
 
   function resolveBaseUrl() {
     const raw = process.env.NEXT_PUBLIC_SITE_URL!

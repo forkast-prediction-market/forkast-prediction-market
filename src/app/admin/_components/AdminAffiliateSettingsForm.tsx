@@ -3,7 +3,7 @@
 import Form from 'next/form'
 import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { updateForkSettingsAction } from '@/app/admin/actions/update-fork-settings'
+import { updateForkSettingsAction } from '@/app/admin/actions/update-affiliate-settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
@@ -20,7 +20,7 @@ const initialState = {
   success: undefined as string | undefined,
 }
 
-export default function AdminForkSettingsForm({ tradeFeeBps, affiliateShareBps, updatedAtLabel }: Props) {
+export default function AdminAffiliateSettingsForm({ tradeFeeBps, affiliateShareBps, updatedAtLabel }: Props) {
   const [state, formAction, isPending] = useActionState(updateForkSettingsAction, initialState)
 
   useEffect(() => {
@@ -85,7 +85,7 @@ export default function AdminForkSettingsForm({ tradeFeeBps, affiliateShareBps, 
 
       {state.error && <InputError message={state.error} />}
 
-      <Button type="submit" className="w-40" disabled={isPending}>
+      <Button type="submit" className="ms-auto w-40" disabled={isPending}>
         {isPending ? 'Saving...' : 'Save changes'}
       </Button>
     </Form>

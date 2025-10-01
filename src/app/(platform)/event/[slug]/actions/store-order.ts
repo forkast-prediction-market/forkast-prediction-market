@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { AffiliateModel } from '@/lib/db/affiliates'
 import { OrderModel } from '@/lib/db/orders'
+import { SettingsModel } from '@/lib/db/settings'
 import { UserModel } from '@/lib/db/users'
 
 const StoreOrderSchema = z.object({
@@ -41,13 +42,15 @@ export async function storeOrderAction(formData: FormData) {
   const { slug, ...orderPayload } = validated.data
 
   try {
-    const [{ data: forkSettings }, { data: referral }] = await Promise.all([
-      AffiliateModel.getForkSettings(),
+    const [{ data: allSettings }, { data: referral }] = await Promise.all([
+      SettingsModel.getSettings(),
       AffiliateModel.getReferral(user.id),
     ])
 
-    const tradeFeeBps = forkSettings?.trade_fee_bps ?? 0
-    const affiliateShareBps = forkSettings?.affiliate_share_bps ?? 0
+    const affiliateSettings = allSettings?.affiliate
+
+    const tradeFeeBps = Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '0', 10)
+    const affiliateShareBps = Number.parseInt(affiliateSettings?.affiliate_share_bps?.value || '0', 10)
     const affiliateUserId = user.referred_by_user_id
       || referral?.affiliate_user_id
       || null

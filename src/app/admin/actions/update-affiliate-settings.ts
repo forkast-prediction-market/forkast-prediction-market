@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { AffiliateModel } from '@/lib/db/affiliates'
+import { SettingsModel } from '@/lib/db/settings'
 import { UserModel } from '@/lib/db/users'
 
 export interface ForkSettingsActionState {
@@ -36,10 +36,10 @@ export async function updateForkSettingsAction(
   const tradeFeeBps = Math.round(parsed.data.trade_fee_percent * 100)
   const affiliateShareBps = Math.round(parsed.data.affiliate_share_percent * 100)
 
-  const { error } = await AffiliateModel.updateForkSettings({
-    trade_fee_bps: tradeFeeBps,
-    affiliate_share_bps: affiliateShareBps,
-  })
+  const { error } = await SettingsModel.updateSettings([
+    { group: 'affiliate', key: 'trade_fee_bps', value: tradeFeeBps.toString() },
+    { group: 'affiliate', key: 'affiliate_share_bps', value: affiliateShareBps.toString() },
+  ])
 
   if (error) {
     console.error('Failed to update fork settings', error)
