@@ -51,6 +51,14 @@ export default async function AdminUsersPage() {
       referredProfile = `${baseProfileUrl}/${referredPath}`
     }
 
+    // Generate search text for global search functionality
+    const searchText = [
+      user.username,
+      user.email,
+      user.address,
+      referredDisplay,
+    ].filter(Boolean).join(' ').toLowerCase()
+
     return {
       ...user,
       is_admin: isAdminWallet(user.address),
@@ -59,6 +67,8 @@ export default async function AdminUsersPage() {
       referred_by_profile_url: referredProfile,
       created_label: createdLabel,
       profileUrl: `${baseProfileUrl}/${profilePath}`,
+      created_at: user.created_at, // Raw ISO date for proper sorting
+      search_text: searchText, // Computed field for global search
     }
   })
 
