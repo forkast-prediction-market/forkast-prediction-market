@@ -1,3 +1,13 @@
+BEGIN;
+
+-- ============================================================
+-- EXTENSIONS & ULID FUNCTION - Database Foundation
+-- ============================================================
+-- Extensions: pg_net, pg_cron, pgcrypto
+-- Functions: generate_ulid() - ULID generation for primary keys
+-- Dependencies: None (foundation layer)
+-- ============================================================
+
 CREATE EXTENSION IF NOT EXISTS pg_net SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
@@ -76,4 +86,7 @@ BEGIN
 
   RETURN output;
 END
-$$ LANGUAGE plpgsql VOLATILE SET search_path = 'extensions';
+$$ LANGUAGE plpgsql VOLATILE
+                    SET search_path = 'extensions';
+
+COMMIT;

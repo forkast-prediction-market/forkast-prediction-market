@@ -1,29 +1,37 @@
+BEGIN;
+
 -- ============================================================
 -- ORDERS - Minimal Order Storage System
 -- ============================================================
--- Tables: orders
+-- Tables: orders (with affiliate fee columns)
 -- Dependencies: users, outcomes, conditions, markets
--- Business Logic: Basic order insertion and storage
+-- Business Logic: Basic order insertion and storage with affiliate fee tracking
+-- Consolidation: Includes affiliate fee columns (affiliate_user_id, trade_fee_bps, affiliate_share_bps, fork_fee_amount, affiliate_fee_amount)
 -- ============================================================
 
 -- ===========================================
 -- 1. TABLE CREATION
 -- ===========================================
 
--- Orders table - Basic order storage
+-- Orders table - Basic order storage with affiliate fee tracking
 CREATE TABLE IF NOT EXISTS orders
 (
-  id            CHAR(26) PRIMARY KEY    DEFAULT generate_ulid(),
-  user_id       CHAR(26)       NOT NULL REFERENCES users (id) ON DELETE CASCADE,
-  condition_id  VARCHAR(66)    NOT NULL REFERENCES conditions (id) ON DELETE CASCADE,
-  outcome_index SMALLINT       NOT NULL,
-  order_type    VARCHAR(10)    NOT NULL,                   -- 'market', 'limit'
-  side          VARCHAR(4)     NOT NULL,                   -- 'buy', 'sell'
-  amount        DECIMAL(20, 6) NOT NULL,                   -- Amount to buy/sell
-  price         DECIMAL(4, 4),                             -- Limit price (0.0001 to 0.9999)
-  status        VARCHAR(20)    NOT NULL DEFAULT 'pending', -- 'pending', 'filled', 'cancelled'
-  created_at    TIMESTAMPTZ             DEFAULT NOW(),
-  updated_at    TIMESTAMPTZ             DEFAULT NOW(),
+  id                   CHAR(26) PRIMARY KEY    DEFAULT generate_ulid(),
+  user_id              CHAR(26)       NOT NULL REFERENCES users (id) ON DELETE CASCADE,
+  condition_id         VARCHAR(66)    NOT NULL REFERENCES conditions (id) ON DELETE CASCADE,
+  outcome_index        SMALLINT       NOT NULL,
+  order_type           VARCHAR(10)    NOT NULL,                                 -- 'market', 'limit'
+  side                 VARCHAR(4)     NOT NULL,                                 -- 'buy', 'sell'
+  amount               DECIMAL(20, 6) NOT NULL,                                 -- Amount to buy/sell
+  price                DECIMAL(4, 4),                                           -- Limit price (0.0001 to 0.9999)
+  status               VARCHAR(20)    NOT NULL DEFAULT 'pending',               -- 'pending', 'filled', 'cancelled'
+  affiliate_user_id    CHAR(26)       REFERENCES users (id) ON DELETE SET NULL, -- Affiliate who gets commission
+  trade_fee_bps        INTEGER        NOT NULL DEFAULT 0,                       -- Trading fee in basis points
+  affiliate_share_bps  INTEGER        NOT NULL DEFAULT 0,                       -- Affiliate's share of fees in basis points
+  fork_fee_amount      DECIMAL(20, 6) NOT NULL DEFAULT 0,                       -- Fork fee amount
+  affiliate_fee_amount DECIMAL(20, 6) NOT NULL DEFAULT 0,                       -- Affiliate commission amount
+  created_at           TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
 
   -- Constraints
   CHECK (order_type IN ('market', 'limit')),
@@ -31,6 +39,8 @@ CREATE TABLE IF NOT EXISTS orders
   CHECK (status IN ('pending', 'filled', 'cancelled')),
   CHECK (amount > 0),
   CHECK (price IS NULL OR (price >= 0.0001 AND price <= 0.9999)),
+  CHECK (trade_fee_bps >= 0 AND trade_fee_bps <= 1000),
+  CHECK (affiliate_share_bps >= 0 AND affiliate_share_bps <= 10000),
   FOREIGN KEY (condition_id, outcome_index) REFERENCES outcomes (condition_id, outcome_index)
 );
 
@@ -86,3 +96,5 @@ $$
     END IF;
   END
 $$;
+
+COMMIT;

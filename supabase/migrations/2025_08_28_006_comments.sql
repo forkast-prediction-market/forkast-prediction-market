@@ -1,3 +1,5 @@
+BEGIN;
+
 -- ============================================================
 -- COMMENTS SYSTEM - Complete Domain Implementation
 -- ============================================================
@@ -14,15 +16,15 @@
 CREATE TABLE IF NOT EXISTS comments
 (
   id                CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
-  event_id          CHAR(26) NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  user_id           CHAR(26) NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  event_id          CHAR(26)    NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  user_id           CHAR(26)    NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
   parent_comment_id CHAR(26) REFERENCES comments (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  content           TEXT     NOT NULL CHECK (LENGTH(content) >= 1 AND LENGTH(content) <= 2000),
+  content           TEXT        NOT NULL CHECK (LENGTH(content) >= 1 AND LENGTH(content) <= 2000),
   is_deleted        BOOLEAN              DEFAULT FALSE,
   likes_count       INTEGER              DEFAULT 0 CHECK (likes_count >= 0),
   replies_count     INTEGER              DEFAULT 0 CHECK (replies_count >= 0),
-  created_at        TIMESTAMPTZ          DEFAULT NOW(),
-  updated_at        TIMESTAMPTZ          DEFAULT NOW()
+  created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Comment likes/reactions
@@ -43,7 +45,7 @@ CREATE TABLE IF NOT EXISTS comment_reports
   description      TEXT,
   status           VARCHAR(20)          DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'resolved', 'dismissed')),
   reviewed_at      TIMESTAMPTZ,
-  created_at       TIMESTAMPTZ          DEFAULT NOW(),
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (comment_id, reporter_user_id)
 );
 
@@ -257,3 +259,5 @@ SELECT c.id,
 FROM comments c
        JOIN users u ON c.user_id = u.id
 WHERE c.is_deleted = FALSE;
+
+COMMIT;
