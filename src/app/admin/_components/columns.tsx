@@ -50,6 +50,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
     ),
     enableSorting: false,
     enableHiding: false,
+    size: 40, // Fixed width for checkbox column
   },
   {
     accessorKey: 'username',
@@ -69,13 +70,13 @@ export const columns: ColumnDef<AdminUserRow>[] = [
     cell: ({ row }) => {
       const user = row.original
       return (
-        <div className="flex min-w-[200px] items-start gap-3">
+        <div className="flex min-w-0 items-start gap-3">
           <Image
             src={user.avatarUrl}
             alt={user.username ?? user.address}
-            width={40}
-            height={40}
-            className="flex-shrink-0 rounded-full"
+            width={32}
+            height={32}
+            className="flex-shrink-0 rounded-full sm:h-10 sm:w-10"
           />
           <div className="flex min-w-0 flex-col gap-1">
             <a
@@ -84,10 +85,10 @@ export const columns: ColumnDef<AdminUserRow>[] = [
               rel="noreferrer"
               className="font-medium text-foreground hover:text-primary"
             >
-              <span className="inline-flex flex-wrap items-center gap-2">
-                <span className="truncate">{user.username ?? formatAddress(user.address)}</span>
-                {user.is_admin && <Badge variant="outline">Admin</Badge>}
-              </span>
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
+                <span className="truncate text-sm">{user.username ?? formatAddress(user.address)}</span>
+                {user.is_admin && <Badge variant="outline" className="w-fit text-xs">Admin</Badge>}
+              </div>
             </a>
           </div>
         </div>
@@ -99,6 +100,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
       return a.localeCompare(b)
     },
     enableHiding: false, // User column should always be visible
+    minSize: 200, // Minimum width for user column
   },
   {
     accessorKey: 'email',
@@ -117,7 +119,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
     cell: ({ row }) => {
       const user = row.original
       return (
-        <div className="min-w-[80px] text-xs text-muted-foreground">
+        <div className="min-w-0 text-xs text-muted-foreground">
           {user.email
             ? (
                 <a
@@ -137,6 +139,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
         </div>
       )
     },
+    size: 80, // Fixed width for email column
   },
   {
     accessorKey: 'referred_by_display',
@@ -156,14 +159,18 @@ export const columns: ColumnDef<AdminUserRow>[] = [
     cell: ({ row }) => {
       const user = row.original
       return (
-        <div className="min-w-[100px]">
+        <div className="min-w-0">
           {user.referred_by_display
             ? (
                 <a
                   href={user.referred_by_profile_url ?? '#'}
                   target={user.referred_by_profile_url ? '_blank' : undefined}
                   rel={user.referred_by_profile_url ? 'noreferrer' : undefined}
-                  className="block touch-manipulation truncate text-xs font-medium text-foreground hover:text-primary"
+                  className={`
+                    block max-w-[120px] touch-manipulation truncate text-xs font-medium text-foreground
+                    hover:text-primary
+                    sm:max-w-none
+                  `}
                 >
                   {user.referred_by_display}
                 </a>
@@ -174,6 +181,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
         </div>
       )
     },
+    size: 120, // Fixed width for referral column
   },
   {
     accessorKey: 'created_at',
@@ -195,7 +203,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
     cell: ({ row }) => {
       const user = row.original
       return (
-        <div className="min-w-[100px] text-right text-xs text-muted-foreground">
+        <div className="text-right text-xs whitespace-nowrap text-muted-foreground">
           {user.created_label}
         </div>
       )
@@ -205,5 +213,6 @@ export const columns: ColumnDef<AdminUserRow>[] = [
       const b = new Date(rowB.original.created_at).getTime()
       return a - b
     },
+    size: 100, // Fixed width for created date column
   },
 ]
