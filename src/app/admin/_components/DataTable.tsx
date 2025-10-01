@@ -37,9 +37,9 @@ interface DataTableProps<TData, TValue> {
   // Server-side state handlers
   search: string
   onSearchChange: (search: string) => void
-  sortBy: string
-  sortOrder: 'asc' | 'desc'
-  onSortChange: (column: string, order: 'asc' | 'desc' | null) => void
+  sortBy: string | null
+  sortOrder: 'asc' | 'desc' | null
+  onSortChange: (column: string | null, order: 'asc' | 'desc' | null) => void
   pageIndex: number
   pageSize: number
   onPageChange: (pageIndex: number) => void
@@ -79,7 +79,7 @@ export function DataTable<TData, TValue>({
     const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue
 
     if (newSorting.length === 0) {
-      onSortChange('', 'desc')
+      onSortChange(null, null)
     }
     else {
       const sort = newSorting[0]

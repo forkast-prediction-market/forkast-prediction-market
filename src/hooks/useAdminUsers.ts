@@ -111,8 +111,8 @@ export function useAdminUsersTable() {
     setPageIndex(0) // Reset to first page when searching
   }, [])
 
-  const handleSortChange = useCallback((column: string, order: 'asc' | 'desc' | null) => {
-    if (order === null) {
+  const handleSortChange = useCallback((column: string | null, order: 'asc' | 'desc' | null) => {
+    if (column === null || order === null) {
       setSortBy('created_at')
       setSortOrder('desc')
     }

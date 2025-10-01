@@ -180,15 +180,20 @@ export const UserModel = {
         referred_at
       `, { count: 'exact' })
 
-    // Apply search filter if provided
     if (search && search.trim()) {
       const searchTerm = search.trim()
-      query = query.or(`username.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%,address.ilike.%${searchTerm}%`)
+      const sanitizedSearchTerm = searchTerm
+        .replace(/[,()]/g, ' ')
+        .replace(/['"]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+
+      if (sanitizedSearchTerm) {
+        query = query.or(`username.ilike.%${sanitizedSearchTerm}%,email.ilike.%${sanitizedSearchTerm}%,address.ilike.%${sanitizedSearchTerm}%`)
+      }
     }
 
-    // Apply sorting with NULL handling for username
     if (sortBy === 'username') {
-      // Handle NULL username by using address as fallback
       const ascending = sortOrder === 'asc'
       query = query.order('username', { ascending, nullsFirst: false })
       query = query.order('address', { ascending })
@@ -197,7 +202,6 @@ export const UserModel = {
       query = query.order(sortBy, { ascending: sortOrder === 'asc' })
     }
 
-    // Apply pagination
     query = query.range(offset, offset + limit - 1)
 
     const { data, error, count } = await query
