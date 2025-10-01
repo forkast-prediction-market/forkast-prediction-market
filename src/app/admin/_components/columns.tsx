@@ -136,18 +136,14 @@ export const columns: ColumnDef<AdminUserRow>[] = [
   {
     accessorKey: 'referred_by_display',
     id: 'referral',
-    header: ({ column }) => {
+    header: () => {
       return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="h-auto p-0 text-xs font-medium text-muted-foreground uppercase hover:text-foreground"
-        >
+        <div className="h-auto p-0 text-xs font-medium text-muted-foreground uppercase">
           Referral
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
+        </div>
       )
     },
+    enableSorting: false, // Disable sorting since this is a computed field not available in the database
     cell: ({ row }) => {
       const user = row.original
       return (

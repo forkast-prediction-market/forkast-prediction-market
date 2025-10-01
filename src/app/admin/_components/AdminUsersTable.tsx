@@ -22,6 +22,22 @@ export default function AdminUsersTable() {
     handlePageSizeChange,
   } = useAdminUsersTable()
 
+  function handleSortChangeWithTranslation(column: string | null, order: 'asc' | 'desc' | null) {
+    if (column === null || order === null) {
+      handleSortChange(null, null)
+      return
+    }
+
+    const columnMapping: Record<string, string> = {
+      user: 'username',
+      email: 'email',
+      created: 'created_at',
+    }
+
+    const dbFieldName = columnMapping[column] || column
+    handleSortChange(dbFieldName, order)
+  }
+
   return (
     <DataTable
       columns={columns}
@@ -38,7 +54,7 @@ export default function AdminUsersTable() {
       onSearchChange={handleSearchChange}
       sortBy={sortBy}
       sortOrder={sortOrder}
-      onSortChange={handleSortChange}
+      onSortChange={handleSortChangeWithTranslation}
       pageIndex={pageIndex}
       pageSize={pageSize}
       onPageChange={handlePageChange}
