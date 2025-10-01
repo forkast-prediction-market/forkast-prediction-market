@@ -12,7 +12,7 @@ export async function DELETE(
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthenticated.' },
         { status: 401 },
       )
     }

@@ -6,27 +6,27 @@ import { truncateAddress } from '@/lib/utils'
 
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication and admin status
     const currentUser = await UserModel.getCurrentUser()
     if (!currentUser || !currentUser.is_admin) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
 
-    // Parse query parameters
     const { searchParams } = new URL(request.url)
-    const limit = Math.min(Number.parseInt(searchParams.get('limit') || '50'), 100) // Cap at 100
-    const offset = Math.max(Number.parseInt(searchParams.get('offset') || '0'), 0)
+
+    const limitParam = Number.parseInt(searchParams.get('limit') || '50')
+    const limit = Number.isNaN(limitParam) ? 50 : Math.min(limitParam, 100)
+
+    const offsetParam = Number.parseInt(searchParams.get('offset') || '0')
+    const offset = Number.isNaN(offsetParam) ? 0 : Math.max(offsetParam, 0)
     const search = searchParams.get('search') || undefined
     const sortBy = (searchParams.get('sortBy') as 'username' | 'email' | 'address' | 'created_at') || 'created_at'
     const sortOrder = (searchParams.get('sortOrder') as 'asc' | 'desc') || 'desc'
 
-    // Validate sortBy parameter
     const validSortFields = ['username', 'email', 'address', 'created_at']
     if (!validSortFields.includes(sortBy)) {
       return NextResponse.json({ error: 'Invalid sortBy parameter' }, { status: 400 })
     }
 
-    // Fetch users with server-side filtering, sorting, and pagination
     const { data, count, error } = await UserModel.listUsers({
       limit,
       offset,
@@ -40,7 +40,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
     }
 
-    // Get referred users data for referral display
     const referredIds = Array.from(new Set((data ?? [])
       .map(user => user.referred_by_user_id)
       .filter((id): id is string => Boolean(id))))
@@ -55,7 +54,6 @@ export async function GET(request: NextRequest) {
       return raw.startsWith('http') ? raw : `https://${raw}`
     })()
 
-    // Transform data for frontend consumption
     const transformedUsers = (data ?? []).map((user) => {
       const created = new Date(user.created_at)
       const createdLabel = Number.isNaN(created.getTime())
@@ -81,7 +79,6 @@ export async function GET(request: NextRequest) {
         referredProfile = `${baseProfileUrl}/${referredPath}`
       }
 
-      // Generate search text for client-side reference (though search is now server-side)
       const searchText = [
         user.username,
         user.email,
@@ -97,8 +94,8 @@ export async function GET(request: NextRequest) {
         referred_by_profile_url: referredProfile,
         created_label: createdLabel,
         profileUrl: `${baseProfileUrl}/${profilePath}`,
-        created_at: user.created_at, // Raw ISO date for proper sorting
-        search_text: searchText, // Computed field for reference
+        created_at: user.created_at,
+        search_text: searchText,
       }
     })
 
