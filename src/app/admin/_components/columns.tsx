@@ -88,12 +88,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
         </div>
       )
     },
-    sortingFn: (rowA, rowB) => {
-      const a = rowA.original.username ?? rowA.original.address
-      const b = rowB.original.username ?? rowB.original.address
-      return a.localeCompare(b)
-    },
-    enableHiding: false, // User column should always be visible
+    enableHiding: false,
   },
   {
     accessorKey: 'email',
@@ -194,11 +189,6 @@ export const columns: ColumnDef<AdminUserRow>[] = [
           {user.created_label}
         </div>
       )
-    },
-    sortingFn: (rowA, rowB) => {
-      const a = new Date(rowA.original.created_at).getTime()
-      const b = new Date(rowB.original.created_at).getTime()
-      return a - b
     },
   },
 ]

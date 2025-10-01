@@ -72,7 +72,14 @@ export function DataTable<TData, TValue>({
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
   const sorting: SortingState = useMemo(() => {
-    return sortBy ? [{ id: sortBy, desc: sortOrder === 'desc' }] : []
+    const dbToColumnMapping: Record<string, string> = {
+      username: 'user',
+      email: 'email',
+      created_at: 'created',
+    }
+
+    const columnId = sortBy ? (dbToColumnMapping[sortBy] || sortBy) : null
+    return columnId ? [{ id: columnId, desc: sortOrder === 'desc' }] : []
   }, [sortBy, sortOrder])
 
   const handleSortingChange = useCallback((updaterOrValue: any) => {
