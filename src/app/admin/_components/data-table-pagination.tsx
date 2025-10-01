@@ -7,41 +7,122 @@ import {
 } from '@radix-ui/react-icons'
 
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>
+  totalCount?: number
+  onPageChange?: (pageIndex: number) => void
+  onPageSizeChange?: (pageSize: number) => void
 }
 
 export function DataTablePagination<TData>({
   table,
+  totalCount,
+  onPageChange,
+  onPageSizeChange,
 }: DataTablePaginationProps<TData>) {
+  const pageIndex = table.getState().pagination.pageIndex
+  const pageSize = table.getState().pagination.pageSize
+  const pageCount = table.getPageCount()
+  const isServerSide = totalCount !== undefined
+
+  const handlePageChange = (newPageIndex: number) => {
+    if (onPageChange) {
+      onPageChange(newPageIndex)
+    }
+    else {
+      table.setPageIndex(newPageIndex)
+    }
+  }
+
+  const handlePageSizeChange = (newPageSize: string) => {
+    const size = Number.parseInt(newPageSize)
+    if (onPageSizeChange) {
+      onPageSizeChange(size)
+    }
+    else {
+      table.setPageSize(size)
+    }
+  }
+
+  const canPreviousPage = pageIndex > 0
+  const canNextPage = pageIndex < pageCount - 1
+
   return (
     <div className="flex flex-col space-y-2 px-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-      <div className="flex-1 text-sm text-muted-foreground">
-        {table.getFilteredSelectedRowModel().rows.length}
-        {' '}
-        of
-        {' '}
-        {table.getFilteredRowModel().rows.length}
-        {' '}
-        row(s) selected.
-      </div>
-      <div className="flex items-center justify-between space-x-2">
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium whitespace-nowrap">
-          Page
-          {' '}
-          {table.getState().pagination.pageIndex + 1}
+      <div className={`
+        flex flex-col space-y-1 text-sm text-muted-foreground
+        sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4
+      `}
+      >
+        <div>
+          {table.getFilteredSelectedRowModel().rows.length}
           {' '}
           of
           {' '}
-          {table.getPageCount()}
+          {isServerSide ? totalCount : table.getFilteredRowModel().rows.length}
+          {' '}
+          row(s) selected.
+        </div>
+        {isServerSide && (
+          <div>
+            Showing
+            {' '}
+            {pageIndex * pageSize + 1}
+            {' '}
+            to
+            {' '}
+            {Math.min((pageIndex + 1) * pageSize, totalCount!)}
+            {' '}
+            of
+            {' '}
+            {totalCount}
+            {' '}
+            entries.
+          </div>
+        )}
+      </div>
+      <div className="flex items-center space-x-6 lg:space-x-8">
+        <div className="flex items-center space-x-2">
+          <p className="text-sm font-medium">Rows per page</p>
+          <Select
+            value={`${pageSize}`}
+            onValueChange={handlePageSizeChange}
+          >
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue placeholder={pageSize} />
+            </SelectTrigger>
+            <SelectContent side="top">
+              {[10, 25, 50, 100].map(size => (
+                <SelectItem key={size} value={`${size}`}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex w-[100px] items-center justify-center text-sm font-medium whitespace-nowrap">
+          Page
+          {' '}
+          {pageIndex + 1}
+          {' '}
+          of
+          {' '}
+          {pageCount}
         </div>
         <div className="flex items-center space-x-2">
           <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => handlePageChange(0)}
+            disabled={!canPreviousPage}
           >
             <span className="sr-only">Go to first page</span>
             <DoubleArrowLeftIcon className="h-4 w-4" />
@@ -49,8 +130,8 @@ export function DataTablePagination<TData>({
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
+            onClick={() => handlePageChange(pageIndex - 1)}
+            disabled={!canPreviousPage}
           >
             <span className="sr-only">Go to previous page</span>
             <ChevronLeftIcon className="h-4 w-4" />
@@ -58,8 +139,8 @@ export function DataTablePagination<TData>({
           <Button
             variant="outline"
             className="h-8 w-8 p-0"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
+            onClick={() => handlePageChange(pageIndex + 1)}
+            disabled={!canNextPage}
           >
             <span className="sr-only">Go to next page</span>
             <ChevronRightIcon className="h-4 w-4" />
@@ -67,8 +148,8 @@ export function DataTablePagination<TData>({
           <Button
             variant="outline"
             className="hidden h-8 w-8 p-0 lg:flex"
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
+            onClick={() => handlePageChange(pageCount - 1)}
+            disabled={!canNextPage}
           >
             <span className="sr-only">Go to last page</span>
             <DoubleArrowRightIcon className="h-4 w-4" />

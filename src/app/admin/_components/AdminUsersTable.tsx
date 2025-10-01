@@ -1,41 +1,32 @@
+'use client'
+
+import { useAdminUsersTable } from '@/hooks/useAdminUsers'
 import { columns } from './columns'
-import { DataTable } from './data-table'
+import { ServerDataTable } from './server-data-table'
 
-interface AdminUserRow {
-  id: string
-  username?: string | null
-  email: string
-  address: string
-  created_label: string
-  affiliate_code?: string | null
-  referred_by_display?: string | null
-  referred_by_profile_url?: string | null
-  is_admin: boolean
-  avatarUrl: string
-  profileUrl: string
-  // Enhanced fields for TanStack Table functionality
-  created_at: string // Raw ISO date for proper sorting
-  search_text: string // Computed field for global search across username, email, and address
-}
+export default function AdminUsersTable() {
+  const {
+    users,
+    totalCount,
+    isLoading,
+    error,
+    retry,
+    pageIndex,
+    pageSize,
+    search,
+    sortBy,
+    sortOrder,
+    handleSearchChange,
+    handleSortChange,
+    handlePageChange,
+    handlePageSizeChange,
+  } = useAdminUsersTable()
 
-interface AdminUsersTableProps {
-  users: AdminUserRow[]
-  isLoading?: boolean
-  error?: string | null
-  onRetry?: () => void
-}
-
-export default function AdminUsersTable({
-  users,
-  isLoading = false,
-  error = null,
-  onRetry,
-}: AdminUsersTableProps) {
   return (
-    <DataTable
+    <ServerDataTable
       columns={columns}
       data={users}
-      searchKey="search_text"
+      totalCount={totalCount}
       searchPlaceholder="Search users..."
       enableSelection={true}
       enablePagination={true}
@@ -43,7 +34,16 @@ export default function AdminUsersTable({
       storageKey="admin-users-table"
       isLoading={isLoading}
       error={error}
-      onRetry={onRetry}
+      onRetry={retry}
+      search={search}
+      onSearchChange={handleSearchChange}
+      sortBy={sortBy}
+      sortOrder={sortOrder}
+      onSortChange={handleSortChange}
+      pageIndex={pageIndex}
+      pageSize={pageSize}
+      onPageChange={handlePageChange}
+      onPageSizeChange={handlePageSizeChange}
     />
   )
 }
