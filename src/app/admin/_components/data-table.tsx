@@ -113,9 +113,10 @@ export function DataTable<TData, TValue>({
     onRowSelectionChange: setRowSelection,
     onGlobalFilterChange: setGlobalFilter,
     globalFilterFn: searchKey
-      ? (row, columnId, filterValue) => {
+      ? (row, _columnId, filterValue) => {
           const searchValue = String(filterValue).toLowerCase()
-          const searchText = String(row.getValue(searchKey) || '').toLowerCase()
+          const rowData = row.original as any
+          const searchText = String(rowData[searchKey] || '').toLowerCase()
           return searchText.includes(searchValue)
         }
       : undefined,
