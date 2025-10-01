@@ -65,7 +65,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
     cell: ({ row }) => {
       const user = row.original
       return (
-        <div className="flex min-w-44 items-start gap-2">
+        <div className="flex min-w-44 items-center gap-2">
           <Image
             src={user.avatarUrl}
             alt={user.username ?? user.address}

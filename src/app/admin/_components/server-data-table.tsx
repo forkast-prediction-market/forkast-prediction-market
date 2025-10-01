@@ -10,10 +10,8 @@ import {
   getCoreRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import * as React from 'react'
-
+import { useCallback, useMemo, useState } from 'react'
 import { ServerDataTableToolbar } from '@/app/admin/_components/server-data-table-toolbar'
-
 import {
   Table,
   TableBody,
@@ -22,7 +20,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { DataTablePagination } from './data-table-pagination'
 import { DataTableSkeleton } from './data-table-skeleton'
 
@@ -34,7 +31,6 @@ interface ServerDataTableProps<TData, TValue> {
   enableSelection?: boolean
   enablePagination?: boolean
   enableColumnVisibility?: boolean
-  storageKey?: string
   isLoading?: boolean
   error?: string | null
   onRetry?: () => void
@@ -58,7 +54,6 @@ export function ServerDataTable<TData, TValue>({
   enableSelection = false,
   enablePagination = true,
   enableColumnVisibility = true,
-  storageKey,
   isLoading = false,
   error = null,
   onRetry,
@@ -72,20 +67,15 @@ export function ServerDataTable<TData, TValue>({
   onPageChange,
   onPageSizeChange,
 }: ServerDataTableProps<TData, TValue>) {
-  const [rowSelection, setRowSelection] = React.useState({})
+  const [rowSelection, setRowSelection] = useState({})
 
-  // Use localStorage for column visibility if storageKey is provided
-  const [columnVisibility, setColumnVisibility] = storageKey
-    ? useLocalStorage<VisibilityState>(`${storageKey}-column-visibility`, {})
-    : React.useState<VisibilityState>({})
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
 
-  // Convert server-side sorting to TanStack Table format
-  const sorting: SortingState = React.useMemo(() => {
+  const sorting: SortingState = useMemo(() => {
     return sortBy ? [{ id: sortBy, desc: sortOrder === 'desc' }] : []
   }, [sortBy, sortOrder])
 
-  // Handle sorting changes
-  const handleSortingChange = React.useCallback((updaterOrValue: any) => {
+  const handleSortingChange = useCallback((updaterOrValue: any) => {
     const newSorting = typeof updaterOrValue === 'function' ? updaterOrValue(sorting) : updaterOrValue
 
     if (newSorting.length === 0) {
@@ -96,34 +86,6 @@ export function ServerDataTable<TData, TValue>({
       onSortChange(sort.id, sort.desc ? 'desc' : 'asc')
     }
   }, [sorting, onSortChange])
-
-  // Ensure always-visible columns remain visible
-  React.useEffect(() => {
-    if (storageKey && enableColumnVisibility) {
-      const alwaysVisibleColumns = columns
-        .filter(col => col.enableHiding === false)
-        .map(col => col.id)
-        .filter(Boolean) as string[]
-
-      if (alwaysVisibleColumns.length > 0) {
-        const currentVisibility = Array.isArray(columnVisibility) ? columnVisibility[0] : columnVisibility
-        const updatedVisibility = { ...currentVisibility }
-        let hasChanges = false
-
-        alwaysVisibleColumns.forEach((columnId) => {
-          if (updatedVisibility[columnId] === false) {
-            updatedVisibility[columnId] = true
-            hasChanges = true
-          }
-        })
-
-        if (hasChanges) {
-          const setVisibility = Array.isArray(columnVisibility) ? columnVisibility[1] : setColumnVisibility
-          setVisibility(updatedVisibility)
-        }
-      }
-    }
-  }, [columns, storageKey, enableColumnVisibility, columnVisibility])
 
   const table = useReactTable({
     data,
@@ -146,7 +108,6 @@ export function ServerDataTable<TData, TValue>({
     },
   })
 
-  // Show loading skeleton while data is loading
   if (isLoading) {
     return (
       <DataTableSkeleton
@@ -158,7 +119,6 @@ export function ServerDataTable<TData, TValue>({
     )
   }
 
-  // Show error state if there's an error
   if (error) {
     return (
       <div className="space-y-4">
@@ -193,6 +153,7 @@ export function ServerDataTable<TData, TValue>({
             <p className="mb-4 text-sm text-muted-foreground">{error}</p>
             {onRetry && (
               <button
+                type="button"
                 onClick={onRetry}
                 className={`
                   inline-flex items-center rounded-md border border-transparent bg-primary px-4 py-2 text-sm font-medium

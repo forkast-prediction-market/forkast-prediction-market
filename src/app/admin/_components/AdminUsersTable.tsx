@@ -31,7 +31,6 @@ export default function AdminUsersTable() {
       enableSelection={true}
       enablePagination={true}
       enableColumnVisibility={true}
-      storageKey="admin-users-table"
       isLoading={isLoading}
       error={error}
       onRetry={retry}
