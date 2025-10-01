@@ -1,6 +1,7 @@
 import AdminAffiliateOverview from '@/app/admin/_components/AdminAffiliateOverview'
-import AdminForkSettingsForm from '@/app/admin/_components/AdminForkSettingsForm'
+import AdminAffiliateSettingsForm from '@/app/admin/_components/AdminAffiliateSettingsForm'
 import { AffiliateModel } from '@/lib/db/affiliates'
+import { SettingsModel } from '@/lib/db/settings'
 import { UserModel } from '@/lib/db/users'
 
 interface AffiliateOverviewRow {
@@ -35,7 +36,8 @@ export default async function AdminSettingsPage() {
     return null
   }
 
-  const { data: forkSettings } = await AffiliateModel.getForkSettings()
+  const { data: allSettings } = await SettingsModel.getSettings()
+  const affiliateSettings = allSettings?.affiliate
   const { data: overviewData } = await AffiliateModel.listAffiliateOverview()
 
   const overview = (overviewData ?? []) as AffiliateOverviewRow[]
@@ -44,8 +46,17 @@ export default async function AdminSettingsPage() {
   const profiles = (profilesData ?? []) as AffiliateProfile[]
 
   let updatedAtLabel: string | undefined
-  if (forkSettings?.updated_at) {
-    const date = new Date(forkSettings.updated_at)
+  const tradeFeeUpdatedAt = affiliateSettings?.trade_fee_bps?.updated_at
+  const shareUpdatedAt = affiliateSettings?.affiliate_share_bps?.updated_at
+  const latestUpdatedAt
+    = tradeFeeUpdatedAt && shareUpdatedAt
+      ? new Date(tradeFeeUpdatedAt) > new Date(shareUpdatedAt)
+        ? tradeFeeUpdatedAt
+        : shareUpdatedAt
+      : tradeFeeUpdatedAt || shareUpdatedAt
+
+  if (latestUpdatedAt) {
+    const date = new Date(latestUpdatedAt)
     if (!Number.isNaN(date.getTime())) {
       const iso = date.toISOString()
       updatedAtLabel = `${iso.replace('T', ' ').slice(0, 19)} UTC`
@@ -88,9 +99,9 @@ export default async function AdminSettingsPage() {
   return (
     <div className="space-y-8">
       <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-        <AdminForkSettingsForm
-          tradeFeeBps={forkSettings?.trade_fee_bps ?? 100}
-          affiliateShareBps={forkSettings?.affiliate_share_bps ?? 5000}
+        <AdminAffiliateSettingsForm
+          tradeFeeBps={Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '100', 10)}
+          affiliateShareBps={Number.parseInt(affiliateSettings?.affiliate_share_bps?.value || '5000', 10)}
           updatedAtLabel={updatedAtLabel}
         />
         <div className="grid gap-4 rounded-lg border p-6">

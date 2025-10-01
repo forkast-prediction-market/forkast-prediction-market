@@ -26,45 +26,6 @@ async function generateUniqueAffiliateCode() {
 }
 
 export const AffiliateModel = {
-  async getForkSettings() {
-    const { data, error } = await supabaseAdmin
-      .from('fork_settings')
-      .select('trade_fee_bps, affiliate_share_bps, updated_at')
-      .eq('singleton', true)
-      .maybeSingle()
-
-    if (error) {
-      return { data: null, error }
-    }
-
-    if (!data) {
-      // Ensure default row exists
-      const { data: inserted, error: insertError } = await supabaseAdmin
-        .from('fork_settings')
-        .upsert({ singleton: true }, { onConflict: 'singleton' })
-        .select('trade_fee_bps, affiliate_share_bps, updated_at')
-        .single()
-
-      return { data: inserted, error: insertError }
-    }
-
-    return { data, error: null }
-  },
-
-  async updateForkSettings(input: { trade_fee_bps: number, affiliate_share_bps: number }) {
-    const { data, error } = await supabaseAdmin
-      .from('fork_settings')
-      .upsert({
-        singleton: true,
-        trade_fee_bps: input.trade_fee_bps,
-        affiliate_share_bps: input.affiliate_share_bps,
-      }, { onConflict: 'singleton' })
-      .select('trade_fee_bps, affiliate_share_bps, updated_at')
-      .single()
-
-    return { data, error }
-  },
-
   async ensureUserAffiliateCode(userId: string) {
     const { data: user, error } = await supabaseAdmin
       .from('users')
