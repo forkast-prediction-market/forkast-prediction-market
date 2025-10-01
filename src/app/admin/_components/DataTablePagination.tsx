@@ -75,7 +75,7 @@ export function DataTablePagination<TData>({
           <div>
             Showing
             {' '}
-            {pageIndex * pageSize + 1}
+            {totalCount ? pageIndex * pageSize + 1 : 0}
             {' '}
             to
             {' '}
