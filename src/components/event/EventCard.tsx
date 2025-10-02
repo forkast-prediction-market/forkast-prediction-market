@@ -505,6 +505,7 @@ export default function EventCard({ event }: EventCardProps) {
                           handleTrade(yesOutcome.id, 'yes')
                           onToggle()
                         }}
+                        className="gap-1"
                         disabled={isLoading}
                         variant="yes"
                       >
@@ -521,6 +522,7 @@ export default function EventCard({ event }: EventCardProps) {
                           handleTrade(noOutcome.id, 'no')
                           onToggle()
                         }}
+                        className="gap-1"
                         disabled={isLoading}
                         variant="no"
                       >
