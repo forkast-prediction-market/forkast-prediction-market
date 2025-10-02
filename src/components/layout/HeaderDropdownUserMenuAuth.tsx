@@ -41,19 +41,23 @@ export default function HeaderDropdownUserMenuAuth() {
         <DropdownMenuItem asChild>
           <UserInfoSection />
         </DropdownMenuItem>
+
         <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>
           <Link href="/settings">Profile</Link>
         </DropdownMenuItem>
+
         <DropdownMenuItem asChild>
           <Link href="/settings?tab=affiliate">Affiliate</Link>
         </DropdownMenuItem>
+
         {user?.is_admin && (
           <DropdownMenuItem asChild>
             <Link href="/admin">Admin</Link>
           </DropdownMenuItem>
         )}
+
         <DropdownMenuItem asChild>
           <Link href="/?bookmarked=true">Watchlist</Link>
         </DropdownMenuItem>
@@ -63,6 +67,7 @@ export default function HeaderDropdownUserMenuAuth() {
         <DropdownMenuItem asChild>
           <Link href="/docs" data-testid="header-docs-link">Documentation</Link>
         </DropdownMenuItem>
+
         <DropdownMenuItem asChild>
           <Link href="/terms-of-use" data-testid="header-terms-link">Terms of Use</Link>
         </DropdownMenuItem>
