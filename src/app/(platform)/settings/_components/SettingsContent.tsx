@@ -43,8 +43,6 @@ export default function SettingsContent({ user, tab, affiliateData }: Props) {
               <SettingsAffiliateTab
                 referralUrl={affiliateData.referralUrl}
                 commissionPercent={affiliateData.commissionPercent}
-                tradeFeePercent={affiliateData.tradeFeePercent}
-                affiliateSharePercent={affiliateData.affiliateSharePercent}
                 stats={affiliateData.stats}
                 recentReferrals={affiliateData.recentReferrals}
               />
