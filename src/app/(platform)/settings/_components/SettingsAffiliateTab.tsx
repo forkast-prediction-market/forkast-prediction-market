@@ -75,7 +75,7 @@ export default function SettingsAffiliateTab({
           </div>
           <div className="text-right">
             <div className="text-lg font-medium text-primary">{formatPercent(commissionPercent)}</div>
-            <div className="text-sm text-muted-foreground">Comission</div>
+            <div className="text-sm text-muted-foreground">Commission</div>
           </div>
         </div>
       </div>
