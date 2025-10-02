@@ -2,14 +2,20 @@
   "title": "User Guide",
   "description": "How to trade and use the platform",
   "icon": "BookOpen",
+  "root": true,
   "pages": [
     "index",
-    "getting-started",
-    "exploring-markets",
-    "my-account",
-    "resolution-settlement",
-    "fees-limits",
-    "help-support"
-  ],
-  "root": true
+    "---Getting started---",
+    "...getting-started",
+    "---Exploring markets---",
+    "...exploring-markets",
+    "---My acount---",
+    "...my-account",
+    "---Resolution Settlement---",
+    "...resolution-settlement",
+    "---Fees Limits---",
+    "...fees-limits",
+    "---Help Support---",
+    "...help-support"
+  ]
 }
