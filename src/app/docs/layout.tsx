@@ -47,6 +47,9 @@ export default async function Layout({ children }: LayoutProps<'/docs'>) {
           ],
         }}
         tree={source.pageTree}
+        themeSwitch={{
+          mode: 'light-dark-system',
+        }}
         links={[
           {
             type: 'main',
