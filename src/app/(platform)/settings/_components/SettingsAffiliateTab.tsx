@@ -19,7 +19,7 @@ export default function SettingsAffiliateTab({
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid gap-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Affiliate Program</h1>
         <p className="mt-2 text-muted-foreground">
