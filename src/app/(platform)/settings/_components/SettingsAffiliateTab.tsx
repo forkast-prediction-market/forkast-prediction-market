@@ -3,7 +3,7 @@
 import { CheckIcon, CopyIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useClipboard } from '@/hooks/useClipboard'
-import { truncateAddress } from '@/lib/utils'
+import { formatCurrency, formatPercent, truncateAddress } from '@/lib/utils'
 
 interface ReferralSummary {
   user_id: string
@@ -24,14 +24,6 @@ interface Props {
   recentReferrals: ReferralSummary[]
 }
 
-function formatPercent(value: number) {
-  return `${value.toFixed(2)}%`
-}
-
-function formatCurrency(value: number) {
-  return `$${value.toFixed(2)}`
-}
-
 export default function SettingsAffiliateTab({
   referralUrl,
   commissionPercent,
@@ -45,7 +37,7 @@ export default function SettingsAffiliateTab({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="grid gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Affiliate Program</h1>
         <p className="mt-2 text-muted-foreground">
@@ -53,27 +45,27 @@ export default function SettingsAffiliateTab({
         </p>
       </div>
 
-      <div className="rounded-lg border p-6">
-        <div className="flex items-center justify-between gap-4">
-          <div className="space-y-1">
+      <div className="rounded-lg border p-4 sm:p-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0 flex-1 space-y-1">
             <h3 className="text-lg font-medium">Referral link</h3>
             <div className="flex items-center gap-2">
-              <span className="truncate text-sm text-muted-foreground" title={referralUrl}>
+              <span className="min-w-0 truncate text-sm text-muted-foreground" title={referralUrl}>
                 {referralUrl}
               </span>
               <Button
                 variant="ghost"
                 type="button"
-                size="sm"
+                size="icon"
                 onClick={handleCopyReferralUrl}
-                className="h-auto p-1"
+                className="shrink-0"
                 title={copied ? 'Copied!' : 'Copy referral link'}
               >
                 {copied ? <CheckIcon className="size-4 text-yes" /> : <CopyIcon className="size-4" />}
               </Button>
             </div>
           </div>
-          <div className="text-right">
+          <div className="shrink-0 text-left sm:text-right">
             <div className="text-lg font-medium text-primary">{formatPercent(commissionPercent)}</div>
             <div className="text-sm text-muted-foreground">Commission</div>
           </div>
@@ -100,20 +92,20 @@ export default function SettingsAffiliateTab({
       </div>
 
       <div className="rounded-lg border">
-        <div className="border-b px-6 py-4">
+        <div className="border-b px-4 py-4 sm:px-6">
           <h3 className="text-lg font-medium">Recent referrals</h3>
           <p className="text-sm text-muted-foreground">Latest users who joined through your link.</p>
         </div>
         <div className="divide-y">
           {recentReferrals.length === 0 && (
-            <div className="px-6 py-10 text-center text-sm text-muted-foreground">
+            <div className="px-4 py-10 text-center text-sm text-muted-foreground sm:px-6">
               No referrals yet. Share your link to get started.
             </div>
           )}
           {recentReferrals.map(referral => (
-            <div key={referral.user_id} className="flex items-center justify-between px-6 py-4">
-              <div>
-                <p className="text-sm font-medium">
+            <div key={referral.user_id} className="flex items-center justify-between px-4 py-4 sm:px-6">
+              <div className="min-w-0">
+                <p className="truncate text-sm font-medium">
                   {referral.username || truncateAddress(referral.address)}
                 </p>
                 <p className="text-xs text-muted-foreground">
