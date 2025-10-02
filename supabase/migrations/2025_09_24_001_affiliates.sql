@@ -113,7 +113,8 @@ FROM users u
                   GROUP BY affiliate_user_id) ord ON ord.affiliate_user_id = u.id
 WHERE ar.count_referrals IS NOT NULL
    OR ord.total_volume IS NOT NULL
-ORDER BY COALESCE(ord.total_volume, 0) DESC LIMIT 100;
+ORDER BY COALESCE(ord.total_volume, 0) DESC
+LIMIT 100;
 $$;
 
 COMMIT;
