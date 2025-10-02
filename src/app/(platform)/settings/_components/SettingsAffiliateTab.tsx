@@ -1,7 +1,6 @@
 'use client'
 
 import { CheckIcon, CopyIcon } from 'lucide-react'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useClipboard } from '@/hooks/useClipboard'
 import { truncateAddress } from '@/lib/utils'
@@ -16,8 +15,6 @@ interface ReferralSummary {
 interface Props {
   referralUrl: string
   commissionPercent: number
-  tradeFeePercent: number
-  affiliateSharePercent: number
   stats: {
     total_referrals: number
     active_referrals: number
@@ -38,8 +35,6 @@ function formatCurrency(value: number) {
 export default function SettingsAffiliateTab({
   referralUrl,
   commissionPercent,
-  tradeFeePercent,
-  affiliateSharePercent,
   stats,
   recentReferrals,
 }: Props) {
@@ -54,51 +49,33 @@ export default function SettingsAffiliateTab({
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Affiliate Program</h1>
         <p className="mt-2 text-muted-foreground">
-          Share your referral link to earn a percentage of every trade executed by users you onboard.
+          Share your referral link to earn a percentage of every trade from users you invite.
         </p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-[2fr_1fr]">
-        <div className="rounded-lg border p-6">
-          <div className="flex items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h3 className="text-lg font-medium">Referral link</h3>
-              <div className="flex items-center gap-2">
-                <span className="truncate text-sm text-muted-foreground" title={referralUrl}>
-                  {referralUrl}
-                </span>
-                <Button
-                  variant="ghost"
-                  type="button"
-                  size="sm"
-                  onClick={handleCopyReferralUrl}
-                  className="h-auto p-1"
-                  title={copied ? 'Copied!' : 'Copy referral link'}
-                >
-                  {copied ? <CheckIcon className="size-4 text-yes" /> : <CopyIcon className="size-4" />}
-                </Button>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="text-lg font-medium text-primary">{formatPercent(commissionPercent)}</div>
-              <div className="text-sm text-muted-foreground">Commission on volume</div>
+      <div className="rounded-lg border p-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-1">
+            <h3 className="text-lg font-medium">Referral link</h3>
+            <div className="flex items-center gap-2">
+              <span className="truncate text-sm text-muted-foreground" title={referralUrl}>
+                {referralUrl}
+              </span>
+              <Button
+                variant="ghost"
+                type="button"
+                size="sm"
+                onClick={handleCopyReferralUrl}
+                className="h-auto p-1"
+                title={copied ? 'Copied!' : 'Copy referral link'}
+              >
+                {copied ? <CheckIcon className="size-4 text-yes" /> : <CopyIcon className="size-4" />}
+              </Button>
             </div>
           </div>
-        </div>
-
-        <div className="rounded-lg border p-6">
-          <div className="grid gap-1 text-sm text-muted-foreground">
-            <div className="flex items-center justify-between">
-              <span>Base trading fee</span>
-              <span className="font-medium text-foreground">{formatPercent(tradeFeePercent)}</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Affiliate share of fee</span>
-              <span className="font-medium text-foreground">{formatPercent(affiliateSharePercent)}</span>
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              Your commission equals the trading fee multiplied by the affiliate share setting.
-            </p>
+          <div className="text-right">
+            <div className="text-lg font-medium text-primary">{formatPercent(commissionPercent)}</div>
+            <div className="text-sm text-muted-foreground">Comission</div>
           </div>
         </div>
       </div>
@@ -123,14 +100,9 @@ export default function SettingsAffiliateTab({
       </div>
 
       <div className="rounded-lg border">
-        <div className="flex items-center justify-between border-b px-6 py-4">
-          <div>
-            <h3 className="text-lg font-medium">Recent referrals</h3>
-            <p className="text-sm text-muted-foreground">Latest users who joined through your link.</p>
-          </div>
-          <Link href="/settings?tab=affiliate" className="text-sm text-muted-foreground" prefetch={false}>
-            Refresh
-          </Link>
+        <div className="border-b px-6 py-4">
+          <h3 className="text-lg font-medium">Recent referrals</h3>
+          <p className="text-sm text-muted-foreground">Latest users who joined through your link.</p>
         </div>
         <div className="divide-y">
           {recentReferrals.length === 0 && (
