@@ -43,7 +43,7 @@ export default function EventOrderPanelOutcomeButton({ type, price }: Props) {
             ? state.market.outcomes[1].outcome_text
             : 'No'}
       </span>
-      <span className="font-bold">
+      <span className="shrink-0 font-bold">
         {price}
         ¢
       </span>
