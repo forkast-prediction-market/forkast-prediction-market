@@ -39,7 +39,8 @@ $$
   BEGIN
     IF NOT EXISTS (SELECT 1
                    FROM pg_policies
-                   WHERE policyname = 'service_role_all_affiliate_referrals' AND tablename = 'affiliate_referrals') THEN
+                   WHERE policyname = 'service_role_all_affiliate_referrals'
+                     AND tablename = 'affiliate_referrals') THEN
       CREATE POLICY "service_role_all_affiliate_referrals" ON affiliate_referrals FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
     END IF;
   END
@@ -111,7 +112,9 @@ FROM users u
                   WHERE affiliate_user_id IS NOT NULL
                   GROUP BY affiliate_user_id) ord ON ord.affiliate_user_id = u.id
 WHERE ar.count_referrals IS NOT NULL
-   OR ord.total_volume IS NOT NULL;
+   OR ord.total_volume IS NOT NULL
+ORDER BY COALESCE(ord.total_volume, 0) DESC
+LIMIT 100;
 $$;
 
 COMMIT;
