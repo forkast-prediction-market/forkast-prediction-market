@@ -1,35 +1,17 @@
 'use client'
 
+import type { AffiliateData } from '@/types'
 import { CheckIcon, CopyIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useClipboard } from '@/hooks/useClipboard'
 import { formatCurrency, formatPercent, truncateAddress } from '@/lib/utils'
-
-interface ReferralSummary {
-  user_id: string
-  username?: string | null
-  address: string
-  attributed_at: string
-}
-
-interface Props {
-  referralUrl: string
-  commissionPercent: number
-  stats: {
-    total_referrals: number
-    active_referrals: number
-    total_volume: number
-    total_affiliate_fees: number
-  }
-  recentReferrals: ReferralSummary[]
-}
 
 export default function SettingsAffiliateTab({
   referralUrl,
   commissionPercent,
   stats,
   recentReferrals,
-}: Props) {
+}: AffiliateData) {
   const { copied, copy } = useClipboard()
 
   function handleCopyReferralUrl() {
