@@ -6,16 +6,15 @@ import { Button } from '@/components/ui/button'
 import { useClipboard } from '@/hooks/useClipboard'
 import { formatCurrency, formatPercent, truncateAddress } from '@/lib/utils'
 
-export default function SettingsAffiliateTab({
-  referralUrl,
-  commissionPercent,
-  stats,
-  recentReferrals,
-}: AffiliateData) {
+interface SettingsAffiliateTabProps {
+  affiliateData: AffiliateData
+}
+
+export default function SettingsAffiliateTab({ affiliateData }: SettingsAffiliateTabProps) {
   const { copied, copy } = useClipboard()
 
   function handleCopyReferralUrl() {
-    copy(referralUrl)
+    copy(affiliateData.referralUrl)
   }
 
   return (
@@ -32,8 +31,8 @@ export default function SettingsAffiliateTab({
           <div className="min-w-0 flex-1 space-y-1">
             <h3 className="text-lg font-medium">Referral link</h3>
             <div className="flex items-center gap-2">
-              <span className="min-w-0 truncate text-sm text-muted-foreground" title={referralUrl}>
-                {referralUrl}
+              <span className="min-w-0 truncate text-sm text-muted-foreground" title={affiliateData.referralUrl}>
+                {affiliateData.referralUrl}
               </span>
               <Button
                 variant="ghost"
@@ -48,7 +47,7 @@ export default function SettingsAffiliateTab({
             </div>
           </div>
           <div className="shrink-0 text-left sm:text-right">
-            <div className="text-lg font-medium text-primary">{formatPercent(commissionPercent)}</div>
+            <div className="text-lg font-medium text-primary">{formatPercent(affiliateData.commissionPercent)}</div>
             <div className="text-sm text-muted-foreground">Commission</div>
           </div>
         </div>
@@ -57,19 +56,19 @@ export default function SettingsAffiliateTab({
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground uppercase">Total referrals</p>
-          <p className="mt-2 text-2xl font-semibold">{stats.total_referrals}</p>
+          <p className="mt-2 text-2xl font-semibold">{affiliateData.stats.total_referrals}</p>
         </div>
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground uppercase">Active traders</p>
-          <p className="mt-2 text-2xl font-semibold">{stats.active_referrals}</p>
+          <p className="mt-2 text-2xl font-semibold">{affiliateData.stats.active_referrals}</p>
         </div>
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground uppercase">Referred volume</p>
-          <p className="mt-2 text-2xl font-semibold">{formatCurrency(Number(stats.total_volume ?? 0))}</p>
+          <p className="mt-2 text-2xl font-semibold">{formatCurrency(Number(affiliateData.stats.total_volume ?? 0))}</p>
         </div>
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground uppercase">Earned fees</p>
-          <p className="mt-2 text-2xl font-semibold">{formatCurrency(Number(stats.total_affiliate_fees ?? 0))}</p>
+          <p className="mt-2 text-2xl font-semibold">{formatCurrency(Number(affiliateData.stats.total_affiliate_fees ?? 0))}</p>
         </div>
       </div>
 
@@ -79,12 +78,12 @@ export default function SettingsAffiliateTab({
           <p className="text-sm text-muted-foreground">Latest users who joined through your link.</p>
         </div>
         <div className="divide-y">
-          {recentReferrals.length === 0 && (
+          {affiliateData.recentReferrals.length === 0 && (
             <div className="px-4 py-10 text-center text-sm text-muted-foreground sm:px-6">
               No referrals yet. Share your link to get started.
             </div>
           )}
-          {recentReferrals.map(referral => (
+          {affiliateData.recentReferrals.map(referral => (
             <div key={referral.user_id} className="flex items-center justify-between px-4 py-4 sm:px-6">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">

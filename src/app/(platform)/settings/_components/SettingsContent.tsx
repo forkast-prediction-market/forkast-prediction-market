@@ -20,14 +20,7 @@ export default function SettingsContent({ user, tab, affiliateData }: Props) {
     switch (tab) {
       case 'affiliate':
         return affiliateData
-          ? (
-              <SettingsAffiliateTab
-                referralUrl={affiliateData.referralUrl}
-                commissionPercent={affiliateData.commissionPercent}
-                stats={affiliateData.stats}
-                recentReferrals={affiliateData.recentReferrals}
-              />
-            )
+          ? <SettingsAffiliateTab affiliateData={affiliateData} />
           : (
               <div className="rounded-lg border p-6 text-sm text-muted-foreground">
                 Unable to load affiliate information. Please try again later.
