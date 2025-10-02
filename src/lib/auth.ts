@@ -113,9 +113,6 @@ export const auth = betterAuth({
       referred_at: {
         type: 'date',
       },
-      is_admin: {
-        type: 'boolean',
-      },
     },
     changeEmail: {
       enabled: true,
