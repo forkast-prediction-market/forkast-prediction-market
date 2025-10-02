@@ -2,9 +2,10 @@ import { getChainIdFromMessage } from '@reown/appkit-siwe'
 import { betterAuth } from 'better-auth'
 import { generateRandomString } from 'better-auth/crypto'
 import { nextCookies } from 'better-auth/next-js'
-import { siwe, twoFactor } from 'better-auth/plugins'
+import { customSession, siwe, twoFactor } from 'better-auth/plugins'
 import { Pool } from 'pg'
 import { createPublicClient, http } from 'viem'
+import { isAdminWallet } from '@/lib/admin'
 
 export const auth = betterAuth({
   database: new Pool({
@@ -18,6 +19,15 @@ export const auth = betterAuth({
     },
   },
   plugins: [
+    customSession(async ({ user, session }) => {
+      return {
+        user: {
+          ...user,
+          is_admin: isAdminWallet(user.name),
+        },
+        session,
+      }
+    }),
     nextCookies(),
     siwe({
       schema: {

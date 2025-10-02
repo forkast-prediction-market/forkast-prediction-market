@@ -1,6 +1,5 @@
 'use client'
 
-import type { User } from '@/types'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { createAuthClient } from 'better-auth/react'
 import { router } from 'next/client'
@@ -17,21 +16,11 @@ import { useUser } from '@/stores/useUser'
 
 const { useSession } = createAuthClient()
 
-interface HeaderMenuProps {
-  initialUser?: User | null
-}
-
-export default function HeaderMenu({ initialUser }: HeaderMenuProps) {
+export default function HeaderMenu() {
   const isMounted = useClientMounted()
   const { open } = useAppKit()
   const { isConnected, status } = useAppKitAccount()
   const { data: session } = useSession()
-
-  useEffect(() => {
-    if (initialUser) {
-      useUser.setState(initialUser)
-    }
-  }, [initialUser])
 
   useEffect(() => {
     const timeout = setTimeout(async () => {
