@@ -4,20 +4,40 @@ description: Claim your rewards once a market is resolved.
 icon: BadgeCheck
 ---
 
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
 ## Claim workflow
 
-Learn how to release your winnings after a market resolves.
+<Callout type="info" title="Before you start">
+  Ensure your wallet holds a little extra MATIC for gas so the claim transaction can
+  complete without delays.
+</Callout>
 
-### 1. Confirm the market resolution
+<Steps>
+  <Step>
+    <h3 className="!mt-0">Confirm the market resolution</h3>
+    <p>
+      On {process.env.NEXT_PUBLIC_SITE_NAME}, open the market page and verify the
+      outcome you backed shows the resolved badge.
+    </p>
+  </Step>
+  <Step>
+    <h3 className="!mt-0">Queue a claim transaction</h3>
+    <p>
+      Click <code>Claim</code> on the winning outcome. The interface previews your
+      expected payout and fees before you sign in your wallet.
+    </p>
+  </Step>
+  <Step>
+    <h3 className="!mt-0">Sign and wait for confirmation</h3>
+    <p>
+      Approve the transaction in the connected wallet. Once the network confirms,
+      the winnings land in your available balance automatically.
+    </p>
+  </Step>
+</Steps>
 
-Open the market details page and verify that the outcome is marked as resolved.
-
-### 2. Queue a claim transaction
-
-Select the outcome you backed and click `Claim`. The app prepares a transaction for your connected wallet.
-
-### 3. Sign and wait for confirmation
-
-Approve the transaction in your wallet. Funds appear in your balance after the transaction finalizes.
-
-> Need more help? Visit the dedicated resolution and settlement section for advanced scenarios.
+<Callout type="success" title="Need more help?">
+  Explore the Resolution &amp; Settlement section for dispute steps and edge-case
+  guidance if your claim requires additional review.
+</Callout>

@@ -6,16 +6,37 @@ icon: PieChart
 
 ## What you see on a market page
 
-Get familiar with the core elements that appear on every market detail screen.
+Get familiar with the building blocks that show up on every
+{process.env.NEXT_PUBLIC_SITE_NAME} market page.
 
-### Question prompt
+<Cards className="@container">
+  <Card title="Question prompt" description="Sets the context for the market" icon={null}>
+    <p>
+      The headline describes the event being forecast, and each listed outcome
+      represents a mutually exclusive result.
+    </p>
+  </Card>
+  <Card title="Outcome cards" description="Price, volume, and implied odds" icon={null}>
+    <p>
+      Watch how prices and probabilities update in real time as traders buy and
+      sell shares across the order book.
+    </p>
+  </Card>
+  <Card title="Order ticket" description="Enter market or limit orders" icon={null}>
+    <p>
+      Use the ticket to choose an outcome, set order preferences, and preview
+      fees before submitting the transaction to your wallet.
+    </p>
+  </Card>
+  <Card title="Activity stream" description="Live feed of trades and updates" icon={null}>
+    <p>
+      Stay informed with recent fills, new limit orders, and resolution notices
+      published by market moderators.
+    </p>
+  </Card>
+</Cards>
 
-The headline describes the event being forecast. Each outcome underneath represents a possible result.
-
-### Outcome cards
-
-Outcome cards show the current price, implied probability, and the total volume traded so far.
-
-### Activity stream
-
-The activity panel highlights recent trades, orders, and resolution updates to keep you informed.
+<Callout type="info" title="Tip">
+  Hover over inline tooltips in the UI whenever you need formulas or definitions
+  for the metrics displayed on outcome cards.
+</Callout>
