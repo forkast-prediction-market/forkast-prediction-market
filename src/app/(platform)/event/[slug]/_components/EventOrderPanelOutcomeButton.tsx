@@ -23,7 +23,7 @@ export default function EventOrderPanelOutcomeButton({ type, price }: Props) {
       variant={isSelected ? type : 'outline'}
       size="lg"
       className={cn(
-        'flex-1',
+        'flex-1 gap-1 truncate',
         isSelected
         && (type === 'yes'
           ? 'bg-yes text-white hover:bg-yes-foreground'
@@ -43,7 +43,7 @@ export default function EventOrderPanelOutcomeButton({ type, price }: Props) {
             ? state.market.outcomes[1].outcome_text
             : 'No'}
       </span>
-      <span className="font-bold">
+      <span className="shrink-0 font-bold">
         {price}
         ¢
       </span>
