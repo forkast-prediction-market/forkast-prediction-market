@@ -13,6 +13,7 @@ export default antfu({
     'node/prefer-global/process': 'off',
     'no-console': 'off',
     'curly': ['error', 'all'],
+    'react/no-array-index-key': 'off',
     'react-dom/no-dangerously-set-innerhtml': 'off',
     'react-refresh/only-export-components': 'off',
     'func-style': ['error', 'declaration', { allowArrowFunctions: false }],

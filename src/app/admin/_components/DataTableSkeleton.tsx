@@ -42,7 +42,7 @@ export function DataTableSkeleton({
           <TableHeader>
             <TableRow>
               {Array.from({ length: columnCount }).map((_, i) => (
-                <TableHead key={`skeleton-col-${i + 1}`} className="whitespace-nowrap">
+                <TableHead key={`skeleton-col-${i}`} className="whitespace-nowrap">
                   <Skeleton className="h-4 w-[80px]" />
                 </TableHead>
               ))}
@@ -50,9 +50,9 @@ export function DataTableSkeleton({
           </TableHeader>
           <TableBody>
             {Array.from({ length: rowCount }).map((_, rowIndex) => (
-              <TableRow key={`row-${rowIndex + 1}`}>
+              <TableRow key={`row-${rowIndex}`}>
                 {Array.from({ length: columnCount }).map((_, cellIndex) => (
-                  <TableCell key={`cell-${cellIndex + 1}`} className="whitespace-nowrap">
+                  <TableCell key={`cell-${cellIndex}`} className="whitespace-nowrap">
                     {cellIndex === 0
                       ? <Skeleton className="h-4 w-4" />
                       : cellIndex === 1

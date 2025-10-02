@@ -1,17 +1,10 @@
 'use client'
 
-import type {
-  ColumnDef,
-  SortingState,
-  VisibilityState,
-} from '@tanstack/react-table'
-import {
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from '@tanstack/react-table'
+import type { ColumnDef, SortingState, VisibilityState } from '@tanstack/react-table'
+import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { useCallback, useMemo, useState } from 'react'
 import { DataTableToolbar } from '@/app/admin/_components/DataTableToolbar'
+import { Skeleton } from '@/components/ui/skeleton'
 import {
   Table,
   TableBody,
@@ -21,7 +14,6 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { DataTablePagination } from './DataTablePagination'
-import { DataTableSkeleton } from './DataTableSkeleton'
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
@@ -115,17 +107,6 @@ export function DataTable<TData, TValue>({
     },
   })
 
-  if (isLoading) {
-    return (
-      <DataTableSkeleton
-        columnCount={columns.length}
-        rowCount={10}
-        searchable={true}
-        showPagination={enablePagination}
-      />
-    )
-  }
-
   if (error) {
     return (
       <div className="space-y-4">
@@ -210,80 +191,92 @@ export function DataTable<TData, TValue>({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length
+            {isLoading
               ? (
-                  table.getRowModel().rows.map(row => (
-                    <TableRow
-                      key={row.id}
-                      data-state={row.getIsSelected() && 'selected'}
-                    >
-                      {row.getVisibleCells().map(cell => (
-                        <TableCell key={cell.id} className="px-1 sm:px-2">
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
+                  Array.from({ length: 10 }).map((_, index) => (
+                    <TableRow key={`skeleton-${index}`}>
+                      {columns.map((column, colIndex) => (
+                        <TableCell key={`skeleton-${index}-${colIndex}`} className="px-1 sm:px-2">
+                          <Skeleton className="h-4 w-full" />
                         </TableCell>
                       ))}
                     </TableRow>
                   ))
                 )
-              : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      {totalCount === 0
-                        ? (
-                            <div className="flex flex-col items-center justify-center py-8">
-                              <div className="mb-2 text-muted-foreground">
-                                <svg
-                                  className="mx-auto h-8 w-8"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                  aria-hidden="true"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                  />
-                                </svg>
+              : table.getRowModel().rows?.length
+                ? (
+                    table.getRowModel().rows.map(row => (
+                      <TableRow
+                        key={row.id}
+                        data-state={row.getIsSelected() && 'selected'}
+                      >
+                        {row.getVisibleCells().map(cell => (
+                          <TableCell key={cell.id} className="px-1 sm:px-2">
+                            {flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext(),
+                            )}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    ))
+                  )
+                : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center"
+                      >
+                        {totalCount === 0
+                          ? (
+                              <div className="flex flex-col items-center justify-center py-8">
+                                <div className="mb-2 text-muted-foreground">
+                                  <svg
+                                    className="mx-auto h-8 w-8"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    aria-hidden="true"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
+                                    />
+                                  </svg>
+                                </div>
+                                <h3 className="mb-1 text-sm font-medium text-foreground">No users found</h3>
+                                <p className="text-xs text-muted-foreground">There are no users in the system yet.</p>
                               </div>
-                              <h3 className="mb-1 text-sm font-medium text-foreground">No users found</h3>
-                              <p className="text-xs text-muted-foreground">There are no users in the system yet.</p>
-                            </div>
-                          )
-                        : (
-                            <div className="flex flex-col items-center justify-center py-8">
-                              <div className="mb-2 text-muted-foreground">
-                                <svg
-                                  className="mx-auto h-8 w-8"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  stroke="currentColor"
-                                  aria-hidden="true"
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                  />
-                                </svg>
+                            )
+                          : (
+                              <div className="flex flex-col items-center justify-center py-8">
+                                <div className="mb-2 text-muted-foreground">
+                                  <svg
+                                    className="mx-auto h-8 w-8"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    aria-hidden="true"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth={2}
+                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                    />
+                                  </svg>
+                                </div>
+                                <h3 className="mb-1 text-sm font-medium text-foreground">No results found</h3>
+                                <p className="text-xs text-muted-foreground">
+                                  Try adjusting your search or filter to find what you're looking for.
+                                </p>
                               </div>
-                              <h3 className="mb-1 text-sm font-medium text-foreground">No results found</h3>
-                              <p className="text-xs text-muted-foreground">
-                                Try adjusting your search or filter to find what you're looking for.
-                              </p>
-                            </div>
-                          )}
-                    </TableCell>
-                  </TableRow>
-                )}
+                            )}
+                      </TableCell>
+                    </TableRow>
+                  )}
           </TableBody>
         </Table>
       </div>
