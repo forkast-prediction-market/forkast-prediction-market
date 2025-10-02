@@ -1,0 +1,10 @@
+{
+  "title": "My Account",
+  "description": "Track positions and keep your profile secure.",
+  "icon": "UserCircle",
+  "pages": [
+    "portfolio-open-positions",
+    "transaction-history",
+    "account-security"
+  ]
+}

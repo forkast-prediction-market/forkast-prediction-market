@@ -1,7 +1,15 @@
 {
-  "title": "API",
-  "description": "API documentation and reference",
+  "title": "For Developers",
+  "description": "API reference and integration details",
   "icon": "SquareTerminal",
-  "pages": ["index", "keys"],
+  "pages": [
+    "index",
+    "api-keys",
+    "markets-api",
+    "trading-api",
+    "portfolio-api",
+    "real-time-data",
+    "examples-sdks"
+  ],
   "root": true
 }

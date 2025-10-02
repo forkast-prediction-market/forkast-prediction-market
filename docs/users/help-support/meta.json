@@ -1,0 +1,10 @@
+{
+  "title": "Help & Support",
+  "description": "Get answers and contact the team.",
+  "icon": "LifeBuoy",
+  "pages": [
+    "faq",
+    "contact-support",
+    "platform-rules"
+  ]
+}

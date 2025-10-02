@@ -1,0 +1,10 @@
+{
+  "title": "Markets API",
+  "description": "Query markets and resolution data.",
+  "icon": "CandlestickChart",
+  "pages": [
+    "list-markets",
+    "market-details",
+    "market-status-resolution"
+  ]
+}

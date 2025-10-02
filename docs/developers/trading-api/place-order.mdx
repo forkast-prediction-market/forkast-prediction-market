@@ -1,0 +1,17 @@
+---
+title: Place an Order
+description: Submit market or limit orders via the API.
+icon: ArrowDownUp
+---
+
+## Endpoint
+
+`POST /v1/orders`
+
+## Request body
+
+Include the market identifier, outcome ID, side (`buy` or `sell`), order type, size, and optional limit price.
+
+## Response
+
+Successful submissions return an order ID that you can track for fills or cancellation.
