@@ -16,7 +16,7 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const params = await props.params
   const page = source.getPage(params.slug)
   if (!page) {
-    redirect('/docs/platform')
+    redirect('/docs/users')
   }
 
   const MDX = page.data.body
@@ -25,12 +25,6 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
     <DocsPage
       toc={page.data.toc}
       full={page.data.full}
-      editOnGithub={{
-        owner: 'forkast-prediction-market',
-        repo: 'forkast-prediction-market',
-        sha: 'main',
-        path: `/docs/${page.path}`,
-      }}
     >
       <DocsTitle>{page.data.title}</DocsTitle>
       <DocsDescription>{page.data.description}</DocsDescription>

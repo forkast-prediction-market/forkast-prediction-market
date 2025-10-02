@@ -1,6 +1,6 @@
 import { DocsLayout } from 'fumadocs-ui/layouts/docs'
 import { RootProvider } from 'fumadocs-ui/provider'
-import { BookOpenIcon, CodeIcon, ExternalLinkIcon } from 'lucide-react'
+import { BookOpenIcon, CodeIcon, HomeIcon } from 'lucide-react'
 import { source } from '@/lib/source'
 import { sanitizeSvg } from '@/lib/utils'
 
@@ -33,27 +33,26 @@ export default async function Layout({ children }: LayoutProps<'/docs'>) {
         sidebar={{
           tabs: [
             {
-              title: 'Platform',
-              description: 'Platform guides and features',
-              url: '/docs/platform',
+              title: 'User Guide',
+              description: 'How to trade and use the platform',
+              url: '/docs/users',
               icon: <BookOpenIcon className="size-4" />,
             },
             {
-              title: 'API',
-              description: 'API documentation and keys',
-              url: '/docs/api',
+              title: 'For Developers',
+              description: 'API reference and integration details',
+              url: '/docs/developers',
               icon: <CodeIcon className="size-4" />,
             },
           ],
         }}
         tree={source.pageTree}
-        githubUrl="https://github.com/forkast-prediction-market/forkast-prediction-market"
         links={[
           {
             type: 'main',
             url: '/',
-            text: 'forka.st',
-            icon: <ExternalLinkIcon />,
+            text: process.env.NEXT_PUBLIC_SITE_NAME,
+            icon: <HomeIcon />,
           },
         ]}
       >
