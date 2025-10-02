@@ -1,6 +1,6 @@
 'use client'
 
-import type { User } from '@/types'
+import type { AffiliateData, User } from '@/types'
 import { useMemo } from 'react'
 import SettingsAffiliateTab from '@/app/(platform)/settings/_components/SettingsAffiliateTab'
 import SettingsExportPrivateKeyTab from '@/app/(platform)/settings/_components/SettingsExportPrivateKeyTab'
@@ -8,25 +8,6 @@ import SettingsNotificationsTab from '@/app/(platform)/settings/_components/Sett
 import SettingsProfileTab from '@/app/(platform)/settings/_components/SettingsProfileTab'
 import SettingsSidebar from '@/app/(platform)/settings/_components/SettingsSidebar'
 import SettingsTwoFactorAuthTab from '@/app/(platform)/settings/_components/SettingsTwoFactorAuthTab'
-
-interface AffiliateData {
-  referralUrl: string
-  commissionPercent: number
-  tradeFeePercent: number
-  affiliateSharePercent: number
-  stats: {
-    total_referrals: number
-    active_referrals: number
-    total_volume: number
-    total_affiliate_fees: number
-  }
-  recentReferrals: {
-    user_id: string
-    username?: string | null
-    address: string
-    attributed_at: string
-  }[]
-}
 
 interface Props {
   user: User
@@ -39,16 +20,7 @@ export default function SettingsContent({ user, tab, affiliateData }: Props) {
     switch (tab) {
       case 'affiliate':
         return affiliateData
-          ? (
-              <SettingsAffiliateTab
-                referralUrl={affiliateData.referralUrl}
-                commissionPercent={affiliateData.commissionPercent}
-                tradeFeePercent={affiliateData.tradeFeePercent}
-                affiliateSharePercent={affiliateData.affiliateSharePercent}
-                stats={affiliateData.stats}
-                recentReferrals={affiliateData.recentReferrals}
-              />
-            )
+          ? <SettingsAffiliateTab affiliateData={affiliateData} />
           : (
               <div className="rounded-lg border p-6 text-sm text-muted-foreground">
                 Unable to load affiliate information. Please try again later.

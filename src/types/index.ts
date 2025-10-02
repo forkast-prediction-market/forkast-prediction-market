@@ -187,6 +187,23 @@ export interface Notification {
   metadata?: Record<string, unknown>
 }
 
+export interface AffiliateData {
+  referralUrl: string
+  commissionPercent: number
+  stats: {
+    total_referrals: number
+    active_referrals: number
+    total_volume: number
+    total_affiliate_fees: number
+  }
+  recentReferrals: {
+    user_id: string
+    username?: string | null
+    address: string
+    attributed_at: string
+  }[]
+}
+
 export type QueryResult<T>
   = | { data: T, error: null }
     | { data: null, error: string }
