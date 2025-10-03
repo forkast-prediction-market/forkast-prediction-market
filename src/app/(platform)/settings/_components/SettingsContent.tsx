@@ -39,7 +39,7 @@ export default function SettingsContent({ user, tab, affiliateData }: Props) {
 
   return (
     <>
-      <SettingsSidebar user={user} tab={tab} />
+      <SettingsSidebar tab={tab} />
       <div className="mx-auto max-w-2xl lg:mx-0">{content}</div>
     </>
   )
