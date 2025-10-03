@@ -1,0 +1,44 @@
+---
+title: Affiliate Program
+description: Earn a share of trading fees when people trade through your link
+icon: Link
+---
+
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? Reach out on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} target="_blank">Discord</a> and the team will walk you through the affiliate tools.
+</Callout>
+)}
+
+## Share your referral link
+
+Every account receives a personal referral link inside **My Account → Affiliate**.  
+When someone signs up or connects a wallet using your link, they become your referral.
+
+Your dashboard shows:
+
+- **Referrals** – total number of invited accounts
+- **Active traders** – referrals who placed trades
+- **Referred volume** – USDC traded by your referrals
+- **Earned fees** – commissions you have already received
+
+## Commission structure
+
+The affiliate program pays you a portion of the trading fee your referrals generate:
+
+- Current platform trading fee: **1.00%** per fill
+- Your commission: **40% of that trading fee** on every qualifying trade (the current live setting)
+
+> Example: if a referral executes a 1,000 USDC trade, the trading fee is 10 USDC.  
+> You receive **4 USDC**, and the remaining 6 USDC goes to the platform.
+
+## When you get paid
+
+- Commissions accrue instantly as each referral trade settles
+- You can track earnings in the Affiliate dashboard and withdraw them just like normal trading profits
+- If a referral reverses a trade (cancellation/refund), the commission adjusts automatically
+
+## Program updates
+
+Admins can occasionally adjust the trading fee or the affiliate share for promotions.  
+Whenever a change happens, the dashboard shows the updated percentages so you always know what you’ll earn before sharing your link.

@@ -1,17 +1,49 @@
 ---
-title: Winnings
-description: Withdraw payouts from markets you predicted correctly.
-icon: Trophy
+title: Claiming Winnings
+description: How to receive your payouts when markets resolve
+icon: Award
 ---
 
-## Automatic claim prompts
+import { Steps, Step } from 'fumadocs-ui/components/steps'
 
-When a market resolves in your favor, the app highlights the claim action in your notifications and portfolio.
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} target="_blank">Discord</a>.
+</Callout>
+)}
 
-## Fees on claims
+## Claiming Your Rewards
 
-Claiming does not introduce additional trading fees, but you still pay network gas costs for the transaction.
+Once a market resolves, holders of winning shares can claim their payout.
 
-## Tax considerations
+<Steps>
+  <Step>
+    <h3 className="!mt-0">Go to Portfolio</h3>
+    <p>
+      Navigate to <strong>My Account → Portfolio</strong> and look for markets with
+      a <strong>Claim</strong> button next to your winning position.
+    </p>
+  </Step>
+  <Step>
+    <h3 className="!mt-0">Claim winnings</h3>
+    <p>
+      Click <strong>Claim</strong> to send the payout transaction. Your balance
+      updates as soon as the transaction confirms on-chain.
+    </p>
+  </Step>
+  <Step>
+    <h3 className="!mt-0">Withdraw or reuse</h3>
+    <p>
+      Use the credited funds to enter new markets or withdraw to your connected
+      wallet whenever you like.
+    </p>
+  </Step>
+</Steps>
 
-Track claims along with your transaction history to simplify reporting and compliance.
+---
+
+## Example
+
+- You buy 50 “Yes” shares at $0.30 → cost $15  
+- Market resolves **Yes** → each share pays $1 → you receive $50  
+- Profit = $35 (minus fees)

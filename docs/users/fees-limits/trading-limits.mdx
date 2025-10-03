@@ -1,17 +1,34 @@
 ---
-title: Trading Limits
-description: Know the limits that apply to orders and account balances.
-icon: Gauge
+title: Limits
+description: Deposit, withdrawal, and trading limits
+icon: Lock
 ---
 
-## Position size caps
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} target="_blank">Discord</a>.
+</Callout>
+)}
 
-Each market defines a maximum position size to manage risk and liquidity.
+## Deposit & Withdrawal Limits
 
-## Daily volume limits
+Limits may apply depending on your account setup or payment provider:
 
-Aggregate trading over a 24-hour period counts toward your daily cap. Exceeding it requires additional verification.
+- **Crypto deposits** → No fixed limits, but subject to blockchain network fees.  
+- **Fiat on-ramps** → Provider-specific daily or monthly limits.  
+- **Withdrawals** → Typically processed without restrictions, except for compliance checks if required.
 
-## Raising limits
+---
 
-Complete identity checks or reach out to support to request higher limits for institutional trading.
+## Trading Limits
+
+- Minimum order size: **$1**  
+- Maximum order size: depends on liquidity in each market.  
+- Orders cannot exceed your **available balance**.
+
+---
+
+## CSV & History Exports
+
+You can export your full account history, including deposits, withdrawals, and trades, in **CSV format**.  
+Go to **My Account > History > Export CSV**.

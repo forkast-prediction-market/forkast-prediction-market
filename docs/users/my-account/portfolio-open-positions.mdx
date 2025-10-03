@@ -1,17 +1,54 @@
 ---
-title: Portfolio
-description: Monitor your holdings and unrealized PnL.
-icon: Briefcase
+title: Portfolio & Open Positions
+description: Track positions, PnL, and claims
+icon: PieChart
 ---
 
-## Portfolio overview
+import { Steps, Step } from 'fumadocs-ui/components/steps'
 
-See total exposure, realized profits, and your current wallet balance at a glance.
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} target="_blank">Discord</a>.
+</Callout>
+)}
 
-## Open positions
+## What you’ll see
 
-Each position card shows entry price, current price, size, and unrealized returns.
+- **Positions Value** – current value of open shares  
+- **Profit/Loss** – realized + unrealized PnL  
+- **Volume Traded** & **Markets Traded** – lifetime activity  
+- **Tabs**: *Positions* and *Activity* (latest buys/sells with amounts and timestamps)
 
-## Managing exposure
+---
 
-Use the portfolio view to rebalance positions or close trades that no longer fit your strategy.
+## Claims
+
+When a market resolves in your favor, a **Claim** button appears.
+
+<Steps>
+  <Step>
+    <h3 className="!mt-0">Open Portfolio</h3>
+    <p>
+      Head to <strong>My Account → Portfolio</strong> to see your open
+      positions and activity feed.
+    </p>
+  </Step>
+  <Step>
+    <h3 className="!mt-0">Locate resolved markets</h3>
+    <p>
+      Markets ready to settle display a <strong>Claim</strong> button next to the
+      position.
+    </p>
+  </Step>
+  <Step>
+    <h3 className="!mt-0">Confirm the claim</h3>
+    <p>
+      Click <strong>Claim</strong> to credit your balance with the payout. Funds
+      arrive as soon as the transaction finalizes.
+    </p>
+  </Step>
+</Steps>
+
+<Callout type="info">
+Payouts credit instantly after confirmation. Network fees may apply.
+</Callout>

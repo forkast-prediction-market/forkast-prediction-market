@@ -1,17 +1,49 @@
 ---
-title: History
-description: Review deposits, withdrawals, and market activity.
-icon: History
+title: Transaction History
+description: Orders, trades, deposits, withdrawals — and CSV export
+icon: Clock
 ---
 
-## Activity log
+import { Steps, Step } from 'fumadocs-ui/components/steps'
 
-Every on-chain action appears in chronological order, with links to the block explorer for verification.
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} target="_blank">Discord</a>.
+</Callout>
+)}
 
-## Filtering transactions
+## Tabs
 
-Filter by market, transaction type, or date to quickly find the event you need.
+- **Orders** – open, partially filled, filled, canceled  
+- **Trades** – executed fills (price, size, side)  
+- **Deposits** / **Withdrawals** – transfers in and out
 
-## Exporting records
+---
 
-Download a CSV to share activity with your accountant or compliance team.
+## Export CSV
+
+Download your account history for records or taxes:
+
+<Steps>
+  <Step>
+    <h3 className="!mt-0">Choose a tab or date range</h3>
+    <p>
+      Filter by tab (Orders, Trades, Deposits, Withdrawals) and, if needed,
+      adjust the date range to limit the export.
+    </p>
+  </Step>
+  <Step>
+    <h3 className="!mt-0">Click <strong>Export CSV</strong></h3>
+    <p>
+      {process.env.NEXT_PUBLIC_SITE_NAME} generates a CSV containing the rows you
+      currently see in the table.
+    </p>
+  </Step>
+  <Step>
+    <h3 className="!mt-0">Save securely</h3>
+    <p>
+      Download and store the file safely for bookkeeping, taxes, or compliance
+      reviews.
+    </p>
+  </Step>
+</Steps>

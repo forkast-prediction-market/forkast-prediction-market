@@ -1,0 +1,47 @@
+---
+title: Profile Settings
+description: Manage your profile, username, and preferences
+icon: Settings
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} target="_blank">Discord</a>.
+</Callout>
+)}
+
+## Profile
+
+Update how your account appears across {process.env.NEXT_PUBLIC_SITE_NAME}.
+
+<Steps>
+  <Step>
+    <h3 className="!mt-0">Upload an avatar</h3>
+    <p>
+      Click <strong>Upload</strong> and choose a JPG/PNG/WEBP image up to 5 MB to
+      personalize your profile.
+    </p>
+  </Step>
+  <Step>
+    <h3 className="!mt-0">Update details</h3>
+    <p>
+      Edit your <strong>Email</strong> and <strong>Username</strong>, then press
+      <strong>Save changes</strong> to apply.
+    </p>
+  </Step>
+  <Step>
+    <h3 className="!mt-0">Preview the public page</h3>
+    <p>
+      Use <strong>View public profile</strong> to see how your activity and stats
+      appear to other users.
+    </p>
+  </Step>
+</Steps>
+
+---
+
+## Tips
+- Usernames are unique. If a name is taken, try a variation.
+- Keep a recognizable avatar so friends can find you easily.

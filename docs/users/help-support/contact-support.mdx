@@ -1,17 +1,36 @@
 ---
-title: Contact Support
-description: Reach the Forkast team for personalized help.
-icon: MessageCircle
+title: Help & Support
+description: Get help while using the platform
+icon: LifeBuoy
 ---
 
-## In-app chat
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} target="_blank">Discord</a>.
+</Callout>
+)}
 
-Start a conversation from the help widget for real-time assistance during trading hours.
+## Support Channels
 
-## Email support
+There are several ways to get help while using {process.env.NEXT_PUBLIC_SITE_NAME}:
 
-Send detailed requests to support@forkast.xyz and include relevant transaction hashes when possible.
+- **Discord community** – fastest way to get peer-to-peer help and updates  
+- **FAQ page** – quick answers to common questions  
+- **Email support** – for account-specific issues (response times vary)
 
-## Community channels
+---
 
-Join the community Discord to share feedback, report issues, and learn from other traders.
+## Support Hours
+
+- Community channels: **24/7** (responses depend on community activity)  
+- Direct support: typically answered during **business hours** (Monday–Friday)
+
+---
+
+## Escalation
+
+If your issue is not resolved through normal support:
+
+1. Open a ticket via Discord or email  
+2. Include screenshots, transaction IDs, and a clear description of the problem  
+3. The support team may escalate to technical or compliance review if necessary

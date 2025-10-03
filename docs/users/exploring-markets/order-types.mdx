@@ -1,17 +1,36 @@
 ---
 title: Order Types
-description: Choose between instant execution or price control.
-icon: Shuffle
+description: Learn about market and limit orders
+icon: List
 ---
 
-## Market orders
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} target="_blank">Discord</a>.
+</Callout>
+)}
 
-Market orders fill immediately at the best available price. They are ideal when execution speed matters most.
+## Types of Orders
 
-## Limit orders
+{process.env.NEXT_PUBLIC_SITE_NAME} supports two types of orders:
 
-Limit orders let you set the maximum price you will pay or the minimum price you will accept when selling.
+<Accordion type="single" collapsible>
 
-## Managing slippage
+<AccordionItem value="market">
+  <AccordionTrigger>Market Orders</AccordionTrigger>
+  <AccordionContent>
+  Executes immediately at the best available price in the order book.  
+  Best for quick entry or exit.
+  </AccordionContent>
+</AccordionItem>
 
-Preview the quoted fill before submitting to ensure the order meets your expectations.
+<AccordionItem value="limit">
+  <AccordionTrigger>Limit Orders</AccordionTrigger>
+  <AccordionContent>
+  Lets you set a specific price.  
+  The order will remain open until matched by another trader.  
+  Best for large trades or when you want to control your entry price.
+  </AccordionContent>
+</AccordionItem>
+
+</Accordion>

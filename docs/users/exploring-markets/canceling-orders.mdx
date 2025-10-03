@@ -1,17 +1,41 @@
 ---
 title: Canceling Orders
-description: Withdraw pending orders before they execute.
-icon: XCircle
+description: Manage and cancel your open orders
+icon: X
 ---
 
-## Where to find open orders
+import { Steps, Step } from 'fumadocs-ui/components/steps'
 
-Open the `Open Orders` tab on a market page or in your portfolio view to review pending orders.
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} target="_blank">Discord</a>.
+</Callout>
+)}
 
-## Cancel an order
+## How to Cancel Orders
 
-Select the order and click `Cancel`. Confirm the transaction in your wallet to free the reserved funds.
+You can cancel any open limit order before it is matched.
 
-## Partial fills
-
-If an order is partially filled, canceling removes only the remaining unfilled portion.
+<Steps>
+  <Step>
+    <h3 className="!mt-0">Open your open orders</h3>
+    <p>
+      Navigate to <strong>My Account → Open Orders</strong> to review all active
+      limit orders waiting to fill.
+    </p>
+  </Step>
+  <Step>
+    <h3 className="!mt-0">Select the order</h3>
+    <p>
+      Locate the order marked <strong>Open</strong> that you want to cancel and
+      expand the row for details.
+    </p>
+  </Step>
+  <Step>
+    <h3 className="!mt-0">Cancel and confirm</h3>
+    <p>
+      Press <strong>Cancel Order</strong> to release the reserved funds back to
+      your available balance immediately.
+    </p>
+  </Step>
+</Steps>
