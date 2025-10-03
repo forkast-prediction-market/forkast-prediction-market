@@ -16,7 +16,7 @@ export function useSearch() {
 
     setIsLoading(true)
     try {
-      const response = await fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
+      const response = await fetch(`/api/events/search?q=${encodeURIComponent(searchQuery)}`)
       if (response.ok) {
         const data = await response.json()
         setResults(data)

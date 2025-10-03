@@ -29,7 +29,7 @@ These rules are designed to help the AI assistant understand and interact with t
   - **Wallet Integration:** Wallet connection is handled by `reown/appkit` and `better-auth` libraries. Refer to `src/lib/auth-client.ts` or `src/providers/siwe.ts` for existing patterns. `ethers.js` is also used for general blockchain interactions.
 - **State Management (Zustand):** For client-side state, primarily use React Hooks and the Context API. For more complex global state, `Zustand` is used (e.g., `src/stores/useUser.ts`).
 - **Database (PostgreSQL & Supabase):** PostgreSQL is used as the primary database, with Supabase (`@supabase/supabase-js`) providing an interface for database interactions. Refer to `src/lib/db/` for database query patterns and `src/lib/supabase.ts` for Supabase client configuration.
-- **Data Handling & Synchronization:** Understand how data is fetched and managed, especially the synchronization of market data from The Graph subgraphs to Supabase (`src/app/api/sync-events/route.ts`). Look for existing patterns for API calls and database interactions (`src/lib/data.ts`, `src/lib/db/`).
+- **Data Handling & Synchronization:** Understand how data is fetched and managed, especially the synchronization of market data from The Graph subgraphs to Supabase (`src/app/api/sync/events/route.ts`). Look for existing patterns for API calls and database interactions (`src/lib/data.ts`, `src/lib/db/`).
 - **Styling Utilities:** `clsx` and `tailwind-merge` are used in conjunction with Tailwind CSS for conditional styling and efficient class management (e.g., `src/lib/utils.ts`).
 
 ## 3. Project Structure and Conventions
@@ -48,7 +48,7 @@ These rules are designed to help the AI assistant understand and interact with t
   - `src/app/api/events/[slug]/related/route.ts`: API for fetching related events.
   - `src/app/api/markets/[condition_id]/route.ts`: API for market-specific data.
   - `src/app/api/search/route.ts`: API for search functionality.
-  - `src/app/api/sync-events/route.ts`: Critical route for synchronizing market data from subgraphs to Supabase.
+  - `src/app/api/sync/events/route.ts`: Critical route for synchronizing market data from subgraphs to Supabase.
   - `src/app/api/trading/stats/route.ts`: API for trading statistics.
   - `src/app/api/users/[address]/positions/route.ts`: API for user positions.
 - **Database Interactions:** Refer to `src/lib/db/` for database query patterns.
