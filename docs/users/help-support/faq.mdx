@@ -4,54 +4,48 @@ description: Frequently asked questions about the platform
 icon: HelpCircle
 ---
 
+import { Accordions, Accordion } from 'fumadocs-ui/components/accordion'
+
 {process.env.NEXT_PUBLIC_DISCORD_LINK && (
 <Callout>
   Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} target="_blank">Discord</a>.
 </Callout>
 )}
 
-<Accordion type="single" collapsible>
-
-<AccordionItem value="fees">
-  <AccordionTrigger>What fees do I pay when I trade?</AccordionTrigger>
-  <AccordionContent>
-  Each trade includes a **protocol fee (1%)** and a **site fee (1%)**.  
-  Part of the site fee may be shared with affiliates.  
-  All fees are displayed before you confirm a trade.
-  </AccordionContent>
-</AccordionItem>
-
-<AccordionItem value="claim">
-  <AccordionTrigger>How do I claim my winnings?</AccordionTrigger>
-  <AccordionContent>
-  Go to **My Account > Portfolio** and click the **Claim** button next to resolved markets.  
-  Your winnings are instantly added to your balance.
-  </AccordionContent>
-</AccordionItem>
-
-<AccordionItem value="deposit">
-  <AccordionTrigger>How long do deposits take?</AccordionTrigger>
-  <AccordionContent>
-  - **Crypto deposits**: usually confirmed within minutes (depending on network congestion).  
-  - **Fiat on-ramps**: may take several hours or up to 2 business days, depending on your provider.
-  </AccordionContent>
-</AccordionItem>
-
-<AccordionItem value="dispute">
-  <AccordionTrigger>What if I disagree with a market resolution?</AccordionTrigger>
-  <AccordionContent>
-  You can file a dispute during the dispute window shown in the market page.  
-  Disputes require a small stake and must include verifiable evidence.
-  </AccordionContent>
-</AccordionItem>
-
-<AccordionItem value="withdraw">
-  <AccordionTrigger>Are there withdrawal limits?</AccordionTrigger>
-  <AccordionContent>
-  Crypto withdrawals are generally unlimited.  
-  Fiat withdrawals may be subject to provider-specific limits.  
-  All withdrawal requests are processed promptly.
-  </AccordionContent>
-</AccordionItem>
-
-</Accordion>
+<Accordions type="single" collapsible>
+  <Accordion title="What fees do I pay when I trade?" value="fees">
+    <p>
+      Each trade includes a <strong>1% protocol fee</strong> plus the platform’s
+      trading fee (currently 1%). Part of the platform fee can be shared with
+      affiliates, and the exact amount appears before you confirm any order.
+    </p>
+  </Accordion>
+  <Accordion title="How do I claim my winnings?" value="claim">
+    <p>
+      Visit <strong>My Account → Portfolio</strong> and press the
+      <strong>Claim</strong> button next to markets that resolved in your favor.
+      Payouts hit your balance right away.
+    </p>
+  </Accordion>
+  <Accordion title="How long do deposits take?" value="deposit">
+    <p>
+      Crypto deposits usually confirm within minutes, depending on network
+      congestion. Fiat on-ramps can take several hours or up to two business days
+      based on your provider.
+    </p>
+  </Accordion>
+  <Accordion title="What if I disagree with a market resolution?" value="dispute">
+    <p>
+      Use the <strong>Dispute</strong> button on the market page during the listed
+      dispute window. You’ll stake a small fee and must supply verifiable
+      evidence; valid disputes receive the stake back.
+    </p>
+  </Accordion>
+  <Accordion title="Are there withdrawal limits?" value="withdraw">
+    <p>
+      Crypto withdrawals are generally unlimited. Fiat withdrawals may have
+      provider-specific limits, and all requests are processed as quickly as
+      possible.
+    </p>
+  </Accordion>
+</Accordions>
