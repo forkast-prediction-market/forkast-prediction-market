@@ -162,15 +162,15 @@ export default function SettingsProfileTab({ user }: { user: User }) {
         </div>
 
         <div className="flex items-center justify-between gap-3">
-          <Button type="submit" disabled={isPending} className="w-36">
-            {isPending ? 'Saving...' : 'Save changes'}
-          </Button>
           <Link
             href={user.username ? `/@${user.username}` : `/@${user.address}`}
             className="text-sm font-medium text-primary transition-colors hover:text-primary/80 hover:underline"
           >
             View Public Profile
           </Link>
+          <Button type="submit" disabled={isPending} className="w-36">
+            {isPending ? 'Saving...' : 'Save changes'}
+          </Button>
         </div>
       </Form>
     </div>
