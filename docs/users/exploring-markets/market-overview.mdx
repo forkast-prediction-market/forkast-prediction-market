@@ -14,13 +14,13 @@ import { Steps, Step } from 'fumadocs-ui/components/steps'
 
 ## What is a Market?
 
-A market represents a real-world question with possible outcomes, such as  
+A market represents a real-world question with possible outcomes, such as
 **“Will candidate X win the election?”** or **“Will company Y launch a product this year?”**
 
 Each market has:
 
-- A **title** that states the question  
-- A list of **outcomes** (usually “Yes” / “No”, but can be multiple choices)  
+- A **title** that states the question
+- A list of **outcomes** (usually “Yes” / “No”, but can be multiple choices)
 - A **price** for each outcome, shown as a percentage probability
 
 ---
@@ -30,7 +30,7 @@ Each market has:
 Prices in {process.env.NEXT_PUBLIC_SITE_NAME} are expressed as probabilities:
 
 - A price of **0.65 (65%)** means the market currently estimates a **65% chance** that the outcome will happen.
-- If the outcome resolves as true, each share is worth **$1**.  
+- If the outcome resolves as true, each share is worth **$1**.
 - If false, the shares expire worthless.
 
 ---
@@ -39,24 +39,21 @@ Prices in {process.env.NEXT_PUBLIC_SITE_NAME} are expressed as probabilities:
 
 <Steps>
   <Step>
-    <h3 className="!mt-0">Browse available markets</h3>
-    <p>
-      Open the **Markets** tab to explore active events, then narrow results using
-      filters or the search bar to focus on topics you care about.
-    </p>
+    ### Browse available markets
+
+    Open the **Markets** tab to explore active events, then narrow results using
+    filters or the search bar to focus on topics you care about.
   </Step>
   <Step>
-    <h3 className="!mt-0">Open a market</h3>
-    <p>
-      Click any market card to inspect the price chart, recent fills, current
-      order book, and the outcomes you can trade.
-    </p>
+    ### Open a market
+
+    Click any market card to inspect the price chart, recent fills, current
+    order book, and the outcomes you can trade.
   </Step>
   <Step>
-    <h3 className="!mt-0">Review prices and liquidity</h3>
-    <p>
-      Check the best bids/asks, historical price movement, and displayed volume to
-      gauge how much liquidity is available before placing an order.
-    </p>
+    ### Review prices and liquidity
+
+    Check the best bids/asks, historical price movement, and displayed volume to
+    gauge how much liquidity is available before placing an order.
   </Step>
 </Steps>
