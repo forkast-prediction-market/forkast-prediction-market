@@ -47,7 +47,7 @@ async function fetchAdminUsers(params: UseAdminUsersParams): Promise<AdminUsersR
     searchParams.set('search', search.trim())
   }
 
-  const response = await fetch(`/api/admin/users?${searchParams.toString()}`)
+  const response = await fetch(`/admin/api/users?${searchParams.toString()}`)
 
   if (!response.ok) {
     throw new Error(`Failed to fetch users: ${response.statusText}`)
