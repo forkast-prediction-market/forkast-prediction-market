@@ -9,7 +9,7 @@ export default async function Layout({ children }: LayoutProps<'/docs'>) {
     <RootProvider
       search={{
         options: {
-          api: '/docs/search',
+          api: '/docs/api/search',
         },
       }}
     >

@@ -26,27 +26,19 @@ The payload returns market metadata, order book snapshots, resolution details, a
 
 <Accordions type="multiple" defaultValue={['metadata']}>
   <Accordion title="Metadata" value="metadata">
-    <p>
-      Provides identifiers, question text, category tags, and timestamps needed to
-      render the market directory or catalog.
-    </p>
+    Provides identifiers, question text, category tags, and timestamps needed to
+    render the market directory or catalog.
   </Accordion>
   <Accordion title="Order book" value="orderbook">
-    <p>
-      Includes bid and ask depth, mid price, and liquidity snapshots so you can
-      sync the trading interface programmatically.
-    </p>
+    Includes bid and ask depth, mid price, and liquidity snapshots so you can
+    sync the trading interface programmatically.
   </Accordion>
   <Accordion title="Resolution" value="resolution">
-    <p>
-      Returns status transitions, selected outcome, and oracle evidence whenever a
-      market is resolving or already closed.
-    </p>
+    Returns status transitions, selected outcome, and oracle evidence whenever a
+    market is resolving or already closed.
   </Accordion>
   <Accordion title="Your position" value="position">
-    <p>
-      When authorized, appends the account's exposure, average entry price, and
-      unrealized PnL for the requested outcome.
-    </p>
+    When authorized, appends the account's exposure, average entry price, and
+    unrealized PnL for the requested outcome.
   </Accordion>
 </Accordions>
