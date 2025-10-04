@@ -1,6 +1,6 @@
 import { DocsLayout } from 'fumadocs-ui/layouts/docs'
 import { RootProvider } from 'fumadocs-ui/provider'
-import { BookOpenIcon, CodeIcon, HomeIcon } from 'lucide-react'
+import { BookOpenIcon, CodeIcon, GitForkIcon, HomeIcon } from 'lucide-react'
 import { source } from '@/lib/source'
 import { sanitizeSvg } from '@/lib/utils'
 
@@ -44,6 +44,16 @@ export default async function Layout({ children }: LayoutProps<'/docs'>) {
               url: '/docs/developers',
               icon: <CodeIcon className="size-4" />,
             },
+            ...(process.env.NEXT_PUBLIC_FORK_OWNER_GUIDE
+              ? [
+                  {
+                    title: 'Fork Owner Guide',
+                    description: 'How to create your platform',
+                    url: '/docs/owners',
+                    icon: <GitForkIcon className="size-4" />,
+                  },
+                ]
+              : []),
           ],
         }}
         tree={source.pageTree}

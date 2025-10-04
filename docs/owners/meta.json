@@ -1,0 +1,9 @@
+{
+  "title": "Fork Owner Guide",
+  "description": "How to create your platform",
+  "icon": "GitFork",
+  "root": true,
+  "pages": [
+    "index"
+  ]
+}
