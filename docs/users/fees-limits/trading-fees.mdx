@@ -4,15 +4,17 @@ description: Understand how trading fees are applied, split, and displayed
 icon: Percent
 ---
 
+import { TradingFeeDisplay, AffiliateShareDisplay, PlatformShareDisplay, FeeCalculationExample } from '@/components/docs'
+
 ## Current platform fee
 
-- **Default rate:** 1.00% per trade (100 basis points) pulled from the affiliate settings.
+- **Default rate:** <TradingFeeDisplay /> per trade pulled from the affiliate settings.
 - **Configurable range:** Admins can raise the fee up to 9.00% from **Admin → Affiliate**.
 - **Rounding:** Fees are rounded to 6 decimal places when recorded on-chain.
 
 <Callout type="info" title="How the math works">
-  Trading fee (USDC) = Order notional × 1.00%.
-  A 150 USDC fill at the default rate costs 1.50 USDC in fees.
+  Trading fee (USDC) = Order notional × <TradingFeeDisplay />.
+  A 150 USDC fill at the current rate costs <FeeCalculationExample amount={150} format="inline" /> in fees.
 </Callout>
 
 ## Maker vs taker
@@ -26,10 +28,12 @@ Fee estimates appear directly in the order ticket before you sign the transactio
 
 Trading fees are shared with referring affiliates:
 
-- **Affiliate share:** 40% of the trading fee (current configuration)
-- **Platform share:** 60% of the trading fee
+- **Affiliate share:** <AffiliateShareDisplay /> of the trading fee (current configuration)
+- **Platform share:** <PlatformShareDisplay /> of the trading fee
 
 If an order has no associated affiliate, the platform retains 100% of the fee.
+
+<FeeCalculationExample amount={100} />
 
 ## Where to review fees
 

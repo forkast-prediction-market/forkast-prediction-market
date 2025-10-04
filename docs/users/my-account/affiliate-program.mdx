@@ -4,6 +4,8 @@ description: Earn a share of trading fees when people trade through your link
 icon: Link
 ---
 
+import { TradingFeeDisplay, AffiliateShareDisplay, FeeCalculationExample } from '@/components/docs'
+
 {process.env.NEXT_PUBLIC_DISCORD_LINK && (
 <Callout>
   Need Help? Reach out on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} target="_blank">Discord</a> and the team will walk you through the affiliate tools.
@@ -12,7 +14,7 @@ icon: Link
 
 ## Share your referral link
 
-Every account receives a personal referral link inside **My Account → Affiliate**.  
+Every account receives a personal referral link inside **My Account → Affiliate**.
 When someone signs up or connects a wallet using your link, they become your referral.
 
 Your dashboard shows:
@@ -26,11 +28,10 @@ Your dashboard shows:
 
 The affiliate program pays you a portion of the trading fee your referrals generate:
 
-- Current platform trading fee: **1.00%** per fill
-- Your commission: **40% of that trading fee** on every qualifying trade (the current live setting)
+- Current platform trading fee: **<TradingFeeDisplay />%** per fill
+- Your commission: **<AffiliateShareDisplay />% of that trading fee** on every qualifying trade (the current live setting)
 
-> Example: if a referral executes a 1,000 USDC trade, the trading fee is 10 USDC.  
-> You receive **4 USDC**, and the remaining 6 USDC goes to the platform.
+<FeeCalculationExample amount={1000} format="inline" />
 
 ## When you get paid
 
@@ -40,5 +41,5 @@ The affiliate program pays you a portion of the trading fee your referrals gener
 
 ## Program updates
 
-Admins can occasionally adjust the trading fee or the affiliate share for promotions.  
+Admins can occasionally adjust the trading fee or the affiliate share for promotions.
 Whenever a change happens, the dashboard shows the updated percentages so you always know what you’ll earn before sharing your link.
