@@ -54,6 +54,7 @@ export async function fetchAffiliateSettingsFromAPI(): Promise<AffiliateDataResu
     const apiData: AffiliateSettingsResponse = await response.json()
 
     // Format the API response data
+    // API returns percentages as numbers (e.g., 1.00 for 1%)
     const formattedData: FormattedAffiliateSettings = {
       tradeFeePercent: formatPercentage(apiData.tradeFeePercent),
       affiliateSharePercent: formatPercentage(apiData.affiliateSharePercent),

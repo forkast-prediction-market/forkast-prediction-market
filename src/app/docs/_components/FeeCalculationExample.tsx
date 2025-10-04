@@ -11,10 +11,6 @@ interface FeeCalculationExampleProps {
    */
   amount: number
   /**
-   * Server-side data passed as props (preferred method)
-   */
-  data?: AffiliateDataResult
-  /**
    * Custom className for styling the container
    */
   className?: string
@@ -27,32 +23,23 @@ interface FeeCalculationExampleProps {
 /**
  * Component that displays a dynamic fee calculation example
  * Shows trading fee, affiliate commission, and platform share calculations
- * Prioritizes server-side data, falls back to client-side fetching if needed
+ * Fetches data client-side for simplicity
  */
 export function FeeCalculationExample({
   amount,
-  data,
   className = '',
   format = 'table',
 }: FeeCalculationExampleProps) {
-  const [clientData, setClientData] = useState<AffiliateDataResult | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-
-  // Use server-side data if available, otherwise fetch client-side
-  const effectiveData = data || clientData
+  const [data, setData] = useState<AffiliateDataResult | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Only fetch client-side if no server-side data provided
-    if (!data) {
-      setIsLoading(true)
-      fetchAffiliateSettingsFromAPI()
-        .then(setClientData)
-        .finally(() => setIsLoading(false))
-    }
-  }, [data])
+    fetchAffiliateSettingsFromAPI()
+      .then(setData)
+      .finally(() => setIsLoading(false))
+  }, [])
 
-  // Show loading state only for client-side fetching when no server data
-  if (isLoading && !data) {
+  if (isLoading) {
     return (
       <span className={className}>
         <span className="text-muted-foreground">Loading calculation example...</span>
@@ -60,22 +47,22 @@ export function FeeCalculationExample({
     )
   }
 
-  // Handle error state - use block display for table format, inline for inline format
-  if (effectiveData && !effectiveData.success) {
+  // Handle error state
+  if (data && !data.success) {
     if (format === 'inline') {
       return (
         <ErrorDisplay
-          error={effectiveData.error}
+          error={data.error}
           fallbackValue="Unable to load calculation example"
           className={className}
-          showRefresh={!data} // Only show refresh for client-side errors
+          showRefresh={true}
         />
       )
     }
     else {
       return (
         <ErrorDisplayBlock
-          error={effectiveData.error}
+          error={data.error}
           title="Unable to load fee calculation"
           className={className}
         />
@@ -84,13 +71,11 @@ export function FeeCalculationExample({
   }
 
   // Calculate the example using current data
-  if (!effectiveData?.success) {
-    return null // This case is handled above in error states
+  if (!data?.success) {
+    return null
   }
 
-  const affiliateSettings = effectiveData.data
-
-  const calculation = createFeeCalculationExample(amount, affiliateSettings)
+  const calculation = createFeeCalculationExample(amount, data.data)
 
   if (format === 'inline') {
     return (
@@ -121,7 +106,7 @@ export function FeeCalculationExample({
   }
 
   return (
-    <div className={`${className} not-prose`}>
+    <div className={className}>
       <div className="rounded-lg border bg-card text-card-foreground shadow-sm">
         <div className="p-4">
           <h4 className="mb-3 font-semibold">Fee Calculation Example</h4>

@@ -4,7 +4,7 @@ description: Earn a share of trading fees when people trade through your link
 icon: Link
 ---
 
-import { TradingFeeDisplay, AffiliateShareDisplay, FeeCalculationExample } from '@/components/docs'
+
 
 {process.env.NEXT_PUBLIC_DISCORD_LINK && (
 <Callout>
@@ -28,8 +28,8 @@ Your dashboard shows:
 
 The affiliate program pays you a portion of the trading fee your referrals generate:
 
-- Current platform trading fee: **<TradingFeeDisplay />%** per fill
-- Your commission: **<AffiliateShareDisplay />% of that trading fee** on every qualifying trade (the current live setting)
+- Current platform trading fee: **<TradingFeeDisplay />** per fill
+- Your commission: **<AffiliateShareDisplay /> of that trading fee** on every qualifying trade (the current live setting)
 
 <FeeCalculationExample amount={1000} format="inline" />
 

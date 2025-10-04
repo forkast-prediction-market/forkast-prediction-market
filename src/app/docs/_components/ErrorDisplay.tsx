@@ -36,7 +36,6 @@ export function ErrorDisplay({
   function handleRefresh() {
     window.location.reload()
   }
-
   function getErrorMessage(error: AffiliateDataError): string {
     switch (error.code) {
       case 'DATABASE_ERROR':
@@ -100,7 +99,6 @@ export function ErrorDisplayBlock({
   function handleRefresh() {
     window.location.reload()
   }
-
   function getErrorMessage(error: AffiliateDataError): string {
     switch (error.code) {
       case 'DATABASE_ERROR':
