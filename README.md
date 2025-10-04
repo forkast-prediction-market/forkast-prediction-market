@@ -86,7 +86,7 @@ In your forked Forkast repository:
 
 <div align="center">
 
-**📚 [Documentation](https://forka.st/docs/owners)** •
+**📚 [Documentation](https://forka.st/docs/users)** •
 **🚀 [Live Demo](https://forka.st)** •
 **🗺️ [Roadmap](https://github.com/orgs/forkast-prediction-market/discussions/51)** •
 **💬 [Discussions](https://github.com/orgs/forkast-prediction-market/discussions)**
