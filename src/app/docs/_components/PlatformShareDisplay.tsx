@@ -6,20 +6,10 @@ import { fetchAffiliateSettingsFromAPI } from '@/lib/affiliate-data'
 import { ErrorDisplay } from './ErrorDisplay'
 
 interface PlatformShareDisplayProps {
-  /**
-   * Whether to show the percentage symbol
-   */
   showSymbol?: boolean
-  /**
-   * Custom className for styling
-   */
   className?: string
 }
 
-/**
- * Component that displays the calculated platform share percentage
- * Fetches data client-side for simplicity
- */
 export function PlatformShareDisplay({
   showSymbol = true,
   className = 'font-semibold text-primary',
@@ -41,7 +31,6 @@ export function PlatformShareDisplay({
     )
   }
 
-  // Handle error state
   if (data && !data.success) {
     return (
       <ErrorDisplay
@@ -52,7 +41,6 @@ export function PlatformShareDisplay({
     )
   }
 
-  // Handle success state
   const platformSharePercent = data?.success
     ? data.data.platformSharePercent
     : 'N/A'

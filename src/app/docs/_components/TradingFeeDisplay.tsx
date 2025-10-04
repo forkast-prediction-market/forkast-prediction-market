@@ -6,20 +6,10 @@ import { fetchAffiliateSettingsFromAPI } from '@/lib/affiliate-data'
 import { ErrorDisplay } from './ErrorDisplay'
 
 interface TradingFeeDisplayProps {
-  /**
-   * Whether to show the percentage symbol
-   */
   showSymbol?: boolean
-  /**
-   * Custom className for styling
-   */
   className?: string
 }
 
-/**
- * Component that displays the current trading fee percentage
- * Fetches data client-side for simplicity
- */
 export function TradingFeeDisplay({
   showSymbol = true,
   className = 'font-semibold text-primary',
@@ -41,7 +31,6 @@ export function TradingFeeDisplay({
     )
   }
 
-  // Handle error state
   if (data && !data.success) {
     return (
       <ErrorDisplay
@@ -52,7 +41,6 @@ export function TradingFeeDisplay({
     )
   }
 
-  // Handle success state
   const tradeFeePercent = data?.success
     ? data.data.tradeFeePercent
     : 'N/A'

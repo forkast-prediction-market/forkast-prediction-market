@@ -20,7 +20,6 @@ export interface FormattedAffiliateSettings {
 
 export interface AffiliateDataError {
   error: string
-  code: string
 }
 
 // Result type for error handling
@@ -74,8 +73,7 @@ export async function fetchAffiliateSettingsFromAPI(): Promise<AffiliateDataResu
     return {
       success: false,
       error: {
-        error: 'Failed to fetch affiliate settings',
-        code: 'FETCH_ERROR',
+        error: 'Internal server error',
       },
     }
   }

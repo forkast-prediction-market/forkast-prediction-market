@@ -6,30 +6,12 @@ import { createFeeCalculationExample, fetchAffiliateSettingsFromAPI } from '@/li
 import { ErrorDisplay, ErrorDisplayBlock } from './ErrorDisplay'
 
 interface FeeCalculationExampleProps {
-  /**
-   * The trade amount to use in the calculation example
-   */
   amount: number
-  /**
-   * Custom className for styling the container
-   */
   className?: string
-  /**
-   * Whether to show the calculation as a table or inline
-   */
   format?: 'table' | 'inline'
 }
 
-/**
- * Component that displays a dynamic fee calculation example
- * Shows trading fee, affiliate commission, and platform share calculations
- * Fetches data client-side for simplicity
- */
-export function FeeCalculationExample({
-  amount,
-  className = '',
-  format = 'table',
-}: FeeCalculationExampleProps) {
+export function FeeCalculationExample({ amount, className = '', format = 'table' }: FeeCalculationExampleProps) {
   const [data, setData] = useState<AffiliateDataResult | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
@@ -47,7 +29,6 @@ export function FeeCalculationExample({
     )
   }
 
-  // Handle error state
   if (data && !data.success) {
     if (format === 'inline') {
       return (
@@ -70,7 +51,6 @@ export function FeeCalculationExample({
     }
   }
 
-  // Calculate the example using current data
   if (!data?.success) {
     return null
   }

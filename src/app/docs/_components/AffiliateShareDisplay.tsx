@@ -6,20 +6,10 @@ import { fetchAffiliateSettingsFromAPI } from '@/lib/affiliate-data'
 import { ErrorDisplay } from './ErrorDisplay'
 
 interface AffiliateShareDisplayProps {
-  /**
-   * Whether to show the percentage symbol
-   */
   showSymbol?: boolean
-  /**
-   * Custom className for styling
-   */
   className?: string
 }
 
-/**
- * Component that displays the current affiliate share percentage
- * Fetches data client-side for simplicity
- */
 export function AffiliateShareDisplay({
   showSymbol = true,
   className = 'font-semibold text-primary',
@@ -41,7 +31,6 @@ export function AffiliateShareDisplay({
     )
   }
 
-  // Handle error state
   if (data && !data.success) {
     return (
       <ErrorDisplay
@@ -52,7 +41,6 @@ export function AffiliateShareDisplay({
     )
   }
 
-  // Handle success state
   const affiliateSharePercent = data?.success
     ? data.data.affiliateSharePercent
     : 'N/A'

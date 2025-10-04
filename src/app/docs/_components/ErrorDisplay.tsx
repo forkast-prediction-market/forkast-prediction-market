@@ -5,55 +5,15 @@ import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface ErrorDisplayProps {
-  /**
-   * The error object containing error details
-   */
   error: AffiliateDataError
-  /**
-   * Fallback value to display alongside the error
-   */
   fallbackValue?: string
-  /**
-   * Custom className for styling
-   */
   className?: string
-  /**
-   * Whether to show the refresh button
-   */
   showRefresh?: boolean
 }
 
-/**
- * Component that displays error states with refresh functionality
- * Used by other MDX components when data fetching fails
- */
-export function ErrorDisplay({
-  error,
-  fallbackValue,
-  className = '',
-  showRefresh = true,
-}: ErrorDisplayProps) {
+export function ErrorDisplay({ fallbackValue, className = '', showRefresh = true }: ErrorDisplayProps) {
   function handleRefresh() {
     window.location.reload()
-  }
-  function getErrorMessage(error: AffiliateDataError): string {
-    switch (error.code) {
-      case 'DATABASE_ERROR':
-        return 'Unable to connect to database'
-      case 'SETTINGS_NOT_FOUND':
-        return 'Settings not found'
-      case 'AFFILIATE_SETTINGS_NOT_FOUND':
-        return 'Affiliate settings not configured'
-      case 'INCOMPLETE_SETTINGS':
-        return 'Incomplete settings configuration'
-      case 'INVALID_FORMAT':
-        return 'Invalid settings format'
-      case 'FETCH_ERROR':
-        return 'Failed to fetch data'
-      case 'INTERNAL_ERROR':
-      default:
-        return 'Internal server error'
-    }
   }
 
   return (
@@ -65,7 +25,7 @@ export function ErrorDisplay({
       )}
       <span
         className="cursor-help text-xs text-destructive"
-        title={`${getErrorMessage(error)} (${error.code})`}
+        title="Unable to load data"
       >
         ⚠️
       </span>
@@ -84,11 +44,7 @@ export function ErrorDisplay({
   )
 }
 
-/**
- * Block-level error display for larger error states
- */
 export function ErrorDisplayBlock({
-  error,
   className = '',
   title = 'Unable to load data',
 }: {
@@ -98,25 +54,6 @@ export function ErrorDisplayBlock({
 }) {
   function handleRefresh() {
     window.location.reload()
-  }
-  function getErrorMessage(error: AffiliateDataError): string {
-    switch (error.code) {
-      case 'DATABASE_ERROR':
-        return 'We\'re having trouble connecting to our database. Please try refreshing the page.'
-      case 'SETTINGS_NOT_FOUND':
-        return 'The required settings could not be found. Please contact support if this persists.'
-      case 'AFFILIATE_SETTINGS_NOT_FOUND':
-        return 'Affiliate settings have not been configured yet. Please contact support.'
-      case 'INCOMPLETE_SETTINGS':
-        return 'Some required settings are missing. Please contact support.'
-      case 'INVALID_FORMAT':
-        return 'The settings data format is invalid. Please contact support.'
-      case 'FETCH_ERROR':
-        return 'Failed to fetch the latest data. Please check your connection and try again.'
-      case 'INTERNAL_ERROR':
-      default:
-        return 'An unexpected error occurred. Please try refreshing the page.'
-    }
   }
 
   return (
@@ -128,7 +65,7 @@ export function ErrorDisplayBlock({
         <div className="flex-1">
           <h4 className="mb-1 font-semibold text-destructive">{title}</h4>
           <p className="mb-3 text-sm text-muted-foreground">
-            {getErrorMessage(error)}
+            An error occurred while loading the data. Please try refreshing the page.
           </p>
           <Button
             variant="outline"
