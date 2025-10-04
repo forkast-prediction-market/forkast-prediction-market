@@ -68,8 +68,11 @@ In your forked Forkast repository:
 **Ready! 🎉** Your prediction market will be online with automatic database setup in a few minutes.
 
 ## 🎯 Features
+
 - 📱 Mobile Ready
 - 🎨 Modern UI/UX (Polymarket-style)
+- 📚 Docs
+- 👨‍💻 API
 - ⚡ Live Price Updates
 - 💳 Web3 Wallets (MetaMask, Reown AppKit)
 - 📊 Advanced Charts & Analytics
@@ -80,7 +83,7 @@ In your forked Forkast repository:
 - **Frontend:** Next.js 15 (React 19, TS, Tailwind, Zustand, @visx)
 - **Backend/DB:** Supabase (Postgres)
 - **Auth:** Better Auth + SIWE
-- **Blockchain:** Polygon (Ethers.js, viem, wagmi)
+- **Blockchain:** Polygon (ethers, viem)
 
 ## 🔗 Links
 
