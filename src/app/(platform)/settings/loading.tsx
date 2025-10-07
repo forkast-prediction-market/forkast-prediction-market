@@ -10,7 +10,6 @@ export default function Loading() {
           <Skeleton className="h-9 w-full" />
           <Skeleton className="h-9 w-full" />
           <Skeleton className="h-9 w-full" />
-          <Skeleton className="h-9 w-full" />
         </nav>
       </aside>
       <div className="mx-auto max-w-2xl lg:mx-0">
