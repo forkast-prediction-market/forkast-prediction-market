@@ -3,12 +3,14 @@ import type { Event, Market, Outcome } from '@/types'
 import { create } from 'zustand'
 import { mockUser } from '@/lib/mockData'
 
+type Side = 'buy' | 'sell'
+
 interface OrderState {
   // Order state
   event: Event | null
   market: Market | null
   outcome: Outcome | null
-  activeTab: string
+  side: Side
   amount: string
   isLoading: boolean
   isMobileOrderPanelOpen: boolean
@@ -19,7 +21,7 @@ interface OrderState {
   setMarket: (market: Market) => void
   setOutcome: (outcome: Outcome) => void
   reset: () => void
-  setActiveTab: (tab: string) => void
+  setSide: (side: Side) => void
   setAmount: (amount: string) => void
   setIsLoading: (loading: boolean) => void
   setIsMobileOrderPanelOpen: (loading: boolean) => void
@@ -29,7 +31,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   event: null,
   market: null,
   outcome: null,
-  activeTab: 'buy',
+  side: 'buy',
   amount: '0.00',
   isLoading: false,
   isMobileOrderPanelOpen: false,
@@ -39,7 +41,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   setMarket: (market: Market) => set({ market }),
   setOutcome: (outcome: Outcome) => set({ outcome }),
   reset: () => set(store.getInitialState()),
-  setActiveTab: (tab: string) => set({ activeTab: tab }),
+  setSide: (side: Side) => set({ side }),
   setAmount: (amount: string) => set({ amount }),
   setIsLoading: (loading: boolean) => set({ isLoading: loading }),
   setIsMobileOrderPanelOpen: (open: boolean) => set({ isMobileOrderPanelOpen: open }),

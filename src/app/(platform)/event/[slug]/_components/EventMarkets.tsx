@@ -73,7 +73,7 @@ export default function EventMarkets({ event }: Props) {
             `)}
             onClick={() => {
               state.setMarket(market)
-              state.setActiveTab('buy')
+              state.setSide('buy')
             }}
           >
             {/* Mobile: Layout in column */}
@@ -123,7 +123,7 @@ export default function EventMarkets({ event }: Props) {
                     e.stopPropagation()
                     state.setMarket(market)
                     state.setOutcome(market.outcomes[0])
-                    state.setActiveTab('buy')
+                    state.setSide('buy')
                     state.setIsMobileOrderPanelOpen(true)
                   }}
                 >
@@ -144,7 +144,7 @@ export default function EventMarkets({ event }: Props) {
                     e.stopPropagation()
                     state.setMarket(market)
                     state.setOutcome(market.outcomes[1])
-                    state.setActiveTab('buy')
+                    state.setSide('buy')
                     state.setIsMobileOrderPanelOpen(true)
                   }}
                 >
@@ -213,7 +213,7 @@ export default function EventMarkets({ event }: Props) {
                     e.stopPropagation()
                     state.setMarket(market)
                     state.setOutcome(market.outcomes[0])
-                    state.setActiveTab('buy')
+                    state.setSide('buy')
                     state.inputRef?.current?.focus()
                   }}
                 >
@@ -236,7 +236,7 @@ export default function EventMarkets({ event }: Props) {
                     e.stopPropagation()
                     state.setMarket(market)
                     state.setOutcome(market.outcomes[1])
-                    state.setActiveTab('buy')
+                    state.setSide('buy')
                     state.inputRef?.current?.focus()
                   }}
                 >

@@ -4,7 +4,7 @@ export const OrderModel = {
   async createOrder(orderData: {
     user_id: string
     condition_id: string
-    outcome_index: number
+    token_id: string
     side: 'buy' | 'sell'
     amount: number
     price?: number
@@ -20,7 +20,7 @@ export const OrderModel = {
       .insert({
         user_id: orderData.user_id,
         condition_id: orderData.condition_id,
-        outcome_index: orderData.outcome_index,
+        token_id: orderData.token_id,
         order_type: orderData.order_type || 'market',
         side: orderData.side,
         amount: orderData.amount,

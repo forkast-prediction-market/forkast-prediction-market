@@ -57,12 +57,12 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
     state.setIsLoading(true)
 
     try {
-      formData.append('condition_id', state.market.condition_id)
       formData.append('slug', event.slug)
-      formData.append('side', state.activeTab)
+      formData.append('condition_id', state.market.condition_id)
+      formData.append('token_id', state.outcome.token_id)
+      formData.append('side', state.side)
       formData.append('amount', state.amount)
-      formData.append('order_type', 'market')
-      formData.append('outcome_index', state.outcome.outcome_index.toString())
+      formData.append('type', 'market')
       const price = state.outcome.outcome_index === 0 ? yesPrice : noPrice
       formData.append('price', (price / 100).toString())
 
@@ -79,7 +79,7 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
       // Success - show appropriate toast
       const amountNum = Number.parseFloat(state.amount)
 
-      if (state.activeTab === 'sell') {
+      if (state.side === 'sell') {
         const sellValue = calculateSellAmount(amountNum)
 
         toast.success(
@@ -155,7 +155,7 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
         <EventOrderPanelOutcomeButton type="no" price={noPrice} />
       </div>
 
-      {state.activeTab === 'sell' ? <EventOrderPanelUserShares /> : <div className="mb-4"></div>}
+      {state.side === 'sell' ? <EventOrderPanelUserShares /> : <div className="mb-4"></div>}
 
       <EventOrderPanelInput isMobile={isMobile} getUserShares={getUserShares} />
 
