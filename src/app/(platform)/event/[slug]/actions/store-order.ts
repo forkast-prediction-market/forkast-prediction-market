@@ -67,7 +67,7 @@ export async function storeOrderAction(payload: FormData) {
         side: validated.data.side,
         type: validated.data.type,
         referrer: process.env.FEE_RECIPIENT_WALLET,
-        affiliate: undefined,
+        affiliate: referral?.affiliate_user[0]?.address,
         fee_rate_bps: tradeFeeBps,
         affiliate_percentage: affiliateShareBps,
       }),

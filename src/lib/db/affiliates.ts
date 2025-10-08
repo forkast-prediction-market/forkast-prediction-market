@@ -54,16 +54,10 @@ export const AffiliateModel = {
   },
 
   async getAffiliateByCode(code: string) {
-    const normalized = code.trim().toLowerCase()
-
-    if (!normalized) {
-      return { data: null, error: null }
-    }
-
     const { data, error } = await supabaseAdmin
       .from('users')
       .select('id, affiliate_code, username, address, image')
-      .filter('affiliate_code', 'ilike', normalized)
+      .filter('affiliate_code', 'ilike', code)
       .maybeSingle()
 
     return { data, error }
@@ -74,7 +68,7 @@ export const AffiliateModel = {
 
     const { data, error } = await supabaseAdmin
       .from('affiliate_referrals')
-      .select('user_id, affiliate_user_id, source, attributed_at')
+      .select('user_id, affiliate_user_id, source, attributed_at, affiliate_user:users!affiliate_user_id(address)')
       .eq('user_id', userId)
       .maybeSingle()
 
