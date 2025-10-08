@@ -87,7 +87,7 @@ export function calculateSellAmount() {
       ? (state.market.probability / 100) * 0.95
       : ((100 - state.market.probability) / 100) * 0.95
 
-  return Number.parseFloat(state.amount) * sellPrice
+  return Number.parseFloat(state.amount || '0') * sellPrice
 }
 
 export function getUserShares() {
@@ -133,5 +133,5 @@ export function getNoShares(outcomeId: string) {
 }
 
 export function useAmountAsNumber() {
-  return useOrder(state => Number.parseFloat(state.amount))
+  return useOrder(state => Number.parseFloat(state.amount) || 0)
 }
