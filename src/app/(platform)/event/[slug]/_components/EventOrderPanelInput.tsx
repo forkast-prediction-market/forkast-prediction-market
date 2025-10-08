@@ -182,7 +182,7 @@ export default function EventOrderPanelInput({
                 <div className="text-xs text-muted-foreground">
                   {state.side === 'sell'
                     ? ``
-                    : `Balance $${balance?.data?.text || '0.00'}`}
+                    : `Balance $${balance.text || '0.00'}`}
                 </div>
               </div>
               <div className="relative flex-1">
@@ -265,7 +265,7 @@ export default function EventOrderPanelInput({
               state.setAmount(userShares.toFixed(2))
             }
             else {
-              const maxBalance = Number.parseFloat(balance?.data?.text)
+              const maxBalance = balance.raw
               // Limit to 999,999,999
               const limitedBalance = Math.min(maxBalance, 999999999)
               state.setAmount(limitedBalance.toFixed(2))
