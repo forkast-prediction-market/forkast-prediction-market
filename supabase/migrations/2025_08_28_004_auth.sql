@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS users
   settings            JSONB       NOT NULL DEFAULT '{}'::JSONB,
   affiliate_code      TEXT,                                                 -- Unique referral code for this user
   referred_by_user_id CHAR(26)    REFERENCES users (id) ON DELETE SET NULL, -- User who referred this user
-  referred_at         TIMESTAMPTZ,                                          -- When the referral occurred
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

@@ -124,9 +124,7 @@ export const UserModel = {
     if (!user.referred_by_user_id) {
       try {
         const cookieStore = await cookies()
-        const referralCookie
-          = cookieStore.get('platform_affiliate')
-            ?? cookieStore.get('fork_affiliate')
+        const referralCookie = cookieStore.get('platform_affiliate')
 
         if (referralCookie?.value) {
           const parsed = JSON.parse(referralCookie.value) as {
@@ -138,7 +136,6 @@ export const UserModel = {
             await AffiliateModel.recordReferral({
               user_id: user.id,
               affiliate_user_id: parsed.affiliateUserId,
-              source: 'cookie',
             })
           }
         }
@@ -176,8 +173,7 @@ export const UserModel = {
         created_at,
         image,
         affiliate_code,
-        referred_by_user_id,
-        referred_at
+        referred_by_user_id
       `, { count: 'exact' })
 
     if (search && search.trim()) {
