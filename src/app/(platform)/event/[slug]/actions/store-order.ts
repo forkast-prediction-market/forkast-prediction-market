@@ -10,38 +10,30 @@ import { UserModel } from '@/lib/db/users'
 const StoreOrderSchema = z.object({
   condition_id: z.string(),
   side: z.enum(['buy', 'sell']),
-  amount: z.coerce.number().positive(),
-  price: z.coerce.number().positive().optional(),
+  amount: z.number().positive(),
+  price: z.number().positive().optional(),
   type: z.enum(['market', 'limit']).default('market'),
   slug: z.string(),
   token_id: z.string(),
 })
 
+type StoreOrderInput = z.infer<typeof StoreOrderSchema>
+
 const DEFAULT_ERROR_MESSAGE = 'Something went wrong while processing your order. Please try again.'
 
-export async function storeOrderAction(payload: FormData) {
+export async function storeOrderAction(payload: StoreOrderInput) {
   const user = await UserModel.getCurrentUser()
   if (!user) {
     return { error: 'Unauthenticated.' }
   }
 
-  const validated = StoreOrderSchema.safeParse({
-    condition_id: payload.get('condition_id'),
-    token_id: payload.get('token_id'),
-    side: payload.get('side'),
-    amount: payload.get('amount'),
-    price: payload.get('price'),
-    type: payload.get('type'),
-    slug: payload.get('slug'),
-  })
+  const validated = StoreOrderSchema.safeParse(payload)
 
   if (!validated.success) {
     return {
       error: validated.error.issues[0].message,
     }
   }
-
-  const { slug, ...orderPayload } = validated.data
 
   try {
     const [{ data: allSettings }, { data: referral }] = await Promise.all([
@@ -60,11 +52,13 @@ export async function storeOrderAction(payload: FormData) {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
+      signal: AbortSignal.timeout(5000),
+      keepalive: true,
       body: JSON.stringify({
         trader: user.address,
         token_id: validated.data.token_id,
         amount: validated.data.amount,
-        side: validated.data.side,
+        side: validated.data.side.toUpperCase(),
         type: validated.data.type,
         referrer: process.env.FEE_RECIPIENT_WALLET,
         affiliate: referral?.affiliate_user[0]?.address,
@@ -74,6 +68,8 @@ export async function storeOrderAction(payload: FormData) {
     })
 
     if (!clobResponse.ok) {
+      const text = await clobResponse.text()
+      console.error('Failed to send order to CLOB.', text)
       return { error: DEFAULT_ERROR_MESSAGE }
     }
 
@@ -82,7 +78,7 @@ export async function storeOrderAction(payload: FormData) {
       || null
 
     const tradeFeeDecimal = tradeFeeBps / 10000
-    const totalFeeAmount = Number((orderPayload.amount * tradeFeeDecimal).toFixed(6))
+    const totalFeeAmount = Number((validated.data.amount * tradeFeeDecimal).toFixed(6))
     const affiliateShareDecimal = affiliateUserId ? (affiliateShareBps / 10000) : 0
     const affiliateFeeAmount = affiliateUserId
       ? Number((totalFeeAmount * affiliateShareDecimal).toFixed(6))
@@ -90,7 +86,7 @@ export async function storeOrderAction(payload: FormData) {
     const forkFeeAmount = Math.max(0, Number((totalFeeAmount - affiliateFeeAmount).toFixed(6)))
 
     const { error } = await OrderModel.createOrder({
-      ...orderPayload,
+      ...validated.data,
       user_id: user.id,
       affiliate_user_id: affiliateUserId,
       trade_fee_bps: tradeFeeBps,
@@ -104,7 +100,7 @@ export async function storeOrderAction(payload: FormData) {
       return { error: DEFAULT_ERROR_MESSAGE }
     }
 
-    revalidatePath(`/event/${slug}`)
+    revalidatePath(`/event/${validated.data.slug}`)
   }
   catch (error) {
     console.error('Failed to create order.', error)

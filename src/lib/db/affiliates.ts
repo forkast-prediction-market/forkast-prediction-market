@@ -68,7 +68,7 @@ export const AffiliateModel = {
 
     const { data, error } = await supabaseAdmin
       .from('affiliate_referrals')
-      .select('user_id, affiliate_user_id, source, created_at, affiliate_user:users!affiliate_user_id(address)')
+      .select('user_id, affiliate_user_id, created_at, affiliate_user:users!affiliate_user_id(address)')
       .eq('user_id', userId)
       .maybeSingle()
 
