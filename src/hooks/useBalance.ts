@@ -60,10 +60,9 @@ export function useBalance() {
         const balanceNumber = Number(balanceRaw) / (10 ** USDC_DECIMALS)
 
         const newBalance = {
-          data: {
-            balance: balanceNumber.toFixed(2),
-            symbol: 'USDC',
-          },
+          raw: balanceNumber,
+          text: balanceNumber.toFixed(2),
+          symbol: 'USDC',
         }
 
         if (active) {

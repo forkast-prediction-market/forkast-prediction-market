@@ -17,6 +17,7 @@ import {
   calculateSellAmount,
   getAvgSellPrice,
   getUserShares,
+  useAmountAsNumber,
   useIsBinaryMarket,
   useNoPrice,
   useOrder,
@@ -35,6 +36,7 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
   const yesPrice = useYesPrice()
   const noPrice = useNoPrice()
   const isBinaryMarket = useIsBinaryMarket()
+  const amount = useAmountAsNumber()
 
   async function onSubmit() {
     if (!isConnected) {
@@ -50,8 +52,7 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
       return
     }
 
-    const amountNum = Number.parseFloat(state.amount)
-    if (amountNum <= 0) {
+    if (amount <= 0) {
       return
     }
 
@@ -65,7 +66,7 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
         condition_id: state.market.condition_id,
         token_id: state.outcome.token_id,
         side: state.side,
-        amount: amountNum,
+        amount,
         type: 'market' as const,
         price: price / 100,
       }
@@ -80,7 +81,7 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
       }
 
       if (state.side === 'sell') {
-        const sellValue = calculateSellAmount(amountNum)
+        const sellValue = calculateSellAmount()
 
         toast.success(
           `Sell ${state.amount} shares on ${state.outcome.outcome_index === 0 ? 'Yes' : 'No'}`,
@@ -104,7 +105,7 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
       else {
         // Buy logic
         const price = state.outcome.outcome_index === 0 ? yesPrice : noPrice
-        const shares = ((amountNum / price) * 100).toFixed(2)
+        const shares = ((amount / price) * 100).toFixed(2)
 
         toast.success(
           `Buy $${state.amount} on ${state.outcome.outcome_index === 0 ? 'Yes' : 'No'}`,
@@ -159,7 +160,7 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
 
       <EventOrderPanelInput isMobile={isMobile} getUserShares={getUserShares} />
 
-      {Number.parseFloat(state.amount) > 0 && <EventOrderPanelEarnings isMobile={isMobile} />}
+      {amount > 0 && <EventOrderPanelEarnings isMobile={isMobile} />}
 
       <EventOrderPanelSubmitButton />
       <EventOrderPanelTermsDisclaimer />
