@@ -12,7 +12,7 @@ import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_componen
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
 import { storeOrderAction } from '@/app/(platform)/event/[slug]/actions/store-order'
-import { cn } from '@/lib/utils'
+import { cn, triggerConfetti } from '@/lib/utils'
 import {
   calculateSellAmount,
   getAvgSellPrice,
@@ -84,7 +84,7 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
         const sellValue = calculateSellAmount()
 
         toast.success(
-          `Sell ${state.amount} shares on ${state.outcome.outcome_index === 0 ? 'Yes' : 'No'}`,
+          `Sell ${state.amount} shares on ${state.outcome.outcome_text}`,
           {
             description: (
               <div>
@@ -108,7 +108,7 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
         const shares = ((amount / price) * 100).toFixed(2)
 
         toast.success(
-          `Buy $${state.amount} on ${state.outcome.outcome_index === 0 ? 'Yes' : 'No'}`,
+          `Buy $${state.amount} on ${state.outcome.outcome_text}`,
           {
             description: (
               <div>
@@ -126,7 +126,8 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
         )
       }
 
-      state.setAmount('')
+      triggerConfetti(state.outcome.outcome_index === 0 ? 'yes' : 'no', state.lastMouseEvent)
+      state.setAmount('0.00')
     }
     catch (error) {
       console.error('Trade error:', error)

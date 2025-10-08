@@ -16,6 +16,7 @@ export default function EventOrderPanelSubmitButton() {
         || !amount
         || (state.side === 'sell' && amount > getUserShares())
       }
+      onClick={e => state.setLastMouseEvent(e)}
     >
       {state.isLoading
         ? (

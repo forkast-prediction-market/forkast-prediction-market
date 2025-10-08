@@ -1,7 +1,6 @@
 'use client'
 
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
-import confetti from 'canvas-confetti'
 import { InfoIcon, XIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
@@ -15,7 +14,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { useClientMounted } from '@/hooks/useClientMounted'
-import { cn } from '@/lib/utils'
+import { cn, triggerConfetti } from '@/lib/utils'
 
 const STEPS = [
   {
@@ -78,20 +77,9 @@ export default function HeaderHowItWorks() {
     setActiveStep(0)
   }
 
-  function fireCelebration() {
-    confetti({
-      particleCount: 120,
-      spread: 70,
-      origin: { y: 0.4 },
-      decay: 0.92,
-      scalar: 0.9,
-      colors: ['#2563eb', '#1d4ed8', '#3b82f6', '#60a5fa'],
-    })
-  }
-
   function handleNext() {
     if (isLastStep) {
-      fireCelebration()
+      triggerConfetti('primary')
       setIsOpen(false)
       setActiveStep(0)
       openAuthModal()
