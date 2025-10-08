@@ -36,7 +36,7 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
   const noPrice = useNoPrice()
   const isBinaryMarket = useIsBinaryMarket()
 
-  async function onSubmit(formData: FormData) {
+  async function onSubmit() {
     if (!isConnected) {
       queueMicrotask(() => open())
       return
@@ -50,24 +50,27 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
       return
     }
 
-    if (Number.parseFloat(state.amount) <= 0) {
+    const amountNum = Number.parseFloat(state.amount)
+    if (amountNum <= 0) {
       return
     }
 
     state.setIsLoading(true)
 
     try {
-      formData.append('slug', event.slug)
-      formData.append('condition_id', state.market.condition_id)
-      formData.append('token_id', state.outcome.token_id)
-      formData.append('side', state.side)
-      formData.append('amount', state.amount)
-      formData.append('type', 'market')
       const price = state.outcome.outcome_index === 0 ? yesPrice : noPrice
-      formData.append('price', (price / 100).toString())
 
-      // Call the server action
-      const result = await storeOrderAction(formData)
+      const orderPayload = {
+        slug: event.slug,
+        condition_id: state.market.condition_id,
+        token_id: state.outcome.token_id,
+        side: state.side,
+        amount: amountNum,
+        type: 'market' as const,
+        price: price / 100,
+      }
+
+      const result = await storeOrderAction(orderPayload)
 
       if (result?.error) {
         toast.error('Trade failed', {
@@ -75,9 +78,6 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
         })
         return
       }
-
-      // Success - show appropriate toast
-      const amountNum = Number.parseFloat(state.amount)
 
       if (state.side === 'sell') {
         const sellValue = calculateSellAmount(amountNum)

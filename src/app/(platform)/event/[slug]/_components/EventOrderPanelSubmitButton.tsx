@@ -12,7 +12,7 @@ export default function EventOrderPanelSubmitButton() {
       size="lg"
       disabled={
         state.isLoading
-        || !state.amount
+        || !Number.parseFloat(state.amount)
         || !state.outcome
         || (state.side === 'sell' && Number.parseFloat(state.amount) > getUserShares())
       }
