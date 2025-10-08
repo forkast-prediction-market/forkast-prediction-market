@@ -75,7 +75,7 @@ export const AffiliateModel = {
     return { data, error }
   },
 
-  async recordReferral(args: { user_id: string, affiliate_user_id: string, source?: string }) {
+  async recordReferral(args: { user_id: string, affiliate_user_id: string }) {
     if (args.user_id === args.affiliate_user_id) {
       return { data: null, error: 'Self referrals are not allowed.' }
     }
@@ -95,8 +95,6 @@ export const AffiliateModel = {
       .upsert({
         user_id: args.user_id,
         affiliate_user_id: args.affiliate_user_id,
-        source: args.source,
-        created_at: new Date().toISOString(),
       }, { onConflict: 'user_id' })
       .select('user_id, affiliate_user_id, source, created_at')
       .single()
