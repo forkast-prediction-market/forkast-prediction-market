@@ -68,7 +68,7 @@ export const AffiliateModel = {
 
     const { data, error } = await supabaseAdmin
       .from('affiliate_referrals')
-      .select('user_id, affiliate_user_id, source, attributed_at, affiliate_user:users!affiliate_user_id(address)')
+      .select('user_id, affiliate_user_id, source, created_at, affiliate_user:users!affiliate_user_id(address)')
       .eq('user_id', userId)
       .maybeSingle()
 
@@ -96,9 +96,9 @@ export const AffiliateModel = {
         user_id: args.user_id,
         affiliate_user_id: args.affiliate_user_id,
         source: args.source,
-        attributed_at: new Date().toISOString(),
+        created_at: new Date().toISOString(),
       }, { onConflict: 'user_id' })
-      .select('user_id, affiliate_user_id, source, attributed_at')
+      .select('user_id, affiliate_user_id, source, created_at')
       .single()
 
     if (!error) {
@@ -162,11 +162,11 @@ export const AffiliateModel = {
       .from('affiliate_referrals')
       .select(`
         user_id,
-        attributed_at,
+        created_at,
         users:users!affiliate_referrals_user_id_fkey (username, address, image)
       `)
       .eq('affiliate_user_id', affiliateUserId)
-      .order('attributed_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(limit)
 
     return { data, error }

@@ -52,7 +52,7 @@ export default async function SettingsPage({ searchParams }: PageProps<'/setting
             user_id: referral.user_id as string,
             username: userInfo?.username as string | undefined,
             address: (userInfo?.address as string | undefined) ?? referral.user_id as string,
-            attributed_at: referral.attributed_at as string,
+            created_at: referral.created_at as string,
           }
         }),
       }

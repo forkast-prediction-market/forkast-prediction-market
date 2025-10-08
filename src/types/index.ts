@@ -200,7 +200,7 @@ export interface AffiliateData {
     user_id: string
     username?: string | null
     address: string
-    attributed_at: string
+    created_at: string
   }[]
 }
 
