@@ -110,9 +110,6 @@ export const auth = betterAuth({
       referred_by_user_id: {
         type: 'string',
       },
-      referred_at: {
-        type: 'date',
-      },
     },
     changeEmail: {
       enabled: true,

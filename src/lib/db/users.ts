@@ -176,8 +176,7 @@ export const UserModel = {
         created_at,
         image,
         affiliate_code,
-        referred_by_user_id,
-        referred_at
+        referred_by_user_id
       `, { count: 'exact' })
 
     if (search && search.trim()) {

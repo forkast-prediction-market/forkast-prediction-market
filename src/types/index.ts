@@ -94,7 +94,6 @@ export interface User {
   settings: UserSettings
   affiliate_code?: string | null
   referred_by_user_id?: string | null
-  referred_at?: string | null
   is_admin: boolean
 }
 

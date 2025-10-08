@@ -106,7 +106,6 @@ export const AffiliateModel = {
         .from('users')
         .update({
           referred_by_user_id: args.affiliate_user_id,
-          referred_at: new Date().toISOString(),
         })
         .eq('id', args.user_id)
         .is('referred_by_user_id', null)
