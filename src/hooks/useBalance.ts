@@ -16,7 +16,11 @@ const ERC20_ABI = [
 export function useBalance() {
   const { address, isConnected } = useAppKitAccount()
   const user = useUser()
-  const [balance, setBalance] = useState<any>(null)
+  const [balance, setBalance] = useState<any>({
+    raw: 0.00,
+    text: '0.00',
+    symbol: 'USDC',
+  })
   const [isLoadingBalance, setIsLoadingBalance] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
@@ -60,10 +64,9 @@ export function useBalance() {
         const balanceNumber = Number(balanceRaw) / (10 ** USDC_DECIMALS)
 
         const newBalance = {
-          data: {
-            balance: balanceNumber.toFixed(2),
-            symbol: 'USDC',
-          },
+          raw: balanceNumber,
+          text: balanceNumber.toFixed(2),
+          symbol: 'USDC',
         }
 
         if (active) {

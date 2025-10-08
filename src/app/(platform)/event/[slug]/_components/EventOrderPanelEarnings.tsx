@@ -27,7 +27,7 @@ export default function EventOrderPanelEarnings({ isMobile }: Props) {
             {isMobile && (
               <span className="text-2xl font-bold text-yes">
                 {state.side === 'sell'
-                  ? `$${calculateSellAmount(Number.parseFloat(state.amount)).toFixed(2)}`
+                  ? `$${calculateSellAmount().toFixed(2)}`
                   : `$${calculateWinnings(Number.parseFloat(state.amount), 0.72).toFixed(2)}`}
               </span>
             )}
@@ -46,7 +46,7 @@ export default function EventOrderPanelEarnings({ isMobile }: Props) {
         {!isMobile && (
           <div className="text-4xl font-bold text-yes">
             {state.side === 'sell'
-              ? `$${calculateSellAmount(Number.parseFloat(state.amount)).toFixed(2)}`
+              ? `$${calculateSellAmount().toFixed(2)}`
               : `$${calculateWinnings(Number.parseFloat(state.amount), 0.26).toFixed(2)}`}
           </div>
         )}

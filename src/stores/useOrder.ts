@@ -75,7 +75,7 @@ export function getAvgSellPrice() {
   return sellPrice.toString()
 }
 
-export function calculateSellAmount(sharesToSell: number) {
+export function calculateSellAmount() {
   const state = useOrder.getState()
 
   if (!state.market || !state.outcome) {
@@ -87,7 +87,7 @@ export function calculateSellAmount(sharesToSell: number) {
       ? (state.market.probability / 100) * 0.95
       : ((100 - state.market.probability) / 100) * 0.95
 
-  return sharesToSell * sellPrice
+  return Number.parseFloat(state.amount || '0') * sellPrice
 }
 
 export function getUserShares() {
@@ -130,4 +130,8 @@ export function getNoShares(outcomeId: string) {
 
   const shareKey = `${outcomeId}-no` as keyof typeof mockUser.shares
   return mockUser.shares[shareKey] || 0
+}
+
+export function useAmountAsNumber() {
+  return useOrder(state => Number.parseFloat(state.amount) || 0)
 }
