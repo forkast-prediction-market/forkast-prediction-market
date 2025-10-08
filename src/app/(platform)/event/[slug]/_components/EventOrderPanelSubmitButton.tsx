@@ -14,7 +14,7 @@ export default function EventOrderPanelSubmitButton() {
         state.isLoading
         || !state.amount
         || !state.outcome
-        || (state.activeTab === 'sell' && Number.parseFloat(state.amount) > getUserShares())
+        || (state.side === 'sell' && Number.parseFloat(state.amount) > getUserShares())
       }
     >
       {state.isLoading
@@ -26,7 +26,7 @@ export default function EventOrderPanelSubmitButton() {
           )
         : (
             <>
-              {`${state.activeTab === 'sell' ? 'Sell' : 'Buy'} ${
+              {`${state.side === 'sell' ? 'Sell' : 'Buy'} ${
                 state.outcome?.outcome_index === 1
                   ? !isBinaryMarket
                       ? 'No'

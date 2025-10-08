@@ -2,6 +2,8 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export const SettingsModel = {
   async getSettings() {
+    'use cache'
+
     const { data, error } = await supabaseAdmin
       .from('settings')
       .select('group, key, value, updated_at')

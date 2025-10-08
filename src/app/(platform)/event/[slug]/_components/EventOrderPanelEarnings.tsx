@@ -21,12 +21,12 @@ export default function EventOrderPanelEarnings({ isMobile }: Props) {
               isMobile ? 'justify-center text-lg text-foreground' : 'text-sm text-muted-foreground',
             )}
           >
-            {state.activeTab === 'sell' ? 'You\'ll receive' : 'To win'}
+            {state.side === 'sell' ? 'You\'ll receive' : 'To win'}
             {!isMobile && <BanknoteIcon className="size-4 text-yes" />}
             {isMobile && <span className="text-xl text-yes">💰</span>}
             {isMobile && (
               <span className="text-2xl font-bold text-yes">
-                {state.activeTab === 'sell'
+                {state.side === 'sell'
                   ? `$${calculateSellAmount(Number.parseFloat(state.amount)).toFixed(2)}`
                   : `$${calculateWinnings(Number.parseFloat(state.amount), 0.72).toFixed(2)}`}
               </span>
@@ -38,14 +38,14 @@ export default function EventOrderPanelEarnings({ isMobile }: Props) {
               isMobile ? 'text-center text-sm' : 'text-xs',
             )}
           >
-            {state.activeTab === 'sell'
+            {state.side === 'sell'
               ? `Avg. price ${getAvgSellPrice()}¢`
               : 'Avg. Price 72¢'}
           </div>
         </div>
         {!isMobile && (
           <div className="text-4xl font-bold text-yes">
-            {state.activeTab === 'sell'
+            {state.side === 'sell'
               ? `$${calculateSellAmount(Number.parseFloat(state.amount)).toFixed(2)}`
               : `$${calculateWinnings(Number.parseFloat(state.amount), 0.26).toFixed(2)}`}
           </div>

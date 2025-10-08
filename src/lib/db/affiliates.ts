@@ -70,6 +70,8 @@ export const AffiliateModel = {
   },
 
   async getReferral(userId: string) {
+    'use cache'
+
     const { data, error } = await supabaseAdmin
       .from('affiliate_referrals')
       .select('user_id, affiliate_user_id, source, attributed_at')

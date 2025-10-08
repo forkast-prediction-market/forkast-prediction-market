@@ -4,11 +4,11 @@ export const OrderModel = {
   async createOrder(orderData: {
     user_id: string
     condition_id: string
-    outcome_index: number
+    token_id: string
     side: 'buy' | 'sell'
     amount: number
     price?: number
-    order_type?: 'market' | 'limit'
+    type?: 'market' | 'limit'
     affiliate_user_id?: string | null
     trade_fee_bps?: number
     affiliate_share_bps?: number
@@ -20,8 +20,8 @@ export const OrderModel = {
       .insert({
         user_id: orderData.user_id,
         condition_id: orderData.condition_id,
-        outcome_index: orderData.outcome_index,
-        order_type: orderData.order_type || 'market',
+        token_id: orderData.token_id,
+        type: orderData.type || 'market',
         side: orderData.side,
         amount: orderData.amount,
         price: orderData.price,
