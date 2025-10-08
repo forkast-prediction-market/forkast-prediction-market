@@ -15,6 +15,7 @@ interface OrderState {
   isLoading: boolean
   isMobileOrderPanelOpen: boolean
   inputRef: RefObject<HTMLInputElement | null>
+  lastMouseEvent: any
 
   // Actions
   setEvent: (event: Event) => void
@@ -25,6 +26,7 @@ interface OrderState {
   setAmount: (amount: string) => void
   setIsLoading: (loading: boolean) => void
   setIsMobileOrderPanelOpen: (loading: boolean) => void
+  setLastMouseEvent: (lastMouseEvent: any) => void
 }
 
 export const useOrder = create<OrderState>()((set, _, store) => ({
@@ -36,6 +38,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   isLoading: false,
   isMobileOrderPanelOpen: false,
   inputRef: { current: null as HTMLInputElement | null },
+  lastMouseEvent: null,
 
   setEvent: (event: Event) => set({ event }),
   setMarket: (market: Market) => set({ market }),
@@ -45,6 +48,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   setAmount: (amount: string) => set({ amount }),
   setIsLoading: (loading: boolean) => set({ isLoading: loading }),
   setIsMobileOrderPanelOpen: (open: boolean) => set({ isMobileOrderPanelOpen: open }),
+  setLastMouseEvent: (lastMouseEvent: any) => set({ lastMouseEvent }),
 }))
 
 export function useYesPrice() {

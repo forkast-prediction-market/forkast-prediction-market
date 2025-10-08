@@ -1,7 +1,6 @@
 'use client'
 
 import type { Event } from '@/types'
-import confetti from 'canvas-confetti'
 import { ChevronsDownIcon, ChevronsUpIcon, DollarSignIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -11,7 +10,7 @@ import EventBookmark from '@/app/(platform)/event/[slug]/_components/EventBookma
 import { OpenCardContext } from '@/components/event/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { formatVolume } from '@/lib/utils'
+import { formatVolume, triggerConfetti } from '@/lib/utils'
 
 interface EventCardProps {
   event: Event
@@ -155,47 +154,6 @@ export default function EventCard({ event }: EventCardProps) {
     const winnings = amountNum * odds
     return winnings.toFixed(2)
   }
-
-  // Confetti effects
-  function triggerYesConfetti(event?: React.MouseEvent) {
-    let origin: { x?: number, y: number } = { y: 0.6 }
-
-    // If an event is passed, calculate the button position
-    if (event && event.currentTarget) {
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-      const x = (rect.left + rect.width / 2) / window.innerWidth
-      const y = (rect.top + rect.height / 2) / window.innerHeight
-      origin = { x, y }
-    }
-
-    confetti({
-      particleCount: 80,
-      spread: 60,
-      origin,
-      colors: ['#10b981', '#059669', '#047857', '#065f46'], // Green colors
-    })
-  }
-
-  function triggerNoConfetti(event?: React.MouseEvent) {
-    let origin: { x?: number, y: number } = { y: 0.6 }
-
-    // If an event is passed, calculate the button position
-    if (event && event.currentTarget) {
-      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect()
-      const x = (rect.left + rect.width / 2) / window.innerWidth
-      const y = (rect.top + rect.height / 2) / window.innerHeight
-      origin = { x, y }
-    }
-
-    confetti({
-      particleCount: 80,
-      spread: 60,
-      origin,
-      colors: ['#ef4444', '#dc2626', '#b91c1c', '#991b1b'], // Red colors
-    })
-  }
-
-  // Unified category icon render function - removed as avatars now replace category icons
 
   return (
     <Card
@@ -376,12 +334,11 @@ export default function EventCard({ event }: EventCardProps) {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation()
-                      // Trigger confetti based on selection
                       if (selectedOutcome.type === 'yes') {
-                        triggerYesConfetti(e)
+                        triggerConfetti('yes', e)
                       }
                       else {
-                        triggerNoConfetti(e)
+                        triggerConfetti('no', e)
                       }
                       handleConfirmTrade()
                     }}
