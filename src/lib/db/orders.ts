@@ -8,7 +8,7 @@ export const OrderModel = {
     side: 'buy' | 'sell'
     amount: number
     price?: number
-    order_type?: 'market' | 'limit'
+    type?: 'market' | 'limit'
     affiliate_user_id?: string | null
     trade_fee_bps?: number
     affiliate_share_bps?: number
@@ -21,7 +21,7 @@ export const OrderModel = {
         user_id: orderData.user_id,
         condition_id: orderData.condition_id,
         token_id: orderData.token_id,
-        order_type: orderData.order_type || 'market',
+        type: orderData.type || 'market',
         side: orderData.side,
         amount: orderData.amount,
         price: orderData.price,

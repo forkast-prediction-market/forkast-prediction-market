@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS orders
   user_id              CHAR(26)       NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   condition_id         VARCHAR(66)    NOT NULL REFERENCES conditions (id) ON DELETE CASCADE,
   outcome_index        SMALLINT       NOT NULL,
-  order_type           VARCHAR(10)    NOT NULL,                                 -- 'market', 'limit'
+  type           VARCHAR(10)    NOT NULL,                                 -- 'market', 'limit'
   side                 VARCHAR(4)     NOT NULL,                                 -- 'buy', 'sell'
   amount               DECIMAL(20, 6) NOT NULL,                                 -- Amount to buy/sell
   price                DECIMAL(4, 4),                                           -- Limit price (0.0001 to 0.9999)
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS orders
   updated_at           TIMESTAMPTZ    NOT NULL DEFAULT NOW(),
 
   -- Constraints
-  CHECK (order_type IN ('market', 'limit')),
+  CHECK (type IN ('market', 'limit')),
   CHECK (side IN ('buy', 'sell')),
   CHECK (status IN ('pending', 'filled', 'cancelled')),
   CHECK (amount > 0),
