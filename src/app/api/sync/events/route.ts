@@ -124,12 +124,20 @@ async function getLastUpdatedAt() {
 }
 
 async function fetchNewMarkets() {
+  const lastConditionId = await getLastProcessedConditionId()
+  if (lastConditionId) {
+    console.log(`⏱️ Resuming sync after condition: ${lastConditionId}`)
+  }
+  else {
+    console.log('📥 No existing markets found, starting full sync')
+  }
+
   console.log(`🔄 Fetching data from Activity subgraph...`)
-  const activityConditions = await fetchFromActivitySubgraph()
+  const activityConditions = await fetchFromActivitySubgraph(lastConditionId ?? undefined)
   console.log(`📊 Activity subgraph: Found ${activityConditions.length} conditions`)
 
   console.log(`🔄 Fetching data from PnL subgraph...`)
-  const pnlConditions = await fetchFromPnLSubgraph()
+  const pnlConditions = await fetchFromPnLSubgraph(lastConditionId ?? undefined)
   console.log(`📊 PnL subgraph: Found ${pnlConditions.length} conditions`)
 
   const mergedConditions = mergeConditionsData(activityConditions, pnlConditions)
@@ -151,20 +159,35 @@ async function fetchNewMarkets() {
   return newConditions
 }
 
-async function fetchFromActivitySubgraph() {
-  const first = 1000
+async function getLastProcessedConditionId(): Promise<string | null> {
+  const { data, error } = await supabaseAdmin
+    .from('markets')
+    .select('condition_id, created_at')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error && error.code !== 'PGRST116') {
+    throw new Error(`Failed to get last processed condition: ${error.message}`)
+  }
+
+  return data?.condition_id ?? null
+}
+
+async function fetchFromActivitySubgraph(afterConditionId?: string) {
+  const first = 250
   let allConditions: any[] = []
-  let skip = 0
+  let cursor = afterConditionId
   let hasMore = true
 
   while (hasMore) {
+    const whereClause = cursor ? `, where: { id_gt: ${JSON.stringify(cursor)} }` : ''
     const query = `
       {
         conditions(
           first: ${first},
-          skip: ${skip},
           orderBy: id,
-          orderDirection: asc
+          orderDirection: asc${whereClause}
         ) {
           id
           arweaveHash
@@ -196,7 +219,7 @@ async function fetchFromActivitySubgraph() {
     }
     else {
       allConditions = allConditions.concat(conditions)
-      skip += first
+      cursor = conditions[conditions.length - 1].id
       if (conditions.length < first) {
         hasMore = false
       }
@@ -206,20 +229,20 @@ async function fetchFromActivitySubgraph() {
   return allConditions
 }
 
-async function fetchFromPnLSubgraph() {
+async function fetchFromPnLSubgraph(afterConditionId?: string) {
   let allConditions: any[] = []
-  let skip = 0
-  const first = 1000
+  const first = 250
   let hasMore = true
+  let cursor = afterConditionId
 
   while (hasMore) {
+    const whereClause = cursor ? `, where: { id_gt: ${JSON.stringify(cursor)} }` : ''
     const query = `
       {
         conditions(
           first: ${first},
-          skip: ${skip},
           orderBy: id,
-          orderDirection: asc
+          orderDirection: asc${whereClause}
         ) {
           id
           oracle
@@ -254,7 +277,7 @@ async function fetchFromPnLSubgraph() {
     }
     else {
       allConditions = allConditions.concat(conditions)
-      skip += first
+      cursor = conditions[conditions.length - 1].id
       if (conditions.length < first) {
         hasMore = false
       }
