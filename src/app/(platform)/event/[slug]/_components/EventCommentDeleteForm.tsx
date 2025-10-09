@@ -8,13 +8,14 @@ import { Button } from '@/components/ui/button'
 
 interface EventCommentDeleteFormProps {
   commentId: string
+  eventId: string
   onDeleted: () => void
 }
 
-export default function EventCommentDeleteForm({ commentId, onDeleted }: EventCommentDeleteFormProps) {
+export default function EventCommentDeleteForm({ commentId, eventId, onDeleted }: EventCommentDeleteFormProps) {
   const [state, formAction, pending] = useActionState(
     async (_: any, __: FormData) => {
-      const res = await deleteCommentAction(commentId)
+      const res = await deleteCommentAction(eventId, commentId)
       if (!res.error) {
         onDeleted()
       }

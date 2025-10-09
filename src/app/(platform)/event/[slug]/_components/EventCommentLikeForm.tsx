@@ -12,18 +12,20 @@ import { cn } from '@/lib/utils'
 interface EventCommentLikeFormProps {
   comment: Comment
   user: User | null
+  eventId: string
   onLikeToggled: (newLikesCount: number, newUserHasLiked: boolean) => void
 }
 
 export default function EventCommentLikeForm({
   comment,
   user,
+  eventId,
   onLikeToggled,
 }: EventCommentLikeFormProps) {
   const { open } = useAppKit()
   const [_, formAction, isPending] = useActionState(
     async (_: any, __: FormData) => {
-      const res = await likeCommentAction(comment.id)
+      const res = await likeCommentAction(eventId, comment.id)
       if (res.data) {
         onLikeToggled(res.data.likes_count, res.data.user_has_liked)
       }

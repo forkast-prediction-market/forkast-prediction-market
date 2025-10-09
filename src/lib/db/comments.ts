@@ -33,13 +33,13 @@ export const CommentModel = {
 
   async getCommentReplies(commentId: string) {
     'use cache'
-    cacheTag(cacheTags.commentReplies(commentId))
 
     const { data, error } = await supabaseAdmin
       .from('comments')
       .select(`
         id,
         content,
+        event_id,
         user_id,
         likes_count,
         replies_count,
@@ -49,6 +49,10 @@ export const CommentModel = {
       .eq('parent_comment_id', commentId)
       .eq('is_deleted', false)
       .order('created_at', { ascending: true })
+
+    if (data) {
+      cacheTag(cacheTags.eventComments(data[0].event_id))
+    }
 
     return { data, error }
   },
@@ -73,40 +77,39 @@ export const CommentModel = {
       .single()
 
     revalidateTag(cacheTags.eventComments(eventId))
-    revalidateTag(cacheTags.commentReplies(parentCommentId))
 
     return { data, error }
   },
 
-  async delete(userId: string, commentId: string) {
+  async delete(args: { eventId: string, userId: string, commentId: string }) {
     const { data, error } = await supabaseAdmin
       .from('comments')
       .update({
         is_deleted: true,
         updated_at: new Date().toISOString(),
       })
-      .eq('id', commentId)
-      .eq('user_id', userId)
+      .eq('id', args.commentId)
+      .eq('user_id', args.userId)
 
-    revalidateTag(cacheTags.commentReplies(commentId))
+    revalidateTag(cacheTags.eventComments(args.eventId))
 
     return { data, error }
   },
 
-  async toggleLike(userId: string, commentId: string) {
+  async toggleLike(args: { eventId: string, userId: string, commentId: string }) {
     const { data: existingLike } = await supabaseAdmin
       .from('comment_likes')
       .select('comment_id')
-      .eq('comment_id', commentId)
-      .eq('user_id', userId)
+      .eq('comment_id', args.commentId)
+      .eq('user_id', args.userId)
       .single()
 
     if (existingLike) {
       const { error: deleteError } = await supabaseAdmin
         .from('comment_likes')
         .delete()
-        .eq('comment_id', commentId)
-        .eq('user_id', userId)
+        .eq('comment_id', args.commentId)
+        .eq('user_id', args.userId)
 
       if (deleteError) {
         return { error: deleteError }
@@ -115,15 +118,15 @@ export const CommentModel = {
       const { data: comment, error: fetchError } = await supabaseAdmin
         .from('comments')
         .select('likes_count')
-        .eq('id', commentId)
+        .eq('id', args.commentId)
         .single()
 
       if (fetchError) {
         return { error: fetchError }
       }
 
-      revalidateTag(cacheTags.commentReplies(commentId))
-      revalidateTag(cacheTags.commentLikes(userId))
+      revalidateTag(cacheTags.eventComments(args.eventId))
+      revalidateTag(cacheTags.commentLikes(args.userId))
 
       return {
         data: {
@@ -137,8 +140,8 @@ export const CommentModel = {
       const { error: insertError } = await supabaseAdmin
         .from('comment_likes')
         .insert({
-          comment_id: commentId,
-          user_id: userId,
+          comment_id: args.commentId,
+          user_id: args.userId,
         })
 
       if (insertError) {
@@ -148,15 +151,15 @@ export const CommentModel = {
       const { data: comment, error: fetchError } = await supabaseAdmin
         .from('comments')
         .select('likes_count')
-        .eq('id', commentId)
+        .eq('id', args.commentId)
         .single()
 
       if (fetchError) {
         return { error: fetchError }
       }
 
-      revalidateTag(cacheTags.commentReplies(commentId))
-      revalidateTag(cacheTags.commentLikes(userId))
+      revalidateTag(cacheTags.eventComments(args.eventId))
+      revalidateTag(cacheTags.commentLikes(args.userId))
 
       return {
         data: {
