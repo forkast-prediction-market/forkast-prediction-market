@@ -1,7 +1,6 @@
 'use client'
 
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
-import { useQueryClient } from '@tanstack/react-query'
 import { BookmarkIcon } from 'lucide-react'
 import { useCallback, useState, useTransition } from 'react'
 import { toggleBookmarkAction } from '@/app/(platform)/event/[slug]/actions/toggle-bookmark'
@@ -20,7 +19,6 @@ export default function EventBookmark({ event }: Props) {
   const { isConnected } = useAppKitAccount()
   const [isBookmarked, setIsBookmarked] = useState(event.is_bookmarked)
   const [isPending, startTransition] = useTransition()
-  const queryClient = useQueryClient()
 
   const handleBookmark = useCallback(() => {
     const previousState = isBookmarked
@@ -32,17 +30,12 @@ export default function EventBookmark({ event }: Props) {
         if (response.error) {
           setIsBookmarked(previousState)
         }
-        else {
-          queueMicrotask(() => queryClient.invalidateQueries({
-            predicate: query => query.queryKey[0] === 'events',
-          }))
-        }
       }
       catch {
         setIsBookmarked(previousState)
       }
     })
-  }, [isBookmarked, event.id, queryClient])
+  }, [isBookmarked, event.id])
 
   return (
     <Button
