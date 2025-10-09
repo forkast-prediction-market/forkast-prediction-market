@@ -9,6 +9,31 @@ const IRYS_GATEWAY = process.env.IRYS_GATEWAY || 'https://gateway.irys.xyz'
 const SYNC_TIME_LIMIT_MS = 250_000
 const PNL_PAGE_SIZE = 200
 
+interface SyncCursor {
+  conditionId: string
+  creationTimestamp: number
+}
+
+interface SubgraphCondition {
+  id: string
+  oracle: string | null
+  questionId: string | null
+  resolved: boolean
+  arweaveHash: string | null
+  creator: string | null
+  owner?: string | null
+  creationTimestamp: string
+}
+
+interface SyncStats {
+  fetchedCount: number
+  processedCount: number
+  skippedExistingCount: number
+  skippedCreatorCount: number
+  errors: { conditionId: string, error: string }[]
+  timeLimitReached: boolean
+}
+
 function getAllowedCreators(): string[] {
   const fixedCreators = [
     '0xa4221e79Aa4c29c8AB2f76be76a4cc97579e542d', // Polymarket cloned markets on Amoy
@@ -96,7 +121,7 @@ export async function GET(request: Request) {
 
 async function getLastUpdatedAt() {
   const { data, error } = await supabaseAdmin
-    .from('sync_status')
+    .from('subgraph_syncs')
     .select('updated_at')
     .eq('service_name', 'market_sync')
     .eq('subgraph_name', 'pnl')
@@ -107,31 +132,6 @@ async function getLastUpdatedAt() {
   }
 
   return data?.updated_at || 0
-}
-
-interface SyncCursor {
-  conditionId: string
-  creationTimestamp: number
-}
-
-interface SubgraphCondition {
-  id: string
-  oracle: string | null
-  questionId: string | null
-  resolved: boolean
-  arweaveHash: string | null
-  creator: string | null
-  owner?: string | null
-  creationTimestamp: string
-}
-
-interface SyncStats {
-  fetchedCount: number
-  processedCount: number
-  skippedExistingCount: number
-  skippedCreatorCount: number
-  errors: { conditionId: string, error: string }[]
-  timeLimitReached: boolean
 }
 
 async function syncMarkets(): Promise<SyncStats> {
@@ -642,7 +642,7 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
 
 async function checkSyncRunning(): Promise<boolean> {
   const { data, error } = await supabaseAdmin
-    .from('sync_status')
+    .from('subgraph_syncs')
     .select('status')
     .eq('service_name', 'market_sync')
     .eq('subgraph_name', 'pnl')
@@ -676,7 +676,7 @@ async function updateSyncStatus(
   }
 
   const { error } = await supabaseAdmin
-    .from('sync_status')
+    .from('subgraph_syncs')
     .upsert(updateData, {
       onConflict: 'service_name,subgraph_name',
     })
