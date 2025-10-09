@@ -3,7 +3,7 @@ BEGIN;
 -- ============================================================
 -- EVENTS & MARKETS - Complete Domain Implementation
 -- ============================================================
--- Tables: events, event_tags, markets, outcomes, sync_status, tags, conditions
+-- Tables: events, event_tags, markets, outcomes, subgraph_syncs, tags, conditions
 -- Views: v_tags_with_counts, v_markets_full
 -- Dependencies: None (self-contained domain)
 -- Business Logic: Event-market relationships, trading mechanics, tag categorization
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS event_tags
 (
   event_id CHAR(26) NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
   tag_id   SMALLINT NOT NULL REFERENCES tags (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  UNIQUE (event_id, tag_id)
+  PRIMARY KEY (event_id, tag_id)
 );
 
 -- Markets table - Core trading markets (belongs to events)
@@ -125,8 +125,8 @@ CREATE TABLE IF NOT EXISTS outcomes
   CHECK (payout_value IS NULL OR payout_value >= 0)
 );
 
--- Sync status table - Blockchain synchronization tracking
-CREATE TABLE IF NOT EXISTS sync_status
+-- subgraph_syncs table - Blockchain synchronization tracking
+CREATE TABLE IF NOT EXISTS subgraph_syncs
 (
   id              SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   service_name    VARCHAR(50) NOT NULL,                -- 'activity_sync', 'pnl_sync', etc.
@@ -159,7 +159,7 @@ ALTER TABLE markets
   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE outcomes
   ENABLE ROW LEVEL SECURITY;
-ALTER TABLE sync_status
+ALTER TABLE subgraph_syncs
   ENABLE ROW LEVEL SECURITY;
 
 -- ===========================================
@@ -244,9 +244,9 @@ $$
   BEGIN
     IF NOT EXISTS (SELECT 1
                    FROM pg_policies
-                   WHERE policyname = 'service_role_all_sync_status'
-                     AND tablename = 'sync_status') THEN
-      CREATE POLICY "service_role_all_sync_status" ON sync_status FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
+                   WHERE policyname = 'service_role_all_subgraph_syncs'
+                     AND tablename = 'subgraph_syncs') THEN
+      CREATE POLICY "service_role_all_subgraph_syncs" ON subgraph_syncs FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
     END IF;
   END
 $$;
@@ -395,10 +395,10 @@ $$;
 DO
 $$
   BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_sync_status_updated_at') THEN
-      CREATE TRIGGER update_sync_status_updated_at
+    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_subgraph_syncs_updated_at') THEN
+      CREATE TRIGGER update_subgraph_syncs_updated_at
         BEFORE UPDATE
-        ON sync_status
+        ON subgraph_syncs
         FOR EACH ROW
       EXECUTE FUNCTION update_updated_at_column();
     END IF;
@@ -463,47 +463,5 @@ VALUES ('Politics', 'politics', TRUE, 1),
        ('Elections', 'elections', TRUE, 10),
        ('Mentions', 'mentions', TRUE, 11)
 ON CONFLICT (slug) DO NOTHING;
-
--- Insert sub-tags of Sports
-INSERT INTO tags (name,
-                  slug,
-                  is_main_category,
-                  parent_tag_id,
-                  display_order)
-VALUES ('Tennis',
-        'tennis',
-        FALSE,
-        (SELECT id FROM tags WHERE slug = 'sports'),
-        1),
-       ('Football',
-        'football',
-        FALSE,
-        (SELECT id FROM tags WHERE slug = 'sports'),
-        2),
-       ('Basketball',
-        'basketball',
-        FALSE,
-        (SELECT id FROM tags WHERE slug = 'sports'),
-        3),
-       ('Baseball',
-        'baseball',
-        FALSE,
-        (SELECT id FROM tags WHERE slug = 'sports'),
-        4)
-ON CONFLICT (slug) DO NOTHING;
-
-INSERT INTO sync_status (service_name,
-                         subgraph_name,
-                         status)
-VALUES ('activity_sync', 'activity', 'idle'),
-       ('pnl_sync', 'pnl', 'idle'),
-       ('oi_sync', 'oi', 'idle'),
-       ('sports_sync', 'sports', 'idle'),
-       ('fpmm_sync', 'fpmm', 'idle'),
-       ('orderbook_sync', 'orderbook', 'idle'),
-       ('wallet_sync', 'wallet', 'idle'),
-       ('resolution_sync', 'resolution', 'idle'),
-       ('market_sync', 'activity', 'idle')
-ON CONFLICT (service_name, subgraph_name) DO NOTHING;
 
 COMMIT;
