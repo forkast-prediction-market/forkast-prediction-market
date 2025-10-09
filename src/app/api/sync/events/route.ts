@@ -114,6 +114,17 @@ interface SyncCursor {
   creationTimestamp: number
 }
 
+interface SubgraphCondition {
+  id: string
+  oracle: string | null
+  questionId: string | null
+  resolved: boolean
+  arweaveHash: string | null
+  creator: string | null
+  owner?: string | null
+  creationTimestamp: string
+}
+
 interface SyncStats {
   fetchedCount: number
   processedCount: number
@@ -283,7 +294,7 @@ async function getLastProcessedConditionCursor(): Promise<SyncCursor | null> {
   }
 }
 
-async function fetchPnLConditionsPage(afterCursor: SyncCursor | null) {
+async function fetchPnLConditionsPage(afterCursor: SyncCursor | null): Promise<{ conditions: SubgraphCondition[] }> {
   const cursorTimestamp = afterCursor?.creationTimestamp
   const cursorConditionId = afterCursor?.conditionId
 
@@ -329,9 +340,9 @@ async function fetchPnLConditionsPage(afterCursor: SyncCursor | null) {
     throw new Error(`PnL subgraph query error: ${result.errors[0].message}`)
   }
 
-  const rawConditions = result.data.conditions || []
+  const rawConditions: SubgraphCondition[] = result.data.conditions || []
 
-  const normalizedConditions = rawConditions.map((condition: any) => {
+  const normalizedConditions: SubgraphCondition[] = rawConditions.map((condition) => {
     const owner = condition.owner ?? condition.creator
     return {
       ...condition,
@@ -342,12 +353,12 @@ async function fetchPnLConditionsPage(afterCursor: SyncCursor | null) {
   return { conditions: normalizedConditions }
 }
 
-async function processMarket(market: any) {
+async function processMarket(market: SubgraphCondition) {
   await processCondition(market)
   const metadata = await fetchMetadata(market.arweaveHash)
   const eventId = await processEvent(
     metadata.event,
-    market.creator,
+    market.creator!,
   )
   await processMarketData(market, metadata, eventId)
 }
@@ -369,7 +380,7 @@ async function fetchMetadata(arweaveHash: string) {
   return metadata
 }
 
-async function processCondition(market: any) {
+async function processCondition(market: SubgraphCondition) {
   const { data: existingCondition } = await supabaseAdmin
     .from('conditions')
     .select('id')
@@ -412,7 +423,7 @@ async function processCondition(market: any) {
     question_id: market.questionId,
     resolved: market.resolved,
     arweave_hash: market.arweaveHash,
-    creator: market.creator,
+    creator: market.creator!,
     created_at: createdAtIso,
   })
 
@@ -476,7 +487,7 @@ async function processEvent(eventData: any, creatorAddress: string) {
   return newEvent.id
 }
 
-async function processMarketData(market: any, metadata: any, eventId: string) {
+async function processMarketData(market: SubgraphCondition, metadata: any, eventId: string) {
   if (!eventId) {
     throw new Error(`Invalid eventId: ${eventId}. Event must be created first.`)
   }
