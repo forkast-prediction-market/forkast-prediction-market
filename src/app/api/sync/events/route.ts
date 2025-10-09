@@ -355,6 +355,9 @@ async function fetchPnLConditionsPage(afterCursor: SyncCursor | null): Promise<{
 
 async function processMarket(market: SubgraphCondition) {
   await processCondition(market)
+  if (!market.arweaveHash) {
+    throw new Error(`Market ${market.id} missing required arweaveHash field`)
+  }
   const metadata = await fetchMetadata(market.arweaveHash)
   const eventId = await processEvent(
     metadata.event,
