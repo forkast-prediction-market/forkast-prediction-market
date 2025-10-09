@@ -50,7 +50,7 @@ export const CommentModel = {
       .eq('is_deleted', false)
       .order('created_at', { ascending: true })
 
-    if (data) {
+    if (data && data.length > 0) {
       cacheTag(cacheTags.eventComments(data[0].event_id))
     }
 
