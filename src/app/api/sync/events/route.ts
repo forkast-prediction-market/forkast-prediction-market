@@ -3,7 +3,6 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export const maxDuration = 300 // This function can run for a maximum of 300 seconds
 
-const ACTIVITY_SUBGRAPH_URL = process.env.ACTIVITY_SUBGRAPH_URL!
 const PNL_SUBGRAPH_URL = process.env.PNL_SUBGRAPH_URL!
 const MARKET_CREATORS_ADDRESS = process.env.MARKET_CREATORS_ADDRESS
 const IRYS_GATEWAY = process.env.IRYS_GATEWAY || 'https://gateway.irys.xyz'
@@ -114,7 +113,7 @@ async function getLastUpdatedAt() {
     .from('sync_status')
     .select('updated_at')
     .eq('service_name', 'market_sync')
-    .eq('subgraph_name', 'activity')
+    .eq('subgraph_name', 'pnl')
     .maybeSingle()
 
   if (error && error.code !== 'PGRST116') {
@@ -140,13 +139,6 @@ async function fetchNewMarkets() {
     console.log('📥 No existing markets found, starting full sync')
   }
 
-  console.log(`🔄 Fetching data from Activity subgraph...`)
-  const activityConditions = await fetchFromActivitySubgraph(
-    lastCursor?.creationTimestamp,
-    syncStartedAt,
-  )
-  console.log(`📊 Activity subgraph: Found ${activityConditions.length} conditions`)
-
   console.log(`🔄 Fetching data from PnL subgraph...`)
   const pnlConditions = await fetchFromPnLSubgraph(
     lastCursor?.creationTimestamp,
@@ -154,18 +146,15 @@ async function fetchNewMarkets() {
   )
   console.log(`📊 PnL subgraph: Found ${pnlConditions.length} conditions`)
 
-  const mergedConditions = mergeConditionsData(activityConditions, pnlConditions)
-  console.log(`🎯 Total merged conditions: ${mergedConditions.length}`)
-
   const allowedCreators = getAllowedCreators()
-  const filteredConditions = mergedConditions.filter((condition) => {
+  const filteredConditions = pnlConditions.filter((condition) => {
     const isAllowed = allowedCreators.includes(condition.creator?.toLowerCase())
     if (!isAllowed) {
       console.log(`🚫 Skipping market ${condition.id} - creator ${condition.creator} not in allowed list`)
     }
     return isAllowed
   })
-  console.log(`🔒 Filtered by creators: ${mergedConditions.length} → ${filteredConditions.length}`)
+  console.log(`🔒 Filtered by creators: ${pnlConditions.length} → ${filteredConditions.length}`)
 
   const newConditions = await filterExistingConditions(filteredConditions)
   console.log(`🆕 New conditions to process: ${newConditions.length}`)
@@ -198,71 +187,6 @@ async function getLastProcessedConditionCursor(): Promise<SyncCursor | null> {
   }
 }
 
-async function fetchFromActivitySubgraph(afterCreationTimestamp: number | undefined, syncStartedAt: number) {
-  const first = 1000
-  let allConditions: any[] = []
-  let cursor = afterCreationTimestamp !== undefined ? afterCreationTimestamp.toString() : undefined
-  let hasMore = true
-
-  while (hasMore) {
-    if (Date.now() - syncStartedAt >= SYNC_TIME_LIMIT_MS) {
-      console.log('⏹️ Time limit reached while fetching Activity subgraph data, stopping pagination')
-      break
-    }
-
-    const whereClause = cursor ? `, where: { creationTimestamp_gt: ${JSON.stringify(cursor)} }` : ''
-    const query = `
-      {
-        conditions(
-          first: ${first},
-          orderBy: creationTimestamp,
-          orderDirection: asc${whereClause}
-        ) {
-          id
-          arweaveHash
-          creator
-          creationTimestamp
-        }
-      }
-    `
-
-    const response = await fetch(ACTIVITY_SUBGRAPH_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Activity subgraph request failed: ${response.statusText}`)
-    }
-
-    const result = await response.json()
-
-    if (result.errors) {
-      throw new Error(`Activity subgraph query error: ${result.errors[0].message}`)
-    }
-
-    const conditions = result.data.conditions || []
-
-    if (conditions.length === 0) {
-      hasMore = false
-    }
-    else {
-      allConditions = allConditions.concat(conditions)
-      const lastCondition = conditions[conditions.length - 1]
-      if (!lastCondition?.creationTimestamp) {
-        throw new Error('Activity subgraph response missing creationTimestamp field')
-      }
-      cursor = lastCondition.creationTimestamp.toString()
-      if (conditions.length < first) {
-        hasMore = false
-      }
-    }
-  }
-
-  return allConditions
-}
-
 async function fetchFromPnLSubgraph(afterCreationTimestamp: number | undefined, syncStartedAt: number) {
   let allConditions: any[] = []
   const first = 1000
@@ -289,6 +213,7 @@ async function fetchFromPnLSubgraph(afterCreationTimestamp: number | undefined, 
           resolved
           arweaveHash
           creator
+          owner
           creationTimestamp
         }
       }
@@ -310,19 +235,27 @@ async function fetchFromPnLSubgraph(afterCreationTimestamp: number | undefined, 
       throw new Error(`PnL subgraph query error: ${result.errors[0].message}`)
     }
 
-    const conditions = result.data.conditions || []
+    const rawConditions = result.data.conditions || []
 
-    if (conditions.length === 0) {
+    if (rawConditions.length === 0) {
       hasMore = false
     }
     else {
-      allConditions = allConditions.concat(conditions)
-      const lastCondition = conditions[conditions.length - 1]
+      const normalizedConditions = rawConditions.map((condition: any) => {
+        const creator = condition.owner ?? condition.creator
+        return {
+          ...condition,
+          creator,
+        }
+      })
+
+      allConditions = allConditions.concat(normalizedConditions)
+      const lastCondition = rawConditions[rawConditions.length - 1]
       if (!lastCondition?.creationTimestamp) {
         throw new Error('PnL subgraph response missing creationTimestamp field')
       }
       cursor = lastCondition.creationTimestamp.toString()
-      if (conditions.length < first) {
+      if (rawConditions.length < first) {
         hasMore = false
       }
     }
@@ -651,7 +584,7 @@ async function checkSyncRunning(): Promise<boolean> {
     .from('sync_status')
     .select('status')
     .eq('service_name', 'market_sync')
-    .eq('subgraph_name', 'activity')
+    .eq('subgraph_name', 'pnl')
     .lt('updated_at', new Date(Date.now() - 15 * 60 * 1000).toISOString())
     .maybeSingle()
 
@@ -669,7 +602,7 @@ async function updateSyncStatus(
 ) {
   const updateData: any = {
     service_name: 'market_sync',
-    subgraph_name: 'activity',
+    subgraph_name: 'pnl',
     status,
   }
 
@@ -690,36 +623,4 @@ async function updateSyncStatus(
   if (error) {
     console.error(`Failed to update sync status to ${status}:`, error)
   }
-}
-
-function mergeConditionsData(activityConditions: any[], pnlConditions: any[]) {
-  const merged: any[] = []
-  const activityMap = new Map<string, any>()
-
-  activityConditions.forEach(condition => activityMap.set(condition.id, condition))
-
-  pnlConditions.forEach((pnlCondition) => {
-    const activityCondition = activityMap.get(pnlCondition.id)
-    if (!activityCondition) {
-      console.log(`⚠️ Skipping condition ${pnlCondition.id} - missing required fields from Activity subgraph`)
-      return
-    }
-
-    if (!pnlCondition.creationTimestamp) {
-      console.log(`⚠️ Skipping condition ${pnlCondition.id} - missing creationTimestamp in PnL subgraph data`)
-      return
-    }
-
-    merged.push({
-      id: pnlCondition.id,
-      creator: activityCondition.creator,
-      arweaveHash: pnlCondition.arweaveHash,
-      oracle: pnlCondition.oracle,
-      questionId: pnlCondition.questionId,
-      resolved: pnlCondition.resolved,
-      creationTimestamp: pnlCondition.creationTimestamp,
-    })
-  })
-
-  return merged
 }
