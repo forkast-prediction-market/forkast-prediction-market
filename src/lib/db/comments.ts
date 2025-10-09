@@ -1,7 +1,12 @@
+import { unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'
+import { cacheTags } from '@/lib/cache-tags'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const CommentModel = {
   async getEventComments(eventId: string, limit: number = 20, offset: number = 0) {
+    'use cache'
+    cacheTag(cacheTags.eventComments(eventId))
+
     const { data, error } = await supabaseAdmin
       .from('v_comments_with_user')
       .select('*')
@@ -14,6 +19,9 @@ export const CommentModel = {
   },
 
   async getCommentsIdsLikedByUser(userId: string, ids: string[]) {
+    'use cache'
+    cacheTag(cacheTags.commentLikes(userId))
+
     const { data, error } = await supabaseAdmin
       .from('comment_likes')
       .select('comment_id')
@@ -24,6 +32,9 @@ export const CommentModel = {
   },
 
   async getCommentReplies(commentId: string) {
+    'use cache'
+    cacheTag(cacheTags.commentReplies(commentId))
+
     const { data, error } = await supabaseAdmin
       .from('comments')
       .select(`
@@ -61,6 +72,9 @@ export const CommentModel = {
       `)
       .single()
 
+    revalidateTag(cacheTags.eventComments(eventId))
+    revalidateTag(cacheTags.commentReplies(parentCommentId))
+
     return { data, error }
   },
 
@@ -73,6 +87,8 @@ export const CommentModel = {
       })
       .eq('id', commentId)
       .eq('user_id', userId)
+
+    revalidateTag(cacheTags.commentReplies(commentId))
 
     return { data, error }
   },
@@ -106,6 +122,9 @@ export const CommentModel = {
         return { error: fetchError }
       }
 
+      revalidateTag(cacheTags.commentReplies(commentId))
+      revalidateTag(cacheTags.commentLikes(userId))
+
       return {
         data: {
           likes_count: comment.likes_count,
@@ -135,6 +154,9 @@ export const CommentModel = {
       if (fetchError) {
         return { error: fetchError }
       }
+
+      revalidateTag(cacheTags.commentReplies(commentId))
+      revalidateTag(cacheTags.commentLikes(userId))
 
       return {
         data: {

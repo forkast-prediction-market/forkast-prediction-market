@@ -155,6 +155,8 @@ export const UserModel = {
     sortBy?: 'username' | 'email' | 'address' | 'created_at'
     sortOrder?: 'asc' | 'desc'
   } = {}) {
+    'use cache'
+
     const {
       limit = 100,
       offset = 0,

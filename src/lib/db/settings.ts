@@ -1,8 +1,11 @@
+import { unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'
+import { cacheTags } from '@/lib/cache-tags'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const SettingsModel = {
   async getSettings() {
     'use cache'
+    cacheTag(cacheTags.settings)
 
     const { data, error } = await supabaseAdmin
       .from('settings')
@@ -36,6 +39,8 @@ export const SettingsModel = {
     if (error) {
       return { data: null, error }
     }
+
+    revalidateTag(cacheTags.settings)
 
     return { data, error: null }
   },

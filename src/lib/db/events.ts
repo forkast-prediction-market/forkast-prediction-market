@@ -1,4 +1,6 @@
 import type { Event, Tag } from '@/types'
+import { unstable_cacheTag as cacheTag } from 'next/cache'
+import { cacheTags } from '@/lib/cache-tags'
 import { getSupabaseImageUrl, supabaseAdmin } from '@/lib/supabase'
 
 const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
@@ -19,6 +21,9 @@ export const EventModel = {
     bookmarked = false,
     offset = 0,
   }: ListEventsProps) {
+    'use cache'
+    cacheTag(cacheTags.events(userId))
+
     const marketsSelect = `
       markets!inner(
         condition_id,
@@ -101,6 +106,8 @@ export const EventModel = {
   },
 
   async getIdBySlug(slug: string) {
+    'use cache'
+
     const { data, error } = await supabaseAdmin
       .from('events')
       .select('id')
@@ -111,6 +118,8 @@ export const EventModel = {
   },
 
   async getEventTitleBySlug(slug: string) {
+    'use cache'
+
     const { data, error } = await supabaseAdmin
       .from('events')
       .select('title')
@@ -121,6 +130,8 @@ export const EventModel = {
   },
 
   async getEventBySlug(slug: string, userId: string = '') {
+    'use cache'
+
     const { data, error } = await supabaseAdmin
       .from('events')
       .select(`
@@ -158,6 +169,8 @@ export const EventModel = {
     }
 
     const event = eventResource(data, userId)
+
+    cacheTag(cacheTags.event(`${event.id}:${userId}`))
 
     return { data: event, error }
   },
