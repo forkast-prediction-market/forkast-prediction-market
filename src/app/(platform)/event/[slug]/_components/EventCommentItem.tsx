@@ -116,6 +116,7 @@ export default function EventCommentItem({
             <EventCommentLikeForm
               comment={comment}
               user={user}
+              eventId={eventId}
               onLikeToggled={handleLikeToggle}
             />
           </div>
@@ -133,6 +134,7 @@ export default function EventCommentItem({
             </DropdownMenuTrigger>
             <EventCommentMenu
               comment={comment}
+              eventId={eventId}
               onDelete={handleDelete}
             />
           </DropdownMenu>

@@ -27,7 +27,7 @@ export default async function SettingsPage({ searchParams }: PageProps<'/setting
 
   const tradeFeeBps = Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '100', 10)
   const affiliateShareBps = Number.parseInt(affiliateSettings?.affiliate_share_bps?.value || '5000', 10)
-  const commissionPercent = Number((tradeFeeBps / 100) * (affiliateShareBps / 10000))
+  const commissionPercent = Number(tradeFeeBps * affiliateShareBps) / 1000000
 
   function resolveBaseUrl() {
     const raw = process.env.NEXT_PUBLIC_SITE_URL!

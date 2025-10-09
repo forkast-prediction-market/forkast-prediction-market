@@ -1,3 +1,5 @@
+import { revalidateTag } from 'next/cache'
+import { cacheTags } from '@/lib/cache-tags'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const BookmarkModel = {
@@ -26,6 +28,9 @@ export const BookmarkModel = {
         return { data: null, error: 'Could not delete bookmark.' }
       }
 
+      revalidateTag(cacheTags.events(userId))
+      revalidateTag(cacheTags.event(`${eventId}:${userId}`))
+
       return { data: null, error: null }
     }
     else {
@@ -38,6 +43,9 @@ export const BookmarkModel = {
         console.error('Could not insert bookmark.', error)
         return { data: null, error: 'Could not insert bookmark.' }
       }
+
+      revalidateTag(cacheTags.events(userId))
+      revalidateTag(cacheTags.event(`${eventId}:${userId}`))
 
       return { data: null, error: null }
     }

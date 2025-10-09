@@ -54,6 +54,8 @@ export const AffiliateModel = {
   },
 
   async getAffiliateByCode(code: string) {
+    'use cache'
+
     const { data, error } = await supabaseAdmin
       .from('users')
       .select('id, affiliate_code, username, address, image')
@@ -113,6 +115,8 @@ export const AffiliateModel = {
   },
 
   async getUserAffiliateStats(userId: string) {
+    'use cache'
+
     const { data, error } = await supabaseAdmin.rpc('get_affiliate_stats', {
       target_user_id: userId,
     })
@@ -136,12 +140,16 @@ export const AffiliateModel = {
   },
 
   async listAffiliateOverview() {
+    'use cache'
+
     const { data, error } = await supabaseAdmin.rpc('get_affiliate_overview')
 
     return { data, error }
   },
 
   async getAffiliateProfiles(userIds: string[]) {
+    'use cache'
+
     if (!userIds.length) {
       return { data: [] as any[], error: null }
     }
@@ -155,6 +163,8 @@ export const AffiliateModel = {
   },
 
   async listReferralsByAffiliate(affiliateUserId: string, limit = 20) {
+    'use cache'
+
     const { data, error } = await supabaseAdmin
       .from('affiliate_referrals')
       .select(`
