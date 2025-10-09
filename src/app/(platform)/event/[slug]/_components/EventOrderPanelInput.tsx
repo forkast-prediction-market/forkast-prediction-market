@@ -1,21 +1,16 @@
 import { useBalance } from '@/hooks/useBalance'
 import { cn } from '@/lib/utils'
-import { useAmountAsNumber, useOrder } from '@/stores/useOrder'
+import { getUserShares, useAmountAsNumber, useOrder } from '@/stores/useOrder'
 
-interface EventOrderPanelInputSectionProps {
+interface EventOrderPanelInputProps {
   isMobile: boolean
-  getUserShares: () => number
 }
 
-export default function EventOrderPanelInput({
-  isMobile,
-  getUserShares,
-}: EventOrderPanelInputSectionProps) {
+export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputProps) {
   const state = useOrder()
   const amount = useAmountAsNumber()
   const { balance } = useBalance()
 
-  // Function to render action buttons (percentage and value)
   function renderActionButtons(isMobile: boolean) {
     const baseButtonClasses = 'h-7 px-3 rounded-lg border text-[11px] transition-all duration-200 ease-in-out'
 

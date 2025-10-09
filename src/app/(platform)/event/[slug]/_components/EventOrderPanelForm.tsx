@@ -16,7 +16,6 @@ import { cn, triggerConfetti } from '@/lib/utils'
 import {
   calculateSellAmount,
   getAvgSellPrice,
-  getUserShares,
   useAmountAsNumber,
   useIsBinaryMarket,
   useNoPrice,
@@ -24,12 +23,12 @@ import {
   useYesPrice,
 } from '@/stores/useOrder'
 
-interface Props {
+interface EventOrderPanelFormProps {
   isMobile: boolean
   event: Event
 }
 
-export default function EventOrderPanelForm({ event, isMobile }: Props) {
+export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanelFormProps) {
   const { open } = useAppKit()
   const { isConnected } = useAppKitAccount()
   const state = useOrder()
@@ -159,7 +158,7 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
 
       {state.side === 'sell' ? <EventOrderPanelUserShares /> : <div className="mb-4"></div>}
 
-      <EventOrderPanelInput isMobile={isMobile} getUserShares={getUserShares} />
+      <EventOrderPanelInput isMobile={isMobile} />
 
       {amount > 0 && <EventOrderPanelEarnings isMobile={isMobile} />}
 
