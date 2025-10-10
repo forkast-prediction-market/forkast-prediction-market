@@ -3,7 +3,9 @@
 import type { Event, HoldersResponse, TopHolder } from '@/types'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { formatPosition, truncateAddress } from '@/lib/utils'
+import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
 interface EventTopHoldersProps {
   event: Event
@@ -24,6 +26,28 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
     error: null,
   })
 
+  const isBinaryMarket = useIsBinaryMarket()
+  const orderState = useOrder()
+  const [selectedMarket, setSelectedMarket] = useState<string>('')
+
+  useEffect(() => {
+    if (isBinaryMarket) {
+      queueMicrotask(() => setSelectedMarket(''))
+    }
+    else if (orderState.market && !selectedMarket) {
+      queueMicrotask(() => setSelectedMarket(orderState.market!.condition_id))
+    }
+    else if (!selectedMarket && event.markets.length > 0) {
+      queueMicrotask(() => setSelectedMarket(event.markets[0].condition_id))
+    }
+  }, [isBinaryMarket, orderState.market, selectedMarket, event.markets])
+
+  useEffect(() => {
+    if (!isBinaryMarket && orderState.market && selectedMarket !== orderState.market.condition_id) {
+      queueMicrotask(() => setSelectedMarket(orderState.market!.condition_id))
+    }
+  }, [isBinaryMarket, orderState.market, selectedMarket])
+
   useEffect(() => {
     const abortController = new AbortController()
 
@@ -31,7 +55,13 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
       try {
         setState(prev => ({ ...prev, loading: true, error: null }))
 
-        const response = await fetch(`/api/events/${event.slug}/holders`, {
+        const params = new URLSearchParams()
+        if (!isBinaryMarket && selectedMarket) {
+          params.set('condition_id', selectedMarket)
+        }
+
+        const url = `/api/events/${event.slug}/holders${params.toString() ? `?${params}` : ''}`
+        const response = await fetch(url, {
           signal: abortController.signal,
         })
 
@@ -63,12 +93,26 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
       }
     }
 
-    queueMicrotask(() => fetchHolders())
+    if (isBinaryMarket || selectedMarket) {
+      queueMicrotask(() => fetchHolders())
+    }
 
     return () => {
       abortController.abort()
     }
-  }, [event.slug])
+  }, [event.slug, isBinaryMarket, selectedMarket])
+
+  function handleMarketChange(conditionId: string) {
+    setSelectedMarket(conditionId)
+
+    const market = event.markets.find(m => m.condition_id === conditionId)
+    if (market) {
+      orderState.setMarket(market)
+      if (market.outcomes.length > 0) {
+        orderState.setOutcome(market.outcomes[0])
+      }
+    }
+  }
 
   if (state.loading) {
     return (
@@ -92,8 +136,24 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
 
   return (
     <div className="mt-6">
+      {!isBinaryMarket && event.markets.length > 1 && (
+        <div className="mb-4">
+          <Select value={selectedMarket} onValueChange={handleMarketChange}>
+            <SelectTrigger className="w-32">
+              <SelectValue placeholder="Select market..." />
+            </SelectTrigger>
+            <SelectContent>
+              {event.markets.map(market => (
+                <SelectItem key={market.condition_id} value={market.condition_id}>
+                  {market.short_title || market.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-6">
-        {/* Yes Holders */}
         <div>
           <div className="mb-3 flex justify-between">
             <span className="text-sm font-medium">Yes holders</span>
@@ -117,7 +177,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
                           height={32}
                           className="shrink-0 rounded-full"
                         />
-                        <span className="text-sm font-medium">
+                        <span className="max-w-28 truncate text-sm font-medium">
                           {holder.user.username || truncateAddress(holder.user.address)}
                         </span>
                       </div>
@@ -130,7 +190,6 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
           </div>
         </div>
 
-        {/* No Holders */}
         <div>
           <div className="mb-3 flex justify-between">
             <span className="text-sm font-medium">No holders</span>

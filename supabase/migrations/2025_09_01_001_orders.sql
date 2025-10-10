@@ -101,8 +101,9 @@ $$;
 -- ===========================================
 
 CREATE OR REPLACE FUNCTION get_event_top_holders(
-  event_slug TEXT,
-  limit_per_outcome INTEGER DEFAULT 10
+  event_slug_arg TEXT,
+  condition_id_arg TEXT DEFAULT NULL,
+  limit_arg INTEGER DEFAULT 15
 )
   RETURNS TABLE
           (
@@ -119,7 +120,7 @@ CREATE OR REPLACE FUNCTION get_event_top_holders(
 AS
 $$
 WITH event_orders AS (
-  -- Get all filled orders for the specific event
+  -- Get all filled orders for the specific event, optionally filtered by condition_id
   SELECT o.user_id,
          o.side,
          o.amount,
@@ -134,8 +135,9 @@ WITH event_orders AS (
          JOIN markets m ON c.id = m.condition_id
          JOIN events e ON m.event_id = e.id
          JOIN users u ON o.user_id = u.id
-  WHERE e.slug = event_slug
-    AND o.status IN ('filled', 'pending')),
+  WHERE e.slug = event_slug_arg
+    AND o.status IN ('filled', 'pending')
+    AND (condition_id_arg IS NULL OR c.id = condition_id_arg)),
      user_positions AS (
        -- Calculate net positions per user per outcome
        SELECT user_id,
@@ -175,7 +177,7 @@ SELECT user_id,
        outcome_text,
        net_position
 FROM ranked_positions
-WHERE rank <= limit_per_outcome
+WHERE rank <= limit_arg
 ORDER BY outcome_index, net_position DESC;
 $$;
 

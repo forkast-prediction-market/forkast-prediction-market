@@ -338,13 +338,14 @@ export const EventModel = {
     return { data: activities, error: null }
   },
 
-  async getEventTopHolders(eventSlug: string): Promise<QueryResult<{
+  async getEventTopHolders(eventSlug: string, conditionId?: string | null): Promise<QueryResult<{
     yesHolders: TopHolder[]
     noHolders: TopHolder[]
   }>> {
     const { data: holdersData, error: holdersError } = await supabaseAdmin.rpc('get_event_top_holders', {
-      event_slug: eventSlug,
-      limit_per_outcome: 10,
+      event_slug_arg: eventSlug,
+      condition_id_arg: conditionId,
+      limit_arg: 10,
     })
 
     if (holdersError) {
