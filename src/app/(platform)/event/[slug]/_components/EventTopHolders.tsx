@@ -99,12 +99,16 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
             <span className="text-sm font-medium">Yes holders</span>
             <span className="text-xs font-medium text-muted-foreground uppercase">Shares</span>
           </div>
-          <div className="space-y-2">
+
+          <div className="divide-y divide-border border-t">
             {state.yesHolders.length === 0
-              ? <p className="text-sm text-muted-foreground">No holders found</p>
+              ? <p className="py-2 text-sm text-muted-foreground">No holders found</p>
               : (
                   state.yesHolders.map(holder => (
-                    <div key={`${holder.user.id}-${holder.outcomeIndex}`} className="flex items-center justify-between">
+                    <div
+                      key={`${holder.user.id}-${holder.outcomeIndex}`}
+                      className="flex items-center justify-between py-2"
+                    >
                       <div className="flex items-center gap-3">
                         <Image
                           src={holder.user.image || `https://avatar.vercel.sh/${holder.user.address}.png`}
@@ -132,12 +136,15 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
             <span className="text-sm font-medium">No holders</span>
             <span className="text-xs font-medium text-muted-foreground uppercase">Shares</span>
           </div>
-          <div className="space-y-2">
+          <div className="divide-y divide-border border-t">
             {state.noHolders.length === 0
-              ? <p className="text-sm text-muted-foreground">No holders found</p>
+              ? <p className="py-2 text-sm text-muted-foreground">No holders found</p>
               : (
                   state.noHolders.map(holder => (
-                    <div key={`${holder.user.id}-${holder.outcomeIndex}`} className="flex items-center justify-between">
+                    <div
+                      key={`${holder.user.id}-${holder.outcomeIndex}`}
+                      className="flex items-center justify-between py-2"
+                    >
                       <div className="flex items-center gap-3">
                         <Image
                           src={holder.user.image || `https://avatar.vercel.sh/${holder.user.address}.png`}

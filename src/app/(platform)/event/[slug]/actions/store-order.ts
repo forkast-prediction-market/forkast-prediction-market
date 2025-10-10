@@ -45,33 +45,33 @@ export async function storeOrderAction(payload: StoreOrderInput) {
     const tradeFeeBps = Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '0', 10)
     const affiliateShareBps = Number.parseInt(affiliateSettings?.affiliate_share_bps?.value || '0', 10)
 
-    // const clobUrl = `${process.env.CLOB_URL}/api/v1/orders`
-    // const clobResponse = await fetch(clobUrl, {
-    //   method: 'POST',
-    //   headers: {
-    //     'Content-Type': 'application/json',
-    //     'Accept': 'application/json',
-    //   },
-    //   signal: AbortSignal.timeout(5000),
-    //   keepalive: true,
-    //   body: JSON.stringify({
-    //     trader: user.address,
-    //     token_id: validated.data.token_id,
-    //     amount: validated.data.amount,
-    //     side: validated.data.side.toUpperCase(),
-    //     type: validated.data.type,
-    //     referrer: process.env.FEE_RECIPIENT_WALLET,
-    //     affiliate: referral?.affiliate_user[0]?.address,
-    //     fee_rate_bps: tradeFeeBps,
-    //     affiliate_percentage: affiliateShareBps,
-    //   }),
-    // })
-    //
-    // if (!clobResponse.ok) {
-    //   const text = await clobResponse.text()
-    //   console.error('Failed to send order to CLOB.', text)
-    //   return { error: DEFAULT_ERROR_MESSAGE }
-    // }
+    const clobUrl = `${process.env.CLOB_URL}/api/v1/orders`
+    const clobResponse = await fetch(clobUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      signal: AbortSignal.timeout(5000),
+      keepalive: true,
+      body: JSON.stringify({
+        trader: user.address,
+        token_id: validated.data.token_id,
+        amount: validated.data.amount,
+        side: validated.data.side.toUpperCase(),
+        type: validated.data.type,
+        referrer: process.env.FEE_RECIPIENT_WALLET,
+        affiliate: referral?.affiliate_user[0]?.address,
+        fee_rate_bps: tradeFeeBps,
+        affiliate_percentage: affiliateShareBps,
+      }),
+    })
+
+    if (!clobResponse.ok) {
+      const text = await clobResponse.text()
+      console.error('Failed to send order to CLOB.', text)
+      return { error: DEFAULT_ERROR_MESSAGE }
+    }
 
     const affiliateUserId = user.referred_by_user_id
       || referral?.affiliate_user_id
