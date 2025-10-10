@@ -112,7 +112,7 @@ export default function EventActivity({ event }: EventActivityProps) {
       })
 
       if (!response.ok) {
-        setError('Failed to fetch more activity data')
+        setLoadMoreError('Failed to fetch more activity data')
         return
       }
 

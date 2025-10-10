@@ -304,7 +304,7 @@ export const EventModel = {
     let activities: ActivityOrder[] = data
       .filter((order: any) => order.user && order.outcome && order.condition?.market?.event)
       .map((order: any) => {
-        const totalValue = order.amount * (order.price || 0.5)
+        const totalValue = order.amount * (order.price ?? 0.5)
 
         return {
           id: order.id,
