@@ -1,0 +1,39 @@
+Forkast Modified MIT License (with Custom Commons Clause)
+
+Copyright (c) 2025 Forkast contributors
+
+This software is licensed under the terms of the MIT License,
+with an additional Commons Clause restriction described below.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+of the Software, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+---
+
+### COMMONS CLAUSE — CUSTOM RESTRICTION
+
+Notwithstanding the permissions granted above, you may not host, operate, or offer
+the Software, or any modified version thereof, as a prediction market or orderbook
+service without maintaining the original Forkast on-chain contracts and orderbook modules.
+
+This restriction exists solely to protect users from malicious forks or scams that
+could mislead them by altering core trading logic or contract behavior.
+
+You are free to build forks, frontends, agents, or businesses *on top of* Forkast,
+as long as the underlying contracts and orderbook remain authentic.
+
+---
+
+### DISCLAIMER
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.

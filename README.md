@@ -1,5 +1,7 @@
 # 🚀 Launch Your Decentralized Prediction Market in Minutes
 
+[![License: Forkast MIT+Commons](https://img.shields.io/badge/License-Forkast--MIT--Commons-blue.svg)](./LICENSE) [![CI](https://github.com/forkast-prediction-market/forkast-prediction-market/actions/workflows/ci.yml/badge.svg)](https://github.com/forkast-prediction-market/forkast-prediction-market/actions/workflows/ci.yml)
+
 [![Forkast Banner](https://i.imgur.com/G9wM4Na.png)](https://forka.st)
 
 Open-source project to launch and monetize Web3 prediction markets, inspired by Polymarket, but with full transparency and control.
@@ -74,6 +76,10 @@ In your forked Forkast repository:
 - 💳 Web3 Wallets (MetaMask, Reown AppKit)
 - 📊 Advanced Charts & Analytics
 - 🔒 Secure Smart Contracts
+
+## ⚠️ Disclaimer
+
+Forkast is provided "as is" and should be used at your own risk. Review the [Modified MIT License with Commons Clause](./LICENSE) before deploying production forks: running derivatives that alter the core on-chain contracts or orderbook modules may fall outside the permitted use. Always verify smart contracts and comply with relevant regulations in your jurisdiction.
 
 ## 🔧 Tech Stack
 
