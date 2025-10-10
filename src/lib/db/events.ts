@@ -373,10 +373,10 @@ export const EventModel = {
       }
 
       if (holder.outcome_index === 0) {
-        noHolders.push(topHolder)
+        yesHolders.push(topHolder)
       }
       else if (holder.outcome_index === 1) {
-        yesHolders.push(topHolder)
+        noHolders.push(topHolder)
       }
     })
 
