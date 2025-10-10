@@ -261,16 +261,16 @@ export const EventModel = {
         price,
         created_at,
         status,
-        outcome_index,
         user:users!orders_user_id_fkey (
           id,
           username,
           address,
           image
         ),
-        outcome:outcomes!orders_condition_id_outcome_index_fkey (
+        outcome:outcomes!orders_token_id_fkey (
           outcome_text,
-          outcome_index
+          outcome_index,
+          token_id
         ),
         condition:conditions!orders_condition_id_fkey (
           market:markets!markets_condition_id_fkey (
