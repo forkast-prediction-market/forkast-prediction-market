@@ -9,12 +9,12 @@ import { UserModel } from '@/lib/db/users'
 
 const StoreOrderSchema = z.object({
   condition_id: z.string(),
+  token_id: z.string(),
   side: z.enum(['buy', 'sell']),
   amount: z.number().positive(),
   price: z.number().positive().optional(),
   type: z.enum(['market', 'limit']).default('market'),
   slug: z.string(),
-  token_id: z.string(),
 })
 
 type StoreOrderInput = z.infer<typeof StoreOrderSchema>
@@ -86,7 +86,12 @@ export async function storeOrderAction(payload: StoreOrderInput) {
     const forkFeeAmount = Math.max(0, Number((totalFeeAmount - affiliateFeeAmount).toFixed(6)))
 
     const { error } = await OrderModel.createOrder({
-      ...validated.data,
+      side: validated.data.side,
+      condition_id: validated.data.condition_id,
+      amount: validated.data.amount,
+      price: validated.data.price,
+      type: validated.data.type,
+      token_id: validated.data.token_id,
       user_id: user.id,
       affiliate_user_id: affiliateUserId,
       trade_fee_bps: tradeFeeBps,

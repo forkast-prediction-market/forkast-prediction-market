@@ -327,6 +327,7 @@ async function fetchPnLConditionsPage(afterCursor: SyncCursor | null): Promise<{
   const response = await fetch(PNL_SUBGRAPH_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    keepalive: true,
     body: JSON.stringify({ query }),
   })
 
@@ -369,7 +370,10 @@ async function processMarket(market: SubgraphCondition) {
 async function fetchMetadata(arweaveHash: string) {
   const url = `${IRYS_GATEWAY}/${arweaveHash}`
 
-  const response = await fetch(url)
+  const response = await fetch(url, {
+    keepalive: true,
+  })
+
   if (!response.ok) {
     throw new Error(`Failed to fetch metadata from ${url}: ${response.statusText}`)
   }
@@ -611,7 +615,9 @@ async function processTags(eventId: string, tagNames: any[]) {
 async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
   try {
     const imageUrl = `${IRYS_GATEWAY}/${arweaveHash}`
-    const response = await fetch(imageUrl)
+    const response = await fetch(imageUrl, {
+      keepalive: true,
+    })
 
     if (!response.ok) {
       console.error(`Failed to download image: ${response.statusText}`)

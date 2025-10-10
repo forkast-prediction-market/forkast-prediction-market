@@ -1,7 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const OrderModel = {
-  async createOrder(orderData: {
+  async createOrder(args: {
     user_id: string
     condition_id: string
     token_id: string
@@ -18,19 +18,19 @@ export const OrderModel = {
     const { data, error } = await supabaseAdmin
       .from('orders')
       .insert({
-        user_id: orderData.user_id,
-        condition_id: orderData.condition_id,
-        token_id: orderData.token_id,
-        type: orderData.type || 'market',
-        side: orderData.side,
-        amount: orderData.amount,
-        price: orderData.price,
+        user_id: args.user_id,
+        condition_id: args.condition_id,
+        token_id: args.token_id,
+        type: args.type || 'market',
+        side: args.side,
+        amount: args.amount,
+        price: args.price,
         status: 'pending',
-        affiliate_user_id: orderData.affiliate_user_id ?? null,
-        trade_fee_bps: orderData.trade_fee_bps ?? 0,
-        affiliate_share_bps: orderData.affiliate_share_bps ?? 0,
-        fork_fee_amount: orderData.fork_fee_amount ?? 0,
-        affiliate_fee_amount: orderData.affiliate_fee_amount ?? 0,
+        affiliate_user_id: args.affiliate_user_id ?? null,
+        trade_fee_bps: args.trade_fee_bps ?? 0,
+        affiliate_share_bps: args.affiliate_share_bps ?? 0,
+        fork_fee_amount: args.fork_fee_amount ?? 0,
+        affiliate_fee_amount: args.affiliate_fee_amount ?? 0,
       })
       .select()
       .single()

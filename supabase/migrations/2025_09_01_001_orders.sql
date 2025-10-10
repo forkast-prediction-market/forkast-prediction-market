@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS orders
   id                   CHAR(26) PRIMARY KEY    DEFAULT generate_ulid(),
   user_id              CHAR(26)       NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   condition_id         VARCHAR(66)    NOT NULL REFERENCES conditions (id) ON DELETE CASCADE,
-  outcome_index        SMALLINT       NOT NULL,
-  type           VARCHAR(10)    NOT NULL,                                 -- 'market', 'limit'
+  token_id             TEXT           NOT NULL REFERENCES outcomes (token_id) ON DELETE CASCADE,
+  type                 VARCHAR(10)    NOT NULL,                                 -- 'market', 'limit'
   side                 VARCHAR(4)     NOT NULL,                                 -- 'buy', 'sell'
   amount               DECIMAL(20, 6) NOT NULL,                                 -- Amount to buy/sell
   price                DECIMAL(4, 4),                                           -- Limit price (0.0001 to 0.9999)
@@ -40,8 +40,7 @@ CREATE TABLE IF NOT EXISTS orders
   CHECK (amount > 0),
   CHECK (price IS NULL OR (price >= 0.0001 AND price <= 0.9999)),
   CHECK (trade_fee_bps >= 0 AND trade_fee_bps <= 1000),
-  CHECK (affiliate_share_bps >= 0 AND affiliate_share_bps <= 10000),
-  FOREIGN KEY (condition_id, outcome_index) REFERENCES outcomes (condition_id, outcome_index)
+  CHECK (affiliate_share_bps >= 0 AND affiliate_share_bps <= 10000)
 );
 
 -- ===========================================
@@ -50,7 +49,7 @@ CREATE TABLE IF NOT EXISTS orders
 
 -- Orders indexes for efficient queries
 CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id);
-CREATE INDEX IF NOT EXISTS idx_orders_condition ON orders (condition_id, outcome_index);
+CREATE INDEX IF NOT EXISTS idx_orders_condition ON orders (condition_id, token_id);
 CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
 CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders (created_at);
 
