@@ -148,7 +148,7 @@ export default function EventActivity({ event }: EventActivityProps) {
     setError(null)
     const currentFilter = minAmountFilter
     setMinAmountFilter('')
-    setTimeout(() => setMinAmountFilter(currentFilter), 0)
+    queueMicrotask(() => setMinAmountFilter(currentFilter))
   }
 
   if (error) {

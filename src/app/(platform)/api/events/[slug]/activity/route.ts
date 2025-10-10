@@ -27,7 +27,7 @@ export async function GET(
     }
 
     const { data: activities, error: activitiesError } = await EventModel.getEventActivity({
-      eventSlug: slug,
+      slug,
       limit: validatedLimit,
       offset: validatedOffset,
       minAmount: validatedMinAmount,

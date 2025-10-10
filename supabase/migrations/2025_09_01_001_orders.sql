@@ -96,4 +96,87 @@ $$
   END
 $$;
 
+-- ===========================================
+-- 6. Functions
+-- ===========================================
+
+CREATE OR REPLACE FUNCTION get_event_top_holders(
+  event_slug TEXT,
+  limit_per_outcome INTEGER DEFAULT 10
+)
+  RETURNS TABLE
+          (
+            user_id       TEXT,
+            username      TEXT,
+            address       TEXT,
+            image         TEXT,
+            outcome_index INTEGER,
+            outcome_text  TEXT,
+            net_position  NUMERIC
+          )
+  LANGUAGE SQL
+  STABLE
+AS
+$$
+WITH event_orders AS (
+  -- Get all filled orders for the specific event
+  SELECT o.user_id,
+         o.side,
+         o.amount,
+         out.outcome_index,
+         out.outcome_text,
+         u.username,
+         u.address,
+         u.image
+  FROM orders o
+         JOIN outcomes out ON o.token_id = out.token_id
+         JOIN conditions c ON out.condition_id = c.id
+         JOIN markets m ON c.id = m.condition_id
+         JOIN events e ON m.event_id = e.id
+         JOIN users u ON o.user_id = u.id
+  WHERE e.slug = event_slug
+    AND o.status IN ('filled', 'pending')),
+     user_positions AS (
+       -- Calculate net positions per user per outcome
+       SELECT user_id,
+              username,
+              address,
+              image,
+              outcome_index,
+              outcome_text,
+              SUM(
+                CASE
+                  WHEN side = 'buy' THEN amount
+                  ELSE -amount
+                  END
+              ) AS net_position
+       FROM event_orders
+       GROUP BY user_id, username, address, image, outcome_index, outcome_text
+       HAVING SUM(
+                CASE
+                  WHEN side = 'buy' THEN amount
+                  ELSE -amount
+                  END
+              ) > 0),
+     ranked_positions AS (
+       -- Rank positions within each outcome
+       SELECT *,
+              ROW_NUMBER() OVER (
+                PARTITION BY outcome_index
+                ORDER BY net_position DESC
+                ) AS rank
+       FROM user_positions)
+-- Return top holders for each outcome
+SELECT user_id,
+       username,
+       address,
+       image,
+       outcome_index,
+       outcome_text,
+       net_position
+FROM ranked_positions
+WHERE rank <= limit_per_outcome
+ORDER BY outcome_index, net_position DESC;
+$$;
+
 COMMIT;
