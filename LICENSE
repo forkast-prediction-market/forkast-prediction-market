@@ -14,9 +14,7 @@ of the Software, subject to the following conditions:
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
 
----
-
-### COMMONS CLAUSE — CUSTOM RESTRICTION
+COMMONS CLAUSE — CUSTOM RESTRICTION
 
 Notwithstanding the permissions granted above, you may not host, operate, or offer
 the Software, or any modified version thereof, as a prediction market or orderbook
@@ -28,9 +26,7 @@ could mislead them by altering core trading logic or contract behavior.
 You are free to build forks, frontends, agents, or businesses *on top of* Forkast,
 as long as the underlying contracts and orderbook remain authentic.
 
----
-
-### DISCLAIMER
+DISCLAIMER
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
