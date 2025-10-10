@@ -26,6 +26,7 @@ export const OrderModel = {
         amount: orderData.amount,
         price: orderData.price,
         status: 'pending',
+        outcome_index: 0,
         affiliate_user_id: orderData.affiliate_user_id ?? null,
         trade_fee_bps: orderData.trade_fee_bps ?? 0,
         affiliate_share_bps: orderData.affiliate_share_bps ?? 0,

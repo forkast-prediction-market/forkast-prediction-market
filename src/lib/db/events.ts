@@ -1,4 +1,4 @@
-import type { Event, Tag } from '@/types'
+import type { ActivityOrder, Event, QueryResult, Tag } from '@/types'
 import { unstable_cacheTag as cacheTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { getSupabaseImageUrl, supabaseAdmin } from '@/lib/supabase'
@@ -242,6 +242,111 @@ export const EventModel = {
       .slice(0, 3)
 
     return { data: response, error: null }
+  },
+
+  async getEventActivity(params: {
+    eventSlug: string
+    limit: number
+    offset: number
+    minAmount?: number
+  }): Promise<QueryResult<ActivityOrder[]>> {
+    const { eventSlug, limit, offset, minAmount } = params
+
+    let query = supabaseAdmin
+      .from('orders')
+      .select(`
+        id,
+        side,
+        amount,
+        price,
+        created_at,
+        status,
+        outcome_index,
+        user:users!orders_user_id_fkey (
+          id,
+          username,
+          address,
+          image
+        ),
+        outcome:outcomes!orders_condition_id_outcome_index_fkey (
+          outcome_text,
+          outcome_index
+        ),
+        condition:conditions!orders_condition_id_fkey (
+          market:markets!markets_condition_id_fkey (
+            title,
+            slug,
+            event:events!markets_event_id_fkey (
+              slug
+            )
+          )
+        )
+      `)
+      .eq('condition.market.event.slug', eventSlug)
+      .order('id', { ascending: false })
+      .range(offset, offset + limit - 1)
+
+    // Apply minimum amount filter if specified
+    if (minAmount && minAmount > 0) {
+      // We need to filter by total_value which is amount * price (or amount * 0.5 if price is null)
+      // Since we can't do complex calculations in the query, we'll filter after fetching
+      // For now, let's fetch more data and filter client-side
+      query = query.range(offset, offset + limit * 2 - 1) // Fetch more to account for filtering
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('Error fetching event activity:', error)
+      return { data: null, error: 'Failed to fetch event activity' }
+    }
+
+    if (!data) {
+      return { data: [], error: null }
+    }
+
+    // Transform the data to match ActivityOrder interface
+    let activities: ActivityOrder[] = data
+      .filter((order: any) => {
+        // Ensure we have all required nested data
+        return order.user && order.outcome && order.condition?.market?.event
+      })
+      .map((order: any) => {
+        const totalValue = order.amount * (order.price || 0.5)
+
+        return {
+          id: order.id,
+          user: {
+            id: order.user.id,
+            username: order.user.username,
+            address: order.user.address,
+            image: order.user.image ? getSupabaseImageUrl(order.user.image) : null,
+          },
+          side: order.side,
+          amount: order.amount,
+          price: order.price,
+          outcome: {
+            index: order.outcome.outcome_index,
+            text: order.outcome.outcome_text,
+          },
+          market: {
+            title: order.condition.market.title,
+            slug: order.condition.market.slug,
+          },
+          total_value: totalValue,
+          created_at: order.created_at,
+          status: order.status,
+        }
+      })
+
+    // Apply minimum amount filter if specified
+    if (minAmount && minAmount > 0) {
+      activities = activities.filter(activity => activity.total_value >= minAmount)
+      // Take only the requested limit after filtering
+      activities = activities.slice(0, limit)
+    }
+
+    return { data: activities, error: null }
   },
 }
 

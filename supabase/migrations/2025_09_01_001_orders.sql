@@ -19,8 +19,8 @@ CREATE TABLE IF NOT EXISTS orders
   id                   CHAR(26) PRIMARY KEY    DEFAULT generate_ulid(),
   user_id              CHAR(26)       NOT NULL REFERENCES users (id) ON DELETE CASCADE,
   condition_id         VARCHAR(66)    NOT NULL REFERENCES conditions (id) ON DELETE CASCADE,
-  outcome_index        SMALLINT       NOT NULL,
-  type           VARCHAR(10)    NOT NULL,                                 -- 'market', 'limit'
+  token_id             TEXT           NOT NULL,
+  type                 VARCHAR(10)    NOT NULL,                                 -- 'market', 'limit'
   side                 VARCHAR(4)     NOT NULL,                                 -- 'buy', 'sell'
   amount               DECIMAL(20, 6) NOT NULL,                                 -- Amount to buy/sell
   price                DECIMAL(4, 4),                                           -- Limit price (0.0001 to 0.9999)
