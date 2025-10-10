@@ -1,3 +1,5 @@
+import type { PostgrestError } from '@supabase/supabase-js'
+
 export interface Event {
   id: string
   slug: string
@@ -230,3 +232,4 @@ export interface ActivityOrder {
 export type QueryResult<T>
   = | { data: T, error: null }
     | { data: null, error: string }
+    | { data: null, error: PostgrestError }

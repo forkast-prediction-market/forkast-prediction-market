@@ -1,40 +1,14 @@
 import type { ActivityOrder, Event } from '@/types'
+import { AlertCircleIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Skeleton } from '@/components/ui/skeleton'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { formatTimeAgo, truncateAddress } from '@/lib/utils'
 
 interface EventActivityProps {
   event: Event
-}
-
-function ActivitySkeleton() {
-  return (
-    <div className="flex items-center gap-3 border-b border-border/30 py-2">
-      <Skeleton className="size-8 shrink-0 rounded-full" />
-      <div className="flex-1 space-y-1">
-        <div className="flex items-center gap-1">
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-12" />
-          <Skeleton className="h-4 w-8" />
-          <Skeleton className="h-4 w-6" />
-          <Skeleton className="h-4 w-4" />
-          <Skeleton className="h-4 w-24" />
-          <Skeleton className="h-4 w-8" />
-          <Skeleton className="h-4 w-12" />
-        </div>
-      </div>
-      <Skeleton className="h-3 w-12" />
-    </div>
-  )
 }
 
 export default function EventActivity({ event }: EventActivityProps) {
@@ -44,10 +18,10 @@ export default function EventActivity({ event }: EventActivityProps) {
   const [error, setError] = useState<string | null>(null)
   const [loadMoreError, setLoadMoreError] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(true)
-  const [minAmountFilter, setMinAmountFilter] = useState('')
+  const [minAmountFilter, setMinAmountFilter] = useState('none')
   const abortControllerRef = useRef<AbortController | null>(null)
+  const loadMoreAbortControllerRef = useRef<AbortController | null>(null)
 
-  // Fetch initial activity data
   useEffect(() => {
     let isMounted = true
 
@@ -77,42 +51,20 @@ export default function EventActivity({ event }: EventActivityProps) {
         })
 
         if (!response.ok) {
-          throw new Error('Failed to fetch activity data')
+          setError('Internal server error')
+          return
         }
 
         const data = await response.json()
 
         if (isMounted) {
           setActivities(data)
-          setHasMore(data.length === 50) // If we got 50 items, there might be more
+          setHasMore(data.length === 50)
         }
       }
-      catch (error) {
-        if (error instanceof Error && error.name === 'AbortError') {
-          return // Request was cancelled, don't update state
-        }
-
+      catch {
         if (isMounted) {
-          console.error('Error fetching activity:', error)
-
-          // Provide more specific error messages
-          if (error instanceof Error) {
-            if (error.name === 'TypeError' && error.message.includes('fetch')) {
-              setError('Network error. Please check your connection and try again.')
-            }
-            else if (error.message.includes('404')) {
-              setError('Event not found.')
-            }
-            else if (error.message.includes('500')) {
-              setError('Server error. Please try again later.')
-            }
-            else {
-              setError(error.message)
-            }
-          }
-          else {
-            setError('Failed to load activity')
-          }
+          setError('Internal server error')
         }
       }
       finally {
@@ -122,11 +74,12 @@ export default function EventActivity({ event }: EventActivityProps) {
       }
     }
 
-    fetchActivities()
+    queueMicrotask(() => fetchActivities())
 
     return () => {
       isMounted = false
       abortControllerRef.current?.abort()
+      loadMoreAbortControllerRef.current?.abort()
     }
   }, [event.slug, minAmountFilter])
 
@@ -134,6 +87,12 @@ export default function EventActivity({ event }: EventActivityProps) {
     if (loadingMore || !hasMore) {
       return
     }
+
+    if (loadMoreAbortControllerRef.current) {
+      loadMoreAbortControllerRef.current.abort()
+    }
+
+    loadMoreAbortControllerRef.current = new AbortController()
 
     try {
       setLoadingMore(true)
@@ -148,28 +107,22 @@ export default function EventActivity({ event }: EventActivityProps) {
         params.set('minAmount', minAmountFilter)
       }
 
-      const response = await fetch(`/api/events/${event.slug}/activity?${params}`)
+      const response = await fetch(`/api/events/${event.slug}/activity?${params}`, {
+        signal: loadMoreAbortControllerRef.current?.signal,
+      })
 
       if (!response.ok) {
-        throw new Error('Failed to fetch more activity data')
+        setError('Failed to fetch more activity data')
+        return
       }
 
       const newData = await response.json()
 
       setActivities(prev => [...prev, ...newData])
-      setHasMore(newData.length === 50) // If we got 50 items, there might be more
+      setHasMore(newData.length === 50)
     }
-    catch (error) {
-      console.error('Error loading more activity:', error)
-      // For load more errors, we don't want to clear the existing data
-      // Just show a temporary error message or retry option
-      if (error instanceof Error && error.name === 'TypeError' && error.message.includes('fetch')) {
-        // Network error
-        setLoadMoreError('Network error. Please check your connection.')
-      }
-      else {
-        setLoadMoreError(error instanceof Error ? error.message : 'Failed to load more activity')
-      }
+    catch {
+      setLoadMoreError('Internal server error')
     }
     finally {
       setLoadingMore(false)
@@ -193,7 +146,6 @@ export default function EventActivity({ event }: EventActivityProps) {
 
   function retryFetch() {
     setError(null)
-    // Trigger useEffect by updating a dependency
     const currentFilter = minAmountFilter
     setMinAmountFilter('')
     setTimeout(() => setMinAmountFilter(currentFilter), 0)
@@ -203,20 +155,18 @@ export default function EventActivity({ event }: EventActivityProps) {
     return (
       <div className="mt-6">
         <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>{error}</AlertTitle>
           <AlertDescription>
-            <div className="space-y-2">
-              <p>
-                Failed to load activity data:
-                {error}
-              </p>
-              <button
-                type="button"
-                onClick={retryFetch}
-                className="text-sm underline hover:no-underline"
-              >
-                Try again
-              </button>
-            </div>
+            <Button
+              type="button"
+              onClick={retryFetch}
+              size="sm"
+              variant="link"
+              className="-ml-3"
+            >
+              Try again
+            </Button>
           </AlertDescription>
         </Alert>
       </div>
@@ -224,38 +174,32 @@ export default function EventActivity({ event }: EventActivityProps) {
   }
 
   return (
-    <div className="mt-6">
-      {/* Min Amount Filter */}
-      <div className="mb-4">
-        <div className="flex items-center gap-2">
-          <Select value={minAmountFilter} onValueChange={setMinAmountFilter}>
-            <SelectTrigger className="w-[130px]">
-              <SelectValue placeholder="Min Amount:" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">None</SelectItem>
-              <SelectItem value="10">$10</SelectItem>
-              <SelectItem value="100">$100</SelectItem>
-              <SelectItem value="1000">$1,000</SelectItem>
-              <SelectItem value="10000">$10,000</SelectItem>
-              <SelectItem value="100000">$100,000</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+    <div className="mt-6 grid gap-6">
+      <div className="flex items-center gap-2">
+        <Select value={minAmountFilter} onValueChange={setMinAmountFilter}>
+          <SelectTrigger className="w-[130px]">
+            <SelectValue placeholder="Min Amount:" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">None</SelectItem>
+            <SelectItem value="10">$10</SelectItem>
+            <SelectItem value="100">$100</SelectItem>
+            <SelectItem value="1000">$1,000</SelectItem>
+            <SelectItem value="10000">$10,000</SelectItem>
+            <SelectItem value="100000">$100,000</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {/* Loading State */}
       {loading
         ? (
-            <div className="space-y-4">
-              {Array.from({ length: 5 }).map((_, index) => (
-                <ActivitySkeleton key={index} />
-              ))}
-            </div>
+            <p className="text-center text-sm text-muted-foreground">
+              Loading activity...
+            </p>
           )
         : activities.length === 0
           ? (
-              <div className="py-8 text-center">
+              <div className="text-center">
                 <div className="text-sm text-muted-foreground">
                   {minAmountFilter && minAmountFilter !== 'none'
                     ? `No activity found with minimum amount of $${Number.parseInt(minAmountFilter).toLocaleString()}.`
@@ -270,8 +214,7 @@ export default function EventActivity({ event }: EventActivityProps) {
             )
           : (
               <>
-                {/* List of Activities */}
-                <div className="space-y-4">
+                <div className="grid gap-4">
                   {activities.map(activity => (
                     <div
                       key={activity.id}
@@ -331,7 +274,6 @@ export default function EventActivity({ event }: EventActivityProps) {
                   ))}
                 </div>
 
-                {/* Load More Button */}
                 {hasMore && (
                   <div className="mt-4 text-center">
                     {loadMoreError
@@ -340,31 +282,24 @@ export default function EventActivity({ event }: EventActivityProps) {
                             <div className="text-sm text-destructive">
                               {loadMoreError}
                             </div>
-                            <button
+                            <Button
                               type="button"
+                              variant="outline"
                               onClick={loadMoreActivities}
-                              className={`
-                                rounded-full border px-4 py-2 text-sm font-medium transition-colors
-                                hover:bg-muted/50
-                              `}
                             >
                               Try Again
-                            </button>
+                            </Button>
                           </div>
                         )
                       : (
-                          <button
+                          <Button
                             type="button"
+                            variant="outline"
                             onClick={loadMoreActivities}
                             disabled={loadingMore}
-                            className={`
-                              rounded-full border px-4 py-2 text-sm font-medium transition-colors
-                              hover:bg-muted/50
-                              disabled:opacity-50
-                            `}
                           >
                             {loadingMore ? 'Loading...' : 'Load More'}
-                          </button>
+                          </Button>
                         )}
                   </div>
                 )}

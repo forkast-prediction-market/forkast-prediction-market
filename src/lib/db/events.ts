@@ -286,31 +286,23 @@ export const EventModel = {
       .order('id', { ascending: false })
       .range(offset, offset + limit - 1)
 
-    // Apply minimum amount filter if specified
     if (minAmount && minAmount > 0) {
-      // We need to filter by total_value which is amount * price (or amount * 0.5 if price is null)
-      // Since we can't do complex calculations in the query, we'll filter after fetching
-      // For now, let's fetch more data and filter client-side
-      query = query.range(offset, offset + limit * 2 - 1) // Fetch more to account for filtering
+      query = query.range(offset, offset + limit * 2 - 1)
     }
 
     const { data, error } = await query
 
     if (error) {
       console.error('Error fetching event activity:', error)
-      return { data: null, error: 'Failed to fetch event activity' }
+      return { data: null, error }
     }
 
     if (!data) {
       return { data: [], error: null }
     }
 
-    // Transform the data to match ActivityOrder interface
     let activities: ActivityOrder[] = data
-      .filter((order: any) => {
-        // Ensure we have all required nested data
-        return order.user && order.outcome && order.condition?.market?.event
-      })
+      .filter((order: any) => order.user && order.outcome && order.condition?.market?.event)
       .map((order: any) => {
         const totalValue = order.amount * (order.price || 0.5)
 
@@ -320,7 +312,7 @@ export const EventModel = {
             id: order.user.id,
             username: order.user.username,
             address: order.user.address,
-            image: order.user.image ? getSupabaseImageUrl(order.user.image) : null,
+            image: order.user.image,
           },
           side: order.side,
           amount: order.amount,
@@ -339,10 +331,8 @@ export const EventModel = {
         }
       })
 
-    // Apply minimum amount filter if specified
     if (minAmount && minAmount > 0) {
       activities = activities.filter(activity => activity.total_value >= minAmount)
-      // Take only the requested limit after filtering
       activities = activities.slice(0, limit)
     }
 
