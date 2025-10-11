@@ -60,6 +60,18 @@ export default function EventCard({ event }: EventCardProps) {
   const isBinaryMarket = event.markets.length === 1
   const yesOutcome = event.markets[0].outcomes[0]
   const noOutcome = event.markets[0].outcomes[1]
+  function getOutcomeLabelClass(label: string) {
+    if (label.length > 26) {
+      return 'text-[9px]'
+    }
+    if (label.length > 20) {
+      return 'text-[10px]'
+    }
+    if (label.length > 15) {
+      return 'text-[11px]'
+    }
+    return 'text-xs'
+  }
 
   async function handleTrade(outcomeId: string, type: 'yes' | 'no') {
     const outcomes = event.markets.flatMap(market => market.outcomes)
@@ -462,15 +474,22 @@ export default function EventCard({ event }: EventCardProps) {
                           handleTrade(yesOutcome.id, 'yes')
                           onToggle()
                         }}
-                        className="gap-1"
+                        className="flex w-full items-center justify-center gap-1 px-2 py-1 text-xs leading-tight"
                         disabled={isLoading}
                         variant="yes"
                       >
-                        Buy
-                        {' '}
-                        {yesOutcome.outcome_text}
-                        {' '}
-                        <ChevronsUpIcon className="size-4" />
+                        <span className="shrink-0 text-[10px] font-semibold tracking-wide uppercase">
+                          Buy
+                        </span>
+                        <span className={`${getOutcomeLabelClass(yesOutcome.outcome_text)}
+                          leading-tight font-semibold tracking-tight
+                        `}
+                        >
+                          {yesOutcome.outcome_text}
+                        </span>
+                        <span className="flex shrink-0">
+                          <ChevronsUpIcon className="size-4" />
+                        </span>
                       </Button>
                       <Button
                         type="button"
@@ -479,15 +498,22 @@ export default function EventCard({ event }: EventCardProps) {
                           handleTrade(noOutcome.id, 'no')
                           onToggle()
                         }}
-                        className="gap-1"
+                        className="flex w-full items-center justify-center gap-1 px-2 py-1 text-xs leading-tight"
                         disabled={isLoading}
                         variant="no"
                       >
-                        Buy
-                        {' '}
-                        {noOutcome.outcome_text}
-                        {' '}
-                        <ChevronsDownIcon className="size-4" />
+                        <span className="shrink-0 text-[10px] font-semibold tracking-wide uppercase">
+                          Buy
+                        </span>
+                        <span className={`${getOutcomeLabelClass(noOutcome.outcome_text)}
+                          leading-tight font-semibold tracking-tight
+                        `}
+                        >
+                          {noOutcome.outcome_text}
+                        </span>
+                        <span className="flex shrink-0">
+                          <ChevronsDownIcon className="size-4" />
+                        </span>
                       </Button>
                     </div>
                   )}
