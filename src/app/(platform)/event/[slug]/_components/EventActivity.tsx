@@ -137,7 +137,7 @@ export default function EventActivity({ event }: EventActivityProps) {
   }
 
   function formatAmount(amount: number) {
-    return amount.toLocaleString()
+    return amount.toLocaleString('en-US')
   }
 
   function formatTotalValue(totalValue: number) {
@@ -148,7 +148,7 @@ export default function EventActivity({ event }: EventActivityProps) {
     setError(null)
     const currentFilter = minAmountFilter
     setMinAmountFilter('')
-    queueMicrotask(() => setMinAmountFilter(currentFilter))
+    setTimeout(() => setMinAmountFilter(currentFilter), 0)
   }
 
   if (error) {

@@ -72,7 +72,7 @@ export function formatPosition(amount: number): string {
   }
 
   if (amount < 1000000) {
-    return amount.toLocaleString()
+    return amount.toLocaleString('en-US')
   }
 
   const millions = amount / 1000000
