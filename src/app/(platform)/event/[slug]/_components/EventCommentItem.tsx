@@ -1,11 +1,10 @@
 import type { Comment } from '@/types'
 import { useAppKit } from '@reown/appkit/react'
 import { MoreHorizontalIcon } from 'lucide-react'
-import Image from 'next/image'
-import Link from 'next/link'
 import { useCallback } from 'react'
+import ProfileLink from '@/components/ProfileLink'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { formatTimeAgo, truncateAddress } from '@/lib/utils'
+import { truncateAddress } from '@/lib/utils'
 import EventCommentLikeForm from './EventCommentLikeForm'
 import EventCommentMenu from './EventCommentMenu'
 import EventCommentReplyForm from './EventCommentReplyForm'
@@ -78,68 +77,55 @@ export default function EventCommentItem({
 
   return (
     <div className="grid gap-3">
-      <div className="flex gap-3">
-        <Link
-          href={comment.username ? `/@${comment.username}` : `/@${comment.user_address}`}
-          className="text-sm font-medium transition-colors hover:text-foreground"
-        >
-          <Image
-            src={comment.user_avatar || `https://avatar.vercel.sh/${comment.username || comment.user_address || 'anonymous'}.png`}
-            alt={comment.username || comment.user_address || 'Anonymous User'}
-            width={32}
-            height={32}
-            className="size-8 rounded-full object-cover transition-opacity hover:opacity-80"
-          />
-        </Link>
-        <div className="flex-1">
-          <div className="mb-1 flex items-center gap-2">
-            <Link
-              href={comment.username ? `/@${comment.username}` : `/@${comment.user_address}`}
-              className="text-sm font-medium transition-colors hover:text-foreground"
-            >
-              @
-              {comment.username || truncateAddress(comment.user_address)}
-            </Link>
-            <span className="text-xs text-muted-foreground">
-              {formatTimeAgo(comment.created_at)}
-            </span>
-          </div>
-          <p className="text-sm">{comment.content}</p>
-          <div className="mt-2 flex items-center gap-3">
-            <button
-              type="button"
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              onClick={handleReplyClick}
-            >
-              Reply
-            </button>
-            <EventCommentLikeForm
-              comment={comment}
-              user={user}
-              eventId={eventId}
-              onLikeToggled={handleLikeToggle}
-            />
-          </div>
-        </div>
-        <div className="relative">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+      <ProfileLink
+        user={{
+          image: comment.user_avatar,
+          username: comment.username,
+          address: comment.user_address,
+        }}
+        date={comment.created_at}
+      >
+        <div className="flex w-full flex-1 gap-3">
+          <div className="flex-1">
+            <p className="text-sm">{comment.content}</p>
+            <div className="mt-2 flex items-center gap-3">
               <button
                 type="button"
-                className="text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Comment options"
+                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                onClick={handleReplyClick}
               >
-                <MoreHorizontalIcon className="size-4" />
+                Reply
               </button>
-            </DropdownMenuTrigger>
-            <EventCommentMenu
-              comment={comment}
-              eventId={eventId}
-              onDelete={handleDelete}
-            />
-          </DropdownMenu>
+              <EventCommentLikeForm
+                comment={comment}
+                user={user}
+                eventId={eventId}
+                onLikeToggled={handleLikeToggle}
+              />
+            </div>
+          </div>
+          {comment.is_owner && (
+            <div className="relative">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label="Comment options"
+                  >
+                    <MoreHorizontalIcon className="size-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <EventCommentMenu
+                  comment={comment}
+                  eventId={eventId}
+                  onDelete={handleDelete}
+                />
+              </DropdownMenu>
+            </div>
+          )}
         </div>
-      </div>
+      </ProfileLink>
 
       {/* Reply input field */}
       {replyingTo === comment.id && (

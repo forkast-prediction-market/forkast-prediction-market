@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useMemo } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { formatTimeAgo, truncateAddress } from '@/lib/utils'
 
@@ -17,18 +16,13 @@ interface ProfileLinkProps {
 }
 
 export default function ProfileLink({ user, position, date, children }: ProfileLinkProps) {
-  const medalColor = useMemo(() => {
-    return {
-      1: '#FFD700',
-      2: '#C0C0C0',
-      3: '#CD7F32',
-    }[position ?? 0] ?? '#000000'
-  }, [position])
+  const medalColor = {
+    1: '#FFD700',
+    2: '#C0C0C0',
+    3: '#CD7F32',
+  }[position ?? 0] ?? '#000000'
 
-  const medalTextColor = useMemo(() => {
-    return medalColor === '#000000' ? '#ffffff' : '#1a1a1a'
-  }, [medalColor])
-
+  const medalTextColor = medalColor === '#000000' ? '#ffffff' : '#1a1a1a'
   const href = `/@${user.username || user.address}` as any
 
   return (
@@ -51,7 +45,7 @@ export default function ProfileLink({ user, position, date, children }: ProfileL
           </Badge>
         )}
       </Link>
-      <div>
+      <div className="w-full">
         <div className="flex max-w-32 items-center gap-1 lg:max-w-64">
           <Link href={href} className="truncate text-sm font-medium">
             {user.username || truncateAddress(user.address)}
