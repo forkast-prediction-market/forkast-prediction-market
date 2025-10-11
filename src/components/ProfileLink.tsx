@@ -29,12 +29,11 @@ export default function ProfileLink({ user, position, date, children }: ProfileL
     return medalColor === '#000000' ? '#ffffff' : '#1a1a1a'
   }, [medalColor])
 
+  const href = `/@${user.username || user.address}` as any
+
   return (
-    <Link
-      href={user.username ? `/@${user.username}` : `/@${user.address}`}
-      className="flex items-start gap-3 border-b border-border/30 py-2 last:border-b-0"
-    >
-      <div className="relative shrink-0">
+    <div className="flex items-start gap-3 border-b border-border/30 py-2 last:border-b-0">
+      <Link href={href} className="relative shrink-0">
         <Image
           src={user.image || `https://avatar.vercel.sh/${user.address}.png`}
           alt={user.username || user.address}
@@ -51,12 +50,12 @@ export default function ProfileLink({ user, position, date, children }: ProfileL
             {position}
           </Badge>
         )}
-      </div>
-      <div className="grid gap-1">
+      </Link>
+      <div>
         <div className="flex max-w-32 items-center gap-1 lg:max-w-64">
-          <span className="truncate text-sm font-medium">
+          <Link href={href} className="truncate text-sm font-medium">
             {user.username || truncateAddress(user.address)}
-          </span>
+          </Link>
           {date && (
             <span className="text-xs whitespace-nowrap text-muted-foreground">
               {formatTimeAgo(date)}
@@ -65,6 +64,6 @@ export default function ProfileLink({ user, position, date, children }: ProfileL
         </div>
         {children}
       </div>
-    </Link>
+    </div>
   )
 }
