@@ -1,4 +1,4 @@
-import type { ActivityOrder, Event, QueryResult, Tag } from '@/types'
+import type { ActivityOrder, Event, QueryResult, Tag, TopHolder } from '@/types'
 import { unstable_cacheTag as cacheTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { getSupabaseImageUrl, supabaseAdmin } from '@/lib/supabase'
@@ -244,14 +244,12 @@ export const EventModel = {
     return { data: response, error: null }
   },
 
-  async getEventActivity(params: {
-    eventSlug: string
+  async getEventActivity(args: {
+    slug: string
     limit: number
     offset: number
     minAmount?: number
   }): Promise<QueryResult<ActivityOrder[]>> {
-    const { eventSlug, limit, offset, minAmount } = params
-
     let query = supabaseAdmin
       .from('orders')
       .select(`
@@ -282,12 +280,12 @@ export const EventModel = {
           )
         )
       `)
-      .eq('condition.market.event.slug', eventSlug)
+      .eq('condition.market.event.slug', args.slug)
       .order('id', { ascending: false })
-      .range(offset, offset + limit - 1)
+      .range(args.offset, args.offset + args.limit - 1)
 
-    if (minAmount && minAmount > 0) {
-      query = query.range(offset, offset + limit * 2 - 1)
+    if (args.minAmount && args.minAmount > 0) {
+      query = query.range(args.offset, args.offset + args.limit * 2 - 1)
     }
 
     const { data, error } = await query
@@ -331,12 +329,59 @@ export const EventModel = {
         }
       })
 
-    if (minAmount && minAmount > 0) {
+    if (args.minAmount && args.minAmount > 0) {
+      const minAmount = args.minAmount
       activities = activities.filter(activity => activity.total_value >= minAmount)
-      activities = activities.slice(0, limit)
+      activities = activities.slice(0, args.limit)
     }
 
     return { data: activities, error: null }
+  },
+
+  async getEventTopHolders(eventSlug: string, conditionId?: string | null): Promise<QueryResult<{
+    yesHolders: TopHolder[]
+    noHolders: TopHolder[]
+  }>> {
+    const { data: holdersData, error: holdersError } = await supabaseAdmin.rpc('get_event_top_holders', {
+      event_slug_arg: eventSlug,
+      condition_id_arg: conditionId,
+      limit_arg: 10,
+    })
+
+    if (holdersError) {
+      console.error('Error fetching top holders:', holdersError)
+      return { data: null, error: holdersError }
+    }
+
+    if (!holdersData || holdersData.length === 0) {
+      return { data: { yesHolders: [], noHolders: [] }, error: null }
+    }
+
+    const yesHolders: TopHolder[] = []
+    const noHolders: TopHolder[] = []
+
+    holdersData.forEach((holder: any) => {
+      const topHolder: TopHolder = {
+        user: {
+          id: holder.user_id,
+          username: holder.username,
+          address: holder.address,
+          image: holder.image,
+        },
+        netPosition: holder.net_position,
+        outcomeIndex: holder.outcome_index,
+        outcomeText: holder.outcome_text,
+      }
+
+      if (holder.outcome_index === 0) {
+        yesHolders.push(topHolder)
+      }
+      else if (holder.outcome_index === 1) {
+        noHolders.push(topHolder)
+      }
+    })
+
+    return { data: { yesHolders, noHolders }, error: null }
   },
 }
 

@@ -229,6 +229,23 @@ export interface ActivityOrder {
   status: string
 }
 
+export interface TopHolder {
+  user: {
+    id: string
+    username: string | null
+    address: string
+    image: string | null
+  }
+  netPosition: number
+  outcomeIndex: number
+  outcomeText: string
+}
+
+export interface HoldersResponse {
+  yesHolders: TopHolder[]
+  noHolders: TopHolder[]
+}
+
 export type QueryResult<T>
   = | { data: T, error: null }
     | { data: null, error: string }

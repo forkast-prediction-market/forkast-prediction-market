@@ -66,6 +66,19 @@ export function formatCurrency(value: number) {
   return `$${value.toFixed(2)}`
 }
 
+export function formatPosition(amount: number): string {
+  if (amount < 1000) {
+    return amount.toString()
+  }
+
+  if (amount < 1000000) {
+    return amount.toLocaleString('en-US')
+  }
+
+  const millions = amount / 1000000
+  return `${millions.toFixed(1)}M`
+}
+
 export function triggerConfetti(color: 'primary' | 'yes' | 'no', event?: any) {
   let origin: { x?: number, y: number } = { y: 0.6 }
 

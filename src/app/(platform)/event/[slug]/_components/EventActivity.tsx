@@ -137,7 +137,7 @@ export default function EventActivity({ event }: EventActivityProps) {
   }
 
   function formatAmount(amount: number) {
-    return amount.toLocaleString()
+    return amount.toLocaleString('en-US')
   }
 
   function formatTotalValue(totalValue: number) {
@@ -177,7 +177,7 @@ export default function EventActivity({ event }: EventActivityProps) {
     <div className="mt-6 grid gap-6">
       <div className="flex items-center gap-2">
         <Select value={minAmountFilter} onValueChange={setMinAmountFilter}>
-          <SelectTrigger className="w-[130px]">
+          <SelectTrigger className="w-32">
             <SelectValue placeholder="Min Amount:" />
           </SelectTrigger>
           <SelectContent>
@@ -228,7 +228,7 @@ export default function EventActivity({ event }: EventActivityProps) {
                         className="shrink-0 rounded-full"
                       />
                       <div className="flex-1">
-                        <span className="text-sm font-medium">
+                        <span className="truncate text-sm font-medium">
                           {activity.user.username || truncateAddress(activity.user.address)}
                         </span>
                         <span className="text-sm text-muted-foreground">
