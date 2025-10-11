@@ -1,3 +1,5 @@
+'use client'
+
 import type { Comment, Event, User } from '@/types'
 import { useCallback, useState } from 'react'
 import { useComments } from '@/hooks/useComments'

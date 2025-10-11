@@ -98,7 +98,7 @@ export async function updateUserAction(formData: FormData): Promise<ActionState>
 
 async function uploadImage(user: any, image: File) {
   const fileExt = image.name.split('.').pop()
-  const fileName = `${user.id}-${Date.now()}.${fileExt}`
+  const fileName = `users/avatars/${user.id}-${Date.now()}.${fileExt}`
 
   const buffer = Buffer.from(await image.arrayBuffer())
 
@@ -110,18 +110,13 @@ async function uploadImage(user: any, image: File) {
   const { error } = await supabaseAdmin.storage
     .from('forkast-assets')
     .upload(fileName, resizedBuffer, {
-      cacheControl: '3600',
-      upsert: false,
       contentType: image.type,
+      cacheControl: '31536000',
     })
 
   if (error) {
     return user.image
   }
 
-  const { data: { publicUrl } } = supabaseAdmin.storage
-    .from('forkast-assets')
-    .getPublicUrl(fileName)
-
-  return publicUrl
+  return fileName
 }
