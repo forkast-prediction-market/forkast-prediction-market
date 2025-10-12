@@ -42,7 +42,7 @@ export default function EventMarkets({ event }: Props) {
             OUTCOMES
           </span>
         </div>
-        <div className="flex w-3/5 items-center justify-center gap-1">
+        <div className="flex w-1/5 items-center justify-center gap-1">
           <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             CHANCE
           </span>
@@ -53,8 +53,6 @@ export default function EventMarkets({ event }: Props) {
             <RefreshCwIcon className="size-3" />
           </a>
         </div>
-        <div className="w-[24%]"></div>
-        <div className="w-[24%]"></div>
       </div>
 
       {[...event.markets]
@@ -118,7 +116,7 @@ export default function EventMarkets({ event }: Props) {
                   variant="yes"
                   className={cn({
                     'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 0,
-                  }, 'w-1/2')}
+                  }, 'w-1/2 px-3')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -142,7 +140,7 @@ export default function EventMarkets({ event }: Props) {
                   variant="no"
                   className={cn({
                     'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 1,
-                  }, 'w-1/2')}
+                  }, 'w-1/2 px-3')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -166,7 +164,6 @@ export default function EventMarkets({ event }: Props) {
 
             {/* Desktop: Original line layout */}
             <div className="hidden w-full items-center md:flex">
-              {/* First column: Name and info - 50% */}
               <div className="flex w-1/2 items-center gap-3">
                 {event.show_market_icons && (
                   <Image
@@ -193,8 +190,7 @@ export default function EventMarkets({ event }: Props) {
                 </div>
               </div>
 
-              {/* Second column: Probability - 20% */}
-              <div className="flex w-2/5 justify-center">
+              <div className="flex w-1/5 justify-center">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold text-foreground">
                     {Math.round(market.probability)}
@@ -207,14 +203,13 @@ export default function EventMarkets({ event }: Props) {
                 </div>
               </div>
 
-              {/* Third column: Yes button - 15% */}
-              <div className="ml-3 w-[15%]">
+              <div className="ml-2">
                 <Button
                   size="lg"
                   variant="yes"
                   className={cn({
                     'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 0,
-                  }, 'w-36')}
+                  }, 'w-36 px-3')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -234,13 +229,13 @@ export default function EventMarkets({ event }: Props) {
                   </span>
                 </Button>
               </div>
-              <div className="ml-2 w-[15%]">
+              <div className="ml-2">
                 <Button
                   size="lg"
                   variant="no"
                   className={cn({
                     'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 1,
-                  }, 'w-36')}
+                  }, 'w-36 px-3')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
