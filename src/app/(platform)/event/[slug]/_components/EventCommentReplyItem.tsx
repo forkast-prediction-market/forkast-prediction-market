@@ -15,13 +15,12 @@ interface ReplyItemProps {
   commentId: string
   eventId: string
   user: any
-  onLikeToggle: (commentId: string, replyId: string, updates: Partial<Comment>) => void
+  onLikeToggle: (commentId: string, replyId: string) => void
   onDelete: (commentId: string, replyId: string) => void
   replyingTo: string | null
   onSetReplyingTo: (id: string | null) => void
   replyText: string
   onSetReplyText: (text: string) => void
-
   onReplyAddedAction?: (reply: Comment) => void
   onCancelReply?: () => void
 }
@@ -51,8 +50,8 @@ export default function EventCommentReplyItem({
     onSetReplyText(`@${username} `)
   }, [user, reply, replyingTo, onSetReplyingTo, onSetReplyText, open])
 
-  const handleLikeToggle = useCallback((newLikesCount: number, newUserHasLiked: boolean) => {
-    onLikeToggle(commentId, reply.id, { likes_count: newLikesCount, user_has_liked: newUserHasLiked })
+  const handleLikeToggle = useCallback(() => {
+    onLikeToggle(commentId, reply.id)
   }, [commentId, reply.id, onLikeToggle])
 
   const handleDelete = useCallback(() => {
@@ -109,7 +108,6 @@ export default function EventCommentReplyItem({
             <EventCommentLikeForm
               comment={reply}
               user={user}
-              eventId={eventId}
               onLikeToggled={handleLikeToggle}
             />
           </div>

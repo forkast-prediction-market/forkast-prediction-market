@@ -1,6 +1,6 @@
 'use client'
 
-import type { Comment, Event, User } from '@/types'
+import type { Event, User } from '@/types'
 import { useCallback, useEffect, useState } from 'react'
 import { useInfiniteComments } from '@/hooks/useInfiniteComments'
 import EventCommentForm from './EventCommentForm'
@@ -65,8 +65,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     setExpandedComments(prev => new Set([...prev, commentId]))
   }, [])
 
-  const handleLikeToggled = useCallback((commentId: string, newLikesCount: number, newUserHasLiked: boolean) => {
-    // Use the new mutation-based like toggle instead of manual state updates
+  const handleLikeToggled = useCallback((commentId: string) => {
     toggleCommentLike(event.id, commentId)
   }, [toggleCommentLike, event.id])
 
@@ -74,10 +73,8 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     deleteReply(commentId, replyId, event.id)
   }, [deleteReply, event.id])
 
-  const handleUpdateReply = useCallback((commentId: string, replyId: string, updates: Partial<Comment>) => {
-    if ('user_has_liked' in updates || 'likes_count' in updates) {
-      toggleReplyLike(event.id, replyId)
-    }
+  const handleUpdateReply = useCallback((commentId: string, replyId: string) => {
+    toggleReplyLike(event.id, replyId)
   }, [toggleReplyLike, event.id])
 
   const handleDeleteComment = useCallback((commentId: string) => {
@@ -122,7 +119,6 @@ export default function EventComments({ event, user }: EventCommentsProps) {
         onCommentAddedAction={() => refetch()}
       />
 
-      {/* List of Comments with Infinite Scroll */}
       <div className="mt-6">
         {status === 'pending'
           ? (
@@ -138,7 +134,6 @@ export default function EventComments({ event, user }: EventCommentsProps) {
               )
             : (
                 <div className="grid gap-6">
-                  {/* Non-virtualized rendering - working version */}
                   {comments.map(comment => (
                     <EventCommentItem
                       key={comment.id}
@@ -160,14 +155,12 @@ export default function EventComments({ event, user }: EventCommentsProps) {
                 </div>
               )}
 
-        {/* Loading indicator for infinite scroll */}
         {isFetchingNextPage && (
           <div className="mt-4 text-center text-sm text-muted-foreground">
             Loading more comments...
           </div>
         )}
 
-        {/* Add new error handling for infinite scroll failures at bottom of list */}
         {hasInfiniteScrollError && infiniteScrollError && (
           <div className="mt-4 text-center text-sm text-destructive">
             <div className="mb-2">
@@ -176,6 +169,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
               {infiniteScrollError.message || String(infiniteScrollError)}
             </div>
             <button
+              type="button"
               onClick={handleRetryInfiniteScroll}
               className="text-xs underline hover:no-underline"
             >

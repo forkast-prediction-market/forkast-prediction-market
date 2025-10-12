@@ -9,25 +9,22 @@ import { cn } from '@/lib/utils'
 interface EventCommentLikeFormProps {
   comment: Comment
   user: User | null
-  eventId: string
-  onLikeToggled: (newLikesCount: number, newUserHasLiked: boolean) => void
+  onLikeToggled: () => void
 }
 
 export default function EventCommentLikeForm({
   comment,
   user,
-  eventId,
   onLikeToggled,
 }: EventCommentLikeFormProps) {
   const { open } = useAppKit()
 
-  const handleClick = () => {
+  function handleClick() {
     if (!user) {
-      open()
+      queueMicrotask(() => open())
       return
     }
-    // Just trigger the mutation through the callback
-    onLikeToggled(0, false) // The actual values don't matter since the mutation handles everything
+    onLikeToggled()
   }
 
   return (

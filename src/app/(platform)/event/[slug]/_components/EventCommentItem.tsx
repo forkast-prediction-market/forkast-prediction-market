@@ -15,7 +15,7 @@ interface CommentItemProps {
   comment: Comment
   eventId: string
   user: any
-  onLikeToggle: (commentId: string, newLikesCount: number, newUserHasLiked: boolean) => void
+  onLikeToggle: (commentId: string) => void
   onDelete: (commentId: string) => void
   replyingTo: string | null
   onSetReplyingTo: (id: string | null) => void
@@ -40,7 +40,6 @@ export default function EventCommentItem({
   onSetReplyText,
   expandedComments,
   onRepliesLoaded,
-
   onDeleteReply,
   onUpdateReply,
 }: CommentItemProps) {
@@ -56,8 +55,8 @@ export default function EventCommentItem({
     onSetReplyText(`@${username} `)
   }, [user, comment, replyingTo, onSetReplyingTo, onSetReplyText, open])
 
-  const handleLikeToggle = useCallback((newLikesCount: number, newUserHasLiked: boolean) => {
-    onLikeToggle(comment.id, newLikesCount, newUserHasLiked)
+  const handleLikeToggle = useCallback(() => {
+    onLikeToggle(comment.id)
   }, [comment.id, onLikeToggle])
 
   const handleDelete = useCallback(() => {
@@ -98,7 +97,6 @@ export default function EventCommentItem({
               <EventCommentLikeForm
                 comment={comment}
                 user={user}
-                eventId={eventId}
                 onLikeToggled={handleLikeToggle}
               />
             </div>
