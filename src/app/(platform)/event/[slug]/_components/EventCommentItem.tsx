@@ -23,7 +23,7 @@ interface CommentItemProps {
   onSetReplyText: (text: string) => void
   expandedComments: Set<string>
   onRepliesLoaded: (commentId: string) => void
-  onAddReply: () => void
+
   onDeleteReply: (commentId: string, replyId: string) => void
   onUpdateReply: (commentId: string, replyId: string, updates: Partial<Comment>) => void
 }
@@ -40,7 +40,7 @@ export default function EventCommentItem({
   onSetReplyText,
   expandedComments,
   onRepliesLoaded,
-  onAddReply,
+
   onDeleteReply,
   onUpdateReply,
 }: CommentItemProps) {
@@ -65,10 +65,9 @@ export default function EventCommentItem({
   }, [comment.id, onDelete])
 
   const handleReplyAdded = useCallback(() => {
-    onAddReply()
     onSetReplyingTo(null)
     onSetReplyText('')
-  }, [onAddReply, onSetReplyingTo, onSetReplyText])
+  }, [onSetReplyingTo, onSetReplyText])
 
   const handleReplyCancel = useCallback(() => {
     onSetReplyingTo(null)
@@ -158,7 +157,7 @@ export default function EventCommentItem({
               onSetReplyingTo={onSetReplyingTo}
               replyText={replyText}
               onSetReplyText={onSetReplyText}
-              onAddReply={onAddReply}
+
             />
           ))}
 

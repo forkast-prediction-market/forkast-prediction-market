@@ -398,7 +398,7 @@ export function useInfiniteComments(eventSlug: string) {
     deleteCommentMutation.mutate({ eventId, commentId: replyId })
   }, [deleteCommentMutation])
 
-  const returnValue = {
+  return {
     comments,
     status,
     error,
@@ -432,6 +432,4 @@ export function useInfiniteComments(eventSlug: string) {
     resetLikeCommentError: likeCommentMutation.reset,
     resetDeleteCommentError: deleteCommentMutation.reset,
   }
-
-  return returnValue
 }

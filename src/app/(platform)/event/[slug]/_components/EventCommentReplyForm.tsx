@@ -1,6 +1,6 @@
 'use client'
 
-import type { Comment, User } from '@/types'
+import type { User } from '@/types'
 import Form from 'next/form'
 import Image from 'next/image'
 import { useActionState, useEffect, useRef } from 'react'

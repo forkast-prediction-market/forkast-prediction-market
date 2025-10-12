@@ -21,7 +21,7 @@ interface ReplyItemProps {
   onSetReplyingTo: (id: string | null) => void
   replyText: string
   onSetReplyText: (text: string) => void
-  onAddReply: () => void
+
   onReplyAddedAction?: (reply: Comment) => void
   onCancelReply?: () => void
 }
@@ -37,7 +37,7 @@ export default function EventCommentReplyItem({
   onSetReplyingTo,
   replyText,
   onSetReplyText,
-  onAddReply,
+
 }: ReplyItemProps) {
   const { open } = useAppKit()
 
@@ -60,10 +60,9 @@ export default function EventCommentReplyItem({
   }, [commentId, reply.id, onDelete])
 
   const handleReplyAdded = useCallback(() => {
-    onAddReply()
     onSetReplyingTo(null)
     onSetReplyText('')
-  }, [onAddReply, onSetReplyingTo, onSetReplyText])
+  }, [onSetReplyingTo, onSetReplyText])
 
   const handleReplyCancel = useCallback(() => {
     onSetReplyingTo(null)

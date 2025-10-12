@@ -2,7 +2,6 @@
 
 import type { Comment, Event, User } from '@/types'
 import { useCallback, useEffect, useState } from 'react'
-
 import { useInfiniteComments } from '@/hooks/useInfiniteComments'
 import EventCommentForm from './EventCommentForm'
 import EventCommentItem from './EventCommentItem'
@@ -31,7 +30,6 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     deleteComment,
     toggleReplyLike,
     deleteReply,
-
     status,
   } = useInfiniteComments(event.slug)
 
@@ -71,10 +69,6 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     // Use the new mutation-based like toggle instead of manual state updates
     toggleCommentLike(event.id, commentId)
   }, [toggleCommentLike, event.id])
-
-  const handleAddReply = useCallback(() => {
-    // UI state only - mutations handle data updates
-  }, [])
 
   const handleDeleteReply = useCallback((commentId: string, replyId: string) => {
     deleteReply(commentId, replyId, event.id)
@@ -159,7 +153,6 @@ export default function EventComments({ event, user }: EventCommentsProps) {
                       onSetReplyText={setReplyText}
                       expandedComments={expandedComments}
                       onRepliesLoaded={handleRepliesLoaded}
-                      onAddReply={handleAddReply}
                       onDeleteReply={handleDeleteReply}
                       onUpdateReply={handleUpdateReply}
                     />
