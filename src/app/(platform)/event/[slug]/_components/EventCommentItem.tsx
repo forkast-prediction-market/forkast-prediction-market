@@ -23,9 +23,8 @@ interface CommentItemProps {
   onSetReplyText: (text: string) => void
   expandedComments: Set<string>
   onRepliesLoaded: (commentId: string) => void
-
   onDeleteReply: (commentId: string, replyId: string) => void
-  onUpdateReply: (commentId: string, replyId: string, updates: Partial<Comment>) => void
+  onUpdateReply: (commentId: string, replyId: string) => void
 }
 
 export default function EventCommentItem({

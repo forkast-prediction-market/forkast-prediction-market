@@ -36,7 +36,6 @@ export default function EventCommentReplyItem({
   onSetReplyingTo,
   replyText,
   onSetReplyText,
-
 }: ReplyItemProps) {
   const { open } = useAppKit()
 
