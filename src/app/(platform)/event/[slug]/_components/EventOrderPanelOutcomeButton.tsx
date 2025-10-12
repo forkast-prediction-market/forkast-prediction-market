@@ -22,7 +22,7 @@ export default function EventOrderPanelOutcomeButton({ type, price }: Props) {
       variant={isSelected ? type : 'outline'}
       size="lg"
       className={cn(
-        'w-1/2 gap-1 px-3 text-sm',
+        'min-w-0 flex-1 gap-1 px-3 text-sm',
         isSelected
         && (type === 'yes'
           ? 'bg-yes text-white hover:bg-yes-foreground'

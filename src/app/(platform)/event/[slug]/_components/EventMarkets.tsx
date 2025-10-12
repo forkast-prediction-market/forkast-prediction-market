@@ -110,13 +110,13 @@ export default function EventMarkets({ event }: Props) {
               </div>
 
               {/* Row 2: Buttons */}
-              <div className="flex gap-2 pr-2">
+              <div className="flex gap-2">
                 <Button
                   size="lg"
                   variant="yes"
                   className={cn({
                     'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 0,
-                  }, 'w-1/2 px-3')}
+                  }, 'min-w-0 flex-1 px-3')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -130,7 +130,7 @@ export default function EventMarkets({ event }: Props) {
                     {' '}
                     {market.outcomes[0].outcome_text}
                   </span>
-                  <span className="shrink-0 font-bold">
+                  <span className="ms-auto shrink-0 font-bold">
                     {Math.round(market.probability)}
                     ¢
                   </span>
@@ -140,7 +140,7 @@ export default function EventMarkets({ event }: Props) {
                   variant="no"
                   className={cn({
                     'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 1,
-                  }, 'w-1/2 px-3')}
+                  }, 'min-w-0 flex-1 px-3')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -154,7 +154,7 @@ export default function EventMarkets({ event }: Props) {
                     {' '}
                     {market.outcomes[1].outcome_text}
                   </span>
-                  <span className="shrink-0 font-bold">
+                  <span className="ms-auto shrink-0 font-bold">
                     {100 - Math.round(market.probability)}
                     ¢
                   </span>

@@ -151,7 +151,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
       <EventOrderPanelBuySellTabs />
 
-      <div className="mb-2 flex gap-2 pr-2">
+      <div className="mb-2 flex gap-2">
         <EventOrderPanelOutcomeButton type="yes" price={yesPrice} />
         <EventOrderPanelOutcomeButton type="no" price={noPrice} />
       </div>
