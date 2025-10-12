@@ -90,7 +90,7 @@ export default function EventActivity({ event }: EventActivityProps) {
     estimateSize: () => {
       // Use responsive sizing based on screen width
       if (typeof window !== 'undefined') {
-        return window.innerWidth < 768 ? 100 : 70
+        return window.innerWidth < 768 ? 120 : 70
       }
       return 70
     },
@@ -208,6 +208,7 @@ export default function EventActivity({ event }: EventActivityProps) {
       {!loading && activities.length > 0 && (
         <div>
           <div
+            className="divide-y divide-border"
             style={{
               height: `${virtualizer.getTotalSize()}px`,
               position: 'relative',
@@ -235,49 +236,47 @@ export default function EventActivity({ event }: EventActivityProps) {
                     }px)`,
                   }}
                 >
-                  <div className="pb-4 md:pb-3">
-                    <ProfileLink
-                      user={activity.user}
-                      date={activity.created_at}
-                    >
-                      <div className="flex-1">
-                        <span className="text-sm text-muted-foreground">
-                          {' '}
-                          {activity.side === 'buy' ? 'bought' : 'sold'}
-                          {' '}
-                        </span>
-                        <span className="text-sm font-semibold">
-                          {formatAmount(activity.amount)}
-                        </span>
-                        <span className={`ml-1 text-sm font-semibold ${
-                          activity.outcome.index === 0
-                            ? 'text-yes'
-                            : 'text-no'
-                        }`}
-                        >
-                          {activity.outcome.text}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {' '}
-                          for
-                          {' '}
-                          {activity.market.title}
-                          {' '}
-                          at
-                          {' '}
-                        </span>
-                        <span className="text-sm font-semibold">
-                          {formatPrice(activity.price)}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {' '}
-                          (
-                          {formatTotalValue(activity.total_value)}
-                          )
-                        </span>
-                      </div>
-                    </ProfileLink>
-                  </div>
+                  <ProfileLink
+                    user={activity.user}
+                    date={activity.created_at}
+                  >
+                    <div className="flex-1">
+                      <span className="text-sm text-muted-foreground">
+                        {' '}
+                        {activity.side === 'buy' ? 'bought' : 'sold'}
+                        {' '}
+                      </span>
+                      <span className="text-sm font-semibold">
+                        {formatAmount(activity.amount)}
+                      </span>
+                      <span className={`ml-1 text-sm font-semibold ${
+                        activity.outcome.index === 0
+                          ? 'text-yes'
+                          : 'text-no'
+                      }`}
+                      >
+                        {activity.outcome.text}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {' '}
+                        for
+                        {' '}
+                        {activity.market.title}
+                        {' '}
+                        at
+                        {' '}
+                      </span>
+                      <span className="text-sm font-semibold">
+                        {formatPrice(activity.price)}
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {' '}
+                        (
+                        {formatTotalValue(activity.total_value)}
+                        )
+                      </span>
+                    </div>
+                  </ProfileLink>
                 </div>
               )
             })}
