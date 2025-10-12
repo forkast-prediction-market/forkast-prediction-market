@@ -24,11 +24,11 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
       <DrawerTrigger asChild>
         {isBinaryMarket && (
           <div className="fixed right-0 bottom-0 left-0 border-t bg-background p-4 md:hidden">
-            <div className="flex gap-2">
+            <div className="flex gap-2 pr-2">
               <Button
                 variant="yes"
                 size="lg"
-                className="flex-1"
+                className="w-1/2"
                 onClick={() => {
                   if (!state.market) {
                     return
@@ -38,15 +38,20 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
                   state.setIsMobileOrderPanelOpen(true)
                 }}
               >
-                Buy Yes
-                {' '}
-                {yesPrice}
-                ¢
+                <span className="truncate opacity-70">
+                  Buy
+                  {' '}
+                  {state.market!.outcomes[0].outcome_text}
+                </span>
+                <span className="shrink-0 font-bold">
+                  {yesPrice}
+                  ¢
+                </span>
               </Button>
               <Button
                 variant="no"
                 size="lg"
-                className="flex-1"
+                className="w-1/2"
                 onClick={() => {
                   if (!state.market) {
                     return
@@ -56,10 +61,15 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
                   state.setIsMobileOrderPanelOpen(true)
                 }}
               >
-                Buy No
-                {' '}
-                {noPrice}
-                ¢
+                <span className="truncate opacity-70">
+                  Buy
+                  {' '}
+                  {state.market!.outcomes[1].outcome_text}
+                </span>
+                <span className="shrink-0 font-bold">
+                  {noPrice}
+                  ¢
+                </span>
               </Button>
             </div>
           </div>

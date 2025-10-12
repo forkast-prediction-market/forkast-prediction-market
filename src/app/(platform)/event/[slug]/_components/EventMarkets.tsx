@@ -13,18 +13,6 @@ interface Props {
 export default function EventMarkets({ event }: Props) {
   const state = useOrder()
   const isBinaryMarket = useIsBinaryMarket()
-  function getOutcomeLabelClass(label: string) {
-    if (label.length > 26) {
-      return 'text-[9px]'
-    }
-    if (label.length > 20) {
-      return 'text-[10px]'
-    }
-    if (label.length > 15) {
-      return 'text-[11px]'
-    }
-    return 'text-xs'
-  }
 
   useEffect(() => {
     if (!state.market) {
@@ -124,13 +112,13 @@ export default function EventMarkets({ event }: Props) {
               </div>
 
               {/* Row 2: Buttons */}
-              <div className="flex gap-2">
+              <div className="flex gap-2 pr-2">
                 <Button
                   size="lg"
                   variant="yes"
                   className={cn({
                     'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 0,
-                  }, 'flex flex-1 items-center justify-center gap-1 px-2 py-2 text-xs leading-tight')}
+                  }, 'w-1/2')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -139,18 +127,12 @@ export default function EventMarkets({ event }: Props) {
                     state.setIsMobileOrderPanelOpen(true)
                   }}
                 >
-                  <span className="shrink-0 text-[10px] font-semibold tracking-wide uppercase">
+                  <span className="truncate opacity-70">
                     Buy
-                  </span>
-                  <span
-                    className={cn(
-                      'flex-1 text-center leading-tight font-semibold tracking-tight',
-                      getOutcomeLabelClass(market.outcomes[0].outcome_text),
-                    )}
-                  >
+                    {' '}
                     {market.outcomes[0].outcome_text}
                   </span>
-                  <span className="shrink-0 text-sm font-semibold">
+                  <span className="shrink-0 font-bold">
                     {Math.round(market.probability)}
                     ¢
                   </span>
@@ -160,7 +142,7 @@ export default function EventMarkets({ event }: Props) {
                   variant="no"
                   className={cn({
                     'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 1,
-                  }, 'flex flex-1 items-center justify-center gap-1 px-2 py-2 text-xs leading-tight')}
+                  }, 'w-1/2')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -169,18 +151,12 @@ export default function EventMarkets({ event }: Props) {
                     state.setIsMobileOrderPanelOpen(true)
                   }}
                 >
-                  <span className="shrink-0 text-[10px] font-semibold tracking-wide uppercase">
+                  <span className="truncate opacity-70">
                     Buy
-                  </span>
-                  <span
-                    className={cn(
-                      'flex-1 text-center leading-tight font-semibold tracking-tight',
-                      getOutcomeLabelClass(market.outcomes[1].outcome_text),
-                    )}
-                  >
+                    {' '}
                     {market.outcomes[1].outcome_text}
                   </span>
-                  <span className="shrink-0 text-sm font-semibold">
+                  <span className="shrink-0 font-bold">
                     {100 - Math.round(market.probability)}
                     ¢
                   </span>
@@ -238,7 +214,7 @@ export default function EventMarkets({ event }: Props) {
                   variant="yes"
                   className={cn({
                     'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 0,
-                  }, 'flex w-full items-center justify-center gap-1 px-2 py-2 text-xs leading-tight')}
+                  }, 'w-36')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -247,18 +223,12 @@ export default function EventMarkets({ event }: Props) {
                     state.inputRef?.current?.focus()
                   }}
                 >
-                  <span className="shrink-0 text-[10px] font-semibold tracking-wide uppercase">
+                  <span className="truncate opacity-70">
                     Buy
-                  </span>
-                  <span
-                    className={cn(
-                      'flex-1 text-center leading-tight font-semibold tracking-tight',
-                      getOutcomeLabelClass(market.outcomes[0].outcome_text),
-                    )}
-                  >
+                    {' '}
                     {market.outcomes[0].outcome_text}
                   </span>
-                  <span className="shrink-0 text-sm font-semibold">
+                  <span className="shrink-0 font-bold">
                     {Math.round(market.probability)}
                     ¢
                   </span>
@@ -270,7 +240,7 @@ export default function EventMarkets({ event }: Props) {
                   variant="no"
                   className={cn({
                     'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 1,
-                  }, 'flex w-full items-center justify-center gap-1 px-2 py-2 text-xs leading-tight')}
+                  }, 'w-36')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -279,18 +249,12 @@ export default function EventMarkets({ event }: Props) {
                     state.inputRef?.current?.focus()
                   }}
                 >
-                  <span className="shrink-0 text-[10px] font-semibold tracking-wide uppercase">
+                  <span className="truncate opacity-70">
                     Buy
-                  </span>
-                  <span
-                    className={cn(
-                      'flex-1 text-center leading-tight font-semibold tracking-tight',
-                      getOutcomeLabelClass(market.outcomes[1].outcome_text),
-                    )}
-                  >
+                    {' '}
                     {market.outcomes[1].outcome_text}
                   </span>
-                  <span className="shrink-0 text-sm font-semibold">
+                  <span className="shrink-0 font-bold">
                     {100 - Math.round(market.probability)}
                     ¢
                   </span>
