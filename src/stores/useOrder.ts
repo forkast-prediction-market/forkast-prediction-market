@@ -127,11 +127,18 @@ export function calculateSellAmount() {
 export function getUserShares() {
   const state = useOrder.getState()
 
-  if (!state.market) {
+  if (!state.market || !state.outcome) {
     return 0
   }
 
-  return mockUser.shares['1-yes'] || 0
+  const outcomeKey = `${state.market.condition_id}-${state.outcome.outcome_index === 0 ? 'yes' : 'no'}` as keyof typeof mockUser.shares
+
+  if (outcomeKey in mockUser.shares) {
+    return mockUser.shares[outcomeKey] || 0
+  }
+
+  const fallbackKey = `${state.market.condition_id}-yes` as keyof typeof mockUser.shares
+  return mockUser.shares[fallbackKey] || 0
 }
 
 export function getYesShares(outcomeId: string) {

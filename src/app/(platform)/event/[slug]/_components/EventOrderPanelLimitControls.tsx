@@ -156,28 +156,62 @@ export default function EventOrderPanelLimitControls() {
             />
           </div>
         </div>
-        <div className="ml-auto flex w-1/2 justify-end gap-2">
-          <button
-            type="button"
-            className={`
-              rounded-md bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors
-              hover:bg-muted/80
-            `}
-            onClick={() => updateLimitShares(limitSharesNumber - 10)}
-          >
-            -10
-          </button>
-          <button
-            type="button"
-            className={`
-              rounded-md bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors
-              hover:bg-muted/80
-            `}
-            onClick={() => updateLimitShares(limitSharesNumber + 10)}
-          >
-            +10
-          </button>
-        </div>
+        {useOrder.getState().side === 'sell'
+          ? (
+              <div className="ml-auto flex w-1/2 justify-end gap-2">
+                {['25%', '50%', 'MAX'].map(label => (
+                  <button
+                    type="button"
+                    key={label}
+                    className={`
+                      rounded-md bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors
+                      hover:bg-muted/80
+                    `}
+                    onClick={() => {
+                      const userShares = getUserShares()
+
+                      if (userShares <= 0) {
+                        return
+                      }
+
+                      if (label === 'MAX') {
+                        updateLimitShares(userShares)
+                        return
+                      }
+
+                      const percent = Number.parseInt(label.replace('%', ''), 10) / 100
+                      updateLimitShares(Math.floor(userShares * percent))
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            )
+          : (
+              <div className="ml-auto flex w-1/2 justify-end gap-2">
+                <button
+                  type="button"
+                  className={`
+                    rounded-md bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors
+                    hover:bg-muted/80
+                  `}
+                  onClick={() => updateLimitShares(limitSharesNumber - 10)}
+                >
+                  -10
+                </button>
+                <button
+                  type="button"
+                  className={`
+                    rounded-md bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors
+                    hover:bg-muted/80
+                  `}
+                  onClick={() => updateLimitShares(limitSharesNumber + 10)}
+                >
+                  +10
+                </button>
+              </div>
+            )}
       </div>
 
       <div className="my-4 border-b border-border"></div>
