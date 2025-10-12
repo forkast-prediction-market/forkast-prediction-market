@@ -30,18 +30,16 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     deleteComment,
     toggleReplyLike,
     deleteReply,
+    loadMoreReplies,
     status,
   } = useInfiniteComments(event.slug)
 
-  // Scroll detection for infinite loading
   useEffect(() => {
     function handleScroll() {
-      // Check if we're near the bottom of the page
       const scrollTop = window.pageYOffset || document.documentElement.scrollTop
       const windowHeight = window.innerHeight
       const documentHeight = document.documentElement.scrollHeight
 
-      // Trigger when we're within 1000px of the bottom
       if (scrollTop + windowHeight >= documentHeight - 1000) {
         if (hasNextPage && !isFetchingNextPage && isInitialized) {
           fetchNextPage()
@@ -53,17 +51,16 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [hasNextPage, isFetchingNextPage, fetchNextPage, isInitialized])
 
-  // Handle initialization state to prevent premature loading
   useEffect(() => {
-    // Mark as initialized once we have successfully loaded the first page
     if (status === 'success' && !isInitialized) {
       queueMicrotask(() => setIsInitialized(true))
     }
   }, [status, isInitialized])
 
   const handleRepliesLoaded = useCallback((commentId: string) => {
+    loadMoreReplies(commentId)
     setExpandedComments(prev => new Set([...prev, commentId]))
-  }, [])
+  }, [loadMoreReplies])
 
   const handleLikeToggled = useCallback((commentId: string) => {
     toggleCommentLike(event.id, commentId)
@@ -81,17 +78,6 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     deleteComment(commentId, event.id)
   }, [deleteComment, event.id])
 
-  // Handle retry for failed infinite scroll requests
-  const handleRetryInfiniteScroll = useCallback(() => {
-    fetchNextPage()
-  }, [fetchNextPage])
-
-  // Handle retry for initial load errors
-  const handleRetryInitialLoad = useCallback(() => {
-    refetch()
-  }, [refetch])
-
-  // Maintain existing initial load error UI display
   if (error) {
     return (
       <div className="mt-6 text-center text-sm text-destructive">
@@ -102,7 +88,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
         </div>
         <button
           type="button"
-          onClick={handleRetryInitialLoad}
+          onClick={() => refetch()}
           className="text-xs underline hover:no-underline"
         >
           Try again
@@ -170,7 +156,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
             </div>
             <button
               type="button"
-              onClick={handleRetryInfiniteScroll}
+              onClick={() => fetchNextPage()}
               className="text-xs underline hover:no-underline"
             >
               Try again

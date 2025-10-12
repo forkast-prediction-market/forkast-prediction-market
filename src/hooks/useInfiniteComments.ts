@@ -398,6 +398,43 @@ export function useInfiniteComments(eventSlug: string) {
     deleteCommentMutation.mutate({ eventId, commentId: replyId })
   }, [deleteCommentMutation])
 
+  // Mutation for loading more replies
+  const loadMoreRepliesMutation = useMutation({
+    mutationFn: async ({ commentId }: { commentId: string }) => {
+      const response = await fetch(`/api/comments/${commentId}/replies`)
+      if (!response.ok) {
+        throw new Error('Failed to load replies')
+      }
+      return await response.json()
+    },
+    onSuccess: (replies, variables) => {
+      // Update the specific comment with all replies
+      queryClient.setQueryData(['event-comments', eventSlug], (oldData: any) => {
+        if (!oldData) {
+          return oldData
+        }
+
+        const newPages = oldData.pages.map((page: Comment[]) =>
+          page.map((comment: Comment) => {
+            if (comment.id === variables.commentId) {
+              return {
+                ...comment,
+                recent_replies: replies,
+              }
+            }
+            return comment
+          }),
+        )
+
+        return { ...oldData, pages: newPages }
+      })
+    },
+  })
+
+  const loadMoreReplies = useCallback((commentId: string) => {
+    loadMoreRepliesMutation.mutate({ commentId })
+  }, [loadMoreRepliesMutation])
+
   return {
     comments,
     status,
@@ -416,11 +453,13 @@ export function useInfiniteComments(eventSlug: string) {
     createReply,
     toggleReplyLike,
     deleteReply,
+    loadMoreReplies,
 
     // Mutation states for UI feedback
     isCreatingComment: createCommentMutation.isPending,
     isTogglingLike: likeCommentMutation.isPending,
     isDeletingComment: deleteCommentMutation.isPending,
+    isLoadingReplies: loadMoreRepliesMutation.isPending,
 
     // Error states
     createCommentError: createCommentMutation.error,
