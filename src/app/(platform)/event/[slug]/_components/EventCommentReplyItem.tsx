@@ -21,7 +21,7 @@ interface ReplyItemProps {
   onSetReplyingTo: (id: string | null) => void
   replyText: string
   onSetReplyText: (text: string) => void
-  onAddReply: (commentId: string, reply: Comment) => void
+  onAddReply: () => void
   onReplyAddedAction?: (reply: Comment) => void
   onCancelReply?: () => void
 }
@@ -59,11 +59,11 @@ export default function EventCommentReplyItem({
     onDelete(commentId, reply.id)
   }, [commentId, reply.id, onDelete])
 
-  const handleReplyAdded = useCallback((newReply: Comment) => {
-    onAddReply(commentId, newReply)
+  const handleReplyAdded = useCallback(() => {
+    onAddReply()
     onSetReplyingTo(null)
     onSetReplyText('')
-  }, [commentId, onAddReply, onSetReplyingTo, onSetReplyText])
+  }, [onAddReply, onSetReplyingTo, onSetReplyText])
 
   const handleReplyCancel = useCallback(() => {
     onSetReplyingTo(null)

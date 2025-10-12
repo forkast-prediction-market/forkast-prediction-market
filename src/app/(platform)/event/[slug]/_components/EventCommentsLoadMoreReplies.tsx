@@ -3,7 +3,7 @@ import { useState } from 'react'
 
 interface Props {
   comment: Comment
-  onRepliesLoaded: (commentId: string, allReplies: Comment[]) => void
+  onRepliesLoaded: (commentId: string) => void
 }
 
 export default function EventCommentsLoadMoreReplies({ comment, onRepliesLoaded }: Props) {
@@ -16,7 +16,8 @@ export default function EventCommentsLoadMoreReplies({ comment, onRepliesLoaded 
       const response = await fetch(`/api/comments/${commentId}/replies`)
       if (response.ok) {
         const allReplies = await response.json()
-        onRepliesLoaded(commentId, allReplies)
+        // TODO: Update this to use mutations instead of direct API calls
+        onRepliesLoaded(commentId)
       }
     }
     catch (error) {

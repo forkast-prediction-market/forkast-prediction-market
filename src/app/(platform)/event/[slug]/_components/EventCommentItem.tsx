@@ -22,8 +22,8 @@ interface CommentItemProps {
   replyText: string
   onSetReplyText: (text: string) => void
   expandedComments: Set<string>
-  onRepliesLoaded: (commentId: string, allReplies: Comment[]) => void
-  onAddReply: (commentId: string, reply: Comment) => void
+  onRepliesLoaded: (commentId: string) => void
+  onAddReply: () => void
   onDeleteReply: (commentId: string, replyId: string) => void
   onUpdateReply: (commentId: string, replyId: string, updates: Partial<Comment>) => void
 }
@@ -64,11 +64,11 @@ export default function EventCommentItem({
     onDelete(comment.id)
   }, [comment.id, onDelete])
 
-  const handleReplyAdded = useCallback((newReply: Comment) => {
-    onAddReply(comment.id, newReply)
+  const handleReplyAdded = useCallback(() => {
+    onAddReply()
     onSetReplyingTo(null)
     onSetReplyText('')
-  }, [comment.id, onAddReply, onSetReplyingTo, onSetReplyText])
+  }, [onAddReply, onSetReplyingTo, onSetReplyText])
 
   const handleReplyCancel = useCallback(() => {
     onSetReplyingTo(null)

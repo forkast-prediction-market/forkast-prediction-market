@@ -63,8 +63,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     }
   }, [status, isInitialized])
 
-  const handleRepliesLoaded = useCallback((commentId: string, allReplies: Comment[]) => {
-    // Replies are now handled automatically by the mutations
+  const handleRepliesLoaded = useCallback((commentId: string) => {
     setExpandedComments(prev => new Set([...prev, commentId]))
   }, [])
 
@@ -74,7 +73,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
   }, [toggleCommentLike, event.id])
 
   const handleAddReply = useCallback(() => {
-    // Replies are handled automatically by the mutations
+    // UI state only - mutations handle data updates
   }, [])
 
   const handleDeleteReply = useCallback((commentId: string, replyId: string) => {
@@ -82,7 +81,6 @@ export default function EventComments({ event, user }: EventCommentsProps) {
   }, [deleteReply, event.id])
 
   const handleUpdateReply = useCallback((commentId: string, replyId: string, updates: Partial<Comment>) => {
-    // For like toggle on replies, use the specific mutation
     if ('user_has_liked' in updates || 'likes_count' in updates) {
       toggleReplyLike(event.id, replyId)
     }

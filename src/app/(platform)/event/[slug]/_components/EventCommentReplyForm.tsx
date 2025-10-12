@@ -15,7 +15,7 @@ interface Props {
   placeholder: string
   initialValue?: string
   onCancel: () => void
-  onReplyAddedAction: (reply: Comment) => void
+  onReplyAddedAction?: () => void
 }
 
 export default function EventCommentReplyForm({
@@ -35,16 +35,10 @@ export default function EventCommentReplyForm({
 
   useEffect(() => {
     if (state.comment) {
-      const replyWithUserData = {
-        ...state.comment,
-        username: `${user?.username}`,
-        user_avatar: `${user?.image}`,
-        user_address: `${user?.address}`,
-      }
-      onReplyAddedAction(replyWithUserData as unknown as Comment)
+      onReplyAddedAction?.()
       formRef.current?.reset()
     }
-  }, [state.comment, user, onReplyAddedAction])
+  }, [state.comment, onReplyAddedAction])
 
   return (
     <Form ref={formRef} action={formAction} className="flex gap-3">
