@@ -101,8 +101,6 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
           if (user) {
             useUser.setState(user)
           }
-
-          queueMicrotask(() => redirect(window.location.href as unknown as Route))
         }).catch(() => {})
       },
     }),
