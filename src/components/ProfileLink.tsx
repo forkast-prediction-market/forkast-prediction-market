@@ -26,7 +26,7 @@ export default function ProfileLink({ user, position, date, children }: ProfileL
   const href = `/@${user.username || user.address}` as any
 
   return (
-    <div className="flex items-start gap-3 border-b border-border/30 py-2 last:border-b-0">
+    <div className="flex items-start gap-3 py-2">
       <Link href={href} className="relative shrink-0">
         <Image
           src={user.image || `https://avatar.vercel.sh/${user.address}.png`}
