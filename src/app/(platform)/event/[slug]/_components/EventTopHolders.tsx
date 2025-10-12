@@ -1,10 +1,10 @@
 'use client'
 
 import type { Event, HoldersResponse, TopHolder } from '@/types'
-import Image from 'next/image'
 import { useEffect, useState } from 'react'
+import ProfileLink from '@/components/ProfileLink'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { formatPosition, truncateAddress } from '@/lib/utils'
+import { formatPosition } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
 interface EventTopHoldersProps {
@@ -155,71 +155,46 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
 
       <div className="grid grid-cols-2 gap-6">
         <div>
-          <div className="mb-3 flex justify-between">
-            <span className="text-sm font-medium">Yes holders</span>
-            <span className="text-xs font-medium text-muted-foreground uppercase">Shares</span>
-          </div>
-
-          <div className="divide-y divide-border border-t">
+          <span className="text-sm font-medium">Yes holders</span>
+          <div className="mt-1 divide-y divide-border border-t">
             {state.yesHolders.length === 0
               ? <p className="py-2 text-sm text-muted-foreground">No holders found</p>
               : (
-                  state.yesHolders.map(holder => (
-                    <div
-                      key={`${holder.user.id}-${holder.outcomeIndex}`}
-                      className="flex items-center justify-between py-2"
+                  state.yesHolders.map((holder, index) => (
+                    <ProfileLink
+                      key={holder.user.address}
+                      user={holder.user}
+                      position={index + 1}
                     >
-                      <div className="flex items-center gap-3">
-                        <Image
-                          src={holder.user.image || `https://avatar.vercel.sh/${holder.user.address}.png`}
-                          alt={holder.user.username || holder.user.address}
-                          width={32}
-                          height={32}
-                          className="shrink-0 rounded-full"
-                        />
-                        <span className="max-w-28 truncate text-sm font-medium">
-                          {holder.user.username || truncateAddress(holder.user.address)}
-                        </span>
-                      </div>
-                      <span className="text-sm font-semibold text-yes">
+                      <span className="text-xs font-semibold text-yes">
                         {formatPosition(holder.netPosition)}
+                        {' '}
+                        shares
                       </span>
-                    </div>
+                    </ProfileLink>
                   ))
                 )}
           </div>
         </div>
 
         <div>
-          <div className="mb-3 flex justify-between">
-            <span className="text-sm font-medium">No holders</span>
-            <span className="text-xs font-medium text-muted-foreground uppercase">Shares</span>
-          </div>
-          <div className="divide-y divide-border border-t">
+          <span className="text-sm font-medium">No holders</span>
+          <div className="mt-1 divide-y divide-border border-t">
             {state.noHolders.length === 0
               ? <p className="py-2 text-sm text-muted-foreground">No holders found</p>
               : (
-                  state.noHolders.map(holder => (
-                    <div
-                      key={`${holder.user.id}-${holder.outcomeIndex}`}
-                      className="flex items-center justify-between py-2"
+                  state.noHolders.map((holder, index) => (
+                    <ProfileLink
+                      key={holder.user.address}
+                      user={holder.user}
+                      position={index + 1}
                     >
-                      <div className="flex items-center gap-3">
-                        <Image
-                          src={holder.user.image || `https://avatar.vercel.sh/${holder.user.address}.png`}
-                          alt={holder.user.username || holder.user.address}
-                          width={32}
-                          height={32}
-                          className="shrink-0 rounded-full"
-                        />
-                        <span className="text-sm font-medium">
-                          {holder.user.username || truncateAddress(holder.user.address)}
-                        </span>
-                      </div>
-                      <span className="text-sm font-semibold text-no">
+                      <span className="text-xs font-semibold text-no">
                         {formatPosition(holder.netPosition)}
+                        {' '}
+                        shares
                       </span>
-                    </div>
+                    </ProfileLink>
                   ))
                 )}
           </div>

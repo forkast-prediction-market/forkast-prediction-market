@@ -1,11 +1,12 @@
+'use client'
+
 import type { ActivityOrder, Event } from '@/types'
 import { AlertCircleIcon } from 'lucide-react'
-import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
+import ProfileLink from '@/components/ProfileLink'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { formatTimeAgo, truncateAddress } from '@/lib/utils'
 
 interface EventActivityProps {
   event: Event
@@ -216,21 +217,12 @@ export default function EventActivity({ event }: EventActivityProps) {
               <>
                 <div className="grid gap-4">
                   {activities.map(activity => (
-                    <div
+                    <ProfileLink
                       key={activity.id}
-                      className="flex items-center gap-3 border-b border-border/30 py-2 last:border-b-0"
+                      user={activity.user}
+                      date={activity.created_at}
                     >
-                      <Image
-                        src={activity.user.image || `https://avatar.vercel.sh/${activity.user.address}.png`}
-                        alt={activity.user.username || activity.user.address}
-                        width={32}
-                        height={32}
-                        className="shrink-0 rounded-full"
-                      />
                       <div className="flex-1">
-                        <span className="truncate text-sm font-medium">
-                          {activity.user.username || truncateAddress(activity.user.address)}
-                        </span>
                         <span className="text-sm text-muted-foreground">
                           {' '}
                           {activity.side === 'buy' ? 'bought' : 'sold'}
@@ -267,10 +259,7 @@ export default function EventActivity({ event }: EventActivityProps) {
                           )
                         </span>
                       </div>
-                      <span className="text-xs text-muted-foreground">
-                        {formatTimeAgo(activity.created_at)}
-                      </span>
-                    </div>
+                    </ProfileLink>
                   ))}
                 </div>
 

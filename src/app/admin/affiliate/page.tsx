@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import AdminAffiliateOverview from '@/app/admin/_components/AdminAffiliateOverview'
 import AdminAffiliateSettingsForm from '@/app/admin/_components/AdminAffiliateSettingsForm'
 import { AffiliateModel } from '@/lib/db/affiliates'
@@ -31,9 +32,9 @@ interface RowSummary {
 }
 
 export default async function AdminSettingsPage() {
-  const user = await UserModel.getCurrentUser()
-  if (!user || !user.is_admin) {
-    return null
+  const currentUser = await UserModel.getCurrentUser()
+  if (!currentUser || !currentUser.is_admin) {
+    redirect('/')
   }
 
   const { data: allSettings } = await SettingsModel.getSettings()

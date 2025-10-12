@@ -630,6 +630,7 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
       .from('forkast-assets')
       .upload(storagePath, imageBuffer, {
         contentType: 'image/jpeg',
+        cacheControl: '31536000',
         upsert: true,
       })
 
