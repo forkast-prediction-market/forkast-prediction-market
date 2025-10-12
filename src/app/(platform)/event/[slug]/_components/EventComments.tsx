@@ -1,8 +1,8 @@
 'use client'
 
 import type { Comment, Event, User } from '@/types'
-import { useCallback, useState, useRef, useEffect } from 'react'
-import { useWindowVirtualizer } from '@tanstack/react-virtual'
+import { useCallback, useEffect, useRef, useState } from 'react'
+
 import { useInfiniteComments } from '@/hooks/useInfiniteComments'
 import EventCommentForm from './EventCommentForm'
 import EventCommentItem from './EventCommentItem'
@@ -39,67 +39,33 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     status,
   } = useInfiniteComments(event.slug)
 
-  // Add useWindowVirtualizer hook with estimated comment item height
-  const virtualizer = useWindowVirtualizer({
-    count: comments.length,
-    estimateSize: useCallback(() => 120, []), // Estimated 120px per comment item (accounting for content, replies, and actions)
-    scrollMargin: parentRef.current?.offsetTop ?? 0,
-    overscan: 5, // Render 5 extra items above and below visible area for smoother scrolling
-    measureElement: typeof window !== 'undefined' ? undefined : () => 120, // Fallback for SSR
-  })
+  // Scroll detection for infinite loading
+  useEffect(() => {
+    function handleScroll() {
+      // Check if we're near the bottom of the page
+      const scrollTop = window.pageYOffset || document.documentElement.scrollTop
+      const windowHeight = window.innerHeight
+      const documentHeight = document.documentElement.scrollHeight
+
+      // Trigger when we're within 1000px of the bottom
+      if (scrollTop + windowHeight >= documentHeight - 1000) {
+        if (hasNextPage && !isFetchingNextPage && isInitialized) {
+          fetchNextPage()
+        }
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, isInitialized])
 
   // Handle initialization state to prevent premature loading
   useEffect(() => {
     // Mark as initialized once we have successfully loaded the first page
     if (status === 'success' && !isInitialized) {
-      setIsInitialized(true)
+      queueMicrotask(() => setIsInitialized(true))
     }
   }, [status, isInitialized])
-
-  // Handle variable height comments with content and replies
-  useEffect(() => {
-    // Measure actual heights after render and update virtualizer
-    virtualizer.measure()
-  }, [comments, expandedComments, replyingTo, virtualizer])
-
-  // Cleanup effect to ensure proper cleanup of queries and event listeners
-  useEffect(() => {
-    return () => {
-      // Clear any pending infinite scroll errors when component unmounts
-      // The TanStack Query cleanup is handled automatically
-    }
-  }, [])
-
-  // Implement onChange handler for virtualizer to detect scroll position
-  useEffect(() => {
-    const virtualItems = virtualizer.getVirtualItems()
-    
-    // Handle initialization state to prevent premature loading
-    if (!isInitialized || virtualItems.length === 0 || comments.length === 0) {
-      return
-    }
-    
-    const [lastItem] = [...virtualItems].reverse()
-    
-    if (!lastItem) return
-    
-    // Add logic to trigger fetchNextPage when approaching end of comments list
-    // Include hasNextPage and isFetchingNextPage checks
-    // Trigger when we're within 5 items of the end and have more data to load
-    if (
-      lastItem.index >= comments.length - 5 &&
-      hasNextPage &&
-      !isFetchingNextPage
-    ) {
-      fetchNextPage()
-    }
-  }, [isInitialized, comments.length, hasNextPage, isFetchingNextPage, fetchNextPage, virtualizer])
-
-  const handleCommentAdded = useCallback((newComment: Comment) => {
-    // The server action has already created the comment, so we refetch the data
-    // to ensure the UI is updated with the latest comment
-    refetch()
-  }, [refetch])
 
   const handleRepliesLoaded = useCallback((commentId: string, allReplies: Comment[]) => {
     updateComment(commentId, { recent_replies: allReplies })
@@ -125,7 +91,8 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     // For like toggle on replies, use the specific mutation
     if ('user_has_liked' in updates || 'likes_count' in updates) {
       toggleReplyLike(event.id, replyId)
-    } else {
+    }
+    else {
       // For other updates, use the legacy function (with warning)
       updateReply(commentId, replyId, updates)
     }
@@ -169,7 +136,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
       <EventCommentForm
         eventId={event.id}
         user={user}
-        onCommentAddedAction={handleCommentAdded}
+        onCommentAddedAction={() => refetch()}
       />
 
       {/* List of Comments with Virtual Scrolling */}
@@ -187,52 +154,27 @@ export default function EventComments({ event, user }: EventCommentsProps) {
                 </div>
               )
             : (
-                <div
-                  style={{
-                    height: `${virtualizer.getTotalSize()}px`,
-                    width: '100%',
-                    position: 'relative',
-                  }}
-                >
-                  {/* Implement virtual item rendering logic for single-column comment layout */}
-                  {virtualizer.getVirtualItems().map((virtualItem) => {
-                    const comment = comments[virtualItem.index]
-                    if (!comment) return null
-
-                    return (
-                      <div
-                        key={virtualItem.key}
-                        data-index={virtualItem.index}
-                        ref={virtualizer.measureElement}
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          transform: `translateY(${virtualItem.start}px)`,
-                        }}
-                      >
-                        <div className="pb-6">
-                          <EventCommentItem
-                            comment={comment}
-                            eventId={event.id}
-                            user={user}
-                            onLikeToggle={handleLikeToggled}
-                            onDelete={handleDeleteComment}
-                            replyingTo={replyingTo}
-                            onSetReplyingTo={setReplyingTo}
-                            replyText={replyText}
-                            onSetReplyText={setReplyText}
-                            expandedComments={expandedComments}
-                            onRepliesLoaded={handleRepliesLoaded}
-                            onAddReply={handleAddReply}
-                            onDeleteReply={handleDeleteReply}
-                            onUpdateReply={handleUpdateReply}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })}
+                <div className="grid gap-6">
+                  {/* Non-virtualized rendering - working version */}
+                  {comments.map(comment => (
+                    <EventCommentItem
+                      key={comment.id}
+                      comment={comment}
+                      eventId={event.id}
+                      user={user}
+                      onLikeToggle={handleLikeToggled}
+                      onDelete={handleDeleteComment}
+                      replyingTo={replyingTo}
+                      onSetReplyingTo={setReplyingTo}
+                      replyText={replyText}
+                      onSetReplyText={setReplyText}
+                      expandedComments={expandedComments}
+                      onRepliesLoaded={handleRepliesLoaded}
+                      onAddReply={handleAddReply}
+                      onDeleteReply={handleDeleteReply}
+                      onUpdateReply={handleUpdateReply}
+                    />
+                  ))}
                 </div>
               )}
 
