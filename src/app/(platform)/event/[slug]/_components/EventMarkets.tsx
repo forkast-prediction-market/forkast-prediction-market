@@ -223,7 +223,7 @@ export default function EventMarkets({ event }: Props) {
                     {' '}
                     {market.outcomes[0].outcome_text}
                   </span>
-                  <span className="shrink-0 font-bold">
+                  <span className="ms-auto shrink-0 font-bold">
                     {Math.round(market.probability)}
                     ¢
                   </span>
@@ -249,7 +249,7 @@ export default function EventMarkets({ event }: Props) {
                     {' '}
                     {market.outcomes[1].outcome_text}
                   </span>
-                  <span className="shrink-0 font-bold">
+                  <span className="ms-auto font-bold">
                     {100 - Math.round(market.probability)}
                     ¢
                   </span>
