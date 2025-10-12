@@ -9,7 +9,7 @@ import {
   Select as UiSelect,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { useOrder } from '@/stores/useOrder'
+import { getUserShares, useOrder } from '@/stores/useOrder'
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
