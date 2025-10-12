@@ -28,7 +28,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
               <Button
                 variant="yes"
                 size="lg"
-                className="flex-1"
+                className="min-w-0 flex-1"
                 onClick={() => {
                   if (!state.market) {
                     return
@@ -38,15 +38,20 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
                   state.setIsMobileOrderPanelOpen(true)
                 }}
               >
-                Buy Yes
-                {' '}
-                {yesPrice}
-                ¢
+                <span className="truncate opacity-70">
+                  Buy
+                  {' '}
+                  {state.market!.outcomes[0].outcome_text}
+                </span>
+                <span className="shrink-0 font-bold">
+                  {yesPrice}
+                  ¢
+                </span>
               </Button>
               <Button
                 variant="no"
                 size="lg"
-                className="flex-1"
+                className="min-w-0 flex-1"
                 onClick={() => {
                   if (!state.market) {
                     return
@@ -56,10 +61,15 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
                   state.setIsMobileOrderPanelOpen(true)
                 }}
               >
-                Buy No
-                {' '}
-                {noPrice}
-                ¢
+                <span className="truncate opacity-70">
+                  Buy
+                  {' '}
+                  {state.market!.outcomes[1].outcome_text}
+                </span>
+                <span className="shrink-0 font-bold">
+                  {noPrice}
+                  ¢
+                </span>
               </Button>
             </div>
           </div>
