@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import EventOrderPanelBuySellTabs from '@/app/(platform)/event/[slug]/_components/EventOrderPanelBuySellTabs'
 import EventOrderPanelEarnings from '@/app/(platform)/event/[slug]/_components/EventOrderPanelEarnings'
 import EventOrderPanelInput from '@/app/(platform)/event/[slug]/_components/EventOrderPanelInput'
+import EventOrderPanelLimitControls from '@/app/(platform)/event/[slug]/_components/EventOrderPanelLimitControls'
 import EventOrderPanelMarketInfo from '@/app/(platform)/event/[slug]/_components/EventOrderPanelMarketInfo'
 import EventOrderPanelMobileMarketInfo from '@/app/(platform)/event/[slug]/_components/EventOrderPanelMobileMarketInfo'
 import EventOrderPanelOutcomeButton from '@/app/(platform)/event/[slug]/_components/EventOrderPanelOutcomeButton'
@@ -36,6 +37,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const noPrice = useNoPrice()
   const isBinaryMarket = useIsBinaryMarket()
   const amount = useAmountAsNumber()
+  const isLimitOrder = state.type === 'limit'
 
   async function onSubmit() {
     if (!isConnected) {
@@ -66,7 +68,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         token_id: state.outcome.token_id,
         side: state.side,
         amount,
-        type: 'market' as const,
+        type: state.type,
         price: price / 100,
       }
 
@@ -156,11 +158,19 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         <EventOrderPanelOutcomeButton type="no" price={noPrice} />
       </div>
 
-      {state.side === 'sell' ? <EventOrderPanelUserShares /> : <div className="mb-4"></div>}
-
-      <EventOrderPanelInput isMobile={isMobile} />
-
-      {amount > 0 && <EventOrderPanelEarnings isMobile={isMobile} />}
+      {isLimitOrder
+        ? (
+            <div className="mb-4">
+              <EventOrderPanelLimitControls />
+            </div>
+          )
+        : (
+            <>
+              {state.side === 'sell' ? <EventOrderPanelUserShares /> : <div className="mb-4"></div>}
+              <EventOrderPanelInput isMobile={isMobile} />
+              {amount > 0 && <EventOrderPanelEarnings isMobile={isMobile} />}
+            </>
+          )}
 
       <EventOrderPanelSubmitButton />
       <EventOrderPanelTermsDisclaimer />
