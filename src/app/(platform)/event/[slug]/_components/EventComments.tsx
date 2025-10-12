@@ -1,7 +1,7 @@
 'use client'
 
 import type { Comment, Event, User } from '@/types'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { useInfiniteComments } from '@/hooks/useInfiniteComments'
 import EventCommentForm from './EventCommentForm'
@@ -18,9 +18,6 @@ export default function EventComments({ event, user }: EventCommentsProps) {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(() => new Set())
   const [isInitialized, setIsInitialized] = useState(false)
 
-  // Create parent container ref for scroll margin calculation
-  const parentRef = useRef<HTMLDivElement>(null)
-
   const {
     comments,
     error,
@@ -34,8 +31,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     deleteComment,
     toggleReplyLike,
     deleteReply,
-    updateComment,
-    updateReply,
+
     status,
   } = useInfiniteComments(event.slug)
 
@@ -68,19 +64,17 @@ export default function EventComments({ event, user }: EventCommentsProps) {
   }, [status, isInitialized])
 
   const handleRepliesLoaded = useCallback((commentId: string, allReplies: Comment[]) => {
-    updateComment(commentId, { recent_replies: allReplies })
+    // Replies are now handled automatically by the mutations
     setExpandedComments(prev => new Set([...prev, commentId]))
-  }, [updateComment])
+  }, [])
 
   const handleLikeToggled = useCallback((commentId: string, newLikesCount: number, newUserHasLiked: boolean) => {
     // Use the new mutation-based like toggle instead of manual state updates
     toggleCommentLike(event.id, commentId)
   }, [toggleCommentLike, event.id])
 
-  const handleAddReply = useCallback((commentId: string, newReply: Comment) => {
-    // The new hook handles optimistic updates automatically through mutations
-    // This callback is called after a successful reply creation
-    // No need to manually update the comment as it's handled by the mutation
+  const handleAddReply = useCallback(() => {
+    // Replies are handled automatically by the mutations
   }, [])
 
   const handleDeleteReply = useCallback((commentId: string, replyId: string) => {
@@ -92,11 +86,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     if ('user_has_liked' in updates || 'likes_count' in updates) {
       toggleReplyLike(event.id, replyId)
     }
-    else {
-      // For other updates, use the legacy function (with warning)
-      updateReply(commentId, replyId, updates)
-    }
-  }, [updateReply, toggleReplyLike, event.id])
+  }, [toggleReplyLike, event.id])
 
   const handleDeleteComment = useCallback((commentId: string) => {
     deleteComment(commentId, event.id)
@@ -122,6 +112,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
           {error.message || String(error)}
         </div>
         <button
+          type="button"
           onClick={handleRetryInitialLoad}
           className="text-xs underline hover:no-underline"
         >
@@ -139,8 +130,8 @@ export default function EventComments({ event, user }: EventCommentsProps) {
         onCommentAddedAction={() => refetch()}
       />
 
-      {/* List of Comments with Virtual Scrolling */}
-      <div ref={parentRef} className="mt-6">
+      {/* List of Comments with Infinite Scroll */}
+      <div className="mt-6">
         {status === 'pending'
           ? (
               <div className="text-center text-sm text-muted-foreground">

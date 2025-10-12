@@ -5,7 +5,7 @@ import { deleteCommentAction } from '@/app/(platform)/event/[slug]/actions/delet
 import { likeCommentAction } from '@/app/(platform)/event/[slug]/actions/like-comment'
 import { storeCommentAction } from '@/app/(platform)/event/[slug]/actions/store-comment'
 
-async function fetchComments({
+export async function fetchComments({
   pageParam = 0,
   eventSlug,
 }: {
@@ -373,15 +373,6 @@ export function useInfiniteComments(eventSlug: string) {
     },
   })
 
-  // Mutation for creating a reply (uses the same createCommentMutation with parentCommentId)
-  const createReplyMutation = createCommentMutation
-
-  // Mutation for liking a reply (uses the same likeCommentMutation)
-  const likeReplyMutation = likeCommentMutation
-
-  // Mutation for deleting a reply (uses the same deleteCommentMutation)
-  const deleteReplyMutation = deleteCommentMutation
-
   // Core mutation functions with proper error handling and optimistic updates
   const createComment = useCallback((eventId: string, content: string, parentCommentId?: string) => {
     createCommentMutation.mutate({ eventId, content, parentCommentId })
@@ -396,60 +387,16 @@ export function useInfiniteComments(eventSlug: string) {
   }, [deleteCommentMutation])
 
   const createReply = useCallback((eventId: string, parentCommentId: string, content: string) => {
-    createReplyMutation.mutate({ eventId, content, parentCommentId })
-  }, [createReplyMutation])
+    createCommentMutation.mutate({ eventId, content, parentCommentId })
+  }, [createCommentMutation])
 
   const toggleReplyLike = useCallback((eventId: string, replyId: string) => {
-    likeReplyMutation.mutate({ eventId, commentId: replyId })
-  }, [likeReplyMutation])
+    likeCommentMutation.mutate({ eventId, commentId: replyId })
+  }, [likeCommentMutation])
 
   const deleteReply = useCallback((_commentId: string, replyId: string, eventId: string) => {
-    deleteReplyMutation.mutate({ eventId, commentId: replyId })
-  }, [deleteReplyMutation])
-
-  // Legacy callback functions for backward compatibility (minimal implementation)
-  const updateComment = useCallback((commentId: string, updates: Partial<Comment>) => {
-    // Only support recent_replies updates for reply loading functionality
-    if ('recent_replies' in updates) {
-      queryClient.setQueryData(['event-comments', eventSlug], (oldData: any) => {
-        if (!oldData) {
-          return oldData
-        }
-
-        const newPages = oldData.pages.map((page: Comment[]) =>
-          page.map((comment: Comment) =>
-            comment.id === commentId ? { ...comment, ...updates } : comment,
-          ),
-        )
-
-        return { ...oldData, pages: newPages }
-      })
-    }
-  }, [queryClient, eventSlug])
-
-  const updateReply = useCallback((commentId: string, replyId: string, updates: Partial<Comment>) => {
-    queryClient.setQueryData(['event-comments', eventSlug], (oldData: any) => {
-      if (!oldData) {
-        return oldData
-      }
-
-      const newPages = oldData.pages.map((page: Comment[]) =>
-        page.map((comment: Comment) => {
-          if (comment.id === commentId && comment.recent_replies) {
-            return {
-              ...comment,
-              recent_replies: comment.recent_replies.map(reply =>
-                reply.id === replyId ? { ...reply, ...updates } : reply,
-              ),
-            }
-          }
-          return comment
-        }),
-      )
-
-      return { ...oldData, pages: newPages }
-    })
-  }, [queryClient, eventSlug])
+    deleteCommentMutation.mutate({ eventId, commentId: replyId })
+  }, [deleteCommentMutation])
 
   const returnValue = {
     comments,
@@ -469,10 +416,6 @@ export function useInfiniteComments(eventSlug: string) {
     createReply,
     toggleReplyLike,
     deleteReply,
-
-    // Legacy interface for backward compatibility (minimal implementation)
-    updateComment,
-    updateReply,
 
     // Mutation states for UI feedback
     isCreatingComment: createCommentMutation.isPending,
