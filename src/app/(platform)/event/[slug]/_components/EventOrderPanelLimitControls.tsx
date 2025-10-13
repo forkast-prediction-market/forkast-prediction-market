@@ -18,8 +18,7 @@ function clamp(value: number, min: number, max: number) {
 export default function EventOrderPanelLimitControls() {
   const {
     type,
-    market,
-    outcome,
+    side,
     limitPrice,
     limitShares,
     limitExpirationEnabled,
@@ -47,18 +46,19 @@ export default function EventOrderPanelLimitControls() {
   }, [limitPriceNumber, limitSharesNumber])
 
   const potentialWin = useMemo(() => {
-    if (!market) {
+    if (limitSharesNumber <= 0) {
       return 0
     }
 
-    const targetProbability = outcome?.outcome_index === 0
-      ? market.probability
-      : 100 - market.probability
+    if (side === 'sell') {
+      const total = (limitPriceNumber * limitSharesNumber) / 100
+      return Number.isFinite(total) ? total : 0
+    }
 
-    const payoutPerShare = (targetProbability || 0) / 100
+    const payoutPerShare = (100 - limitPriceNumber) / 100
     const total = limitSharesNumber * payoutPerShare
     return Number.isFinite(total) ? total : 0
-  }, [limitSharesNumber, market, outcome])
+  }, [limitPriceNumber, limitSharesNumber, side])
 
   useEffect(() => {
     if (type !== 'limit') {
@@ -156,7 +156,7 @@ export default function EventOrderPanelLimitControls() {
             />
           </div>
         </div>
-        {useOrder.getState().side === 'sell'
+        {side === 'sell'
           ? (
               <div className="ml-auto flex w-1/2 justify-end gap-2">
                 {['25%', '50%', 'MAX'].map(label => (
@@ -180,7 +180,8 @@ export default function EventOrderPanelLimitControls() {
                       }
 
                       const percent = Number.parseInt(label.replace('%', ''), 10) / 100
-                      updateLimitShares(Math.floor(userShares * percent))
+                      const calculatedShares = Number.parseFloat((userShares * percent).toFixed(2))
+                      updateLimitShares(calculatedShares)
                     }}
                   >
                     {label}

@@ -110,7 +110,7 @@ export default function EventOrderPanelBuySellTabs() {
                 `,
               )}
             >
-              <SelectValue placeholder="Select order type" />
+              <SelectValue />
               <ChevronDownIcon className={`
                 size-4 text-muted-foreground transition-colors
                 group-data-[state=open]:text-foreground

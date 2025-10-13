@@ -132,13 +132,9 @@ export function getUserShares() {
   }
 
   const outcomeKey = `${state.market.condition_id}-${state.outcome.outcome_index === 0 ? 'yes' : 'no'}` as keyof typeof mockUser.shares
+  const shares = mockUser.shares[outcomeKey]
 
-  if (outcomeKey in mockUser.shares) {
-    return mockUser.shares[outcomeKey] || 0
-  }
-
-  const fallbackKey = `${state.market.condition_id}-yes` as keyof typeof mockUser.shares
-  return mockUser.shares[fallbackKey] || 0
+  return shares ?? 0
 }
 
 export function getYesShares(outcomeId: string) {

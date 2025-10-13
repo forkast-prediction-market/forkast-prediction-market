@@ -53,6 +53,21 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       return
     }
 
+    if (isLimitOrder) {
+      const limitPriceValue = Number.parseFloat(state.limitPrice)
+
+      if (!Number.isFinite(limitPriceValue) || limitPriceValue <= 0) {
+        toast.error('Enter a valid limit price before submitting.')
+        return
+      }
+
+      const limitSharesValue = Number.parseFloat(state.limitShares)
+      if (!Number.isFinite(limitSharesValue) || limitSharesValue <= 0) {
+        toast.error('Enter the number of shares for your limit order.')
+        return
+      }
+    }
+
     if (amount <= 0) {
       return
     }
@@ -60,7 +75,9 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     state.setIsLoading(true)
 
     try {
-      const price = state.outcome.outcome_index === 0 ? yesPrice : noPrice
+      const marketPriceCents = state.outcome.outcome_index === 0 ? yesPrice : noPrice
+      const limitPriceValue = Number.parseFloat(state.limitPrice)
+      const priceCents = isLimitOrder && Number.isFinite(limitPriceValue) ? limitPriceValue : marketPriceCents
 
       const orderPayload = {
         slug: event.slug,
@@ -69,7 +86,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         side: state.side,
         amount,
         type: state.type,
-        price: price / 100,
+        price: priceCents / 100,
       }
 
       const result = await storeOrderAction(orderPayload)
@@ -105,8 +122,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       }
       else {
         // Buy logic
-        const price = state.outcome.outcome_index === 0 ? yesPrice : noPrice
-        const shares = ((amount / price) * 100).toFixed(2)
+        const shares = priceCents > 0 ? ((amount / priceCents) * 100).toFixed(2) : '0'
 
         toast.success(
           `Buy $${state.amount} on ${state.outcome.outcome_text}`,
@@ -118,7 +134,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                   {shares}
                   {' '}
                   shares @
-                  {price}
+                  {priceCents}
                   ¢
                 </div>
               </div>
