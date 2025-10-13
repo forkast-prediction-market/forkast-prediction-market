@@ -11,6 +11,7 @@ export async function likeCommentAction(eventId: string, commentId: string) {
     }
 
     const { data, error } = await CommentModel.toggleLike({ eventId, userId: user.id, commentId })
+
     if (error) {
       return { data: null, error: 'Failed to toggle like.' }
     }
