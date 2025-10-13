@@ -12,7 +12,6 @@ import { TradingFeeDisplay } from '../_components/TradingFeeDisplay'
 function getMDXComponents(components?: MDXComponents): MDXComponents {
   return {
     ...defaultMdxComponents,
-    // Provide client-side components that will fetch data themselves
     TradingFeeDisplay,
     AffiliateShareDisplay,
     PlatformShareDisplay,

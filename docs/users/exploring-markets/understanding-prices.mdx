@@ -6,7 +6,7 @@ icon: DollarSign
 
 {process.env.NEXT_PUBLIC_DISCORD_LINK && (
 <Callout>
-  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} target="_blank">Discord</a>.
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} rel="noopener noreferrer" target="_blank">Discord</a>.
 </Callout>
 )}
 
@@ -21,13 +21,13 @@ Each share is priced between **$0 and $1**:
 
 ## How Payouts Work
 
-- If the outcome resolves as true → each share pays **$1**  
+- If the outcome resolves as true → each share pays **$1**
 - If false → shares pay **$0**
 
-**Example:**  
-You buy 100 “Yes” shares at $0.40.  
-- Cost = $40  
-- If “Yes” wins, payout = $100 → profit = $60  
+**Example:**
+You buy 100 “Yes” shares at $0.40.
+- Cost = $40
+- If “Yes” wins, payout = $100 → profit = $60
 - If “No” wins, payout = $0
 
 ---
@@ -35,7 +35,7 @@ You buy 100 “Yes” shares at $0.40.
 ## Why Prices Move
 
 Prices change as traders buy and sell:
-- High demand for “Yes” pushes price up  
+- High demand for “Yes” pushes price up
 - More “No” sellers push price down
 
 This continuous trading updates the **real-time probability** shown in the market.

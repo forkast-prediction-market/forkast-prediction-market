@@ -44,7 +44,7 @@ export default async function Layout({ children }: LayoutProps<'/docs'>) {
               url: '/docs/developers',
               icon: <CodeIcon className="size-4" />,
             },
-            ...(process.env.NEXT_PUBLIC_FORK_OWNER_GUIDE
+            ...(JSON.parse(process.env.NEXT_PUBLIC_FORK_OWNER_GUIDE || 'false')
               ? [
                   {
                     title: 'Fork Owner Guide',
