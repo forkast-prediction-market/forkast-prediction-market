@@ -1,7 +1,11 @@
 'use client'
 
 import type { Event, User } from '@/types'
+import { AlertCircleIcon } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
+import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { useInfiniteComments } from '@/hooks/useInfiniteComments'
 import EventCommentForm from './EventCommentForm'
 import EventCommentItem from './EventCommentItem'
@@ -16,6 +20,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
   const [replyText, setReplyText] = useState('')
   const [expandedComments, setExpandedComments] = useState<Set<string>>(() => new Set())
   const [isInitialized, setIsInitialized] = useState(false)
+  const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
 
   const {
     comments,
@@ -23,8 +28,6 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    infiniteScrollError,
-    hasInfiniteScrollError,
     refetch,
     toggleCommentLike,
     deleteComment,
@@ -44,7 +47,9 @@ export default function EventComments({ event, user }: EventCommentsProps) {
 
       if (scrollTop + windowHeight >= documentHeight - 1000) {
         if (hasNextPage && !isFetchingNextPage && isInitialized) {
-          fetchNextPage()
+          fetchNextPage().catch((error) => {
+            setInfiniteScrollError(error.message || 'Failed to load more comments')
+          })
         }
       }
     }
@@ -58,6 +63,10 @@ export default function EventComments({ event, user }: EventCommentsProps) {
       queueMicrotask(() => setIsInitialized(true))
     }
   }, [status, isInitialized])
+
+  useEffect(() => {
+    queueMicrotask(() => setInfiniteScrollError(null))
+  }, [comments.length])
 
   const handleRepliesLoaded = useCallback((commentId: string) => {
     loadMoreReplies(commentId)
@@ -80,21 +89,31 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     deleteComment(commentId, event.id)
   }, [deleteComment, event.id])
 
+  const retryInfiniteScroll = useCallback(() => {
+    setInfiniteScrollError(null)
+    fetchNextPage().catch((error) => {
+      setInfiniteScrollError(error.message || 'Failed to load more comments')
+    })
+  }, [fetchNextPage])
+
   if (error) {
     return (
-      <div className="mt-6 text-center text-sm text-destructive">
-        <div className="mb-2">
-          Error loading comments:
-          {' '}
-          {error.message || String(error)}
-        </div>
-        <button
-          type="button"
-          onClick={() => refetch()}
-          className="text-xs underline hover:no-underline"
-        >
-          Try again
-        </button>
+      <div className="mt-6">
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>Internal server error</AlertTitle>
+          <AlertDescription>
+            <Button
+              type="button"
+              onClick={() => refetch()}
+              size="sm"
+              variant="link"
+              className="-ml-3"
+            >
+              Try again
+            </Button>
+          </AlertDescription>
+        </Alert>
       </div>
     )
   }
@@ -110,9 +129,11 @@ export default function EventComments({ event, user }: EventCommentsProps) {
       <div className="mt-6">
         {status === 'pending'
           ? (
-              <div className="text-center text-sm text-muted-foreground">
-                Loading comments...
-              </div>
+              <>
+                <ProfileLinkSkeleton showDate={true} showChildren={true} />
+                <ProfileLinkSkeleton showDate={true} showChildren={true} />
+                <ProfileLinkSkeleton showDate={true} showChildren={true} />
+              </>
             )
           : comments.length === 0
             ? (
@@ -146,25 +167,30 @@ export default function EventComments({ event, user }: EventCommentsProps) {
               )}
 
         {isFetchingNextPage && (
-          <div className="mt-4 text-center text-sm text-muted-foreground">
-            Loading more comments...
+          <div className="mt-4">
+            <ProfileLinkSkeleton showDate={true} showChildren={true} />
+            <ProfileLinkSkeleton showDate={true} showChildren={true} />
+            <ProfileLinkSkeleton showDate={true} showChildren={true} />
           </div>
         )}
 
-        {hasInfiniteScrollError && infiniteScrollError && (
-          <div className="mt-4 text-center text-sm text-destructive">
-            <div className="mb-2">
-              Error loading more comments:
-              {' '}
-              {infiniteScrollError.message || String(infiniteScrollError)}
-            </div>
-            <button
-              type="button"
-              onClick={() => fetchNextPage()}
-              className="text-xs underline hover:no-underline"
-            >
-              Try again
-            </button>
+        {infiniteScrollError && (
+          <div className="mt-6">
+            <Alert variant="destructive">
+              <AlertCircleIcon />
+              <AlertTitle>Error loading more comments</AlertTitle>
+              <AlertDescription>
+                <Button
+                  type="button"
+                  onClick={retryInfiniteScroll}
+                  size="sm"
+                  variant="link"
+                  className="-ml-3"
+                >
+                  Try again
+                </Button>
+              </AlertDescription>
+            </Alert>
           </div>
         )}
       </div>
