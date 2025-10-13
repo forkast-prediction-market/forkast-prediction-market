@@ -1,0 +1,10 @@
+{
+  "title": "Portfolio API",
+  "description": "Fetch balances and open positions.",
+  "icon": "Wallet",
+  "pages": [
+    "account-balance",
+    "open-positions",
+    "transaction-history"
+  ]
+}

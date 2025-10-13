@@ -1,0 +1,12 @@
+{
+  "title": "Exploring Markets",
+  "description": "Navigate markets and understand pricing.",
+  "icon": "Compass",
+  "pages": [
+    "market-overview",
+    "buy-sell-shares",
+    "understanding-prices",
+    "order-types",
+    "canceling-orders"
+  ]
+}

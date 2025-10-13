@@ -1,0 +1,59 @@
+---
+title: Market Overview
+description: Learn how markets work
+icon: BarChart
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} rel="noopener noreferrer" target="_blank">Discord</a>.
+</Callout>
+)}
+
+## What is a Market?
+
+A market represents a real-world question with possible outcomes, such as
+**“Will candidate X win the election?”** or **“Will company Y launch a product this year?”**
+
+Each market has:
+
+- A **title** that states the question
+- A list of **outcomes** (usually “Yes” / “No”, but can be multiple choices)
+- A **price** for each outcome, shown as a percentage probability
+
+---
+
+## How Probabilities Work
+
+Prices in {process.env.NEXT_PUBLIC_SITE_NAME} are expressed as probabilities:
+
+- A price of **0.65 (65%)** means the market currently estimates a **65% chance** that the outcome will happen.
+- If the outcome resolves as true, each share is worth **$1**.
+- If false, the shares expire worthless.
+
+---
+
+## Navigating the Market Page
+
+<Steps>
+  <Step>
+    ### Browse available markets
+
+    Open the **Markets** tab to explore active events, then narrow results using
+    filters or the search bar to focus on topics you care about.
+  </Step>
+  <Step>
+    ### Open a market
+
+    Click any market card to inspect the price chart, recent fills, current
+    order book, and the outcomes you can trade.
+  </Step>
+  <Step>
+    ### Review prices and liquidity
+
+    Check the best bids/asks, historical price movement, and displayed volume to
+    gauge how much liquidity is available before placing an order.
+  </Step>
+</Steps>

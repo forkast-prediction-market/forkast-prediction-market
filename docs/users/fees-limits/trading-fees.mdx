@@ -1,0 +1,42 @@
+---
+title: Trading Fees
+description: Understand how trading fees are applied, split, and displayed
+icon: Percent
+---
+
+
+
+## Current platform fee
+
+- **Default rate:** <TradingFeeDisplay /> per trade pulled from the affiliate settings.
+- **Configurable range:** Admins can raise the fee up to 9.00% from **Admin → Affiliate**.
+- **Rounding:** Fees are rounded to 6 decimal places when recorded on-chain.
+
+<Callout type="info" title="How the math works">
+  Trading fee (USDC) = Order notional × <TradingFeeDisplay />.
+  A 150 USDC fill at the current rate costs <FeeCalculationExample amount={150} format="inline" /> in fees.
+</Callout>
+
+## Maker vs taker
+
+- **Market orders** consume liquidity and always pay the full trading fee.
+- **Limit orders** incur the fee only when executed. There is no rebate program today, so makers and takers pay the same rate.
+
+Fee estimates appear directly in the order ticket before you sign the transaction.
+
+## Revenue split
+
+Trading fees are shared with referring affiliates:
+
+- **Affiliate share:** <AffiliateShareDisplay /> of the trading fee (current configuration)
+- **Platform share:** <PlatformShareDisplay /> of the trading fee
+
+If an order has no associated affiliate, the platform retains 100% of the fee.
+
+<FeeCalculationExample amount={100} />
+
+## Where to review fees
+
+- **Order preview:** Displays the estimated fee alongside the net cost or proceeds.
+- **Portfolio → History:** Lists the precise fee debited for each fill.
+- **Settings → Affiliate:** Shows the current basis-point configuration and when it was last updated.

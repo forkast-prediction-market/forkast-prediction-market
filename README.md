@@ -70,8 +70,11 @@ In your forked Forkast repository:
 **Ready! 🎉** Your prediction market will be online with automatic database setup in a few minutes.
 
 ## 🎯 Features
+
 - 📱 Mobile Ready
 - 🎨 Modern UI/UX (Polymarket-style)
+- 📚 Docs
+- 👨‍💻 API
 - ⚡ Live Price Updates
 - 💳 Web3 Wallets (MetaMask, Reown AppKit)
 - 📊 Advanced Charts & Analytics
@@ -86,13 +89,13 @@ Forkast is provided "as is" and should be used at your own risk. Review the [Mod
 - **Frontend:** Next.js 15 (React 19, TS, Tailwind, Zustand, @visx)
 - **Backend/DB:** Supabase (Postgres)
 - **Auth:** Better Auth + SIWE
-- **Blockchain:** Polygon (Ethers.js, viem, wagmi)
+- **Blockchain:** Polygon (ethers, viem)
 
 ## 🔗 Links
 
 <div align="center">
 
-**📚 [Documentation](https://github.com/forkast-prediction-market/forkast-prediction-market/tree/main/docs)** •
+**📚 [Documentation](https://forka.st/docs/users)** •
 **🚀 [Live Demo](https://forka.st)** •
 **🗺️ [Roadmap](https://github.com/orgs/forkast-prediction-market/discussions/51)** •
 **💬 [Discussions](https://github.com/orgs/forkast-prediction-market/discussions)**

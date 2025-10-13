@@ -1,0 +1,46 @@
+---
+title: Claiming Winnings
+description: How to receive your payouts when markets resolve
+icon: Award
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} rel="noopener noreferrer" target="_blank">Discord</a>.
+</Callout>
+)}
+
+## Claiming Your Rewards
+
+Once a market resolves, holders of winning shares can claim their payout.
+
+<Steps>
+  <Step>
+    ### Go to Portfolio
+
+    Navigate to <strong>My Account → Portfolio</strong> and look for markets with
+    a <strong>Claim</strong> button next to your winning position.
+  </Step>
+  <Step>
+    ### Claim winnings
+
+    Click <strong>Claim</strong> to send the payout transaction. Your balance
+    updates as soon as the transaction confirms on-chain.
+  </Step>
+  <Step>
+    ### Withdraw or reuse
+
+    Use the credited funds to enter new markets or withdraw to your connected
+    wallet whenever you like.
+  </Step>
+</Steps>
+
+---
+
+## Example
+
+- You buy 50 “Yes” shares at $0.30 → cost $15
+- Market resolves **Yes** → each share pays $1 → you receive $50
+- Profit = $35 (minus fees)

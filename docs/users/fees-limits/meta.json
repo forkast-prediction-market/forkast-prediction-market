@@ -1,0 +1,10 @@
+{
+  "title": "Fees & Limits",
+  "description": "Understand costs, calculations, and platform thresholds.",
+  "icon": "Coins",
+  "pages": [
+    "trading-fees",
+    "fee-examples",
+    "trading-limits"
+  ]
+}

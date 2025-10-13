@@ -2,6 +2,6 @@
   "title": "Getting Started",
   "description": "Installation and setup guides",
   "icon": "CirclePlay",
-  "pages": ["how-to-sign-up", "how-to-deposit"],
+  "pages": ["how-to-sign-up", "how-to-deposit", "how-to-claim"],
   "defaultOpen": true
 }

@@ -1,0 +1,52 @@
+---
+title: Market Resolution
+description: Learn how markets are resolved
+icon: CheckCircle
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} rel="noopener noreferrer" target="_blank">Discord</a>.
+</Callout>
+)}
+
+## What is Market Resolution?
+
+Each market eventually resolves to a final outcome — either **Yes**, **No**, or one of the listed choices.
+Resolution determines which traders win and which lose.
+
+---
+
+## How Resolution Works
+
+<Steps>
+  <Step>
+    ### Event concludes
+
+    The real-world condition tied to the market is finished (for example, polls
+    close, earnings call completes, or the deadline passes).
+  </Step>
+  <Step>
+    ### Outcome reported
+
+    Trusted sources and on-chain oracles feed the outcome into
+    {process.env.NEXT_PUBLIC_SITE_NAME}. Moderators confirm accuracy and flag
+    any disputes.
+  </Step>
+  <Step>
+    ### Market status updates
+
+    The market flips to <strong>Resolved</strong>; winning shares become
+    claimable and non-winning shares expire worth zero.
+  </Step>
+</Steps>
+
+---
+
+## Resolution Timelines
+
+- Most markets resolve within a few hours after the event concludes.
+- Some may take longer if the outcome is unclear or awaiting official confirmation.
+- The resolution timestamp appears directly in the market page.

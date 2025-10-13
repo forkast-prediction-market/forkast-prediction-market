@@ -1,0 +1,38 @@
+---
+title: Canceling Orders
+description: Manage and cancel your open orders
+icon: X
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} rel="noopener noreferrer" target="_blank">Discord</a>.
+</Callout>
+)}
+
+## How to Cancel Orders
+
+You can cancel any open limit order before it is matched.
+
+<Steps>
+  <Step>
+    ### Open your open orders
+
+    Navigate to <strong>My Account → Open Orders</strong> to review all active
+    limit orders waiting to fill.
+  </Step>
+  <Step>
+    ### Select the order
+
+    Locate the order marked <strong>Open</strong> that you want to cancel and
+    expand the row for details.
+  </Step>
+  <Step>
+    ### Cancel and confirm
+
+    Press <strong>Cancel Order</strong> to release the reserved funds back to
+    your available balance immediately.
+  </Step>
+</Steps>
