@@ -1,15 +1,14 @@
 import { Button } from '@/components/ui/button'
-import { getUserShares, useAmountAsNumber, useIsBinaryMarket, useOrder } from '@/stores/useOrder'
+import { getUserShares, useAmountAsNumber, useOrder } from '@/stores/useOrder'
 
 export default function EventOrderPanelSubmitButton() {
   const state = useOrder()
   const amount = useAmountAsNumber()
-  const isBinaryMarket = useIsBinaryMarket()
 
   return (
     <Button
       type="submit"
-      className="w-full"
+      className="!h-[50px] w-full"
       size="lg"
       disabled={
         state.isLoading
@@ -26,17 +25,7 @@ export default function EventOrderPanelSubmitButton() {
             </div>
           )
         : (
-            <>
-              {`${state.side === 'sell' ? 'Sell' : 'Buy'} ${
-                state.outcome?.outcome_index === 1
-                  ? !isBinaryMarket
-                      ? 'No'
-                      : state.outcome?.outcome_text
-                  : !isBinaryMarket
-                      ? 'Yes'
-                      : state.outcome?.outcome_text
-              }`}
-            </>
+            <span>Trade</span>
           )}
     </Button>
   )

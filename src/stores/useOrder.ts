@@ -4,6 +4,8 @@ import { create } from 'zustand'
 import { mockUser } from '@/lib/mockData'
 
 type Side = 'buy' | 'sell'
+export type OrderType = 'market' | 'limit'
+export type LimitExpirationOption = 'end-of-day' | 'custom'
 
 interface OrderState {
   // Order state
@@ -11,7 +13,12 @@ interface OrderState {
   market: Market | null
   outcome: Outcome | null
   side: Side
+  type: OrderType
   amount: string
+  limitPrice: string
+  limitShares: string
+  limitExpirationEnabled: boolean
+  limitExpirationOption: LimitExpirationOption
   isLoading: boolean
   isMobileOrderPanelOpen: boolean
   inputRef: RefObject<HTMLInputElement | null>
@@ -23,7 +30,12 @@ interface OrderState {
   setOutcome: (outcome: Outcome) => void
   reset: () => void
   setSide: (side: Side) => void
+  setType: (type: OrderType) => void
   setAmount: (amount: string) => void
+  setLimitPrice: (price: string) => void
+  setLimitShares: (shares: string) => void
+  setLimitExpirationEnabled: (enabled: boolean) => void
+  setLimitExpirationOption: (option: LimitExpirationOption) => void
   setIsLoading: (loading: boolean) => void
   setIsMobileOrderPanelOpen: (loading: boolean) => void
   setLastMouseEvent: (lastMouseEvent: any) => void
@@ -34,7 +46,12 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   market: null,
   outcome: null,
   side: 'buy',
+  type: 'market',
   amount: '0.00',
+  limitPrice: '0.0',
+  limitShares: '0',
+  limitExpirationEnabled: false,
+  limitExpirationOption: 'end-of-day',
   isLoading: false,
   isMobileOrderPanelOpen: false,
   inputRef: { current: null as HTMLInputElement | null },
@@ -45,7 +62,20 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   setOutcome: (outcome: Outcome) => set({ outcome }),
   reset: () => set(store.getInitialState()),
   setSide: (side: Side) => set({ side }),
+  setType: (type: OrderType) => set(state => ({
+    type,
+    amount: '0.00',
+    limitPrice: '0.0',
+    limitShares: '0',
+    limitExpirationEnabled: false,
+    limitExpirationOption: 'end-of-day',
+    side: state.side,
+  })),
   setAmount: (amount: string) => set({ amount }),
+  setLimitPrice: (price: string) => set({ limitPrice: price }),
+  setLimitShares: (shares: string) => set({ limitShares: shares }),
+  setLimitExpirationEnabled: (enabled: boolean) => set({ limitExpirationEnabled: enabled }),
+  setLimitExpirationOption: (option: LimitExpirationOption) => set({ limitExpirationOption: option }),
   setIsLoading: (loading: boolean) => set({ isLoading: loading }),
   setIsMobileOrderPanelOpen: (open: boolean) => set({ isMobileOrderPanelOpen: open }),
   setLastMouseEvent: (lastMouseEvent: any) => set({ lastMouseEvent }),
@@ -97,11 +127,14 @@ export function calculateSellAmount() {
 export function getUserShares() {
   const state = useOrder.getState()
 
-  if (!state.market) {
+  if (!state.market || !state.outcome) {
     return 0
   }
 
-  return mockUser.shares['1-yes'] || 0
+  const outcomeKey = `${state.market.condition_id}-${state.outcome.outcome_index === 0 ? 'yes' : 'no'}` as keyof typeof mockUser.shares
+  const shares = mockUser.shares[outcomeKey]
+
+  return shares ?? 0
 }
 
 export function getYesShares(outcomeId: string) {
