@@ -1,8 +1,9 @@
 import { Button } from '@/components/ui/button'
-import { getUserShares, useIsBinaryMarket, useOrder } from '@/stores/useOrder'
+import { getUserShares, useAmountAsNumber, useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
 export default function EventOrderPanelSubmitButton() {
   const state = useOrder()
+  const amount = useAmountAsNumber()
   const isBinaryMarket = useIsBinaryMarket()
 
   return (
@@ -12,10 +13,10 @@ export default function EventOrderPanelSubmitButton() {
       size="lg"
       disabled={
         state.isLoading
-        || !state.amount
-        || !state.outcome
-        || (state.activeTab === 'sell' && Number.parseFloat(state.amount) > getUserShares())
+        || !amount
+        || (state.side === 'sell' && amount > getUserShares())
       }
+      onClick={e => state.setLastMouseEvent(e)}
     >
       {state.isLoading
         ? (
@@ -26,7 +27,7 @@ export default function EventOrderPanelSubmitButton() {
           )
         : (
             <>
-              {`${state.activeTab === 'sell' ? 'Sell' : 'Buy'} ${
+              {`${state.side === 'sell' ? 'Sell' : 'Buy'} ${
                 state.outcome?.outcome_index === 1
                   ? !isBinaryMarket
                       ? 'No'

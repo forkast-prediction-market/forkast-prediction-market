@@ -3,46 +3,52 @@ import type { Event, Market, Outcome } from '@/types'
 import { create } from 'zustand'
 import { mockUser } from '@/lib/mockData'
 
+type Side = 'buy' | 'sell'
+
 interface OrderState {
   // Order state
   event: Event | null
   market: Market | null
   outcome: Outcome | null
-  activeTab: string
+  side: Side
   amount: string
   isLoading: boolean
   isMobileOrderPanelOpen: boolean
   inputRef: RefObject<HTMLInputElement | null>
+  lastMouseEvent: any
 
   // Actions
   setEvent: (event: Event) => void
   setMarket: (market: Market) => void
   setOutcome: (outcome: Outcome) => void
   reset: () => void
-  setActiveTab: (tab: string) => void
+  setSide: (side: Side) => void
   setAmount: (amount: string) => void
   setIsLoading: (loading: boolean) => void
   setIsMobileOrderPanelOpen: (loading: boolean) => void
+  setLastMouseEvent: (lastMouseEvent: any) => void
 }
 
 export const useOrder = create<OrderState>()((set, _, store) => ({
   event: null,
   market: null,
   outcome: null,
-  activeTab: 'buy',
+  side: 'buy',
   amount: '0.00',
   isLoading: false,
   isMobileOrderPanelOpen: false,
   inputRef: { current: null as HTMLInputElement | null },
+  lastMouseEvent: null,
 
   setEvent: (event: Event) => set({ event }),
   setMarket: (market: Market) => set({ market }),
   setOutcome: (outcome: Outcome) => set({ outcome }),
   reset: () => set(store.getInitialState()),
-  setActiveTab: (tab: string) => set({ activeTab: tab }),
+  setSide: (side: Side) => set({ side }),
   setAmount: (amount: string) => set({ amount }),
   setIsLoading: (loading: boolean) => set({ isLoading: loading }),
   setIsMobileOrderPanelOpen: (open: boolean) => set({ isMobileOrderPanelOpen: open }),
+  setLastMouseEvent: (lastMouseEvent: any) => set({ lastMouseEvent }),
 }))
 
 export function useYesPrice() {
@@ -73,7 +79,7 @@ export function getAvgSellPrice() {
   return sellPrice.toString()
 }
 
-export function calculateSellAmount(sharesToSell: number) {
+export function calculateSellAmount() {
   const state = useOrder.getState()
 
   if (!state.market || !state.outcome) {
@@ -85,7 +91,7 @@ export function calculateSellAmount(sharesToSell: number) {
       ? (state.market.probability / 100) * 0.95
       : ((100 - state.market.probability) / 100) * 0.95
 
-  return sharesToSell * sellPrice
+  return Number.parseFloat(state.amount || '0') * sellPrice
 }
 
 export function getUserShares() {
@@ -128,4 +134,8 @@ export function getNoShares(outcomeId: string) {
 
   const shareKey = `${outcomeId}-no` as keyof typeof mockUser.shares
   return mockUser.shares[shareKey] || 0
+}
+
+export function useAmountAsNumber() {
+  return useOrder(state => Number.parseFloat(state.amount) || 0)
 }

@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
+import { useOrder } from '@/stores/useOrder'
 
 interface Props {
   type: 'yes' | 'no'
@@ -9,7 +9,6 @@ interface Props {
 
 export default function EventOrderPanelOutcomeButton({ type, price }: Props) {
   const state = useOrder()
-  const isBinaryMarket = useIsBinaryMarket()
   const outcomeIndex = type === 'yes' ? 0 : 1
   const isSelected = state.outcome!.outcome_index === outcomeIndex
 
@@ -23,7 +22,7 @@ export default function EventOrderPanelOutcomeButton({ type, price }: Props) {
       variant={isSelected ? type : 'outline'}
       size="lg"
       className={cn(
-        'flex-1 gap-1 truncate',
+        'min-w-0 flex-1 gap-1 px-3 text-sm',
         isSelected
         && (type === 'yes'
           ? 'bg-yes text-white hover:bg-yes-foreground'
@@ -34,14 +33,10 @@ export default function EventOrderPanelOutcomeButton({ type, price }: Props) {
         state.inputRef?.current?.focus()
       }}
     >
-      <span className="opacity-70">
+      <span className="truncate opacity-70">
         {type === 'yes'
-          ? isBinaryMarket
-            ? state.market.outcomes[0].outcome_text
-            : 'Yes'
-          : isBinaryMarket
-            ? state.market.outcomes[1].outcome_text
-            : 'No'}
+          ? state.market.outcomes[0].outcome_text
+          : state.market.outcomes[1].outcome_text}
       </span>
       <span className="shrink-0 font-bold">
         {price}

@@ -1,8 +1,13 @@
 import type { Notification } from '@/types'
+import { unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'
+import { cacheTags } from '@/lib/cache-tags'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const NotificationModel = {
   async getByUserId(userId: string) {
+    'use cache'
+    cacheTag(cacheTags.notifications(userId))
+
     const { data, error } = await supabaseAdmin
       .from('notifications')
       .select('*')
@@ -26,6 +31,8 @@ export const NotificationModel = {
     if (error) {
       return { data: null, error }
     }
+
+    revalidateTag(cacheTags.notifications(userId))
 
     return { data: null, error: null }
   },

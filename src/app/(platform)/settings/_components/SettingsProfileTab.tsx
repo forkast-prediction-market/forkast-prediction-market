@@ -3,6 +3,7 @@
 import type { User } from '@/types'
 import Form from 'next/form'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { updateUserAction } from '@/app/(platform)/settings/actions/update-profile'
@@ -160,9 +161,17 @@ export default function SettingsProfileTab({ user }: { user: User }) {
           </div>
         </div>
 
-        <Button type="submit" disabled={isPending} className="w-36">
-          {isPending ? 'Saving...' : 'Save changes'}
-        </Button>
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            href={user.username ? `/@${user.username}` : `/@${user.address}`}
+            className="text-sm font-medium text-primary transition-colors hover:text-primary/80 hover:underline"
+          >
+            View Public Profile
+          </Link>
+          <Button type="submit" disabled={isPending} className="w-36">
+            {isPending ? 'Saving...' : 'Save changes'}
+          </Button>
+        </div>
       </Form>
     </div>
   )

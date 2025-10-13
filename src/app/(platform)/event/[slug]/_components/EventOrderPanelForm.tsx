@@ -12,31 +12,32 @@ import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_componen
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
 import { storeOrderAction } from '@/app/(platform)/event/[slug]/actions/store-order'
-import { cn } from '@/lib/utils'
+import { cn, triggerConfetti } from '@/lib/utils'
 import {
   calculateSellAmount,
   getAvgSellPrice,
-  getUserShares,
+  useAmountAsNumber,
   useIsBinaryMarket,
   useNoPrice,
   useOrder,
   useYesPrice,
 } from '@/stores/useOrder'
 
-interface Props {
+interface EventOrderPanelFormProps {
   isMobile: boolean
   event: Event
 }
 
-export default function EventOrderPanelForm({ event, isMobile }: Props) {
+export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanelFormProps) {
   const { open } = useAppKit()
   const { isConnected } = useAppKitAccount()
   const state = useOrder()
   const yesPrice = useYesPrice()
   const noPrice = useNoPrice()
   const isBinaryMarket = useIsBinaryMarket()
+  const amount = useAmountAsNumber()
 
-  async function onSubmit(formData: FormData) {
+  async function onSubmit() {
     if (!isConnected) {
       queueMicrotask(() => open())
       return
@@ -50,24 +51,26 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
       return
     }
 
-    if (Number.parseFloat(state.amount) <= 0) {
+    if (amount <= 0) {
       return
     }
 
     state.setIsLoading(true)
 
     try {
-      formData.append('condition_id', state.market.condition_id)
-      formData.append('slug', event.slug)
-      formData.append('side', state.activeTab)
-      formData.append('amount', state.amount)
-      formData.append('order_type', 'market')
-      formData.append('outcome_index', state.outcome.outcome_index.toString())
       const price = state.outcome.outcome_index === 0 ? yesPrice : noPrice
-      formData.append('price', (price / 100).toString())
 
-      // Call the server action
-      const result = await storeOrderAction(formData)
+      const orderPayload = {
+        slug: event.slug,
+        condition_id: state.market.condition_id,
+        token_id: state.outcome.token_id,
+        side: state.side,
+        amount,
+        type: 'market' as const,
+        price: price / 100,
+      }
+
+      const result = await storeOrderAction(orderPayload)
 
       if (result?.error) {
         toast.error('Trade failed', {
@@ -76,14 +79,11 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
         return
       }
 
-      // Success - show appropriate toast
-      const amountNum = Number.parseFloat(state.amount)
-
-      if (state.activeTab === 'sell') {
-        const sellValue = calculateSellAmount(amountNum)
+      if (state.side === 'sell') {
+        const sellValue = calculateSellAmount()
 
         toast.success(
-          `Sell ${state.amount} shares on ${state.outcome.outcome_index === 0 ? 'Yes' : 'No'}`,
+          `Sell ${state.amount} shares on ${state.outcome.outcome_text}`,
           {
             description: (
               <div>
@@ -104,10 +104,10 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
       else {
         // Buy logic
         const price = state.outcome.outcome_index === 0 ? yesPrice : noPrice
-        const shares = ((amountNum / price) * 100).toFixed(2)
+        const shares = ((amount / price) * 100).toFixed(2)
 
         toast.success(
-          `Buy $${state.amount} on ${state.outcome.outcome_index === 0 ? 'Yes' : 'No'}`,
+          `Buy $${state.amount} on ${state.outcome.outcome_text}`,
           {
             description: (
               <div>
@@ -125,7 +125,8 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
         )
       }
 
-      state.setAmount('')
+      triggerConfetti(state.outcome.outcome_index === 0 ? 'yes' : 'no', state.lastMouseEvent)
+      state.setAmount('0.00')
     }
     catch (error) {
       console.error('Trade error:', error)
@@ -155,11 +156,11 @@ export default function EventOrderPanelForm({ event, isMobile }: Props) {
         <EventOrderPanelOutcomeButton type="no" price={noPrice} />
       </div>
 
-      {state.activeTab === 'sell' ? <EventOrderPanelUserShares /> : <div className="mb-4"></div>}
+      {state.side === 'sell' ? <EventOrderPanelUserShares /> : <div className="mb-4"></div>}
 
-      <EventOrderPanelInput isMobile={isMobile} getUserShares={getUserShares} />
+      <EventOrderPanelInput isMobile={isMobile} />
 
-      {Number.parseFloat(state.amount) > 0 && <EventOrderPanelEarnings isMobile={isMobile} />}
+      {amount > 0 && <EventOrderPanelEarnings isMobile={isMobile} />}
 
       <EventOrderPanelSubmitButton />
       <EventOrderPanelTermsDisclaimer />

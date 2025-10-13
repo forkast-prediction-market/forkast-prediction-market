@@ -1,23 +1,20 @@
 import { useBalance } from '@/hooks/useBalance'
-import { mockUser } from '@/lib/mockData'
-import { useOrder } from '@/stores/useOrder'
+import { cn } from '@/lib/utils'
+import { getUserShares, useAmountAsNumber, useOrder } from '@/stores/useOrder'
 
-interface EventOrderPanelInputSectionProps {
+interface EventOrderPanelInputProps {
   isMobile: boolean
-  getUserShares: () => number
 }
 
-export default function EventOrderPanelInput({
-  isMobile,
-  getUserShares,
-}: EventOrderPanelInputSectionProps) {
+export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputProps) {
   const state = useOrder()
+  const amount = useAmountAsNumber()
   const { balance } = useBalance()
-  // Function to render action buttons (percentage and value)
+
   function renderActionButtons(isMobile: boolean) {
     const baseButtonClasses = 'h-7 px-3 rounded-lg border text-[11px] transition-all duration-200 ease-in-out'
 
-    if (state.activeTab === 'sell') {
+    if (state.side === 'sell') {
       const userShares = getUserShares()
       const isDisabled = userShares <= 0
 
@@ -57,8 +54,7 @@ export default function EventOrderPanelInput({
           className={`${baseButtonClasses} hover:border-border hover:bg-white/10 dark:hover:bg-white/5`}
           onClick={() => {
             const chipValue = Number.parseInt(chip.substring(2))
-            const currentValue = Number.parseFloat(state.amount) || 0
-            const newValue = currentValue + chipValue
+            const newValue = amount + chipValue
 
             if (newValue <= 999999999) {
               state.setAmount(newValue.toFixed(2))
@@ -82,10 +78,9 @@ export default function EventOrderPanelInput({
                 <button
                   type="button"
                   onClick={() => {
-                    const currentValue = Number.parseFloat(state.amount) || 0
                     const newValue = Math.max(
                       0,
-                      currentValue - (state.activeTab === 'sell' ? 0.1 : 1),
+                      amount - (state.side === 'sell' ? 0.1 : 1),
                     )
                     state.setAmount(newValue.toFixed(2))
                   }}
@@ -107,26 +102,24 @@ export default function EventOrderPanelInput({
                       placeholder-muted-foreground outline-hidden
                       [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
                     `}
-                    placeholder={state.activeTab === 'sell' ? '0' : '$1.00'}
+                    placeholder={state.side === 'sell' ? '0' : '$1.00'}
                     value={
-                      state.activeTab === 'sell'
-                        ? state.amount || ''
-                        : state.amount
-                          ? `$${state.amount}`
-                          : ''
+                      state.side === 'sell'
+                        ? state.amount
+                        : `$${state.amount}`
                     }
                     onChange={(e) => {
-                      const rawValue = state.activeTab === 'sell'
+                      const rawValue = state.side === 'sell'
                         ? e.target.value
                         : e.target.value.replace(/[^0-9.]/g, '')
 
-                      const value = state.activeTab === 'sell'
+                      const value = state.side === 'sell'
                         ? Number.parseFloat(rawValue).toFixed(2)
                         : rawValue
 
                       const numericValue = Number.parseFloat(value)
 
-                      if (state.activeTab === 'sell') {
+                      if (state.side === 'sell') {
                         // For sell, limit by the amount of shares the user has
                         const userShares = getUserShares()
                         if (numericValue <= userShares || value === '') {
@@ -151,10 +144,9 @@ export default function EventOrderPanelInput({
                 <button
                   type="button"
                   onClick={() => {
-                    const currentValue = Number.parseFloat(state.amount) || 0
-                    const newValue = currentValue + (state.activeTab === 'sell' ? 0.1 : 1)
+                    const newValue = amount + (state.side === 'sell' ? 0.1 : 1)
 
-                    if (state.activeTab === 'sell') {
+                    if (state.side === 'sell') {
                       const userShares = getUserShares()
                       if (newValue <= userShares) {
                         state.setAmount(newValue.toFixed(2))
@@ -180,12 +172,12 @@ export default function EventOrderPanelInput({
             <div className="mb-2 flex items-center gap-3">
               <div className="shrink-0">
                 <div className="text-lg font-medium">
-                  {state.activeTab === 'sell' ? 'Shares' : 'Amount'}
+                  {state.side === 'sell' ? 'Shares' : 'Amount'}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {state.activeTab === 'sell'
+                  {state.side === 'sell'
                     ? ``
-                    : `Balance $${balance?.data?.balance || '0.00'}`}
+                    : `Balance $${balance.text || '0.00'}`}
                 </div>
               </div>
               <div className="relative flex-1">
@@ -200,26 +192,24 @@ export default function EventOrderPanelInput({
                     dark:text-slate-300 dark:placeholder-slate-500
                     [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
                   `}
-                  placeholder={state.activeTab === 'sell' ? '0' : '$0.00'}
+                  placeholder={state.side === 'sell' ? '0' : '$0.00'}
                   value={
-                    state.activeTab === 'sell'
-                      ? state.amount || ''
-                      : state.amount
-                        ? `$${state.amount}`
-                        : ''
+                    state.side === 'sell'
+                      ? state.amount
+                      : `$${state.amount}`
                   }
                   onChange={(e) => {
-                    const rawValue = state.activeTab === 'sell'
+                    const rawValue = state.side === 'sell'
                       ? e.target.value
                       : e.target.value.replace(/[^0-9.]/g, '')
 
-                    const value = state.activeTab === 'sell'
+                    const value = state.side === 'sell'
                       ? Number.parseFloat(rawValue).toFixed(2)
                       : rawValue
 
                     const numericValue = Number.parseFloat(value)
 
-                    if (state.activeTab === 'sell') {
+                    if (state.side === 'sell') {
                       // For sell, limit by the amount of shares the user has
                       const userShares = getUserShares()
                       if (numericValue <= userShares || value === '') {
@@ -254,17 +244,15 @@ export default function EventOrderPanelInput({
         {/* Max button */}
         <button
           type="button"
-          className={`
-            h-7 rounded-lg border px-3 text-[11px] font-semibold transition-all duration-200
-            ease-in-out
-            ${
-    state.activeTab === 'sell' && getUserShares() <= 0
-      ? 'cursor-not-allowed opacity-50'
-      : 'hover:border-border hover:bg-white/10 dark:hover:bg-white/5'
-    }`}
-          disabled={state.activeTab === 'sell' && getUserShares() <= 0}
+          className={cn(
+            'h-7 rounded-lg border px-3 text-[11px] font-semibold transition-all duration-200 ease-in-out',
+            state.side === 'sell' && getUserShares() <= 0
+              ? 'cursor-not-allowed opacity-50'
+              : 'hover:border-border hover:bg-white/10 dark:hover:bg-white/5',
+          )}
+          disabled={state.side === 'sell' && getUserShares() <= 0}
           onClick={() => {
-            if (state.activeTab === 'sell') {
+            if (state.side === 'sell') {
               const userShares = getUserShares()
               if (userShares <= 0) {
                 return
@@ -272,7 +260,7 @@ export default function EventOrderPanelInput({
               state.setAmount(userShares.toFixed(2))
             }
             else {
-              const maxBalance = mockUser.cash
+              const maxBalance = balance.raw
               // Limit to 999,999,999
               const limitedBalance = Math.min(maxBalance, 999999999)
               state.setAmount(limitedBalance.toFixed(2))

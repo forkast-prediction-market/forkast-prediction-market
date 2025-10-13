@@ -83,7 +83,7 @@ async function createSyncEventsCron(client) {
       WHERE start_time < now() - interval '3 days';
 
       SELECT net.http_get(
-        url := 'https://<<VERCEL_URL>>/api/sync-events',
+        url := 'https://<<VERCEL_URL>>/api/sync/events',
         headers := '{"Content-Type": "application/json", "Authorization": "Bearer <<CRON_SECRET>>"}'
       );
     $c$;

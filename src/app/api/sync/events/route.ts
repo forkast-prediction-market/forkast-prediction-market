@@ -3,10 +3,36 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export const maxDuration = 300 // This function can run for a maximum of 300 seconds
 
-const ACTIVITY_SUBGRAPH_URL = process.env.ACTIVITY_SUBGRAPH_URL!
 const PNL_SUBGRAPH_URL = process.env.PNL_SUBGRAPH_URL!
 const MARKET_CREATORS_ADDRESS = process.env.MARKET_CREATORS_ADDRESS
 const IRYS_GATEWAY = process.env.IRYS_GATEWAY || 'https://gateway.irys.xyz'
+const SYNC_TIME_LIMIT_MS = 250_000
+const PNL_PAGE_SIZE = 200
+
+interface SyncCursor {
+  conditionId: string
+  creationTimestamp: number
+}
+
+interface SubgraphCondition {
+  id: string
+  oracle: string | null
+  questionId: string | null
+  resolved: boolean
+  arweaveHash: string | null
+  creator: string | null
+  owner?: string | null
+  creationTimestamp: string
+}
+
+interface SyncStats {
+  fetchedCount: number
+  processedCount: number
+  skippedExistingCount: number
+  skippedCreatorCount: number
+  errors: { conditionId: string, error: string }[]
+  timeLimitReached: boolean
+}
 
 function getAllowedCreators(): string[] {
   const fixedCreators = [
@@ -50,48 +76,33 @@ export async function GET(request: Request) {
     const updatedAt = await getLastUpdatedAt()
     console.log(`📊 Last processed at: ${updatedAt}`)
 
-    const markets = await fetchNewMarkets()
-    console.log(`🔍 Found ${markets.length} new markets to process`)
+    const syncResult = await syncMarkets()
 
-    if (markets.length === 0) {
-      await updateSyncStatus('completed', null, 0)
+    await updateSyncStatus('completed', null, syncResult.processedCount)
+
+    if (syncResult.fetchedCount === 0) {
+      console.log('📭 No markets fetched from PnL subgraph')
       return NextResponse.json({
         success: true,
         message: 'No new markets to process',
         processed: 0,
+        fetched: 0,
       })
     }
 
-    let processedCount = 0
-    const errors: { conditionId: string, error: string }[] = []
-
-    for (const market of markets) {
-      try {
-        await processMarket(market)
-        processedCount++
-        console.log(`✅ Processed market: ${market.id}`)
-      }
-      catch (error: any) {
-        console.error(`❌ Error processing market ${market.id}:`, error)
-        errors.push({
-          conditionId: market.id,
-          error: error.message,
-        })
-      }
-    }
-
-    await updateSyncStatus('completed', null, processedCount)
-
-    const result = {
+    const responsePayload = {
       success: true,
-      processed: processedCount,
-      total: markets.length,
-      errors: errors.length,
-      errorDetails: errors,
+      processed: syncResult.processedCount,
+      fetched: syncResult.fetchedCount,
+      skippedExisting: syncResult.skippedExistingCount,
+      skippedCreators: syncResult.skippedCreatorCount,
+      errors: syncResult.errors.length,
+      errorDetails: syncResult.errors,
+      timeLimitReached: syncResult.timeLimitReached,
     }
 
-    console.log('🎉 Incremental synchronization completed:', result)
-    return NextResponse.json(result)
+    console.log('🎉 Incremental synchronization completed:', responsePayload)
+    return NextResponse.json(responsePayload)
   }
   catch (error: any) {
     console.error('💥 Sync failed:', error)
@@ -110,10 +121,10 @@ export async function GET(request: Request) {
 
 async function getLastUpdatedAt() {
   const { data, error } = await supabaseAdmin
-    .from('sync_status')
+    .from('subgraph_syncs')
     .select('updated_at')
     .eq('service_name', 'market_sync')
-    .eq('subgraph_name', 'activity')
+    .eq('subgraph_name', 'pnl')
     .maybeSingle()
 
   if (error && error.code !== 'PGRST116') {
@@ -123,178 +134,235 @@ async function getLastUpdatedAt() {
   return data?.updated_at || 0
 }
 
-async function fetchNewMarkets() {
-  console.log(`🔄 Fetching data from Activity subgraph...`)
-  const activityConditions = await fetchFromActivitySubgraph()
-  console.log(`📊 Activity subgraph: Found ${activityConditions.length} conditions`)
+async function syncMarkets(): Promise<SyncStats> {
+  const syncStartedAt = Date.now()
+  let cursor = await getLastProcessedConditionCursor()
 
-  console.log(`🔄 Fetching data from PnL subgraph...`)
-  const pnlConditions = await fetchFromPnLSubgraph()
-  console.log(`📊 PnL subgraph: Found ${pnlConditions.length} conditions`)
+  if (cursor) {
+    const cursorIso = new Date(cursor.creationTimestamp * 1000).toISOString()
+    console.log(`⏱️ Resuming sync after condition ${cursor.conditionId} (created at ${cursorIso})`)
+  }
+  else {
+    console.log('📥 No existing markets found, starting full sync')
+  }
 
-  const mergedConditions = mergeConditionsData(activityConditions, pnlConditions)
-  console.log(`🎯 Total merged conditions: ${mergedConditions.length}`)
+  const allowedCreators = new Set(getAllowedCreators())
 
-  const allowedCreators = getAllowedCreators()
-  const filteredConditions = mergedConditions.filter((condition) => {
-    const isAllowed = allowedCreators.includes(condition.creator?.toLowerCase())
-    if (!isAllowed) {
-      console.log(`🚫 Skipping market ${condition.id} - creator ${condition.creator} not in allowed list`)
+  let fetchedCount = 0
+  let processedCount = 0
+  let skippedExistingCount = 0
+  let skippedCreatorCount = 0
+  const errors: { conditionId: string, error: string }[] = []
+  let timeLimitReached = false
+
+  while (Date.now() - syncStartedAt < SYNC_TIME_LIMIT_MS) {
+    const page = await fetchPnLConditionsPage(cursor)
+
+    if (page.conditions.length === 0) {
+      console.log('📦 PnL subgraph returned no additional conditions')
+      break
     }
-    return isAllowed
+
+    fetchedCount += page.conditions.length
+    console.log(`📑 Processing ${page.conditions.length} conditions (running total fetched: ${fetchedCount})`)
+
+    const existingIds = await getExistingConditionIds(page.conditions.map(condition => condition.id))
+
+    for (const condition of page.conditions) {
+      const creationTimestamp = Number(condition.creationTimestamp)
+      if (Number.isNaN(creationTimestamp)) {
+        console.error(`⚠️ Skipping condition ${condition.id} - invalid creationTimestamp: ${condition.creationTimestamp}`)
+        continue
+      }
+
+      const conditionCursor: SyncCursor = {
+        conditionId: condition.id,
+        creationTimestamp,
+      }
+
+      if (!condition.creator) {
+        console.error(`⚠️ Skipping condition ${condition.id} - missing creator/owner field`)
+        cursor = conditionCursor
+        continue
+      }
+
+      if (!allowedCreators.has(condition.creator)) {
+        skippedCreatorCount++
+        console.log(`🚫 Skipping market ${condition.id} - creator ${condition.creator} not in allowed list`)
+        cursor = conditionCursor
+        continue
+      }
+
+      if (existingIds.has(condition.id)) {
+        skippedExistingCount++
+        cursor = conditionCursor
+        continue
+      }
+
+      if (Date.now() - syncStartedAt >= SYNC_TIME_LIMIT_MS) {
+        console.warn('⏹️ Time limit reached during market processing, aborting sync loop')
+        timeLimitReached = true
+        break
+      }
+
+      try {
+        await processMarket(condition)
+        processedCount++
+        console.log(`✅ Processed market: ${condition.id}`)
+      }
+      catch (error: any) {
+        console.error(`❌ Error processing market ${condition.id}:`, error)
+        errors.push({
+          conditionId: condition.id,
+          error: error.message ?? String(error),
+        })
+      }
+
+      cursor = conditionCursor
+    }
+
+    if (timeLimitReached) {
+      break
+    }
+
+    if (page.conditions.length < PNL_PAGE_SIZE) {
+      console.log('📭 Last fetched page was smaller than the configured page size; stopping pagination')
+      break
+    }
+  }
+
+  return {
+    fetchedCount,
+    processedCount,
+    skippedExistingCount,
+    skippedCreatorCount,
+    errors,
+    timeLimitReached,
+  }
+}
+
+async function getExistingConditionIds(conditionIds: string[]): Promise<Set<string>> {
+  const uniqueIds = Array.from(new Set(conditionIds))
+  if (uniqueIds.length === 0) {
+    return new Set()
+  }
+
+  const existingIds = new Set<string>()
+  const chunkSize = 200
+
+  for (let start = 0; start < uniqueIds.length; start += chunkSize) {
+    const chunk = uniqueIds.slice(start, start + chunkSize)
+    const { data, error } = await supabaseAdmin
+      .from('conditions')
+      .select('id')
+      .in('id', chunk)
+
+    if (error) {
+      throw new Error(`Failed to check existing conditions: ${error.message}`)
+    }
+
+    for (const row of data ?? []) {
+      existingIds.add(row.id)
+    }
+  }
+
+  return existingIds
+}
+
+async function getLastProcessedConditionCursor(): Promise<SyncCursor | null> {
+  const { data, error } = await supabaseAdmin
+    .from('markets')
+    .select('condition_id, created_at')
+    .order('created_at', { ascending: false })
+    .order('condition_id', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error && error.code !== 'PGRST116') {
+    throw new Error(`Failed to get last processed condition: ${error.message}`)
+  }
+
+  if (!data?.condition_id || !data?.created_at) {
+    return null
+  }
+
+  const creationTimestamp = Math.floor(new Date(data.created_at).getTime() / 1000)
+
+  return {
+    conditionId: data.condition_id,
+    creationTimestamp,
+  }
+}
+
+async function fetchPnLConditionsPage(afterCursor: SyncCursor | null): Promise<{ conditions: SubgraphCondition[] }> {
+  const cursorTimestamp = afterCursor?.creationTimestamp
+  const cursorConditionId = afterCursor?.conditionId
+
+  let whereClause = ''
+  if (cursorTimestamp !== undefined && cursorConditionId !== undefined) {
+    const timestampLiteral = JSON.stringify(cursorTimestamp.toString())
+    const conditionIdLiteral = JSON.stringify(cursorConditionId)
+    whereClause = `, where: { or: [{ creationTimestamp_gt: ${timestampLiteral} }, { creationTimestamp: ${timestampLiteral}, id_gt: ${conditionIdLiteral} }] }`
+  }
+
+  const query = `
+    {
+      conditions(
+        first: ${PNL_PAGE_SIZE},
+        orderBy: creationTimestamp,
+        orderDirection: asc${whereClause}
+      ) {
+        id
+        oracle
+        questionId
+        resolved
+        arweaveHash
+        creator
+        owner
+        creationTimestamp
+      }
+    }
+  `
+
+  const response = await fetch(PNL_SUBGRAPH_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    keepalive: true,
+    body: JSON.stringify({ query }),
   })
-  console.log(`🔒 Filtered by creators: ${mergedConditions.length} → ${filteredConditions.length}`)
 
-  const newConditions = await filterExistingConditions(filteredConditions)
-  console.log(`🆕 New conditions to process: ${newConditions.length}`)
-
-  return newConditions
-}
-
-async function fetchFromActivitySubgraph() {
-  const first = 1000
-  let allConditions: any[] = []
-  let skip = 0
-  let hasMore = true
-
-  while (hasMore) {
-    const query = `
-      {
-        conditions(
-          first: ${first},
-          skip: ${skip},
-          orderBy: id,
-          orderDirection: asc
-        ) {
-          id
-          arweaveHash
-          creator
-        }
-      }
-    `
-
-    const response = await fetch(ACTIVITY_SUBGRAPH_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`Activity subgraph request failed: ${response.statusText}`)
-    }
-
-    const result = await response.json()
-
-    if (result.errors) {
-      throw new Error(`Activity subgraph query error: ${result.errors[0].message}`)
-    }
-
-    const conditions = result.data.conditions || []
-
-    if (conditions.length === 0) {
-      hasMore = false
-    }
-    else {
-      allConditions = allConditions.concat(conditions)
-      skip += first
-      if (conditions.length < first) {
-        hasMore = false
-      }
-    }
+  if (!response.ok) {
+    throw new Error(`PnL subgraph request failed: ${response.statusText}`)
   }
 
-  return allConditions
-}
+  const result = await response.json()
 
-async function fetchFromPnLSubgraph() {
-  let allConditions: any[] = []
-  let skip = 0
-  const first = 1000
-  let hasMore = true
-
-  while (hasMore) {
-    const query = `
-      {
-        conditions(
-          first: ${first},
-          skip: ${skip},
-          orderBy: id,
-          orderDirection: asc
-        ) {
-          id
-          oracle
-          questionId
-          resolved
-          arweaveHash
-          creator
-        }
-      }
-    `
-
-    const response = await fetch(PNL_SUBGRAPH_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`PnL subgraph request failed: ${response.statusText}`)
-    }
-
-    const result = await response.json()
-
-    if (result.errors) {
-      throw new Error(`PnL subgraph query error: ${result.errors[0].message}`)
-    }
-
-    const conditions = result.data.conditions || []
-
-    if (conditions.length === 0) {
-      hasMore = false
-    }
-    else {
-      allConditions = allConditions.concat(conditions)
-      skip += first
-      if (conditions.length < first) {
-        hasMore = false
-      }
-    }
+  if (result.errors) {
+    throw new Error(`PnL subgraph query error: ${result.errors[0].message}`)
   }
 
-  return allConditions
+  const rawConditions: SubgraphCondition[] = result.data.conditions || []
+
+  const normalizedConditions: SubgraphCondition[] = rawConditions.map((condition) => {
+    const owner = condition.owner ?? condition.creator
+    return {
+      ...condition,
+      creator: owner ? owner.toLowerCase() : owner,
+    }
+  })
+
+  return { conditions: normalizedConditions }
 }
 
-async function filterExistingConditions(conditions: any[]) {
-  if (conditions.length === 0) {
-    return []
-  }
-
-  const conditionIds = conditions.map(c => c.id)
-
-  const { data: existingConditions, error } = await supabaseAdmin
-    .from('conditions')
-    .select('id')
-    .in('id', conditionIds)
-
-  if (error) {
-    throw new Error(`Failed to check existing conditions: ${error.message}`)
-  }
-
-  const existingIds = new Set(existingConditions.map(c => c.id))
-
-  const newConditions = conditions.filter(condition => !existingIds.has(condition.id))
-
-  console.log(`📊 Filtered: ${conditions.length} total, ${existingConditions.length} existing, ${newConditions.length} new`)
-
-  return newConditions
-}
-
-async function processMarket(market: any) {
+async function processMarket(market: SubgraphCondition) {
   await processCondition(market)
+  if (!market.arweaveHash) {
+    throw new Error(`Market ${market.id} missing required arweaveHash field`)
+  }
   const metadata = await fetchMetadata(market.arweaveHash)
   const eventId = await processEvent(
     metadata.event,
-    market.creator,
+    market.creator!,
   )
   await processMarketData(market, metadata, eventId)
 }
@@ -302,7 +370,10 @@ async function processMarket(market: any) {
 async function fetchMetadata(arweaveHash: string) {
   const url = `${IRYS_GATEWAY}/${arweaveHash}`
 
-  const response = await fetch(url)
+  const response = await fetch(url, {
+    keepalive: true,
+  })
+
   if (!response.ok) {
     throw new Error(`Failed to fetch metadata from ${url}: ${response.statusText}`)
   }
@@ -316,7 +387,7 @@ async function fetchMetadata(arweaveHash: string) {
   return metadata
 }
 
-async function processCondition(market: any) {
+async function processCondition(market: SubgraphCondition) {
   const { data: existingCondition } = await supabaseAdmin
     .from('conditions')
     .select('id')
@@ -343,13 +414,24 @@ async function processCondition(market: any) {
     throw new Error(`Market ${market.id} missing required arweaveHash field`)
   }
 
+  if (!market.creationTimestamp) {
+    throw new Error(`Market ${market.id} missing required creationTimestamp field`)
+  }
+
+  const creationTimestamp = Number(market.creationTimestamp)
+  if (Number.isNaN(creationTimestamp)) {
+    throw new TypeError(`Market ${market.id} has invalid creationTimestamp: ${market.creationTimestamp}`)
+  }
+  const createdAtIso = new Date(creationTimestamp * 1000).toISOString()
+
   const { error } = await supabaseAdmin.from('conditions').upsert({
     id: market.id,
     oracle: market.oracle,
     question_id: market.questionId,
     resolved: market.resolved,
     arweave_hash: market.arweaveHash,
-    creator: market.creator,
+    creator: market.creator!,
+    created_at: createdAtIso,
   })
 
   if (error) {
@@ -412,7 +494,7 @@ async function processEvent(eventData: any, creatorAddress: string) {
   return newEvent.id
 }
 
-async function processMarketData(market: any, metadata: any, eventId: string) {
+async function processMarketData(market: SubgraphCondition, metadata: any, eventId: string) {
   if (!eventId) {
     throw new Error(`Invalid eventId: ${eventId}. Event must be created first.`)
   }
@@ -433,6 +515,16 @@ async function processMarketData(market: any, metadata: any, eventId: string) {
     iconUrl = await downloadAndSaveImage(metadata.icon, `markets/icons/${metadata.slug}.jpg`)
   }
 
+  if (!market.creationTimestamp) {
+    throw new Error(`Market ${market.id} missing required creationTimestamp field`)
+  }
+
+  const creationTimestamp = Number(market.creationTimestamp)
+  if (Number.isNaN(creationTimestamp)) {
+    throw new TypeError(`Market ${market.id} has invalid creationTimestamp: ${market.creationTimestamp}`)
+  }
+  const createdAtIso = new Date(creationTimestamp * 1000).toISOString()
+
   console.log(`Creating market with eventId: ${eventId}`)
 
   if (!market.oracle) {
@@ -448,6 +540,7 @@ async function processMarketData(market: any, metadata: any, eventId: string) {
     short_title: metadata.short_title,
     icon_url: iconUrl,
     metadata,
+    created_at: createdAtIso,
   }
 
   const { error } = await supabaseAdmin.from('markets').upsert(marketData)
@@ -522,7 +615,9 @@ async function processTags(eventId: string, tagNames: any[]) {
 async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
   try {
     const imageUrl = `${IRYS_GATEWAY}/${arweaveHash}`
-    const response = await fetch(imageUrl)
+    const response = await fetch(imageUrl, {
+      keepalive: true,
+    })
 
     if (!response.ok) {
       console.error(`Failed to download image: ${response.statusText}`)
@@ -535,6 +630,7 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
       .from('forkast-assets')
       .upload(storagePath, imageBuffer, {
         contentType: 'image/jpeg',
+        cacheControl: '31536000',
         upsert: true,
       })
 
@@ -553,10 +649,10 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
 
 async function checkSyncRunning(): Promise<boolean> {
   const { data, error } = await supabaseAdmin
-    .from('sync_status')
+    .from('subgraph_syncs')
     .select('status')
     .eq('service_name', 'market_sync')
-    .eq('subgraph_name', 'activity')
+    .eq('subgraph_name', 'pnl')
     .lt('updated_at', new Date(Date.now() - 15 * 60 * 1000).toISOString())
     .maybeSingle()
 
@@ -574,7 +670,7 @@ async function updateSyncStatus(
 ) {
   const updateData: any = {
     service_name: 'market_sync',
-    subgraph_name: 'activity',
+    subgraph_name: 'pnl',
     status,
   }
 
@@ -587,7 +683,7 @@ async function updateSyncStatus(
   }
 
   const { error } = await supabaseAdmin
-    .from('sync_status')
+    .from('subgraph_syncs')
     .upsert(updateData, {
       onConflict: 'service_name,subgraph_name',
     })
@@ -595,30 +691,4 @@ async function updateSyncStatus(
   if (error) {
     console.error(`Failed to update sync status to ${status}:`, error)
   }
-}
-
-function mergeConditionsData(activityConditions: any[], pnlConditions: any[]) {
-  const merged: any[] = []
-  const pnlMap = new Map<string, any>()
-
-  pnlConditions.forEach(condition => pnlMap.set(condition.id, condition))
-
-  activityConditions.forEach((activityCondition) => {
-    const pnlCondition = pnlMap.get(activityCondition.id)
-    if (pnlCondition) {
-      merged.push({
-        id: pnlCondition.id,
-        creator: activityCondition.creator,
-        arweaveHash: pnlCondition.arweaveHash,
-        oracle: pnlCondition.oracle,
-        questionId: pnlCondition.questionId,
-        resolved: pnlCondition.resolved,
-      })
-    }
-    else {
-      console.log(`⚠️ Skipping condition ${activityCondition.id} - missing required fields from PnL subgraph`)
-    }
-  })
-
-  return merged
 }

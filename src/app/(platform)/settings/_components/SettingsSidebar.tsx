@@ -1,9 +1,7 @@
-import type { User } from '@/types'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
 interface Props {
-  user: User
   tab: string
 }
 
@@ -15,7 +13,7 @@ const menuItems = [
   { id: 'export-key', label: 'Export Private Key' },
 ]
 
-export default function SettingsSidebar({ user, tab }: Props) {
+export default function SettingsSidebar({ tab }: Props) {
   return (
     <aside className="lg:sticky lg:top-28 lg:self-start">
       <nav className="grid gap-1">
@@ -30,17 +28,6 @@ export default function SettingsSidebar({ user, tab }: Props) {
             <Link href={`/settings?tab=${item.id}`}>{item.label}</Link>
           </Button>
         ))}
-        <Button
-          variant="ghost"
-          className="justify-start text-muted-foreground"
-          asChild
-        >
-          <Link
-            href={user.username ? `/@${user.username}` : `/@${user.address}`}
-          >
-            See public profile
-          </Link>
-        </Button>
       </nav>
     </aside>
   )

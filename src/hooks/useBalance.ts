@@ -4,6 +4,12 @@ import { Contract, JsonRpcProvider } from 'ethers'
 import { useEffect, useMemo, useState } from 'react'
 import { useUser } from '@/stores/useUser'
 
+interface Balance {
+  raw: number
+  text: string
+  symbol: string
+}
+
 const USDC_ADDRESS = '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582' // Polygon Amoy USDC
 const USDC_DECIMALS = 6
 const ERC20_ABI = [
@@ -12,11 +18,16 @@ const ERC20_ABI = [
   'function symbol() view returns (string)',
   'function name() view returns (string)',
 ]
+const INITIAL_STATE: Balance = {
+  raw: 0.00,
+  text: '0.00',
+  symbol: 'USDC',
+}
 
 export function useBalance() {
   const { address, isConnected } = useAppKitAccount()
   const user = useUser()
-  const [balance, setBalance] = useState<any>(null)
+  const [balance, setBalance] = useState<Balance>(INITIAL_STATE)
   const [isLoadingBalance, setIsLoadingBalance] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
@@ -37,7 +48,7 @@ export function useBalance() {
   useEffect(() => {
     if (!walletAddress || !isConnected) {
       queueMicrotask(() => {
-        setBalance(null)
+        setBalance(INITIAL_STATE)
         setIsLoadingBalance(false)
         setIsInitialLoad(true)
       })
@@ -60,10 +71,9 @@ export function useBalance() {
         const balanceNumber = Number(balanceRaw) / (10 ** USDC_DECIMALS)
 
         const newBalance = {
-          data: {
-            balance: balanceNumber.toFixed(2),
-            symbol: 'USDC',
-          },
+          raw: balanceNumber,
+          text: balanceNumber.toFixed(2),
+          symbol: 'USDC',
         }
 
         if (active) {
@@ -74,7 +84,7 @@ export function useBalance() {
       }
       catch {
         if (active) {
-          setBalance(null)
+          setBalance(INITIAL_STATE)
           setIsLoadingBalance(false)
           setIsInitialLoad(false)
         }

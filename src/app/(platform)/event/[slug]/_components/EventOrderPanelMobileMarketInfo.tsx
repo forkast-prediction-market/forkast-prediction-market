@@ -28,7 +28,7 @@ export default function EventOrderPanelMobileMarketInfo() {
           {!isBinaryMarket && <span>{state.market.short_title || state.market.title}</span>}
           <span>
             Bal. $
-            {balance?.data?.balance || '0.00'}
+            {balance.text}
           </span>
         </div>
       </div>

@@ -1,12 +1,10 @@
 'use client'
 
-import type { Comment, User } from '@/types'
-import Form from 'next/form'
+import type { User } from '@/types'
 import Image from 'next/image'
-import { useActionState, useEffect, useRef } from 'react'
+import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { storeCommentAction } from '../actions/store-comment'
 
 interface Props {
   user: User | null
@@ -15,7 +13,9 @@ interface Props {
   placeholder: string
   initialValue?: string
   onCancel: () => void
-  onReplyAddedAction: (reply: Comment) => void
+  onReplyAddedAction?: () => void
+  createReply: (eventId: string, parentCommentId: string, content: string, user?: any) => void
+  isCreatingComment: boolean
 }
 
 export default function EventCommentReplyForm({
@@ -26,29 +26,25 @@ export default function EventCommentReplyForm({
   initialValue,
   onCancel,
   onReplyAddedAction,
+  createReply,
+  isCreatingComment,
 }: Props) {
-  const formRef = useRef<HTMLFormElement>(null)
-  const [state, formAction, isPending] = useActionState(
-    (_: any, formData: any) => storeCommentAction(eventId, formData),
-    { error: '' },
-  )
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [content, setContent] = useState(initialValue || '')
 
-  useEffect(() => {
-    if (state.comment) {
-      const replyWithUserData = {
-        ...state.comment,
-        username: `${user?.username}`,
-        user_avatar: `${user?.image}`,
-        user_address: `${user?.address}`,
-      }
-      onReplyAddedAction(replyWithUserData as unknown as Comment)
-      formRef.current?.reset()
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!content.trim() || !user) {
+      return
     }
-  }, [state.comment, user, onReplyAddedAction])
+
+    createReply(eventId, parentCommentId, content.trim(), user)
+    setContent('')
+    onReplyAddedAction?.()
+  }
 
   return (
-    <Form ref={formRef} action={formAction} className="flex gap-3">
-      <input type="hidden" name="parent_comment_id" value={parentCommentId} />
+    <form onSubmit={handleSubmit} className="flex gap-3">
       <Image
         src={user?.image || `https://avatar.vercel.sh/${user?.username || user?.address}.png`}
         alt={user?.username || user?.address || 'User'}
@@ -59,10 +55,11 @@ export default function EventCommentReplyForm({
       <div className="flex-1 space-y-2">
         <div className="relative">
           <Input
-            name="content"
+            ref={inputRef}
+            value={content}
+            onChange={e => setContent(e.target.value)}
             className="pr-20 text-sm placeholder:text-muted-foreground/70 focus:border-blue-500 focus:ring-blue-500/20"
             placeholder={placeholder}
-            defaultValue={initialValue}
             required
           />
           <div className="absolute top-1/2 right-2 flex -translate-y-1/2 gap-1">
@@ -79,13 +76,13 @@ export default function EventCommentReplyForm({
               type="submit"
               size="sm"
               className="h-6 px-2 text-xs"
-              disabled={isPending}
+              disabled={isCreatingComment || !content.trim()}
             >
-              {isPending ? 'Posting...' : user ? 'Reply' : 'Connect to Reply'}
+              {isCreatingComment ? 'Posting...' : user ? 'Reply' : 'Connect to Reply'}
             </Button>
           </div>
         </div>
       </div>
-    </Form>
+    </form>
   )
 }

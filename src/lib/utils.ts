@@ -1,4 +1,5 @@
 import type { ClassValue } from 'clsx'
+import confetti from 'canvas-confetti'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -63,4 +64,42 @@ export function formatPercent(value: number) {
 
 export function formatCurrency(value: number) {
   return `$${value.toFixed(2)}`
+}
+
+export function formatPosition(amount: number): string {
+  if (amount < 1000) {
+    return amount.toString()
+  }
+
+  if (amount < 1000000) {
+    return amount.toLocaleString('en-US')
+  }
+
+  const millions = amount / 1000000
+  return `${millions.toFixed(1)}M`
+}
+
+export function triggerConfetti(color: 'primary' | 'yes' | 'no', event?: any) {
+  let origin: { x?: number, y: number } = { y: 0.6 }
+
+  if (event && event.clientX && event.clientY) {
+    const x = event.clientX / window.innerWidth
+    const y = event.clientY / window.innerHeight
+    origin = { x, y }
+  }
+
+  const colors = {
+    yes: ['#10b981', '#059669', '#047857', '#065f46'],
+    no: ['#ef4444', '#dc2626', '#b91c1c', '#991b1b'],
+    primary: ['#2563eb', '#1d4ed8', '#3b82f6', '#60a5fa'],
+  }[color ?? 'primary']
+
+  confetti({
+    particleCount: 120,
+    spread: 70,
+    decay: 0.92,
+    scalar: 0.9,
+    origin,
+    colors,
+  })
 }

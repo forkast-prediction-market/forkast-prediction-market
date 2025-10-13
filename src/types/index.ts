@@ -1,3 +1,5 @@
+import type { PostgrestError } from '@supabase/supabase-js'
+
 export interface Event {
   id: string
   slug: string
@@ -94,7 +96,6 @@ export interface User {
   settings: UserSettings
   affiliate_code?: string | null
   referred_by_user_id?: string | null
-  referred_at?: string | null
   is_admin: boolean
 }
 
@@ -200,10 +201,52 @@ export interface AffiliateData {
     user_id: string
     username?: string | null
     address: string
-    attributed_at: string
+    created_at: string
   }[]
+}
+
+export interface ActivityOrder {
+  id: string
+  user: {
+    id: string
+    username: string | null
+    address: string
+    image: string | null
+  }
+  side: 'buy' | 'sell'
+  amount: number
+  price: number | null
+  outcome: {
+    index: number
+    text: string
+  }
+  market: {
+    title: string
+    slug: string
+  }
+  total_value: number
+  created_at: string
+  status: string
+}
+
+export interface TopHolder {
+  user: {
+    id: string
+    username: string | null
+    address: string
+    image: string | null
+  }
+  netPosition: number
+  outcomeIndex: number
+  outcomeText: string
+}
+
+export interface HoldersResponse {
+  yesHolders: TopHolder[]
+  noHolders: TopHolder[]
 }
 
 export type QueryResult<T>
   = | { data: T, error: null }
     | { data: null, error: string }
+    | { data: null, error: PostgrestError }

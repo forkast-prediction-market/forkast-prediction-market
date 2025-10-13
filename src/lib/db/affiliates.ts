@@ -54,32 +54,30 @@ export const AffiliateModel = {
   },
 
   async getAffiliateByCode(code: string) {
-    const normalized = code.trim().toLowerCase()
-
-    if (!normalized) {
-      return { data: null, error: null }
-    }
+    'use cache'
 
     const { data, error } = await supabaseAdmin
       .from('users')
       .select('id, affiliate_code, username, address, image')
-      .filter('affiliate_code', 'ilike', normalized)
+      .filter('affiliate_code', 'ilike', code)
       .maybeSingle()
 
     return { data, error }
   },
 
   async getReferral(userId: string) {
+    'use cache'
+
     const { data, error } = await supabaseAdmin
       .from('affiliate_referrals')
-      .select('user_id, affiliate_user_id, source, attributed_at')
+      .select('user_id, affiliate_user_id, created_at, affiliate_user:users!affiliate_user_id(address)')
       .eq('user_id', userId)
       .maybeSingle()
 
     return { data, error }
   },
 
-  async recordReferral(args: { user_id: string, affiliate_user_id: string, source?: string }) {
+  async recordReferral(args: { user_id: string, affiliate_user_id: string }) {
     if (args.user_id === args.affiliate_user_id) {
       return { data: null, error: 'Self referrals are not allowed.' }
     }
@@ -99,10 +97,8 @@ export const AffiliateModel = {
       .upsert({
         user_id: args.user_id,
         affiliate_user_id: args.affiliate_user_id,
-        source: args.source,
-        attributed_at: new Date().toISOString(),
       }, { onConflict: 'user_id' })
-      .select('user_id, affiliate_user_id, source, attributed_at')
+      .select('user_id, affiliate_user_id, source, created_at')
       .single()
 
     if (!error) {
@@ -110,7 +106,6 @@ export const AffiliateModel = {
         .from('users')
         .update({
           referred_by_user_id: args.affiliate_user_id,
-          referred_at: new Date().toISOString(),
         })
         .eq('id', args.user_id)
         .is('referred_by_user_id', null)
@@ -120,6 +115,8 @@ export const AffiliateModel = {
   },
 
   async getUserAffiliateStats(userId: string) {
+    'use cache'
+
     const { data, error } = await supabaseAdmin.rpc('get_affiliate_stats', {
       target_user_id: userId,
     })
@@ -143,12 +140,16 @@ export const AffiliateModel = {
   },
 
   async listAffiliateOverview() {
+    'use cache'
+
     const { data, error } = await supabaseAdmin.rpc('get_affiliate_overview')
 
     return { data, error }
   },
 
   async getAffiliateProfiles(userIds: string[]) {
+    'use cache'
+
     if (!userIds.length) {
       return { data: [] as any[], error: null }
     }
@@ -162,15 +163,17 @@ export const AffiliateModel = {
   },
 
   async listReferralsByAffiliate(affiliateUserId: string, limit = 20) {
+    'use cache'
+
     const { data, error } = await supabaseAdmin
       .from('affiliate_referrals')
       .select(`
         user_id,
-        attributed_at,
+        created_at,
         users:users!affiliate_referrals_user_id_fkey (username, address, image)
       `)
       .eq('affiliate_user_id', affiliateUserId)
-      .order('attributed_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(limit)
 
     return { data, error }

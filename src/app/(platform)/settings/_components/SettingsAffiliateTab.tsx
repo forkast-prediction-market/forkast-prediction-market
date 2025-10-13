@@ -92,7 +92,7 @@ export default function SettingsAffiliateTab({ affiliateData }: SettingsAffiliat
                 <p className="text-xs text-muted-foreground">
                   Joined
                   {' '}
-                  {new Date(referral.attributed_at).toLocaleDateString()}
+                  {new Date(referral.created_at).toLocaleDateString()}
                 </p>
               </div>
             </div>

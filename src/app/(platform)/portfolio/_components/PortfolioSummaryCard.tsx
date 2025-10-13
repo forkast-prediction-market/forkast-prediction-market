@@ -52,7 +52,7 @@ export default function PortfolioSummaryCard() {
             </svg>
             <span>
               $
-              {balance?.data?.balance || '0.00'}
+              {balance.text}
             </span>
           </div>
         </div>
@@ -60,7 +60,7 @@ export default function PortfolioSummaryCard() {
         <div className="mb-2">
           <div className="text-3xl font-bold text-foreground">
             $
-            {balance?.data?.balance || '0.00'}
+            {balance.text}
           </div>
         </div>
 

@@ -27,7 +27,7 @@ export default async function SettingsPage({ searchParams }: PageProps<'/setting
 
   const tradeFeeBps = Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '100', 10)
   const affiliateShareBps = Number.parseInt(affiliateSettings?.affiliate_share_bps?.value || '5000', 10)
-  const commissionPercent = Number((tradeFeeBps / 100) * (affiliateShareBps / 10000))
+  const commissionPercent = Number(tradeFeeBps * affiliateShareBps) / 1000000
 
   function resolveBaseUrl() {
     const raw = process.env.NEXT_PUBLIC_SITE_URL!
@@ -52,7 +52,7 @@ export default async function SettingsPage({ searchParams }: PageProps<'/setting
             user_id: referral.user_id as string,
             username: userInfo?.username as string | undefined,
             address: (userInfo?.address as string | undefined) ?? referral.user_id as string,
-            attributed_at: referral.attributed_at as string,
+            created_at: referral.created_at as string,
           }
         }),
       }

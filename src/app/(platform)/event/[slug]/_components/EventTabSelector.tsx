@@ -1,4 +1,3 @@
-import { mockMarketDetails } from '@/lib/mockData'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -7,10 +6,10 @@ interface Props {
 }
 
 export default function EventTabSelector({ activeTab, setActiveTab }: Props) {
-  const { eventTabs } = mockMarketDetails
+  const eventTabs = ['comments', 'holders', 'activity']
 
   return (
-    <ul className="mt-3 flex h-12 gap-8 border-b text-sm font-semibold">
+    <ul className="mt-3 flex h-8 gap-8 border-b text-sm font-semibold">
       {eventTabs.map(tab => (
         <li
           key={tab}

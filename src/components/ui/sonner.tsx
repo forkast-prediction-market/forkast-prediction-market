@@ -6,7 +6,7 @@ function Toaster({ ...props }: ToasterProps) {
   return (
     <Sonner
       position="bottom-right"
-      expand={true}
+      expand={false}
       richColors={true}
       closeButton={false}
       duration={4000}

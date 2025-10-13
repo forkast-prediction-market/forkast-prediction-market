@@ -1,11 +1,10 @@
 import type { Comment } from '@/types'
 import { useAppKit } from '@reown/appkit/react'
 import { MoreHorizontalIcon } from 'lucide-react'
-import Image from 'next/image'
-import Link from 'next/link'
 import { useCallback } from 'react'
+import ProfileLink from '@/components/ProfileLink'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { formatTimeAgo, truncateAddress } from '@/lib/utils'
+import { truncateAddress } from '@/lib/utils'
 import EventCommentLikeForm from './EventCommentLikeForm'
 import EventCommentMenu from './EventCommentMenu'
 import EventCommentReplyForm from './EventCommentReplyForm'
@@ -16,17 +15,21 @@ interface CommentItemProps {
   comment: Comment
   eventId: string
   user: any
-  onLikeToggle: (commentId: string, newLikesCount: number, newUserHasLiked: boolean) => void
+  onLikeToggle: (commentId: string) => void
   onDelete: (commentId: string) => void
   replyingTo: string | null
   onSetReplyingTo: (id: string | null) => void
   replyText: string
   onSetReplyText: (text: string) => void
   expandedComments: Set<string>
-  onRepliesLoaded: (commentId: string, allReplies: Comment[]) => void
-  onAddReply: (commentId: string, reply: Comment) => void
+  onRepliesLoaded: (commentId: string) => void
   onDeleteReply: (commentId: string, replyId: string) => void
-  onUpdateReply: (commentId: string, replyId: string, updates: Partial<Comment>) => void
+  onUpdateReply: (commentId: string, replyId: string) => void
+  createReply: (eventId: string, parentCommentId: string, content: string, user?: any) => void
+  isCreatingComment: boolean
+  isLoadingRepliesForComment: (commentId: string) => boolean
+  loadRepliesError: Error | null
+  retryLoadReplies: (commentId: string) => void
 }
 
 export default function EventCommentItem({
@@ -41,9 +44,13 @@ export default function EventCommentItem({
   onSetReplyText,
   expandedComments,
   onRepliesLoaded,
-  onAddReply,
   onDeleteReply,
   onUpdateReply,
+  createReply,
+  isCreatingComment,
+  isLoadingRepliesForComment,
+  loadRepliesError,
+  retryLoadReplies,
 }: CommentItemProps) {
   const { open } = useAppKit()
 
@@ -52,24 +59,23 @@ export default function EventCommentItem({
       queueMicrotask(() => open())
       return
     }
-    const username = comment.username || truncateAddress(comment.user_address)
+    const username = comment.username || (comment.user_address ? truncateAddress(comment.user_address) : 'Unknown')
     onSetReplyingTo(replyingTo === comment.id ? null : comment.id)
     onSetReplyText(`@${username} `)
   }, [user, comment, replyingTo, onSetReplyingTo, onSetReplyText, open])
 
-  const handleLikeToggle = useCallback((newLikesCount: number, newUserHasLiked: boolean) => {
-    onLikeToggle(comment.id, newLikesCount, newUserHasLiked)
+  const handleLikeToggle = useCallback(() => {
+    onLikeToggle(comment.id)
   }, [comment.id, onLikeToggle])
 
   const handleDelete = useCallback(() => {
     onDelete(comment.id)
   }, [comment.id, onDelete])
 
-  const handleReplyAdded = useCallback((newReply: Comment) => {
-    onAddReply(comment.id, newReply)
+  const handleReplyAdded = useCallback(() => {
     onSetReplyingTo(null)
     onSetReplyText('')
-  }, [comment.id, onAddReply, onSetReplyingTo, onSetReplyText])
+  }, [onSetReplyingTo, onSetReplyText])
 
   const handleReplyCancel = useCallback(() => {
     onSetReplyingTo(null)
@@ -78,66 +84,54 @@ export default function EventCommentItem({
 
   return (
     <div className="grid gap-3">
-      <div className="flex gap-3">
-        <Link
-          href={comment.username ? `/@${comment.username}` : `/@${comment.user_address}`}
-          className="text-sm font-medium transition-colors hover:text-foreground"
-        >
-          <Image
-            src={comment.user_avatar || `https://avatar.vercel.sh/${comment.username || comment.user_address || 'anonymous'}.png`}
-            alt={comment.username || comment.user_address || 'Anonymous User'}
-            width={32}
-            height={32}
-            className="size-8 rounded-full object-cover transition-opacity hover:opacity-80"
-          />
-        </Link>
-        <div className="flex-1">
-          <div className="mb-1 flex items-center gap-2">
-            <Link
-              href={comment.username ? `/@${comment.username}` : `/@${comment.user_address}`}
-              className="text-sm font-medium transition-colors hover:text-foreground"
-            >
-              @
-              {comment.username || truncateAddress(comment.user_address)}
-            </Link>
-            <span className="text-xs text-muted-foreground">
-              {formatTimeAgo(comment.created_at)}
-            </span>
-          </div>
-          <p className="text-sm">{comment.content}</p>
-          <div className="mt-2 flex items-center gap-3">
-            <button
-              type="button"
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              onClick={handleReplyClick}
-            >
-              Reply
-            </button>
-            <EventCommentLikeForm
-              comment={comment}
-              user={user}
-              onLikeToggled={handleLikeToggle}
-            />
-          </div>
-        </div>
-        <div className="relative">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+      <ProfileLink
+        user={{
+          image: comment.user_avatar,
+          username: comment.username,
+          address: comment.user_address,
+        }}
+        date={comment.created_at}
+      >
+        <div className="flex w-full flex-1 gap-3">
+          <div className="flex-1">
+            <p className="text-sm">{comment.content}</p>
+            <div className="mt-2 flex items-center gap-3">
               <button
                 type="button"
-                className="text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Comment options"
+                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                onClick={handleReplyClick}
               >
-                <MoreHorizontalIcon className="size-4" />
+                Reply
               </button>
-            </DropdownMenuTrigger>
-            <EventCommentMenu
-              comment={comment}
-              onDelete={handleDelete}
-            />
-          </DropdownMenu>
+              <EventCommentLikeForm
+                comment={comment}
+                user={user}
+                onLikeToggled={handleLikeToggle}
+              />
+            </div>
+          </div>
+          {comment.is_owner && (
+            <div className="relative">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label="Comment options"
+                  >
+                    <MoreHorizontalIcon className="size-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <EventCommentMenu
+                  comment={comment}
+                  eventId={eventId}
+                  onDelete={handleDelete}
+                />
+              </DropdownMenu>
+            </div>
+          )}
         </div>
-      </div>
+      </ProfileLink>
 
       {/* Reply input field */}
       {replyingTo === comment.id && (
@@ -146,10 +140,12 @@ export default function EventCommentItem({
             user={user}
             eventId={eventId}
             parentCommentId={comment.id}
-            placeholder={`Reply to ${comment.username || truncateAddress(comment.user_address)}`}
+            placeholder={`Reply to ${comment.username || (comment.user_address ? truncateAddress(comment.user_address) : 'Unknown')}`}
             initialValue={replyText}
             onCancel={handleReplyCancel}
             onReplyAddedAction={handleReplyAdded}
+            createReply={createReply}
+            isCreatingComment={isCreatingComment}
           />
         </div>
       )}
@@ -170,7 +166,9 @@ export default function EventCommentItem({
               onSetReplyingTo={onSetReplyingTo}
               replyText={replyText}
               onSetReplyText={onSetReplyText}
-              onAddReply={onAddReply}
+              createReply={createReply}
+              isCreatingComment={isCreatingComment}
+
             />
           ))}
 
@@ -178,6 +176,9 @@ export default function EventCommentItem({
             <EventCommentsLoadMoreReplies
               comment={comment}
               onRepliesLoaded={onRepliesLoaded}
+              isLoading={isLoadingRepliesForComment(comment.id)}
+              error={loadRepliesError}
+              onRetry={() => retryLoadReplies(comment.id)}
             />
           )}
         </div>

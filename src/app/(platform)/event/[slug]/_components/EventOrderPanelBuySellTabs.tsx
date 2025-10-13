@@ -11,10 +11,10 @@ export default function EventOrderPanelBuySellTabs() {
         type="button"
         variant="ghost"
         className={cn({
-          'border-primary text-foreground': state.activeTab === 'buy',
+          'border-primary text-foreground': state.side === 'buy',
         }, 'flex-1 rounded-none border-b-2 pb-2 transition-colors duration-200')}
         onClick={() => {
-          state.setActiveTab('buy')
+          state.setSide('buy')
           state.setAmount('')
           state.inputRef?.current?.focus()
         }}
@@ -25,10 +25,10 @@ export default function EventOrderPanelBuySellTabs() {
         type="button"
         variant="ghost"
         className={cn({
-          'border-primary text-foreground': state.activeTab === 'sell',
+          'border-primary text-foreground': state.side === 'sell',
         }, 'flex-1 rounded-none border-b-2 pb-2 transition-colors duration-200')}
         onClick={() => {
-          state.setActiveTab('sell')
+          state.setSide('sell')
           state.setAmount('')
           state.inputRef?.current?.focus()
         }}
