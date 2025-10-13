@@ -27,6 +27,9 @@ interface CommentItemProps {
   onUpdateReply: (commentId: string, replyId: string) => void
   createReply: (eventId: string, parentCommentId: string, content: string, user?: any) => void
   isCreatingComment: boolean
+  isLoadingRepliesForComment: (commentId: string) => boolean
+  loadRepliesError: Error | null
+  retryLoadReplies: (commentId: string) => void
 }
 
 export default function EventCommentItem({
@@ -45,6 +48,9 @@ export default function EventCommentItem({
   onUpdateReply,
   createReply,
   isCreatingComment,
+  isLoadingRepliesForComment,
+  loadRepliesError,
+  retryLoadReplies,
 }: CommentItemProps) {
   const { open } = useAppKit()
 
@@ -170,6 +176,9 @@ export default function EventCommentItem({
             <EventCommentsLoadMoreReplies
               comment={comment}
               onRepliesLoaded={onRepliesLoaded}
+              isLoading={isLoadingRepliesForComment(comment.id)}
+              error={loadRepliesError}
+              onRetry={() => retryLoadReplies(comment.id)}
             />
           )}
         </div>

@@ -31,6 +31,7 @@ export async function fetchComments({
 export function useInfiniteComments(eventSlug: string) {
   const queryClient = useQueryClient()
   const [infiniteScrollError, setInfiniteScrollError] = useState<Error | null>(null)
+  const [loadingRepliesForComment, setLoadingRepliesForComment] = useState<string | null>(null)
 
   const {
     data,
@@ -376,7 +377,11 @@ export function useInfiniteComments(eventSlug: string) {
       }
       return await response.json()
     },
+    onMutate: ({ commentId }) => {
+      setLoadingRepliesForComment(commentId)
+    },
     onSuccess: (replies, variables) => {
+      setLoadingRepliesForComment(null)
       queryClient.setQueryData(['event-comments', eventSlug], (oldData: any) => {
         if (!oldData) {
           return oldData
@@ -397,9 +402,21 @@ export function useInfiniteComments(eventSlug: string) {
         return { ...oldData, pages: newPages }
       })
     },
+    onError: () => {
+      setLoadingRepliesForComment(null)
+    },
   })
 
   const loadMoreReplies = useCallback((commentId: string) => {
+    loadMoreRepliesMutation.mutate({ commentId })
+  }, [loadMoreRepliesMutation])
+
+  const isLoadingRepliesForComment = useCallback((commentId: string) => {
+    return loadingRepliesForComment === commentId
+  }, [loadingRepliesForComment])
+
+  const retryLoadReplies = useCallback((commentId: string) => {
+    loadMoreRepliesMutation.reset()
     loadMoreRepliesMutation.mutate({ commentId })
   }, [loadMoreRepliesMutation])
 
@@ -428,15 +445,18 @@ export function useInfiniteComments(eventSlug: string) {
     isTogglingLike: likeCommentMutation.isPending,
     isDeletingComment: deleteCommentMutation.isPending,
     isLoadingReplies: loadMoreRepliesMutation.isPending,
+    isLoadingRepliesForComment,
 
     // Error states
     createCommentError: createCommentMutation.error,
     likeCommentError: likeCommentMutation.error,
     deleteCommentError: deleteCommentMutation.error,
+    loadRepliesError: loadMoreRepliesMutation.error,
 
     // Reset functions for error handling
     resetCreateCommentError: createCommentMutation.reset,
     resetLikeCommentError: likeCommentMutation.reset,
     resetDeleteCommentError: deleteCommentMutation.reset,
+    retryLoadReplies,
   }
 }

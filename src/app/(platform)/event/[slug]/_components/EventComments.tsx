@@ -37,6 +37,9 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     createReply,
     isCreatingComment,
     status,
+    isLoadingRepliesForComment,
+    loadRepliesError,
+    retryLoadReplies,
   } = useInfiniteComments(event.slug)
 
   useEffect(() => {
@@ -70,8 +73,17 @@ export default function EventComments({ event, user }: EventCommentsProps) {
 
   const handleRepliesLoaded = useCallback((commentId: string) => {
     loadMoreReplies(commentId)
-    setExpandedComments(prev => new Set([...prev, commentId]))
   }, [loadMoreReplies])
+
+  // Update expanded comments when replies are successfully loaded
+  useEffect(() => {
+    // Find comments that have loaded replies (have recent_replies with more than 3 items or replies_count <= recent_replies.length)
+    comments.forEach((comment) => {
+      if (comment.recent_replies && comment.recent_replies.length > 3) {
+        setExpandedComments(prev => new Set([...prev, comment.id]))
+      }
+    })
+  }, [comments])
 
   const handleLikeToggled = useCallback((commentId: string) => {
     toggleCommentLike(event.id, commentId)
@@ -161,6 +173,9 @@ export default function EventComments({ event, user }: EventCommentsProps) {
                       onUpdateReply={handleUpdateReply}
                       createReply={createReply}
                       isCreatingComment={isCreatingComment}
+                      isLoadingRepliesForComment={isLoadingRepliesForComment}
+                      loadRepliesError={loadRepliesError}
+                      retryLoadReplies={retryLoadReplies}
                     />
                   ))}
                 </div>
