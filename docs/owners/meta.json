@@ -4,6 +4,12 @@
   "icon": "GitFork",
   "root": true,
   "pages": [
-    "index"
+    "index",
+    "---Launch workflow---",
+    "launch-checklist",
+    "---Configuration---",
+    "environment-variables",
+    "---Integrations---",
+    "market-context-generator"
   ]
 }

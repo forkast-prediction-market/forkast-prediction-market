@@ -1,0 +1,52 @@
+---
+title: Market Context Generator
+description: Optional OpenRouter integration for real-time market insights.
+icon: Sparkles
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
+<Callout type="warning">
+  This feature issues external requests. Keep an eye on usage quotas and provider policies before enabling it in production.
+</Callout>
+
+## How to enable
+
+<Steps>
+  <Step>
+    ### Create an OpenRouter API key
+
+    Visit <a href="https://openrouter.ai/settings/keys" target="_blank">OpenRouter -> API Keys</a>, generate a key, and copy it. Choose the model you plan to use (we recommend `perplexity/llama-3.1-sonar-small-128k-online` for live context).
+  </Step>
+  <Step>
+    ### Fill the environment variables
+
+    Add `OPENROUTER_API_KEY` with the generated key and `OPENROUTER_MODEL` with the model identifier. Import an updated `.env` or edit the values in Vercel.
+  </Step>
+  <Step>
+    ### Deploy with the new secrets
+
+    Deploy once the secrets are stored so the backend can read them. If your first deploy already includes the values, no additional action is needed.
+  </Step>
+  <Step>
+    ### Enable the Market Context generator
+
+    Once the API key is stored, the **Market Context generator** entry becomes visible in the interface automatically - no extra toggle required.
+  </Step>
+</Steps>
+
+---
+
+## Using free plans
+
+<Callout type="warning">
+  Running live context on the free tier is not recommended for production - keep it to demos or local testing.
+</Callout>
+
+If you rely on OpenRouter's free tier:
+
+1. Visit <a href="https://openrouter.ai/settings/privacy" target="_blank">Settings -> Privacy</a>.
+2. Enable **Enable free endpoints that may publish prompts**. Without this toggle the free online models won't return responses.
+3. Revisit the policy periodically - free endpoints can publish prompts publicly.
+
+When you upgrade to a paid plan you can disable that permission and switch models if needed.
