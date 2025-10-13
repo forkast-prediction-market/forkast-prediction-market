@@ -91,6 +91,7 @@ export default function EventOrderPanelBuySellTabs() {
         </div>
 
         <Select
+          key={type}
           value={type}
           onValueChange={(value: OrderType) => {
             setType(value)

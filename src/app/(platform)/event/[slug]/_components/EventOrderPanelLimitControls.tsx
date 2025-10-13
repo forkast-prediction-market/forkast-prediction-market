@@ -1,6 +1,6 @@
 import type { LimitExpirationOption } from '@/stores/useOrder'
 import { BanknoteIcon, MinusIcon, PlusIcon } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
+import { useMemo } from 'react'
 import {
   SelectContent,
   SelectItem,
@@ -60,28 +60,40 @@ export default function EventOrderPanelLimitControls() {
     return Number.isFinite(total) ? total : 0
   }, [limitPriceNumber, limitSharesNumber, side])
 
-  useEffect(() => {
-    if (type !== 'limit') {
-      return
-    }
-
-    setAmount(totalValue > 0 ? totalValue.toFixed(2) : '0.00')
-  }, [type, totalValue, setAmount])
-
   function updateLimitPrice(nextValue: number) {
     const clampedValue = clamp(Number.isNaN(nextValue) ? 0 : nextValue, 0, 99.9)
-    setLimitPrice(clampedValue.toFixed(1))
+    const nextPrice = clampedValue.toFixed(1)
+    setLimitPrice(nextPrice)
+
+    if (type === 'limit') {
+      const sharesValue = Number.parseFloat(limitShares) || 0
+      const nextAmount = (clampedValue * sharesValue) / 100
+
+      setAmount((sharesValue === 0 || nextAmount === 0)
+        ? '0.00'
+        : nextAmount.toFixed(2))
+    }
   }
 
   function updateLimitShares(nextValue: number) {
     const clampedValue = clamp(Number.isNaN(nextValue) ? 0 : nextValue, 0, 999999)
-    setLimitShares(clampedValue.toString())
+    const nextShares = clampedValue.toString()
+    setLimitShares(nextShares)
+
+    if (type === 'limit') {
+      const priceValue = Number.parseFloat(limitPrice) || 0
+      const nextAmount = (priceValue * clampedValue) / 100
+
+      setAmount((priceValue === 0 || nextAmount === 0)
+        ? '0.00'
+        : nextAmount.toFixed(2))
+    }
   }
 
   return (
     <div className="mt-4 space-y-5">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-semibold text-muted-foreground">
+        <span className="text-sm font-semibold text-foreground">
           Limit Price
         </span>
         <div className="flex w-1/2 items-center justify-end gap-2">
@@ -108,6 +120,13 @@ export default function EventOrderPanelLimitControls() {
                   ? `${parts[0]}.${parts[1].slice(0, 1)}`
                   : parts[0]
                 setLimitPrice(normalized || '0')
+
+                if (type === 'limit') {
+                  const priceValue = Number.parseFloat(normalized) || 0
+                  const sharesValue = Number.parseFloat(limitShares) || 0
+                  const nextAmount = (priceValue * sharesValue) / 100
+                  setAmount(nextAmount > 0 ? nextAmount.toFixed(2) : '0.00')
+                }
               }}
               onBlur={() => updateLimitPrice(Number.parseFloat(limitPrice))}
               placeholder="0.0"
@@ -132,7 +151,7 @@ export default function EventOrderPanelLimitControls() {
 
       <div>
         <div className="mb-2 flex items-center justify-between gap-3">
-          <span className="text-sm font-semibold text-muted-foreground">
+          <span className="text-sm font-semibold text-foreground">
             Shares
           </span>
           <div className="flex w-1/2 items-center justify-end gap-2">
@@ -158,7 +177,7 @@ export default function EventOrderPanelLimitControls() {
         </div>
         {side === 'sell'
           ? (
-              <div className="ml-auto flex w-1/2 justify-end gap-2">
+              <div className="ml-auto flex h-8 w-1/2 justify-end gap-2">
                 {['25%', '50%', 'MAX'].map(label => (
                   <button
                     type="button"
@@ -190,7 +209,7 @@ export default function EventOrderPanelLimitControls() {
               </div>
             )
           : (
-              <div className="ml-auto flex w-1/2 justify-end gap-2">
+              <div className="ml-auto flex h-8 w-1/2 justify-end gap-2">
                 <button
                   type="button"
                   className={`
@@ -250,19 +269,19 @@ export default function EventOrderPanelLimitControls() {
       </div>
 
       <div className="mt-6 space-y-1">
-        <div className="flex items-center justify-between text-sm font-medium text-muted-foreground">
+        <div className="flex items-center justify-between text-base font-semibold text-foreground">
           <span>Total</span>
-          <span className="text-primary">
+          <span className="font-semibold text-primary">
             $
             {totalValue.toFixed(2)}
           </span>
         </div>
         <div className="flex items-center justify-between text-base font-semibold">
-          <span className="flex items-center gap-2 text-muted-foreground">
+          <span className="flex items-center gap-2 text-foreground">
             To Win
             <BanknoteIcon className="size-4 text-yes" />
           </span>
-          <span className="text-yes">
+          <span className="text-xl font-semibold text-yes">
             $
             {potentialWin.toFixed(2)}
           </span>
