@@ -21,8 +21,8 @@ interface ReplyItemProps {
   onSetReplyingTo: (id: string | null) => void
   replyText: string
   onSetReplyText: (text: string) => void
-  onReplyAddedAction?: (reply: Comment) => void
-  onCancelReply?: () => void
+  createReply: (eventId: string, parentCommentId: string, content: string, user?: any) => void
+  isCreatingComment: boolean
 }
 
 export default function EventCommentReplyItem({
@@ -36,6 +36,8 @@ export default function EventCommentReplyItem({
   onSetReplyingTo,
   replyText,
   onSetReplyText,
+  createReply,
+  isCreatingComment,
 }: ReplyItemProps) {
   const { open } = useAppKit()
 
@@ -44,7 +46,7 @@ export default function EventCommentReplyItem({
       queueMicrotask(() => open())
       return
     }
-    const username = reply.username || truncateAddress(reply.user_address)
+    const username = reply.username || (reply.user_address ? truncateAddress(reply.user_address) : 'Unknown')
     onSetReplyingTo(replyingTo === reply.id ? null : reply.id)
     onSetReplyText(`@${username} `)
   }, [user, reply, replyingTo, onSetReplyingTo, onSetReplyText, open])
@@ -85,11 +87,11 @@ export default function EventCommentReplyItem({
         <div className="flex-1">
           <div className="mb-1 flex items-center gap-2">
             <Link
-              href={reply.username ? `/@${reply.username}` : `/@${reply.user_address}`}
+              href={reply.username ? `/@${reply.username}` : `/@${reply.user_address || 'unknown'}`}
               className="text-sm font-medium transition-colors hover:text-foreground"
             >
               @
-              {reply.username || truncateAddress(reply.user_address)}
+              {reply.username || (reply.user_address ? truncateAddress(reply.user_address) : 'Unknown')}
             </Link>
             <span className="text-xs text-muted-foreground">
               {formatTimeAgo(reply.created_at)}
@@ -138,10 +140,12 @@ export default function EventCommentReplyItem({
             user={user}
             eventId={eventId}
             parentCommentId={commentId}
-            placeholder={`Reply to ${reply.username || truncateAddress(reply.user_address)}`}
+            placeholder={`Reply to ${reply.username || (reply.user_address ? truncateAddress(reply.user_address) : 'Unknown')}`}
             initialValue={replyText}
             onCancel={handleReplyCancel}
             onReplyAddedAction={handleReplyAdded}
+            createReply={createReply}
+            isCreatingComment={isCreatingComment}
           />
         </div>
       )}

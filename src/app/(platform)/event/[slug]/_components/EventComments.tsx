@@ -31,6 +31,8 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     toggleReplyLike,
     deleteReply,
     loadMoreReplies,
+    createReply,
+    isCreatingComment,
     status,
   } = useInfiniteComments(event.slug)
 
@@ -136,6 +138,8 @@ export default function EventComments({ event, user }: EventCommentsProps) {
                       onRepliesLoaded={handleRepliesLoaded}
                       onDeleteReply={handleDeleteReply}
                       onUpdateReply={handleUpdateReply}
+                      createReply={createReply}
+                      isCreatingComment={isCreatingComment}
                     />
                   ))}
                 </div>

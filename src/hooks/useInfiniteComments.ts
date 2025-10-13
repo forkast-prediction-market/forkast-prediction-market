@@ -92,6 +92,7 @@ export function useInfiniteComments(eventSlug: string) {
       eventId: string
       content: string
       parentCommentId?: string
+      user?: any
     }) => {
       const formData = new FormData()
       formData.append('content', content)
@@ -105,21 +106,21 @@ export function useInfiniteComments(eventSlug: string) {
       }
       return result.comment
     },
-    onMutate: async ({ content, parentCommentId }) => {
+    onMutate: async ({ content, parentCommentId, user }) => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['event-comments', eventSlug] })
 
       // Snapshot the previous value
       const previousComments = queryClient.getQueryData(['event-comments', eventSlug])
 
-      // Create optimistic comment
+      // Create optimistic comment with real user data
       const optimisticComment: Comment = {
         id: `temp-${Date.now()}`,
         content,
-        user_id: 'current-user',
-        username: 'You',
-        user_avatar: null,
-        user_address: '',
+        user_id: user?.id || 'current-user',
+        username: user?.username || 'You',
+        user_avatar: user?.image || null,
+        user_address: user?.address || '0x0000...0000',
         likes_count: 0,
         replies_count: 0,
         created_at: new Date().toISOString(),
@@ -185,11 +186,12 @@ export function useInfiniteComments(eventSlug: string) {
             // Replace in replies
             return page.map((comment: Comment) => {
               if (comment.id === variables.parentCommentId && comment.recent_replies) {
+                const updatedReplies = comment.recent_replies.map(reply =>
+                  reply.id === context?.optimisticComment.id ? newComment : reply,
+                )
                 return {
                   ...comment,
-                  recent_replies: comment.recent_replies.map(reply =>
-                    reply.id === context?.optimisticComment.id ? newComment : reply,
-                  ),
+                  recent_replies: updatedReplies,
                 }
               }
               return comment
@@ -386,8 +388,8 @@ export function useInfiniteComments(eventSlug: string) {
     deleteCommentMutation.mutate({ eventId, commentId })
   }, [deleteCommentMutation])
 
-  const createReply = useCallback((eventId: string, parentCommentId: string, content: string) => {
-    createCommentMutation.mutate({ eventId, content, parentCommentId })
+  const createReply = useCallback((eventId: string, parentCommentId: string, content: string, user?: any) => {
+    createCommentMutation.mutate({ eventId, content, parentCommentId, user })
   }, [createCommentMutation])
 
   const toggleReplyLike = useCallback((eventId: string, replyId: string) => {

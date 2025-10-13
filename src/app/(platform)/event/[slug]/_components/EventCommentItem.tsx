@@ -25,6 +25,8 @@ interface CommentItemProps {
   onRepliesLoaded: (commentId: string) => void
   onDeleteReply: (commentId: string, replyId: string) => void
   onUpdateReply: (commentId: string, replyId: string) => void
+  createReply: (eventId: string, parentCommentId: string, content: string, user?: any) => void
+  isCreatingComment: boolean
 }
 
 export default function EventCommentItem({
@@ -41,6 +43,8 @@ export default function EventCommentItem({
   onRepliesLoaded,
   onDeleteReply,
   onUpdateReply,
+  createReply,
+  isCreatingComment,
 }: CommentItemProps) {
   const { open } = useAppKit()
 
@@ -49,7 +53,7 @@ export default function EventCommentItem({
       queueMicrotask(() => open())
       return
     }
-    const username = comment.username || truncateAddress(comment.user_address)
+    const username = comment.username || (comment.user_address ? truncateAddress(comment.user_address) : 'Unknown')
     onSetReplyingTo(replyingTo === comment.id ? null : comment.id)
     onSetReplyText(`@${username} `)
   }, [user, comment, replyingTo, onSetReplyingTo, onSetReplyText, open])
@@ -130,10 +134,12 @@ export default function EventCommentItem({
             user={user}
             eventId={eventId}
             parentCommentId={comment.id}
-            placeholder={`Reply to ${comment.username || truncateAddress(comment.user_address)}`}
+            placeholder={`Reply to ${comment.username || (comment.user_address ? truncateAddress(comment.user_address) : 'Unknown')}`}
             initialValue={replyText}
             onCancel={handleReplyCancel}
             onReplyAddedAction={handleReplyAdded}
+            createReply={createReply}
+            isCreatingComment={isCreatingComment}
           />
         </div>
       )}
@@ -154,6 +160,8 @@ export default function EventCommentItem({
               onSetReplyingTo={onSetReplyingTo}
               replyText={replyText}
               onSetReplyText={onSetReplyText}
+              createReply={createReply}
+              isCreatingComment={isCreatingComment}
 
             />
           ))}
