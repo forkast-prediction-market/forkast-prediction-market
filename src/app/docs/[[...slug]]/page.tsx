@@ -22,6 +22,12 @@ function getMDXComponents(components?: MDXComponents): MDXComponents {
 
 export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
   const params = await props.params
+
+  const isOwnerGuideEnabled = JSON.parse(process.env.NEXT_PUBLIC_FORK_OWNER_GUIDE || 'false')
+  if (params.slug?.[0] === 'owners' && !isOwnerGuideEnabled) {
+    redirect('/docs/users')
+  }
+
   const page = source.getPage(params.slug)
   if (!page) {
     redirect('/docs/users')
@@ -53,6 +59,12 @@ export async function generateStaticParams() {
 
 export async function generateMetadata(props: PageProps<'/docs/[[...slug]]'>): Promise<Metadata> {
   const params = await props.params
+
+  const isOwnerGuideEnabled = JSON.parse(process.env.NEXT_PUBLIC_FORK_OWNER_GUIDE || 'false')
+  if (params.slug?.[0] === 'owners' && !isOwnerGuideEnabled) {
+    notFound()
+  }
+
   const page = source.getPage(params.slug)
   if (!page) {
     notFound()
