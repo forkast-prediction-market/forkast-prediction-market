@@ -8,7 +8,7 @@ export default function EventOrderPanelSubmitButton() {
   return (
     <Button
       type="submit"
-      className="w-full"
+      className="!h-[50px] w-full"
       size="lg"
       disabled={
         state.isLoading
