@@ -35,7 +35,10 @@ export default function EventOrderPanelBuySellTabs() {
       return
     }
 
-    window.localStorage.setItem(ORDER_TYPE_STORAGE_KEY, type)
+    try {
+      window.localStorage.setItem(ORDER_TYPE_STORAGE_KEY, type)
+    }
+    catch {}
   }, [type])
 
   return (
