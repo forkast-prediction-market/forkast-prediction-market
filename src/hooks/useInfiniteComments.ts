@@ -30,11 +30,8 @@ export async function fetchComments({
 
 export function useInfiniteComments(eventSlug: string) {
   const queryClient = useQueryClient()
-
-  // Track infinite scroll errors separately from initial load errors
   const [infiniteScrollError, setInfiniteScrollError] = useState<Error | null>(null)
 
-  // Configure useInfiniteQuery with proper query key and options
   const {
     data,
     status,
@@ -47,23 +44,20 @@ export function useInfiniteComments(eventSlug: string) {
     queryKey: ['event-comments', eventSlug],
     queryFn: ({ pageParam = 0 }) => fetchComments({ pageParam, eventSlug }),
     getNextPageParam: (lastPage, allPages) => {
-      // If the last page has fewer than 20 comments, we've reached the end
       const pageSize = 20
       if (lastPage.length < pageSize) {
-        return undefined // No more pages
+        return undefined
       }
-      // Return the next page number (current page count)
+
       return allPages.length
     },
     initialPageParam: 0,
-    // Set up proper query options for caching and refetch behavior
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes (formerly cacheTime)
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
     refetchOnWindowFocus: false,
     retry: 3,
   })
 
-  // Flatten pages data to provide comments array to component
   const comments = useMemo(() => {
     if (!data?.pages) {
       return []
@@ -71,7 +65,6 @@ export function useInfiniteComments(eventSlug: string) {
     return data.pages.flat()
   }, [data?.pages])
 
-  // Wrapper for fetchNextPage with error handling
   const fetchNextPageWithErrorHandling = useCallback(async () => {
     try {
       setInfiniteScrollError(null)
@@ -83,10 +76,8 @@ export function useInfiniteComments(eventSlug: string) {
     }
   }, [fetchNextPage])
 
-  // Check if we have an infinite scroll error (error occurred after initial load)
   const hasInfiniteScrollError = infiniteScrollError !== null && data?.pages && data.pages.length > 0
 
-  // Mutation for creating a new comment
   const createCommentMutation = useMutation({
     mutationFn: async ({ eventId, content, parentCommentId }: {
       eventId: string
@@ -107,13 +98,10 @@ export function useInfiniteComments(eventSlug: string) {
       return result.comment
     },
     onMutate: async ({ content, parentCommentId, user }) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['event-comments', eventSlug] })
 
-      // Snapshot the previous value
       const previousComments = queryClient.getQueryData(['event-comments', eventSlug])
 
-      // Create optimistic comment with real user data
       const optimisticComment: Comment = {
         id: `temp-${Date.now()}`,
         content,
@@ -130,7 +118,6 @@ export function useInfiniteComments(eventSlug: string) {
       }
 
       if (parentCommentId) {
-        // If it's a reply, add to the parent comment's recent_replies
         queryClient.setQueryData(['event-comments', eventSlug], (oldData: any) => {
           if (!oldData) {
             return oldData
@@ -153,7 +140,6 @@ export function useInfiniteComments(eventSlug: string) {
         })
       }
       else {
-        // If it's a top-level comment, add to the first page
         queryClient.setQueryData(['event-comments', eventSlug], (oldData: any) => {
           if (!oldData) {
             return { pages: [[optimisticComment]], pageParams: [0] }
@@ -169,13 +155,11 @@ export function useInfiniteComments(eventSlug: string) {
       return { previousComments, optimisticComment }
     },
     onError: (_err, _variables, context) => {
-      // Rollback to previous state on error
       if (context?.previousComments) {
         queryClient.setQueryData(['event-comments', eventSlug], context.previousComments)
       }
     },
     onSuccess: (newComment, variables, context) => {
-      // Replace optimistic comment with real comment
       queryClient.setQueryData(['event-comments', eventSlug], (oldData: any) => {
         if (!oldData) {
           return oldData
@@ -183,7 +167,6 @@ export function useInfiniteComments(eventSlug: string) {
 
         const newPages = oldData.pages.map((page: Comment[]) => {
           if (variables.parentCommentId) {
-            // Replace in replies
             return page.map((comment: Comment) => {
               if (comment.id === variables.parentCommentId && comment.recent_replies) {
                 const updatedReplies = comment.recent_replies.map(reply =>
@@ -198,7 +181,6 @@ export function useInfiniteComments(eventSlug: string) {
             })
           }
           else {
-            // Replace in top-level comments
             return page.map((comment: Comment) =>
               comment.id === context?.optimisticComment.id ? newComment : comment,
             )
@@ -210,7 +192,6 @@ export function useInfiniteComments(eventSlug: string) {
     },
   })
 
-  // Mutation for toggling comment like
   const likeCommentMutation = useMutation({
     mutationFn: async ({ eventId, commentId }: { eventId: string, commentId: string }) => {
       const result = await likeCommentAction(eventId, commentId)
@@ -220,13 +201,10 @@ export function useInfiniteComments(eventSlug: string) {
       return result.data
     },
     onMutate: async ({ commentId }) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['event-comments', eventSlug] })
 
-      // Snapshot the previous value
       const previousComments = queryClient.getQueryData(['event-comments', eventSlug])
 
-      // Optimistically update the like status
       queryClient.setQueryData(['event-comments', eventSlug], (oldData: any) => {
         if (!oldData) {
           return oldData
@@ -243,7 +221,7 @@ export function useInfiniteComments(eventSlug: string) {
                   : comment.likes_count + 1,
               }
             }
-            // Also check replies
+
             if (comment.recent_replies) {
               return {
                 ...comment,
@@ -271,13 +249,11 @@ export function useInfiniteComments(eventSlug: string) {
       return { previousComments }
     },
     onError: (_err, _variables, context) => {
-      // Rollback to previous state on error
       if (context?.previousComments) {
         queryClient.setQueryData(['event-comments', eventSlug], context.previousComments)
       }
     },
     onSuccess: (data, variables) => {
-      // Update with actual server response if needed
       if (data) {
         queryClient.setQueryData(['event-comments', eventSlug], (oldData: any) => {
           if (!oldData) {
@@ -293,7 +269,7 @@ export function useInfiniteComments(eventSlug: string) {
                   likes_count: data.likes_count,
                 }
               }
-              // Also check replies
+
               if (comment.recent_replies) {
                 return {
                   ...comment,
@@ -319,7 +295,6 @@ export function useInfiniteComments(eventSlug: string) {
     },
   })
 
-  // Mutation for deleting a comment
   const deleteCommentMutation = useMutation({
     mutationFn: async ({ eventId, commentId }: { eventId: string, commentId: string }) => {
       const result = await deleteCommentAction(eventId, commentId)
@@ -329,23 +304,18 @@ export function useInfiniteComments(eventSlug: string) {
       return commentId
     },
     onMutate: async ({ commentId }) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ['event-comments', eventSlug] })
 
-      // Snapshot the previous value
       const previousComments = queryClient.getQueryData(['event-comments', eventSlug])
 
-      // Optimistically remove the comment
       queryClient.setQueryData(['event-comments', eventSlug], (oldData: any) => {
         if (!oldData) {
           return oldData
         }
 
         const newPages = oldData.pages.map((page: Comment[]) => {
-          // Remove from top-level comments
           const filteredPage = page.filter((comment: Comment) => comment.id !== commentId)
 
-          // Also remove from replies and update reply counts
           return filteredPage.map((comment: Comment) => {
             if (comment.recent_replies) {
               const originalReplyCount = comment.recent_replies.length
@@ -368,14 +338,12 @@ export function useInfiniteComments(eventSlug: string) {
       return { previousComments }
     },
     onError: (_err, _variables, context) => {
-      // Rollback to previous state on error
       if (context?.previousComments) {
         queryClient.setQueryData(['event-comments', eventSlug], context.previousComments)
       }
     },
   })
 
-  // Core mutation functions with proper error handling and optimistic updates
   const createComment = useCallback((eventId: string, content: string, parentCommentId?: string) => {
     createCommentMutation.mutate({ eventId, content, parentCommentId })
   }, [createCommentMutation])
@@ -400,7 +368,6 @@ export function useInfiniteComments(eventSlug: string) {
     deleteCommentMutation.mutate({ eventId, commentId: replyId })
   }, [deleteCommentMutation])
 
-  // Mutation for loading more replies
   const loadMoreRepliesMutation = useMutation({
     mutationFn: async ({ commentId }: { commentId: string }) => {
       const response = await fetch(`/api/comments/${commentId}/replies`)
@@ -410,7 +377,6 @@ export function useInfiniteComments(eventSlug: string) {
       return await response.json()
     },
     onSuccess: (replies, variables) => {
-      // Update the specific comment with all replies
       queryClient.setQueryData(['event-comments', eventSlug], (oldData: any) => {
         if (!oldData) {
           return oldData
