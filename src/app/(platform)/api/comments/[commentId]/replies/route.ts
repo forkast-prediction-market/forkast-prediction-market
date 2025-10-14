@@ -21,7 +21,7 @@ export async function GET(
       )
     }
 
-    const normalizedReplies = (replies ?? []).map((reply: any) => ({
+    let normalizedReplies = (replies ?? []).map((reply: any) => ({
       ...reply,
       recent_replies: Array.isArray(reply.recent_replies) ? reply.recent_replies : [],
       is_owner: currentUserId ? reply.user_id === currentUserId : false,
@@ -40,7 +40,7 @@ export async function GET(
       }
 
       const likedIds = new Set((userLikes ?? []).map(like => like.comment_id))
-      normalizedReplies.map(reply => ({
+      normalizedReplies = normalizedReplies.map(reply => ({
         ...reply,
         user_avatar: reply.user_avatar ? getSupabaseImageUrl(reply.user_avatar) : `https://avatar.vercel.sh/${user.user_avatar}.png`,
         user_has_liked: likedIds.has(reply.id),
