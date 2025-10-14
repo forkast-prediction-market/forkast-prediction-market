@@ -1,7 +1,7 @@
 import type { Event } from '@/types'
-import { SparklesIcon } from 'lucide-react'
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
+import { RotateCwIcon, SparklesIcon } from 'lucide-react'
+import { useMemo, useState, useTransition } from 'react'
+import { generateMarketContextAction } from '@/app/(platform)/event/[slug]/actions/generate-market-context'
 import { cn } from '@/lib/utils'
 import { useOrder } from '@/stores/useOrder'
 
@@ -12,54 +12,140 @@ interface Props {
 export default function EventMarketContext({ event }: Props) {
   const state = useOrder()
   const [contextExpanded, setContextExpanded] = useState(false)
-  const [isGeneratingContext, setIsGeneratingContext] = useState(false)
-  const [generatedContext, setGeneratedContext] = useState<string[]>([])
+  const [context, setContext] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const [hasGenerated, setHasGenerated] = useState(false)
 
   async function generateMarketContext() {
-    setIsGeneratingContext(true)
+    if (!state.market) {
+      return
+    }
 
-    // Simulate AI generation delay
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    startTransition(async () => {
+      setError(null)
 
-    // Generate contextual content based on market title and type
-    const contextLines = [
-      `This market tracks ${event.title.toLowerCase()} with current probability trends indicating ${state.market?.probability}% likelihood of the positive outcome.`,
-      `Historical data shows similar events have had volatility patterns with key decision points typically occurring near market resolution dates.`,
-      `Market sentiment and external factors including recent news developments, expert opinions, and related market movements may influence final outcomes.`,
-    ]
+      try {
+        const response = await generateMarketContextAction({
+          slug: event.slug,
+          marketConditionId: state.market?.condition_id,
+        })
 
-    setGeneratedContext(contextLines)
-    setContextExpanded(true)
-    setIsGeneratingContext(false)
+        if (response?.error) {
+          setError(response.error)
+          setContext(null)
+          setContextExpanded(false)
+          return
+        }
+
+        if (response?.context) {
+          setContext(response.context)
+          setContextExpanded(true)
+          setHasGenerated(true)
+        }
+      }
+      catch (caughtError) {
+        console.error('Failed to fetch market context.', caughtError)
+        setError('Unable to reach the market context service right now.')
+        setContext(null)
+        setContextExpanded(false)
+      }
+    })
+  }
+
+  const paragraphs = useMemo(() => {
+    if (!context) {
+      return []
+    }
+
+    return context
+      .split(/\n{2,}|\r\n{2,}/)
+      .map(block => block.trim())
+      .filter(Boolean)
+  }, [context])
+
+  function toggleCollapse() {
+    setContextExpanded(current => !current)
   }
 
   return (
     <div className="rounded-lg border transition-all duration-200 ease-in-out">
       <div className="flex items-center justify-between p-4 hover:bg-muted/50">
         <span className="text-lg font-medium">Market Context</span>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-1"
-          onClick={generateMarketContext}
-          disabled={isGeneratingContext}
-        >
-          <SparklesIcon className={cn({ 'animate-spin': isGeneratingContext }, 'size-3')} />
-          {isGeneratingContext ? 'Generating...' : 'Generate'}
-        </Button>
+        {hasGenerated
+          ? (
+              <button
+                type="button"
+                onClick={toggleCollapse}
+                className={`
+                  flex h-8 w-8 items-center justify-center rounded-md border border-border/60 bg-background
+                  text-muted-foreground transition
+                  hover:bg-muted/50
+                `}
+                aria-expanded={contextExpanded}
+              >
+                <span className="sr-only">{contextExpanded ? 'Collapse context' : 'Expand context'}</span>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={cn('transition-transform', { 'rotate-180': contextExpanded })}
+                >
+                  <path
+                    d="M4 6L8 10L12 6"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+            )
+          : (
+              <button
+                type="button"
+                onClick={generateMarketContext}
+                className={`
+                  flex items-center gap-1 rounded-md border border-border/60 bg-background px-3 py-1 text-sm font-medium
+                  text-foreground shadow-sm transition
+                  hover:bg-muted/50
+                  disabled:cursor-not-allowed disabled:opacity-50
+                `}
+                disabled={isPending || !state.market}
+              >
+                {isPending ? <RotateCwIcon className="size-3 animate-spin" /> : <SparklesIcon className="size-3" />}
+                {isPending ? 'Generating...' : 'Generate'}
+              </button>
+            )}
       </div>
 
-      {contextExpanded && (
-        <div className="border-t border-border/30 px-3 pb-3">
-          <div className="space-y-2 pt-3">
-            {generatedContext.map(line => (
+      {(contextExpanded || error) && (
+        <div className="border-t border-border/30 px-3 pt-3 pb-3">
+          <div className="space-y-3">
+            {error && (
+              <p className="text-sm font-medium text-destructive">
+                {error}
+              </p>
+            )}
+
+            {paragraphs.map(paragraph => (
               <p
-                key={line}
+                key={paragraph}
                 className="text-sm leading-relaxed text-muted-foreground"
               >
-                {line}
+                {paragraph}
               </p>
             ))}
+
+            {!error && context && (
+              <div className="flex justify-end">
+                <span className="font-mono text-[10px] tracking-wide text-muted-foreground/80 uppercase">
+                  Results are experimental
+                </span>
+              </div>
+            )}
           </div>
         </div>
       )}

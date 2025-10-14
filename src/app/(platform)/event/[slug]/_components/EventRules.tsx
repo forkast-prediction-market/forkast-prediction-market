@@ -36,14 +36,34 @@ export default function EventRules({ event }: EventRulesProps) {
     <div className="rounded-lg border transition-all duration-200 ease-in-out">
       <div className="flex items-center justify-between p-4 hover:bg-muted/50">
         <span className="text-lg font-medium">Rules</span>
-        <Button
-          variant="outline"
-          size="sm"
-          className="flex items-center gap-1"
+        <button
+          type="button"
           onClick={() => setRulesExpanded(!rulesExpanded)}
+          className={`
+            flex h-8 w-8 items-center justify-center rounded-md border border-border/60 bg-background
+            text-muted-foreground transition
+            hover:bg-muted/50
+          `}
+          aria-expanded={rulesExpanded}
         >
-          {rulesExpanded ? 'Show less ▴' : 'Show more ▾'}
-        </Button>
+          <span className="sr-only">{rulesExpanded ? 'Collapse rules' : 'Expand rules'}</span>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={`transition-transform ${rulesExpanded ? 'rotate-180' : ''}`}
+          >
+            <path
+              d="M4 6L8 10L12 6"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
       </div>
 
       {rulesExpanded && (
