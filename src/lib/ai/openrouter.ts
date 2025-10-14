@@ -71,5 +71,5 @@ export async function requestOpenRouterCompletion(messages: OpenRouterMessage[],
 }
 
 export function sanitizeForPrompt(value: string | null | undefined) {
-  return value?.replace(/\s+/g, ' ').trim() ?? 'Not provided'
+  return value?.replace(/\s+/g, ' ')?.trim() ?? 'Not provided'
 }
