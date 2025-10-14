@@ -113,24 +113,26 @@ export default function EventCommentReplyItem({
             />
           </div>
         </div>
-        <div className="relative">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="text-muted-foreground transition-colors hover:text-foreground"
-                aria-label="Reply options"
-              >
-                <MoreHorizontalIcon className="size-4" />
-              </button>
-            </DropdownMenuTrigger>
-            <EventCommentMenu
-              comment={reply}
-              eventId={eventId}
-              onDelete={handleDelete}
-            />
-          </DropdownMenu>
-        </div>
+        {reply.is_owner && (
+          <div className="relative">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
+                  aria-label="Reply options"
+                >
+                  <MoreHorizontalIcon className="size-4" />
+                </button>
+              </DropdownMenuTrigger>
+              <EventCommentMenu
+                comment={reply}
+                eventId={eventId}
+                onDelete={handleDelete}
+              />
+            </DropdownMenu>
+          </div>
+        )}
       </div>
 
       {/* Reply input field for second level replies */}
