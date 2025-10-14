@@ -21,7 +21,6 @@ export const auth = betterAuth({
   },
   plugins: [
     customSession(async ({ user, session }) => {
-      console.log('test', user.image ? 'yes' : 'no')
       return {
         user: {
           ...user,

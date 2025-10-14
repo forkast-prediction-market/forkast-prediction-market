@@ -211,7 +211,7 @@ export interface ActivityOrder {
     id: string
     username: string | null
     address: string
-    image: string | null
+    image: string
   }
   side: 'buy' | 'sell'
   amount: number
@@ -234,7 +234,7 @@ export interface TopHolder {
     id: string
     username: string | null
     address: string
-    image: string | null
+    image: string
   }
   netPosition: number
   outcomeIndex: number

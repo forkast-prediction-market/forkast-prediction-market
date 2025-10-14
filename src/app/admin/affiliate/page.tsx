@@ -25,7 +25,7 @@ interface RowSummary {
   id: string
   username?: string | null
   address: string
-  image: string | null
+  image: string
   affiliate_code: string | null
   total_referrals: number
   total_volume: number
@@ -76,7 +76,7 @@ export default async function AdminSettingsPage() {
       id: item.affiliate_user_id,
       username: profile?.username ?? undefined,
       address: profile?.address ?? fallbackAddress,
-      image: profile?.image ? getSupabaseImageUrl(profile.image) : null,
+      image: profile?.image ? getSupabaseImageUrl(profile.image) : `https://avatar.vercel.sh/${profile?.address || item.affiliate_user_id}.png`,
       affiliate_code: profile?.affiliate_code ?? null,
       total_referrals: Number(item.total_referrals ?? 0),
       total_volume: Number(item.total_volume ?? 0),

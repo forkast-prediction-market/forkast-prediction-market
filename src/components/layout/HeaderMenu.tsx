@@ -1,8 +1,9 @@
 'use client'
 
+import type { Route } from 'next'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { createAuthClient } from 'better-auth/react'
-import { router } from 'next/client'
+import { redirect } from 'next/navigation'
 import { useEffect } from 'react'
 import HeaderDropdownUserMenuAuth from '@/components/layout/HeaderDropdownUserMenuAuth'
 import HeaderDropdownUserMenuGuest from '@/components/layout/HeaderDropdownUserMenuGuest'
@@ -33,7 +34,8 @@ export default function HeaderMenu() {
                   localStorage.removeItem(key)
                 }
               })
-              router.push('/')
+
+              queueMicrotask(() => redirect(window.location.pathname as unknown as Route))
             },
           },
         })
@@ -45,7 +47,7 @@ export default function HeaderMenu() {
 
   useEffect(() => {
     if (session?.user) {
-      useUser.setState(session.user)
+      useUser.setState({ ...session.user, image: session.user.image! })
     }
     else {
       useUser.setState(null)

@@ -10,20 +10,20 @@ export default function UserInfoSection() {
   const user = useUser()
   const { copied, copy } = useClipboard()
 
+  if (!user) {
+    return <></>
+  }
+
   const displayUsername = user?.username
     ? user.username.length > 12
       ? `${user.username.slice(0, 12)}...`
       : user.username
-    : truncateAddress(user?.address || '')
+    : truncateAddress(user?.address)
 
   const polygonscanUrl = `https://polygonscan.com/address/${user.address}`
 
   function handleCopyWallet() {
     copy(user!.address)
-  }
-
-  if (!user) {
-    return <></>
   }
 
   return (
