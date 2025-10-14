@@ -8,14 +8,14 @@ export default function EventOrderPanelSubmitButton() {
   return (
     <Button
       type="submit"
-      className="!h-[50px] w-full"
-      size="lg"
+      size="outcome"
       disabled={
         state.isLoading
         || !amount
         || (state.side === 'sell' && amount > getUserShares())
       }
       onClick={e => state.setLastMouseEvent(e)}
+      className="w-full text-base font-bold"
     >
       {state.isLoading
         ? (

@@ -7,8 +7,8 @@ import { cn } from '@/lib/utils'
 
 const buttonVariants = cva(
   `
-    inline-flex shrink-0 items-center justify-center gap-2 rounded text-sm font-medium whitespace-nowrap transition-all
-    outline-none
+    inline-flex shrink-0 items-center justify-center gap-2 rounded-sm text-sm font-medium whitespace-nowrap
+    transition-all outline-none
     focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50
     disabled:pointer-events-none disabled:opacity-50
     aria-invalid:border-destructive aria-invalid:ring-destructive/20
@@ -40,17 +40,18 @@ const buttonVariants = cva(
           'hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50',
         link: 'text-primary underline-offset-4 hover:underline',
         yes: `
-          flex items-center justify-center bg-yes/15 text-sm font-semibold text-yes-foreground transition-colors
+          bg-yes/15 font-semibold text-yes-foreground transition-colors
           hover:bg-yes-foreground hover:text-white
           dark:hover:bg-yes dark:hover:text-white
         `,
         no: `
-          flex items-center justify-center bg-no/15 text-sm font-semibold text-no-foreground transition-colors
+          bg-no/15 font-semibold text-no-foreground transition-colors
           hover:bg-no-foreground hover:text-white
           dark:hover:bg-no dark:hover:text-white
         `,
       },
       size: {
+        outcome: 'h-[48px] min-w-0 flex-1 gap-1 px-3',
         default: 'h-9 px-4 py-2 has-[>svg]:px-3',
         sm: 'h-8 gap-1.5 px-3 has-[>svg]:px-2.5',
         lg: 'h-10 px-6 has-[>svg]:px-4',

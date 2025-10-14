@@ -112,11 +112,11 @@ export default function EventMarkets({ event }: Props) {
               {/* Row 2: Buttons */}
               <div className="flex gap-2">
                 <Button
-                  size="lg"
+                  size="outcome"
                   variant="yes"
                   className={cn({
                     'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 0,
-                  }, 'min-w-0 flex-1 px-3')}
+                  })}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -130,17 +130,17 @@ export default function EventMarkets({ event }: Props) {
                     {' '}
                     {market.outcomes[0].outcome_text}
                   </span>
-                  <span className="ms-auto shrink-0 font-bold">
+                  <span className="shrink-0 text-base font-bold">
                     {Math.round(market.probability)}
                     ¢
                   </span>
                 </Button>
                 <Button
-                  size="lg"
+                  size="outcome"
                   variant="no"
                   className={cn({
                     'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 1,
-                  }, 'min-w-0 flex-1 px-3')}
+                  })}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -154,7 +154,7 @@ export default function EventMarkets({ event }: Props) {
                     {' '}
                     {market.outcomes[1].outcome_text}
                   </span>
-                  <span className="ms-auto shrink-0 font-bold">
+                  <span className="shrink-0 text-base font-bold">
                     {100 - Math.round(market.probability)}
                     ¢
                   </span>
@@ -203,13 +203,13 @@ export default function EventMarkets({ event }: Props) {
                 </div>
               </div>
 
-              <div className="ml-2">
+              <div className="flex items-center gap-2">
                 <Button
-                  size="lg"
+                  size="outcome"
                   variant="yes"
                   className={cn({
                     'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 0,
-                  }, 'w-36 px-3')}
+                  }, 'w-36')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -223,19 +223,18 @@ export default function EventMarkets({ event }: Props) {
                     {' '}
                     {market.outcomes[0].outcome_text}
                   </span>
-                  <span className="ms-auto shrink-0 font-bold">
+                  <span className="shrink-0 text-base font-bold">
                     {Math.round(market.probability)}
                     ¢
                   </span>
                 </Button>
-              </div>
-              <div className="ml-2">
+
                 <Button
-                  size="lg"
+                  size="outcome"
                   variant="no"
                   className={cn({
                     'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 1,
-                  }, 'w-36 px-3')}
+                  }, 'w-36')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -249,7 +248,7 @@ export default function EventMarkets({ event }: Props) {
                     {' '}
                     {market.outcomes[1].outcome_text}
                   </span>
-                  <span className="ms-auto font-bold">
+                  <span className="shrink-0 text-base font-bold">
                     {100 - Math.round(market.probability)}
                     ¢
                   </span>
