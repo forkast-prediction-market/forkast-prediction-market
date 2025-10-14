@@ -68,7 +68,7 @@ export default function SettingsProfileTab({ user }: { user: User }) {
               to-primary/60
             `}
             >
-              {previewImage || user.image
+              {previewImage || user.image?.includes('supabase.co')
                 ? (
                     <Image
                       width={42}

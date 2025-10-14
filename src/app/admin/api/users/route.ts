@@ -2,6 +2,7 @@ import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { isAdminWallet } from '@/lib/admin'
 import { UserModel } from '@/lib/db/users'
+import { getSupabaseImageUrl } from '@/lib/supabase'
 import { truncateAddress } from '@/lib/utils'
 
 export async function GET(request: NextRequest) {
@@ -65,7 +66,6 @@ export async function GET(request: NextRequest) {
           })
 
       const profilePath = user.username ?? user.address
-      const avatarSource = user.image || `https://avatar.vercel.sh/${profilePath}.png`
 
       const referredSource = user.referred_by_user_id
         ? referredMap.get(user.referred_by_user_id)
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       if (user.referred_by_user_id) {
         const referredPath = referredSource?.username ?? referredSource?.address ?? user.referred_by_user_id
         referredDisplay = referredSource?.username ?? truncateAddress(referredSource?.address ?? user.referred_by_user_id)
-        referredProfile = `${baseProfileUrl}/${referredPath}`
+        referredProfile = `${baseProfileUrl}/@${referredPath}`
       }
 
       const searchText = [
@@ -89,11 +89,11 @@ export async function GET(request: NextRequest) {
       return {
         ...user,
         is_admin: isAdminWallet(user.address),
-        avatarUrl: avatarSource,
+        avatarUrl: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${user.address}.png`,
         referred_by_display: referredDisplay,
         referred_by_profile_url: referredProfile,
         created_label: createdLabel,
-        profileUrl: `${baseProfileUrl}/${profilePath}`,
+        profileUrl: `${baseProfileUrl}/@${profilePath}`,
         created_at: user.created_at,
         search_text: searchText,
       }

@@ -1,8 +1,7 @@
 import { cookies, headers } from 'next/headers'
-import { isAdminWallet } from '@/lib/admin'
 import { auth } from '@/lib/auth'
 import { AffiliateModel } from '@/lib/db/affiliates'
-import { supabaseAdmin } from '@/lib/supabase'
+import { getSupabaseImageUrl, supabaseAdmin } from '@/lib/supabase'
 
 export const UserModel = {
   async getProfileByUsername(username: string) {
@@ -13,6 +12,10 @@ export const UserModel = {
       .select('address, username, image, created_at')
       .or(`username.eq.${username},address.eq.${username}`)
       .single()
+
+    if (data) {
+      data.image = data.image ? getSupabaseImageUrl(data.image) : `https://avatar.vercel.sh/${data.address}.png`
+    }
 
     return { data, error }
   },
@@ -106,8 +109,6 @@ export const UserModel = {
         user.settings = {}
       }
     }
-
-    user.is_admin = isAdminWallet(user.address)
 
     if (!user.affiliate_code) {
       try {

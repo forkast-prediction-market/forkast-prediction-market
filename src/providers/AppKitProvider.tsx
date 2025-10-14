@@ -99,7 +99,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
         authClient.getSession().then((session) => {
           const user = session?.data?.user
           if (user) {
-            useUser.setState(user)
+            useUser.setState({ ...user, image: user.image! })
           }
         }).catch(() => {})
       },

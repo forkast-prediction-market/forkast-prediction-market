@@ -10,13 +10,17 @@ export default function UserInfoSection() {
   const user = useUser()
   const { copied, copy } = useClipboard()
 
+  if (!user) {
+    return <></>
+  }
+
   const displayUsername = user?.username
     ? user.username.length > 12
       ? `${user.username.slice(0, 12)}...`
       : user.username
-    : truncateAddress(user?.address || '')
+    : truncateAddress(user?.address)
 
-  const polygonscanUrl = `https://polygonscan.com/address/${user?.address}`
+  const polygonscanUrl = `https://polygonscan.com/address/${user.address}`
 
   function handleCopyWallet() {
     copy(user!.address)
@@ -26,7 +30,7 @@ export default function UserInfoSection() {
     <div className="flex items-center gap-4 p-4">
       <div className="shrink-0">
         <Image
-          src={user?.image || `https://avatar.vercel.sh/${user?.address}.png`}
+          src={user.image}
           alt="User avatar"
           width={48}
           height={48}
@@ -35,7 +39,7 @@ export default function UserInfoSection() {
       </div>
       <div className="min-w-0 flex-1 space-y-1.5">
         <Link
-          href={`/@${user?.username || user?.address}`}
+          href={`/@${user.username || user.address}`}
           className={`
             truncate text-base leading-tight font-semibold text-foreground transition-colors duration-200
             hover:text-primary
@@ -53,7 +57,7 @@ export default function UserInfoSection() {
             title={copied ? 'Copied!' : 'Copy address'}
           >
             <span className="font-mono">
-              {truncateAddress(user?.address || '')}
+              {truncateAddress(user.address)}
             </span>
             {copied
               ? (

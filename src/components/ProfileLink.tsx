@@ -7,8 +7,8 @@ import { formatTimeAgo, truncateAddress } from '@/lib/utils'
 interface ProfileLinkProps {
   user: {
     address: string
+    image: string
     username?: string | null
-    image?: string | null
   }
   position?: number
   date?: string
@@ -29,7 +29,7 @@ export default function ProfileLink({ user, position, date, children }: ProfileL
     <div className="flex items-start gap-3 py-2">
       <Link href={href} className="relative shrink-0">
         <Image
-          src={user.image || `https://avatar.vercel.sh/${user.address}.png`}
+          src={user.image}
           alt={user.username || user.address}
           width={32}
           height={32}

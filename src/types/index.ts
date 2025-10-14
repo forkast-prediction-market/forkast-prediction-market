@@ -92,7 +92,7 @@ export interface User {
   email: string
   twoFactorEnabled: boolean | null | undefined
   username?: string
-  image?: string | null
+  image: string
   settings: UserSettings
   affiliate_code?: string | null
   referred_by_user_id?: string | null
@@ -109,7 +109,7 @@ export interface PublicProfileStats {
 export interface PublicProfile {
   address: string
   username?: string
-  image?: string
+  image: string
   created_at: Date
   stats?: PublicProfileStats
 }
@@ -131,7 +131,7 @@ export interface Comment {
   content: string
   user_id: string
   username: string
-  user_avatar: string | null
+  user_avatar: string
   user_address: string
   likes_count: number
   replies_count: number
@@ -211,7 +211,7 @@ export interface ActivityOrder {
     id: string
     username: string | null
     address: string
-    image: string | null
+    image: string
   }
   side: 'buy' | 'sell'
   amount: number
@@ -234,7 +234,7 @@ export interface TopHolder {
     id: string
     username: string | null
     address: string
-    image: string | null
+    image: string
   }
   netPosition: number
   outcomeIndex: number

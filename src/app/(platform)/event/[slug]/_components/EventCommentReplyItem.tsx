@@ -77,7 +77,7 @@ export default function EventCommentReplyItem({
           className="text-sm font-medium transition-colors hover:text-foreground"
         >
           <Image
-            src={reply.user_avatar || `https://avatar.vercel.sh/${reply.username || reply.user_address || 'anonymous'}.png`}
+            src={reply.user_avatar}
             alt={reply.username || reply.user_address || 'Anonymous User'}
             width={24}
             height={24}

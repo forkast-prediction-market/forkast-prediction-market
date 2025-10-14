@@ -18,6 +18,10 @@ export default function HeaderDropdownUserMenuAuth() {
   const { disconnect } = useDisconnect()
   const user = useUser()
 
+  if (!user) {
+    return <></>
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -28,7 +32,7 @@ export default function HeaderDropdownUserMenuAuth() {
           data-testid="header-menu-button"
         >
           <Image
-            src={user?.image || `https://avatar.vercel.sh/${user?.address}.png`}
+            src={user.image}
             alt="User avatar"
             width={32}
             height={32}

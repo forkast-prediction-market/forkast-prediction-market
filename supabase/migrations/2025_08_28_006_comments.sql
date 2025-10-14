@@ -223,18 +223,16 @@ SELECT c.id,
        c.content,
        c.is_deleted,
        c.likes_count,
-       COALESCE((
-         SELECT COUNT(*)::int
-         FROM comments r
-         WHERE r.parent_comment_id = c.id
-           AND r.is_deleted = FALSE
-       ), 0) AS replies_count,
+       COALESCE((SELECT COUNT(*)::int
+                 FROM comments r
+                 WHERE r.parent_comment_id = c.id
+                   AND r.is_deleted = FALSE), 0) AS replies_count,
        c.created_at,
        c.updated_at,
        -- User info
        u.username,
-       u.image   AS user_avatar,
-       u.address AS user_address,
+       u.image                                   AS user_avatar,
+       u.address                                 AS user_address,
        -- Aggregated reply info for root comments
        CASE
          WHEN c.parent_comment_id IS NULL THEN (SELECT JSON_AGG(
@@ -260,7 +258,7 @@ SELECT c.id,
                                                         AND r.is_deleted = FALSE
                                                       ORDER BY r.created_at
                                                       LIMIT 3) r)
-         END     AS recent_replies
+         END                                     AS recent_replies
 FROM comments c
        JOIN users u ON c.user_id = u.id
 WHERE c.is_deleted = FALSE;
