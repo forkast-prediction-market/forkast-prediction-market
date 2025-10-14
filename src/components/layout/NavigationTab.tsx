@@ -4,9 +4,8 @@ import type { Route } from 'next'
 import { TrendingUpIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import SubNavigationTabs from '@/components/layout/SubNavigationTabs'
 import { Teleport } from '@/components/layout/Teleport'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
 interface Props {
   tag: {
@@ -15,20 +14,17 @@ interface Props {
     childs: { name: string, slug: string }[]
   }
   childParentMap: Record<string, string>
+  isActive: boolean
+  ref?: React.Ref<HTMLAnchorElement>
 }
 
-export default function NavigationTab({ tag, childParentMap }: Props) {
+function NavigationTab({ tag, childParentMap: _childParentMap, isActive, ref }: Props) {
   const searchParams = useSearchParams()
   const showBookmarkedOnly = searchParams?.get('bookmarked') === 'true'
   const currentSearch = searchParams?.toString() ?? ''
   const tagFromURL = showBookmarkedOnly && searchParams?.get('tag') === 'trending'
     ? ''
     : searchParams?.get('tag') || 'trending'
-  const contextFromURL = searchParams?.get('context') ?? undefined
-  const parentSlug = childParentMap[tagFromURL]
-  const hasChildMatch = tag.childs.some(child => child.slug === tagFromURL)
-  const effectiveParent = contextFromURL ?? (parentSlug ?? (hasChildMatch ? tag.slug : tagFromURL))
-  const isActive = effectiveParent === tag.slug
 
   function createHref(nextTag: string, context?: string): Route {
     const params = new URLSearchParams(currentSearch)
@@ -51,11 +47,12 @@ export default function NavigationTab({ tag, childParentMap }: Props) {
   return (
     <>
       <Link
+        ref={ref}
         href={createHref(tag.slug)}
-        className={`flex items-center gap-1.5 border-b-2 py-2 pb-1 whitespace-nowrap transition-colors ${
+        className={`flex items-center gap-1.5 py-2 pb-1 whitespace-nowrap transition-colors ${
           isActive
-            ? 'border-primary text-foreground'
-            : 'border-transparent text-muted-foreground hover:text-foreground'
+            ? 'font-semibold text-foreground'
+            : 'text-muted-foreground hover:text-foreground'
         }`}
       >
         {tag.slug === 'trending' && <TrendingUpIcon className="size-4" />}
@@ -64,41 +61,15 @@ export default function NavigationTab({ tag, childParentMap }: Props) {
 
       {isActive && (
         <Teleport to="#navigation-tags">
-          <Link href={createHref(tag.slug)} key={tag.slug}>
-            <Button
-              variant={tagFromURL === tag.slug ? 'default' : 'ghost'}
-              size="sm"
-              className={cn(
-                'h-8 shrink-0 text-sm whitespace-nowrap',
-                tagFromURL === tag.slug ? undefined : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              All
-            </Button>
-          </Link>
-
-          {tag.childs.map(subtag => (
-            <Link
-              href={createHref(
-                subtag.slug,
-                tag.slug === 'trending' || tag.slug === 'new' ? tag.slug : undefined,
-              )}
-              key={subtag.slug}
-            >
-              <Button
-                variant={tagFromURL === subtag.slug ? 'default' : 'ghost'}
-                size="sm"
-                className={cn(
-                  'h-8 shrink-0 text-sm whitespace-nowrap',
-                  tagFromURL === subtag.slug ? undefined : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {subtag.name}
-              </Button>
-            </Link>
-          ))}
+          <SubNavigationTabs
+            activeTag={tagFromURL}
+            mainTag={tag}
+            createHref={createHref}
+          />
         </Teleport>
       )}
     </>
   )
 }
+
+export default NavigationTab
