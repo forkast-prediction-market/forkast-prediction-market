@@ -15,9 +15,10 @@ interface Props {
     childs: { name: string, slug: string }[]
   }
   childParentMap: Record<string, string>
+  isActive: boolean
 }
 
-export default function NavigationTab({ tag, childParentMap }: Props) {
+function NavigationTab({ ref, tag, childParentMap, isActive }: Props & { ref?: React.RefObject<HTMLAnchorElement | null> }) {
   const searchParams = useSearchParams()
   const showBookmarkedOnly = searchParams?.get('bookmarked') === 'true'
   const currentSearch = searchParams?.toString() ?? ''
@@ -25,10 +26,6 @@ export default function NavigationTab({ tag, childParentMap }: Props) {
     ? ''
     : searchParams?.get('tag') || 'trending'
   const contextFromURL = searchParams?.get('context') ?? undefined
-  const parentSlug = childParentMap[tagFromURL]
-  const hasChildMatch = tag.childs.some(child => child.slug === tagFromURL)
-  const effectiveParent = contextFromURL ?? (parentSlug ?? (hasChildMatch ? tag.slug : tagFromURL))
-  const isActive = effectiveParent === tag.slug
 
   function createHref(nextTag: string, context?: string): Route {
     const params = new URLSearchParams(currentSearch)
@@ -51,11 +48,12 @@ export default function NavigationTab({ tag, childParentMap }: Props) {
   return (
     <>
       <Link
+        ref={ref}
         href={createHref(tag.slug)}
-        className={`flex items-center gap-1.5 border-b-2 py-2 pb-1 whitespace-nowrap transition-colors ${
+        className={`flex items-center gap-1.5 py-2 pb-1 whitespace-nowrap transition-colors ${
           isActive
-            ? 'border-primary text-foreground'
-            : 'border-transparent text-muted-foreground hover:text-foreground'
+            ? 'text-foreground'
+            : 'text-muted-foreground hover:text-foreground'
         }`}
       >
         {tag.slug === 'trending' && <TrendingUpIcon className="size-4" />}
@@ -102,3 +100,5 @@ export default function NavigationTab({ tag, childParentMap }: Props) {
     </>
   )
 }
+
+export default NavigationTab
