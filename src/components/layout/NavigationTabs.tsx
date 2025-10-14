@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, useCallback, useLayoutEffect, useRef, useState } from 'react'
 import NavigationTab from '@/components/layout/NavigationTab'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -78,43 +78,6 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
   useLayoutEffect(() => {
     updateIndicatorPosition()
   }, [updateIndicatorPosition, tags])
-
-  useEffect(() => {
-    let resizeTimeout: NodeJS.Timeout
-
-    function handleResize() {
-      if (resizeTimeout) {
-        clearTimeout(resizeTimeout)
-      }
-
-      resizeTimeout = setTimeout(() => {
-        updateIndicatorPosition()
-      }, 150)
-    }
-
-    function handleScroll() {
-      if (indicatorStyle.isInitialized) {
-        updateIndicatorPosition()
-      }
-    }
-
-    window.addEventListener('resize', handleResize)
-
-    const container = containerRef.current
-    if (container) {
-      container.addEventListener('scroll', handleScroll, { passive: true })
-    }
-
-    return () => {
-      window.removeEventListener('resize', handleResize)
-      if (container) {
-        container.removeEventListener('scroll', handleScroll)
-      }
-      if (resizeTimeout) {
-        clearTimeout(resizeTimeout)
-      }
-    }
-  }, [updateIndicatorPosition, indicatorStyle.isInitialized])
 
   return (
     <nav className="sticky top-14 z-10 border-b bg-background">
