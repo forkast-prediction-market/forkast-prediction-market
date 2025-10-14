@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { CommentModel } from '@/lib/db/comments'
 import { UserModel } from '@/lib/db/users'
+import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export async function GET(
   _: Request,
@@ -39,9 +40,11 @@ export async function GET(
       }
 
       const likedIds = new Set((userLikes ?? []).map(like => like.comment_id))
-      normalizedReplies.forEach((reply) => {
-        reply.user_has_liked = likedIds.has(reply.id)
-      })
+      normalizedReplies.map(reply => ({
+        ...reply,
+        user_avatar: reply.user_avatar ? getSupabaseImageUrl(reply.user_avatar) : `https://avatar.vercel.sh/${user.user_avatar}.png`,
+        user_has_liked: likedIds.has(reply.id),
+      }))
     }
 
     const repliesWithoutExtraRelations = normalizedReplies.map(({ users, ...reply }) => reply)

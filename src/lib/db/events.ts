@@ -310,7 +310,9 @@ export const EventModel = {
             id: order.user.id,
             username: order.user.username,
             address: order.user.address,
-            image: order.user.image,
+            image: order.user.image
+              ? getSupabaseImageUrl(order.user.image)
+              : `https://avatar.vercel.sh/${order.user.address}.png`,
           },
           side: order.side,
           amount: order.amount,
@@ -366,7 +368,7 @@ export const EventModel = {
           id: holder.user_id,
           username: holder.username,
           address: holder.address,
-          image: holder.image,
+          image: holder.image ? getSupabaseImageUrl(holder.image) : `https://avatar.vercel.sh/${holder.address}.png`,
         },
         netPosition: holder.net_position,
         outcomeIndex: holder.outcome_index,
@@ -393,7 +395,7 @@ function eventResource(event: Event & any, userId: string): Event {
       title: market.short_title || market.title,
       probability: Math.random() * 100,
       price: Math.random() * 0.99 + 0.01,
-      volume: Math.random() * 100000,
+      volume: Math.random() * 100_000,
       outcomes: market.condition?.outcomes || [],
       icon_url: getSupabaseImageUrl(market.icon_url),
     })),

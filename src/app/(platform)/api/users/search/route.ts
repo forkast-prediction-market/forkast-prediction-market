@@ -1,6 +1,7 @@
 import type { PublicProfile } from '@/types'
 import { NextResponse } from 'next/server'
 import { UserModel } from '@/lib/db/users'
+import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -23,11 +24,10 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 
-    // Transform user data to PublicProfile format
     const profiles: PublicProfile[] = (data || []).map(user => ({
       address: user.address,
       username: user.username || undefined,
-      image: user.image || undefined,
+      image: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${user.address}.png`,
       created_at: new Date(user.created_at),
     }))
 

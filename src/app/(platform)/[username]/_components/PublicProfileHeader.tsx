@@ -23,13 +23,12 @@ export default function PublicProfileHeader({ profile }: Props) {
 
   const address = truncateAddress(profile.address)
   const joinDate = new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  const avatarSrc = profile.image || `https://avatar.vercel.sh/${profile.username || 'user'}.png`
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:gap-8">
       <div className="size-28 overflow-hidden rounded-full border border-border shadow-sm">
         <Image
-          src={avatarSrc}
+          src={profile.image}
           alt={`${profile.username || 'User'} avatar`}
           width={112}
           height={112}

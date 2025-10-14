@@ -43,11 +43,15 @@ export default function EventCommentReplyForm({
     onReplyAddedAction?.()
   }
 
+  if (!user) {
+    return <></>
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex gap-3">
       <Image
-        src={user?.image || `https://avatar.vercel.sh/${user?.username || user?.address}.png`}
-        alt={user?.username || user?.address || 'User'}
+        src={user.image}
+        alt={user.username || user.address || 'User'}
         width={24}
         height={24}
         className="size-6 shrink-0 rounded-full object-cover"

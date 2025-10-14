@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { CommentModel } from '@/lib/db/comments'
 import { EventModel } from '@/lib/db/events'
 import { UserModel } from '@/lib/db/users'
+import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export async function GET(
   request: Request,
@@ -34,6 +35,7 @@ export async function GET(
 
     const normalizedComments = (comments ?? []).map((comment: any) => ({
       ...comment,
+      user_avatar: comment.user_avatar ? getSupabaseImageUrl(comment.user_avatar) : `https://avatar.vercel.sh/${comment.user_address}.png`,
       recent_replies: Array.isArray(comment.recent_replies) ? comment.recent_replies : [],
     }))
 
@@ -46,6 +48,7 @@ export async function GET(
           .slice(0, comment.replies_count > 3 ? 3 : comment.replies_count)
           .map((reply: any) => ({
             ...reply,
+            user_avatar: reply.user_avatar ? getSupabaseImageUrl(reply.user_avatar) : `https://avatar.vercel.sh/${reply.user_address}.png`,
             is_owner: false,
             user_has_liked: false,
           })),
@@ -67,6 +70,7 @@ export async function GET(
           .slice(0, comment.replies_count > 3 ? 3 : comment.replies_count)
           .map((reply: any) => ({
             ...reply,
+            user_avatar: reply.user_avatar ? getSupabaseImageUrl(reply.user_avatar) : `https://avatar.vercel.sh/${user.user_avatar}.png`,
             is_owner: currentUserId === reply.user_id,
             user_has_liked: false,
           })),
@@ -97,6 +101,7 @@ export async function GET(
         user_has_liked: likedIds.has(comment.id),
         recent_replies: limitedReplies.map((reply: any) => ({
           ...reply,
+          user_avatar: reply.user_avatar ? getSupabaseImageUrl(reply.user_avatar) : `https://avatar.vercel.sh/${user.user_avatar}.png`,
           is_owner: currentUserId === reply.user_id,
           user_has_liked: likedIds.has(reply.id),
         })),

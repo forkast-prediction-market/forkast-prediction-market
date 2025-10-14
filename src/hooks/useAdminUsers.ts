@@ -90,7 +90,6 @@ export function useAdminUsers(params: UseAdminUsersParams = {}) {
   }
 }
 
-// Hook for managing table state
 export function useAdminUsersTable() {
   const [pageIndex, setPageIndex] = useState(0)
   const [pageSize, setPageSize] = useState(50)
@@ -108,7 +107,7 @@ export function useAdminUsersTable() {
 
   const handleSearchChange = useCallback((newSearch: string) => {
     setSearch(newSearch)
-    setPageIndex(0) // Reset to first page when searching
+    setPageIndex(0)
   }, [])
 
   const handleSortChange = useCallback((column: string | null, order: 'asc' | 'desc' | null) => {
@@ -120,7 +119,7 @@ export function useAdminUsersTable() {
       setSortBy(column as 'username' | 'email' | 'address' | 'created_at')
       setSortOrder(order)
     }
-    setPageIndex(0) // Reset to first page when sorting changes
+    setPageIndex(0)
   }, [])
 
   const handlePageChange = useCallback((newPageIndex: number) => {
@@ -129,7 +128,7 @@ export function useAdminUsersTable() {
 
   const handlePageSizeChange = useCallback((newPageSize: number) => {
     setPageSize(newPageSize)
-    setPageIndex(0) // Reset to first page when page size changes
+    setPageIndex(0)
   }, [])
 
   return {

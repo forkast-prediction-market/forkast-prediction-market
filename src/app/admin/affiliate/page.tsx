@@ -4,6 +4,7 @@ import AdminAffiliateSettingsForm from '@/app/admin/_components/AdminAffiliateSe
 import { AffiliateModel } from '@/lib/db/affiliates'
 import { SettingsModel } from '@/lib/db/settings'
 import { UserModel } from '@/lib/db/users'
+import { getSupabaseImageUrl } from '@/lib/supabase'
 
 interface AffiliateOverviewRow {
   affiliate_user_id: string
@@ -75,7 +76,7 @@ export default async function AdminSettingsPage() {
       id: item.affiliate_user_id,
       username: profile?.username ?? undefined,
       address: profile?.address ?? fallbackAddress,
-      image: profile?.image ?? null,
+      image: profile?.image ? getSupabaseImageUrl(profile.image) : null,
       affiliate_code: profile?.affiliate_code ?? null,
       total_referrals: Number(item.total_referrals ?? 0),
       total_volume: Number(item.total_volume ?? 0),
