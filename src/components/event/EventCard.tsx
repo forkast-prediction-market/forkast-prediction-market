@@ -10,7 +10,8 @@ import EventBookmark from '@/app/(platform)/event/[slug]/_components/EventBookma
 import { OpenCardContext } from '@/components/event/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { formatVolume, triggerConfetti } from '@/lib/utils'
+import { NewBadge } from '@/components/ui/new-badge'
+import { formatVolume, isMarketNew, triggerConfetti } from '@/lib/utils'
 
 interface EventCardProps {
   event: Event
@@ -60,6 +61,9 @@ export default function EventCard({ event }: EventCardProps) {
   const isBinaryMarket = event.markets.length === 1
   const yesOutcome = event.markets[0].outcomes[0]
   const noOutcome = event.markets[0].outcomes[1]
+  const hasRecentMarket = event.markets.some(
+    market => isMarketNew(market.created_at),
+  )
 
   async function handleTrade(outcomeId: string, type: 'yes' | 'no') {
     const outcomes = event.markets.flatMap(market => market.outcomes)
@@ -498,11 +502,15 @@ export default function EventCard({ event }: EventCardProps) {
         {!isInTradingMode && (
           <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
             <div className="flex items-center gap-2">
-              <span>
-                {formatVolume(event.markets[0].total_volume)}
-                {' '}
-                Vol.
-              </span>
+              {hasRecentMarket
+                ? <NewBadge />
+                : (
+                    <span>
+                      {formatVolume(event.markets[0].total_volume)}
+                      {' '}
+                      Vol.
+                    </span>
+                  )}
             </div>
             <EventBookmark event={event} />
           </div>

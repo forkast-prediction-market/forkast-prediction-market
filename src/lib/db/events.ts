@@ -35,6 +35,7 @@ export const EventModel = {
         is_resolved,
         current_volume_24h,
         total_volume,
+        created_at,
         condition:conditions!markets_condition_id_fkey(
           oracle,
           outcomes(*)
@@ -147,6 +148,7 @@ export const EventModel = {
           is_resolved,
           current_volume_24h,
           total_volume,
+          created_at,
           condition:conditions!markets_condition_id_fkey(
             oracle,
             outcomes(*)
