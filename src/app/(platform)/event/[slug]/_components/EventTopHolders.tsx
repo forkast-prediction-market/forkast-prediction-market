@@ -1,9 +1,14 @@
 'use client'
 
-import type { Event, HoldersResponse, TopHolder } from '@/types'
+import type { Event } from '@/types'
+import { AlertCircleIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import ProfileLink from '@/components/ProfileLink'
+import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
+import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useEventHolders } from '@/hooks/useEventHolders'
 import { formatPosition } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
@@ -11,21 +16,7 @@ interface EventTopHoldersProps {
   event: Event
 }
 
-interface HoldersState {
-  yesHolders: TopHolder[]
-  noHolders: TopHolder[]
-  loading: boolean
-  error: string | null
-}
-
 export default function EventTopHolders({ event }: EventTopHoldersProps) {
-  const [state, setState] = useState<HoldersState>({
-    yesHolders: [],
-    noHolders: [],
-    loading: true,
-    error: null,
-  })
-
   const isBinaryMarket = useIsBinaryMarket()
   const orderState = useOrder()
   const [selectedMarket, setSelectedMarket] = useState<string>('')
@@ -48,59 +39,8 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
     }
   }, [isBinaryMarket, orderState.market, selectedMarket])
 
-  useEffect(() => {
-    const abortController = new AbortController()
-
-    async function fetchHolders() {
-      try {
-        setState(prev => ({ ...prev, loading: true, error: null }))
-
-        const params = new URLSearchParams()
-        if (!isBinaryMarket && selectedMarket) {
-          params.set('condition_id', selectedMarket)
-        }
-
-        const url = `/api/events/${event.slug}/holders${params.toString() ? `?${params}` : ''}`
-        const response = await fetch(url, {
-          signal: abortController.signal,
-        })
-
-        if (!response.ok) {
-          setState(prev => ({
-            ...prev,
-            loading: false,
-            error: 'Failed to load holders',
-          }))
-
-          return
-        }
-
-        const data: HoldersResponse = await response.json()
-
-        setState({
-          yesHolders: data.yesHolders,
-          noHolders: data.noHolders,
-          loading: false,
-          error: null,
-        })
-      }
-      catch {
-        setState(prev => ({
-          ...prev,
-          loading: false,
-          error: 'Failed to load holders',
-        }))
-      }
-    }
-
-    if (isBinaryMarket || selectedMarket) {
-      queueMicrotask(() => fetchHolders())
-    }
-
-    return () => {
-      abortController.abort()
-    }
-  }, [event.slug, isBinaryMarket, selectedMarket])
+  const conditionId = isBinaryMarket ? undefined : (selectedMarket || undefined)
+  const { data, isLoading, error } = useEventHolders(event.slug, conditionId)
 
   function handleMarketChange(conditionId: string) {
     setSelectedMarket(conditionId)
@@ -114,22 +54,33 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
     }
   }
 
-  if (state.loading) {
+  if (isLoading) {
     return (
       <div className="mt-6">
-        <div className="py-8 text-center">
-          <p className="text-sm text-muted-foreground">Loading top holders...</p>
+        <Skeleton className="mb-4 h-8 w-32" />
+        <div className="grid grid-cols-2 gap-6">
+          <div>
+            <ProfileLinkSkeleton showPosition={true} showChildren={true} />
+            <ProfileLinkSkeleton showPosition={true} showChildren={true} />
+            <ProfileLinkSkeleton showPosition={true} showChildren={true} />
+          </div>
+          <div>
+            <ProfileLinkSkeleton showPosition={true} showChildren={true} />
+            <ProfileLinkSkeleton showPosition={true} showChildren={true} />
+            <ProfileLinkSkeleton showPosition={true} showChildren={true} />
+          </div>
         </div>
       </div>
     )
   }
 
-  if (state.error) {
+  if (error) {
     return (
       <div className="mt-6">
-        <div className="py-8 text-center">
-          <p className="text-sm text-muted-foreground">{state.error}</p>
-        </div>
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>Failed to load holders</AlertTitle>
+        </Alert>
       </div>
     )
   }
@@ -157,10 +108,10 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
         <div>
           <span className="text-sm font-medium">Yes holders</span>
           <div className="mt-1 divide-y divide-border border-t">
-            {state.yesHolders.length === 0
+            {!data?.yesHolders || data.yesHolders.length === 0
               ? <p className="py-2 text-sm text-muted-foreground">No holders found</p>
               : (
-                  state.yesHolders.map((holder, index) => (
+                  data.yesHolders.map((holder, index) => (
                     <ProfileLink
                       key={holder.user.address}
                       user={holder.user}
@@ -180,10 +131,10 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
         <div>
           <span className="text-sm font-medium">No holders</span>
           <div className="mt-1 divide-y divide-border border-t">
-            {state.noHolders.length === 0
+            {!data?.noHolders || data.noHolders.length === 0
               ? <p className="py-2 text-sm text-muted-foreground">No holders found</p>
               : (
-                  state.noHolders.map((holder, index) => (
+                  data.noHolders.map((holder, index) => (
                     <ProfileLink
                       key={holder.user.address}
                       user={holder.user}
