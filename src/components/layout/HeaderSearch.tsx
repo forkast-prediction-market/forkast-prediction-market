@@ -9,6 +9,7 @@ import { useSearch } from '@/hooks/useSearch'
 export default function HeaderSearch() {
   const searchRef = useRef<HTMLDivElement>(null)
   const { query, handleQueryChange, results, isLoading, showResults, clearSearch, hideResults, activeTab, setActiveTab } = useSearch()
+  const sitename = `${process.env.NEXT_PUBLIC_SITE_NAME || 'events and profiles'}`.toLowerCase()
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -35,7 +36,7 @@ export default function HeaderSearch() {
       <Input
         type="text"
         data-testid="header-search-input"
-        placeholder="Search events and profiles"
+        placeholder={`Search ${sitename}`}
         value={query}
         onChange={e => handleQueryChange(e.target.value)}
         className="w-full pl-9 text-sm"
