@@ -4,7 +4,6 @@ import type { Route } from 'next'
 import { TrendingUpIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { forwardRef } from 'react'
 import { Teleport } from '@/components/layout/Teleport'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -17,9 +16,10 @@ interface Props {
   }
   childParentMap: Record<string, string>
   isActive: boolean
+  ref?: React.Ref<HTMLAnchorElement>
 }
 
-const NavigationTab = forwardRef<HTMLAnchorElement, Props>(({ tag, childParentMap: _childParentMap, isActive }, ref) => {
+function NavigationTab({ tag, childParentMap: _childParentMap, isActive, ref }: Props) {
   const searchParams = useSearchParams()
   const showBookmarkedOnly = searchParams?.get('bookmarked') === 'true'
   const currentSearch = searchParams?.toString() ?? ''
@@ -99,8 +99,6 @@ const NavigationTab = forwardRef<HTMLAnchorElement, Props>(({ tag, childParentMa
       )}
     </>
   )
-})
-
-NavigationTab.displayName = 'NavigationTab'
+}
 
 export default NavigationTab

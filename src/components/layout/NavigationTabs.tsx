@@ -98,7 +98,6 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
       }
     }
 
-    // Add event listeners
     window.addEventListener('resize', handleResize)
 
     const container = containerRef.current
