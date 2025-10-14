@@ -330,7 +330,7 @@ export default function EventCard({ event }: EventCardProps) {
                   </div>
 
                   {/* Confirm Trade Button */}
-                  <button
+                  <Button
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation()
@@ -347,13 +347,9 @@ export default function EventCard({ event }: EventCardProps) {
                       || !tradeAmount
                       || Number.parseFloat(tradeAmount) <= 0
                     }
-                    className={`
-                      w-full rounded px-3 py-1 text-sm font-semibold text-white transition-colors
-                      disabled:cursor-not-allowed
-                      ${selectedOutcome.type === 'yes'
-                  ? 'bg-yes hover:bg-yes-foreground'
-                  : 'bg-no hover:bg-no-foreground'}
-                  `}
+                    size="outcome"
+                    variant={selectedOutcome.type}
+                    className="w-full"
                   >
                     {isLoading
                       ? (
@@ -380,7 +376,7 @@ export default function EventCard({ event }: EventCardProps) {
                             </div>
                           </div>
                         )}
-                  </button>
+                  </Button>
                 </div>
               )
             : (
@@ -414,7 +410,6 @@ export default function EventCard({ event }: EventCardProps) {
                                 }}
                                 title={`${market.outcomes[0].outcome_text}: ${Math.round(market.probability)}%`}
                                 variant="yes"
-                                size="sm"
                                 className="group h-auto w-[40px] px-2 py-1 text-[10px]"
                               >
                                 <span className="truncate group-hover:hidden">
@@ -462,9 +457,9 @@ export default function EventCard({ event }: EventCardProps) {
                           handleTrade(yesOutcome.id, 'yes')
                           onToggle()
                         }}
-                        className="gap-1 text-xs"
                         disabled={isLoading}
                         variant="yes"
+                        size="outcome"
                       >
                         <span className="truncate">
                           Buy
@@ -481,9 +476,9 @@ export default function EventCard({ event }: EventCardProps) {
                           handleTrade(noOutcome.id, 'no')
                           onToggle()
                         }}
-                        className="gap-1 text-xs"
                         disabled={isLoading}
                         variant="no"
+                        size="outcome"
                       >
                         <span className="truncate">
                           Buy

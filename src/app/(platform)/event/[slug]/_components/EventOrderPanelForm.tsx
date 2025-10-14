@@ -161,7 +161,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     <Form
       action={onSubmit}
       className={cn({
-        'rounded-lg border lg:w-[320px]': !isMobile,
+        'rounded-lg border lg:w-full': !isMobile,
       }, 'w-full p-4 shadow-xl/5')}
     >
       {!isMobile && !isBinaryMarket && <EventOrderPanelMarketInfo />}
