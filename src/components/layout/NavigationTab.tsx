@@ -4,9 +4,8 @@ import type { Route } from 'next'
 import { TrendingUpIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
+import SubNavigationTabs from '@/components/layout/SubNavigationTabs'
 import { Teleport } from '@/components/layout/Teleport'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
 interface Props {
   tag: {
@@ -62,39 +61,11 @@ function NavigationTab({ tag, childParentMap: _childParentMap, isActive, ref }: 
 
       {isActive && (
         <Teleport to="#navigation-tags">
-          <Link href={createHref(tag.slug)} key={tag.slug}>
-            <Button
-              variant={tagFromURL === tag.slug ? 'default' : 'ghost'}
-              size="sm"
-              className={cn(
-                'h-8 shrink-0 text-sm whitespace-nowrap',
-                tagFromURL === tag.slug ? undefined : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              All
-            </Button>
-          </Link>
-
-          {tag.childs.map(subtag => (
-            <Link
-              href={createHref(
-                subtag.slug,
-                tag.slug === 'trending' || tag.slug === 'new' ? tag.slug : undefined,
-              )}
-              key={subtag.slug}
-            >
-              <Button
-                variant={tagFromURL === subtag.slug ? 'default' : 'ghost'}
-                size="sm"
-                className={cn(
-                  'h-8 shrink-0 text-sm whitespace-nowrap',
-                  tagFromURL === subtag.slug ? undefined : 'text-muted-foreground hover:text-foreground',
-                )}
-              >
-                {subtag.name}
-              </Button>
-            </Link>
-          ))}
+          <SubNavigationTabs
+            activeTag={tagFromURL}
+            mainTag={tag}
+            createHref={createHref}
+          />
         </Teleport>
       )}
     </>
