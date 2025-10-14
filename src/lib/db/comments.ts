@@ -35,19 +35,9 @@ export const CommentModel = {
     'use cache'
 
     const { data, error } = await supabaseAdmin
-      .from('comments')
-      .select(`
-        id,
-        content,
-        event_id,
-        user_id,
-        likes_count,
-        replies_count,
-        created_at,
-        users!inner(username, image, address)
-      `)
+      .from('v_comments_with_user')
+      .select('*')
       .eq('parent_comment_id', commentId)
-      .eq('is_deleted', false)
       .order('created_at', { ascending: true })
 
     if (data && data.length > 0) {

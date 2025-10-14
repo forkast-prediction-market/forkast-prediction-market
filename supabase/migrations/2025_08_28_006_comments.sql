@@ -223,7 +223,12 @@ SELECT c.id,
        c.content,
        c.is_deleted,
        c.likes_count,
-       c.replies_count,
+       COALESCE((
+         SELECT COUNT(*)::int
+         FROM comments r
+         WHERE r.parent_comment_id = c.id
+           AND r.is_deleted = FALSE
+       ), 0) AS replies_count,
        c.created_at,
        c.updated_at,
        -- User info
