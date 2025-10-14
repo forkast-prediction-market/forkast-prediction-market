@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import NavigationTab from '@/components/layout/NavigationTab'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -18,7 +18,6 @@ interface IndicatorStyle {
   left: number
   width: number
   isInitialized: boolean
-  shouldAnimate: boolean
 }
 
 export default function NavigationTabs({ tags, childParentMap }: NavigationTabsProps) {
@@ -27,34 +26,17 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
   const containerRef = useRef<HTMLDivElement>(null)
   const searchParams = useSearchParams()
 
-  // Reduced motion preference detection
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false)
-
   // Sliding indicator state
   const [indicatorStyle, setIndicatorStyle] = useState<IndicatorStyle>({
     left: 0,
     width: 0,
     isInitialized: false,
-    shouldAnimate: false,
   })
 
   // Initialize refs array with correct length
   if (tabRefs.current.length !== tags.length) {
     tabRefs.current = Array.from({ length: tags.length }).fill(null) as (HTMLAnchorElement | null)[]
   }
-
-  // Detect reduced motion preference
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
-    setPrefersReducedMotion(mediaQuery.matches)
-
-    function handleChange(e: MediaQueryListEvent) {
-      setPrefersReducedMotion(e.matches)
-    }
-
-    mediaQuery.addEventListener('change', handleChange)
-    return () => mediaQuery.removeEventListener('change', handleChange)
-  }, [])
 
   // Active tab detection logic (replicated from NavigationTab)
   const showBookmarkedOnly = searchParams?.get('bookmarked') === 'true'
@@ -74,7 +56,7 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
 
   const activeTabIndex = getActiveTabIndex()
 
-  function updateIndicatorPosition() {
+  const updateIndicatorPosition = useCallback(() => {
     if (activeTabIndex === -1 || !tabRefs.current[activeTabIndex] || !containerRef.current) {
       return
     }
@@ -90,27 +72,22 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
       const left = tabRect.left - containerRect.left + container.scrollLeft
       const width = tabRect.width
 
-      setIndicatorStyle(prev => ({
+      setIndicatorStyle({
         left,
         width,
         isInitialized: true,
-        shouldAnimate: prev.isInitialized, // Only animate after first initialization
-      }))
+      })
     }
-  }
+  }, [activeTabIndex])
 
   useLayoutEffect(() => {
     // Update position when active tab changes
     updateIndicatorPosition()
-  }, [activeTabIndex, tags])
+  }, [updateIndicatorPosition, tags])
 
   // Handle window resize and container scroll events
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout
-
-    function debouncedUpdatePosition() {
-      updateIndicatorPosition()
-    }
 
     function handleResize() {
       // Clear existing timeout
@@ -120,7 +97,7 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
 
       // Debounce resize calculations to prevent performance issues
       resizeTimeout = setTimeout(() => {
-        debouncedUpdatePosition()
+        updateIndicatorPosition()
       }, 150) // 150ms debounce delay
     }
 
@@ -148,7 +125,7 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
         clearTimeout(resizeTimeout)
       }
     }
-  }, [activeTabIndex, indicatorStyle.isInitialized])
+  }, [updateIndicatorPosition, indicatorStyle.isInitialized])
 
   return (
     <nav className="sticky top-14 z-10 border-b bg-background">
@@ -176,13 +153,10 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
         {/* Sliding indicator */}
         {indicatorStyle.isInitialized && (
           <div
-            className={`absolute bottom-0 h-0.5 rounded-full bg-primary ${
-              indicatorStyle.shouldAnimate && !prefersReducedMotion ? 'transition-all duration-300 ease-out' : ''
-            }`}
+            className="absolute bottom-0 h-0.5 rounded-full bg-primary transition-all duration-300 ease-out"
             style={{
               left: `${indicatorStyle.left}px`,
               width: `${indicatorStyle.width}px`,
-              transform: `translateX(0px)`,
             }}
           />
         )}

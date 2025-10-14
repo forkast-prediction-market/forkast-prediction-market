@@ -18,14 +18,13 @@ interface Props {
   isActive: boolean
 }
 
-function NavigationTab({ ref, tag, childParentMap, isActive }: Props & { ref?: React.RefObject<HTMLAnchorElement | null> }) {
+function NavigationTab({ ref, tag, childParentMap: _childParentMap, isActive }: Props & { ref?: React.RefObject<HTMLAnchorElement | null> }) {
   const searchParams = useSearchParams()
   const showBookmarkedOnly = searchParams?.get('bookmarked') === 'true'
   const currentSearch = searchParams?.toString() ?? ''
   const tagFromURL = showBookmarkedOnly && searchParams?.get('tag') === 'trending'
     ? ''
     : searchParams?.get('tag') || 'trending'
-  const contextFromURL = searchParams?.get('context') ?? undefined
 
   function createHref(nextTag: string, context?: string): Route {
     const params = new URLSearchParams(currentSearch)
