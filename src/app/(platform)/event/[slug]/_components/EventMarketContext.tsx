@@ -1,5 +1,5 @@
 import type { Event } from '@/types'
-import { SparklesIcon } from 'lucide-react'
+import { RotateCwIcon, SparklesIcon } from 'lucide-react'
 import { useMemo, useState, useTransition } from 'react'
 import { generateMarketContextAction } from '@/app/(platform)/event/[slug]/actions/generate-market-context'
 import { cn } from '@/lib/utils'
@@ -115,7 +115,7 @@ export default function EventMarketContext({ event }: Props) {
                 `}
                 disabled={isPending || !state.market}
               >
-                <SparklesIcon className={cn({ 'animate-spin': isPending }, 'size-3')} />
+                {isPending ? <RotateCwIcon className="size-3 animate-spin" /> : <SparklesIcon className="size-3" />}
                 {isPending ? 'Generating...' : 'Generate'}
               </button>
             )}
@@ -141,7 +141,7 @@ export default function EventMarketContext({ event }: Props) {
 
             {!error && context && (
               <div className="flex justify-end">
-                <span className="font-mono text-[11px] tracking-wide text-muted-foreground/80 uppercase">
+                <span className="font-mono text-[10px] tracking-wide text-muted-foreground/80 uppercase">
                   Results are experimental
                 </span>
               </div>
