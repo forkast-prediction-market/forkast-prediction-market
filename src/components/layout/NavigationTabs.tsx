@@ -21,24 +21,20 @@ interface IndicatorStyle {
 }
 
 export default function NavigationTabs({ tags, childParentMap }: NavigationTabsProps) {
-  // Create refs array to track tab elements
   const tabRefs = useRef<(HTMLAnchorElement | null)[]>([])
   const containerRef = useRef<HTMLDivElement>(null)
   const searchParams = useSearchParams()
 
-  // Sliding indicator state
   const [indicatorStyle, setIndicatorStyle] = useState<IndicatorStyle>({
     left: 0,
     width: 0,
     isInitialized: false,
   })
 
-  // Initialize refs array with correct length
   if (tabRefs.current.length !== tags.length) {
     tabRefs.current = Array.from({ length: tags.length }).fill(null) as (HTMLAnchorElement | null)[]
   }
 
-  // Active tab detection logic (replicated from NavigationTab)
   const showBookmarkedOnly = searchParams?.get('bookmarked') === 'true'
   const tagFromURL = showBookmarkedOnly && searchParams?.get('tag') === 'trending'
     ? ''
@@ -68,7 +64,6 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
       const tabRect = activeTab.getBoundingClientRect()
       const containerRect = container.getBoundingClientRect()
 
-      // Account for container scroll offset for horizontal scrolling
       const left = tabRect.left - containerRect.left + container.scrollLeft
       const width = tabRect.width
 
@@ -81,24 +76,20 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
   }, [activeTabIndex])
 
   useLayoutEffect(() => {
-    // Update position when active tab changes
     updateIndicatorPosition()
   }, [updateIndicatorPosition, tags])
 
-  // Handle window resize and container scroll events
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout
 
     function handleResize() {
-      // Clear existing timeout
       if (resizeTimeout) {
         clearTimeout(resizeTimeout)
       }
 
-      // Debounce resize calculations to prevent performance issues
       resizeTimeout = setTimeout(() => {
         updateIndicatorPosition()
-      }, 150) // 150ms debounce delay
+      }, 150)
     }
 
     function handleScroll() {
@@ -115,7 +106,6 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
       container.addEventListener('scroll', handleScroll, { passive: true })
     }
 
-    // Cleanup function
     return () => {
       window.removeEventListener('resize', handleResize)
       if (container) {
@@ -150,7 +140,6 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
           </div>
         ))}
 
-        {/* Sliding indicator */}
         {indicatorStyle.isInitialized && (
           <div
             className="absolute bottom-0 h-0.5 rounded-full bg-primary transition-all duration-300 ease-out"
