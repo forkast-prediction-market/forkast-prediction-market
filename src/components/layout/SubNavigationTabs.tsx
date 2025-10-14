@@ -4,7 +4,6 @@ import type { Route } from 'next'
 import Link from 'next/link'
 import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 
 interface SubNavigationTabsProps {
   activeTag: string
@@ -79,7 +78,6 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
 
   return (
     <div ref={containerRef} className="relative flex items-center gap-2">
-      {/* Sliding background that mimics the 'default' button variant */}
       {backgroundStyle.isInitialized && (
         <div
           className={`
@@ -106,14 +104,9 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
           }}
         >
           <Button
-            variant="ghost"
+            variant={activeTag === item.slug ? 'default' : 'ghost'}
             size="sm"
-            className={cn(
-              'relative z-10 h-8 shrink-0 text-sm whitespace-nowrap hover:text-foreground',
-              activeTag === item.slug
-                ? 'text-primary-foreground'
-                : 'text-muted-foreground',
-            )}
+            className="relative"
           >
             {item.name}
           </Button>
