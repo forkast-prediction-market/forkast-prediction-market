@@ -1,5 +1,5 @@
 import type { Event } from '@/types'
-import { RotateCwIcon, SparklesIcon } from 'lucide-react'
+import { LoaderIcon, SparklesIcon } from 'lucide-react'
 import { useMemo, useState, useTransition } from 'react'
 import { generateMarketContextAction } from '@/app/(platform)/event/[slug]/actions/generate-market-context'
 import { cn } from '@/lib/utils'
@@ -115,7 +115,7 @@ export default function EventMarketContext({ event }: Props) {
                 `}
                 disabled={isPending || !state.market}
               >
-                {isPending ? <RotateCwIcon className="size-3 animate-spin" /> : <SparklesIcon className="size-3" />}
+                {isPending ? <LoaderIcon className="size-3 animate-spin" /> : <SparklesIcon className="size-3" />}
                 {isPending ? 'Generating...' : 'Generate'}
               </button>
             )}

@@ -1,18 +1,34 @@
-import type { Event } from '@/types'
+import type { Event, SearchResultsProps } from '@/types'
 import { LoaderIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { ProfileResults } from './ProfileResults'
+import { SearchTabs } from './SearchTabs'
 
-interface SearchResultsProps {
-  results: Event[]
-  isLoading: boolean
-  onResultClick: () => void
-}
+export function SearchResults({
+  results,
+  isLoading,
+  activeTab,
+  query,
+  onResultClick,
+  onTabChange,
+}: SearchResultsProps) {
+  const { events, profiles } = results
 
-export function SearchResults({ results, isLoading, onResultClick }: SearchResultsProps) {
-  if (isLoading) {
+  const showTabs = query.length >= 2
+
+  if ((isLoading.events && isLoading.profiles) && events.length === 0 && profiles.length === 0) {
     return (
       <div className="absolute top-full right-0 left-0 z-50 mt-1 w-full rounded-lg border bg-background shadow-lg">
+        {showTabs && (
+          <SearchTabs
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+            eventCount={events.length}
+            profileCount={profiles.length}
+            isLoading={isLoading}
+          />
+        )}
         <div className="flex items-center justify-center p-4">
           <LoaderIcon className="size-4 animate-spin text-muted-foreground" />
           <span className="ml-2 text-sm text-muted-foreground">Searching...</span>
@@ -21,18 +37,77 @@ export function SearchResults({ results, isLoading, onResultClick }: SearchResul
     )
   }
 
-  if (results.length === 0) {
+  if (query.length < 2 && !isLoading.events && !isLoading.profiles) {
     return <></>
   }
 
   return (
     <div
       data-testid="search-results"
-      className={`
-        absolute top-full right-0 left-0 z-50 mt-1 max-h-96 overflow-y-auto rounded-lg border bg-background shadow-lg
-      `}
+      className="absolute top-full right-0 left-0 z-50 mt-1 rounded-lg border bg-background shadow-lg"
     >
-      {results.map(result => (
+      {showTabs && (
+        <SearchTabs
+          activeTab={activeTab}
+          onTabChange={onTabChange}
+          eventCount={events.length}
+          profileCount={profiles.length}
+          isLoading={isLoading}
+        />
+      )}
+
+      <div className="max-h-96 overflow-y-auto">
+        {activeTab === 'events' && (
+          <div id="events-panel" role="tabpanel" aria-labelledby="events-tab">
+            {isLoading.events && events.length === 0
+              ? (
+                  <div className="flex items-center justify-center p-4">
+                    <LoaderIcon className="size-4 animate-spin text-muted-foreground" />
+                    <span className="ml-2 text-sm text-muted-foreground">Searching events...</span>
+                  </div>
+                )
+              : (
+                  <EventResults events={events} query={query} isLoading={isLoading.events} onResultClick={onResultClick} />
+                )}
+          </div>
+        )}
+
+        {activeTab === 'profiles' && (
+          <div id="profiles-panel" role="tabpanel" aria-labelledby="profiles-tab">
+            <ProfileResults
+              profiles={profiles}
+              isLoading={isLoading.profiles}
+              query={query}
+              onResultClick={onResultClick}
+            />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function EventResults({ events, query, isLoading, onResultClick }: {
+  events: Event[]
+  query: string
+  isLoading: boolean
+  onResultClick: () => void
+}) {
+  if (events.length === 0 && !isLoading && query.length >= 2) {
+    return (
+      <div className="p-4 text-center text-sm text-muted-foreground">
+        No events found
+      </div>
+    )
+  }
+
+  if (events.length === 0) {
+    return null
+  }
+
+  return (
+    <>
+      {events.map(result => (
         <Link
           key={`${result.id}-${result.slug}`}
           href={`/event/${result.slug}`}
@@ -71,6 +146,6 @@ export function SearchResults({ results, isLoading, onResultClick }: SearchResul
           </div>
         </Link>
       ))}
-    </div>
+    </>
   )
 }
