@@ -278,6 +278,7 @@ export interface SearchResultsProps {
   results: SearchResults
   isLoading: SearchLoadingStates
   activeTab: 'events' | 'profiles'
+  query: string
   onResultClick: () => void
   onTabChange: (tab: 'events' | 'profiles') => void
 }
@@ -293,5 +294,6 @@ export interface SearchTabsProps {
 export interface ProfileResultsProps {
   profiles: PublicProfile[]
   isLoading: boolean
+  query: string
   onResultClick: () => void
 }

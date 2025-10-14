@@ -12,16 +12,7 @@ export function SearchTabs({
   profileCount,
   isLoading,
 }: SearchTabsProps) {
-  const showEventsTab = eventCount > 0 || isLoading.events
-  const showProfilesTab = profileCount > 0 || isLoading.profiles
-
-  // Don't render tabs if only one type has results
-  if (!showEventsTab || !showProfilesTab) {
-    return null
-  }
-
-  /// to-fuction
-  const handleKeyDown = (event: React.KeyboardEvent, tab: 'events' | 'profiles') => {
+  function handleKeyDown(event: React.KeyboardEvent, tab: 'events' | 'profiles') {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault()
       onTabChange(tab)
@@ -79,9 +70,7 @@ export function SearchTabs({
         >
           <span>Profiles</span>
           {isLoading.profiles
-            ? (
-                <LoaderIcon className="ml-1 size-3 animate-spin" />
-              )
+            ? <LoaderIcon className="ml-1 size-3 animate-spin" />
             : (
                 <span className="ml-1 text-xs text-muted-foreground">
                   (

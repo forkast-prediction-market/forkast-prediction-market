@@ -45,6 +45,7 @@ export default function HeaderSearch() {
           results={results}
           isLoading={isLoading}
           activeTab={activeTab}
+          query={query}
           onResultClick={clearSearch}
           onTabChange={setActiveTab}
         />

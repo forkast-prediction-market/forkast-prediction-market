@@ -2,7 +2,7 @@ import type { ProfileResultsProps } from '@/types'
 import { LoaderIcon } from 'lucide-react'
 import ProfileLink from '@/components/ProfileLink'
 
-export function ProfileResults({ profiles, isLoading, onResultClick }: ProfileResultsProps) {
+export function ProfileResults({ profiles, isLoading, query, onResultClick }: ProfileResultsProps) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-4">
@@ -12,12 +12,16 @@ export function ProfileResults({ profiles, isLoading, onResultClick }: ProfileRe
     )
   }
 
-  if (profiles.length === 0) {
+  if (profiles.length === 0 && query.length >= 2) {
     return (
       <div className="p-4 text-center text-sm text-muted-foreground">
         No profiles found
       </div>
     )
+  }
+
+  if (profiles.length === 0) {
+    return null
   }
 
   return (
