@@ -13,32 +13,43 @@ export async function GET(
 
     const { data: replies, error: errorReplies } = await CommentModel.getCommentReplies(commentId)
     if (errorReplies) {
+      console.error('Failed to fetch comment replies', errorReplies)
       return NextResponse.json(
         { error: 'Failed to fetch replies.' },
         { status: 500 },
       )
     }
 
-    let likedIds: Set<string> = new Set<string>([])
-    if (currentUserId && replies?.length) {
-      const replyIds = replies.map(reply => reply.id)
-      const { data: userLikes } = await CommentModel.getCommentsIdsLikedByUser(currentUserId, replyIds)
-      if (userLikes) {
-        likedIds = new Set(userLikes?.map(like => like.comment_id) || [])
+    const normalizedReplies = (replies ?? []).map((reply: any) => ({
+      ...reply,
+      recent_replies: Array.isArray(reply.recent_replies) ? reply.recent_replies : [],
+      is_owner: currentUserId ? reply.user_id === currentUserId : false,
+      user_has_liked: false,
+    }))
+
+    if (currentUserId && normalizedReplies.length) {
+      const replyIds = normalizedReplies.map(reply => reply.id)
+      const { data: userLikes, error: userLikesError } = await CommentModel.getCommentsIdsLikedByUser(currentUserId, replyIds)
+      if (userLikesError) {
+        console.error('Failed to fetch replies like status', userLikesError)
+        return NextResponse.json(
+          { error: 'Failed to fetch replies.' },
+          { status: 500 },
+        )
       }
+
+      const likedIds = new Set((userLikes ?? []).map(like => like.comment_id))
+      normalizedReplies.forEach((reply) => {
+        reply.user_has_liked = likedIds.has(reply.id)
+      })
     }
 
-    const repliesWithLikeStatus = replies?.map((reply: any) => ({
-      ...reply,
-      username: reply.users?.username,
-      user_avatar: reply.users?.image,
-      user_address: reply.users?.address,
-      user_has_liked: likedIds.has(reply.id),
-    })) || []
+    const repliesWithoutExtraRelations = normalizedReplies.map(({ users, ...reply }) => reply)
 
-    return NextResponse.json(repliesWithLikeStatus)
+    return NextResponse.json(repliesWithoutExtraRelations)
   }
-  catch {
+  catch (error) {
+    console.error('Unexpected error loading comment replies', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 },
