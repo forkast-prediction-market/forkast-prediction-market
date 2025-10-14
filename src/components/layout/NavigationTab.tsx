@@ -51,7 +51,7 @@ function NavigationTab({ tag, childParentMap: _childParentMap, isActive, ref }: 
         href={createHref(tag.slug)}
         className={`flex items-center gap-1.5 py-2 pb-1 whitespace-nowrap transition-colors ${
           isActive
-            ? 'text-foreground'
+            ? 'font-semibold text-foreground'
             : 'text-muted-foreground hover:text-foreground'
         }`}
       >

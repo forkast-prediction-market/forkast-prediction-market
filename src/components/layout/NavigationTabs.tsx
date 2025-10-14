@@ -1,7 +1,7 @@
 'use client'
 
 import { useSearchParams } from 'next/navigation'
-import { Suspense, useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import NavigationTab from '@/components/layout/NavigationTab'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -78,6 +78,23 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
   useLayoutEffect(() => {
     updateIndicatorPosition()
   }, [updateIndicatorPosition, tags])
+
+  useEffect(() => {
+    let attempts = 0
+    const maxAttempts = 10
+
+    function tryUpdatePosition() {
+      if (activeTabIndex !== -1 && tabRefs.current[activeTabIndex]) {
+        updateIndicatorPosition()
+      }
+      else if (attempts < maxAttempts) {
+        attempts++
+        requestAnimationFrame(tryUpdatePosition)
+      }
+    }
+
+    requestAnimationFrame(tryUpdatePosition)
+  }, [updateIndicatorPosition, activeTabIndex])
 
   return (
     <nav className="sticky top-14 z-10 border-b bg-background">
