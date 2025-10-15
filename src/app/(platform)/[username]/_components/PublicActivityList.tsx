@@ -338,11 +338,11 @@ export default function PublicActivityList({ userAddress }: Props) {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="All">All</SelectItem>
-              <SelectItem value="$10">$10</SelectItem>
-              <SelectItem value="$100">$100</SelectItem>
-              <SelectItem value="$1,000">$1,000</SelectItem>
-              <SelectItem value="$10,000">$10,000</SelectItem>
-              <SelectItem value="$100,000">$100,000</SelectItem>
+              <SelectItem value="10">$10</SelectItem>
+              <SelectItem value="100">$100</SelectItem>
+              <SelectItem value="1000">$1,000</SelectItem>
+              <SelectItem value="10000">$10,000</SelectItem>
+              <SelectItem value="100000">$100,000</SelectItem>
             </SelectContent>
           </Select>
         </div>
