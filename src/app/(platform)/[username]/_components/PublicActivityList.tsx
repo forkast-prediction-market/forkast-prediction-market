@@ -75,7 +75,6 @@ function formatRelativeTime(date: Date): string {
 }
 
 function ActivityItemComponent({ item }: { item: ActivityOrder }) {
-  const [imageError, setImageError] = useState(false)
   const outcomeText = item.outcome.text
   const outcomeChipColor = outcomeText === 'Yes'
     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
@@ -93,10 +92,6 @@ function ActivityItemComponent({ item }: { item: ActivityOrder }) {
       return '0'
     }
     return amount.toLocaleString('en-US')
-  }
-
-  function handleImageError() {
-    setImageError(true)
   }
 
   return (
