@@ -72,7 +72,6 @@ export async function updateUserAction(formData: FormData): Promise<ActionState>
 
     const updateData = {
       ...validated.data,
-      image: user.image,
     }
 
     if (validated.data.image && validated.data.image.size > 0) {
@@ -115,7 +114,7 @@ async function uploadImage(user: any, image: File) {
     })
 
   if (error) {
-    return user.image
+    return user.image?.startsWith('http') ? null : user.image
   }
 
   return fileName
