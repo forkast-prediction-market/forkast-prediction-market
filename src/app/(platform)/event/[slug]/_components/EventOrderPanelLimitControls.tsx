@@ -93,7 +93,7 @@ export default function EventOrderPanelLimitControls() {
   return (
     <div className="mt-4 space-y-5">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-sm font-semibold text-foreground">
+        <span className="text-lg font-medium text-foreground">
           Limit Price
         </span>
         <div className="flex w-1/2 items-center justify-end gap-2">
@@ -151,7 +151,7 @@ export default function EventOrderPanelLimitControls() {
 
       <div>
         <div className="mb-2 flex items-center justify-between gap-3">
-          <span className="text-sm font-semibold text-foreground">
+          <span className="text-lg font-medium text-foreground">
             Shares
           </span>
           <div className="flex w-1/2 items-center justify-end gap-2">
@@ -237,7 +237,7 @@ export default function EventOrderPanelLimitControls() {
       <div className="my-4 border-b border-border"></div>
 
       <div className="mt-4 space-y-4">
-        <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
+        <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
           <span>Set Expiration</span>
           <Switch
             checked={limitExpirationEnabled}
@@ -269,19 +269,19 @@ export default function EventOrderPanelLimitControls() {
       </div>
 
       <div className="mt-6 space-y-1">
-        <div className="flex items-center justify-between text-base font-semibold text-foreground">
+        <div className="flex items-center justify-between text-lg font-bold text-foreground">
           <span>Total</span>
           <span className="font-semibold text-primary">
             $
             {totalValue.toFixed(2)}
           </span>
         </div>
-        <div className="flex items-center justify-between text-base font-semibold">
+        <div className="flex items-center justify-between text-lg font-bold">
           <span className="flex items-center gap-2 text-foreground">
             To Win
             <BanknoteIcon className="size-4 text-yes" />
           </span>
-          <span className="text-xl font-semibold text-yes">
+          <span className="text-xl font-bold text-yes">
             $
             {potentialWin.toFixed(2)}
           </span>
