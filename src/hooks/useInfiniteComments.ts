@@ -60,11 +60,11 @@ export function useInfiniteComments(eventSlug: string) {
   })
 
   const comments = useMemo(() => {
-    if (!data?.pages) {
+    if (!data || !data.pages) {
       return []
     }
     return data.pages.flat()
-  }, [data?.pages])
+  }, [data])
 
   const fetchNextPageWithErrorHandling = useCallback(async () => {
     try {

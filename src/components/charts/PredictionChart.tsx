@@ -125,12 +125,14 @@ export function PredictionChart({
   )
 
   useLayoutEffect(() => {
-    setIsClient(true)
+    queueMicrotask(() => {
+      setIsClient(true)
 
-    if (providedData && providedSeries) {
-      setData(providedData)
-      setSeries(providedSeries)
-    }
+      if (providedData && providedSeries) {
+        setData(providedData)
+        setSeries(providedSeries)
+      }
+    })
   }, [providedData, providedSeries])
 
   if (!isClient || data.length === 0 || series.length === 0) {
@@ -354,7 +356,7 @@ export function PredictionChart({
         && tooltipLeft !== undefined
         && tooltipTop !== undefined && (
         <TooltipWithBounds
-          key={Math.random()}
+          key={`tooltip-${tooltipData.date.getTime()}-${tooltipLeft}-${tooltipTop}`}
           top={tooltipTop + margin.top}
           left={tooltipLeft + margin.left}
           style={tooltipStyles}

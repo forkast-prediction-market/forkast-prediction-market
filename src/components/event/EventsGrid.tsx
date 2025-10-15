@@ -3,7 +3,7 @@
 import type { Event } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import EventsEmptyState from '@/app/(platform)/event/[slug]/_components/EventsEmptyState'
 import EventCard from '@/components/event/EventCard'
 import EventCardSkeleton from '@/components/event/EventCardSkeleton'
@@ -50,6 +50,7 @@ export default function EventsGrid({
 }: EventsGridProps) {
   const parentRef = useRef<HTMLDivElement | null>(null)
   const [hasInitialized, setHasInitialized] = useState(false)
+  const [scrollMargin, setScrollMargin] = useState(0)
   const PAGE_SIZE = 25
 
   const {
@@ -73,12 +74,20 @@ export default function EventsGrid({
 
   const columns = useColumns()
 
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (parentRef.current) {
+        setScrollMargin(parentRef.current.offsetTop)
+      }
+    })
+  }, [])
+
   const rowsCount = Math.ceil(allEvents.length / columns)
 
   const virtualizer = useWindowVirtualizer({
     count: rowsCount,
     estimateSize: () => 194,
-    scrollMargin: parentRef.current?.offsetTop ?? 0,
+    scrollMargin,
     onChange: (instance) => {
       if (!hasInitialized) {
         setHasInitialized(true)

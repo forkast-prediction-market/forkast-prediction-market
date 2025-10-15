@@ -183,6 +183,7 @@ export default function PublicActivityList({ userAddress }: Props) {
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
+  const [scrollMargin, setScrollMargin] = useState(0)
 
   const handleFilterChange = useCallback((newFilter: string) => {
     if (abortControllerRef.current) {
@@ -249,6 +250,14 @@ export default function PublicActivityList({ userAddress }: Props) {
   const loading = status === 'pending'
   const hasInitialError = status === 'error'
 
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (parentRef.current) {
+        setScrollMargin(parentRef.current.offsetTop)
+      }
+    })
+  }, [])
+
   const virtualizer = useWindowVirtualizer({
     count: activities.length,
     estimateSize: () => {
@@ -257,7 +266,7 @@ export default function PublicActivityList({ userAddress }: Props) {
       }
       return 70
     },
-    scrollMargin: parentRef.current?.offsetTop ?? 0,
+    scrollMargin,
     overscan: 5,
     onChange: (instance) => {
       if (!hasInitialized && activities.length > 0) {
@@ -440,7 +449,7 @@ export default function PublicActivityList({ userAddress }: Props) {
 
                   <div className="min-w-0 flex-1 space-y-2">
                     {/* Market title skeleton */}
-                    <Skeleton className="h-4" style={{ width: `${60 + Math.random() * 40}%` }} />
+                    <Skeleton className="h-4" style={{ width: '80%' }} />
 
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                       {/* Outcome chip skeleton */}
@@ -591,7 +600,7 @@ export default function PublicActivityList({ userAddress }: Props) {
 
                       <div className="min-w-0 flex-1 space-y-2">
                         {/* Market title skeleton */}
-                        <Skeleton className="h-4" style={{ width: `${50 + Math.random() * 50}%` }} />
+                        <Skeleton className="h-4" style={{ width: '75%' }} />
 
                         <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
                           {/* Outcome chip skeleton */}
