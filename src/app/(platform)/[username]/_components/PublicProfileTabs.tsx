@@ -1,13 +1,12 @@
 'use client'
 
-import type { ActivityItem } from '@/types'
 import { useState } from 'react'
 import PublicActivityList from '@/app/(platform)/[username]/_components/PublicActivityList'
 import PublicPositionsEmpty from '@/app/(platform)/[username]/_components/PublicPositionsEmpty'
 import { cn, sanitizeSvg } from '@/lib/utils'
 
 interface Props {
-  activity: ActivityItem[]
+  userAddress: string
 }
 
 type TabType = 'positions' | 'activity'
@@ -17,7 +16,7 @@ const tabs = [
   { id: 'activity' as const, label: 'Activity' },
 ]
 
-export default function PublicProfileTabs({ activity }: Props) {
+export default function PublicProfileTabs({ userAddress }: Props) {
   const [activeTab, setActiveTab] = useState<TabType>('positions')
 
   return (
@@ -42,7 +41,6 @@ export default function PublicProfileTabs({ activity }: Props) {
           ))}
         </div>
 
-        {/* Forkast Watermark */}
         <div className="pointer-events-none absolute top-0 right-0">
           <div className="flex items-center gap-2 text-muted-foreground opacity-40 select-none">
             <div
@@ -58,10 +56,9 @@ export default function PublicProfileTabs({ activity }: Props) {
         </div>
       </div>
 
-      {/* Tab Content */}
       <div className="min-h-[400px]">
         {activeTab === 'positions' && <PublicPositionsEmpty />}
-        {activeTab === 'activity' && <PublicActivityList activity={activity} />}
+        {activeTab === 'activity' && <PublicActivityList userAddress={userAddress} />}
       </div>
     </div>
   )
