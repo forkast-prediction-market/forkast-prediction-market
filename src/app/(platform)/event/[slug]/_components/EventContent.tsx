@@ -37,8 +37,8 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
   return (
     <>
       <div className="grid gap-3">
-        <EventMetaInformation event={event} />
         <EventHeader event={event} />
+        <EventMetaInformation event={event} />
         <EventChart event={event} />
         <EventMarkets event={event} />
         {marketContextEnabled && <EventMarketContext event={event} />}

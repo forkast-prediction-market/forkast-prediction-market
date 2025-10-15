@@ -3,6 +3,19 @@ import confetti from 'canvas-confetti'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
+export const NEW_MARKET_MAX_AGE_DAYS = 7
+const MS_IN_DAY = 86_400_000
+
+export function isMarketNew(createdAt: string, thresholdDays: number = NEW_MARKET_MAX_AGE_DAYS) {
+  const createdDate = new Date(createdAt)
+  if (Number.isNaN(createdDate.getTime())) {
+    return false
+  }
+
+  const diffInMs = Date.now() - createdDate.getTime()
+  return diffInMs <= thresholdDays * MS_IN_DAY
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
