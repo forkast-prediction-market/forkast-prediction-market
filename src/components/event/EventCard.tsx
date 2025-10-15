@@ -221,25 +221,25 @@ export default function EventCard({ event }: EventCardProps) {
                     <div className="relative flex flex-col items-center">
                       <div className="relative">
                         <svg
-                          width="56"
-                          height="36"
-                          viewBox="0 0 56 36"
+                          width="72"
+                          height="52"
+                          viewBox="0 0 72 52"
                           className="rotate-0 transform"
                         >
                           {/* Background arc */}
                           <path
-                            d="M 6 30 A 22 22 0 0 1 50 30"
+                            d="M 6 46 A 30 30 0 0 1 66 46"
                             fill="none"
                             stroke="currentColor"
-                            strokeWidth="4"
+                            strokeWidth="5"
                             className="text-slate-200 dark:text-slate-600"
                           />
                           {/* Progress arc */}
                           <path
-                            d="M 6 30 A 22 22 0 0 1 50 30"
+                            d="M 6 46 A 30 30 0 0 1 66 46"
                             fill="none"
                             stroke="currentColor"
-                            strokeWidth="4"
+                            strokeWidth="5"
                             strokeLinecap="round"
                             className={`transition-all duration-300 ${
                               Math.round(event.markets[0].probability) < 40
@@ -249,21 +249,21 @@ export default function EventCard({ event }: EventCardProps) {
                                   : 'text-yes'
                             }`}
                             strokeDasharray={`${
-                              (Math.round(event.markets[0].probability) / 100) * 69.12
-                            } 69.12`}
+                              (Math.round(event.markets[0].probability) / 100) * 94.25
+                            } 94.25`}
                             strokeDashoffset="0"
                           />
                         </svg>
                         {/* Percentage number centered in arc */}
-                        <div className="absolute inset-0 flex items-center justify-center pt-2">
-                          <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                        <div className="absolute inset-0 flex items-center justify-center pt-4">
+                          <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
                             {Math.round(event.markets[0].probability)}
                             %
                           </span>
                         </div>
                       </div>
-                      {/* "chance" text below arc - colado sem espaço */}
-                      <div className="-mt-1 text-[10px] text-slate-500 dark:text-slate-400">
+                      {/* "chance" text positioned close to the arc */}
+                      <div className="-mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
                         chance
                       </div>
                     </div>
