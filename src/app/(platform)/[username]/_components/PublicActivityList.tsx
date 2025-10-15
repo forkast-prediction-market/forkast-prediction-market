@@ -116,28 +116,13 @@ function ActivityItemComponent({ item }: { item: ActivityOrder }) {
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         {/* Market Icon with Fallback */}
         <div className="size-10 flex-shrink-0 overflow-hidden rounded-lg bg-muted sm:size-12">
-          {item.market.icon_url && !imageError
-            ? (
-                <Image
-                  src={item.market.icon_url}
-                  alt={item.market.title}
-                  width={48}
-                  height={48}
-                  className="size-full object-cover"
-                  onError={handleImageError}
-                  unoptimized={item.market.icon_url.startsWith('data:')}
-                />
-              )
-            : (
-                <div className={`
-                  flex size-full items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-sm
-                  font-semibold text-white
-                  sm:text-lg
-                `}
-                >
-                  {item.market.title?.charAt(0)?.toUpperCase() || '?'}
-                </div>
-              )}
+          <Image
+            src={item.market.icon_url}
+            alt={item.market.title}
+            width={48}
+            height={48}
+            className="size-full object-cover"
+          />
         </div>
 
         <div className="min-w-0 flex-1">
@@ -261,8 +246,8 @@ export default function PublicActivityList({ userAddress }: Props) {
       return undefined
     },
     initialPageParam: 0,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    gcTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 5,
+    gcTime: 1000 * 60 * 10,
   })
 
   const activities = data?.pages.flat() ?? []
@@ -272,7 +257,6 @@ export default function PublicActivityList({ userAddress }: Props) {
   const virtualizer = useWindowVirtualizer({
     count: activities.length,
     estimateSize: () => {
-      // Use responsive sizing based on screen width
       if (typeof window !== 'undefined') {
         return window.innerWidth < 768 ? 120 : 70
       }
@@ -302,18 +286,17 @@ export default function PublicActivityList({ userAddress }: Props) {
 
       if (shouldLoadMore) {
         setIsLoadingMore(true)
-        setInfiniteScrollError(null) // Clear any previous errors
+        setInfiniteScrollError(null)
 
         abortControllerRef.current = new AbortController()
 
         fetchNextPage()
           .then(() => {
             setIsLoadingMore(false)
-            setRetryCount(0) // Reset retry count on success
+            setRetryCount(0)
           })
           .catch((error) => {
             setIsLoadingMore(false)
-            // Don't show error if request was cancelled (component unmounted)
             if (error.name !== 'AbortError') {
               const errorMessage = error.message || 'Failed to load more activity'
               setInfiniteScrollError(errorMessage)
@@ -421,11 +404,11 @@ export default function PublicActivityList({ userAddress }: Props) {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All</SelectItem>
-            <SelectItem value="$10">$10</SelectItem>
-            <SelectItem value="$100">$100</SelectItem>
-            <SelectItem value="$1,000">$1,000</SelectItem>
-            <SelectItem value="$10,000">$10,000</SelectItem>
-            <SelectItem value="$100,000">$100,000</SelectItem>
+            <SelectItem value="10">$10</SelectItem>
+            <SelectItem value="100">$100</SelectItem>
+            <SelectItem value="1000">$1,000</SelectItem>
+            <SelectItem value="10000">$10,000</SelectItem>
+            <SelectItem value="100000">$100,000</SelectItem>
           </SelectContent>
         </Select>
       </div>

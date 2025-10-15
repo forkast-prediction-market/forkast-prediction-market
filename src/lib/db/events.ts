@@ -326,6 +326,7 @@ export const EventModel = {
           market: {
             title: order.condition.market.title,
             slug: order.condition.market.slug,
+            icon_url: order.condition.market.icon_url,
           },
           total_value: totalValue,
           created_at: order.created_at,

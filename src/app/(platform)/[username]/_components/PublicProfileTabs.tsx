@@ -62,7 +62,7 @@ export default function PublicProfileTabs({ userAddress }: Props) {
               {tab.label}
             </button>
           ))}
-          
+
           {/* Animated indicator */}
           <div
             className={cn(
