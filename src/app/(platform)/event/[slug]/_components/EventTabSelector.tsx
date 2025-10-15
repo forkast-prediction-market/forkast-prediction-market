@@ -19,13 +19,15 @@ export default function EventTabSelector({ activeTab, setActiveTab }: Props) {
     if (activeTabElement) {
       const { offsetLeft, offsetWidth } = activeTabElement
 
-      setIndicatorStyle(prev => ({
-        ...prev,
-        left: offsetLeft,
-        width: offsetWidth,
-      }))
+      queueMicrotask(() => {
+        setIndicatorStyle(prev => ({
+          ...prev,
+          left: offsetLeft,
+          width: offsetWidth,
+        }))
 
-      setIsInitialized(prev => prev || true)
+        setIsInitialized(prev => prev || true)
+      })
     }
   }, [activeTab, eventTabs])
 

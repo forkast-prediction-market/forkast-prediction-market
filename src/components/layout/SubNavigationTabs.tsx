@@ -2,7 +2,7 @@
 
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useCallback, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 
 interface SubNavigationTabsProps {
@@ -41,9 +41,11 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
 
   const activeIndex = subNavItems.findIndex(item => activeTag === item.slug)
 
-  if (buttonRefs.current.length !== subNavItems.length) {
-    buttonRefs.current = Array.from({ length: subNavItems.length }).fill(null) as (HTMLAnchorElement | null)[]
-  }
+  useEffect(() => {
+    if (buttonRefs.current.length !== subNavItems.length) {
+      buttonRefs.current = Array.from({ length: subNavItems.length }).fill(null) as (HTMLAnchorElement | null)[]
+    }
+  }, [subNavItems.length])
 
   const updateBackgroundPosition = useCallback(() => {
     if (activeIndex === -1 || !buttonRefs.current[activeIndex] || !containerRef.current) {
@@ -62,6 +64,7 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
       const height = buttonRect.height
       const top = buttonRect.top - containerRect.top
 
+      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
       setBackgroundStyle({
         left,
         width,
