@@ -223,6 +223,11 @@ export interface ActivityOrder {
   market: {
     title: string
     slug: string
+    icon_url: string
+    event?: {
+      slug: string
+      show_market_icons: boolean
+    }
   }
   total_value: number
   created_at: string

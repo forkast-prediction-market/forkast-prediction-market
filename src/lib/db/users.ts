@@ -1,3 +1,4 @@
+import type { ActivityOrder, QueryResult } from '@/types'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { AffiliateModel } from '@/lib/db/affiliates'
@@ -9,7 +10,7 @@ export const UserModel = {
 
     const { data, error } = await supabaseAdmin
       .from('users')
-      .select('address, username, image, created_at')
+      .select('id, address, username, image, created_at')
       .or(`username.eq.${username},address.eq.${username}`)
       .single()
 
@@ -219,5 +220,114 @@ export const UserModel = {
       .in('id', ids)
 
     return { data, error }
+  },
+
+  async getUserActivity(args: {
+    address: string
+    limit: number
+    offset: number
+    minAmount?: number
+  }): Promise<QueryResult<ActivityOrder[]>> {
+    const { data: userData, error: userError } = await this.getProfileByUsername(args.address)
+
+    if (userError || !userData) {
+      return { data: null, error: 'User not found' }
+    }
+
+    let query = supabaseAdmin
+      .from('orders')
+      .select(`
+        id,
+        side,
+        amount,
+        price,
+        created_at,
+        status,
+        user:users!orders_user_id_fkey (
+          id,
+          username,
+          address,
+          image
+        ),
+        outcome:outcomes!orders_token_id_fkey (
+          outcome_text,
+          outcome_index,
+          token_id
+        ),
+        condition:conditions!orders_condition_id_fkey (
+          market:markets!markets_condition_id_fkey (
+            title,
+            slug,
+            icon_url,
+            event:events!markets_event_id_fkey (
+              slug,
+              show_market_icons
+            )
+          )
+        )
+      `)
+      .eq('user_id', userData.id)
+      .order('id', { ascending: false })
+      .range(args.offset, args.offset + args.limit - 1)
+
+    if (args.minAmount && args.minAmount > 0) {
+      query = query.range(args.offset, args.offset + args.limit * 2 - 1)
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+      console.error('Error fetching user activity:', error)
+      return { data: null, error }
+    }
+
+    if (!data) {
+      return { data: [], error: null }
+    }
+
+    let activities: ActivityOrder[] = data
+      .filter((order: any) => order.user && order.outcome && order.condition?.market?.event)
+      .map((order: any) => {
+        const totalValue = order.amount * (order.price ?? 0.5)
+
+        return {
+          id: order.id,
+          user: {
+            id: order.user.id,
+            username: order.user.username,
+            address: order.user.address,
+            image: order.user.image
+              ? getSupabaseImageUrl(order.user.image)
+              : `https://avatar.vercel.sh/${order.user.address}.png`,
+          },
+          side: order.side,
+          amount: order.amount,
+          price: order.price,
+          outcome: {
+            index: order.outcome.outcome_index,
+            text: order.outcome.outcome_text,
+          },
+          market: {
+            title: order.condition.market.title,
+            slug: order.condition.market.slug,
+            icon_url: getSupabaseImageUrl(order.condition.market.icon_url),
+            event: {
+              slug: order.condition.market.event.slug,
+              show_market_icons: order.condition.market.event.show_market_icons,
+            },
+          },
+          total_value: totalValue,
+          created_at: order.created_at,
+          status: order.status,
+        }
+      })
+
+    if (args.minAmount && args.minAmount > 0) {
+      const minAmount = args.minAmount
+      activities = activities.filter(activity => activity.total_value >= minAmount)
+      activities = activities.slice(0, args.limit)
+    }
+
+    return { data: activities, error: null }
   },
 }
