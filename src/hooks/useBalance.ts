@@ -1,7 +1,8 @@
 import { polygonAmoy } from '@reown/appkit/networks'
 import { useAppKitAccount } from '@reown/appkit/react'
-import { Contract, JsonRpcProvider } from 'ethers'
 import { useEffect, useMemo, useState } from 'react'
+import { createPublicClient, getContract, http } from 'viem'
+import { networks } from '@/lib/appkit'
 import { useUser } from '@/stores/useUser'
 
 interface Balance {
@@ -10,16 +11,16 @@ interface Balance {
   symbol: string
 }
 
-const USDC_ADDRESS = '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582' // Polygon Amoy USDC
+const USDC_ADDRESS = '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582'
 const USDC_DECIMALS = 6
 const ERC20_ABI = [
-  'function balanceOf(address account) view returns (uint256)',
-  'function decimals() view returns (uint8)',
-  'function symbol() view returns (string)',
-  'function name() view returns (string)',
+  { type: 'function', name: 'balanceOf', stateMutability: 'view', inputs: [{ name: 'account', type: 'address' }], outputs: [{ type: 'uint256' }] },
+  { type: 'function', name: 'decimals', stateMutability: 'view', inputs: [], outputs: [{ type: 'uint8' }] },
+  { type: 'function', name: 'symbol', stateMutability: 'view', inputs: [], outputs: [{ type: 'string' }] },
+  { type: 'function', name: 'name', stateMutability: 'view', inputs: [], outputs: [{ type: 'string' }] },
 ]
 const INITIAL_STATE: Balance = {
-  raw: 0.00,
+  raw: 0.0,
   text: '0.00',
   symbol: 'USDC',
 }
@@ -31,16 +32,28 @@ export function useBalance() {
   const [isLoadingBalance, setIsLoadingBalance] = useState(false)
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
-  const rpcUrl = useMemo(() => {
-    return process.env.NEXT_PUBLIC_POLYGON_AMOY_RPC_URL
-      || polygonAmoy.rpcUrls.default.http[0]
-  }, [])
+  const rpcUrl = useMemo(
+    () => networks[0].rpcUrls.default.http[0],
+    [],
+  )
 
-  const rpcProvider = useMemo(() => new JsonRpcProvider(rpcUrl), [rpcUrl])
+  const client = useMemo(
+    () =>
+      createPublicClient({
+        chain: polygonAmoy,
+        transport: http(rpcUrl),
+      }),
+    [rpcUrl],
+  )
 
-  const usdcContract = useMemo(
-    () => new Contract(USDC_ADDRESS, ERC20_ABI, rpcProvider),
-    [rpcProvider],
+  const contract = useMemo(
+    () =>
+      getContract({
+        address: USDC_ADDRESS,
+        abi: ERC20_ABI,
+        client,
+      }),
+    [client],
   )
 
   const walletAddress = isConnected ? address : user?.address
@@ -67,17 +80,15 @@ export function useBalance() {
       }
 
       try {
-        const balanceRaw = await usdcContract.balanceOf(walletAddress)
-        const balanceNumber = Number(balanceRaw) / (10 ** USDC_DECIMALS)
-
-        const newBalance = {
-          raw: balanceNumber,
-          text: balanceNumber.toFixed(2),
-          symbol: 'USDC',
-        }
+        const balanceRaw = await contract.read.balanceOf([walletAddress])
+        const balanceNumber = Number(balanceRaw) / 10 ** USDC_DECIMALS
 
         if (active) {
-          setBalance(newBalance)
+          setBalance({
+            raw: balanceNumber,
+            text: balanceNumber.toFixed(2),
+            symbol: 'USDC',
+          })
           setIsLoadingBalance(false)
           setIsInitialLoad(false)
         }
@@ -91,14 +102,14 @@ export function useBalance() {
       }
     }
 
-    queueMicrotask(() => fetchUSDCBalance())
+    queueMicrotask(fetchUSDCBalance)
     const interval = setInterval(fetchUSDCBalance, 30000)
 
     return () => {
       active = false
       clearInterval(interval)
     }
-  }, [isConnected, walletAddress, usdcContract, isInitialLoad])
+  }, [isConnected, walletAddress, contract, isInitialLoad])
 
   return { balance, isLoadingBalance }
 }

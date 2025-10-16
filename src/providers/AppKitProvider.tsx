@@ -3,23 +3,23 @@
 import type { SIWECreateMessageArgs, SIWESession, SIWEVerifyMessageArgs } from '@reown/appkit-siwe'
 import type { Route } from 'next'
 import type { ReactNode } from 'react'
-import { EthersAdapter } from '@reown/appkit-adapter-ethers'
 import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/appkit-siwe'
 import { polygonAmoy } from '@reown/appkit/networks'
 import { createAppKit } from '@reown/appkit/react'
 import { generateRandomString } from 'better-auth/crypto'
 import { useTheme } from 'next-themes'
 import { redirect } from 'next/navigation'
+import { WagmiProvider } from 'wagmi'
+import { config, networks, projectId, wagmiAdapter } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
 export default function AppKitProvider({ children }: { children: ReactNode }) {
   const { resolvedTheme } = useTheme()
-  const projectId = process.env.NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID!
 
   createAppKit({
-    projectId,
-    adapters: [new EthersAdapter()],
+    projectId: projectId!,
+    adapters: [wagmiAdapter],
     themeMode: resolvedTheme as 'light' | 'dark',
     metadata: {
       name: process.env.NEXT_PUBLIC_SITE_NAME!,
@@ -28,11 +28,15 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       icons: ['https://avatar.vercel.sh/bitcoin.png'],
     },
     themeVariables: {
+      '--w3m-font-family': 'var(--font-sans)',
       '--w3m-border-radius-master': '2px',
       '--w3m-accent': 'var(--primary)',
     },
-    networks: [polygonAmoy],
-    defaultNetwork: polygonAmoy,
+    networks,
+    defaultNetwork: networks[0],
+    features: {
+      analytics: process.env.NODE_ENV === 'production',
+    },
     siweConfig: createSIWEConfig({
       signOutOnAccountChange: true,
       getMessageParams: async () => ({
@@ -51,7 +55,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
           }
 
           return {
-            // @ts-expect-error address not defined in address
+            // @ts-expect-error address not defined in session type
             address: session.data?.user.address,
             chainId: polygonAmoy.id,
           } satisfies SIWESession
@@ -104,10 +108,11 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
         }).catch(() => {})
       },
     }),
-    features: {
-      analytics: process.env.NODE_ENV === 'production',
-    },
   })
 
-  return <>{children}</>
+  return (
+    <WagmiProvider config={config}>
+      {children}
+    </WagmiProvider>
+  )
 }
