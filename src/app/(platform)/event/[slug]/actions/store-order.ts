@@ -10,7 +10,7 @@ import { UserModel } from '@/lib/db/users'
 const StoreOrderSchema = z.object({
   condition_id: z.string(),
   token_id: z.string(),
-  side: z.enum(['buy', 'sell']),
+  side: z.union([z.literal(0), z.literal(1)]),
   amount: z.number().positive(),
   price: z.number().positive().optional(),
   type: z.enum(['market', 'limit']).default('market'),
@@ -21,7 +21,7 @@ type StoreOrderInput = z.infer<typeof StoreOrderSchema>
 
 const DEFAULT_ERROR_MESSAGE = 'Something went wrong while processing your order. Please try again.'
 
-export async function storeOrderAction(payload: StoreOrderInput) {
+export async function storeOrderAction(payload: StoreOrderInput, _: string) {
   const user = await UserModel.getCurrentUser()
   if (!user) {
     return { error: 'Unauthenticated.' }
@@ -61,7 +61,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
         expiration: Math.floor(Math.random() * 1000),
         token_id: validated.data.token_id,
         amount: validated.data.amount,
-        side: validated.data.side.toUpperCase(),
+        side: validated.data.side === 0 ? 'buy' : 'sell',
         order_type: validated.data.type.toUpperCase(),
         order_struct_metadata: { taker_address: user.address },
         referrer: process.env.FEE_RECIPIENT_WALLET,
@@ -90,7 +90,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
     const forkFeeAmount = Math.max(0, Number((totalFeeAmount - affiliateFeeAmount).toFixed(6)))
 
     const { error } = await OrderModel.createOrder({
-      side: validated.data.side,
+      side: validated.data.side === 0 ? 'buy' : 'sell',
       condition_id: validated.data.condition_id,
       amount: validated.data.amount,
       price: validated.data.price,
