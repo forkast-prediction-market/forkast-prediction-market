@@ -75,28 +75,28 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       return
     }
 
-    try {
-      const marketPriceCents = state.outcome.outcome_index === 0 ? yesPrice : noPrice
-      const limitPriceValue = Number.parseFloat(state.limitPrice)
-      const priceCents = isLimitOrder && Number.isFinite(limitPriceValue) ? limitPriceValue : marketPriceCents
+    const marketPriceCents = state.outcome.outcome_index === 0 ? yesPrice : noPrice
+    const limitPriceValue = Number.parseFloat(state.limitPrice)
+    const priceCents = isLimitOrder && Number.isFinite(limitPriceValue) ? limitPriceValue : marketPriceCents
 
-      type Side = 0 | 1
-      const payload = {
-        slug: event.slug,
-        condition_id: state.market.condition_id,
-        token_id: state.outcome.token_id,
-        side: state.side === 'buy' ? 0 : 1 as Side,
-        amount,
-        type: state.type,
-        price: priceCents / 100,
-      }
+    type Side = 0 | 1
+    const payload = {
+      slug: event.slug,
+      condition_id: state.market.condition_id,
+      token_id: state.outcome.token_id,
+      side: state.side === 'buy' ? 0 : 1 as Side,
+      amount,
+      type: state.type,
+      price: priceCents / 100,
+    }
 
-      const message = keccak256(stringToBytes(JSON.stringify(payload)))
+    const message = keccak256(stringToBytes(JSON.stringify(payload)))
 
-      signMessage({ message }, {
-        onSuccess: async (signature) => {
-          state.setIsLoading(true)
+    signMessage({ message }, {
+      onSuccess: async (signature) => {
+        state.setIsLoading(true)
 
+        try {
           const result = await storeOrderAction(payload, signature)
 
           if (result?.error) {
@@ -129,7 +129,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
             )
           }
           else {
-          // Buy logic
+            // Buy logic
             const shares = priceCents > 0 ? ((amount / priceCents) * 100).toFixed(2) : '0'
 
             toast.success(
@@ -153,18 +153,17 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
           triggerConfetti(state.outcome!.outcome_index === 0 ? 'yes' : 'no', state.lastMouseEvent)
           state.setAmount('0.00')
-        },
-        onSettled: () => {
+        }
+        catch {
+          toast.error('Trade failed', {
+            description: 'An unexpected error occurred. Please try again.',
+          })
+        }
+        finally {
           state.setIsLoading(false)
-        },
-      })
-    }
-    catch (error) {
-      console.error('Trade error:', error)
-      toast.error('Trade failed', {
-        description: 'An unexpected error occurred. Please try again.',
-      })
-    }
+        }
+      },
+    })
   }
 
   return (
