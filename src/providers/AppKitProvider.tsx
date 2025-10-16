@@ -3,7 +3,6 @@
 import type { SIWECreateMessageArgs, SIWESession, SIWEVerifyMessageArgs } from '@reown/appkit-siwe'
 import type { Route } from 'next'
 import type { ReactNode } from 'react'
-import type { State } from 'wagmi'
 import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/appkit-siwe'
 import { polygonAmoy } from '@reown/appkit/networks'
 import { createAppKit } from '@reown/appkit/react'
@@ -15,7 +14,7 @@ import { config, networks, projectId, wagmiAdapter } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
-export default function AppKitProvider({ children, initialState }: { children: ReactNode, initialState: State | undefined }) {
+export default function AppKitProvider({ children }: { children: ReactNode }) {
   const { resolvedTheme } = useTheme()
 
   createAppKit({
@@ -112,7 +111,7 @@ export default function AppKitProvider({ children, initialState }: { children: R
   })
 
   return (
-    <WagmiProvider config={config} initialState={initialState}>
+    <WagmiProvider config={config}>
       {children}
     </WagmiProvider>
   )
