@@ -3,19 +3,19 @@
 import type { SIWECreateMessageArgs, SIWESession, SIWEVerifyMessageArgs } from '@reown/appkit-siwe'
 import type { Route } from 'next'
 import type { ReactNode } from 'react'
+import type { State } from 'wagmi'
 import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/appkit-siwe'
 import { polygonAmoy } from '@reown/appkit/networks'
 import { createAppKit } from '@reown/appkit/react'
 import { generateRandomString } from 'better-auth/crypto'
 import { useTheme } from 'next-themes'
 import { redirect } from 'next/navigation'
-import { cookieToInitialState, WagmiProvider } from 'wagmi'
+import { WagmiProvider } from 'wagmi'
 import { config, networks, projectId, wagmiAdapter } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
-export default function AppKitProvider({ children, cookies }: { children: ReactNode, cookies: string | null }) {
-  const initialState = cookieToInitialState(config, cookies)
+export default function AppKitProvider({ children, initialState }: { children: ReactNode, initialState: State | undefined }) {
   const { resolvedTheme } = useTheme()
 
   createAppKit({

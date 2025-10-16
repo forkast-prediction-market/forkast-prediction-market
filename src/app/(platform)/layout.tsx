@@ -1,14 +1,18 @@
 import { headers } from 'next/headers'
+import { cookieToInitialState } from 'wagmi'
 import Header from '@/components/layout/Header'
 import NavigationTabsContainer from '@/components/layout/NavigationTabsContainer'
+import { config } from '@/lib/appkit'
 import { Providers } from '@/providers/Providers'
 
 export default async function PlatformLayout({ children }: LayoutProps<'/'>) {
-  const headersData = await headers()
-  const cookies = headersData.get('cookie')
+  const initialState = cookieToInitialState(
+    config,
+    (await headers()).get('cookie'),
+  )
 
   return (
-    <Providers cookies={cookies}>
+    <Providers initialState={initialState}>
       <Header />
       <NavigationTabsContainer />
       {children}
