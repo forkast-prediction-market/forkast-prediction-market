@@ -182,34 +182,6 @@ export function PredictionChart({
         preserveAspectRatio="none"
         style={{ overflow: 'visible' }}
       >
-        {/* Source/Fonte atrás do gráfico - estilo Polymarket */}
-        <foreignObject
-          x={margin.left + 8}
-          y={height - 70}
-          width={120}
-          height={28}
-        >
-          <div
-            style={{
-              display: 'inline-block',
-              background: 'rgba(229, 231, 235, 0.3)',
-              color: 'rgba(209, 213, 219, 0.9)',
-              borderRadius: '6px',
-              padding: '4px 14px',
-              fontSize: '10px',
-              fontWeight: 600,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-              pointerEvents: 'none',
-              userSelect: 'none',
-              width: 'fit-content',
-            }}
-          >
-            Source:
-            {' '}
-            {process.env.NEXT_PUBLIC_SITE_NAME}
-          </div>
-        </foreignObject>
-
         <Group left={margin.left} top={margin.top}>
           {/* Grid lines horizontais pontilhadas - estilo Polymarket */}
           {[0, 20, 40, 60, 80, 100].map(value => (
