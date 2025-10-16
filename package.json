@@ -38,7 +38,6 @@
     "canvas-confetti": "^1.9.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "ethers": "^6.15.0",
     "fumadocs-core": "^15.8.1",
     "fumadocs-mdx": "^12.0.1",
     "fumadocs-ui": "^15.8.1",
@@ -82,6 +81,9 @@
     "tailwindcss": "^4.1.13",
     "tw-animate-css": "^1.3.8",
     "typescript": "^5.9.3"
+  },
+  "overrides": {
+    "pino": "^9.12.0"
   },
   "lint-staged": {
     "*": "eslint --fix"
