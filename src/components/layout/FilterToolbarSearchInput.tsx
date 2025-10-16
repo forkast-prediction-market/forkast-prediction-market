@@ -6,12 +6,12 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { Input } from '@/components/ui/input'
 
-interface Props {
+interface FilterToolbarSearchInputProps {
   search: string
   bookmarked: string
 }
 
-export default function FilterToolbarSearchInput({ search, bookmarked = 'false' }: Props) {
+export default function FilterToolbarSearchInput({ search, bookmarked = 'false' }: FilterToolbarSearchInputProps) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState(search)
   const [isPending, startTransition] = useTransition()

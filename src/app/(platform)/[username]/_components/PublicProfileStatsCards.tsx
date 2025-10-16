@@ -4,10 +4,6 @@ import type { PublicProfileStats } from '@/types'
 import { ActivityIcon, BarChart2Icon, CheckCircle2Icon, TrendingDownIcon, TrendingUpIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-interface Props {
-  stats: PublicProfileStats
-}
-
 interface StatCardProps {
   icon: React.ElementType
   label: string
@@ -39,7 +35,11 @@ function StatCard({ icon: Icon, label, value, isProfit }: StatCardProps) {
   )
 }
 
-export default function PublicProfileStatsCards({ stats }: Props) {
+interface PublicProfileStatsCardsProps {
+  stats: PublicProfileStats
+}
+
+export default function PublicProfileStatsCards({ stats }: PublicProfileStatsCardsProps) {
   function formatCurrency(amount: number) {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',

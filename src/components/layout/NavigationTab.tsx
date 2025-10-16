@@ -7,7 +7,7 @@ import { useSearchParams } from 'next/navigation'
 import SubNavigationTabs from '@/components/layout/SubNavigationTabs'
 import { Teleport } from '@/components/layout/Teleport'
 
-interface Props {
+interface NavigationTabProps {
   tag: {
     slug: string
     name: string
@@ -18,7 +18,7 @@ interface Props {
   ref?: React.Ref<HTMLAnchorElement>
 }
 
-function NavigationTab({ tag, childParentMap: _childParentMap, isActive, ref }: Props) {
+function NavigationTab({ tag, childParentMap: _childParentMap, isActive, ref }: NavigationTabProps) {
   const searchParams = useSearchParams()
   const showBookmarkedOnly = searchParams?.get('bookmarked') === 'true'
   const currentSearch = searchParams?.toString() ?? ''

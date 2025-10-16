@@ -5,11 +5,11 @@ import PredictionChart from '@/components/charts/PredictionChart'
 import { cn, sanitizeSvg } from '@/lib/utils'
 import { useIsBinaryMarket, useYesPrice } from '@/stores/useOrder'
 
-interface Props {
+interface EventChartProps {
   event: Event
 }
 
-export default function EventChart({ event }: Props) {
+export default function EventChart({ event }: EventChartProps) {
   const yesPrice = useYesPrice()
   const isBinaryMarket = useIsBinaryMarket()
 

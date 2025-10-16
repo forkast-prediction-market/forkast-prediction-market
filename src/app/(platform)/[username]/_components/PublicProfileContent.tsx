@@ -4,11 +4,11 @@ import PublicProfileStatsCards from '@/app/(platform)/[username]/_components/Pub
 import PublicProfileTabs from '@/app/(platform)/[username]/_components/PublicProfileTabs'
 import { UserModel } from '@/lib/db/users'
 
-interface Props {
+interface PublicProfileContentProps {
   username: string
 }
 
-export default async function PublicProfileContent({ username }: Props) {
+export default async function PublicProfileContent({ username }: PublicProfileContentProps) {
   const { data: profile } = await UserModel.getProfileByUsername(username)
   if (!profile) {
     notFound()

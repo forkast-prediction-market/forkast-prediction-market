@@ -1,9 +1,17 @@
 'use client'
 
-import type { SearchTabsProps } from '@/types'
+import type { SearchLoadingStates } from '@/types'
 import { LoaderIcon } from 'lucide-react'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
+
+interface SearchTabsProps {
+  activeTab: 'events' | 'profiles'
+  onTabChange: (tab: 'events' | 'profiles') => void
+  eventCount: number
+  profileCount: number
+  isLoading: SearchLoadingStates
+}
 
 export function SearchTabs({
   activeTab,

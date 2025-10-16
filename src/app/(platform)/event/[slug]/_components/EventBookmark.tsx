@@ -7,14 +7,14 @@ import { toggleBookmarkAction } from '@/app/(platform)/event/[slug]/actions/togg
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-interface Props {
+interface EventBookmarkProps {
   event: {
     id: string
     is_bookmarked: boolean
   }
 }
 
-export default function EventBookmark({ event }: Props) {
+export default function EventBookmark({ event }: EventBookmarkProps) {
   const { open } = useAppKit()
   const { isConnected } = useAppKitAccount()
   const [isBookmarked, setIsBookmarked] = useState(event.is_bookmarked)

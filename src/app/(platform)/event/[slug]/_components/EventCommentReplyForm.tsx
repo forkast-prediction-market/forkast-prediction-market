@@ -6,7 +6,7 @@ import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-interface Props {
+interface EventCommentReplyFormProps {
   user: User | null
   eventId: string
   parentCommentId: string
@@ -28,7 +28,7 @@ export default function EventCommentReplyForm({
   onReplyAddedAction,
   createReply,
   isCreatingComment,
-}: Props) {
+}: EventCommentReplyFormProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [content, setContent] = useState(initialValue || '')
 
