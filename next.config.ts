@@ -44,6 +44,10 @@ const config: NextConfig = {
           : 'http://localhost:3000',
     CLOB_URL: 'https://clob.forka.st',
   },
+  webpack: (config) => {
+    config.externals.push('pino-pretty', 'lokijs', 'encoding')
+    return config
+  },
 }
 
 const withMDX = createMDX({

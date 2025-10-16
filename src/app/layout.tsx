@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from 'next'
+import type { ReactNode } from 'react'
 import { openSauceOne } from '@/app/fonts'
 import './globals.css'
 
@@ -18,7 +19,7 @@ export const viewport: Viewport = {
   ],
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${openSauceOne.variable}`} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col font-sans antialiased">

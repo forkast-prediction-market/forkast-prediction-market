@@ -9,12 +9,13 @@ import { createAppKit } from '@reown/appkit/react'
 import { generateRandomString } from 'better-auth/crypto'
 import { useTheme } from 'next-themes'
 import { redirect } from 'next/navigation'
-import { WagmiProvider } from 'wagmi'
+import { cookieToInitialState, WagmiProvider } from 'wagmi'
 import { config, networks, projectId, wagmiAdapter } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
-export default function AppKitProvider({ children }: { children: ReactNode }) {
+export default function AppKitProvider({ children, cookies }: { children: ReactNode, cookies: string | null }) {
+  const initialState = cookieToInitialState(config, cookies)
   const { resolvedTheme } = useTheme()
 
   createAppKit({
@@ -28,11 +29,15 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       icons: ['https://avatar.vercel.sh/bitcoin.png'],
     },
     themeVariables: {
+      '--w3m-font-family': 'var(--font-sans)',
       '--w3m-border-radius-master': '2px',
       '--w3m-accent': 'var(--primary)',
     },
     networks,
     defaultNetwork: networks[0],
+    features: {
+      analytics: process.env.NODE_ENV === 'production',
+    },
     siweConfig: createSIWEConfig({
       signOutOnAccountChange: true,
       getMessageParams: async () => ({
@@ -104,13 +109,10 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
         }).catch(() => {})
       },
     }),
-    features: {
-      analytics: process.env.NODE_ENV === 'production',
-    },
   })
 
   return (
-    <WagmiProvider config={config}>
+    <WagmiProvider config={config} initialState={initialState}>
       {children}
     </WagmiProvider>
   )

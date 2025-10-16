@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from 'next-themes'
@@ -10,12 +11,12 @@ import ProgressIndicatorProvider from '@/providers/ProgressIndicatorProvider'
 
 const queryClient = new QueryClient()
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children, cookies }: { children: ReactNode, cookies: string | null }) {
   return (
     <ProgressIndicatorProvider>
       <ThemeProvider attribute="class">
         <QueryClientProvider client={queryClient}>
-          <AppKitProvider>
+          <AppKitProvider cookies={cookies}>
             <div className="min-h-screen bg-background">
               {children}
             </div>
