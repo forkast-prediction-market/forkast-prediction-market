@@ -9,13 +9,13 @@ import SettingsProfileTab from '@/app/(platform)/settings/_components/SettingsPr
 import SettingsSidebar from '@/app/(platform)/settings/_components/SettingsSidebar'
 import SettingsTwoFactorAuthTab from '@/app/(platform)/settings/_components/SettingsTwoFactorAuthTab'
 
-interface Props {
+interface SettingsContentProps {
   user: User
   tab: string
   affiliateData?: AffiliateData
 }
 
-export default function SettingsContent({ user, tab, affiliateData }: Props) {
+export default function SettingsContent({ user, tab, affiliateData }: SettingsContentProps) {
   const content = useMemo(() => {
     switch (tab) {
       case 'affiliate':

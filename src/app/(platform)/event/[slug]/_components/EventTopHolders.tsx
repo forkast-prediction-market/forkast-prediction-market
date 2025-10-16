@@ -1,6 +1,7 @@
 'use client'
 
-import type { Event } from '@/types'
+import type { Event, TopHolder } from '@/types'
+import { useQuery } from '@tanstack/react-query'
 import { AlertCircleIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import ProfileLink from '@/components/ProfileLink'
@@ -8,12 +9,46 @@ import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
 import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useEventHolders } from '@/hooks/useEventHolders'
 import { formatPosition } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
 interface EventTopHoldersProps {
   event: Event
+}
+
+interface HoldersResponse {
+  yesHolders: TopHolder[]
+  noHolders: TopHolder[]
+}
+
+async function fetchEventHolders(eventSlug: string, conditionId?: string): Promise<HoldersResponse> {
+  const params = new URLSearchParams()
+  if (conditionId) {
+    params.set('condition_id', conditionId)
+  }
+
+  const url = `/api/events/${eventSlug}/holders${params.toString() ? `?${params}` : ''}`
+  const response = await fetch(url)
+
+  if (!response.ok) {
+    throw new Error('Failed to load holders')
+  }
+
+  return response.json()
+}
+
+function useEventHolders(eventSlug: string, conditionId?: string) {
+  return useQuery({
+    queryKey: conditionId
+      ? ['event-holders', eventSlug, conditionId]
+      : ['event-holders', eventSlug],
+    queryFn: () => fetchEventHolders(eventSlug, conditionId),
+    enabled: true,
+    staleTime: 30_000,
+    gcTime: 300_000,
+    refetchOnWindowFocus: false,
+    retry: 3,
+  })
 }
 
 export default function EventTopHolders({ event }: EventTopHoldersProps) {

@@ -3,11 +3,11 @@ import { calculateWinnings } from '@/lib/mockData'
 import { cn } from '@/lib/utils'
 import { calculateSellAmount, getAvgSellPrice, useOrder } from '@/stores/useOrder'
 
-interface Props {
+interface EventOrderPanelEarningsProps {
   isMobile: boolean
 }
 
-export default function EventOrderPanelEarnings({ isMobile }: Props) {
+export default function EventOrderPanelEarnings({ isMobile }: EventOrderPanelEarningsProps) {
   const state = useOrder()
 
   return (

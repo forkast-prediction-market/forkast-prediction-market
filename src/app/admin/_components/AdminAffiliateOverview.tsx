@@ -13,10 +13,6 @@ interface AffiliateRow {
   total_affiliate_fees: number
 }
 
-interface Props {
-  rows: AffiliateRow[]
-}
-
 function formatCurrency(value: number) {
   if (Number.isNaN(value)) {
     return '$0.00'
@@ -25,7 +21,11 @@ function formatCurrency(value: number) {
   return `${value.toFixed(2)}`
 }
 
-export default function AdminAffiliateOverview({ rows }: Props) {
+interface AdminAffiliateOverviewProps {
+  rows: AffiliateRow[]
+}
+
+export default function AdminAffiliateOverview({ rows }: AdminAffiliateOverviewProps) {
   if (!rows.length) {
     return (
       <div className="rounded-lg border p-6">

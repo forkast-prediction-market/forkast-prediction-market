@@ -1,9 +1,18 @@
-import type { Event, SearchResultsProps } from '@/types'
+import type { Event, SearchLoadingStates, SearchResultItems } from '@/types'
 import { LoaderIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ProfileResults } from './ProfileResults'
 import { SearchTabs } from './SearchTabs'
+
+interface SearchResultsProps {
+  results: SearchResultItems
+  isLoading: SearchLoadingStates
+  activeTab: 'events' | 'profiles'
+  query: string
+  onResultClick: () => void
+  onTabChange: (tab: 'events' | 'profiles') => void
+}
 
 export function SearchResults({
   results,

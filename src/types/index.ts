@@ -58,7 +58,7 @@ export interface Outcome {
   updated_at: string
 }
 
-export interface Condition {
+interface Condition {
   id: string
   oracle: string
   question_id: string
@@ -76,7 +76,7 @@ export interface Condition {
   updated_at: string
 }
 
-export interface UserSettings {
+interface UserSettings {
   notifications?: {
     email_resolutions?: boolean
     inapp_order_fills?: boolean
@@ -141,28 +141,9 @@ export interface Comment {
   recent_replies?: Comment[]
 }
 
-// Activity Types
-export type ActivityType = 'Buy' | 'Sell' | 'Redeem'
+type NotificationCategory = 'trade' | 'system' | 'general'
 
-export interface ActivityItem {
-  id: string
-  type: ActivityType
-  market: {
-    id: string
-    title: string
-    image_url: string
-    outcome: 'Yes' | 'No'
-    price: number
-  }
-  shares: number
-  amount: number
-  timestamp: Date
-  transaction_hash: string
-}
-
-export type NotificationCategory = 'trade' | 'system' | 'general'
-
-export type NotificationLinkType
+type NotificationLinkType
   = | 'none'
     | 'market'
     | 'event'
@@ -246,18 +227,12 @@ export interface TopHolder {
   outcomeText: string
 }
 
-export interface HoldersResponse {
-  yesHolders: TopHolder[]
-  noHolders: TopHolder[]
-}
-
 export type QueryResult<T>
   = | { data: T, error: null }
     | { data: null, error: string }
     | { data: null, error: PostgrestError }
 
-// Search-related interfaces
-export interface SearchResults {
+export interface SearchResultItems {
   events: Event[]
   profiles: PublicProfile[]
 }
@@ -265,40 +240,4 @@ export interface SearchResults {
 export interface SearchLoadingStates {
   events: boolean
   profiles: boolean
-}
-
-export interface UseSearchReturn {
-  query: string
-  results: SearchResults
-  isLoading: SearchLoadingStates
-  showResults: boolean
-  activeTab: 'events' | 'profiles'
-  handleQueryChange: (query: string) => void
-  clearSearch: () => void
-  hideResults: () => void
-  setActiveTab: (tab: 'events' | 'profiles') => void
-}
-
-export interface SearchResultsProps {
-  results: SearchResults
-  isLoading: SearchLoadingStates
-  activeTab: 'events' | 'profiles'
-  query: string
-  onResultClick: () => void
-  onTabChange: (tab: 'events' | 'profiles') => void
-}
-
-export interface SearchTabsProps {
-  activeTab: 'events' | 'profiles'
-  onTabChange: (tab: 'events' | 'profiles') => void
-  eventCount: number
-  profileCount: number
-  isLoading: SearchLoadingStates
-}
-
-export interface ProfileResultsProps {
-  profiles: PublicProfile[]
-  isLoading: boolean
-  query: string
-  onResultClick: () => void
 }

@@ -1,6 +1,13 @@
-import type { ProfileResultsProps } from '@/types'
+import type { PublicProfile } from '@/types'
 import { LoaderIcon } from 'lucide-react'
 import ProfileLink from '@/components/ProfileLink'
+
+interface ProfileResultsProps {
+  profiles: PublicProfile[]
+  isLoading: boolean
+  query: string
+  onResultClick: () => void
+}
 
 export function ProfileResults({ profiles, isLoading, query, onResultClick }: ProfileResultsProps) {
   if (isLoading) {

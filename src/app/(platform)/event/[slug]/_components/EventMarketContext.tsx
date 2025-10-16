@@ -5,11 +5,11 @@ import { generateMarketContextAction } from '@/app/(platform)/event/[slug]/actio
 import { cn } from '@/lib/utils'
 import { useOrder } from '@/stores/useOrder'
 
-interface Props {
+interface EventMarketContextProps {
   event: Event
 }
 
-export default function EventMarketContext({ event }: Props) {
+export default function EventMarketContext({ event }: EventMarketContextProps) {
   const state = useOrder()
   const [contextExpanded, setContextExpanded] = useState(false)
   const [context, setContext] = useState<string | null>(null)
