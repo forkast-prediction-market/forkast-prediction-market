@@ -1,7 +1,7 @@
 import type { ActivityOrder, QueryResult } from '@/types'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
-import { AffiliateRepository } from '@/lib/db/affiliate-repository'
+import { AffiliateRepository } from '@/lib/db/affiliate'
 import { getSupabaseImageUrl, supabaseAdmin } from '@/lib/supabase'
 
 export const UserRepository = {

@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { isAdminWallet } from '@/lib/admin'
-import { UserRepository } from '@/lib/db/user-repository'
+import { UserRepository } from '@/lib/db/user'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 import { truncateAddress } from '@/lib/utils'
 

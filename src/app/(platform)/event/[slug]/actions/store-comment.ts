@@ -1,7 +1,7 @@
 'use server'
 
-import { CommentRepository } from '@/lib/db/comment-repository'
-import { UserRepository } from '@/lib/db/user-repository'
+import { CommentRepository } from '@/lib/db/comment'
+import { UserRepository } from '@/lib/db/user'
 
 export async function storeCommentAction(eventId: string, formData: FormData) {
   try {

@@ -2,7 +2,7 @@
 
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
-import { UserRepository } from '@/lib/db/user-repository'
+import { UserRepository } from '@/lib/db/user'
 
 export async function disableTwoFactorAction() {
   const user = await UserRepository.getCurrentUser()

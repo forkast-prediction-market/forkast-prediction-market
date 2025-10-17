@@ -1,9 +1,9 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import SettingsContent from '@/app/(platform)/settings/_components/SettingsContent'
-import { AffiliateRepository } from '@/lib/db/affiliate-repository'
-import { SettingsRepository } from '@/lib/db/setting-repository'
-import { UserRepository } from '@/lib/db/user-repository'
+import { AffiliateRepository } from '@/lib/db/affiliate'
+import { SettingsRepository } from '@/lib/db/settings'
+import { UserRepository } from '@/lib/db/user'
 
 export const metadata: Metadata = {
   title: 'Settings',

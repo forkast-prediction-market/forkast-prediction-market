@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { EventRepository } from '@/lib/db/event-repository'
-import { UserRepository } from '@/lib/db/user-repository'
+import { EventRepository } from '@/lib/db/event'
+import { UserRepository } from '@/lib/db/user'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)

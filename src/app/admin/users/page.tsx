@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import AdminUsersTable from '@/app/admin/_components/AdminUsersTable'
-import { UserRepository } from '@/lib/db/user-repository'
+import { UserRepository } from '@/lib/db/user'
 
 export default async function AdminUsersPage() {
   const currentUser = await UserRepository.getCurrentUser()

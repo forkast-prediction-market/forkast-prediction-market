@@ -2,10 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { AffiliateRepository } from '@/lib/db/affiliate-repository'
-import { OrderRepository } from '@/lib/db/order-repository'
-import { SettingsRepository } from '@/lib/db/setting-repository'
-import { UserRepository } from '@/lib/db/user-repository'
+import { AffiliateRepository } from '@/lib/db/affiliate'
+import { OrderRepository } from '@/lib/db/order'
+import { SettingsRepository } from '@/lib/db/settings'
+import { UserRepository } from '@/lib/db/user'
 
 const StoreOrderSchema = z.object({
   condition_id: z.string(),

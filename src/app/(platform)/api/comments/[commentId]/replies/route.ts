@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { CommentRepository } from '@/lib/db/comment-repository'
-import { UserRepository } from '@/lib/db/user-repository'
+import { CommentRepository } from '@/lib/db/comment'
+import { UserRepository } from '@/lib/db/user'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export async function GET(

@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { SettingsRepository } from '@/lib/db/setting-repository'
-import { UserRepository } from '@/lib/db/user-repository'
+import { SettingsRepository } from '@/lib/db/settings'
+import { UserRepository } from '@/lib/db/user'
 
 export interface ForkSettingsActionState {
   error?: string

@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { NotificationRepository } from '@/lib/db/notification-repository'
-import { UserRepository } from '@/lib/db/user-repository'
+import { NotificationRepository } from '@/lib/db/notification'
+import { UserRepository } from '@/lib/db/user'
 
 export async function DELETE(
   _: NextRequest,

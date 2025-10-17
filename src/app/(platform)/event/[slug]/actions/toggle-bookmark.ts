@@ -1,7 +1,7 @@
 'use server'
 
-import { BookmarkRepository } from '@/lib/db/bookmark-repository'
-import { UserRepository } from '@/lib/db/user-repository'
+import { BookmarkRepository } from '@/lib/db/bookmark'
+import { UserRepository } from '@/lib/db/user'
 
 export async function toggleBookmarkAction(eventId: string) {
   const user = await UserRepository.getCurrentUser()

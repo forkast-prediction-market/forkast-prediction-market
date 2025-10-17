@@ -3,7 +3,7 @@
 import { z } from 'zod'
 import { generateMarketContext } from '@/lib/ai/market-context'
 import { isOpenRouterConfigured } from '@/lib/ai/openrouter'
-import { EventRepository } from '@/lib/db/event-repository'
+import { EventRepository } from '@/lib/db/event'
 
 const GenerateMarketContextSchema = z.object({
   slug: z.string(),

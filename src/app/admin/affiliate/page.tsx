@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
 import AdminAffiliateOverview from '@/app/admin/_components/AdminAffiliateOverview'
 import AdminAffiliateSettingsForm from '@/app/admin/_components/AdminAffiliateSettingsForm'
-import { AffiliateRepository } from '@/lib/db/affiliate-repository'
-import { SettingsRepository } from '@/lib/db/setting-repository'
-import { UserRepository } from '@/lib/db/user-repository'
+import { AffiliateRepository } from '@/lib/db/affiliate'
+import { SettingsRepository } from '@/lib/db/settings'
+import { UserRepository } from '@/lib/db/user'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 interface AffiliateOverviewRow {

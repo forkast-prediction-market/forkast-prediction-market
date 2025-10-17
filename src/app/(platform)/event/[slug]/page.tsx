@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import EventContent from '@/app/(platform)/event/[slug]/_components/EventContent'
-import { EventRepository } from '@/lib/db/event-repository'
-import { UserRepository } from '@/lib/db/user-repository'
+import { EventRepository } from '@/lib/db/event'
+import { UserRepository } from '@/lib/db/user'
 
 export async function generateMetadata({ params }: PageProps<'/event/[slug]'>): Promise<Metadata> {
   const { slug } = await params

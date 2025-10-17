@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { UserRepository } from '@/lib/db/user-repository'
+import { UserRepository } from '@/lib/db/user'
 
 export async function updateNotificationPreferencesAction(formData: FormData) {
   try {
