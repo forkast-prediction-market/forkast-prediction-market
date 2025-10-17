@@ -1,19 +1,60 @@
 'use cache'
 
+import type { PostgrestError } from '@supabase/supabase-js'
+import { revalidatePath } from 'next/cache'
 import { supabaseAdmin } from '@/lib/supabase'
 
 const EXCLUDED_SUB_SLUGS = new Set(['hide-from-new'])
+
+interface ListTagsParams {
+  limit?: number
+  offset?: number
+  search?: string
+  sortBy?: 'name' | 'slug' | 'display_order' | 'created_at' | 'updated_at' | 'active_markets_count'
+  sortOrder?: 'asc' | 'desc'
+}
+
+interface ParentTagPreview {
+  id: number
+  name: string
+  slug: string
+}
+
+interface AdminTagRow {
+  id: number
+  name: string
+  slug: string
+  is_main_category: boolean
+  is_hidden: boolean
+  display_order: number
+  parent_tag_id: number | null
+  active_markets_count: number
+  created_at: string
+  updated_at: string
+  parent?: ParentTagPreview | null
+}
 
 export const TagRepository = {
   async getMainTags() {
     const query = supabaseAdmin
       .from('tags')
       .select(`
-      name,
-      slug,
-      childs:tags!parent_tag_id(name, slug)
-    `)
+        id,
+        name,
+        slug,
+        is_hidden,
+        is_main_category,
+        display_order,
+        childs:tags!parent_tag_id(
+          id,
+          name,
+          slug,
+          is_hidden,
+          is_main_category
+        )
+      `)
       .eq('is_main_category', true)
+      .eq('is_hidden', false)
       .order('display_order', { ascending: true })
       .order('name', { ascending: true })
 
@@ -23,16 +64,17 @@ export const TagRepository = {
       return { data, error, globalChilds: [] }
     }
 
-    const mainSlugs = data.map(tag => tag.slug)
+    const mainVisibleTags = data.filter(tag => !tag.is_hidden)
+    const mainSlugs = mainVisibleTags.map(tag => tag.slug)
     const mainSlugSet = new Set(mainSlugs)
 
     const { data: subcategories, error: viewError } = await supabaseAdmin
       .from('v_main_tag_subcategories')
-      .select('main_tag_slug, sub_tag_name, sub_tag_slug, active_markets_count')
+      .select('main_tag_slug, sub_tag_name, sub_tag_slug, active_markets_count, sub_tag_is_hidden, main_tag_is_hidden')
       .in('main_tag_slug', mainSlugs)
 
     if (viewError || !subcategories) {
-      return { data, error: viewError, globalChilds: [] }
+      return { data: mainVisibleTags, error: viewError, globalChilds: [] }
     }
 
     const grouped = new Map<string, { name: string, slug: string, count: number }[]>()
@@ -44,6 +86,8 @@ export const TagRepository = {
         !subtag.sub_tag_slug
         || mainSlugSet.has(subtag.sub_tag_slug)
         || EXCLUDED_SUB_SLUGS.has(subtag.sub_tag_slug)
+        || subtag.sub_tag_is_hidden
+        || subtag.main_tag_is_hidden
       ) {
         continue
       }
@@ -89,7 +133,7 @@ export const TagRepository = {
       })
     }
 
-    const enhanced = data.map(tag => ({
+    const enhanced = mainVisibleTags.map(tag => ({
       ...tag,
       childs: (grouped.get(tag.slug) ?? [])
         .filter(child => bestMainBySubSlug.get(child.slug)?.mainSlug === tag.slug)
@@ -115,4 +159,121 @@ export const TagRepository = {
 
     return { data: enhanced, error: null, globalChilds }
   },
+
+  async listTags({
+    limit = 50,
+    offset = 0,
+    search,
+    sortBy = 'display_order',
+    sortOrder = 'asc',
+  }: ListTagsParams = {}): Promise<{
+    data: AdminTagRow[]
+    error: PostgrestError | null
+    totalCount: number
+  }> {
+    const cappedLimit = Math.min(Math.max(limit, 1), 100)
+    const safeOffset = Math.max(offset, 0)
+
+    const validSortFields: ListTagsParams['sortBy'][] = [
+      'name',
+      'slug',
+      'display_order',
+      'created_at',
+      'updated_at',
+      'active_markets_count',
+    ]
+    const orderField = validSortFields.includes(sortBy) ? sortBy : 'display_order'
+    const ascending = (sortOrder ?? 'asc') === 'asc'
+
+    let query = supabaseAdmin
+      .from('tags')
+      .select(`
+        id,
+        name,
+        slug,
+        is_main_category,
+        is_hidden,
+        display_order,
+        parent_tag_id,
+        active_markets_count,
+        created_at,
+        updated_at,
+        parent:parent_tag_id(
+          id,
+          name,
+          slug
+        )
+      `, { count: 'exact' })
+
+    if (search && search.trim()) {
+      const sanitized = search.trim()
+        .replace(/['"]/g, '')
+        .replace(/\s+/g, ' ')
+      if (sanitized) {
+        query = query.or(`name.ilike.%${sanitized}%,slug.ilike.%${sanitized}%`)
+      }
+    }
+
+    query = query
+      .order(orderField, { ascending })
+      .order('name', { ascending: true })
+      .range(safeOffset, safeOffset + cappedLimit - 1)
+
+    const { data, error, count } = await query
+
+    return {
+      data: (data as AdminTagRow[] | null) ?? [],
+      error,
+      totalCount: count ?? 0,
+    }
+  },
+
+  async updateTagById(id: number, updates: Partial<{ is_main_category: boolean, is_hidden: boolean }>) {
+    const payload: Record<string, unknown> = {}
+
+    if (Object.prototype.hasOwnProperty.call(updates, 'is_main_category')) {
+      payload.is_main_category = updates.is_main_category
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updates, 'is_hidden')) {
+      payload.is_hidden = updates.is_hidden
+    }
+
+    if (Object.keys(payload).length === 0) {
+      return {
+        data: null,
+        error: new Error('No valid fields to update'),
+      }
+    }
+
+    payload.updated_at = new Date().toISOString()
+
+    const { data, error } = await supabaseAdmin
+      .from('tags')
+      .update(payload)
+      .eq('id', id)
+      .select(`
+        id,
+        name,
+        slug,
+        is_main_category,
+        is_hidden,
+        display_order,
+        parent_tag_id,
+        active_markets_count,
+        created_at,
+        updated_at,
+        parent:parent_tag_id(
+          id,
+          name,
+          slug
+        )
+      `)
+      .single()
+
+    revalidatePath('/')
+
+    return { data: data as AdminTagRow | null, error }
+  },
+
 }
