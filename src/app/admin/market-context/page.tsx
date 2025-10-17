@@ -17,7 +17,7 @@ export default async function AdminMarketContextSettingsPage() {
   const parsedSettings = parseMarketContextSettings(allSettings ?? undefined)
   const defaultPrompt = parsedSettings.prompt
   const defaultModel = parsedSettings.model ?? ''
-  const defaultApiKey = parsedSettings.aiSettings?.openrouter_api_key?.value?.trim() || ''
+  const defaultApiKey = parsedSettings.apiKey ?? ''
   const isEnabled = parsedSettings.enabled
   const apiKeyForModels = parsedSettings.apiKey
   const isModelSelectEnabled = Boolean(apiKeyForModels)

@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { SettingsRepository } from '@/lib/db/settings'
 import { UserRepository } from '@/lib/db/user'
+import { encryptSecret } from '@/lib/encryption'
 
 export interface MarketContextSettingsActionState {
   error?: string
@@ -62,10 +63,19 @@ export async function updateMarketContextSettingsAction(
     return { error: parsed.error.issues[0]?.message ?? 'Invalid input.' }
   }
 
+  let encryptedKey = ''
+  try {
+    encryptedKey = parsed.data.apiKey ? encryptSecret(parsed.data.apiKey) : ''
+  }
+  catch (error) {
+    console.error('Failed to encrypt OpenRouter API key', error)
+    return { error: 'Unable to secure the OpenRouter API key. Check server configuration.' }
+  }
+
   const updates = [
     { group: 'ai', key: 'market_context_prompt', value: parsed.data.prompt },
     { group: 'ai', key: 'openrouter_model', value: parsed.data.model },
-    { group: 'ai', key: 'openrouter_api_key', value: parsed.data.apiKey },
+    { group: 'ai', key: 'openrouter_api_key', value: encryptedKey },
     { group: 'ai', key: 'openrouter_enabled', value: parsed.data.enabled ? 'true' : 'false' },
   ]
 

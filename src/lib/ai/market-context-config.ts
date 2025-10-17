@@ -1,5 +1,6 @@
 import { MARKET_CONTEXT_PROMPT_DEFAULT } from '@/lib/ai/market-context-template'
 import { SettingsRepository } from '@/lib/db/settings'
+import { decryptSecret } from '@/lib/encryption'
 
 type SettingsGroup = Record<string, { value: string, updated_at: string }>
 
@@ -41,7 +42,10 @@ function parseMarketContextSettingsFromMap(allSettings?: SettingsMap): MarketCon
   const prompt = aiSettings?.market_context_prompt?.value?.trim() || MARKET_CONTEXT_PROMPT_DEFAULT
 
   const model = aiSettings?.openrouter_model?.value?.trim() || undefined
-  const apiKey = aiSettings?.openrouter_api_key?.value?.trim() || undefined
+
+  const encryptedApiKey = aiSettings?.openrouter_api_key?.value
+  const decryptedApiKey = encryptedApiKey ? decryptSecret(encryptedApiKey) : ''
+  const apiKey = decryptedApiKey.trim() || undefined
 
   const enabled = normalizeBoolean(
     aiSettings?.openrouter_enabled?.value,
