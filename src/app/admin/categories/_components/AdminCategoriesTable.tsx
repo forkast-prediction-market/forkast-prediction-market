@@ -80,7 +80,9 @@ export default function AdminCategoriesTable() {
 
       await queryClient.cancelQueries({ queryKey: ['admin-categories'] })
 
-      const previousQueries = queryClient.getQueriesData<AdminCategoriesQueryData>(['admin-categories'])
+      const previousQueries = queryClient.getQueriesData<AdminCategoriesQueryData>({
+        queryKey: ['admin-categories'],
+      })
 
       queryClient.setQueriesData<AdminCategoriesQueryData>({ queryKey: ['admin-categories'] }, (old) => {
         if (!old) {
