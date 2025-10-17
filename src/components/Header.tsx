@@ -1,7 +1,7 @@
-import HeaderHowItWorks from '@/components/layout/HeaderHowItWorks'
-import HeaderLogo from '@/components/layout/HeaderLogo'
-import HeaderMenu from '@/components/layout/HeaderMenu'
-import HeaderSearch from '@/components/layout/HeaderSearch'
+import HeaderHowItWorks from '@/components/HeaderHowItWorks'
+import HeaderLogo from '@/components/HeaderLogo'
+import HeaderMenu from '@/components/HeaderMenu'
+import HeaderSearch from '@/components/HeaderSearch'
 
 export default async function Header() {
   return (

@@ -3,10 +3,10 @@
 import type { User } from '@/types'
 import Form from 'next/form'
 import { startTransition, useOptimistic, useRef, useState } from 'react'
+import { updateNotificationPreferencesAction } from '@/app/(platform)/settings/_actions/update-notifications-preferences'
 import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { updateNotificationPreferencesAction } from '../actions/update-notifications-preferences'
 
 interface NotificationSettings {
   email_resolutions: boolean

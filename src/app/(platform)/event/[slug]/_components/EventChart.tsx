@@ -1,7 +1,7 @@
 import type { Event } from '@/types'
 import { TrendingDownIcon } from 'lucide-react'
 import { useState } from 'react'
-import PredictionChart from '@/components/charts/PredictionChart'
+import PredictionChart from '@/components/PredictionChart'
 import { cn, sanitizeSvg } from '@/lib/utils'
 import { useIsBinaryMarket, useYesPrice } from '@/stores/useOrder'
 

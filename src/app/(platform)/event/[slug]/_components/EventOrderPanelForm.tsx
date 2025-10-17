@@ -4,6 +4,7 @@ import Form from 'next/form'
 import { toast } from 'sonner'
 import { keccak256, stringToBytes } from 'viem'
 import { useSignMessage } from 'wagmi'
+import { storeOrderAction } from '@/app/(platform)/event/[slug]/_actions/store-order'
 import EventOrderPanelBuySellTabs from '@/app/(platform)/event/[slug]/_components/EventOrderPanelBuySellTabs'
 import EventOrderPanelEarnings from '@/app/(platform)/event/[slug]/_components/EventOrderPanelEarnings'
 import EventOrderPanelInput from '@/app/(platform)/event/[slug]/_components/EventOrderPanelInput'
@@ -14,7 +15,6 @@ import EventOrderPanelOutcomeButton from '@/app/(platform)/event/[slug]/_compone
 import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_components/EventOrderPanelSubmitButton'
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
-import { storeOrderAction } from '@/app/(platform)/event/[slug]/actions/store-order'
 import { cn, triggerConfetti } from '@/lib/utils'
 import {
   calculateSellAmount,

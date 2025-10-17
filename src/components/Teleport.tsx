@@ -1,11 +1,12 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 
 interface TeleportProps {
   to: string
-  children: React.ReactNode
+  children: ReactNode
 }
 
 export function Teleport({ to, children }: TeleportProps) {

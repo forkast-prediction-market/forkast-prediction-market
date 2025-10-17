@@ -2,7 +2,7 @@
 
 import { useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
-import NavigationTab from '@/components/layout/NavigationTab'
+import NavigationTab from '@/components/NavigationTab'
 import { Skeleton } from '@/components/ui/skeleton'
 
 interface NavigationTabsProps {

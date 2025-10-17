@@ -5,8 +5,8 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { useEffect, useRef, useState } from 'react'
 import EventsEmptyState from '@/app/(platform)/event/[slug]/_components/EventsEmptyState'
-import EventCard from '@/components/event/EventCard'
-import EventCardSkeleton from '@/components/event/EventCardSkeleton'
+import EventCard from '@/components/EventCard'
+import EventCardSkeleton from '@/components/EventCardSkeleton'
 import { useColumns } from '@/hooks/useColumns'
 
 interface EventsGridProps {

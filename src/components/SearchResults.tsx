@@ -1,8 +1,8 @@
-import type { Event, SearchLoadingStates, SearchResultItems } from '@/types'
+import type { Event, PublicProfile, SearchLoadingStates, SearchResultItems } from '@/types'
 import { LoaderIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ProfileResults } from './ProfileResults'
+import ProfileLink from '@/components/ProfileLink'
 import { SearchTabs } from './SearchTabs'
 
 interface SearchResultsProps {
@@ -96,12 +96,14 @@ export function SearchResults({
   )
 }
 
-function EventResults({ events, query, isLoading, onResultClick }: {
+interface EventResultsProps {
   events: Event[]
   query: string
   isLoading: boolean
   onResultClick: () => void
-}) {
+}
+
+function EventResults({ events, query, isLoading, onResultClick }: EventResultsProps) {
   if (events.length === 0 && !isLoading && query.length >= 2) {
     return (
       <div className="p-4 text-center text-sm text-muted-foreground">
@@ -111,7 +113,7 @@ function EventResults({ events, query, isLoading, onResultClick }: {
   }
 
   if (events.length === 0) {
-    return null
+    return <></>
   }
 
   return (
@@ -156,5 +158,55 @@ function EventResults({ events, query, isLoading, onResultClick }: {
         </Link>
       ))}
     </>
+  )
+}
+
+interface ProfileResultsProps {
+  profiles: PublicProfile[]
+  isLoading: boolean
+  query: string
+  onResultClick: () => void
+}
+
+function ProfileResults({ profiles, isLoading, query, onResultClick }: ProfileResultsProps) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center p-4">
+        <LoaderIcon className="size-4 animate-spin text-muted-foreground" />
+        <span className="ml-2 text-sm text-muted-foreground">Searching...</span>
+      </div>
+    )
+  }
+
+  if (profiles.length === 0 && query.length >= 2) {
+    return (
+      <div className="p-4 text-center text-sm text-muted-foreground">
+        No profiles found
+      </div>
+    )
+  }
+
+  if (profiles.length === 0) {
+    return <></>
+  }
+
+  return (
+    <div className="max-h-96 overflow-y-auto">
+      {profiles.map(profile => (
+        <div
+          key={profile.address}
+          onClick={onResultClick}
+          className="cursor-pointer px-3 transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-accent"
+        >
+          <ProfileLink
+            user={{
+              address: profile.address,
+              username: profile.username,
+              image: profile.image,
+            }}
+          />
+        </div>
+      ))}
+    </div>
   )
 }
