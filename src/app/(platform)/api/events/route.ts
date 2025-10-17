@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { EventModel } from '@/lib/db/events'
-import { UserModel } from '@/lib/db/users'
+import { EventRepository } from '@/lib/db/event'
+import { UserRepository } from '@/lib/db/user'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -10,11 +10,11 @@ export async function GET(request: Request) {
   const offset = Number.parseInt(searchParams.get('offset') || '0', 10)
   const clampedOffset = Number.isNaN(offset) ? 0 : Math.max(0, offset)
 
-  const user = await UserModel.getCurrentUser()
+  const user = await UserRepository.getCurrentUser()
   const userId = user?.id
 
   try {
-    const { data: events, error } = await EventModel.listEvents({
+    const { data: events, error } = await EventRepository.listEvents({
       tag,
       search,
       userId,

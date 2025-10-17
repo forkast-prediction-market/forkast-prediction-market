@@ -1,16 +1,16 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import SettingsContent from '@/app/(platform)/settings/_components/SettingsContent'
-import { AffiliateModel } from '@/lib/db/affiliates'
-import { SettingsModel } from '@/lib/db/settings'
-import { UserModel } from '@/lib/db/users'
+import { AffiliateRepository } from '@/lib/db/affiliate'
+import { SettingsRepository } from '@/lib/db/settings'
+import { UserRepository } from '@/lib/db/user'
 
 export const metadata: Metadata = {
   title: 'Settings',
 }
 
 export default async function SettingsPage({ searchParams }: PageProps<'/settings'>) {
-  const user = await UserModel.getCurrentUser({ disableCookieCache: true })
+  const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
   const params = await searchParams
   const tab = (params.tab as string) ?? 'profile'
 
@@ -18,12 +18,12 @@ export default async function SettingsPage({ searchParams }: PageProps<'/setting
     redirect('/')
   }
 
-  const affiliateCode = user.affiliate_code ?? (await AffiliateModel.ensureUserAffiliateCode(user.id)).data
+  const affiliateCode = user.affiliate_code ?? (await AffiliateRepository.ensureUserAffiliateCode(user.id)).data
 
-  const { data: allSettings } = await SettingsModel.getSettings()
+  const { data: allSettings } = await SettingsRepository.getSettings()
   const affiliateSettings = allSettings?.affiliate
-  const { data: statsData } = await AffiliateModel.getUserAffiliateStats(user.id)
-  const { data: referralsData } = await AffiliateModel.listReferralsByAffiliate(user.id)
+  const { data: statsData } = await AffiliateRepository.getUserAffiliateStats(user.id)
+  const { data: referralsData } = await AffiliateRepository.listReferralsByAffiliate(user.id)
 
   const tradeFeeBps = Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '100', 10)
   const affiliateShareBps = Number.parseInt(affiliateSettings?.affiliate_share_bps?.value || '5000', 10)

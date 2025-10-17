@@ -172,3 +172,15 @@ export function getNoShares(outcomeId: string) {
 export function useAmountAsNumber() {
   return useOrder(state => Number.parseFloat(state.amount) || 0)
 }
+
+export function useOrderSide() {
+  return useOrder(state => state.side)
+}
+
+export function useOrderAmount() {
+  return useOrder(state => state.amount)
+}
+
+export function useOrderInputRef() {
+  return useOrder(state => state.inputRef)
+}

@@ -4,11 +4,11 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import EventRelatedSkeleton from '@/app/(platform)/event/[slug]/_components/EventRelatedSkeleton'
 
-interface Props {
+interface EventRelatedProps {
   event: Event
 }
 
-export default function EventRelated({ event }: Props) {
+export default function EventRelated({ event }: EventRelatedProps) {
   const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
   const abortControllerRef = useRef<AbortController | null>(null)

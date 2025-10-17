@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { CommentModel } from '@/lib/db/comments'
-import { EventModel } from '@/lib/db/events'
-import { UserModel } from '@/lib/db/users'
+import { CommentRepository } from '@/lib/db/comment'
+import { EventRepository } from '@/lib/db/event'
+import { UserRepository } from '@/lib/db/user'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export async function GET(
@@ -14,7 +14,7 @@ export async function GET(
     const limit = Number.parseInt(searchParams.get('limit') || '20')
     const offset = Number.parseInt(searchParams.get('offset') || '0')
 
-    const { data: event, error: eventError } = await EventModel.getIdBySlug(slug)
+    const { data: event, error: eventError } = await EventRepository.getIdBySlug(slug)
     if (!event || eventError) {
       return NextResponse.json(
         { error: 'Event not found.' },
@@ -22,10 +22,10 @@ export async function GET(
       )
     }
 
-    const user = await UserModel.getCurrentUser()
+    const user = await UserRepository.getCurrentUser()
     const currentUserId = user?.id
 
-    const { data: comments, error: rootCommentsError } = await CommentModel.getEventComments(event.id, limit, offset)
+    const { data: comments, error: rootCommentsError } = await CommentRepository.getEventComments(event.id, limit, offset)
     if (rootCommentsError) {
       return NextResponse.json(
         { error: 'Failed to fetch comments.' },
@@ -79,7 +79,7 @@ export async function GET(
       return NextResponse.json(commentsWithoutLikes)
     }
 
-    const { data: userLikes, error: userLikesError } = await CommentModel.getCommentsIdsLikedByUser(currentUserId, allIds)
+    const { data: userLikes, error: userLikesError } = await CommentRepository.getCommentsIdsLikedByUser(currentUserId, allIds)
     if (userLikesError) {
       return NextResponse.json(
         { error: 'Failed to fetch comments.' },

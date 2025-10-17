@@ -1,13 +1,13 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { isAdminWallet } from '@/lib/admin'
-import { UserModel } from '@/lib/db/users'
+import { UserRepository } from '@/lib/db/user'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 import { truncateAddress } from '@/lib/utils'
 
 export async function GET(request: NextRequest) {
   try {
-    const currentUser = await UserModel.getCurrentUser()
+    const currentUser = await UserRepository.getCurrentUser()
     if (!currentUser || !currentUser.is_admin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid sortBy parameter' }, { status: 400 })
     }
 
-    const { data, count, error } = await UserModel.listUsers({
+    const { data, count, error } = await UserRepository.listUsers({
       limit,
       offset,
       search,
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
       .map(user => user.referred_by_user_id)
       .filter((id): id is string => Boolean(id))))
 
-    const { data: referredUsers } = await UserModel.getUsersByIds(referredIds)
+    const { data: referredUsers } = await UserRepository.getUsersByIds(referredIds)
     const referredMap = new Map<string, { username?: string | null, address: string, image?: string | null }>(
       (referredUsers ?? []).map(referred => [referred.id, referred]),
     )

@@ -2,10 +2,6 @@
 
 import Image from 'next/image'
 
-interface Props {
-  searchQuery: string
-}
-
 interface OpenOrder {
   id: string
   market: string
@@ -20,7 +16,11 @@ interface OpenOrder {
 
 const mockOrders: OpenOrder[] = []
 
-export default function PortfolioOpenOrdersTable({ searchQuery }: Props) {
+interface PortfolioOpenOrdersTableProps {
+  searchQuery: string
+}
+
+export default function PortfolioOpenOrdersTable({ searchQuery }: PortfolioOpenOrdersTableProps) {
   const filteredOrders = mockOrders.filter(order =>
     order.market.toLowerCase().includes(searchQuery.toLowerCase()),
   )

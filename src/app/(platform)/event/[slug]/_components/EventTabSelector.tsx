@@ -1,12 +1,12 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 
-interface Props {
+interface EventTabSelectorProps {
   activeTab: string
   setActiveTab: (activeTab: string) => void
 }
 
-export default function EventTabSelector({ activeTab, setActiveTab }: Props) {
+export default function EventTabSelector({ activeTab, setActiveTab }: EventTabSelectorProps) {
   const eventTabs = useMemo(() => ['comments', 'holders', 'activity'], [])
   const tabRefs = useRef<(HTMLLIElement | null)[]>([])
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })
@@ -19,13 +19,15 @@ export default function EventTabSelector({ activeTab, setActiveTab }: Props) {
     if (activeTabElement) {
       const { offsetLeft, offsetWidth } = activeTabElement
 
-      setIndicatorStyle(prev => ({
-        ...prev,
-        left: offsetLeft,
-        width: offsetWidth,
-      }))
+      queueMicrotask(() => {
+        setIndicatorStyle(prev => ({
+          ...prev,
+          left: offsetLeft,
+          width: offsetWidth,
+        }))
 
-      setIsInitialized(prev => prev || true)
+        setIsInitialized(prev => prev || true)
+      })
     }
   }, [activeTab, eventTabs])
 

@@ -12,7 +12,7 @@ import EventOrderPanelMobile from '@/app/(platform)/event/[slug]/_components/Eve
 import EventRelated from '@/app/(platform)/event/[slug]/_components/EventRelated'
 import EventRules from '@/app/(platform)/event/[slug]/_components/EventRules'
 import EventTabs from '@/app/(platform)/event/[slug]/_components/EventTabs'
-import { Teleport } from '@/components/layout/Teleport'
+import { Teleport } from '@/components/Teleport'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useOrder } from '@/stores/useOrder'
 
@@ -37,8 +37,8 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
   return (
     <>
       <div className="grid gap-3">
-        <EventMetaInformation event={event} />
         <EventHeader event={event} />
+        <EventMetaInformation event={event} />
         <EventChart event={event} />
         <EventMarkets event={event} />
         {marketContextEnabled && <EventMarketContext event={event} />}

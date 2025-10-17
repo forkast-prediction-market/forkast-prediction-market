@@ -48,11 +48,20 @@ export default function EventActivity({ event }: EventActivityProps) {
   const parentRef = useRef<HTMLDivElement | null>(null)
   const [hasInitialized, setHasInitialized] = useState(false)
   const [minAmountFilter, setMinAmountFilter] = useState('none')
+  const [scrollMargin, setScrollMargin] = useState(0)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
 
   useEffect(() => {
     queueMicrotask(() => setInfiniteScrollError(null))
   }, [minAmountFilter])
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (parentRef.current) {
+        setScrollMargin(parentRef.current.offsetTop)
+      }
+    })
+  }, [])
 
   const {
     status,
@@ -88,13 +97,12 @@ export default function EventActivity({ event }: EventActivityProps) {
   const virtualizer = useWindowVirtualizer({
     count: activities.length,
     estimateSize: () => {
-      // Use responsive sizing based on screen width
       if (typeof window !== 'undefined') {
         return window.innerWidth < 768 ? 120 : 70
       }
       return 70
     },
-    scrollMargin: parentRef.current?.offsetTop ?? 0,
+    scrollMargin,
     overscan: 5,
     onChange: (instance) => {
       if (!hasInitialized) {

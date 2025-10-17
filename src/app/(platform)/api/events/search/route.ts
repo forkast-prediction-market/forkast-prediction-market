@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { EventModel } from '@/lib/db/events'
+import { EventRepository } from '@/lib/db/event'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { data, error } = await EventModel.listEvents({
+    const { data, error } = await EventRepository.listEvents({
       tag: '',
       search: query,
     })

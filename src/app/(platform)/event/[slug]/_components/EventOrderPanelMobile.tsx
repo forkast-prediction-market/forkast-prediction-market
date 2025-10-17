@@ -23,7 +23,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
     >
       <DrawerTrigger asChild>
         {isBinaryMarket && (
-          <div className="fixed right-0 bottom-0 left-0 border-t bg-background p-4 md:hidden">
+          <div className="fixed right-0 bottom-0 left-0 border-t bg-background p-4 lg:hidden">
             <div className="flex gap-2">
               <Button
                 variant="yes"

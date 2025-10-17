@@ -3,23 +3,22 @@
 import type { SIWECreateMessageArgs, SIWESession, SIWEVerifyMessageArgs } from '@reown/appkit-siwe'
 import type { Route } from 'next'
 import type { ReactNode } from 'react'
-import { EthersAdapter } from '@reown/appkit-adapter-ethers'
 import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/appkit-siwe'
-import { polygonAmoy } from '@reown/appkit/networks'
 import { createAppKit } from '@reown/appkit/react'
 import { generateRandomString } from 'better-auth/crypto'
 import { useTheme } from 'next-themes'
 import { redirect } from 'next/navigation'
+import { WagmiProvider } from 'wagmi'
+import { defaultNetwork, networks, projectId, wagmiAdapter, wagmiConfig } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
 export default function AppKitProvider({ children }: { children: ReactNode }) {
   const { resolvedTheme } = useTheme()
-  const projectId = process.env.NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID!
 
   createAppKit({
-    projectId,
-    adapters: [new EthersAdapter()],
+    projectId: projectId!,
+    adapters: [wagmiAdapter],
     themeMode: resolvedTheme as 'light' | 'dark',
     metadata: {
       name: process.env.NEXT_PUBLIC_SITE_NAME!,
@@ -28,17 +27,20 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       icons: ['https://avatar.vercel.sh/bitcoin.png'],
     },
     themeVariables: {
+      '--w3m-font-family': 'var(--font-sans)',
       '--w3m-border-radius-master': '2px',
       '--w3m-accent': 'var(--primary)',
     },
-    networks: [polygonAmoy],
-    defaultNetwork: polygonAmoy,
+    networks,
+    features: {
+      analytics: process.env.NODE_ENV === 'production',
+    },
     siweConfig: createSIWEConfig({
       signOutOnAccountChange: true,
       getMessageParams: async () => ({
         domain: new URL(process.env.NEXT_PUBLIC_SITE_URL!).host,
         uri: typeof window !== 'undefined' ? window.location.origin : '',
-        chains: [polygonAmoy.id],
+        chains: [defaultNetwork.id],
         statement: 'Please sign with your account',
       }),
       createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
@@ -51,9 +53,9 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
           }
 
           return {
-            // @ts-expect-error address not defined in address
+            // @ts-expect-error address not defined in session type
             address: session.data?.user.address,
-            chainId: polygonAmoy.id,
+            chainId: defaultNetwork.id,
           } satisfies SIWESession
         }
         catch {
@@ -66,14 +68,14 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
 
           await authClient.siwe.nonce({
             walletAddress: address,
-            chainId: polygonAmoy.id,
+            chainId: defaultNetwork.id,
           })
 
           const { data } = await authClient.siwe.verify({
             message,
             signature,
             walletAddress: address,
-            chainId: polygonAmoy.id,
+            chainId: defaultNetwork.id,
           })
 
           return Boolean(data?.success)
@@ -104,10 +106,11 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
         }).catch(() => {})
       },
     }),
-    features: {
-      analytics: process.env.NODE_ENV === 'production',
-    },
   })
 
-  return <>{children}</>
+  return (
+    <WagmiProvider config={wagmiConfig}>
+      {children}
+    </WagmiProvider>
+  )
 }

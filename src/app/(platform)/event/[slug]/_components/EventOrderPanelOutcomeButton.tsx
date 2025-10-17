@@ -2,12 +2,12 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useOrder } from '@/stores/useOrder'
 
-interface Props {
+interface EventOrderPanelOutcomeButtonProps {
   type: 'yes' | 'no'
   price: number
 }
 
-export default function EventOrderPanelOutcomeButton({ type, price }: Props) {
+export default function EventOrderPanelOutcomeButton({ type, price }: EventOrderPanelOutcomeButtonProps) {
   const state = useOrder()
   const outcomeIndex = type === 'yes' ? 0 : 1
   const isSelected = state.outcome!.outcome_index === outcomeIndex

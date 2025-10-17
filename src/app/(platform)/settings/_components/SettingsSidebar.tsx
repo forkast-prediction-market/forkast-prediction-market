@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
-interface Props {
+interface SettingsSidebarProps {
   tab: string
 }
 
@@ -13,7 +13,7 @@ const menuItems = [
   { id: 'export-key', label: 'Export Private Key' },
 ]
 
-export default function SettingsSidebar({ tab }: Props) {
+export default function SettingsSidebar({ tab }: SettingsSidebarProps) {
   return (
     <aside className="lg:sticky lg:top-28 lg:self-start">
       <nav className="grid gap-1">

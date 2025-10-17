@@ -1,9 +1,21 @@
-import type { SearchLoadingStates, SearchResults, UseSearchReturn } from '@/types'
+import type { SearchLoadingStates, SearchResultItems } from '@/types'
 import { useCallback, useEffect, useState } from 'react'
 
-export function useSearch(): UseSearchReturn {
+interface UseSearch {
+  query: string
+  results: SearchResultItems
+  isLoading: SearchLoadingStates
+  showResults: boolean
+  activeTab: 'events' | 'profiles'
+  handleQueryChange: (query: string) => void
+  clearSearch: () => void
+  hideResults: () => void
+  setActiveTab: (tab: 'events' | 'profiles') => void
+}
+
+export function useSearch(): UseSearch {
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<SearchResults>({
+  const [results, setResults] = useState<SearchResultItems>({
     events: [],
     profiles: [],
   })

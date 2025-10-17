@@ -1,7 +1,7 @@
 import type { Comment } from '@/types'
 import { AlertCircleIcon, LoaderIcon } from 'lucide-react'
 
-interface Props {
+interface EventCommentsLoadMoreRepliesProps {
   comment: Comment
   onRepliesLoaded: (commentId: string) => void
   isLoading: boolean
@@ -15,7 +15,7 @@ export default function EventCommentsLoadMoreReplies({
   isLoading,
   error,
   onRetry,
-}: Props) {
+}: EventCommentsLoadMoreRepliesProps) {
   function handleLoadMoreReplies() {
     onRepliesLoaded(comment.id)
   }

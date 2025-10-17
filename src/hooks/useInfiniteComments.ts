@@ -1,9 +1,9 @@
 import type { Comment } from '@/types'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
-import { deleteCommentAction } from '@/app/(platform)/event/[slug]/actions/delete-comment'
-import { likeCommentAction } from '@/app/(platform)/event/[slug]/actions/like-comment'
-import { storeCommentAction } from '@/app/(platform)/event/[slug]/actions/store-comment'
+import { deleteCommentAction } from '@/app/(platform)/event/[slug]/_actions/delete-comment'
+import { likeCommentAction } from '@/app/(platform)/event/[slug]/_actions/like-comment'
+import { storeCommentAction } from '@/app/(platform)/event/[slug]/_actions/store-comment'
 
 export async function fetchComments({
   pageParam = 0,
@@ -60,11 +60,11 @@ export function useInfiniteComments(eventSlug: string) {
   })
 
   const comments = useMemo(() => {
-    if (!data?.pages) {
+    if (!data || !data.pages) {
       return []
     }
     return data.pages.flat()
-  }, [data?.pages])
+  }, [data])
 
   const fetchNextPageWithErrorHandling = useCallback(async () => {
     try {

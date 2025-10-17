@@ -9,11 +9,11 @@ import { useClipboard } from '@/hooks/useClipboard'
 import { truncateAddress } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 
-interface Props {
+interface PublicProfileHeaderProps {
   profile: PublicProfile
 }
 
-export default function PublicProfileHeader({ profile }: Props) {
+export default function PublicProfileHeader({ profile }: PublicProfileHeaderProps) {
   const user = useUser()
   const { copied, copy } = useClipboard()
 

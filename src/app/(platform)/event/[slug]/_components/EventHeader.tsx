@@ -5,11 +5,11 @@ import EventBookmark from '@/app/(platform)/event/[slug]/_components/EventBookma
 import EventShare from '@/app/(platform)/event/[slug]/_components/EventShare'
 import { cn } from '@/lib/utils'
 
-interface Props {
+interface EventHeaderProps {
   event: Event
 }
 
-export default function EventHeader({ event }: Props) {
+export default function EventHeader({ event }: EventHeaderProps) {
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
@@ -23,7 +23,7 @@ export default function EventHeader({ event }: Props) {
 
   return (
     <div className={cn({
-      'sticky top-24 translate-y-[3px] border-b bg-background py-3': scrolled,
+      'sticky top-24 translate-y-[1px] border-b bg-background py-3': scrolled,
     }, 'z-10 -mx-4 flex items-center gap-3 px-4 transition-all duration-500 ease-in-out')}
     >
       <Image

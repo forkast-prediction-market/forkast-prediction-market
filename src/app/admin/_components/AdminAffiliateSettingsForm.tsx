@@ -3,24 +3,24 @@
 import Form from 'next/form'
 import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
-import { updateForkSettingsAction } from '@/app/admin/actions/update-affiliate-settings'
+import { updateForkSettingsAction } from '@/app/admin/_actions/update-affiliate-settings'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
-
-interface Props {
-  tradeFeeBps: number
-  affiliateShareBps: number
-  updatedAtLabel?: string
-}
 
 const initialState = {
   error: undefined as string | undefined,
   success: undefined as string | undefined,
 }
 
-export default function AdminAffiliateSettingsForm({ tradeFeeBps, affiliateShareBps, updatedAtLabel }: Props) {
+interface AdminAffiliateSettingsFormProps {
+  tradeFeeBps: number
+  affiliateShareBps: number
+  updatedAtLabel?: string
+}
+
+export default function AdminAffiliateSettingsForm({ tradeFeeBps, affiliateShareBps, updatedAtLabel }: AdminAffiliateSettingsFormProps) {
   const [state, formAction, isPending] = useActionState(updateForkSettingsAction, initialState)
 
   useEffect(() => {

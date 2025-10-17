@@ -1,14 +1,14 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { NotificationModel } from '@/lib/db/notifications'
-import { UserModel } from '@/lib/db/users'
+import { NotificationRepository } from '@/lib/db/notification'
+import { UserRepository } from '@/lib/db/user'
 
 export async function DELETE(
   _: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const user = await UserModel.getCurrentUser()
+    const user = await UserRepository.getCurrentUser()
 
     if (!user) {
       return NextResponse.json(
@@ -18,7 +18,7 @@ export async function DELETE(
     }
 
     const { id } = await params
-    const { error } = await NotificationModel.deleteById(id, user.id)
+    const { error } = await NotificationRepository.deleteById(id, user.id)
 
     if (error) {
       return NextResponse.json(
