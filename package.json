@@ -18,7 +18,6 @@
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
-    "@radix-ui/react-tooltip": "^1.2.8",
     "@reown/appkit": "1.8.10",
     "@reown/appkit-adapter-wagmi": "1.8.10",
     "@reown/appkit-siwe": "1.8.10",
