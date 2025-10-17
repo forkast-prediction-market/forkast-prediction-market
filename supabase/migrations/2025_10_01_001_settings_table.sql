@@ -69,4 +69,11 @@ VALUES ('affiliate', 'trade_fee_bps', '100'),       -- 1.00% trading fee
        ('affiliate', 'affiliate_share_bps', '5000') -- 50% of trading fees go to affiliates
 ON CONFLICT ("group", key) DO NOTHING;
 
+-- Insert default AI settings
+INSERT INTO settings ("group", key, value)
+VALUES ('ai', 'openrouter_api_key', ''),
+       ('ai', 'openrouter_model', ''),
+       ('ai', 'openrouter_enabled', 'false')
+ON CONFLICT ("group", key) DO NOTHING;
+
 COMMIT;
