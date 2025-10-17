@@ -1,3 +1,4 @@
+import type { PostgrestError } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase'
 
 interface ListTagsParams {
@@ -8,6 +9,26 @@ interface ListTagsParams {
   sortOrder?: 'asc' | 'desc'
 }
 
+interface ParentTagPreview {
+  id: number
+  name: string
+  slug: string
+}
+
+export interface AdminTagRow {
+  id: number
+  name: string
+  slug: string
+  is_main_category: boolean
+  is_hidden: boolean
+  display_order: number
+  parent_tag_id: number | null
+  active_markets_count: number
+  created_at: string
+  updated_at: string
+  parent?: ParentTagPreview | null
+}
+
 export const AdminTagModel = {
   async listTags({
     limit = 50,
@@ -15,7 +36,11 @@ export const AdminTagModel = {
     search,
     sortBy = 'display_order',
     sortOrder = 'asc',
-  }: ListTagsParams = {}) {
+  }: ListTagsParams = {}): Promise<{
+    data: AdminTagRow[]
+    error: PostgrestError | null
+    totalCount: number
+  }> {
     const cappedLimit = Math.min(Math.max(limit, 1), 100)
     const safeOffset = Math.max(offset, 0)
 
@@ -67,7 +92,7 @@ export const AdminTagModel = {
     const { data, error, count } = await query
 
     return {
-      data: data ?? [],
+      data: (data as AdminTagRow[] | null) ?? [],
       error,
       totalCount: count ?? 0,
     }
@@ -116,6 +141,6 @@ export const AdminTagModel = {
       `)
       .single()
 
-    return { data, error }
+    return { data: data as AdminTagRow | null, error }
   },
 }
