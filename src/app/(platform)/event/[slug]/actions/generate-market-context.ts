@@ -3,7 +3,7 @@
 import { z } from 'zod'
 import { generateMarketContext } from '@/lib/ai/market-context'
 import { isOpenRouterConfigured } from '@/lib/ai/openrouter'
-import { EventModel } from '@/lib/db/events'
+import { EventRepository } from '@/lib/db/event'
 
 const GenerateMarketContextSchema = z.object({
   slug: z.string(),
@@ -25,7 +25,7 @@ export async function generateMarketContextAction(input: GenerateMarketContextIn
 
   try {
     const { slug, marketConditionId } = parsed.data
-    const { data: event, error } = await EventModel.getEventBySlug(slug, '')
+    const { data: event, error } = await EventRepository.getEventBySlug(slug, '')
 
     if (error || !event) {
       console.error('Failed to fetch event for market context.', error)

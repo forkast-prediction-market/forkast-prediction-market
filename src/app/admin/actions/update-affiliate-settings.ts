@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { SettingsModel } from '@/lib/db/settings'
-import { UserModel } from '@/lib/db/users'
+import { SettingsRepository } from '@/lib/db/settings'
+import { UserRepository } from '@/lib/db/user'
 
 export interface ForkSettingsActionState {
   error?: string
@@ -19,7 +19,7 @@ export async function updateForkSettingsAction(
   _prevState: ForkSettingsActionState,
   formData: FormData,
 ): Promise<ForkSettingsActionState> {
-  const user = await UserModel.getCurrentUser()
+  const user = await UserRepository.getCurrentUser()
   if (!user || !user.is_admin) {
     return { error: 'Not authorized.' }
   }
@@ -36,7 +36,7 @@ export async function updateForkSettingsAction(
   const tradeFeeBps = Math.round(parsed.data.trade_fee_percent * 100)
   const affiliateShareBps = Math.round(parsed.data.affiliate_share_percent * 100)
 
-  const { error } = await SettingsModel.updateSettings([
+  const { error } = await SettingsRepository.updateSettings([
     { group: 'affiliate', key: 'trade_fee_bps', value: tradeFeeBps.toString() },
     { group: 'affiliate', key: 'affiliate_share_bps', value: affiliateShareBps.toString() },
   ])

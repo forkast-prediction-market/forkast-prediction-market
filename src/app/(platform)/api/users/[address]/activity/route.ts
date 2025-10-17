@@ -1,6 +1,6 @@
 import type { ActivityOrder, QueryResult } from '@/types'
 import { NextResponse } from 'next/server'
-import { UserModel } from '@/lib/db/users'
+import { UserRepository } from '@/lib/db/user'
 
 export async function GET(
   request: Request,
@@ -34,7 +34,7 @@ export async function GET(
       )
     }
 
-    const result: QueryResult<ActivityOrder[]> = await UserModel.getUserActivity({
+    const result: QueryResult<ActivityOrder[]> = await UserRepository.getUserActivity({
       address: address.trim(),
       limit: validatedLimit,
       offset: validatedOffset,

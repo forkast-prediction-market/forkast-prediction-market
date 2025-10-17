@@ -2,10 +2,10 @@
 
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
-import { UserModel } from '@/lib/db/users'
+import { UserRepository } from '@/lib/db/user'
 
 export async function disableTwoFactorAction() {
-  const user = await UserModel.getCurrentUser()
+  const user = await UserRepository.getCurrentUser()
   if (!user) {
     return { error: 'Unauthenticated.' }
   }

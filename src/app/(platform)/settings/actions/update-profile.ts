@@ -4,7 +4,7 @@ import { Buffer } from 'node:buffer'
 import { revalidatePath } from 'next/cache'
 import sharp from 'sharp'
 import { z } from 'zod'
-import { UserModel } from '@/lib/db/users'
+import { UserRepository } from '@/lib/db/user'
 import { supabaseAdmin } from '@/lib/supabase'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
@@ -45,7 +45,7 @@ const UpdateUserSchema = z.object({
 
 export async function updateUserAction(formData: FormData): Promise<ActionState> {
   try {
-    const user = await UserModel.getCurrentUser()
+    const user = await UserRepository.getCurrentUser()
     if (!user) {
       return { error: 'Unauthenticated.' }
     }
@@ -78,7 +78,7 @@ export async function updateUserAction(formData: FormData): Promise<ActionState>
       updateData.image = await uploadImage(user, validated.data.image)
     }
 
-    const { error } = await UserModel.updateUserProfileById(user.id, updateData)
+    const { error } = await UserRepository.updateUserProfileById(user.id, updateData)
     if (error) {
       if (typeof error === 'string') {
         return { error }

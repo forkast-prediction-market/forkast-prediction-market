@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { CommentModel } from '@/lib/db/comments'
-import { UserModel } from '@/lib/db/users'
+import { CommentRepository } from '@/lib/db/comment'
+import { UserRepository } from '@/lib/db/user'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export async function GET(
@@ -9,10 +9,10 @@ export async function GET(
 ) {
   try {
     const { commentId } = await params
-    const user = await UserModel.getCurrentUser()
+    const user = await UserRepository.getCurrentUser()
     const currentUserId = user?.id
 
-    const { data: replies, error: errorReplies } = await CommentModel.getCommentReplies(commentId)
+    const { data: replies, error: errorReplies } = await CommentRepository.getCommentReplies(commentId)
     if (errorReplies) {
       console.error('Failed to fetch comment replies', errorReplies)
       return NextResponse.json(
@@ -30,7 +30,7 @@ export async function GET(
 
     if (currentUserId && normalizedReplies.length) {
       const replyIds = normalizedReplies.map(reply => reply.id)
-      const { data: userLikes, error: userLikesError } = await CommentModel.getCommentsIdsLikedByUser(currentUserId, replyIds)
+      const { data: userLikes, error: userLikesError } = await CommentRepository.getCommentsIdsLikedByUser(currentUserId, replyIds)
       if (userLikesError) {
         console.error('Failed to fetch replies like status', userLikesError)
         return NextResponse.json(

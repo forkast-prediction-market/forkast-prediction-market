@@ -25,7 +25,7 @@ async function generateUniqueAffiliateCode() {
   throw new Error('Failed to generate unique affiliate code')
 }
 
-export const AffiliateModel = {
+export const AffiliateRepository = {
   async ensureUserAffiliateCode(userId: string) {
     const { data: user, error } = await supabaseAdmin
       .from('users')

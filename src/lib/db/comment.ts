@@ -2,7 +2,7 @@ import { unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export const CommentModel = {
+export const CommentRepository = {
   async getEventComments(eventId: string, limit: number = 20, offset: number = 0) {
     'use cache'
     cacheTag(cacheTags.eventComments(eventId))

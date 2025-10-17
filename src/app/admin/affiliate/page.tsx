@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
 import AdminAffiliateOverview from '@/app/admin/_components/AdminAffiliateOverview'
 import AdminAffiliateSettingsForm from '@/app/admin/_components/AdminAffiliateSettingsForm'
-import { AffiliateModel } from '@/lib/db/affiliates'
-import { SettingsModel } from '@/lib/db/settings'
-import { UserModel } from '@/lib/db/users'
+import { AffiliateRepository } from '@/lib/db/affiliate'
+import { SettingsRepository } from '@/lib/db/settings'
+import { UserRepository } from '@/lib/db/user'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 interface AffiliateOverviewRow {
@@ -33,18 +33,18 @@ interface RowSummary {
 }
 
 export default async function AdminSettingsPage() {
-  const currentUser = await UserModel.getCurrentUser()
+  const currentUser = await UserRepository.getCurrentUser()
   if (!currentUser || !currentUser.is_admin) {
     redirect('/')
   }
 
-  const { data: allSettings } = await SettingsModel.getSettings()
+  const { data: allSettings } = await SettingsRepository.getSettings()
   const affiliateSettings = allSettings?.affiliate
-  const { data: overviewData } = await AffiliateModel.listAffiliateOverview()
+  const { data: overviewData } = await AffiliateRepository.listAffiliateOverview()
 
   const overview = (overviewData ?? []) as AffiliateOverviewRow[]
   const userIds = overview.map(row => row.affiliate_user_id)
-  const { data: profilesData } = await AffiliateModel.getAffiliateProfiles(userIds)
+  const { data: profilesData } = await AffiliateRepository.getAffiliateProfiles(userIds)
   const profiles = (profilesData ?? []) as AffiliateProfile[]
 
   let updatedAtLabel: string | undefined

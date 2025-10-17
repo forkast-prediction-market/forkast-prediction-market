@@ -1,10 +1,10 @@
 import type { ActivityOrder, QueryResult } from '@/types'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
-import { AffiliateModel } from '@/lib/db/affiliates'
+import { AffiliateRepository } from '@/lib/db/affiliate'
 import { getSupabaseImageUrl, supabaseAdmin } from '@/lib/supabase'
 
-export const UserModel = {
+export const UserRepository = {
   async getProfileByUsername(username: string) {
     'use cache'
 
@@ -113,7 +113,7 @@ export const UserModel = {
 
     if (!user.affiliate_code) {
       try {
-        const { data: code } = await AffiliateModel.ensureUserAffiliateCode(user.id)
+        const { data: code } = await AffiliateRepository.ensureUserAffiliateCode(user.id)
         if (code) {
           user.affiliate_code = code
         }
@@ -135,7 +135,7 @@ export const UserModel = {
           }
 
           if (parsed?.affiliateUserId) {
-            await AffiliateModel.recordReferral({
+            await AffiliateRepository.recordReferral({
               user_id: user.id,
               affiliate_user_id: parsed.affiliateUserId,
             })

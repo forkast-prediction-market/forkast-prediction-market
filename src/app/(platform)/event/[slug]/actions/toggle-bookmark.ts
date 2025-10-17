@@ -1,14 +1,14 @@
 'use server'
 
-import { BookmarkModel } from '@/lib/db/bookmarks'
-import { UserModel } from '@/lib/db/users'
+import { BookmarkRepository } from '@/lib/db/bookmark'
+import { UserRepository } from '@/lib/db/user'
 
 export async function toggleBookmarkAction(eventId: string) {
-  const user = await UserModel.getCurrentUser()
+  const user = await UserRepository.getCurrentUser()
   if (!user) {
     return { data: null, error: 'Unauthenticated.' }
   }
 
   const userId = user.id
-  return await BookmarkModel.toggleBookmark(userId, eventId)
+  return await BookmarkRepository.toggleBookmark(userId, eventId)
 }

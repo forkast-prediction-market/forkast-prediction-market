@@ -1,10 +1,10 @@
 import { Suspense } from 'react'
 import NavigationTabs from '@/components/layout/NavigationTabs'
 import { Skeleton } from '@/components/ui/skeleton'
-import { TagModel } from '@/lib/db/tags'
+import { TagRepository } from '@/lib/db/tag'
 
 export default async function NavigationTabsContainer() {
-  const { data, globalChilds = [] } = await TagModel.getMainTags()
+  const { data, globalChilds = [] } = await TagRepository.getMainTags()
 
   const sharedChilds = globalChilds.map(child => ({ ...child }))
   const baseTags = (data ?? []).map(tag => ({

@@ -1,8 +1,8 @@
 import EventsEmptyState from '@/app/(platform)/event/[slug]/_components/EventsEmptyState'
 import { OpenCardProvider } from '@/components/event/EventOpenCardContext'
 import EventsGrid from '@/components/event/EventsGrid'
-import { EventModel } from '@/lib/db/events'
-import { UserModel } from '@/lib/db/users'
+import { EventRepository } from '@/lib/db/event'
+import { UserRepository } from '@/lib/db/user'
 
 interface EventsLoaderProps {
   tag: string
@@ -11,8 +11,8 @@ interface EventsLoaderProps {
 }
 
 export default async function EventsLoader({ tag, search, bookmarked }: EventsLoaderProps) {
-  const user = await UserModel.getCurrentUser()
-  const { data: events, error } = await EventModel.listEvents({
+  const user = await UserRepository.getCurrentUser()
+  const { data: events, error } = await EventRepository.listEvents({
     tag,
     search,
     userId: user?.id,

@@ -2,10 +2,10 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { AffiliateModel } from '@/lib/db/affiliates'
-import { OrderModel } from '@/lib/db/orders'
-import { SettingsModel } from '@/lib/db/settings'
-import { UserModel } from '@/lib/db/users'
+import { AffiliateRepository } from '@/lib/db/affiliate'
+import { OrderRepository } from '@/lib/db/order'
+import { SettingsRepository } from '@/lib/db/settings'
+import { UserRepository } from '@/lib/db/user'
 
 const StoreOrderSchema = z.object({
   condition_id: z.string(),
@@ -22,7 +22,7 @@ type StoreOrderInput = z.infer<typeof StoreOrderSchema>
 const DEFAULT_ERROR_MESSAGE = 'Something went wrong while processing your order. Please try again.'
 
 export async function storeOrderAction(payload: StoreOrderInput, _: string) {
-  const user = await UserModel.getCurrentUser()
+  const user = await UserRepository.getCurrentUser()
   if (!user) {
     return { error: 'Unauthenticated.' }
   }
@@ -37,8 +37,8 @@ export async function storeOrderAction(payload: StoreOrderInput, _: string) {
 
   try {
     const [{ data: allSettings }, { data: referral }] = await Promise.all([
-      SettingsModel.getSettings(),
-      AffiliateModel.getReferral(user.id),
+      SettingsRepository.getSettings(),
+      AffiliateRepository.getReferral(user.id),
     ])
 
     const affiliateSettings = allSettings?.affiliate
@@ -89,7 +89,7 @@ export async function storeOrderAction(payload: StoreOrderInput, _: string) {
       : 0
     const forkFeeAmount = Math.max(0, Number((totalFeeAmount - affiliateFeeAmount).toFixed(6)))
 
-    const { error } = await OrderModel.createOrder({
+    const { error } = await OrderRepository.createOrder({
       side: validated.data.side === 0 ? 'buy' : 'sell',
       condition_id: validated.data.condition_id,
       amount: validated.data.amount,

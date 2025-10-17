@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
-import { NotificationModel } from '@/lib/db/notifications'
-import { UserModel } from '@/lib/db/users'
+import { NotificationRepository } from '@/lib/db/notification'
+import { UserRepository } from '@/lib/db/user'
 
 export async function GET() {
   try {
-    const user = await UserModel.getCurrentUser()
+    const user = await UserRepository.getCurrentUser()
 
     if (!user) {
       return NextResponse.json(
@@ -13,7 +13,7 @@ export async function GET() {
       )
     }
 
-    const { data: notifications, error } = await NotificationModel.getByUserId(user.id)
+    const { data: notifications, error } = await NotificationRepository.getByUserId(user.id)
 
     if (error) {
       return NextResponse.json(

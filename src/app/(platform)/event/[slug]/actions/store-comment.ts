@@ -1,11 +1,11 @@
 'use server'
 
-import { CommentModel } from '@/lib/db/comments'
-import { UserModel } from '@/lib/db/users'
+import { CommentRepository } from '@/lib/db/comment'
+import { UserRepository } from '@/lib/db/user'
 
 export async function storeCommentAction(eventId: string, formData: FormData) {
   try {
-    const user = await UserModel.getCurrentUser()
+    const user = await UserRepository.getCurrentUser()
     if (!user) {
       return { error: 'Unauthenticated.' }
     }
@@ -21,7 +21,7 @@ export async function storeCommentAction(eventId: string, formData: FormData) {
       return { error: 'Comment is too long (max 2000 characters).' }
     }
 
-    const { data: newComment, error: errorInsert } = await CommentModel.store(user.id, eventId, content, parent_comment_id)
+    const { data: newComment, error: errorInsert } = await CommentRepository.store(user.id, eventId, content, parent_comment_id)
     if (!newComment || errorInsert) {
       return { error: 'Failed to create comment.' }
     }

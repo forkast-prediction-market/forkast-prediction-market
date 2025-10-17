@@ -1,16 +1,16 @@
 'use server'
 
-import { CommentModel } from '@/lib/db/comments'
-import { UserModel } from '@/lib/db/users'
+import { CommentRepository } from '@/lib/db/comment'
+import { UserRepository } from '@/lib/db/user'
 
 export async function deleteCommentAction(eventId: string, commentId: string) {
   try {
-    const user = await UserModel.getCurrentUser()
+    const user = await UserRepository.getCurrentUser()
     if (!user) {
       return { error: 'Authentication required' }
     }
 
-    const { error: deleteError } = await CommentModel.delete({ eventId, userId: user.id, commentId })
+    const { error: deleteError } = await CommentRepository.delete({ eventId, userId: user.id, commentId })
     if (deleteError) {
       return { error: 'Failed to delete comment' }
     }
