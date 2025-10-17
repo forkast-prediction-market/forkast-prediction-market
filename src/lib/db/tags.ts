@@ -9,11 +9,22 @@ export const TagModel = {
     const query = supabaseAdmin
       .from('tags')
       .select(`
-      name,
-      slug,
-      childs:tags!parent_tag_id(name, slug)
-    `)
+        id,
+        name,
+        slug,
+        is_hidden,
+        is_main_category,
+        display_order,
+        childs:tags!parent_tag_id(
+          id,
+          name,
+          slug,
+          is_hidden,
+          is_main_category
+        )
+      `)
       .eq('is_main_category', true)
+      .eq('is_hidden', false)
       .order('display_order', { ascending: true })
       .order('name', { ascending: true })
 
@@ -23,16 +34,17 @@ export const TagModel = {
       return { data, error, globalChilds: [] }
     }
 
-    const mainSlugs = data.map(tag => tag.slug)
+    const mainVisibleTags = data.filter(tag => !tag.is_hidden)
+    const mainSlugs = mainVisibleTags.map(tag => tag.slug)
     const mainSlugSet = new Set(mainSlugs)
 
     const { data: subcategories, error: viewError } = await supabaseAdmin
       .from('v_main_tag_subcategories')
-      .select('main_tag_slug, sub_tag_name, sub_tag_slug, active_markets_count')
+      .select('main_tag_slug, sub_tag_name, sub_tag_slug, active_markets_count, sub_tag_is_hidden, main_tag_is_hidden')
       .in('main_tag_slug', mainSlugs)
 
     if (viewError || !subcategories) {
-      return { data, error: viewError, globalChilds: [] }
+      return { data: mainVisibleTags, error: viewError, globalChilds: [] }
     }
 
     const grouped = new Map<string, { name: string, slug: string, count: number }[]>()
@@ -44,6 +56,8 @@ export const TagModel = {
         !subtag.sub_tag_slug
         || mainSlugSet.has(subtag.sub_tag_slug)
         || EXCLUDED_SUB_SLUGS.has(subtag.sub_tag_slug)
+        || subtag.sub_tag_is_hidden
+        || subtag.main_tag_is_hidden
       ) {
         continue
       }
@@ -89,7 +103,7 @@ export const TagModel = {
       })
     }
 
-    const enhanced = data.map(tag => ({
+    const enhanced = mainVisibleTags.map(tag => ({
       ...tag,
       childs: (grouped.get(tag.slug) ?? [])
         .filter(child => bestMainBySubSlug.get(child.slug)?.mainSlug === tag.slug)

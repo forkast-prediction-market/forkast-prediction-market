@@ -1,26 +1,27 @@
 BEGIN;
 
 -- ============================================================
--- TAG SUBCATEGORIES VIEW - Enhanced Tag Relationships
+-- TAGS VISIBILITY FLAG
 -- ============================================================
--- Views: v_main_tag_subcategories
--- Dependencies: tags, event_tags, markets (from events migration)
--- Business Logic: Dynamic subcategory counts per main category with market activity
+-- Adds new is_hidden flag to control visibility of categories
 -- ============================================================
 
--- View to expose dynamic subcategory counts per main category
+ALTER TABLE public.tags
+  ADD COLUMN IF NOT EXISTS is_hidden BOOLEAN NOT NULL DEFAULT FALSE;
+
+-- Refresh tag subcategory view to account for visibility flag
 CREATE OR REPLACE VIEW public.v_main_tag_subcategories AS
 SELECT main_tag.id                    AS main_tag_id,
        main_tag.slug                  AS main_tag_slug,
        main_tag.name                  AS main_tag_name,
+       main_tag.is_hidden             AS main_tag_is_hidden,
        sub_tag.id                     AS sub_tag_id,
        sub_tag.name                   AS sub_tag_name,
        sub_tag.slug                   AS sub_tag_slug,
        sub_tag.is_main_category       AS sub_tag_is_main_category,
+       sub_tag.is_hidden              AS sub_tag_is_hidden,
        COUNT(DISTINCT m.condition_id) AS active_markets_count,
-       MAX(m.updated_at)              AS last_market_activity_at,
-       main_tag.is_hidden             AS main_tag_is_hidden,
-       sub_tag.is_hidden              AS sub_tag_is_hidden
+       MAX(m.updated_at)              AS last_market_activity_at
 FROM public.tags AS main_tag
        JOIN public.event_tags AS et_main
             ON et_main.tag_id = main_tag.id
@@ -40,11 +41,11 @@ WHERE main_tag.is_main_category = TRUE
 GROUP BY main_tag.id,
          main_tag.slug,
          main_tag.name,
+         main_tag.is_hidden,
          sub_tag.id,
          sub_tag.name,
          sub_tag.slug,
          sub_tag.is_main_category,
-         main_tag.is_hidden,
          sub_tag.is_hidden;
 
 ALTER VIEW public.v_main_tag_subcategories

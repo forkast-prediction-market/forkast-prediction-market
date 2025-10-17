@@ -25,6 +25,8 @@ interface DataTableProps<TData, TValue> {
   enableColumnVisibility?: boolean
   isLoading?: boolean
   error?: string | null
+  emptyMessage?: string
+  emptyDescription?: string
   onRetry?: () => void
   // Server-side state handlers
   search: string
@@ -48,6 +50,8 @@ export function DataTable<TData, TValue>({
   enableColumnVisibility = true,
   isLoading = false,
   error = null,
+  emptyMessage = 'No entries found',
+  emptyDescription = 'There are no entries to display yet.',
   onRetry,
   search,
   onSearchChange,
@@ -247,8 +251,8 @@ export function DataTable<TData, TValue>({
                                     />
                                   </svg>
                                 </div>
-                                <h3 className="mb-1 text-sm font-medium text-foreground">No users found</h3>
-                                <p className="text-xs text-muted-foreground">There are no users in the system yet.</p>
+                                <h3 className="mb-1 text-sm font-medium text-foreground">{emptyMessage}</h3>
+                                <p className="text-xs text-muted-foreground">{emptyDescription}</p>
                               </div>
                             )
                           : (
