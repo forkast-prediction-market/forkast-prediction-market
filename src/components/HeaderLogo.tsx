@@ -8,7 +8,7 @@ export default async function HeaderLogo() {
 
   return (
     <Link
-      href="/public"
+      href="/"
       className="flex shrink-0 items-center gap-2 font-semibold text-foreground transition-opacity hover:opacity-80"
     >
       <div
