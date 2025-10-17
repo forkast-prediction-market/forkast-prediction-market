@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { use, useState } from 'react'
 import { toast } from 'sonner'
 import EventBookmark from '@/app/(platform)/event/[slug]/_components/EventBookmark'
-import { OpenCardContext } from '@/components/event/EventOpenCardContext'
+import { OpenCardContext } from '@/components/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { NewBadge } from '@/components/ui/new-badge'
@@ -55,9 +55,7 @@ export default function EventCard({ event }: EventCardProps) {
     return cleaned
   }
 
-  // Use external state control for opening/closing
   const isInTradingMode = isOpen && selectedOutcome
-
   const isBinaryMarket = event.markets.length === 1
   const yesOutcome = event.markets[0].outcomes[0]
   const noOutcome = event.markets[0].outcomes[1]

@@ -2,7 +2,7 @@
 
 import { SearchIcon } from 'lucide-react'
 import { useEffect, useRef } from 'react'
-import { SearchResults } from '@/components/layout/SearchResults'
+import { SearchResults } from '@/components/SearchResults'
 import { Input } from '@/components/ui/input'
 import { useSearch } from '@/hooks/useSearch'
 

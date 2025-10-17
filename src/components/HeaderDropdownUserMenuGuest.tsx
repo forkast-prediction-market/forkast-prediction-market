@@ -1,7 +1,7 @@
 import { useAppKit } from '@reown/appkit/react'
 import { MenuIcon } from 'lucide-react'
 import Link from 'next/link'
-import ThemeSelector from '@/components/layout/ThemeSelector'
+import ThemeSelector from '@/components/ThemeSelector'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -33,7 +33,7 @@ export default function HeaderDropdownUserMenuGuest() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>
-          <Link href="/">Rewards</Link>
+          <Link href="/public">Rewards</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/docs" data-testid="header-docs-link">Documentation</Link>

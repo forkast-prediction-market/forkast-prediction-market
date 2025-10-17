@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import NavigationTabs from '@/components/layout/NavigationTabs'
+import NavigationTabs from '@/components/NavigationTabs'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TagRepository } from '@/lib/db/tag'
 

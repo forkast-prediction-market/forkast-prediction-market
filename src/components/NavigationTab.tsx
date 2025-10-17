@@ -4,8 +4,8 @@ import type { Route } from 'next'
 import { TrendingUpIcon } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import SubNavigationTabs from '@/components/layout/SubNavigationTabs'
-import { Teleport } from '@/components/layout/Teleport'
+import SubNavigationTabs from '@/components/SubNavigationTabs'
+import { Teleport } from '@/components/Teleport'
 
 interface NavigationTabProps {
   tag: {

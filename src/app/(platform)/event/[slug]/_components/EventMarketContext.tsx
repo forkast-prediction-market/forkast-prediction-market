@@ -1,7 +1,7 @@
 import type { Event } from '@/types'
 import { LoaderIcon, SparklesIcon } from 'lucide-react'
 import { useMemo, useState, useTransition } from 'react'
-import { generateMarketContextAction } from '@/app/(platform)/event/[slug]/actions/generate-market-context'
+import { generateMarketContextAction } from '@/app/(platform)/event/[slug]/_actions/generate-market-context'
 import { cn } from '@/lib/utils'
 import { useOrder } from '@/stores/useOrder'
 

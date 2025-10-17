@@ -2,8 +2,7 @@ import { useDisconnect } from '@reown/appkit-controllers/react'
 import { ChevronDownIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import ThemeSelector from '@/components/layout/ThemeSelector'
-import UserInfoSection from '@/components/layout/UserInfoSection'
+import ThemeSelector from '@/components/ThemeSelector'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -12,6 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import UserInfoSection from '@/components/UserInfoSection'
 import { useUser } from '@/stores/useUser'
 
 export default function HeaderDropdownUserMenuAuth() {
