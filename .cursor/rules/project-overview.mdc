@@ -45,7 +45,7 @@ These rules are designed to help the AI assistant understand and interact with t
   - `public/`: Static assets like images and fonts.
 - **API Routes (`src/app/api/`):** Follow Next.js API route conventions for backend logic.
   - `src/api/auth/[...all]/route.ts`: Authentication routes using `better-auth`.
-  - `src/(platform)/api/events/[slug]/related/route.ts`: API for fetching related events.
+  - `src/app/(platform)/api/events/[slug]/related/route.ts`: API for fetching related events.
 - **Database Interactions:** Refer to `src/lib/db/` for database query patterns.
 - **Naming Conventions:** Adhere to existing naming conventions for files, components, variables, and functions (e.g., PascalCase for components, camelCase for variables/functions).
 
