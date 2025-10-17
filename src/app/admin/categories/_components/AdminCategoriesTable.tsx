@@ -1,14 +1,17 @@
 'use client'
 
 import type { AdminCategoryRow } from '@/hooks/useAdminCategories'
-import { useCallback, useMemo } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { useCallback, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { DataTable } from '@/app/admin/_components/DataTable'
 import { updateCategoryAction } from '@/app/admin/categories/_actions/update-category'
 import { createCategoryColumns } from '@/app/admin/categories/_components/columns'
-import { useCategoryActionState } from '@/hooks/useActionState'
 import { useAdminCategoriesTable } from '@/hooks/useAdminCategories'
 
 export default function AdminCategoriesTable() {
+  const queryClient = useQueryClient()
+
   const {
     categories,
     totalCount,
@@ -26,36 +29,53 @@ export default function AdminCategoriesTable() {
     handlePageSizeChange,
   } = useAdminCategoriesTable()
 
-  const { executeToggleAction, isPending } = useCategoryActionState()
+  const [pendingMainId, setPendingMainId] = useState<number | null>(null)
+  const [pendingHiddenId, setPendingHiddenId] = useState<number | null>(null)
 
   const handleToggleMain = useCallback(async (category: AdminCategoryRow, checked: boolean) => {
-    await executeToggleAction(
-      category,
-      { is_main_category: checked },
-      () => updateCategoryAction({
-        id: category.id,
-        is_main_category: checked,
-      }),
-    )
-  }, [executeToggleAction])
+    setPendingMainId(category.id)
+
+    const result = await updateCategoryAction({
+      id: category.id,
+      is_main_category: checked,
+    })
+
+    if (result.success) {
+      toast.success(`${category.name} ${checked ? 'is now shown as a main category.' : 'is no longer marked as main.'}`)
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] })
+    }
+    else {
+      toast.error(result.error || 'Failed to update category')
+    }
+
+    setPendingMainId(null)
+  }, [queryClient])
 
   const handleToggleHidden = useCallback(async (category: AdminCategoryRow, checked: boolean) => {
-    await executeToggleAction(
-      category,
-      { is_hidden: checked },
-      () => updateCategoryAction({
-        id: category.id,
-        is_hidden: checked,
-      }),
-    )
-  }, [executeToggleAction])
+    setPendingHiddenId(category.id)
+
+    const result = await updateCategoryAction({
+      id: category.id,
+      is_hidden: checked,
+    })
+
+    if (result.success) {
+      toast.success(`${category.name} is now ${checked ? 'hidden' : 'visible'} on the site.`)
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] })
+    }
+    else {
+      toast.error(result.error || 'Failed to update category')
+    }
+
+    setPendingHiddenId(null)
+  }, [queryClient])
 
   const columns = useMemo(() => createCategoryColumns({
     onToggleMain: handleToggleMain,
     onToggleHidden: handleToggleHidden,
-    isUpdatingMain: (id: number) => isPending(id),
-    isUpdatingHidden: (id: number) => isPending(id),
-  }), [handleToggleHidden, handleToggleMain, isPending])
+    isUpdatingMain: id => pendingMainId === id,
+    isUpdatingHidden: id => pendingHiddenId === id,
+  }), [handleToggleHidden, handleToggleMain, pendingHiddenId, pendingMainId])
 
   function handleSortChangeWithTranslation(column: string | null, order: 'asc' | 'desc' | null) {
     if (column === null || order === null) {

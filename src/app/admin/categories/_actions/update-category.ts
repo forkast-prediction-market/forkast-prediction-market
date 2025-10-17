@@ -5,7 +5,6 @@ import { z } from 'zod'
 import { TagRepository } from '@/lib/db/tag'
 import { UserRepository } from '@/lib/db/user'
 
-// Input validation schema
 const UpdateCategoryInputSchema = z.object({
   id: z.number().int().positive('Category ID must be a positive integer'),
   is_main_category: z.boolean().optional(),
@@ -17,7 +16,6 @@ const UpdateCategoryInputSchema = z.object({
   },
 )
 
-// Input and result types
 export interface UpdateCategoryInput {
   id: number
   is_main_category?: boolean
@@ -43,20 +41,16 @@ export interface UpdateCategoryResult {
   error?: string
 }
 
-/**
- * Server action to update category properties (is_main_category, is_hidden)
- * Requires admin authentication and validates input using Zod
- */
 export async function updateCategoryAction(
   input: UpdateCategoryInput,
 ): Promise<UpdateCategoryResult> {
   try {
-    // Validate input
     const validationResult = UpdateCategoryInputSchema.safeParse(input)
     if (!validationResult.success) {
       const errorMessage = validationResult.error.issues
         .map((err: any) => `${err.path.join('.')}: ${err.message}`)
         .join(', ')
+
       return {
         success: false,
         error: `Validation error: ${errorMessage}`,
@@ -65,7 +59,6 @@ export async function updateCategoryAction(
 
     const { id, is_main_category, is_hidden } = validationResult.data
 
-    // Check authentication and admin privileges
     const currentUser = await UserRepository.getCurrentUser()
     if (!currentUser || !currentUser.is_admin) {
       return {
@@ -74,7 +67,6 @@ export async function updateCategoryAction(
       }
     }
 
-    // Prepare updates object
     const updates: { is_main_category?: boolean, is_hidden?: boolean } = {}
     if (is_main_category !== undefined) {
       updates.is_main_category = is_main_category
@@ -83,7 +75,6 @@ export async function updateCategoryAction(
       updates.is_hidden = is_hidden
     }
 
-    // Update category in database
     const { data, error } = await TagRepository.updateTagById(id, updates)
 
     if (error || !data) {
@@ -94,7 +85,6 @@ export async function updateCategoryAction(
       }
     }
 
-    // Transform the response to match the expected format
     const { parent, ...rest } = data
     const transformedData = {
       ...rest,
@@ -102,7 +92,6 @@ export async function updateCategoryAction(
       parent_slug: parent?.slug ?? null,
     }
 
-    // Revalidate relevant paths
     revalidatePath('/admin/categories')
     revalidatePath('/')
 
