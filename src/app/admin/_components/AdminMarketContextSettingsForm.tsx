@@ -70,11 +70,7 @@ export default function AdminMarketContextSettingsForm({
 
   useEffect(() => {
     queueMicrotask(() => {
-      setModelOptions((previous) => {
-        const previousIds = previous.map(model => model.id).join('|')
-        const nextIds = models.map(model => model.id).join('|')
-        return previousIds === nextIds ? previous : models
-      })
+      setModelOptions(models)
     })
   }, [models])
 
