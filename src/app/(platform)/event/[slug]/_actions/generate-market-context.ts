@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import { generateMarketContext } from '@/lib/ai/market-context'
-import { isOpenRouterConfigured } from '@/lib/ai/openrouter'
+import { loadMarketContextSettings } from '@/lib/ai/market-context-config'
 import { EventRepository } from '@/lib/db/event'
 
 const GenerateMarketContextSchema = z.object({
@@ -13,7 +13,8 @@ const GenerateMarketContextSchema = z.object({
 type GenerateMarketContextInput = z.infer<typeof GenerateMarketContextSchema>
 
 export async function generateMarketContextAction(input: GenerateMarketContextInput) {
-  if (!isOpenRouterConfigured()) {
+  const settings = await loadMarketContextSettings()
+  if (!settings.enabled || !settings.apiKey) {
     return { error: 'Market context generation is not configured.' }
   }
 
@@ -38,7 +39,7 @@ export async function generateMarketContextAction(input: GenerateMarketContextIn
       return { error: 'No markets available for this event.' }
     }
 
-    const context = await generateMarketContext(event, market)
+    const context = await generateMarketContext(event, market, settings)
     return { context }
   }
   catch (error) {

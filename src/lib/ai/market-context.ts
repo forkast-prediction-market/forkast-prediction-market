@@ -1,5 +1,7 @@
+import type { MarketContextSettings } from '@/lib/ai/market-context-config'
 import type { OpenRouterMessage } from '@/lib/ai/openrouter'
 import type { Event, Market, Outcome } from '@/types'
+import { loadMarketContextSettings } from '@/lib/ai/market-context-config'
 import { requestOpenRouterCompletion, sanitizeForPrompt } from '@/lib/ai/openrouter'
 
 function formatPercent(value: number | null | undefined, digits = 1) {
@@ -42,45 +44,80 @@ function formatOutcome(outcome: Outcome) {
     ? formatCurrency(outcome.total_volume, 2)
     : 'volume unknown'
 
-  return `- ${outcome.outcome_text}: ${price}, lifetime volume ${totalVolume}`
+  return `- ${sanitizeForPrompt(outcome.outcome_text)}: ${price}, lifetime volume ${totalVolume}`
 }
 
-function buildStructuredEventData(event: Event, market: Market) {
+function resolveEstimatedEndDate(market: Market) {
+  const metadata = (market.metadata ?? {}) as Record<string, any>
+
+  const rawCandidate = (
+    metadata.estimated_end_date
+    || metadata.estimatedEndDate
+    || metadata.end_date
+    || metadata.endDate
+    || metadata.expiry
+    || metadata.expiry_date
+    || metadata.expires_at
+    || metadata.resolution_date
+    || metadata.close_date
+    || metadata.closeDate
+  )
+
+  const candidates = [
+    typeof rawCandidate === 'string' ? rawCandidate : undefined,
+    typeof metadata.end_timestamp === 'string' ? metadata.end_timestamp : undefined,
+    market.condition?.resolved_at,
+  ].filter(Boolean) as string[]
+
+  for (const candidate of candidates) {
+    const date = new Date(candidate)
+    if (!Number.isNaN(date.getTime())) {
+      return date.toISOString()
+    }
+  }
+
+  return 'Not provided'
+}
+
+function buildMarketContextVariables(event: Event, market: Market) {
   const outcomes = market.outcomes?.map(formatOutcome).join('\n') || '- No outcome information provided.'
+  const estimatedEndDate = resolveEstimatedEndDate(market)
 
-  const otherMarkets = event.markets
-    .filter(candidate => candidate.condition_id !== market.condition_id)
-    .slice(0, 3)
-    .map((candidate) => {
-      const probability = formatPercent(candidate.probability)
-      const price = formatSharePrice(candidate.price)
-      const vol = formatCurrency(candidate.total_volume, 2)
-      return `- ${candidate.title} · implied probability ${probability} · price ${price} · total volume ${vol}`
-    })
-    .join('\n') || '- No other active markets recorded.'
-
-  return [
-    `Event title: ${sanitizeForPrompt(event.title)}`,
-    `Event description: ${sanitizeForPrompt(event.description)}`,
-    `Main tag: ${sanitizeForPrompt(event.main_tag)}`,
-    `Additional tags: ${event.tags.length ? event.tags.join(', ') : 'none reported'}`,
-    `Creator: ${sanitizeForPrompt(event.creator)}`,
-    `Created at: ${sanitizeForPrompt(event.created_at)}`,
-    `Updated at: ${sanitizeForPrompt(event.updated_at)}`,
-    `Focused market title: ${sanitizeForPrompt(market.title)}`,
-    `Market slug: ${sanitizeForPrompt(market.slug)}`,
-    `Market oracle: ${sanitizeForPrompt(market.condition?.oracle)}`,
-    `Implied probability: ${formatPercent(market.probability)}`,
-    `Reference price per YES share: ${formatSharePrice(market.price)}`,
-    `24h volume: ${formatCurrency(market.current_volume_24h, 2)}`,
-    `Lifetime volume: ${formatCurrency(market.total_volume, 2)}`,
-    `Outcome snapshot:\n${outcomes}`,
-    `Other markets under the same event:\n${otherMarkets}`,
-  ].join('\n')
+  return {
+    'event-title': sanitizeForPrompt(event.title),
+    'event-description': sanitizeForPrompt(event.description),
+    'event-main-tag': sanitizeForPrompt(event.main_tag),
+    'event-creator': sanitizeForPrompt(event.creator),
+    'event-created-at': sanitizeForPrompt(event.created_at),
+    'market-estimated-end-date': sanitizeForPrompt(estimatedEndDate),
+    'market-title': sanitizeForPrompt(market.title),
+    'market-probability': formatPercent(market.probability),
+    'market-price': formatSharePrice(market.price),
+    'market-volume-24h': formatCurrency(market.current_volume_24h, 2),
+    'market-volume-total': formatCurrency(market.total_volume, 2),
+    'market-outcomes': outcomes,
+  }
 }
 
-export async function generateMarketContext(event: Event, market: Market) {
-  const structuredData = buildStructuredEventData(event, market)
+function applyPromptTemplate(template: string, variables: Record<string, string>) {
+  return template.replace(/\[([a-z0-9-]+)\]/gi, (match, key) => {
+    const normalized = key.toLowerCase()
+    return Object.prototype.hasOwnProperty.call(variables, normalized)
+      ? variables[normalized]
+      : match
+  })
+}
+
+export async function generateMarketContext(event: Event, market: Market, providedSettings?: MarketContextSettings) {
+  const settings = providedSettings ?? await loadMarketContextSettings()
+  const { prompt, model, apiKey } = settings
+
+  if (!apiKey) {
+    throw new Error('OpenRouter API key is not configured.')
+  }
+
+  const variables = buildMarketContextVariables(event, market)
+  const userPrompt = applyPromptTemplate(prompt, variables)
 
   const systemMessage = [
     'You are a research assistant specializing in prediction markets.',
@@ -89,26 +126,18 @@ export async function generateMarketContext(event: Event, market: Market) {
     'Use neutral, professional tone. Avoid marketing language.',
   ].join(' ')
 
-  const instructions = [
-    'Using the structured market data below, produce a narrative context similar to high-quality prediction market recaps.',
-    'Combine up to three short paragraphs (each 2-4 sentences) that cover:',
-    '1. Current market positioning and key probability/volume metrics.',
-    '2. Recent catalysts, news, or narratives that could influence outcomes (leverage web browsing if your model supports it).',
-    '3. Competitive dynamics, risk factors, or what to watch next for traders.',
-    'Whenever citing probabilities or monetary figures, quote the numbers explicitly.',
-    'If external research is performed, integrate it fluidly without citing URLs.',
-    'Never return bullet points—write clean paragraphs.',
-  ].join('\n')
-
   const messages: OpenRouterMessage[] = [
     { role: 'system', content: systemMessage },
     {
       role: 'user',
-      content: `${instructions}\n\nStructured data:\n${structuredData}`,
+      content: userPrompt,
     },
   ]
 
-  const raw = await requestOpenRouterCompletion(messages)
+  const raw = await requestOpenRouterCompletion(messages, {
+    model,
+    apiKey,
+  })
   return normalizeModelOutput(raw)
 }
 

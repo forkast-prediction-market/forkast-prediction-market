@@ -16,22 +16,22 @@ import { Steps, Step } from 'fumadocs-ui/components/steps'
   <Step>
     ### Create an OpenRouter API key
 
-    Visit <a href="https://openrouter.ai/settings/keys" target="_blank">OpenRouter -> API Keys</a>, generate a key, and copy it. Choose the model you plan to use (we recommend `perplexity/llama-3.1-sonar-small-128k-online` for live context).
+    Visit <a href="https://openrouter.ai/settings/keys" target="_blank">OpenRouter -> API Keys</a>, generate a key, and copy it. Models that support live browsing (for example `perplexity/sonar`) deliver richer context.
   </Step>
   <Step>
-    ### Fill the environment variables
+    ### Configure it in the admin panel
 
-    Add `OPENROUTER_API_KEY` with the generated key and `OPENROUTER_MODEL` with the model identifier. Import an updated `.env` or edit the values in Vercel.
+    Navigate to **Admin → Market Context**, paste the API key, and flip the toggle on. The settings are stored in the `settings` table so every deploy stays in sync.
   </Step>
   <Step>
-    ### Deploy with the new secrets
+    ### Pick a model (optional)
 
-    Deploy once the secrets are stored so the backend can read them. If your first deploy already includes the values, no additional action is needed.
+    Use the model dropdown to select a specific OpenRouter model or leave it on **Let OpenRouter decide** to allow the provider to pick the best option. Saving the form also lets you refine the prompt template.
   </Step>
   <Step>
     ### Enable the Market Context generator
 
-    Once the API key is stored, the **Market Context generator** entry becomes visible in the interface automatically - no extra toggle required.
+    With the toggle on and the key stored, the generator becomes available in event pages. Disable the toggle anytime to suspend the integration without losing your key.
   </Step>
 </Steps>
 

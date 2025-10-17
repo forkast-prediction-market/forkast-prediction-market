@@ -14,6 +14,7 @@ interface AdminMenuItem {
 const adminMenuItems: AdminMenuItem[] = [
   { id: 'users', label: 'Users', href: '/admin/users' as Route },
   { id: 'affiliate', label: 'Affiliate Settings', href: '/admin/affiliate' as Route },
+  { id: 'market-context', label: 'Market Context', href: '/admin/market-context' as Route },
 ]
 
 export default function AdminSidebar() {

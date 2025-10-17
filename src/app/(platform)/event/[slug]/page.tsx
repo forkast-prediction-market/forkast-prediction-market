@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import EventContent from '@/app/(platform)/event/[slug]/_components/EventContent'
+import { loadMarketContextSettings } from '@/lib/ai/market-context-config'
 import { EventRepository } from '@/lib/db/event'
 import { UserRepository } from '@/lib/db/user'
 
@@ -16,7 +17,8 @@ export async function generateMetadata({ params }: PageProps<'/event/[slug]'>): 
 export default async function EventPage({ params }: PageProps<'/event/[slug]'>) {
   const user = await UserRepository.getCurrentUser()
   const { slug } = await params
-  const marketContextEnabled = Boolean(process.env.OPENROUTER_API_KEY)
+  const marketContextSettings = await loadMarketContextSettings()
+  const marketContextEnabled = marketContextSettings.enabled && Boolean(marketContextSettings.apiKey)
 
   try {
     const { data: event, error } = await EventRepository.getEventBySlug(slug, user?.id ?? '')
