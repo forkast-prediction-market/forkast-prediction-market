@@ -1,9 +1,9 @@
 import { redirect } from 'next/navigation'
 import AdminCategoriesTable from '@/app/admin/categories/_components/AdminCategoriesTable'
-import { UserModel } from '@/lib/db/users'
+import { UserRepository } from '@/lib/db/user'
 
 export default async function AdminCategoriesPage() {
-  const currentUser = await UserModel.getCurrentUser()
+  const currentUser = await UserRepository.getCurrentUser()
   if (!currentUser || !currentUser.is_admin) {
     redirect('/')
   }

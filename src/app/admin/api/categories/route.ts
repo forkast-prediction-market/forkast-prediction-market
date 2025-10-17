@@ -1,11 +1,11 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { AdminTagModel } from '@/lib/db/admin-tags'
-import { UserModel } from '@/lib/db/users'
+import { TagRepository } from '@/lib/db/tag'
+import { UserRepository } from '@/lib/db/user'
 
 export async function GET(request: NextRequest) {
   try {
-    const currentUser = await UserModel.getCurrentUser()
+    const currentUser = await UserRepository.getCurrentUser()
     if (!currentUser || !currentUser.is_admin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     const sortByParam = searchParams.get('sortBy') as 'name' | 'slug' | 'display_order' | 'created_at' | 'updated_at' | null
     const sortOrderParam = searchParams.get('sortOrder') as 'asc' | 'desc' | null
 
-    const { data, error, totalCount } = await AdminTagModel.listTags({
+    const { data, error, totalCount } = await TagRepository.listTags({
       limit: Number.isNaN(limit) ? 50 : limit,
       offset: Number.isNaN(offset) ? 0 : offset,
       search,
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const currentUser = await UserModel.getCurrentUser()
+    const currentUser = await UserRepository.getCurrentUser()
     if (!currentUser || !currentUser.is_admin) {
       return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
     }
@@ -79,7 +79,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'No valid fields supplied' }, { status: 400 })
     }
 
-    const { data, error } = await AdminTagModel.updateTagById(id, updates)
+    const { data, error } = await TagRepository.updateTagById(id, updates)
     if (error || !data) {
       console.error('Error updating admin tag:', error)
       return NextResponse.json({ error: 'Failed to update category' }, { status: 500 })
