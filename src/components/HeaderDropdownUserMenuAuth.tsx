@@ -63,7 +63,7 @@ export default function HeaderDropdownUserMenuAuth() {
         )}
 
         <DropdownMenuItem asChild>
-          <Link href="/public?bookmarked=true">Watchlist</Link>
+          <Link href="/?bookmarked=true">Watchlist</Link>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
