@@ -1,8 +1,7 @@
-import { polygonAmoy } from '@reown/appkit/networks'
 import { useAppKitAccount } from '@reown/appkit/react'
 import { useEffect, useMemo, useState } from 'react'
 import { createPublicClient, getContract, http } from 'viem'
-import { networks } from '@/lib/appkit'
+import { defaultNetwork } from '@/lib/appkit'
 import { useUser } from '@/stores/useUser'
 
 interface Balance {
@@ -33,14 +32,14 @@ export function useBalance() {
   const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   const rpcUrl = useMemo(
-    () => networks[0].rpcUrls.default.http[0],
+    () => defaultNetwork.rpcUrls.default.http[0],
     [],
   )
 
   const client = useMemo(
     () =>
       createPublicClient({
-        chain: polygonAmoy,
+        chain: defaultNetwork,
         transport: http(rpcUrl),
       }),
     [rpcUrl],

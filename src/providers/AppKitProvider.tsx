@@ -4,13 +4,12 @@ import type { SIWECreateMessageArgs, SIWESession, SIWEVerifyMessageArgs } from '
 import type { Route } from 'next'
 import type { ReactNode } from 'react'
 import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/appkit-siwe'
-import { polygonAmoy } from '@reown/appkit/networks'
 import { createAppKit } from '@reown/appkit/react'
 import { generateRandomString } from 'better-auth/crypto'
 import { useTheme } from 'next-themes'
 import { redirect } from 'next/navigation'
 import { WagmiProvider } from 'wagmi'
-import { config, networks, projectId, wagmiAdapter } from '@/lib/appkit'
+import { defaultNetwork, networks, projectId, wagmiAdapter, wagmiConfig } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
@@ -33,7 +32,6 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       '--w3m-accent': 'var(--primary)',
     },
     networks,
-    defaultNetwork: networks[0],
     features: {
       analytics: process.env.NODE_ENV === 'production',
     },
@@ -42,7 +40,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       getMessageParams: async () => ({
         domain: new URL(process.env.NEXT_PUBLIC_SITE_URL!).host,
         uri: typeof window !== 'undefined' ? window.location.origin : '',
-        chains: [polygonAmoy.id],
+        chains: [defaultNetwork.id],
         statement: 'Please sign with your account',
       }),
       createMessage: ({ address, ...args }: SIWECreateMessageArgs) => formatMessage(args, address),
@@ -57,7 +55,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
           return {
             // @ts-expect-error address not defined in session type
             address: session.data?.user.address,
-            chainId: polygonAmoy.id,
+            chainId: defaultNetwork.id,
           } satisfies SIWESession
         }
         catch {
@@ -70,14 +68,14 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
 
           await authClient.siwe.nonce({
             walletAddress: address,
-            chainId: polygonAmoy.id,
+            chainId: defaultNetwork.id,
           })
 
           const { data } = await authClient.siwe.verify({
             message,
             signature,
             walletAddress: address,
-            chainId: polygonAmoy.id,
+            chainId: defaultNetwork.id,
           })
 
           return Boolean(data?.success)
@@ -111,7 +109,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
   })
 
   return (
-    <WagmiProvider config={config}>
+    <WagmiProvider config={wagmiConfig}>
       {children}
     </WagmiProvider>
   )

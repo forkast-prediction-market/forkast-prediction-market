@@ -8,7 +8,8 @@ if (!projectId) {
   throw new Error('NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID is not defined')
 }
 
-export const networks = [polygonAmoy] as [AppKitNetwork, ...AppKitNetwork[]]
+export const defaultNetwork = polygonAmoy
+export const networks = [defaultNetwork] as [AppKitNetwork, ...AppKitNetwork[]]
 
 export const wagmiAdapter = new WagmiAdapter({
   ssr: false,
@@ -16,4 +17,4 @@ export const wagmiAdapter = new WagmiAdapter({
   networks,
 })
 
-export const config = wagmiAdapter.wagmiConfig
+export const wagmiConfig = wagmiAdapter.wagmiConfig
