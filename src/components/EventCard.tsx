@@ -168,7 +168,7 @@ export default function EventCard({ event }: EventCardProps) {
     >
       <CardContent className="flex h-full flex-col p-3">
         {/* Unified Header */}
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex items-start justify-between">
           <Link href={`/event/${event.slug}`} className="flex flex-1 items-start gap-2 pr-2">
             {/* Creator Avatar */}
             <div
@@ -216,58 +216,54 @@ export default function EventCard({ event }: EventCardProps) {
                 </button>
               )
             : (
-                isBinaryMarket
-                && yesOutcome && (
-                  <div className="ml-auto flex flex-col items-center">
-                    {/* Semicircular Arc Progress */}
-                    <div className="relative flex flex-col items-center">
-                      <div className="relative">
-                        <svg
-                          width="56"
-                          height="36"
-                          viewBox="0 0 56 36"
-                          className="rotate-0 transform"
-                        >
-                          {/* Background arc */}
-                          <path
-                            d="M 6 30 A 22 22 0 0 1 50 30"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                            className="text-slate-200 dark:text-slate-600"
-                          />
-                          {/* Progress arc */}
-                          <path
-                            d="M 6 30 A 22 22 0 0 1 50 30"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                            strokeLinecap="round"
-                            className={`transition-all duration-300 ${
-                              Math.round(event.markets[0].probability) < 40
-                                ? 'text-no'
-                                : Math.round(event.markets[0].probability) === 50
-                                  ? 'text-slate-400'
-                                  : 'text-yes'
-                            }`}
-                            strokeDasharray={`${
-                              (Math.round(event.markets[0].probability) / 100) * 69.12
-                            } 69.12`}
-                            strokeDashoffset="0"
-                          />
-                        </svg>
-                        {/* Percentage number centered in arc */}
-                        <div className="absolute inset-0 flex items-center justify-center pt-2">
-                          <span className="text-xs font-bold text-slate-900 dark:text-slate-100">
-                            {Math.round(event.markets[0].probability)}
-                            %
-                          </span>
-                        </div>
+                isBinaryMarket && (
+                  <div className="relative -mt-3 flex flex-col items-center">
+                    <div className="relative">
+                      <svg
+                        width="72"
+                        height="52"
+                        viewBox="0 0 72 52"
+                        className="rotate-0 transform"
+                      >
+                        {/* Background arc */}
+                        <path
+                          d="M 6 46 A 30 30 0 0 1 66 46"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="5"
+                          className="text-slate-200 dark:text-slate-600"
+                        />
+                        {/* Progress arc */}
+                        <path
+                          d="M 6 46 A 30 30 0 0 1 66 46"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="5"
+                          strokeLinecap="round"
+                          className={`transition-all duration-300 ${
+                            Math.round(event.markets[0].probability) < 40
+                              ? 'text-no'
+                              : Math.round(event.markets[0].probability) === 50
+                                ? 'text-slate-400'
+                                : 'text-yes'
+                          }`}
+                          strokeDasharray={`${
+                            (Math.round(event.markets[0].probability) / 100) * 94.25
+                          } 94.25`}
+                          strokeDashoffset="0"
+                        />
+                      </svg>
+                      {/* Percentage number centered in arc */}
+                      <div className="absolute inset-0 flex items-center justify-center pt-4">
+                        <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                          {Math.round(event.markets[0].probability)}
+                          %
+                        </span>
                       </div>
-                      {/* "chance" text below arc - colado sem espaço */}
-                      <div className="-mt-1 text-[10px] text-slate-500 dark:text-slate-400">
-                        chance
-                      </div>
+                    </div>
+                    {/* "chance" text positioned close to the arc */}
+                    <div className="-mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+                      chance
                     </div>
                   </div>
                 )
