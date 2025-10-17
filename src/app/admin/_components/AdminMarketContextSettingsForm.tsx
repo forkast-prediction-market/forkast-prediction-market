@@ -69,17 +69,19 @@ export default function AdminMarketContextSettingsForm({
   }, [state.error, state.success])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
-    setModelOptions((previous) => {
-      const previousIds = previous.map(model => model.id).join('|')
-      const nextIds = models.map(model => model.id).join('|')
-      return previousIds === nextIds ? previous : models
+    queueMicrotask(() => {
+      setModelOptions((previous) => {
+        const previousIds = previous.map(model => model.id).join('|')
+        const nextIds = models.map(model => model.id).join('|')
+        return previousIds === nextIds ? previous : models
+      })
     })
   }, [models])
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
-    setModelsStateError(previous => (previous === modelsError ? previous : modelsError))
+    queueMicrotask(() => {
+      setModelsStateError(previous => (previous === modelsError ? previous : modelsError))
+    })
   }, [modelsError])
 
   function handleInsertVariable(key: string) {
@@ -211,7 +213,7 @@ export default function AdminMarketContextSettingsForm({
             onValueChange={handleModelChange}
             disabled={!modelDropdownEnabled || isPending}
           >
-            <SelectTrigger className="w-full max-w-md justify-between">
+            <SelectTrigger className="!h-12 w-full max-w-md justify-between">
               <SelectValue placeholder="Select a model" />
             </SelectTrigger>
             <SelectContent>
@@ -240,7 +242,7 @@ export default function AdminMarketContextSettingsForm({
             type="button"
             variant="secondary"
             size="icon"
-            className="shrink-0"
+            className="size-12 shrink-0"
             disabled={!trimmedApiKey || isPending || isRefreshingModels}
             onClick={handleRefreshModels}
             title="Refresh models"
