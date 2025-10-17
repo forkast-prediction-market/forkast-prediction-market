@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase'
 
-export const OrderModel = {
+export const OrderRepository = {
   async createOrder(args: {
     user_id: string
     condition_id: string

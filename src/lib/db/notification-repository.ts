@@ -3,7 +3,7 @@ import { unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export const NotificationModel = {
+export const NotificationRepository = {
   async getByUserId(userId: string) {
     'use cache'
     cacheTag(cacheTags.notifications(userId))

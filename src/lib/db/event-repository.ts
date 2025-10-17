@@ -13,7 +13,7 @@ interface ListEventsProps {
   offset?: number
 }
 
-export const EventModel = {
+export const EventRepository = {
   async listEvents({
     tag = 'trending',
     search = '',

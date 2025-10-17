@@ -2,7 +2,7 @@ import { revalidateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export const BookmarkModel = {
+export const BookmarkRepository = {
   async toggleBookmark(userId: string, eventId: string) {
     const { data: existing, error } = await supabaseAdmin
       .from('bookmarks')

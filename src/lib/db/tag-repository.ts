@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 const EXCLUDED_SUB_SLUGS = new Set(['hide-from-new'])
 
-export const TagModel = {
+export const TagRepository = {
   async getMainTags() {
     const query = supabaseAdmin
       .from('tags')
