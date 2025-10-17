@@ -12,10 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 
-interface Props {
-  userAddress: string
-}
-
 interface FetchUserActivityParams {
   pageParam: number
   userAddress: string
@@ -174,7 +170,11 @@ function ActivityItemComponent({ item }: { item: ActivityOrder }) {
   )
 }
 
-export default function PublicActivityList({ userAddress }: Props) {
+interface PublicActivityListProps {
+  userAddress: string
+}
+
+export default function PublicActivityList({ userAddress }: PublicActivityListProps) {
   const queryClient = useQueryClient()
   const parentRef = useRef<HTMLDivElement | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)

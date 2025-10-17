@@ -2,12 +2,12 @@ import { BarChart3Icon, SearchIcon, XIcon } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
-interface Props {
+interface EventsEmptyStateProps {
   tag: string
   searchQuery: string
 }
 
-export default function EventsEmptyState({ searchQuery, tag }: Props) {
+export default function EventsEmptyState({ searchQuery, tag }: EventsEmptyStateProps) {
   return (
     <div className="col-span-full py-12 text-center">
       <div className="mb-2 flex justify-center text-muted-foreground">

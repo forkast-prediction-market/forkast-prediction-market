@@ -1,6 +1,7 @@
 import type { Event } from '@/types'
 import { Clock3Icon } from 'lucide-react'
 import { NewBadge } from '@/components/ui/new-badge'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatDate, formatVolume, isMarketNew } from '@/lib/utils'
 
 interface EventMetaInformationProps {
@@ -11,7 +12,7 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
   const hasRecentMarket = event.markets.some(
     market => isMarketNew(market.created_at),
   )
-  const expiryTooltip = 'This is estimated end date. See rules below for specific resolution details.'
+  const expiryTooltip = 'This is estimated end date.<br>See rules below for specific resolution details.'
   const volumeLabel = `Volume ${formatVolume(event.markets[0].total_volume)}`
 
   return (
@@ -20,20 +21,22 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
         ? (
             <NewBadge
               variant="soft"
-              className="rounded-sm px-2 py-2"
+              className="rounded-sm p-2"
             />
           )
-        : (
-            <span>{volumeLabel}</span>
-          )}
+        : <span>{volumeLabel}</span>}
       {!hasRecentMarket && <span>•</span>}
-      <div
-        className="flex items-center gap-1"
-        title={expiryTooltip}
-      >
-        <Clock3Icon className="size-3.5 text-muted-foreground" strokeWidth={2.5} />
-        <span>{formatDate(new Date(event.created_at))}</span>
-      </div>
+      <Tooltip>
+        <TooltipTrigger>
+          <div className="flex items-center gap-1">
+            <Clock3Icon className="size-3.5 text-muted-foreground" strokeWidth={2.5} />
+            <span>{formatDate(new Date(event.created_at))}</span>
+          </div>
+        </TooltipTrigger>
+        <TooltipContent collisionPadding={20}>
+          <p dangerouslySetInnerHTML={{ __html: expiryTooltip! }} className="text-center" />
+        </TooltipContent>
+      </Tooltip>
     </div>
   )
 }

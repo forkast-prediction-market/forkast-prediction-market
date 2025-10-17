@@ -1,5 +1,5 @@
 import EventRelatedSkeleton from '@/app/(platform)/event/[slug]/_components/EventRelatedSkeleton'
-import { Teleport } from '@/components/layout/Teleport'
+import { Teleport } from '@/components/Teleport'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export default function Loading() {

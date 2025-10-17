@@ -2,7 +2,7 @@ import { unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export const SettingsModel = {
+export const SettingsRepository = {
   async getSettings() {
     'use cache'
     cacheTag(cacheTags.settings)

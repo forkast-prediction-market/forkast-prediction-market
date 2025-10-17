@@ -3,7 +3,7 @@
 import { MoveRightIcon } from 'lucide-react'
 import Image from 'next/image'
 
-interface Props {
+interface PortfolioPositionsTableProps {
   searchQuery: string
 }
 
@@ -21,7 +21,7 @@ interface Position {
 
 const mockPositions: Position[] = []
 
-export default function PortfolioPositionsTable({ searchQuery }: Props) {
+export default function PortfolioPositionsTable({ searchQuery }: PortfolioPositionsTableProps) {
   const filteredPositions = mockPositions.filter(position =>
     position.market.toLowerCase().includes(searchQuery.toLowerCase()),
   )

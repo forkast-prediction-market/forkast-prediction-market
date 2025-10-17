@@ -1,15 +1,15 @@
 import type { Event } from '@/types'
 import { TrendingDownIcon } from 'lucide-react'
 import { useState } from 'react'
-import PredictionChart from '@/components/charts/PredictionChart'
+import PredictionChart from '@/components/PredictionChart'
 import { cn, sanitizeSvg } from '@/lib/utils'
 import { useIsBinaryMarket, useYesPrice } from '@/stores/useOrder'
 
-interface Props {
+interface EventChartProps {
   event: Event
 }
 
-export default function EventChart({ event }: Props) {
+export default function EventChart({ event }: EventChartProps) {
   const yesPrice = useYesPrice()
   const isBinaryMarket = useIsBinaryMarket()
 
@@ -114,10 +114,9 @@ export default function EventChart({ event }: Props) {
               )}
         </div>
 
-        <div className="flex items-center gap-1 text-white opacity-40">
+        <div className="flex items-center gap-1 text-muted-foreground">
           <div
-            className="size-6"
-            style={{ filter: 'brightness(0) invert(1)' }}
+            className="size-6 [&_*]:fill-current [&_*]:stroke-current"
             dangerouslySetInnerHTML={{
               __html: sanitizeSvg(process.env.NEXT_PUBLIC_SITE_LOGO_SVG!),
             }}

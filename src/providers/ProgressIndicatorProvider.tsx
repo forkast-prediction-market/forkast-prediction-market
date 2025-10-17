@@ -1,8 +1,9 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { ProgressProvider } from '@bprogress/next/app'
 
-function ProgressIndicatorProvider({ children }: { children: React.ReactNode }) {
+function ProgressIndicatorProvider({ children }: { children: ReactNode }) {
   return (
     <ProgressProvider
       height="2px"

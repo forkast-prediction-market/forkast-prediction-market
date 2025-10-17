@@ -1,6 +1,6 @@
 import type { PublicProfile } from '@/types'
 import { NextResponse } from 'next/server'
-import { UserModel } from '@/lib/db/users'
+import { UserRepository } from '@/lib/db/user'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export async function GET(request: Request) {
@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { data, error } = await UserModel.listUsers({
+    const { data, error } = await UserRepository.listUsers({
       search: query,
       limit: 10,
       sortBy: 'username',

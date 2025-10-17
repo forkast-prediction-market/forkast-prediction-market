@@ -5,10 +5,6 @@ import PublicActivityList from '@/app/(platform)/[username]/_components/PublicAc
 import PublicPositionsEmpty from '@/app/(platform)/[username]/_components/PublicPositionsEmpty'
 import { cn, sanitizeSvg } from '@/lib/utils'
 
-interface Props {
-  userAddress: string
-}
-
 type TabType = 'positions' | 'activity'
 
 const tabs = [
@@ -16,7 +12,11 @@ const tabs = [
   { id: 'activity' as const, label: 'Activity' },
 ]
 
-export default function PublicProfileTabs({ userAddress }: Props) {
+interface PublicProfileTabsProps {
+  userAddress: string
+}
+
+export default function PublicProfileTabs({ userAddress }: PublicProfileTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('positions')
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })

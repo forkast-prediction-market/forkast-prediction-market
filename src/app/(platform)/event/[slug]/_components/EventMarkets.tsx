@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
-interface Props {
+interface EventMarketsProps {
   event: Event
 }
 
-export default function EventMarkets({ event }: Props) {
+export default function EventMarkets({ event }: EventMarketsProps) {
   const state = useOrder()
   const isBinaryMarket = useIsBinaryMarket()
 

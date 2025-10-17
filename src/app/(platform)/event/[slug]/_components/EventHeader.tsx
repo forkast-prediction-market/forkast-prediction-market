@@ -5,11 +5,11 @@ import EventBookmark from '@/app/(platform)/event/[slug]/_components/EventBookma
 import EventShare from '@/app/(platform)/event/[slug]/_components/EventShare'
 import { cn } from '@/lib/utils'
 
-interface Props {
+interface EventHeaderProps {
   event: Event
 }
 
-export default function EventHeader({ event }: Props) {
+export default function EventHeader({ event }: EventHeaderProps) {
   const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {

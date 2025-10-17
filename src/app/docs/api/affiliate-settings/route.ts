@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { SettingsModel } from '@/lib/db/settings'
+import { SettingsRepository } from '@/lib/db/settings'
 
 interface AffiliateSettingsResponse {
   tradeFeePercent: number
@@ -10,7 +10,7 @@ interface AffiliateSettingsResponse {
 
 export async function GET() {
   try {
-    const { data: settings, error } = await SettingsModel.getSettings()
+    const { data: settings, error } = await SettingsRepository.getSettings()
 
     if (error || !settings?.affiliate) {
       return NextResponse.json(
