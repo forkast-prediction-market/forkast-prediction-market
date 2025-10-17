@@ -117,6 +117,7 @@ CREATE OR REPLACE FUNCTION get_event_top_holders(
           )
   LANGUAGE SQL
   STABLE
+  SET search_path = public
 AS
 $$
 WITH event_orders AS (
