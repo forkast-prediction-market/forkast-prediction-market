@@ -19,38 +19,33 @@ These rules are designed to help the AI assistant understand and interact with t
 - **Frontend (Next.js 15, TypeScript, Tailwind CSS, shadcn):**
   - **Next.js App Router:** Adhere to Next.js 15 App Router conventions for routing, data fetching, and component organization.
   - **React 19:** Adhere to React 19 features and best practices.
-  - **TypeScript:** Always use TypeScript for type safety. Define interfaces and types (`src/types/`) clearly.
+  - **TypeScript:** Always use TypeScript for type safety. Colocate interfaces with components or define in types folder (`src/types/`) clearly if they must be shared.
   - **Tailwind CSS:** Utilize Tailwind CSS for styling. Avoid inline styles or custom CSS files unless absolutely necessary and justified.
   - **Shadcn:** Utilize shadcn components when needed, they live on `src/components/ui` and new ones can be added with `npx shadcn@latest add <component-name>`
   - **Responsive Design:** Ensure all UI changes are mobile-responsive, as it's a stated feature.
   - **Charting:** The `@visx` library is used for data visualization and charts.
-- **Blockchain & Web3 (Polygon, Solidity, Hardhat, Ethers.js, viem, wagmi):**
+- **Blockchain & Web3 (Polygon, viem, wagmi):**
   - **Smart Contracts:** Be mindful of the security and immutability aspects of smart contracts. When dealing with smart contract interactions, prioritize correctness and security.
-  - **Wallet Integration:** Wallet connection is handled by `reown/appkit` and `better-auth` libraries. Refer to `src/lib/auth-client.ts` or `src/providers/siwe.ts` for existing patterns. `ethers.js` is also used for general blockchain interactions.
+  - **Wallet Integration:** Wallet connection is handled by `reown/appkit` and `better-auth` libraries. Refer to `src/lib/auth-client.ts` or `src/providers/AppKitProvider.tsx` for existing patterns. `wagmi` is also used for general blockchain interactions.
 - **State Management (Zustand):** For client-side state, primarily use React Hooks and the Context API. For more complex global state, `Zustand` is used (e.g., `src/stores/useUser.ts`).
 - **Database (PostgreSQL & Supabase):** PostgreSQL is used as the primary database, with Supabase (`@supabase/supabase-js`) providing an interface for database interactions. Refer to `src/lib/db/` for database query patterns and `src/lib/supabase.ts` for Supabase client configuration.
-- **Data Handling & Synchronization:** Understand how data is fetched and managed, especially the synchronization of market data from The Graph subgraphs to Supabase (`src/app/api/sync/events/route.ts`). Look for existing patterns for API calls and database interactions (`src/lib/data.ts`, `src/lib/db/`).
+- **Data Handling & Synchronization:** Understand how data is fetched and managed, especially the synchronization of market data from The Graph subgraphs to Supabase (`src/app/api/sync/events/route.ts`).
 - **Styling Utilities:** `clsx` and `tailwind-merge` are used in conjunction with Tailwind CSS for conditional styling and efficient class management (e.g., `src/lib/utils.ts`).
 
 ## 3. Project Structure and Conventions
 
 - **File Organization:**
-  - `src/app/`: Next.js pages and API routes. Prefer to colocate components that are only related to the page with a private folder called `_components` and actions to the same route folder.
-  - `src/components/`: Reusable React components. Group related components within subdirectories (e.g., `src/components/ui/`).
-  - `src/hooks/`: Custom React hooks for reusable logic.
+  - `src/app/`: Next.js pages and API routes. Prefer to colocate components that are only related to the page with a private folder called `_components` and actions to a folder called `_actions`.
+  - `src/components/`: Reusable React components. Group related components within prefix (e.g `HeaderXYZ`) and let ui folder for shadcn components (e.g., `src/components/ui/`).
+  - `src/hooks/`: Custom React hooks for reusable logic. Use `useHookName` pattern.
   - `src/lib/`: Utility functions, configurations, and core logic.
   - `src/lib/db/`: Supabase queries, use 'use cache' directive if queries do not rely on authenticated user.
-  - `src/types/`: Centralized TypeScript type definitions.
+  - `src/types/`: Shared TypeScript type definitions.
   - `supabase/`: Database migrations and crons
   - `public/`: Static assets like images and fonts.
 - **API Routes (`src/app/api/`):** Follow Next.js API route conventions for backend logic.
   - `src/app/api/auth/[...all]/route.ts`: Authentication routes using `better-auth`.
-  - `src/app/api/events/[slug]/related/route.ts`: API for fetching related events.
-  - `src/app/api/markets/[condition_id]/route.ts`: API for market-specific data.
-  - `src/app/api/search/route.ts`: API for search functionality.
-  - `src/app/api/sync/events/route.ts`: Critical route for synchronizing market data from subgraphs to Supabase.
-  - `src/app/api/trading/stats/route.ts`: API for trading statistics.
-  - `src/app/api/users/[address]/positions/route.ts`: API for user positions.
+  - `src/app/(platform)/api/events/[slug]/related/route.ts`: API for fetching related events.
 - **Database Interactions:** Refer to `src/lib/db/` for database query patterns.
 - **Naming Conventions:** Adhere to existing naming conventions for files, components, variables, and functions (e.g., PascalCase for components, camelCase for variables/functions).
 

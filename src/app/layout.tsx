@@ -2,7 +2,7 @@
 
 import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from 'react'
-import { openSauceOne } from '@/app/fonts'
+import { openSauceOne } from '@/lib/fonts'
 import './globals.css'
 
 export const metadata: Metadata = {
