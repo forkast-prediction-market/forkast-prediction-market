@@ -57,4 +57,4 @@ Be respectful and inclusive. Harassment and discrimination are not tolerated.
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree that your contributions will be licensed under the Forkast Modified MIT License (with Custom Commons Clause), as described in [`LICENSE`](LICENSE).
