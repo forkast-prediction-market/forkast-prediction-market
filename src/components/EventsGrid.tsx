@@ -51,7 +51,7 @@ export default function EventsGrid({
   const parentRef = useRef<HTMLDivElement | null>(null)
   const [hasInitialized, setHasInitialized] = useState(false)
   const [scrollMargin, setScrollMargin] = useState(0)
-  const PAGE_SIZE = 25
+  const PAGE_SIZE = 40
 
   const {
     status,

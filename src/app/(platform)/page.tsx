@@ -4,7 +4,7 @@ import EventsLoader from '@/components/EventsLoader'
 import FilterToolbar from '@/components/FilterToolbar'
 
 function HomePageSkeleton() {
-  const skeletons = Array.from({ length: 8 }, (_, i) => `skeleton-${i}`)
+  const skeletons = Array.from({ length: 20 }, (_, i) => `skeleton-${i}`)
 
   return (
     <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">

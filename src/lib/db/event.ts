@@ -73,7 +73,7 @@ export const EventRepository = {
       query.ilike('title', `%${search}%`)
     }
 
-    const limit = 25
+    const limit = 40
     const validOffset = Number.isNaN(offset) || offset < 0 ? 0 : offset
     query.order('id', { ascending: false }).range(validOffset, validOffset + limit - 1)
 
