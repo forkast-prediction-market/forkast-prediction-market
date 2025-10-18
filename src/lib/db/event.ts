@@ -21,8 +21,8 @@ export const EventRepository = {
     bookmarked = false,
     offset = 0,
   }: ListEventsProps) {
-    // 'use cache'
-    // cacheTag(cacheTags.events(userId))
+    'use cache'
+    cacheTag(cacheTags.events(userId))
 
     let selectString = `
       *,
@@ -47,8 +47,7 @@ export const EventRepository = {
           id,
           name,
           slug,
-          is_main_category,
-          is_hidden
+          is_main_category
         )
       )
     `
