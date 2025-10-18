@@ -1,0 +1,51 @@
+---
+title: Portfolio & Open Positions
+description: Track positions, PnL, and claims
+icon: PieChart
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} rel="noopener noreferrer" target="_blank">Discord</a>.
+</Callout>
+)}
+
+## What you’ll see
+
+- **Positions Value** – current value of open shares
+- **Profit/Loss** – realized + unrealized PnL
+- **Volume Traded** & **Markets Traded** – lifetime activity
+- **Tabs**: *Positions* and *Activity* (latest buys/sells with amounts and timestamps)
+
+---
+
+## Claims
+
+When a market resolves in your favor, a **Claim** button appears.
+
+<Steps>
+  <Step>
+    ### Open Portfolio
+
+    Head to <strong>My Account → Portfolio</strong> to see your open
+    positions and activity feed.
+  </Step>
+  <Step>
+    ### Locate resolved markets
+
+    Markets ready to settle display a <strong>Claim</strong> button next to the
+    position.
+  </Step>
+  <Step>
+    ### Confirm the claim
+
+    Click <strong>Claim</strong> to credit your balance with the payout. Funds
+    arrive as soon as the transaction finalizes.
+  </Step>
+</Steps>
+
+<Callout type="info">
+Payouts credit instantly after confirmation. Network fees may apply.
+</Callout>

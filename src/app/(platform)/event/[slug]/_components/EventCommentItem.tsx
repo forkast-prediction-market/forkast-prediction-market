@@ -15,17 +15,21 @@ interface CommentItemProps {
   comment: Comment
   eventId: string
   user: any
-  onLikeToggle: (commentId: string, newLikesCount: number, newUserHasLiked: boolean) => void
+  onLikeToggle: (commentId: string) => void
   onDelete: (commentId: string) => void
   replyingTo: string | null
   onSetReplyingTo: (id: string | null) => void
   replyText: string
   onSetReplyText: (text: string) => void
   expandedComments: Set<string>
-  onRepliesLoaded: (commentId: string, allReplies: Comment[]) => void
-  onAddReply: (commentId: string, reply: Comment) => void
+  onRepliesLoaded: (commentId: string) => void
   onDeleteReply: (commentId: string, replyId: string) => void
-  onUpdateReply: (commentId: string, replyId: string, updates: Partial<Comment>) => void
+  onUpdateReply: (commentId: string, replyId: string) => void
+  createReply: (eventId: string, parentCommentId: string, content: string, user?: any) => void
+  isCreatingComment: boolean
+  isLoadingRepliesForComment: (commentId: string) => boolean
+  loadRepliesError: Error | null
+  retryLoadReplies: (commentId: string) => void
 }
 
 export default function EventCommentItem({
@@ -40,9 +44,13 @@ export default function EventCommentItem({
   onSetReplyText,
   expandedComments,
   onRepliesLoaded,
-  onAddReply,
   onDeleteReply,
   onUpdateReply,
+  createReply,
+  isCreatingComment,
+  isLoadingRepliesForComment,
+  loadRepliesError,
+  retryLoadReplies,
 }: CommentItemProps) {
   const { open } = useAppKit()
 
@@ -51,24 +59,23 @@ export default function EventCommentItem({
       queueMicrotask(() => open())
       return
     }
-    const username = comment.username || truncateAddress(comment.user_address)
+    const username = comment.username || (comment.user_address ? truncateAddress(comment.user_address) : 'Unknown')
     onSetReplyingTo(replyingTo === comment.id ? null : comment.id)
     onSetReplyText(`@${username} `)
   }, [user, comment, replyingTo, onSetReplyingTo, onSetReplyText, open])
 
-  const handleLikeToggle = useCallback((newLikesCount: number, newUserHasLiked: boolean) => {
-    onLikeToggle(comment.id, newLikesCount, newUserHasLiked)
+  const handleLikeToggle = useCallback(() => {
+    onLikeToggle(comment.id)
   }, [comment.id, onLikeToggle])
 
   const handleDelete = useCallback(() => {
     onDelete(comment.id)
   }, [comment.id, onDelete])
 
-  const handleReplyAdded = useCallback((newReply: Comment) => {
-    onAddReply(comment.id, newReply)
+  const handleReplyAdded = useCallback(() => {
     onSetReplyingTo(null)
     onSetReplyText('')
-  }, [comment.id, onAddReply, onSetReplyingTo, onSetReplyText])
+  }, [onSetReplyingTo, onSetReplyText])
 
   const handleReplyCancel = useCallback(() => {
     onSetReplyingTo(null)
@@ -99,7 +106,6 @@ export default function EventCommentItem({
               <EventCommentLikeForm
                 comment={comment}
                 user={user}
-                eventId={eventId}
                 onLikeToggled={handleLikeToggle}
               />
             </div>
@@ -134,10 +140,12 @@ export default function EventCommentItem({
             user={user}
             eventId={eventId}
             parentCommentId={comment.id}
-            placeholder={`Reply to ${comment.username || truncateAddress(comment.user_address)}`}
+            placeholder={`Reply to ${comment.username || (comment.user_address ? truncateAddress(comment.user_address) : 'Unknown')}`}
             initialValue={replyText}
             onCancel={handleReplyCancel}
             onReplyAddedAction={handleReplyAdded}
+            createReply={createReply}
+            isCreatingComment={isCreatingComment}
           />
         </div>
       )}
@@ -158,7 +166,9 @@ export default function EventCommentItem({
               onSetReplyingTo={onSetReplyingTo}
               replyText={replyText}
               onSetReplyText={onSetReplyText}
-              onAddReply={onAddReply}
+              createReply={createReply}
+              isCreatingComment={isCreatingComment}
+
             />
           ))}
 
@@ -166,6 +176,9 @@ export default function EventCommentItem({
             <EventCommentsLoadMoreReplies
               comment={comment}
               onRepliesLoaded={onRepliesLoaded}
+              isLoading={isLoadingRepliesForComment(comment.id)}
+              error={loadRepliesError}
+              onRetry={() => retryLoadReplies(comment.id)}
             />
           )}
         </div>

@@ -2,10 +2,6 @@
 
 import Image from 'next/image'
 
-interface Props {
-  searchQuery: string
-}
-
 interface HistoryItem {
   id: string
   activity: 'Sold' | 'Bought' | 'Lost' | 'Claimed'
@@ -102,7 +98,11 @@ function getActivityIcon(activity: string) {
   }
 }
 
-export default function PortfolioHistoryTable({ searchQuery }: Props) {
+interface PortfolioHistoryTableProps {
+  searchQuery: string
+}
+
+export default function PortfolioHistoryTable({ searchQuery }: PortfolioHistoryTableProps) {
   const filteredHistory = mockHistory.filter(item =>
     item.market.toLowerCase().includes(searchQuery.toLowerCase()),
   )

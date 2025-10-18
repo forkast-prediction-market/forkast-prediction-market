@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
-import EventCardSkeleton from '@/components/event/EventCardSkeleton'
-import EventsLoader from '@/components/event/EventsLoader'
-import FilterToolbar from '@/components/layout/FilterToolbar'
+import EventCardSkeleton from '@/components/EventCardSkeleton'
+import EventsLoader from '@/components/EventsLoader'
+import FilterToolbar from '@/components/FilterToolbar'
 
 function HomePageSkeleton() {
   const skeletons = Array.from({ length: 8 }, (_, i) => `skeleton-${i}`)

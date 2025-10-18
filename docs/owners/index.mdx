@@ -1,0 +1,58 @@
+---
+title: Launch Overview
+description: What fork owners need to ship a live instance.
+icon: Rocket
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
+<Callout>
+  This track is for teams launching a fork of {process.env.NEXT_PUBLIC_SITE_NAME}. We keep it focused on the decisions that usually block a successful deploy.
+</Callout>
+
+## High-level flow
+
+<Steps>
+  <Step>
+    ### Fork the repository
+
+    Create the fork on GitHub and keep the project name short so it is easy to locate from Vercel.
+  </Step>
+  <Step>
+    ### Import into Vercel
+
+    From the Vercel dashboard choose **Add New -> Project**, connect GitHub, and select your fork. The first build can fail until secrets are available.
+  </Step>
+  <Step>
+    ### Provision Supabase
+
+    Use the integration under **Storage -> Supabase** to create and link a database to the project.
+  </Step>
+  <Step>
+    ### Load environment variables
+
+    Update `.env.example` locally and import it under **Settings -> Environment Variables** so the deploy has everything it needs.
+  </Step>
+  <Step>
+    ### Deploy and enable sync
+
+    Trigger the deploy once secrets are in place and enable GitHub Actions so the fork stays aligned with upstream updates.
+  </Step>
+  <Step>
+    ### Add optional integrations
+
+    Configure the Market Context generator via OpenRouter only if you need AI-based summaries.
+  </Step>
+</Steps>
+
+---
+
+## What you'll find here
+
+- **Launch checklist:** a streamlined sequence covering the minimum required actions.
+- **Environment reference:** only the env vars that affect production launches.
+- **Market Context generator:** how to unlock the OpenRouter flow and the caveats for the free tier.
+
+<Callout type="info">
+  Share this guide with fork operators by setting `NEXT_PUBLIC_FORK_OWNER_GUIDE=true`.
+</Callout>

@@ -50,6 +50,8 @@ export default function AdminUsersTable() {
       isLoading={isLoading}
       error={error}
       onRetry={retry}
+      emptyMessage="No users found"
+      emptyDescription="There are no users in the system yet."
       search={search}
       onSearchChange={handleSearchChange}
       sortBy={sortBy}

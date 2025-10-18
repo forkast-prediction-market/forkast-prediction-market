@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
-interface Props {
+interface EventMarketsProps {
   event: Event
 }
 
-export default function EventMarkets({ event }: Props) {
+export default function EventMarkets({ event }: EventMarketsProps) {
   const state = useOrder()
   const isBinaryMarket = useIsBinaryMarket()
 
@@ -36,7 +36,7 @@ export default function EventMarkets({ event }: Props) {
 
   return (
     <div className="-mx-4 overflow-hidden bg-background lg:mx-0">
-      <div className="hidden items-center rounded-t-lg border-b py-3 md:flex">
+      <div className="hidden items-center rounded-t-lg border-b py-3 lg:flex">
         <div className="w-1/2">
           <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             OUTCOMES
@@ -66,7 +66,7 @@ export default function EventMarkets({ event }: Props) {
             }, `
               flex cursor-pointer flex-col items-start p-4 transition-all duration-200 ease-in-out
               hover:bg-black/5
-              md:flex-row md:items-center
+              lg:flex-row lg:items-center
               dark:hover:bg-white/5
             `)}
             onClick={() => {
@@ -75,7 +75,7 @@ export default function EventMarkets({ event }: Props) {
             }}
           >
             {/* Mobile: Layout in column */}
-            <div className="w-full md:hidden">
+            <div className="w-full lg:hidden">
               {/* Row 1: Name and probability */}
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -112,11 +112,11 @@ export default function EventMarkets({ event }: Props) {
               {/* Row 2: Buttons */}
               <div className="flex gap-2">
                 <Button
-                  size="lg"
+                  size="outcome"
                   variant="yes"
                   className={cn({
                     'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 0,
-                  }, 'min-w-0 flex-1 px-3')}
+                  })}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -130,17 +130,17 @@ export default function EventMarkets({ event }: Props) {
                     {' '}
                     {market.outcomes[0].outcome_text}
                   </span>
-                  <span className="ms-auto shrink-0 font-bold">
+                  <span className="shrink-0 text-base font-bold">
                     {Math.round(market.probability)}
                     ¢
                   </span>
                 </Button>
                 <Button
-                  size="lg"
+                  size="outcome"
                   variant="no"
                   className={cn({
                     'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 1,
-                  }, 'min-w-0 flex-1 px-3')}
+                  })}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -154,7 +154,7 @@ export default function EventMarkets({ event }: Props) {
                     {' '}
                     {market.outcomes[1].outcome_text}
                   </span>
-                  <span className="ms-auto shrink-0 font-bold">
+                  <span className="shrink-0 text-base font-bold">
                     {100 - Math.round(market.probability)}
                     ¢
                   </span>
@@ -163,7 +163,7 @@ export default function EventMarkets({ event }: Props) {
             </div>
 
             {/* Desktop: Original line layout */}
-            <div className="hidden w-full items-center md:flex">
+            <div className="hidden w-full items-center lg:flex">
               <div className="flex w-1/2 items-center gap-3">
                 {event.show_market_icons && (
                   <Image
@@ -203,13 +203,13 @@ export default function EventMarkets({ event }: Props) {
                 </div>
               </div>
 
-              <div className="ml-2">
+              <div className="flex items-center gap-2">
                 <Button
-                  size="lg"
+                  size="outcome"
                   variant="yes"
                   className={cn({
                     'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 0,
-                  }, 'w-36 px-3')}
+                  }, 'w-36')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -223,19 +223,18 @@ export default function EventMarkets({ event }: Props) {
                     {' '}
                     {market.outcomes[0].outcome_text}
                   </span>
-                  <span className="ms-auto shrink-0 font-bold">
+                  <span className="shrink-0 text-base font-bold">
                     {Math.round(market.probability)}
                     ¢
                   </span>
                 </Button>
-              </div>
-              <div className="ml-2">
+
                 <Button
-                  size="lg"
+                  size="outcome"
                   variant="no"
                   className={cn({
                     'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 1,
-                  }, 'w-36 px-3')}
+                  }, 'w-36')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
@@ -249,7 +248,7 @@ export default function EventMarkets({ event }: Props) {
                     {' '}
                     {market.outcomes[1].outcome_text}
                   </span>
-                  <span className="ms-auto font-bold">
+                  <span className="shrink-0 text-base font-bold">
                     {100 - Math.round(market.probability)}
                     ¢
                   </span>

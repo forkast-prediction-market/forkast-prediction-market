@@ -1,14 +1,14 @@
 'use cache'
 
-import Header from '@/components/layout/Header'
-import NavigationTabs from '@/components/layout/NavigationTabs'
+import Header from '@/components/Header'
+import NavigationTabsContainer from '@/components/NavigationTabsContainer'
 import { Providers } from '@/providers/Providers'
 
 export default async function PlatformLayout({ children }: LayoutProps<'/'>) {
   return (
     <Providers>
       <Header />
-      <NavigationTabs />
+      <NavigationTabsContainer />
       {children}
     </Providers>
   )

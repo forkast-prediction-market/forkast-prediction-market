@@ -8,12 +8,12 @@ import PortfolioPositionsTable from '@/app/(platform)/portfolio/_components/Port
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-interface Props {
+interface PortfolioTabsProps {
   activeTab: string
   onTabChange: (tab: string) => void
 }
 
-export default function PortfolioTabs({ activeTab, onTabChange }: Props) {
+export default function PortfolioTabs({ activeTab, onTabChange }: PortfolioTabsProps) {
   const [searchQuery, setSearchQuery] = useState('')
 
   const tabs = [

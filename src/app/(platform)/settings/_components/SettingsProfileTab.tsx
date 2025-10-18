@@ -6,7 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useActionState, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { updateUserAction } from '@/app/(platform)/settings/actions/update-profile'
+import { updateUserAction } from '@/app/(platform)/settings/_actions/update-profile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
@@ -68,7 +68,7 @@ export default function SettingsProfileTab({ user }: { user: User }) {
               to-primary/60
             `}
             >
-              {previewImage || user.image
+              {previewImage || user.image?.includes('supabase.co')
                 ? (
                     <Image
                       width={42}

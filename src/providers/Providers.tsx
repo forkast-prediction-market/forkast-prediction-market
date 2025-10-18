@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from 'next-themes'
@@ -10,7 +11,7 @@ import ProgressIndicatorProvider from '@/providers/ProgressIndicatorProvider'
 
 const queryClient = new QueryClient()
 
-export function Providers({ children }: { children: React.ReactNode }) {
+export function Providers({ children }: { children: ReactNode }) {
   return (
     <ProgressIndicatorProvider>
       <ThemeProvider attribute="class">

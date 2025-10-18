@@ -1,0 +1,29 @@
+---
+title: Public Profile
+description: What others can see on your profile page
+icon: UserCircle
+---
+
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} rel="noopener noreferrer" target="_blank">Discord</a>.
+</Callout>
+)}
+
+## Overview
+
+Your public profile showcases high-level stats:
+
+- **Positions Value**, **Profit/Loss**, **Volume Traded**, **Markets Traded**
+- Address short hash (e.g., `0xa4…9e542d`) and **join date**
+
+---
+
+## Tabs
+
+- **Positions** – open holdings (if you opt to display them)
+- **Activity** – recent buys/sells with amounts and timestamps
+
+<Callout type="info">
+You can access this page from **Profile Settings → View public profile**.
+</Callout>

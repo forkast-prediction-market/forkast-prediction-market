@@ -1,0 +1,52 @@
+---
+title: Market Context Generator
+description: Optional OpenRouter integration for real-time market insights.
+icon: Sparkles
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
+<Callout type="warning">
+  This feature issues external requests. Keep an eye on usage quotas and provider policies before enabling it in production.
+</Callout>
+
+## How to enable
+
+<Steps>
+  <Step>
+    ### Create an OpenRouter API key
+
+    Visit <a href="https://openrouter.ai/settings/keys" target="_blank">OpenRouter -> API Keys</a>, generate a key, and copy it. Models that support live browsing (for example `perplexity/sonar`) deliver richer context.
+  </Step>
+  <Step>
+    ### Configure it in the admin panel
+
+    Navigate to **Admin → Market Context**, paste the API key, and flip the toggle on. The settings are stored in the `settings` table so every deploy stays in sync.
+  </Step>
+  <Step>
+    ### Pick a model (optional)
+
+    Use the model dropdown to select a specific OpenRouter model or leave it on **Let OpenRouter decide** to allow the provider to pick the best option. Saving the form also lets you refine the prompt template.
+  </Step>
+  <Step>
+    ### Enable the Market Context generator
+
+    With the toggle on and the key stored, the generator becomes available in event pages. Disable the toggle anytime to suspend the integration without losing your key.
+  </Step>
+</Steps>
+
+---
+
+## Using free plans
+
+<Callout type="warning">
+  Running live context on the free tier is not recommended for production - keep it to demos or local testing.
+</Callout>
+
+If you rely on OpenRouter's free tier:
+
+1. Visit <a href="https://openrouter.ai/settings/privacy" target="_blank">Settings -> Privacy</a>.
+2. Enable **Enable free endpoints that may publish prompts**. Without this toggle the free online models won't return responses.
+3. Revisit the policy periodically - free endpoints can publish prompts publicly.
+
+When you upgrade to a paid plan you can disable that permission and switch models if needed.

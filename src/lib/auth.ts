@@ -6,6 +6,8 @@ import { customSession, siwe, twoFactor } from 'better-auth/plugins'
 import { Pool } from 'pg'
 import { createPublicClient, http } from 'viem'
 import { isAdminWallet } from '@/lib/admin'
+import { projectId } from '@/lib/appkit'
+import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export const auth = betterAuth({
   database: new Pool({
@@ -23,6 +25,7 @@ export const auth = betterAuth({
       return {
         user: {
           ...user,
+          image: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${user.name}.png`,
           is_admin: isAdminWallet(user.name),
         },
         session,
@@ -48,7 +51,6 @@ export const auth = betterAuth({
       getNonce: async () => generateRandomString(32),
       verifyMessage: async ({ message, signature, address }) => {
         const chainId = getChainIdFromMessage(message)
-        const projectId = process.env.NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID!
 
         const publicClient = createPublicClient(
           {

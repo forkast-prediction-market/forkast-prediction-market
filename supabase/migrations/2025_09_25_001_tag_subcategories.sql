@@ -18,7 +18,9 @@ SELECT main_tag.id                    AS main_tag_id,
        sub_tag.slug                   AS sub_tag_slug,
        sub_tag.is_main_category       AS sub_tag_is_main_category,
        COUNT(DISTINCT m.condition_id) AS active_markets_count,
-       MAX(m.updated_at)              AS last_market_activity_at
+       MAX(m.updated_at)              AS last_market_activity_at,
+       main_tag.is_hidden             AS main_tag_is_hidden,
+       sub_tag.is_hidden              AS sub_tag_is_hidden
 FROM public.tags AS main_tag
        JOIN public.event_tags AS et_main
             ON et_main.tag_id = main_tag.id
@@ -29,17 +31,21 @@ FROM public.tags AS main_tag
        JOIN public.tags AS sub_tag
             ON sub_tag.id = et_sub.tag_id
 WHERE main_tag.is_main_category = TRUE
+  AND main_tag.is_hidden = FALSE
   AND m.is_active = TRUE
   AND m.is_resolved = FALSE
   AND sub_tag.id <> main_tag.id
   AND sub_tag.is_main_category = FALSE
+  AND sub_tag.is_hidden = FALSE
 GROUP BY main_tag.id,
          main_tag.slug,
          main_tag.name,
          sub_tag.id,
          sub_tag.name,
          sub_tag.slug,
-         sub_tag.is_main_category;
+         sub_tag.is_main_category,
+         main_tag.is_hidden,
+         sub_tag.is_hidden;
 
 ALTER VIEW public.v_main_tag_subcategories
   SET (security_invoker = true);

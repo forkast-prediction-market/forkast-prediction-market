@@ -1,0 +1,41 @@
+---
+title: Understanding Prices
+description: Learn how prices reflect probabilities
+icon: DollarSign
+---
+
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} rel="noopener noreferrer" target="_blank">Discord</a>.
+</Callout>
+)}
+
+## Price as Probability
+
+Each share is priced between **$0 and $1**:
+
+- A price of $0.70 means the market estimates a **70% chance** the outcome is true.
+- A price of $0.20 means a **20% chance**.
+
+---
+
+## How Payouts Work
+
+- If the outcome resolves as true → each share pays **$1**
+- If false → shares pay **$0**
+
+**Example:**
+You buy 100 “Yes” shares at $0.40.
+- Cost = $40
+- If “Yes” wins, payout = $100 → profit = $60
+- If “No” wins, payout = $0
+
+---
+
+## Why Prices Move
+
+Prices change as traders buy and sell:
+- High demand for “Yes” pushes price up
+- More “No” sellers push price down
+
+This continuous trading updates the **real-time probability** shown in the market.

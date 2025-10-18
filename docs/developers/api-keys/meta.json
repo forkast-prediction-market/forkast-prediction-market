@@ -1,0 +1,10 @@
+{
+  "title": "API Keys",
+  "description": "Authenticate and manage access.",
+  "icon": "KeySquare",
+  "pages": [
+    "generate-api-key",
+    "permissions-rate-limits"
+  ],
+  "defaultOpen": true
+}

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { EventModel } from '@/lib/db/events'
+import { EventRepository } from '@/lib/db/event'
 
 export async function GET(
   request: Request,
@@ -10,7 +10,7 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const conditionId = searchParams.get('condition_id')
 
-    const { data: holdersData, error: holdersError } = await EventModel.getEventTopHolders(slug, conditionId)
+    const { data: holdersData, error: holdersError } = await EventRepository.getEventTopHolders(slug, conditionId)
 
     if (!holdersData || holdersError) {
       console.error('Error fetching event holders:', holdersError)

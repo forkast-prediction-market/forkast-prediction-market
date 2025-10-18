@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS tags
   name                 VARCHAR(100) NOT NULL UNIQUE,
   slug                 VARCHAR(100) NOT NULL UNIQUE,
   is_main_category     BOOLEAN               DEFAULT FALSE,
+  is_hidden            BOOLEAN       NOT NULL DEFAULT FALSE,
   display_order        SMALLINT              DEFAULT 0,
   parent_tag_id        SMALLINT REFERENCES tags (id),
   active_markets_count INTEGER               DEFAULT 0,

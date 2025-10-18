@@ -6,15 +6,11 @@ interface AffiliateRow {
   id: string
   username?: string | null
   address: string
-  image?: string | null
+  image: string
   affiliate_code?: string | null
   total_referrals: number
   total_volume: number
   total_affiliate_fees: number
-}
-
-interface Props {
-  rows: AffiliateRow[]
 }
 
 function formatCurrency(value: number) {
@@ -25,7 +21,11 @@ function formatCurrency(value: number) {
   return `${value.toFixed(2)}`
 }
 
-export default function AdminAffiliateOverview({ rows }: Props) {
+interface AdminAffiliateOverviewProps {
+  rows: AffiliateRow[]
+}
+
+export default function AdminAffiliateOverview({ rows }: AdminAffiliateOverviewProps) {
   if (!rows.length) {
     return (
       <div className="rounded-lg border p-6">
@@ -61,7 +61,7 @@ export default function AdminAffiliateOverview({ rows }: Props) {
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-3">
                     <Image
-                      src={row.image || `https://avatar.vercel.sh/${row.address}.png`}
+                      src={row.image}
                       alt="Affiliate avatar"
                       width={32}
                       height={32}
@@ -105,7 +105,7 @@ export default function AdminAffiliateOverview({ rows }: Props) {
           <div key={row.id} className="space-y-3 p-4">
             <div className="flex items-center gap-3">
               <Image
-                src={row.image || `https://avatar.vercel.sh/${row.address}.png`}
+                src={row.image}
                 alt="Affiliate avatar"
                 width={32}
                 height={32}

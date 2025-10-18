@@ -1,0 +1,46 @@
+---
+title: Transaction History
+description: Orders, trades, deposits, withdrawals — and CSV export
+icon: Clock
+---
+
+import { Steps, Step } from 'fumadocs-ui/components/steps'
+
+{process.env.NEXT_PUBLIC_DISCORD_LINK && (
+<Callout>
+  Need Help? For assistance, reach out to us on <a href={process.env.NEXT_PUBLIC_DISCORD_LINK} rel="noopener noreferrer" target="_blank">Discord</a>.
+</Callout>
+)}
+
+## Tabs
+
+- **Orders** – open, partially filled, filled, canceled
+- **Trades** – executed fills (price, size, side)
+- **Deposits** / **Withdrawals** – transfers in and out
+
+---
+
+## Export CSV
+
+Download your account history for records or taxes:
+
+<Steps>
+  <Step>
+    ### Choose a tab or date range
+
+    Filter by tab (Orders, Trades, Deposits, Withdrawals) and, if needed,
+    adjust the date range to limit the export.
+  </Step>
+  <Step>
+    ### Click Export CSV
+
+    {process.env.NEXT_PUBLIC_SITE_NAME} generates a CSV containing the rows you
+    currently see in the table.
+  </Step>
+  <Step>
+    ### Save securely
+
+    Download and store the file safely for bookkeeping, taxes, or compliance
+    reviews.
+  </Step>
+</Steps>

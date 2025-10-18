@@ -12,16 +12,17 @@ import EventOrderPanelMobile from '@/app/(platform)/event/[slug]/_components/Eve
 import EventRelated from '@/app/(platform)/event/[slug]/_components/EventRelated'
 import EventRules from '@/app/(platform)/event/[slug]/_components/EventRules'
 import EventTabs from '@/app/(platform)/event/[slug]/_components/EventTabs'
-import { Teleport } from '@/components/layout/Teleport'
+import { Teleport } from '@/components/Teleport'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useOrder } from '@/stores/useOrder'
 
 interface EventContentProps {
   event: Event
   user: User | null
+  marketContextEnabled: boolean
 }
 
-export default function EventContent({ event, user }: EventContentProps) {
+export default function EventContent({ event, user, marketContextEnabled }: EventContentProps) {
   const setEvent = useOrder(state => state.setEvent)
   const setMarket = useOrder(state => state.setMarket)
   const setOutcome = useOrder(state => state.setOutcome)
@@ -36,11 +37,11 @@ export default function EventContent({ event, user }: EventContentProps) {
   return (
     <>
       <div className="grid gap-3">
-        <EventMetaInformation event={event} />
         <EventHeader event={event} />
+        <EventMetaInformation event={event} />
         <EventChart event={event} />
         <EventMarkets event={event} />
-        <EventMarketContext event={event} />
+        {marketContextEnabled && <EventMarketContext event={event} />}
         <EventRules event={event} />
         {isMobile && <EventRelated event={event} />}
         <EventTabs event={event} user={user} />

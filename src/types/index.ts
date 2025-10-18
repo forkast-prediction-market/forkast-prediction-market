@@ -59,7 +59,7 @@ export interface Outcome {
   updated_at: string
 }
 
-export interface Condition {
+interface Condition {
   id: string
   oracle: string
   question_id: string
@@ -77,7 +77,7 @@ export interface Condition {
   updated_at: string
 }
 
-export interface UserSettings {
+interface UserSettings {
   notifications?: {
     email_resolutions?: boolean
     inapp_order_fills?: boolean
@@ -93,7 +93,7 @@ export interface User {
   email: string
   twoFactorEnabled: boolean | null | undefined
   username?: string
-  image?: string | null
+  image: string
   settings: UserSettings
   affiliate_code?: string | null
   referred_by_user_id?: string | null
@@ -110,7 +110,7 @@ export interface PublicProfileStats {
 export interface PublicProfile {
   address: string
   username?: string
-  image?: string
+  image: string
   created_at: Date
   stats?: PublicProfileStats
 }
@@ -120,6 +120,7 @@ export interface Tag {
   name: string
   slug: string
   is_main_category: boolean
+  is_hidden: boolean
   display_order: number
   parent_tag_id: number | null
   active_markets_count: number
@@ -132,7 +133,7 @@ export interface Comment {
   content: string
   user_id: string
   username: string
-  user_avatar: string | null
+  user_avatar: string
   user_address: string
   likes_count: number
   replies_count: number
@@ -142,28 +143,9 @@ export interface Comment {
   recent_replies?: Comment[]
 }
 
-// Activity Types
-export type ActivityType = 'Buy' | 'Sell' | 'Redeem'
+type NotificationCategory = 'trade' | 'system' | 'general'
 
-export interface ActivityItem {
-  id: string
-  type: ActivityType
-  market: {
-    id: string
-    title: string
-    image_url: string
-    outcome: 'Yes' | 'No'
-    price: number
-  }
-  shares: number
-  amount: number
-  timestamp: Date
-  transaction_hash: string
-}
-
-export type NotificationCategory = 'trade' | 'system' | 'general'
-
-export type NotificationLinkType
+type NotificationLinkType
   = | 'none'
     | 'market'
     | 'event'
@@ -212,7 +194,7 @@ export interface ActivityOrder {
     id: string
     username: string | null
     address: string
-    image: string | null
+    image: string
   }
   side: 'buy' | 'sell'
   amount: number
@@ -224,6 +206,11 @@ export interface ActivityOrder {
   market: {
     title: string
     slug: string
+    icon_url: string
+    event?: {
+      slug: string
+      show_market_icons: boolean
+    }
   }
   total_value: number
   created_at: string
@@ -235,19 +222,24 @@ export interface TopHolder {
     id: string
     username: string | null
     address: string
-    image: string | null
+    image: string
   }
   netPosition: number
   outcomeIndex: number
   outcomeText: string
 }
 
-export interface HoldersResponse {
-  yesHolders: TopHolder[]
-  noHolders: TopHolder[]
-}
-
 export type QueryResult<T>
   = | { data: T, error: null }
     | { data: null, error: string }
     | { data: null, error: PostgrestError }
+
+export interface SearchResultItems {
+  events: Event[]
+  profiles: PublicProfile[]
+}
+
+export interface SearchLoadingStates {
+  events: boolean
+  profiles: boolean
+}

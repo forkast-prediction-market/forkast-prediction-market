@@ -1,0 +1,15 @@
+{
+  "title": "Fork Owner Guide",
+  "description": "How to create your platform",
+  "icon": "GitFork",
+  "root": true,
+  "pages": [
+    "index",
+    "---Launch workflow---",
+    "launch-checklist",
+    "---Configuration---",
+    "environment-variables",
+    "---Integrations---",
+    "market-context-generator"
+  ]
+}

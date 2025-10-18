@@ -1,5 +1,5 @@
-import HeaderLogo from '@/components/layout/HeaderLogo'
-import HeaderMenu from '@/components/layout/HeaderMenu'
+import HeaderLogo from '@/components/HeaderLogo'
+import HeaderMenu from '@/components/HeaderMenu'
 
 export default function AdminHeader() {
   return (
