@@ -70,21 +70,32 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
 
   return (
     <div className="rounded-lg border transition-all duration-200 ease-in-out">
-      <div className="flex items-center justify-between p-4 hover:bg-muted/50">
-        <span className="text-lg font-medium">Market Context</span>
-        {hasGenerated
-          ? (
-              <button
-                type="button"
-                onClick={toggleCollapse}
-                className={`
-                  flex h-8 w-8 items-center justify-center rounded-md border border-border/60 bg-background
-                  text-muted-foreground transition
+      {hasGenerated
+        ? (
+            <button
+              type="button"
+              onClick={toggleCollapse}
+              className={cn(
+                'flex w-full items-center justify-between p-4 text-left transition-colors',
+                `
                   hover:bg-muted/50
-                `}
-                aria-expanded={contextExpanded}
+                  focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+                  focus-visible:ring-offset-background focus-visible:outline-none
+                `,
+              )}
+              aria-expanded={contextExpanded}
+            >
+              <span className="text-lg font-medium">Market Context</span>
+              <span
+                aria-hidden="true"
+                className={cn(
+                  `
+                    pointer-events-none flex h-8 w-8 items-center justify-center rounded-md border border-border/60
+                    bg-background text-muted-foreground transition
+                  `,
+                  contextExpanded ? 'bg-muted/50' : '',
+                )}
               >
-                <span className="sr-only">{contextExpanded ? 'Collapse context' : 'Expand context'}</span>
                 <svg
                   width="16"
                   height="16"
@@ -101,9 +112,12 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
                     strokeLinejoin="round"
                   />
                 </svg>
-              </button>
-            )
-          : (
+              </span>
+            </button>
+          )
+        : (
+            <div className="flex items-center justify-between p-4 hover:bg-muted/50">
+              <span className="text-lg font-medium">Market Context</span>
               <button
                 type="button"
                 onClick={generateMarketContext}
@@ -118,8 +132,8 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
                 {isPending ? <LoaderIcon className="size-3 animate-spin" /> : <SparklesIcon className="size-3" />}
                 {isPending ? 'Generating...' : 'Generate'}
               </button>
-            )}
-      </div>
+            </div>
+          )}
 
       {(contextExpanded || error) && (
         <div className="border-t border-border/30 px-3 pt-3 pb-3">

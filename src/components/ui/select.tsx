@@ -76,7 +76,7 @@ function SelectContent({
         data-slot="select-content"
         className={cn(
           `
-            relative z-50 max-h-(--radix-select-content-available-height) min-w-[8rem]
+            relative z-[50] max-h-(--radix-select-content-available-height) min-w-[8rem]
             origin-(--radix-select-content-transform-origin) overflow-x-hidden overflow-y-auto rounded-md border
             bg-popover text-popover-foreground shadow-md
             data-[side=bottom]:slide-in-from-top-2
