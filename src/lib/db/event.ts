@@ -21,10 +21,11 @@ export const EventRepository = {
     bookmarked = false,
     offset = 0,
   }: ListEventsProps) {
-    'use cache'
-    cacheTag(cacheTags.events(userId))
+    // 'use cache'
+    // cacheTag(cacheTags.events(userId))
 
-    const marketsSelect = `
+    let selectString = `
+      *,
       markets!inner(
         condition_id,
         title,
@@ -40,26 +41,26 @@ export const EventRepository = {
           oracle,
           outcomes(*)
         )
-      )
-    `
-
-    const tagsSelect = `
+      ),
       event_tags!inner(
         tag:tags!inner(
           id,
           name,
           slug,
-          is_main_category
+          is_main_category,
+          is_hidden
         )
       )
     `
 
-    const selectString = bookmarked && userId
-      ? `*, bookmarks!inner(user_id), ${marketsSelect}, ${tagsSelect}`
-      : `*, bookmarks(user_id), ${marketsSelect}, ${tagsSelect}`
+    if (userId) {
+      selectString += `, bookmarks${bookmarked ? '!inner' : ''}(user_id)`
+    }
 
-    const query = supabaseAdmin.from('events').select(selectString)
-    query.eq('status', 'active')
+    const query = supabaseAdmin
+      .from('v_visible_events')
+      .select(selectString)
+      .eq('status', 'active')
 
     if (bookmarked && userId) {
       query.eq('bookmarks.user_id', userId)
@@ -86,25 +87,20 @@ export const EventRepository = {
 
     const events = data?.map(event => eventResource(event, userId)) || []
 
-    const sanitizedEvents = tag === 'new'
-      ? events.filter(event => !event.tags.includes(HIDE_FROM_NEW_TAG_SLUG))
-      : events
-
     if (!bookmarked && tag === 'trending') {
-      const trendingEvents = sanitizedEvents.filter(event => event.is_trending)
+      const trendingEvents = events.filter(event => event.is_trending)
       return { data: trendingEvents, error }
     }
 
     if (tag === 'new') {
-      const newEvents = sanitizedEvents.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      const newEvents = events.filter(event => !event.tags.includes(HIDE_FROM_NEW_TAG_SLUG)).sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       )
 
       return { data: newEvents, error }
     }
 
-    return { data: sanitizedEvents, error }
+    return { data: events, error }
   },
 
   async getIdBySlug(slug: string) {

@@ -130,7 +130,7 @@ export function createCategoryColumns({
       id: 'is_hidden',
       header: () => (
         <div className="text-center text-xs font-medium text-muted-foreground uppercase">
-          Hide
+          Hide Category
         </div>
       ),
       cell: ({ row }) => {
