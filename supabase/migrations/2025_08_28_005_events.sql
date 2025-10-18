@@ -4,7 +4,7 @@ BEGIN;
 -- EVENTS & MARKETS - Complete Domain Implementation
 -- ============================================================
 -- Tables: events, event_tags, markets, outcomes, subgraph_syncs, tags, conditions
--- Views: v_tags_with_counts, v_markets_full
+-- Views: v_visible_events
 -- Dependencies: None (self-contained domain)
 -- Business Logic: Event-market relationships, trading mechanics, tag categorization
 -- ============================================================
@@ -450,7 +450,22 @@ $$
 $$;
 
 -- ===========================================
--- 6. SEED
+-- 6. VIEWS
+-- ===========================================
+
+CREATE OR REPLACE VIEW v_visible_events AS
+SELECT events.*
+FROM events
+WHERE status = 'active'
+  AND NOT EXISTS (
+  SELECT 1
+  FROM event_tags
+         JOIN tags ON tags.id = event_tags.tag_id
+  WHERE event_tags.event_id = events.id AND tags.hide_events = true
+);
+
+-- ===========================================
+-- 7. SEED
 -- ===========================================
 
 -- Insert initial main tags

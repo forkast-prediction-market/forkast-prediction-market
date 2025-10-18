@@ -34,7 +34,7 @@ export function useSearch(): UseSearch {
 
     setIsLoading(prev => ({ ...prev, events: true }))
     try {
-      const response = await fetch(`/api/events/search?q=${encodeURIComponent(searchQuery)}`)
+      const response = await fetch(`/api/events?search=${encodeURIComponent(searchQuery)}`)
       if (response.ok) {
         const data = await response.json()
         setResults(prev => ({ ...prev, events: data }))
@@ -60,7 +60,7 @@ export function useSearch(): UseSearch {
 
     setIsLoading(prev => ({ ...prev, profiles: true }))
     try {
-      const response = await fetch(`/api/users/search?q=${encodeURIComponent(searchQuery)}`)
+      const response = await fetch(`/api/users?search=${encodeURIComponent(searchQuery)}`)
       if (response.ok) {
         const data = await response.json()
         setResults(prev => ({ ...prev, profiles: data }))

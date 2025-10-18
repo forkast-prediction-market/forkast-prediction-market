@@ -5,7 +5,7 @@ import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
-  const query = searchParams.get('q')
+  const query = searchParams.get('search')
 
   if (!query || query.length < 2) {
     return NextResponse.json([])
