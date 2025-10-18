@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
-import { formatTimeAgo, truncateAddress } from '@/lib/utils'
+import { cn, formatTimeAgo, truncateAddress } from '@/lib/utils'
 
 interface ProfileLinkProps {
   user: {
@@ -26,7 +26,7 @@ export default function ProfileLink({ user, position, date, children }: ProfileL
   const href = `/@${user.username || user.address}` as any
 
   return (
-    <div className="flex items-start gap-3 py-2">
+    <div className={cn('flex gap-3 py-2', children ? 'items-start' : 'items-center')}>
       <Link href={href} className="relative shrink-0">
         <Image
           src={user.image}
