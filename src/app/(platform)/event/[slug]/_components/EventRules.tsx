@@ -34,19 +34,26 @@ export default function EventRules({ event }: EventRulesProps) {
 
   return (
     <div className="rounded-lg border transition-all duration-200 ease-in-out">
-      <div className="flex items-center justify-between p-4 hover:bg-muted/50">
+      <button
+        type="button"
+        onClick={() => setRulesExpanded(!rulesExpanded)}
+        className={`
+          flex w-full items-center justify-between p-4 text-left transition-colors
+          hover:bg-muted/50
+          focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
+          focus-visible:outline-none
+        `}
+        aria-expanded={rulesExpanded}
+      >
         <span className="text-lg font-medium">Rules</span>
-        <button
-          type="button"
-          onClick={() => setRulesExpanded(!rulesExpanded)}
+        <span
+          aria-hidden="true"
           className={`
-            flex h-8 w-8 items-center justify-center rounded-md border border-border/60 bg-background
-            text-muted-foreground transition
-            hover:bg-muted/50
+            pointer-events-none flex h-8 w-8 items-center justify-center rounded-md border border-border/60
+            bg-background text-muted-foreground transition
+            ${rulesExpanded ? 'bg-muted/50' : ''}
           `}
-          aria-expanded={rulesExpanded}
         >
-          <span className="sr-only">{rulesExpanded ? 'Collapse rules' : 'Expand rules'}</span>
           <svg
             width="16"
             height="16"
@@ -63,8 +70,8 @@ export default function EventRules({ event }: EventRulesProps) {
               strokeLinejoin="round"
             />
           </svg>
-        </button>
-      </div>
+        </span>
+      </button>
 
       {rulesExpanded && (
         <div className="border-t border-border/30 px-3 pb-3">

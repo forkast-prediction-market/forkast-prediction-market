@@ -146,7 +146,7 @@
   }
 
   w3m-modal.open {
-    z-index: 50
+    z-index: 999;
   }
 }
 

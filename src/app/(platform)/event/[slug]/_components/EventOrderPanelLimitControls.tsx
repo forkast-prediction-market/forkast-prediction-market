@@ -130,7 +130,7 @@ export default function EventOrderPanelLimitControls() {
               }}
               onBlur={() => updateLimitPrice(Number.parseFloat(limitPrice))}
               placeholder="0.0"
-              className="w-full bg-transparent text-center text-sm font-semibold outline-none"
+              className="w-full bg-transparent text-center text-base font-semibold outline-none md:text-sm"
             />
             <span className="ml-2 text-sm font-medium text-muted-foreground">c</span>
           </div>
@@ -169,7 +169,8 @@ export default function EventOrderPanelLimitControls() {
               className={`
                 w-full
                 [appearance:textfield]
-                rounded-md border px-3 py-2 text-right text-sm font-semibold outline-none
+                rounded-md border px-3 py-2 text-right text-base font-semibold outline-none
+                md:text-sm
                 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
               `}
             />

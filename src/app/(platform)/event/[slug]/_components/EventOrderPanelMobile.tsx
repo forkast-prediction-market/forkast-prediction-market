@@ -20,6 +20,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
     <Drawer
       open={state.isMobileOrderPanelOpen}
       onClose={() => state.setIsMobileOrderPanelOpen(false)}
+      repositionInputs={false}
     >
       <DrawerTrigger asChild>
         {isBinaryMarket && (
@@ -27,8 +28,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
             <div className="flex gap-2">
               <Button
                 variant="yes"
-                size="lg"
-                className="min-w-0 flex-1"
+                size="outcome"
                 onClick={() => {
                   if (!state.market) {
                     return
@@ -50,8 +50,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
               </Button>
               <Button
                 variant="no"
-                size="lg"
-                className="min-w-0 flex-1"
+                size="outcome"
                 onClick={() => {
                   if (!state.market) {
                     return
@@ -76,7 +75,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
         )}
       </DrawerTrigger>
 
-      <DrawerContent>
+      <DrawerContent className="overflow-y-auto">
         <VisuallyHidden>
           <DialogTitle>{event.title}</DialogTitle>
         </VisuallyHidden>
