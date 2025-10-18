@@ -34,21 +34,6 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
     setOutcome(event.markets[0].outcomes[0])
   }, [event, setEvent, setMarket, setOutcome])
 
-  useEffect(() => {
-    const originalHtml = document.documentElement.style.cssText
-    const originalBody = document.body.style.cssText
-
-    document.documentElement.style.overflow = 'hidden'
-    document.documentElement.style.height = '100%'
-    document.body.style.overflow = 'auto'
-    document.body.style.height = '100%'
-
-    return () => {
-      document.documentElement.style.cssText = originalHtml
-      document.body.style.cssText = originalBody
-    }
-  }, [])
-
   return (
     <>
       <div className="grid gap-3">
