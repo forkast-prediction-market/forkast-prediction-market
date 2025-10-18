@@ -178,8 +178,10 @@ export const EventRepository = {
     return { data: event, error }
   },
 
-  async getRelatedEventsBySlug(slug: string) {
+  async getRelatedEventsBySlug(slug: string, options: { tagSlug?: string } = {}) {
     'use cache'
+
+    const tagSlug = options.tagSlug?.toLowerCase()
 
     const { data: currentEvent, error: errorEvent } = await supabaseAdmin
       .from('events')
@@ -193,15 +195,32 @@ export const EventRepository = {
 
     const { data: currentTags, error: errorTags } = await supabaseAdmin
       .from('event_tags')
-      .select('tag_id')
+      .select(`
+        tag_id,
+        tag:tags!inner(
+          slug
+        )
+      `)
       .eq('event_id', currentEvent.id)
 
     if (errorTags) {
       return { data: currentTags, error: 'Could not retrieve tags.' }
     }
 
-    const currentTagIds = currentTags?.map(t => t.tag_id) || []
-    if (currentTagIds.length === 0) {
+    const tagRecords = (currentTags || [])
+      .map((record: any) => ({
+        id: record.tag_id as number | null,
+        slug: record.tag?.slug as string | undefined,
+      }))
+      .filter(record => record.id !== null) as Array<{ id: number, slug?: string }>
+
+    const currentTagIds = tagRecords.map(tag => tag.id)
+
+    const selectedTagIds = tagSlug
+      ? tagRecords.filter(tag => tag.slug === tagSlug).map(tag => tag.id)
+      : currentTagIds
+
+    if (selectedTagIds.length === 0) {
       return { data: [], error: null }
     }
 
@@ -219,18 +238,20 @@ export const EventRepository = {
         )
       `)
       .neq('slug', slug)
-      .in('event_tags.tag_id', currentTagIds)
+      .in('event_tags.tag_id', selectedTagIds)
       .limit(20)
 
     if (errorRelatedEvents) {
       return { data: null, error: 'Could not retrieve related event.' }
     }
 
+    const tagsToCompare = tagSlug ? selectedTagIds : currentTagIds
+
     const response = (relatedEvents || [])
       .filter(event => event.markets.length === 1)
       .map((event) => {
         const eventTagIds = event.event_tags.map(et => et.tag_id)
-        const commonTagsCount = eventTagIds.filter(t => currentTagIds.includes(t)).length
+        const commonTagsCount = eventTagIds.filter(t => tagsToCompare.includes(t)).length
 
         return {
           id: event.id,
@@ -392,6 +413,10 @@ export const EventRepository = {
 }
 
 function eventResource(event: Event & any, userId: string): Event {
+  const tagRecords: Tag[] = ((event.event_tags ?? []) as any[])
+    .map((et: any) => et.tag)
+    .filter((tag: any): tag is Tag => Boolean(tag?.slug))
+
   return {
     ...event,
     status: (event.status ?? 'draft') as Event['status'],
@@ -404,9 +429,15 @@ function eventResource(event: Event & any, userId: string): Event {
       outcomes: market.condition?.outcomes || [],
       icon_url: getSupabaseImageUrl(market.icon_url),
     })),
-    tags: event.event_tags?.map((et: any) => et.tag?.slug).filter(Boolean) || [],
+    tags: tagRecords.map(tag => tag.slug),
+    tagDetails: tagRecords.map(tag => ({
+      id: tag.id,
+      name: tag.name,
+      slug: tag.slug,
+      isMainCategory: tag.is_main_category,
+    })),
     icon_url: getSupabaseImageUrl(event.icon_url),
-    main_tag: getEventMainTag(event.tags),
+    main_tag: getEventMainTag(tagRecords),
     is_bookmarked: event.bookmarks?.some((bookmark: any) => bookmark.user_id === userId) || false,
     is_trending: Math.random() > 0.3,
   }
