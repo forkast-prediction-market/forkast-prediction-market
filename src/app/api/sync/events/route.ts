@@ -501,12 +501,15 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
 
   const { data: existingMarket } = await supabaseAdmin
     .from('markets')
-    .select('condition_id')
+    .select('condition_id, event_id')
     .eq('condition_id', market.id)
     .maybeSingle()
 
   if (existingMarket) {
     console.log(`Market ${market.id} already exists, skipping...`)
+    if (existingMarket.event_id) {
+      await updateEventStatusFromMarkets(existingMarket.event_id)
+    }
     return
   }
 
@@ -535,6 +538,7 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
     condition_id: market.id,
     event_id: eventId,
     is_resolved: market.resolved,
+    is_active: !market.resolved,
     title: metadata.name,
     slug: metadata.slug,
     short_title: metadata.short_title,
@@ -551,6 +555,49 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
 
   if (metadata.outcomes?.length > 0) {
     await processOutcomes(market.id, metadata.outcomes)
+  }
+
+  await updateEventStatusFromMarkets(eventId)
+}
+
+async function updateEventStatusFromMarkets(eventId: string) {
+  const { data: markets, error } = await supabaseAdmin
+    .from('markets')
+    .select('is_active, is_resolved')
+    .eq('event_id', eventId)
+
+  if (error) {
+    console.error(`Failed to compute status for event ${eventId}:`, error)
+    return
+  }
+
+  const marketsList = markets ?? []
+  const hasMarkets = marketsList.length > 0
+  const hasActiveMarket = marketsList.some((market) => {
+    if (market.is_active === null || market.is_active === undefined) {
+      return !market.is_resolved
+    }
+    return market.is_active
+  })
+
+  let nextStatus: 'draft' | 'active' | 'archived'
+  if (hasActiveMarket) {
+    nextStatus = 'active'
+  }
+  else if (hasMarkets) {
+    nextStatus = 'archived'
+  }
+  else {
+    nextStatus = 'draft'
+  }
+
+  const { error: updateError } = await supabaseAdmin
+    .from('events')
+    .update({ status: nextStatus })
+    .eq('id', eventId)
+
+  if (updateError) {
+    console.error(`Failed to update status for event ${eventId}:`, updateError)
   }
 }
 

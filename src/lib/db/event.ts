@@ -59,6 +59,7 @@ export const EventRepository = {
       : `*, bookmarks(user_id), ${marketsSelect}, ${tagsSelect}`
 
     const query = supabaseAdmin.from('events').select(selectString)
+    query.eq('status', 'active')
 
     if (bookmarked && userId) {
       query.eq('bookmarks.user_id', userId)
@@ -393,6 +394,7 @@ export const EventRepository = {
 function eventResource(event: Event & any, userId: string): Event {
   return {
     ...event,
+    status: (event.status ?? 'draft') as Event['status'],
     markets: event.markets.map((market: any) => ({
       ...market,
       title: market.short_title || market.title,

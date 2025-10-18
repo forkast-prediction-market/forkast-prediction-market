@@ -8,6 +8,7 @@ export interface Event {
   creator: string
   icon_url: string
   show_market_icons: boolean
+  status: 'draft' | 'active' | 'archived'
   rules?: string
   active_markets_count: number
   total_markets_count: number

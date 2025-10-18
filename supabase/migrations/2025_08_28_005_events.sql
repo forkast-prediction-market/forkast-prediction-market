@@ -53,11 +53,13 @@ CREATE TABLE IF NOT EXISTS events
   creator              VARCHAR(42), -- Ethereum address of creator
   icon_url             TEXT,
   show_market_icons    BOOLEAN               DEFAULT TRUE,
+  status               VARCHAR(20)  NOT NULL DEFAULT 'active',
   rules                TEXT,        -- Event-specific rules
   active_markets_count INTEGER               DEFAULT 0,
   total_markets_count  INTEGER               DEFAULT 0,
   created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-  updated_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+  updated_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  CHECK (status IN ('draft', 'active', 'archived'))
 );
 
 -- Event-Tag relationship table - Many-to-many between events and tags
