@@ -20,6 +20,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
     <Drawer
       open={state.isMobileOrderPanelOpen}
       onClose={() => state.setIsMobileOrderPanelOpen(false)}
+      repositionInputs={false}
     >
       <DrawerTrigger asChild>
         {isBinaryMarket && (
