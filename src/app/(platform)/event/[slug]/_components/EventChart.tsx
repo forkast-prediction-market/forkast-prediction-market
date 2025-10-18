@@ -76,7 +76,7 @@ export default function EventChart({ event }: EventChartProps) {
 
   return (
     <div className="grid gap-4">
-      <div className="flex items-center justify-between">
+      <div className="relative flex items-center justify-between">
         <div className="flex items-center gap-3">
           {isBinaryMarket
             ? (
@@ -100,7 +100,7 @@ export default function EventChart({ event }: EventChartProps) {
                   {getTopMarkets().map((market, index) => (
                     <div key={market.condition_id} className="flex items-center gap-2">
                       <div
-                        className="size-3 rounded-full"
+                        className="size-3 shrink-0 rounded-full"
                         style={{
                           backgroundColor: POLYMARKET_COLORS[index % 4],
                         }}
@@ -114,7 +114,7 @@ export default function EventChart({ event }: EventChartProps) {
               )}
         </div>
 
-        <div className="flex items-center gap-1 text-muted-foreground">
+        <div className="absolute top-4 right-4 flex items-center gap-1 text-muted-foreground opacity-50">
           <div
             className="size-6 [&_*]:fill-current [&_*]:stroke-current"
             dangerouslySetInnerHTML={{
