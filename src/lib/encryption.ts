@@ -8,8 +8,8 @@ const ALGORITHM = 'aes-256-gcm'
 
 function resolveEncryptionKey() {
   const secret = process.env.BETTER_AUTH_SECRET
-  if (!secret || secret.length < 16) {
-    throw new Error('BETTER_AUTH_SECRET must be at least 16 characters to encrypt sensitive values.')
+  if (!secret || secret.length < 32) {
+    throw new Error('BETTER_AUTH_SECRET must be at least 32 characters to encrypt sensitive values.')
   }
 
   return createHash('sha256').update(secret).digest()
