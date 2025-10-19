@@ -1,0 +1,59 @@
+Plano para migrar a página Create Event para o painel admin (nova branch)
+
+- Layout/Admin Shell
+  - Usar o layout e componentes de navegação do painel admin atual na `main`.
+  - Provisionar rota/página correspondente no painel admin (ex.: `/admin/events/create`).
+
+- Imports e dependências
+  - Garantir acesso aos mesmos utilitários e componentes usados em `CreateEventContent.tsx`.
+  - Conferir disponibilidade dos ícones `lucide-react`, `toast` de `sonner` e componentes UI (`Button`, `Card`, `Input`, `Switch`, `Textarea`, `Separator`).
+  - Mapear acesso ao helper `getMainTags` (ou equivalente) dentro do contexto admin.
+
+- Modelos e estado inicial
+  - Replicar interfaces `EventTag`, `MarketOutcome`, `Market`, `EventForm`.
+  - Inicializar estado com `useState` para `form`, `isLoading`, `availableTags`, `eventIconFile`, `marketIconFiles`.
+  - Refs para debounce (`eventTitleTimeoutRef`, `tagTimeoutsRef`, `marketTimeoutsRef`).
+
+- Efeitos e carregamentos
+  - `useEffect` para carregar tags principais via `getMainTags` e popular `availableTags`.
+  - `useEffect` de limpeza para cancelar timeouts na desmontagem.
+  - `useEffect` para gerar slug/event_id a partir do título (delay 500ms).
+  - `useEffect` para gerar slugs de tags e mercados de forma independente (delay 300ms; dependências usando string join).
+
+- Helpers e handlers
+  - `generateSlug` com normalização e remoção de acentos.
+  - `handleEventFieldChange` genérico.
+  - Fluxo de tags: `handleTagChange`, `addTag`, `addTagFromList` (evitar duplicados), `removeTag`.
+  - Uploads: `handleEventIconUpload` e `handleMarketIconUpload` (armazenar `File`, mostrar nome).
+  - Mercados: `handleMarketChange`, `handleOutcomeChange` (sem debounce), `addMarket`, `removeMarket`.
+
+- Estrutura de formulário
+  - Card “Event Information” com campos: título, slug, descrição, datas, upload de ícone, fonte de resolução, switch `show_market_icons`.
+  - Card “Event Tags” com grid de tags disponíveis + lista de tags selecionadas (inputs pares label/slug + botão remover).
+  - Card “Prediction Markets” com lista dinâmica: pergunta, slug, descrição, upload de ícone, inputs de outcomes (mínimo 2), botão remover/adicionar mercado.
+  - Card “Development Status” exibindo checklist de pendências (database, blockchain, upload, oracle).
+  - Botão de submit “Validate Event Data” com estado de loading.
+
+- Validações e feedback
+  - `validateForm` cobrindo: título, descrição, datas (start < end), ícones obrigatórios, ao menos 1 tag, cada mercado com pergunta, descrição, ícone e ≥2 outcomes.
+  - Em caso de erros, iterar `toast.error`.
+  - Em caso de sucesso, `toast.success` + `toast.info`.
+  - Reset de estado após sucesso (form, files, loading).
+
+- Preparação dos dados para submissão
+  - Montar `eventData` filtrando tags/oucomes vazios.
+  - Incluir campos fixos: `oracle_type: 'native'`, `resolved_by` via `NEXT_PUBLIC_UMA_ADAPTER_ADDRESS` (fallback para endereço hardcoded).
+  - Simular atraso assíncrono (`await new Promise(setTimeout)`), logar no console.
+
+- Adaptações esperadas no painel admin
+  - Ajustar estilização/spacing conforme tokens do layout admin novo.
+  - Garantir que botões/listas respeitem responsividade e padrões do painel.
+  - Inserir breadcrumbs/header do admin (se aplicável).
+  - Confirmar que permissões/autenticação necessárias do painel admin estejam aplicadas.
+
+- Pendências para a próxima fase
+  - Planejar integração com Supabase para persistência.
+  - Planejar fluxo de upload (storage) para ícones.
+  - Definir interação com contratos/UMA quando disponível.
+  - Adicionar testes (unit/e2e) para handlers e validações.
+
