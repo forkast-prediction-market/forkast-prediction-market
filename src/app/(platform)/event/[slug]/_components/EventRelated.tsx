@@ -256,10 +256,24 @@ export default function EventRelated({ event }: EventRelatedProps) {
       <div className="relative min-w-0">
         <div
           ref={scrollContainerRef}
-          className={`
-            relative scrollbar-hide min-w-0 overflow-x-auto overflow-y-hidden px-2 pb-1
-            lg:w-[340px] lg:max-w-[340px]
-          `}
+          className={cn(
+            `relative scrollbar-hide min-w-0 overflow-x-auto overflow-y-hidden px-2 pb-1 lg:w-[340px] lg:max-w-[340px]`,
+            (showLeftShadow || showRightShadow)
+            && `
+              [mask-image:linear-gradient(to_right,transparent,black_32px,black_calc(100%-32px),transparent)]
+              [-webkit-mask-image:linear-gradient(to_right,transparent,black_32px,black_calc(100%-32px),transparent)]
+            `,
+            showLeftShadow && !showRightShadow
+            && `
+              [mask-image:linear-gradient(to_right,transparent,black_32px,black)]
+              [-webkit-mask-image:linear-gradient(to_right,transparent,black_32px,black)]
+            `,
+            showRightShadow && !showLeftShadow
+            && `
+              [mask-image:linear-gradient(to_right,black,black_calc(100%-32px),transparent)]
+              [-webkit-mask-image:linear-gradient(to_right,black,black_calc(100%-32px),transparent)]
+            `,
+          )}
         >
           <div ref={buttonsWrapperRef} className="relative flex flex-nowrap items-center gap-2">
             {backgroundStyle.isInitialized && (
@@ -297,19 +311,6 @@ export default function EventRelated({ event }: EventRelatedProps) {
             ))}
           </div>
         </div>
-
-        {showLeftShadow && (
-          <div className={`
-            pointer-events-none absolute top-0 left-0 h-full w-6 bg-gradient-to-r from-background to-transparent
-          `}
-          />
-        )}
-        {showRightShadow && (
-          <div className={`
-            pointer-events-none absolute top-0 right-0 h-full w-6 bg-gradient-to-l from-background to-transparent
-          `}
-          />
-        )}
       </div>
 
       {loading
@@ -328,7 +329,7 @@ export default function EventRelated({ event }: EventRelatedProps) {
             )
           : events.length > 0
             ? (
-                <ul className="grid gap-2 lg:w-[340px] lg:max-w-[340px]">
+                <ul className="grid gap-2 lg:w-[340px]">
                   {events.map(relatedEvent => (
                     <li key={relatedEvent.id}>
                       <Link
