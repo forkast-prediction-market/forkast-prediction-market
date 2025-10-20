@@ -70,7 +70,7 @@
     "@types/pg": "^8.15.5",
     "@types/react": "^19.1.15",
     "@types/react-dom": "^19.2.2",
-    "eslint": "^9.37.0",
+    "eslint": "^9.38.0",
     "eslint-plugin-better-tailwindcss": "^3.7.8",
     "eslint-plugin-react-hooks": "^7.0.0",
     "eslint-plugin-react-refresh": "^0.4.24",
