@@ -24,7 +24,8 @@ export const EventRepository = {
     'use cache'
     cacheTag(cacheTags.events(userId))
 
-    const marketsSelect = `
+    let selectString = `
+      *,
       markets!inner(
         condition_id,
         title,
@@ -40,10 +41,7 @@ export const EventRepository = {
           oracle,
           outcomes(*)
         )
-      )
-    `
-
-    const tagsSelect = `
+      ),
       event_tags!inner(
         tag:tags!inner(
           id,
@@ -54,12 +52,14 @@ export const EventRepository = {
       )
     `
 
-    const selectString = bookmarked && userId
-      ? `*, bookmarks!inner(user_id), ${marketsSelect}, ${tagsSelect}`
-      : `*, bookmarks(user_id), ${marketsSelect}, ${tagsSelect}`
+    if (userId) {
+      selectString += `, bookmarks${bookmarked ? '!inner' : ''}(user_id)`
+    }
 
-    const query = supabaseAdmin.from('events').select(selectString)
-    query.eq('status', 'active')
+    const query = supabaseAdmin
+      .from('v_visible_events')
+      .select(selectString)
+      .eq('status', 'active')
 
     if (bookmarked && userId) {
       query.eq('bookmarks.user_id', userId)
