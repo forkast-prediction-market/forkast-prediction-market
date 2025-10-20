@@ -87,7 +87,7 @@ export const EventRepository = {
     const events = data?.map(event => eventResource(event, userId)) || []
 
     const sanitizedEvents = tag === 'new'
-      ? events.filter(event => !event.tags.includes(HIDE_FROM_NEW_TAG_SLUG))
+      ? events.filter(event => !event.tags.some(t => t.slug === HIDE_FROM_NEW_TAG_SLUG))
       : events
 
     if (!bookmarked && tag === 'trending') {
@@ -429,8 +429,7 @@ function eventResource(event: Event & any, userId: string): Event {
       outcomes: market.condition?.outcomes || [],
       icon_url: getSupabaseImageUrl(market.icon_url),
     })),
-    tags: tagRecords.map(tag => tag.slug),
-    tagDetails: tagRecords.map(tag => ({
+    tags: tagRecords.map(tag => ({
       id: tag.id,
       name: tag.name,
       slug: tag.slug,

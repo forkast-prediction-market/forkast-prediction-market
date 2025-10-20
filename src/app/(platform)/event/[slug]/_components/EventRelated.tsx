@@ -42,13 +42,6 @@ const INITIAL_BACKGROUND_STYLE: BackgroundStyle = {
   isInitialized: false,
 }
 
-function formatTagLabel(value: string) {
-  return value
-    .split('-')
-    .map(segment => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ')
-}
-
 async function fetchRelatedEvents(params: UseRelatedEventsParams): Promise<RelatedEvent[]> {
   const { eventSlug, tag } = params
 
@@ -116,17 +109,10 @@ export default function EventRelated({ event }: EventRelatedProps) {
   const tagItems = useMemo(() => {
     const uniqueTags = new Map<string, string>()
 
-    if (event.tagDetails && event.tagDetails.length > 0) {
-      for (const tag of event.tagDetails) {
+    if (event.tags && event.tags.length > 0) {
+      for (const tag of event.tags) {
         if (tag.slug && !uniqueTags.has(tag.slug)) {
           uniqueTags.set(tag.slug, tag.name)
-        }
-      }
-    }
-    else if (event.tags && event.tags.length > 0) {
-      for (const slug of event.tags) {
-        if (!uniqueTags.has(slug)) {
-          uniqueTags.set(slug, formatTagLabel(slug))
         }
       }
     }
@@ -138,7 +124,7 @@ export default function EventRelated({ event }: EventRelatedProps) {
         label,
       })),
     ]
-  }, [event.tagDetails, event.tags])
+  }, [event.tags])
 
   const activeIndex = useMemo(
     () => tagItems.findIndex(item => item.slug === activeTag),
