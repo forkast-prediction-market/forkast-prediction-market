@@ -8,6 +8,7 @@ export interface AdminCategoryRow {
   slug: string
   is_main_category: boolean
   is_hidden: boolean
+  hide_events: boolean
   display_order: number
   parent_tag_id: number | null
   parent_name: string | null

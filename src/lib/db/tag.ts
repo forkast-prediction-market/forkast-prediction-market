@@ -193,6 +193,7 @@ export const TagRepository = {
         slug,
         is_main_category,
         is_hidden,
+        hide_events,
         display_order,
         parent_tag_id,
         active_markets_count,
@@ -228,26 +229,7 @@ export const TagRepository = {
     }
   },
 
-  async updateTagById(id: number, updates: Partial<{ is_main_category: boolean, is_hidden: boolean }>) {
-    const payload: Record<string, unknown> = {}
-
-    if (Object.prototype.hasOwnProperty.call(updates, 'is_main_category')) {
-      payload.is_main_category = updates.is_main_category
-    }
-
-    if (Object.prototype.hasOwnProperty.call(updates, 'is_hidden')) {
-      payload.is_hidden = updates.is_hidden
-    }
-
-    if (Object.keys(payload).length === 0) {
-      return {
-        data: null,
-        error: new Error('No valid fields to update'),
-      }
-    }
-
-    payload.updated_at = new Date().toISOString()
-
+  async updateTagById(id: number, payload: any) {
     const { data, error } = await supabaseAdmin
       .from('tags')
       .update(payload)

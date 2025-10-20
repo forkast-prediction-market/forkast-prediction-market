@@ -1,25 +1,21 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
+import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
+import { cacheTags } from '@/lib/cache-tags'
 import { TagRepository } from '@/lib/db/tag'
 import { UserRepository } from '@/lib/db/user'
 
 const UpdateCategoryInputSchema = z.object({
-  id: z.number().int().positive('Category ID must be a positive integer'),
   is_main_category: z.boolean().optional(),
   is_hidden: z.boolean().optional(),
-}).refine(
-  data => data.is_main_category !== undefined || data.is_hidden !== undefined,
-  {
-    message: 'At least one field (is_main_category or is_hidden) must be provided',
-  },
-)
+  hide_events: z.boolean().optional(),
+})
 
 export interface UpdateCategoryInput {
-  id: number
   is_main_category?: boolean
   is_hidden?: boolean
+  hide_events?: boolean
 }
 
 export interface UpdateCategoryResult {
@@ -42,22 +38,17 @@ export interface UpdateCategoryResult {
 }
 
 export async function updateCategoryAction(
+  categoryId: number,
   input: UpdateCategoryInput,
 ): Promise<UpdateCategoryResult> {
   try {
-    const validationResult = UpdateCategoryInputSchema.safeParse(input)
-    if (!validationResult.success) {
-      const errorMessage = validationResult.error.issues
-        .map((err: any) => `${err.path.join('.')}: ${err.message}`)
-        .join(', ')
-
+    const parsed = UpdateCategoryInputSchema.safeParse(input)
+    if (!parsed.success) {
       return {
         success: false,
-        error: `Validation error: ${errorMessage}`,
+        error: parsed.error.issues[0]?.message ?? 'Invalid input.',
       }
     }
-
-    const { id, is_main_category, is_hidden } = validationResult.data
 
     const currentUser = await UserRepository.getCurrentUser()
     if (!currentUser || !currentUser.is_admin) {
@@ -67,15 +58,7 @@ export async function updateCategoryAction(
       }
     }
 
-    const updates: { is_main_category?: boolean, is_hidden?: boolean } = {}
-    if (is_main_category !== undefined) {
-      updates.is_main_category = is_main_category
-    }
-    if (is_hidden !== undefined) {
-      updates.is_hidden = is_hidden
-    }
-
-    const { data, error } = await TagRepository.updateTagById(id, updates)
+    const { data, error } = await TagRepository.updateTagById(categoryId, parsed.data)
 
     if (error || !data) {
       console.error('Error updating category:', error)
@@ -94,6 +77,7 @@ export async function updateCategoryAction(
 
     revalidatePath('/admin/categories')
     revalidatePath('/')
+    revalidateTag(cacheTags.events(currentUser.id))
 
     return {
       success: true,

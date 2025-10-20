@@ -31,12 +31,12 @@ export default function AdminCategoriesTable() {
 
   const [pendingMainId, setPendingMainId] = useState<number | null>(null)
   const [pendingHiddenId, setPendingHiddenId] = useState<number | null>(null)
+  const [pendingHideEventsId, setPendingHideEventsId] = useState<number | null>(null)
 
   const handleToggleMain = useCallback(async (category: AdminCategoryRow, checked: boolean) => {
     setPendingMainId(category.id)
 
-    const result = await updateCategoryAction({
-      id: category.id,
+    const result = await updateCategoryAction(category.id, {
       is_main_category: checked,
     })
 
@@ -54,8 +54,7 @@ export default function AdminCategoriesTable() {
   const handleToggleHidden = useCallback(async (category: AdminCategoryRow, checked: boolean) => {
     setPendingHiddenId(category.id)
 
-    const result = await updateCategoryAction({
-      id: category.id,
+    const result = await updateCategoryAction(category.id, {
       is_hidden: checked,
     })
 
@@ -70,12 +69,32 @@ export default function AdminCategoriesTable() {
     setPendingHiddenId(null)
   }, [queryClient])
 
+  const handleToggleHideEvents = useCallback(async (category: AdminCategoryRow, checked: boolean) => {
+    setPendingHideEventsId(category.id)
+
+    const result = await updateCategoryAction(category.id, {
+      hide_events: checked,
+    })
+
+    if (result.success) {
+      toast.success(`Events with category "${category.name}" are now ${checked ? 'hidden' : 'visible'} on the site.`)
+      queryClient.invalidateQueries({ queryKey: ['admin-categories'] })
+    }
+    else {
+      toast.error(result.error || 'Failed to update category')
+    }
+
+    setPendingHideEventsId(null)
+  }, [queryClient])
+
   const columns = useMemo(() => createCategoryColumns({
     onToggleMain: handleToggleMain,
     onToggleHidden: handleToggleHidden,
+    onToggleHideEvents: handleToggleHideEvents,
     isUpdatingMain: id => pendingMainId === id,
     isUpdatingHidden: id => pendingHiddenId === id,
-  }), [handleToggleHidden, handleToggleMain, pendingHiddenId, pendingMainId])
+    isUpdatingHideEvents: id => pendingHideEventsId === id,
+  }), [handleToggleHideEvents, handleToggleHidden, handleToggleMain, pendingHideEventsId, pendingHiddenId, pendingMainId])
 
   function handleSortChangeWithTranslation(column: string | null, order: 'asc' | 'desc' | null) {
     if (column === null || order === null) {

@@ -8,15 +8,19 @@ import { Switch } from '@/components/ui/switch'
 interface CategoryColumnOptions {
   onToggleMain: (category: AdminCategoryRow, nextValue: boolean) => void
   onToggleHidden: (category: AdminCategoryRow, nextValue: boolean) => void
+  onToggleHideEvents: (category: AdminCategoryRow, nextValue: boolean) => void
   isUpdatingMain: (categoryId: number) => boolean
   isUpdatingHidden: (categoryId: number) => boolean
+  isUpdatingHideEvents: (categoryId: number) => boolean
 }
 
 export function createCategoryColumns({
   onToggleMain,
   onToggleHidden,
+  onToggleHideEvents,
   isUpdatingMain,
   isUpdatingHidden,
+  isUpdatingHideEvents,
 }: CategoryColumnOptions): ColumnDef<AdminCategoryRow>[] {
   return [
     {
@@ -42,6 +46,11 @@ export function createCategoryColumns({
               {category.is_hidden && (
                 <Badge variant="outline" className="text-xs">
                   Hidden
+                </Badge>
+              )}
+              {category.hide_events && (
+                <Badge variant="destructive" className="text-xs">
+                  Hide events
                 </Badge>
               )}
               {category.is_main_category && (
@@ -111,9 +120,7 @@ export function createCategoryColumns({
               id={`main-${category.id}`}
               checked={category.is_main_category}
               disabled={disabled}
-              onCheckedChange={(checked) => {
-                onToggleMain(category, checked)
-              }}
+              onCheckedChange={checked => onToggleMain(category, checked)}
             />
             <span className="sr-only">
               Toggle main category for
@@ -130,7 +137,7 @@ export function createCategoryColumns({
       id: 'is_hidden',
       header: () => (
         <div className="text-center text-xs font-medium text-muted-foreground uppercase">
-          Hide
+          Hide Category
         </div>
       ),
       cell: ({ row }) => {
@@ -142,9 +149,36 @@ export function createCategoryColumns({
               id={`hide-${category.id}`}
               checked={category.is_hidden}
               disabled={disabled}
-              onCheckedChange={(checked) => {
-                onToggleHidden(category, checked)
-              }}
+              onCheckedChange={checked => onToggleHidden(category, checked)}
+            />
+            <span className="sr-only">
+              Toggle hide for
+              {' '}
+              {category.name}
+            </span>
+          </div>
+        )
+      },
+      enableSorting: false,
+    },
+    {
+      accessorKey: 'hide_events',
+      id: 'hide_events',
+      header: () => (
+        <div className="text-center text-xs font-medium text-muted-foreground uppercase">
+          Hide Events
+        </div>
+      ),
+      cell: ({ row }) => {
+        const category = row.original
+        const disabled = isUpdatingHideEvents(category.id)
+        return (
+          <div className="text-center">
+            <Switch
+              id={`hide-${category.id}-events`}
+              checked={category.hide_events}
+              disabled={disabled}
+              onCheckedChange={checked => onToggleHideEvents(category, checked)}
             />
             <span className="sr-only">
               Toggle hide for
