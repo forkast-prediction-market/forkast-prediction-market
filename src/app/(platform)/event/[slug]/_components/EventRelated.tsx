@@ -1,6 +1,7 @@
 'use client'
 
 import type { Event } from '@/types'
+import { useQuery } from '@tanstack/react-query'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
@@ -12,6 +13,14 @@ interface EventRelatedProps {
   event: Event
 }
 
+interface BackgroundStyle {
+  left: number
+  width: number
+  height: number
+  top: number
+  isInitialized: boolean
+}
+
 interface RelatedEvent {
   id: string
   slug: string
@@ -19,12 +28,10 @@ interface RelatedEvent {
   icon_url: string
 }
 
-interface BackgroundStyle {
-  left: number
-  width: number
-  height: number
-  top: number
-  isInitialized: boolean
+interface UseRelatedEventsParams {
+  eventSlug: string
+  tag?: string
+  enabled?: boolean
 }
 
 const INITIAL_BACKGROUND_STYLE: BackgroundStyle = {
@@ -42,40 +49,66 @@ function formatTagLabel(value: string) {
     .join(' ')
 }
 
+async function fetchRelatedEvents(params: UseRelatedEventsParams): Promise<RelatedEvent[]> {
+  const { eventSlug, tag } = params
+
+  const url = new URL(`/api/events/${eventSlug}/related`, window.location.origin)
+  if (tag && tag !== 'all') {
+    url.searchParams.set('tag', tag)
+  }
+
+  const response = await fetch(url.toString())
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch related events.')
+  }
+
+  return response.json()
+}
+
+function useRelatedEvents(params: UseRelatedEventsParams) {
+  const { eventSlug, tag = 'all', enabled = true } = params
+
+  const queryKey = ['related-events', eventSlug, tag] as const
+
+  return useQuery({
+    queryKey,
+    queryFn: () => fetchRelatedEvents({ eventSlug, tag }),
+    enabled,
+    staleTime: 30_000,
+    gcTime: 300_000,
+    refetchOnWindowFocus: false,
+    retry: 3,
+  })
+}
+
 export default function EventRelated({ event }: EventRelatedProps) {
-  const [events, setEventsState] = useState<RelatedEvent[]>([])
-  const [loading, setLoadingState] = useState(true)
   const [activeTag, setActiveTagState] = useState('all')
   const [backgroundStyle, setBackgroundStyleState] = useState<BackgroundStyle>(INITIAL_BACKGROUND_STYLE)
   const [showLeftShadow, setShowLeftShadowState] = useState(false)
   const [showRightShadow, setShowRightShadowState] = useState(false)
 
-  const resetActiveTag = useCallback(() => {
+  const { data: events = [], isLoading: loading, error } = useRelatedEvents({
+    eventSlug: event.slug,
+    tag: activeTag,
+  })
+
+  function resetActiveTag() {
     setActiveTagState('all')
-  }, [])
+  }
 
-  const resetBackgroundStyle = useCallback(() => {
+  function resetBackgroundStyle() {
     setBackgroundStyleState({ ...INITIAL_BACKGROUND_STYLE })
-  }, [])
+  }
 
-  const applyBackgroundStyle = useCallback((style: BackgroundStyle) => {
+  function applyBackgroundStyle(style: BackgroundStyle) {
     setBackgroundStyleState(style)
-  }, [])
+  }
 
-  const updateScrollShadowState = useCallback((left: boolean, right: boolean) => {
+  function updateScrollShadowState(left: boolean, right: boolean) {
     setShowLeftShadowState(left)
     setShowRightShadowState(right)
-  }, [])
-
-  const setLoading = useCallback((value: boolean) => {
-    setLoadingState(value)
-  }, [])
-
-  const setEvents = useCallback((nextEvents: RelatedEvent[]) => {
-    setEventsState(nextEvents)
-  }, [])
-
-  const abortControllerRef = useRef<AbortController | null>(null)
+  }
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const buttonsWrapperRef = useRef<HTMLDivElement>(null)
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -114,7 +147,7 @@ export default function EventRelated({ event }: EventRelatedProps) {
 
   useEffect(() => {
     resetActiveTag()
-  }, [event.slug, resetActiveTag])
+  }, [event.slug])
 
   useEffect(() => {
     buttonRefs.current = Array.from({ length: tagItems.length }).map((_, index) => buttonRefs.current[index] ?? null)
@@ -133,17 +166,24 @@ export default function EventRelated({ event }: EventRelatedProps) {
       return
     }
 
-    const buttonRect = activeButton.getBoundingClientRect()
-    const containerRect = container.getBoundingClientRect()
+    // Use requestAnimationFrame to ensure layout calculations happen after DOM updates
+    requestAnimationFrame(() => {
+      const buttonRect = activeButton.getBoundingClientRect()
+      const containerRect = container.getBoundingClientRect()
 
-    applyBackgroundStyle({
-      left: buttonRect.left - containerRect.left,
-      width: buttonRect.width,
-      height: buttonRect.height,
-      top: buttonRect.top - containerRect.top,
-      isInitialized: true,
+      // Calculate position relative to the container
+      const left = buttonRect.left - containerRect.left
+      const top = buttonRect.top - containerRect.top
+
+      applyBackgroundStyle({
+        left,
+        width: buttonRect.width,
+        height: buttonRect.height,
+        top,
+        isInitialized: true,
+      })
     })
-  }, [activeIndex, applyBackgroundStyle, resetBackgroundStyle])
+  }, [activeIndex])
 
   const updateScrollShadows = useCallback(() => {
     const container = scrollContainerRef.current
@@ -156,7 +196,7 @@ export default function EventRelated({ event }: EventRelatedProps) {
     const maxScrollLeft = scrollWidth - clientWidth
 
     updateScrollShadowState(scrollLeft > 4, scrollLeft < maxScrollLeft - 4)
-  }, [updateScrollShadowState])
+  }, [])
 
   useLayoutEffect(() => {
     updateBackgroundPosition()
@@ -170,14 +210,27 @@ export default function EventRelated({ event }: EventRelatedProps) {
       return
     }
 
-    container.addEventListener('scroll', updateScrollShadows)
-    window.addEventListener('resize', updateBackgroundPosition)
-    window.addEventListener('resize', updateScrollShadows)
+    let resizeTimeout: NodeJS.Timeout
+    function handleResize() {
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(() => {
+        updateBackgroundPosition()
+        updateScrollShadows()
+      }, 16)
+    }
+
+    function handleScroll() {
+      updateScrollShadows()
+      updateBackgroundPosition()
+    }
+
+    container.addEventListener('scroll', handleScroll)
+    window.addEventListener('resize', handleResize)
 
     return () => {
-      container.removeEventListener('scroll', updateScrollShadows)
-      window.removeEventListener('resize', updateBackgroundPosition)
-      window.removeEventListener('resize', updateScrollShadows)
+      container.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('resize', handleResize)
+      clearTimeout(resizeTimeout)
     }
   }, [updateBackgroundPosition, updateScrollShadows, tagItems.length])
 
@@ -194,65 +247,9 @@ export default function EventRelated({ event }: EventRelatedProps) {
     activeButton.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
   }, [activeIndex])
 
-  useEffect(() => {
-    let isMounted = true
-
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-
-    const controller = new AbortController()
-    abortControllerRef.current = controller
-
-    setLoading(true)
-    setEvents([])
-
-    async function fetchEvents() {
-      try {
-        const url = new URL(`/api/events/${event.slug}/related`, window.location.origin)
-        if (activeTag !== 'all') {
-          url.searchParams.set('tag', activeTag)
-        }
-
-        const res = await fetch(url.toString(), { signal: controller.signal })
-
-        if (!res.ok) {
-          throw new Error('Failed to fetch related events.')
-        }
-
-        const data = await res.json() as RelatedEvent[]
-
-        if (isMounted) {
-          setEvents(data)
-        }
-      }
-      catch (error) {
-        if ((error as Error).name === 'AbortError') {
-          return
-        }
-
-        if (isMounted) {
-          setEvents([])
-        }
-      }
-      finally {
-        if (isMounted) {
-          setLoading(false)
-        }
-      }
-    }
-
-    fetchEvents().catch(() => {})
-
-    return () => {
-      isMounted = false
-      controller.abort()
-    }
-  }, [event.slug, activeTag, setEvents, setLoading])
-
-  const handleTagClick = useCallback((slug: string) => {
+  function handleTagClick(slug: string) {
     setActiveTagState(current => (current === slug ? current : slug))
-  }, [])
+  }
 
   return (
     <div className="grid w-full max-w-full gap-3">
@@ -260,10 +257,8 @@ export default function EventRelated({ event }: EventRelatedProps) {
         <div
           ref={scrollContainerRef}
           className={`
-            relative overflow-x-auto overflow-y-hidden px-2 pb-1
-            [scrollbar-width:none]
+            relative scrollbar-hide min-w-0 overflow-x-auto overflow-y-hidden px-2 pb-1
             lg:w-[340px] lg:max-w-[340px]
-            [&::-webkit-scrollbar]:hidden
           `}
         >
           <div ref={buttonsWrapperRef} className="relative flex flex-nowrap items-center gap-2">
@@ -325,33 +320,39 @@ export default function EventRelated({ event }: EventRelatedProps) {
               ))}
             </div>
           )
-        : events.length > 0
+        : error
           ? (
-              <ul className="grid gap-2 lg:w-[340px] lg:max-w-[340px]">
-                {events.map(relatedEvent => (
-                  <li key={relatedEvent.id}>
-                    <Link
-                      href={`/event/${relatedEvent.slug}`}
-                      className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-border"
-                    >
-                      <Image
-                        src={relatedEvent.icon_url}
-                        alt={relatedEvent.title}
-                        width={42}
-                        height={42}
-                        className="shrink-0 rounded-sm object-cover"
-                      />
-                      <strong className="text-sm">{relatedEvent.title}</strong>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )
-          : (
               <div className="rounded-lg border p-4 text-sm text-muted-foreground">
-                No related events for this tag yet.
+                Failed to fetch related events.
               </div>
-            )}
+            )
+          : events.length > 0
+            ? (
+                <ul className="grid gap-2 lg:w-[340px] lg:max-w-[340px]">
+                  {events.map(relatedEvent => (
+                    <li key={relatedEvent.id}>
+                      <Link
+                        href={`/event/${relatedEvent.slug}`}
+                        className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-border"
+                      >
+                        <Image
+                          src={relatedEvent.icon_url}
+                          alt={relatedEvent.title}
+                          width={42}
+                          height={42}
+                          className="shrink-0 rounded-sm object-cover"
+                        />
+                        <strong className="text-sm">{relatedEvent.title}</strong>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )
+            : (
+                <div className="rounded-lg border p-4 text-sm text-muted-foreground">
+                  No related events for this tag yet.
+                </div>
+              )}
     </div>
   )
 }
