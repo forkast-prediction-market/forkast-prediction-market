@@ -253,7 +253,7 @@ export default function EventRelated({ event }: EventRelatedProps) {
 
   return (
     <div className="grid w-full max-w-full gap-3">
-      <div className="relative">
+      <div className="relative min-w-0">
         <div
           ref={scrollContainerRef}
           className={`
