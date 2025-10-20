@@ -1,3 +1,5 @@
+'use cache'
+
 import PortfolioProfitLossCard from '@/app/(platform)/portfolio/_components/PortfolioProfitLossCard'
 import PortfolioSummaryCard from '@/app/(platform)/portfolio/_components/PortfolioSummaryCard'
 
