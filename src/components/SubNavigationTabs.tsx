@@ -64,7 +64,6 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
       const height = buttonRect.height
       const top = buttonRect.top - containerRect.top
 
-      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
       setBackgroundStyle({
         left,
         width,

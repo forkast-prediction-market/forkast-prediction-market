@@ -15,7 +15,12 @@ export interface Event {
   created_at: string
   updated_at: string
   markets: Market[]
-  tags: string[]
+  tags: {
+    id: number
+    name: string
+    slug: string
+    isMainCategory: boolean
+  }[]
   main_tag: string
   is_bookmarked: boolean
   is_trending: boolean

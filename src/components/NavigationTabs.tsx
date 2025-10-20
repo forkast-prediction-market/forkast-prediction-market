@@ -67,7 +67,6 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
       const left = tabRect.left - containerRect.left + container.scrollLeft
       const width = tabRect.width
 
-      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
       setIndicatorStyle({
         left,
         width,
