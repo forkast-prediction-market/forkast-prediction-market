@@ -185,12 +185,10 @@ export default function AdminCreateEventForm() {
 
     const slug = form.slug.trim().toLowerCase()
     if (!slug) {
-      // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
       setSlugValidationState('idle')
       return
     }
 
-    // eslint-disable-next-line react-hooks-extra/no-direct-set-state-in-use-effect
     setSlugValidationState('checking')
 
     const timeoutId = setTimeout(async () => {
