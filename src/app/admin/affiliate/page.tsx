@@ -1,9 +1,7 @@
-import { redirect } from 'next/navigation'
 import AdminAffiliateOverview from '@/app/admin/_components/AdminAffiliateOverview'
 import AdminAffiliateSettingsForm from '@/app/admin/_components/AdminAffiliateSettingsForm'
 import { AffiliateRepository } from '@/lib/db/affiliate'
 import { SettingsRepository } from '@/lib/db/settings'
-import { UserRepository } from '@/lib/db/user'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 interface AffiliateOverviewRow {
@@ -33,11 +31,6 @@ interface RowSummary {
 }
 
 export default async function AdminSettingsPage() {
-  const currentUser = await UserRepository.getCurrentUser()
-  if (!currentUser || !currentUser.is_admin) {
-    redirect('/')
-  }
-
   const { data: allSettings } = await SettingsRepository.getSettings()
   const affiliateSettings = allSettings?.affiliate
   const { data: overviewData } = await AffiliateRepository.listAffiliateOverview()
@@ -99,7 +92,7 @@ export default async function AdminSettingsPage() {
   })
 
   return (
-    <div className="space-y-8">
+    <>
       <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <AdminAffiliateSettingsForm
           tradeFeeBps={Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '100', 10)}
@@ -134,6 +127,6 @@ export default async function AdminSettingsPage() {
         </div>
       </section>
       <AdminAffiliateOverview rows={rows} />
-    </div>
+    </>
   )
 }

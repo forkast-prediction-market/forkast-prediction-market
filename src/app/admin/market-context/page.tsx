@@ -1,18 +1,10 @@
-import { redirect } from 'next/navigation'
 import AdminMarketContextSettingsForm from '@/app/admin/_components/AdminMarketContextSettingsForm'
 import { parseMarketContextSettings } from '@/lib/ai/market-context-config'
 import { MARKET_CONTEXT_VARIABLES } from '@/lib/ai/market-context-template'
 import { fetchOpenRouterModels } from '@/lib/ai/openrouter'
 import { SettingsRepository } from '@/lib/db/settings'
-import { UserRepository } from '@/lib/db/user'
 
 export default async function AdminMarketContextSettingsPage() {
-  const currentUser = await UserRepository.getCurrentUser()
-
-  if (!currentUser || !currentUser.is_admin) {
-    redirect('/')
-  }
-
   const { data: allSettings } = await SettingsRepository.getSettings()
   const parsedSettings = parseMarketContextSettings(allSettings ?? undefined)
   const defaultPrompt = parsedSettings.prompt
@@ -45,26 +37,24 @@ export default async function AdminMarketContextSettingsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <section className="grid gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Market context</h1>
-          <p className="text-sm text-muted-foreground">
-            Control the AI prompt, OpenRouter credentials, and model selection for market context generation.
-          </p>
-        </div>
+    <section className="grid gap-4">
+      <div>
+        <h1 className="text-2xl font-semibold">Market context</h1>
+        <p className="text-sm text-muted-foreground">
+          Control the AI prompt, OpenRouter credentials, and model selection for market context generation.
+        </p>
+      </div>
 
-        <AdminMarketContextSettingsForm
-          defaultPrompt={defaultPrompt}
-          variables={MARKET_CONTEXT_VARIABLES}
-          models={modelOptions}
-          defaultModel={defaultModel}
-          defaultApiKey={defaultApiKey}
-          isEnabled={isEnabled}
-          isModelSelectEnabled={isModelSelectEnabled}
-          modelsError={modelsError}
-        />
-      </section>
-    </div>
+      <AdminMarketContextSettingsForm
+        defaultPrompt={defaultPrompt}
+        variables={MARKET_CONTEXT_VARIABLES}
+        models={modelOptions}
+        defaultModel={defaultModel}
+        defaultApiKey={defaultApiKey}
+        isEnabled={isEnabled}
+        isModelSelectEnabled={isModelSelectEnabled}
+        modelsError={modelsError}
+      />
+    </section>
   )
 }

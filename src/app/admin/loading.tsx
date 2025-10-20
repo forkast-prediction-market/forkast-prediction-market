@@ -1,6 +1,6 @@
 import AdminUsersTable from '@/app/admin/_components/AdminUsersTable'
 
-export default async function AdminUsersPage() {
+export default function Loading() {
   return (
     <section className="grid gap-4">
       <div className="grid gap-2">

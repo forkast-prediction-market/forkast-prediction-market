@@ -12,10 +12,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
+  const url = new URL(request.url)
+  if (url.pathname.startsWith('/admin')) {
+    if (!session.user?.is_admin) {
+      return NextResponse.redirect(new URL('/', request.url))
+    }
+  }
+
   return NextResponse.next()
 }
 
 export const config = {
   runtime: 'nodejs',
-  matcher: ['/settings/:path*', '/portfolio/:path*'],
+  matcher: ['/settings/:path*', '/portfolio/:path*', '/admin/:path*'],
 }

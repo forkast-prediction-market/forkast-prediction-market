@@ -93,16 +93,21 @@ When adding new shadcn components, do not add new radis-ui packages, component w
 **Use Tailwind CSS classes with consistent patterns:**
 
 ```typescript
-// ✅ Correct - Consistent line wrapping
+// ✅ Correct - cn util
+<div
+  className={cn(
+  'flex h-[180px] cursor-pointer flex-col transition-all hover:-translate-y-0.5 hover:shadow-lg overflow-hidden',
+{ 'ring-2 ring-primary/20': isActive }
+)}
+>
+
+// ❌ Incorrect - ternary based
 <div className={`
   flex h-[180px] cursor-pointer flex-col transition-all
   hover:-translate-y-0.5 hover:shadow-lg
   ${isActive ? 'ring-2 ring-primary/20' : ''}
   overflow-hidden
 `}>
-
-// ❌ Incorrect - Long single line
-<div className="flex h-[180px] cursor-pointer flex-col transition-all hover:-translate-y-0.5 hover:shadow-lg overflow-hidden">
 ```
 
 **ESLint Rule**: `'better-tailwindcss/enforce-consistent-line-wrapping'`
@@ -372,19 +377,6 @@ const CreateEventSchema = z.object({
   description: z.string().max(1000),
   tags: z.array(z.string()).max(10),
 })
-```
-
-### Authentication
-**Check user permissions for protected actions:**
-
-```typescript
-export async function adminOnlyAction() {
-  const user = await getCurrentUser()
-  if (!user?.is_admin) {
-    throw new Error('Unauthorized')
-  }
-  // Admin logic
-}
 ```
 
 ## 📚 Documentation Standards

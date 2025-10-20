@@ -4,6 +4,7 @@ import eslintPluginBetterTailwindcss from 'eslint-plugin-better-tailwindcss'
 export default antfu({
   react: true,
   nextjs: true,
+  ignores: ['AGENTS.md'],
 }, {
   plugins: {
     'better-tailwindcss': eslintPluginBetterTailwindcss,
