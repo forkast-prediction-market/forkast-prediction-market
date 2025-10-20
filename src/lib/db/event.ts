@@ -86,25 +86,20 @@ export const EventRepository = {
 
     const events = data?.map(event => eventResource(event, userId)) || []
 
-    const sanitizedEvents = tag === 'new'
-      ? events.filter(event => !event.tags.some(t => t.slug === HIDE_FROM_NEW_TAG_SLUG))
-      : events
-
     if (!bookmarked && tag === 'trending') {
-      const trendingEvents = sanitizedEvents.filter(event => event.is_trending)
+      const trendingEvents = events.filter(event => event.is_trending)
       return { data: trendingEvents, error }
     }
 
     if (tag === 'new') {
-      const newEvents = sanitizedEvents.sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+      const newEvents = events.filter(event => !event.tags.some(t => t.slug === HIDE_FROM_NEW_TAG_SLUG)).sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       )
 
       return { data: newEvents, error }
     }
 
-    return { data: sanitizedEvents, error }
+    return { data: events, error }
   },
 
   async getIdBySlug(slug: string) {
