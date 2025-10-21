@@ -98,8 +98,8 @@ function eventResource(event: DrizzleEventResult, userId: string): Event {
     show_market_icons: event.show_market_icons ?? true,
     status: (event.status ?? 'draft') as Event['status'],
     rules: event.rules || undefined,
-    active_markets_count: event.active_markets_count || 0,
-    total_markets_count: event.total_markets_count || 0,
+    active_markets_count: Number(event.active_markets_count || 0),
+    total_markets_count: Number(event.total_markets_count || 0),
     created_at: event.created_at?.toISOString() || new Date().toISOString(),
     updated_at: event.updated_at?.toISOString() || new Date().toISOString(),
     markets: event.markets.map((market: any) => ({
@@ -108,10 +108,28 @@ function eventResource(event: DrizzleEventResult, userId: string): Event {
       title: market.short_title || market.title,
       probability: Math.random() * 100, // Placeholder - should be calculated from real data
       price: Math.random() * 0.99 + 0.01, // Placeholder - should be calculated from real data
-      volume: Math.random() * 100_000, // Placeholder - should be calculated from real data
-      outcomes: market.condition?.outcomes || [],
+      volume: Number(market.total_volume || 0), // Convert string to number
+      current_volume_24h: Number(market.current_volume_24h || 0), // Convert string to number
+      total_volume: Number(market.total_volume || 0), // Convert string to number
+      outcomes: (market.condition?.outcomes || []).map((outcome: any) => ({
+        ...outcome,
+        outcome_index: Number(outcome.outcome_index || 0),
+        payout_value: outcome.payout_value ? Number(outcome.payout_value) : undefined,
+        current_price: outcome.current_price ? Number(outcome.current_price) : undefined,
+        volume_24h: Number(outcome.volume_24h || 0),
+        total_volume: Number(outcome.total_volume || 0),
+      })),
       icon_url: getSupabaseImageUrl(market.icon_url),
-      condition: market.condition,
+      condition: market.condition
+        ? {
+            ...market.condition,
+            outcome_slot_count: Number(market.condition.outcome_slot_count || 0),
+            payout_denominator: market.condition.payout_denominator ? Number(market.condition.payout_denominator) : undefined,
+            total_volume: Number(market.condition.total_volume || 0),
+            open_interest: Number(market.condition.open_interest || 0),
+            active_positions_count: Number(market.condition.active_positions_count || 0),
+          }
+        : null,
     })),
     tags: tagRecords.map(tag => ({
       id: tag.id,
@@ -224,66 +242,157 @@ export const EventRepository = {
         return []
       }
 
-      // Build the query configuration for full event data with relations
-      const queryConfig: any = {
-        where: inArray(events.id, eventIds),
-        with: {
-          markets: {
-            with: {
-              condition: {
-                with: {
-                  outcomes: true,
-                },
-              },
-            },
-          },
-          eventTags: {
-            with: {
-              tag: true,
-            },
-          },
-        },
-      }
+      // Get full event data with manual joins since relations aren't set up
+      const eventsQuery = db
+        .select({
+          // Event fields
+          id: events.id,
+          slug: events.slug,
+          title: events.title,
+          creator: events.creator,
+          icon_url: events.icon_url,
+          show_market_icons: events.show_market_icons,
+          status: events.status,
+          rules: events.rules,
+          active_markets_count: events.active_markets_count,
+          total_markets_count: events.total_markets_count,
+          created_at: events.created_at,
+          updated_at: events.updated_at,
+        })
+        .from(events)
+        .where(inArray(events.id, eventIds))
 
-      // Conditionally add bookmarks join based on userId
+      const eventsData = await eventsQuery
+
+      // Get markets data for these events
+      const marketsData = await db
+        .select({
+          event_id: markets.event_id,
+          condition_id: markets.condition_id,
+          title: markets.title,
+          short_title: markets.short_title,
+          slug: markets.slug,
+          icon_url: markets.icon_url,
+          is_active: markets.is_active,
+          is_resolved: markets.is_resolved,
+          current_volume_24h: markets.current_volume_24h,
+          total_volume: markets.total_volume,
+          created_at: markets.created_at,
+        })
+        .from(markets)
+        .where(inArray(markets.event_id, eventIds))
+
+      // Get conditions data
+      const conditionIds = marketsData.map(m => m.condition_id)
+      const conditionsData = conditionIds.length > 0
+        ? await db
+            .select()
+            .from(conditions)
+            .where(inArray(conditions.id, conditionIds))
+        : []
+
+      // Get outcomes data
+      const outcomesData = conditionIds.length > 0
+        ? await db
+            .select()
+            .from(outcomes)
+            .where(inArray(outcomes.condition_id, conditionIds))
+        : []
+
+      // Get event tags
+      const eventTagsData = await db
+        .select({
+          event_id: event_tags.event_id,
+          tag_id: event_tags.tag_id,
+        })
+        .from(event_tags)
+        .where(inArray(event_tags.event_id, eventIds))
+
+      // Get tags data
+      const tagIds = eventTagsData.map(et => et.tag_id)
+      const tagsData = tagIds.length > 0
+        ? await db
+            .select()
+            .from(tags)
+            .where(inArray(tags.id, tagIds))
+        : []
+
+      // Get bookmarks if userId provided
+      let bookmarksData: any[] = []
       if (userId) {
-        queryConfig.with.bookmarks = {
-          where: eq(bookmarks.user_id, userId),
-        }
+        bookmarksData = await db
+          .select()
+          .from(bookmarks)
+          .where(
+            and(
+              inArray(bookmarks.event_id, eventIds),
+              eq(bookmarks.user_id, userId),
+            ),
+          )
       }
 
-      // Execute the query with relations
-      let results = await db.query.events.findMany(queryConfig)
+      // Combine the data
+      let results = eventsData.map((eventRecord) => {
+        const eventMarkets = marketsData.filter(m => m.event_id === eventRecord.id)
+        const eventTags = eventTagsData.filter(et => et.event_id === eventRecord.id)
+        const eventBookmarks = bookmarksData.filter(b => b.event_id === eventRecord.id)
+
+        return {
+          ...eventRecord,
+          markets: eventMarkets.map((market) => {
+            const condition = conditionsData.find(c => c.id === market.condition_id)
+            const marketOutcomes = outcomesData.filter(o => o.condition_id === market.condition_id)
+
+            return {
+              ...market,
+              condition: condition
+                ? {
+                    ...condition,
+                    outcomes: marketOutcomes,
+                  }
+                : null,
+            }
+          }),
+          eventTags: eventTags.map((et) => {
+            const tag = tagsData.find(t => t.id === et.tag_id)
+            return {
+              ...et,
+              tag,
+            }
+          }),
+          bookmarks: eventBookmarks,
+        }
+      })
 
       // Handle tag filtering by filtering results after query execution
       if (tag && tag !== 'trending' && tag !== 'new') {
-        results = results.filter((event: any) =>
-          event.eventTags?.some((et: any) => et.tag?.slug === tag),
+        results = results.filter((eventResult: any) =>
+          eventResult.eventTags?.some((et: any) => et.tag?.slug === tag),
         )
       }
 
       // Handle bookmark filtering with conditional joins
       if (bookmarked && userId) {
-        results = results.filter((event: any) =>
-          event.bookmarks && event.bookmarks.length > 0,
+        results = results.filter((eventResult: any) =>
+          eventResult.bookmarks && eventResult.bookmarks.length > 0,
         )
       }
 
       // Transform results using eventResource function
-      const transformedEvents = results.map((event: any) =>
-        eventResource(event as DrizzleEventResult, userId),
+      const transformedEvents = results.map((eventResult: any) =>
+        eventResource(eventResult as DrizzleEventResult, userId),
       )
 
       // Add trending event filtering using eventResource transformation
       if (!bookmarked && tag === 'trending') {
-        const trendingEvents = transformedEvents.filter((event: Event) => event.is_trending)
+        const trendingEvents = transformedEvents.filter((eventItem: Event) => eventItem.is_trending)
         return trendingEvents
       }
 
       // Implement new event filtering excluding hide-from-new tag
       if (tag === 'new') {
         const newEvents = transformedEvents
-          .filter((event: Event) => !event.tags.some((t: any) => t.slug === HIDE_FROM_NEW_TAG_SLUG))
+          .filter((eventItem: Event) => !eventItem.tags.some((t: any) => t.slug === HIDE_FROM_NEW_TAG_SLUG))
           .sort((a: Event, b: Event) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         return newEvents
       }
@@ -332,51 +441,120 @@ export const EventRepository = {
     'use cache'
 
     return executeQuery(async () => {
-      // Build the query configuration based on whether userId is provided
-      const queryConfig: any = {
-        where: eq(events.slug, slug),
-        with: {
-          markets: {
-            with: {
-              condition: {
-                with: {
-                  outcomes: true,
-                },
-              },
-            },
-          },
-          eventTags: {
-            with: {
-              tag: true,
-            },
-          },
-        },
-      }
+      // Get event data
+      const eventData = await db
+        .select()
+        .from(events)
+        .where(eq(events.slug, slug))
+        .limit(1)
 
-      // Conditionally add bookmarks join if userId is provided
-      if (userId) {
-        queryConfig.with.bookmarks = {
-          where: eq(bookmarks.user_id, userId),
-        }
-      }
-      else {
-        queryConfig.with.bookmarks = true
-      }
-
-      // Execute the complex query with all necessary joins
-      const result = await db.query.events.findFirst(queryConfig)
-
-      if (!result) {
+      if (eventData.length === 0) {
         throw new Error('Event not found')
       }
 
+      const eventRecord = eventData[0]
+
+      // Get markets data for this event
+      const marketsData = await db
+        .select({
+          condition_id: markets.condition_id,
+          event_id: markets.event_id,
+          title: markets.title,
+          short_title: markets.short_title,
+          slug: markets.slug,
+          icon_url: markets.icon_url,
+          is_active: markets.is_active,
+          is_resolved: markets.is_resolved,
+          current_volume_24h: markets.current_volume_24h,
+          total_volume: markets.total_volume,
+          created_at: markets.created_at,
+        })
+        .from(markets)
+        .where(eq(markets.event_id, eventRecord.id))
+
+      // Get conditions data
+      const conditionIds = marketsData.map(m => m.condition_id)
+      const conditionsData = conditionIds.length > 0
+        ? await db
+            .select()
+            .from(conditions)
+            .where(inArray(conditions.id, conditionIds))
+        : []
+
+      // Get outcomes data
+      const outcomesData = conditionIds.length > 0
+        ? await db
+            .select()
+            .from(outcomes)
+            .where(inArray(outcomes.condition_id, conditionIds))
+        : []
+
+      // Get event tags
+      const eventTagsData = await db
+        .select({
+          event_id: event_tags.event_id,
+          tag_id: event_tags.tag_id,
+        })
+        .from(event_tags)
+        .where(eq(event_tags.event_id, eventRecord.id))
+
+      // Get tags data
+      const tagIds = eventTagsData.map(et => et.tag_id)
+      const tagsData = tagIds.length > 0
+        ? await db
+            .select()
+            .from(tags)
+            .where(inArray(tags.id, tagIds))
+        : []
+
+      // Get bookmarks if userId provided
+      let bookmarksData: any[] = []
+      if (userId) {
+        bookmarksData = await db
+          .select()
+          .from(bookmarks)
+          .where(
+            and(
+              eq(bookmarks.event_id, eventRecord.id),
+              eq(bookmarks.user_id, userId),
+            ),
+          )
+      }
+
+      // Combine the data
+      const result = {
+        ...eventRecord,
+        markets: marketsData.map((market) => {
+          const condition = conditionsData.find(c => c.id === market.condition_id)
+          const marketOutcomes = outcomesData.filter(o => o.condition_id === market.condition_id)
+
+          return {
+            ...market,
+            condition: condition
+              ? {
+                  ...condition,
+                  outcomes: marketOutcomes,
+                }
+              : null,
+          }
+        }),
+        eventTags: eventTagsData.map((et) => {
+          const tag = tagsData.find(t => t.id === et.tag_id)
+          return {
+            ...et,
+            tag,
+          }
+        }),
+        bookmarks: bookmarksData,
+      }
+
       // Transform the result using eventResource
-      const event = eventResource(result as DrizzleEventResult, userId)
+      const transformedEvent = eventResource(result as DrizzleEventResult, userId)
 
       // Apply cache tagging for user-specific results
-      cacheTag(cacheTags.event(`${event.id}:${userId}`))
+      cacheTag(cacheTags.event(`${transformedEvent.id}:${userId}`))
 
-      return event
+      return transformedEvent
     })
   },
 

@@ -22,7 +22,7 @@ export default async function EventPage({ params }: PageProps<'/event/[slug]'>) 
 
   try {
     const { data: event, error } = await EventRepository.getEventBySlug(slug, user?.id ?? '')
-    if (error) {
+    if (error || !event) {
       notFound()
     }
 

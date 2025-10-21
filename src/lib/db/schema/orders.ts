@@ -1,6 +1,7 @@
 import { sql } from 'drizzle-orm'
 import {
   boolean,
+  char,
   integer,
   numeric,
   pgTable,
@@ -12,71 +13,51 @@ import { users } from './auth'
 import { events } from './events'
 
 export const conditions = pgTable('conditions', {
-  id: text('id').primaryKey(),
-  oracle: text('oracle').notNull(),
-  question_id: text('question_id').notNull(),
-  outcome_slot_count: integer('outcome_slot_count').notNull(),
-  resolved: boolean('resolved').default(false).notNull(),
-  payout_numerators: text('payout_numerators'), // JSON array as text
-  payout_denominator: integer('payout_denominator'),
+  id: char('id', { length: 66 }).primaryKey(),
+  oracle: char('oracle', { length: 42 }).notNull(),
+  question_id: char('question_id', { length: 66 }).notNull(),
+  resolved: boolean('resolved').default(false),
   arweave_hash: text('arweave_hash'),
-  creator: text('creator'),
-  total_volume: numeric('total_volume').default('0').notNull(),
-  open_interest: numeric('open_interest').default('0').notNull(),
-  active_positions_count: integer('active_positions_count').default(0).notNull(),
-  created_at: timestamp('created_at').defaultNow().notNull(),
-  resolved_at: timestamp('resolved_at'),
-  updated_at: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
+  creator: char('creator', { length: 42 }),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
 export const markets = pgTable('markets', {
-  id: text('id').primaryKey(),
-  condition_id: text('condition_id')
+  condition_id: varchar('condition_id', { length: 66 })
+    .primaryKey()
+    .references(() => conditions.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+  event_id: char('event_id', { length: 26 })
     .notNull()
-    .references(() => conditions.id, { onDelete: 'cascade' }),
-  question_id: text('question_id').notNull(),
-  event_id: text('event_id')
-    .notNull()
-    .references(() => events.id, { onDelete: 'cascade' }),
+    .references(() => events.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
   title: text('title').notNull(),
   slug: varchar('slug', { length: 255 }).notNull(),
-  short_title: text('short_title'),
+  short_title: varchar('short_title', { length: 50 }),
   icon_url: text('icon_url'),
   is_active: boolean('is_active').default(true).notNull(),
   is_resolved: boolean('is_resolved').default(false).notNull(),
-  block_number: integer('block_number'),
-  block_timestamp: timestamp('block_timestamp'),
   metadata: text('metadata'), // JSONB as text
-  current_volume_24h: numeric('current_volume_24h').default('0').notNull(),
-  total_volume: numeric('total_volume').default('0').notNull(),
-  created_at: timestamp('created_at').defaultNow().notNull(),
-  updated_at: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
+  current_volume_24h: numeric('current_volume_24h', { precision: 20, scale: 6 }).default('0').notNull(),
+  total_volume: numeric('total_volume', { precision: 20, scale: 6 }).default('0').notNull(),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
 export const outcomes = pgTable('outcomes', {
-  id: text('id').primaryKey(),
-  condition_id: text('condition_id')
+  id: char('id', { length: 26 }).primaryKey().default(sql`generate_ulid()`),
+  condition_id: char('condition_id', { length: 66 })
     .notNull()
-    .references(() => conditions.id, { onDelete: 'cascade' }),
+    .references(() => conditions.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
   outcome_text: text('outcome_text').notNull(),
   outcome_index: integer('outcome_index').notNull(),
   token_id: text('token_id').notNull().unique(),
-  is_winning_outcome: boolean('is_winning_outcome').default(false).notNull(),
-  payout_value: numeric('payout_value'),
-  current_price: numeric('current_price'),
-  volume_24h: numeric('volume_24h').default('0').notNull(),
-  total_volume: numeric('total_volume').default('0').notNull(),
-  created_at: timestamp('created_at').defaultNow().notNull(),
-  updated_at: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
+  is_winning_outcome: boolean('is_winning_outcome').default(false),
+  payout_value: numeric('payout_value', { precision: 20, scale: 6 }),
+  current_price: numeric('current_price', { precision: 8, scale: 4 }),
+  volume_24h: numeric('volume_24h', { precision: 20, scale: 6 }).default('0').notNull(),
+  total_volume: numeric('total_volume', { precision: 20, scale: 6 }).default('0').notNull(),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
 export const orders = pgTable('orders', {
@@ -84,7 +65,7 @@ export const orders = pgTable('orders', {
   user_id: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  condition_id: text('condition_id')
+  condition_id: char('condition_id', { length: 66 })
     .notNull()
     .references(() => conditions.id),
   token_id: text('token_id')
@@ -100,9 +81,6 @@ export const orders = pgTable('orders', {
   affiliate_share_bps: integer('affiliate_share_bps').default(0),
   fork_fee_amount: numeric('fork_fee_amount').default('0'),
   affiliate_fee_amount: numeric('affiliate_fee_amount').default('0'),
-  created_at: timestamp('created_at').defaultNow().notNull(),
-  updated_at: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })

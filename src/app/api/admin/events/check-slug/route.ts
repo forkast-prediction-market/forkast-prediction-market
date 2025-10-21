@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   const normalizedSlug = rawSlug.toLowerCase()
 
   const { data, error } = await EventRepository.getIdBySlug(normalizedSlug)
-  if (error && error.code !== 'PGRST116') {
+  if (error && !(error as string).includes('Event not found')) {
     console.error('Failed to validate slug uniqueness:', error)
     return NextResponse.json({ error: 'Failed to validate slug' }, { status: 500 })
   }
