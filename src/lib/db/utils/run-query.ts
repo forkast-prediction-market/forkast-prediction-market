@@ -1,9 +1,8 @@
 import type { QueryResult } from '@/types'
 
-export async function runQuery<T>(queryFn: () => Promise<QueryResult<T>>) {
+export async function runQuery<T>(queryFn: () => Promise<QueryResult<T>>): Promise<QueryResult<T>> {
   try {
-    const data = await queryFn()
-    return { data, error: null }
+    return await queryFn()
   }
   catch (err) {
     // @ts-expect-error err is of unknow type
