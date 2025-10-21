@@ -75,7 +75,13 @@ export const EventRepository = {
 
     const limit = 40
     const validOffset = Number.isNaN(offset) || offset < 0 ? 0 : offset
-    query.order('id', { ascending: false }).range(validOffset, validOffset + limit - 1)
+
+    if (tag === 'mentions') {
+      query.order('created_at', { ascending: false }).range(validOffset, validOffset + limit - 1)
+    }
+    else {
+      query.order('id', { ascending: false }).range(validOffset, validOffset + limit - 1)
+    }
 
     const { data, error } = await query
 
@@ -97,6 +103,33 @@ export const EventRepository = {
       )
 
       return { data: newEvents, error }
+    }
+
+    if (tag === 'mentions') {
+      const mentionsSorted = events.slice().sort((a, b) => {
+        const aTime = a.end_date ? new Date(a.end_date).getTime() : Number.POSITIVE_INFINITY
+        const bTime = b.end_date ? new Date(b.end_date).getTime() : Number.POSITIVE_INFINITY
+
+        if (Number.isNaN(aTime) && Number.isNaN(bTime)) {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        }
+
+        if (Number.isNaN(aTime)) {
+          return 1
+        }
+
+        if (Number.isNaN(bTime)) {
+          return -1
+        }
+
+        if (aTime === bTime) {
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        }
+
+        return aTime - bTime
+      })
+
+      return { data: mentionsSorted, error }
     }
 
     return { data: events, error }
@@ -432,6 +465,7 @@ function eventResource(event: Event & any, userId: string): Event {
     })),
     icon_url: getSupabaseImageUrl(event.icon_url),
     main_tag: getEventMainTag(tagRecords),
+    end_date: event.end_date ?? null,
     is_bookmarked: event.bookmarks?.some((bookmark: any) => bookmark.user_id === userId) || false,
     is_trending: Math.random() > 0.3,
   }

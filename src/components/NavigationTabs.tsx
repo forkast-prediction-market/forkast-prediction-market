@@ -1,6 +1,6 @@
 'use client'
 
-import { useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import NavigationTab from '@/components/NavigationTab'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -23,6 +23,7 @@ interface IndicatorStyle {
 export default function NavigationTabs({ tags, childParentMap }: NavigationTabsProps) {
   const tabRefs = useRef<(HTMLAnchorElement | null)[]>([])
   const containerRef = useRef<HTMLDivElement>(null)
+  const pathname = usePathname()
   const searchParams = useSearchParams()
 
   const [indicatorStyle, setIndicatorStyle] = useState<IndicatorStyle>({
@@ -36,10 +37,17 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
   }
 
   const showBookmarkedOnly = searchParams?.get('bookmarked') === 'true'
-  const tagFromURL = showBookmarkedOnly && searchParams?.get('tag') === 'trending'
-    ? ''
-    : searchParams?.get('tag') || 'trending'
-  const contextFromURL = searchParams?.get('context') ?? undefined
+  const isMentionsPage = pathname === '/mentions'
+
+  let tagFromURL = searchParams?.get('tag') || 'trending'
+  if (showBookmarkedOnly && tagFromURL === 'trending') {
+    tagFromURL = ''
+  }
+  if (isMentionsPage) {
+    tagFromURL = 'mentions'
+  }
+
+  const contextFromURL = isMentionsPage ? undefined : (searchParams?.get('context') ?? undefined)
 
   function getActiveTabIndex() {
     return tags.findIndex((tag) => {
