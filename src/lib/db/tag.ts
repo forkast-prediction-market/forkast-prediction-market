@@ -79,16 +79,17 @@ export const TagRepository = {
       ))
       .orderBy(asc(tags.display_order), asc(tags.name))
 
-    const { data, error } = await runQuery(async () => {
+    const { data: mainTagsResult, error } = await runQuery(async () => {
       const result = await mainTagsQuery
       return { data: result, error: null }
     })
 
-    if (error || !data?.data) {
-      return { data: null, error, globalChilds: [] }
+    if (error || !mainTagsResult) {
+      const errorMessage = typeof error === 'string' ? error : error?.message || 'Unknown error'
+      return { data: null, error: errorMessage, globalChilds: [] }
     }
 
-    const mainVisibleTags = data.data
+    const mainVisibleTags = mainTagsResult
     const mainSlugs = mainVisibleTags.map(tag => tag.slug)
 
     const subcategoriesQuery = db
@@ -108,14 +109,15 @@ export const TagRepository = {
       .from(v_main_tag_subcategories)
       .where(inArray(v_main_tag_subcategories.main_tag_slug, mainSlugs))
 
-    const { data: subcategories, error: viewError } = await runQuery(async () => {
+    const { data: subcategoriesResult, error: viewError } = await runQuery(async () => {
       const result = await subcategoriesQuery
       return { data: result, error: null }
     })
 
-    if (viewError || !subcategories?.data) {
-      const tagsWithChilds = mainVisibleTags.map(tag => ({ ...tag, childs: [] }))
-      return { data: tagsWithChilds, error: viewError, globalChilds: [] }
+    if (viewError || !subcategoriesResult) {
+      const tagsWithChilds = mainVisibleTags.map((tag: any) => ({ ...tag, childs: [] }))
+      const errorMessage = typeof viewError === 'string' ? viewError : viewError?.message || null
+      return { data: tagsWithChilds, error: errorMessage, globalChilds: [] }
     }
 
     const grouped = new Map<string, { name: string, slug: string, count: number }[]>()
@@ -124,7 +126,7 @@ export const TagRepository = {
 
     const mainSlugSet = new Set(mainSlugs)
 
-    for (const subtag of subcategories.data) {
+    for (const subtag of subcategoriesResult) {
       if (
         !subtag.sub_tag_slug
         || mainSlugSet.has(subtag.sub_tag_slug)
