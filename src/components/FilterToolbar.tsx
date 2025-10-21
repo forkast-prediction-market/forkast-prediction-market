@@ -66,7 +66,7 @@ export default function FilterToolbar({ search, bookmarked }: FilterToolbarProps
   }, [open])
 
   return (
-    <div className="scrollbar-hide flex items-center gap-4 overflow-x-auto">
+    <div className="flex w-full items-center gap-4 overflow-hidden">
       <FilterToolbarSearchInput
         search={search}
         bookmarked={bookmarked}
@@ -80,9 +80,9 @@ export default function FilterToolbar({ search, bookmarked }: FilterToolbarProps
         onConnect={handleConnect}
       />
 
-      <Separator orientation="vertical" />
+      <Separator orientation="vertical" className="shrink-0" />
 
-      <div id="navigation-tags" className="flex items-center gap-2" />
+      <div id="navigation-tags" className="min-w-0 flex-1 overflow-hidden" />
     </div>
   )
 }

@@ -137,24 +137,24 @@ export const TagRepository = {
       ...tag,
       childs: (grouped.get(tag.slug) ?? [])
         .filter(child => bestMainBySubSlug.get(child.slug)?.mainSlug === tag.slug)
+        .filter(child => child.count > 0)
         .sort((a, b) => {
           if (b.count === a.count) {
             return a.name.localeCompare(b.name)
           }
           return b.count - a.count
         })
-        .slice(0, 6)
         .map(({ name, slug }) => ({ name, slug })),
     }))
 
     const globalChilds = Array.from(globalCounts.values())
+      .filter(child => child.count > 0)
       .sort((a, b) => {
         if (b.count === a.count) {
           return a.name.localeCompare(b.name)
         }
         return b.count - a.count
       })
-      .slice(0, 6)
       .map(({ name, slug }) => ({ name, slug }))
 
     return { data: enhanced, error: null, globalChilds }
