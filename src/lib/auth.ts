@@ -1,17 +1,20 @@
 import { getChainIdFromMessage } from '@reown/appkit-siwe'
 import { betterAuth } from 'better-auth'
+import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { generateRandomString } from 'better-auth/crypto'
 import { nextCookies } from 'better-auth/next-js'
 import { customSession, siwe, twoFactor } from 'better-auth/plugins'
-import { Pool } from 'pg'
 import { createPublicClient, http } from 'viem'
 import { isAdminWallet } from '@/lib/admin'
 import { projectId } from '@/lib/appkit'
+import * as schema from '@/lib/db/schema'
+import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export const auth = betterAuth({
-  database: new Pool({
-    connectionString: process.env.POSTGRES_URL!.replace('require', 'disable'),
+  database: drizzleAdapter(db, {
+    provider: 'pg',
+    schema,
   }),
   appName: process.env.NEXT_PUBLIC_SITE_NAME,
   secret: process.env.BETTER_AUTH_SECRET,
