@@ -1,8 +1,11 @@
 'use cache'
 
-import type { PostgrestError } from '@supabase/supabase-js'
+import { and, asc, count, desc, eq, ilike, inArray, or } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/pg-core'
 import { revalidatePath } from 'next/cache'
-import { supabaseAdmin } from '@/lib/supabase'
+import { tags, v_main_tag_subcategories } from '@/lib/db/schema/tags'
+import { runQuery } from '@/lib/db/utils/run-query'
+import { db } from '@/lib/drizzle'
 
 const EXCLUDED_SUB_SLUGS = new Set(['hide-from-new'])
 
@@ -34,54 +37,94 @@ interface AdminTagRow {
   parent?: ParentTagPreview | null
 }
 
+interface TagWithChilds {
+  id: number
+  name: string
+  slug: string
+  is_main_category: boolean | null
+  is_hidden: boolean
+  display_order: number | null
+  parent_tag_id: number | null
+  active_markets_count: number | null
+  created_at: Date
+  updated_at: Date
+  childs: { name: string, slug: string }[]
+}
+
+interface MainTagsResult {
+  data: TagWithChilds[] | null
+  error: string | null
+  globalChilds: { name: string, slug: string }[]
+}
+
 export const TagRepository = {
-  async getMainTags() {
-    const query = supabaseAdmin
-      .from('tags')
-      .select(`
-        id,
-        name,
-        slug,
-        is_hidden,
-        is_main_category,
-        display_order,
-        childs:tags!parent_tag_id(
-          id,
-          name,
-          slug,
-          is_hidden,
-          is_main_category
-        )
-      `)
-      .eq('is_main_category', true)
-      .eq('is_hidden', false)
-      .order('display_order', { ascending: true })
-      .order('name', { ascending: true })
+  async getMainTags(): Promise<MainTagsResult> {
+    const mainTagsQuery = db
+      .select({
+        id: tags.id,
+        name: tags.name,
+        slug: tags.slug,
+        is_main_category: tags.is_main_category,
+        is_hidden: tags.is_hidden,
+        display_order: tags.display_order,
+        parent_tag_id: tags.parent_tag_id,
+        active_markets_count: tags.active_markets_count,
+        created_at: tags.created_at,
+        updated_at: tags.updated_at,
+      })
+      .from(tags)
+      .where(and(
+        eq(tags.is_main_category, true),
+        eq(tags.is_hidden, false),
+      ))
+      .orderBy(asc(tags.display_order), asc(tags.name))
 
-    const { data, error } = await query
+    const { data, error } = await runQuery(async () => {
+      const result = await mainTagsQuery
+      return { data: result, error: null }
+    })
 
-    if (error || !data) {
-      return { data, error, globalChilds: [] }
+    if (error || !data?.data) {
+      return { data: null, error, globalChilds: [] }
     }
 
-    const mainVisibleTags = data.filter(tag => !tag.is_hidden)
+    const mainVisibleTags = data.data
     const mainSlugs = mainVisibleTags.map(tag => tag.slug)
-    const mainSlugSet = new Set(mainSlugs)
 
-    const { data: subcategories, error: viewError } = await supabaseAdmin
-      .from('v_main_tag_subcategories')
-      .select('main_tag_slug, sub_tag_name, sub_tag_slug, active_markets_count, sub_tag_is_hidden, main_tag_is_hidden')
-      .in('main_tag_slug', mainSlugs)
+    const subcategoriesQuery = db
+      .select({
+        main_tag_id: v_main_tag_subcategories.main_tag_id,
+        main_tag_slug: v_main_tag_subcategories.main_tag_slug,
+        main_tag_name: v_main_tag_subcategories.main_tag_name,
+        main_tag_is_hidden: v_main_tag_subcategories.main_tag_is_hidden,
+        sub_tag_id: v_main_tag_subcategories.sub_tag_id,
+        sub_tag_name: v_main_tag_subcategories.sub_tag_name,
+        sub_tag_slug: v_main_tag_subcategories.sub_tag_slug,
+        sub_tag_is_main_category: v_main_tag_subcategories.sub_tag_is_main_category,
+        sub_tag_is_hidden: v_main_tag_subcategories.sub_tag_is_hidden,
+        active_markets_count: v_main_tag_subcategories.active_markets_count,
+        last_market_activity_at: v_main_tag_subcategories.last_market_activity_at,
+      })
+      .from(v_main_tag_subcategories)
+      .where(inArray(v_main_tag_subcategories.main_tag_slug, mainSlugs))
 
-    if (viewError || !subcategories) {
-      return { data: mainVisibleTags, error: viewError, globalChilds: [] }
+    const { data: subcategories, error: viewError } = await runQuery(async () => {
+      const result = await subcategoriesQuery
+      return { data: result, error: null }
+    })
+
+    if (viewError || !subcategories?.data) {
+      const tagsWithChilds = mainVisibleTags.map(tag => ({ ...tag, childs: [] }))
+      return { data: tagsWithChilds, error: viewError, globalChilds: [] }
     }
 
     const grouped = new Map<string, { name: string, slug: string, count: number }[]>()
     const bestMainBySubSlug = new Map<string, { mainSlug: string, count: number }>()
     const globalCounts = new Map<string, { name: string, slug: string, count: number }>()
 
-    for (const subtag of subcategories) {
+    const mainSlugSet = new Set(mainSlugs)
+
+    for (const subtag of subcategories.data) {
       if (
         !subtag.sub_tag_slug
         || mainSlugSet.has(subtag.sub_tag_slug)
@@ -92,42 +135,42 @@ export const TagRepository = {
         continue
       }
 
-      const current = grouped.get(subtag.main_tag_slug) ?? []
+      const current = grouped.get(subtag.main_tag_slug!) ?? []
       const existingIndex = current.findIndex(item => item.slug === subtag.sub_tag_slug)
       const nextCount = subtag.active_markets_count ?? 0
 
       if (existingIndex >= 0) {
         current[existingIndex] = {
-          name: subtag.sub_tag_name,
+          name: subtag.sub_tag_name!,
           slug: subtag.sub_tag_slug,
           count: Math.max(current[existingIndex].count, nextCount),
         }
       }
       else {
         current.push({
-          name: subtag.sub_tag_name,
+          name: subtag.sub_tag_name!,
           slug: subtag.sub_tag_slug,
           count: nextCount,
         })
       }
 
-      grouped.set(subtag.main_tag_slug, current)
+      grouped.set(subtag.main_tag_slug!, current)
 
       const best = bestMainBySubSlug.get(subtag.sub_tag_slug)
       if (
         !best
         || nextCount > best.count
-        || (nextCount === best.count && subtag.main_tag_slug.localeCompare(best.mainSlug) < 0)
+        || (nextCount === best.count && subtag.main_tag_slug!.localeCompare(best.mainSlug) < 0)
       ) {
         bestMainBySubSlug.set(subtag.sub_tag_slug, {
-          mainSlug: subtag.main_tag_slug,
+          mainSlug: subtag.main_tag_slug!,
           count: nextCount,
         })
       }
 
       const globalExisting = globalCounts.get(subtag.sub_tag_slug)
       globalCounts.set(subtag.sub_tag_slug, {
-        name: subtag.sub_tag_name,
+        name: subtag.sub_tag_name!,
         slug: subtag.sub_tag_slug,
         count: (globalExisting?.count ?? 0) + nextCount,
       })
@@ -168,7 +211,7 @@ export const TagRepository = {
     sortOrder = 'asc',
   }: ListTagsParams = {}): Promise<{
     data: AdminTagRow[]
-    error: PostgrestError | null
+    error: string | null
     totalCount: number
   }> {
     const cappedLimit = Math.min(Math.max(limit, 1), 100)
@@ -184,78 +227,194 @@ export const TagRepository = {
     ]
     const orderField = validSortFields.includes(sortBy) ? sortBy : 'display_order'
     const ascending = (sortOrder ?? 'asc') === 'asc'
+    const parentTags = alias(tags, 'parent_tags')
 
-    let query = supabaseAdmin
-      .from('tags')
-      .select(`
-        id,
-        name,
-        slug,
-        is_main_category,
-        is_hidden,
-        hide_events,
-        display_order,
-        parent_tag_id,
-        active_markets_count,
-        created_at,
-        updated_at,
-        parent:parent_tag_id(
-          id,
-          name,
-          slug
+    const whereCondition = search && search.trim()
+      ? or(
+          ilike(tags.name, `%${search.trim()}%`),
+          ilike(tags.slug, `%${search.trim()}%`),
         )
-      `, { count: 'exact' })
+      : undefined
 
-    if (search && search.trim()) {
-      const sanitized = search.trim()
-        .replace(/['"]/g, '')
-        .replace(/\s+/g, ' ')
-      if (sanitized) {
-        query = query.or(`name.ilike.%${sanitized}%,slug.ilike.%${sanitized}%`)
+    let orderByClause
+    switch (orderField) {
+      case 'name':
+        orderByClause = ascending ? asc(tags.name) : desc(tags.name)
+        break
+      case 'slug':
+        orderByClause = ascending ? asc(tags.slug) : desc(tags.slug)
+        break
+      case 'created_at':
+        orderByClause = ascending ? asc(tags.created_at) : desc(tags.created_at)
+        break
+      case 'updated_at':
+        orderByClause = ascending ? asc(tags.updated_at) : desc(tags.updated_at)
+        break
+      case 'active_markets_count':
+        orderByClause = ascending ? asc(tags.active_markets_count) : desc(tags.active_markets_count)
+        break
+      case 'display_order':
+      default:
+        orderByClause = ascending ? asc(tags.display_order) : desc(tags.display_order)
+        break
+    }
+
+    const baseQuery = db
+      .select({
+        id: tags.id,
+        name: tags.name,
+        slug: tags.slug,
+        is_main_category: tags.is_main_category,
+        is_hidden: tags.is_hidden,
+        display_order: tags.display_order,
+        parent_tag_id: tags.parent_tag_id,
+        active_markets_count: tags.active_markets_count,
+        created_at: tags.created_at,
+        updated_at: tags.updated_at,
+        parent: {
+          id: parentTags.id,
+          name: parentTags.name,
+          slug: parentTags.slug,
+        },
+      })
+      .from(tags)
+      .leftJoin(parentTags, eq(tags.parent_tag_id, parentTags.id))
+
+    const finalQuery = whereCondition
+      ? baseQuery.where(whereCondition).orderBy(orderByClause).limit(cappedLimit).offset(safeOffset)
+      : baseQuery.orderBy(orderByClause).limit(cappedLimit).offset(safeOffset)
+
+    const baseCountQuery = db
+      .select({ count: count() })
+      .from(tags)
+
+    const countQuery = whereCondition
+      ? baseCountQuery.where(whereCondition)
+      : baseCountQuery
+
+    const { data, error } = await runQuery(async () => {
+      const result = await finalQuery
+      return { data: result, error: null }
+    })
+
+    const { data: countResult, error: countError } = await runQuery(async () => {
+      const result = await countQuery
+      return { data: result, error: null }
+    })
+
+    if (error || countError) {
+      return {
+        data: [],
+        error: error || countError,
+        totalCount: 0,
       }
     }
 
-    query = query
-      .order(orderField, { ascending })
-      .order('name', { ascending: true })
-      .range(safeOffset, safeOffset + cappedLimit - 1)
-
-    const { data, error, count } = await query
+    const formattedData: AdminTagRow[] = (data?.data || []).map((row: any) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      is_main_category: row.is_main_category,
+      is_hidden: row.is_hidden,
+      display_order: row.display_order,
+      parent_tag_id: row.parent_tag_id,
+      active_markets_count: row.active_markets_count,
+      created_at: row.created_at.toISOString(),
+      updated_at: row.updated_at.toISOString(),
+      parent: row.parent?.id
+        ? {
+            id: row.parent.id,
+            name: row.parent.name,
+            slug: row.parent.slug,
+          }
+        : null,
+    }))
 
     return {
-      data: (data as AdminTagRow[] | null) ?? [],
-      error,
-      totalCount: count ?? 0,
+      data: formattedData,
+      error: null,
+      totalCount: countResult?.data?.[0]?.count ?? 0,
     }
   },
 
-  async updateTagById(id: number, payload: any) {
-    const { data, error } = await supabaseAdmin
-      .from('tags')
-      .update(payload)
-      .eq('id', id)
-      .select(`
-        id,
-        name,
-        slug,
-        is_main_category,
-        is_hidden,
-        display_order,
-        parent_tag_id,
-        active_markets_count,
-        created_at,
-        updated_at,
-        parent:parent_tag_id(
-          id,
-          name,
-          slug
-        )
-      `)
-      .single()
+  async updateTagById(id: number, payload: any): Promise<{
+    data: AdminTagRow | null
+    error: string | null
+  }> {
+    const updateQuery = db
+      .update(tags)
+      .set(payload)
+      .where(eq(tags.id, id))
+      .returning()
+
+    const { data: updateResult, error } = await runQuery(async () => {
+      const result = await updateQuery
+      return { data: result, error: null }
+    })
+
+    if (error || !updateResult?.data?.[0]) {
+      return { data: null, error }
+    }
+
+    const parentTags = alias(tags, 'parent_tags')
+
+    const selectQuery = db
+      .select({
+        id: tags.id,
+        name: tags.name,
+        slug: tags.slug,
+        is_main_category: tags.is_main_category,
+        is_hidden: tags.is_hidden,
+        display_order: tags.display_order,
+        parent_tag_id: tags.parent_tag_id,
+        active_markets_count: tags.active_markets_count,
+        created_at: tags.created_at,
+        updated_at: tags.updated_at,
+        parent: {
+          id: parentTags.id,
+          name: parentTags.name,
+          slug: parentTags.slug,
+        },
+      })
+      .from(tags)
+      .leftJoin(parentTags, eq(tags.parent_tag_id, parentTags.id))
+      .where(eq(tags.id, id))
+
+    const { data: selectResult, error: selectError } = await runQuery(async () => {
+      const result = await selectQuery
+      return { data: result, error: null }
+    })
+
+    if (selectError || !selectResult?.data?.[0]) {
+      return { data: null, error: selectError }
+    }
 
     revalidatePath('/')
 
-    return { data: data as AdminTagRow | null, error }
-  },
+    const row = selectResult.data[0]
+    const formattedData: AdminTagRow = {
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      is_main_category: row.is_main_category ?? false,
+      is_hidden: row.is_hidden,
+      display_order: row.display_order ?? 0,
+      parent_tag_id: row.parent_tag_id,
+      active_markets_count: row.active_markets_count ?? 0,
+      created_at: row.created_at.toISOString(),
+      updated_at: row.updated_at.toISOString(),
+      parent: row.parent?.id
+        ? {
+            id: row.parent.id,
+            name: row.parent.name,
+            slug: row.parent.slug,
+          }
+        : null,
+    }
 
+    return {
+      data: formattedData,
+      error: null,
+    }
+  },
 }
