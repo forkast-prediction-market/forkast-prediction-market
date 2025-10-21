@@ -1,4 +1,7 @@
-import { supabaseAdmin } from '@/lib/supabase'
+import { and, eq } from 'drizzle-orm'
+import { orders } from '@/lib/db/schema/orders'
+import { runQuery } from '@/lib/db/utils/run-query'
+import { db } from '@/lib/drizzle'
 
 export const OrderRepository = {
   async createOrder(args: {
@@ -15,41 +18,54 @@ export const OrderRepository = {
     fork_fee_amount?: number
     affiliate_fee_amount?: number
   }) {
-    const { data, error } = await supabaseAdmin
-      .from('orders')
-      .insert({
+    return await runQuery(async () => {
+      const insertData = {
         user_id: args.user_id,
         condition_id: args.condition_id,
         token_id: args.token_id,
         type: args.type || 'market',
         side: args.side,
-        amount: args.amount,
-        price: args.price,
+        amount: args.amount.toString(),
+        price: args.price?.toString(),
         status: 'pending',
         affiliate_user_id: args.affiliate_user_id ?? null,
         trade_fee_bps: args.trade_fee_bps ?? 0,
         affiliate_share_bps: args.affiliate_share_bps ?? 0,
-        fork_fee_amount: args.fork_fee_amount ?? 0,
-        affiliate_fee_amount: args.affiliate_fee_amount ?? 0,
-      })
-      .select()
-      .single()
+        fork_fee_amount: args.fork_fee_amount?.toString() ?? '0',
+        affiliate_fee_amount: args.affiliate_fee_amount?.toString() ?? '0',
+      }
 
-    return { data, error }
+      const result = await db
+        .insert(orders)
+        .values(insertData)
+        .returning()
+
+      return { data: result[0], error: null }
+    })
   },
 
   async cancelOrder(orderId: string, userId: string) {
-    const { data, error } = await supabaseAdmin
-      .from('orders')
-      .update({
-        status: 'cancelled',
-      })
-      .eq('id', orderId)
-      .eq('user_id', userId)
-      .eq('status', 'pending')
-      .select()
-      .single()
+    return await runQuery(async () => {
+      const result = await db
+        .update(orders)
+        .set({
+          status: 'cancelled',
+        })
+        .where(and(
+          eq(orders.id, orderId),
+          eq(orders.user_id, userId),
+          eq(orders.status, 'pending'),
+        ))
+        .returning()
 
-    return { data, error }
+      if (result.length === 0) {
+        return {
+          data: null,
+          error: 'No matching order found or order cannot be cancelled',
+        }
+      }
+
+      return { data: result[0], error: null }
+    })
   },
 }

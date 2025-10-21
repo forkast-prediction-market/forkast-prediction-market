@@ -1,3 +1,4 @@
+import { sql } from 'drizzle-orm'
 import {
   boolean,
   integer,
@@ -79,7 +80,7 @@ export const outcomes = pgTable('outcomes', {
 })
 
 export const orders = pgTable('orders', {
-  id: text('id').primaryKey(),
+  id: text('id').primaryKey().default(sql`generate_ulid()`),
   user_id: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
