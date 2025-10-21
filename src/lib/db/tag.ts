@@ -305,14 +305,16 @@ export const TagRepository = {
     })
 
     if (error || countError) {
+      const errorMessage = error || countError
+      const finalError = typeof errorMessage === 'string' ? errorMessage : errorMessage?.message || 'Unknown error'
       return {
         data: [],
-        error: error || countError,
+        error: finalError,
         totalCount: 0,
       }
     }
 
-    const formattedData: AdminTagRow[] = (data?.data || []).map((row: any) => ({
+    const formattedData: AdminTagRow[] = (data || []).map((row: any) => ({
       id: row.id,
       name: row.name,
       slug: row.slug,
@@ -335,7 +337,7 @@ export const TagRepository = {
     return {
       data: formattedData,
       error: null,
-      totalCount: countResult?.data?.[0]?.count ?? 0,
+      totalCount: countResult?.[0]?.count ?? 0,
     }
   },
 
@@ -354,8 +356,9 @@ export const TagRepository = {
       return { data: result, error: null }
     })
 
-    if (error || !updateResult?.data?.[0]) {
-      return { data: null, error }
+    if (error || !updateResult?.[0]) {
+      const errorMessage = typeof error === 'string' ? error : error?.message || 'Unknown error'
+      return { data: null, error: errorMessage }
     }
 
     const parentTags = alias(tags, 'parent_tags')
@@ -387,13 +390,14 @@ export const TagRepository = {
       return { data: result, error: null }
     })
 
-    if (selectError || !selectResult?.data?.[0]) {
-      return { data: null, error: selectError }
+    if (selectError || !selectResult?.[0]) {
+      const errorMessage = typeof selectError === 'string' ? selectError : selectError?.message || 'Unknown error'
+      return { data: null, error: errorMessage }
     }
 
     revalidatePath('/')
 
-    const row = selectResult.data[0]
+    const row = selectResult[0]
     const formattedData: AdminTagRow = {
       id: row.id,
       name: row.name,
