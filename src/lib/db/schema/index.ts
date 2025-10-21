@@ -1,5 +1,6 @@
 export * from './auth'
 export * from './bookmarks'
+export * from './comments'
 export * from './events'
 export * from './notifications'
 export * from './settings'

@@ -1,163 +1,174 @@
+import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm'
 import { unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
-import { supabaseAdmin } from '@/lib/supabase'
+import { comment_likes, comments, v_comments_with_user } from '@/lib/db/schema/comments'
+import { runQuery } from '@/lib/db/utils/run-query'
+import { db } from '@/lib/drizzle'
 
 export const CommentRepository = {
   async getEventComments(eventId: string, limit: number = 20, offset: number = 0) {
     'use cache'
     cacheTag(cacheTags.eventComments(eventId))
 
-    const { data, error } = await supabaseAdmin
-      .from('v_comments_with_user')
-      .select('*')
-      .eq('event_id', eventId)
-      .is('parent_comment_id', null)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
+    return await runQuery(async () => {
+      const result = await db
+        .select()
+        .from(v_comments_with_user)
+        .where(and(
+          eq(v_comments_with_user.event_id, eventId),
+          isNull(v_comments_with_user.parent_comment_id),
+        ))
+        .orderBy(desc(v_comments_with_user.created_at))
+        .limit(limit)
+        .offset(offset)
 
-    return { data, error }
+      return { data: result, error: null }
+    })
   },
 
   async getCommentsIdsLikedByUser(userId: string, ids: string[]) {
     'use cache'
     cacheTag(cacheTags.commentLikes(userId))
 
-    const { data, error } = await supabaseAdmin
-      .from('comment_likes')
-      .select('comment_id')
-      .in('comment_id', ids)
-      .eq('user_id', userId)
+    return await runQuery(async () => {
+      const result = await db
+        .select({ comment_id: comment_likes.comment_id })
+        .from(comment_likes)
+        .where(and(
+          eq(comment_likes.user_id, userId),
+          inArray(comment_likes.comment_id, ids),
+        ))
 
-    return { data, error }
+      return { data: result, error: null }
+    })
   },
 
   async getCommentReplies(commentId: string) {
     'use cache'
 
-    const { data, error } = await supabaseAdmin
-      .from('v_comments_with_user')
-      .select('*')
-      .eq('parent_comment_id', commentId)
-      .order('created_at', { ascending: true })
+    return await runQuery(async () => {
+      const result = await db
+        .select()
+        .from(v_comments_with_user)
+        .where(eq(v_comments_with_user.parent_comment_id, commentId))
+        .orderBy(asc(v_comments_with_user.created_at))
 
-    if (data && data.length > 0) {
-      cacheTag(cacheTags.eventComments(data[0].event_id))
-    }
+      // Dynamically set cache tag based on event_id from first reply
+      if (result && result.length > 0 && result[0].event_id) {
+        cacheTag(cacheTags.eventComments(result[0].event_id))
+      }
 
-    return { data, error }
+      return { data: result, error: null }
+    })
   },
 
   async store(userId: string, eventId: string, content: string, parentCommentId: string | null = null) {
-    const { data, error } = await supabaseAdmin
-      .from('comments')
-      .insert({
-        event_id: eventId,
-        user_id: userId,
-        content: content.trim(),
-        parent_comment_id: parentCommentId,
-      })
-      .select(`
-        id,
-        content,
-        user_id,
-        likes_count,
-        replies_count,
-        created_at
-      `)
-      .single()
+    return await runQuery(async () => {
+      const result = await db
+        .insert(comments)
+        .values({
+          event_id: eventId,
+          user_id: userId,
+          content: content.trim(),
+          parent_comment_id: parentCommentId,
+        })
+        .returning({
+          id: comments.id,
+          content: comments.content,
+          user_id: comments.user_id,
+          likes_count: comments.likes_count,
+          replies_count: comments.replies_count,
+          created_at: comments.created_at,
+        })
 
-    revalidateTag(cacheTags.eventComments(eventId))
+      revalidateTag(cacheTags.eventComments(eventId))
 
-    return { data, error }
+      return { data: result[0], error: null }
+    })
   },
 
   async delete(args: { eventId: string, userId: string, commentId: string }) {
-    const { data, error } = await supabaseAdmin
-      .from('comments')
-      .update({
-        is_deleted: true,
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', args.commentId)
-      .eq('user_id', args.userId)
+    return await runQuery(async () => {
+      const result = await db
+        .update(comments)
+        .set({
+          is_deleted: true,
+          updated_at: new Date(),
+        })
+        .where(and(
+          eq(comments.id, args.commentId),
+          eq(comments.user_id, args.userId),
+        ))
 
-    revalidateTag(cacheTags.eventComments(args.eventId))
+      revalidateTag(cacheTags.eventComments(args.eventId))
 
-    return { data, error }
+      return { data: result, error: null }
+    })
   },
 
   async toggleLike(args: { eventId: string, userId: string, commentId: string }) {
-    const { data: existingLike } = await supabaseAdmin
-      .from('comment_likes')
-      .select('comment_id')
-      .eq('comment_id', args.commentId)
-      .eq('user_id', args.userId)
-      .single()
+    return await runQuery(async () => {
+      // Check for existing like
+      const existingLike = await db
+        .select()
+        .from(comment_likes)
+        .where(and(
+          eq(comment_likes.comment_id, args.commentId),
+          eq(comment_likes.user_id, args.userId),
+        ))
 
-    if (existingLike) {
-      const { error: deleteError } = await supabaseAdmin
-        .from('comment_likes')
-        .delete()
-        .eq('comment_id', args.commentId)
-        .eq('user_id', args.userId)
+      if (existingLike.length > 0) {
+        // Delete existing like
+        await db
+          .delete(comment_likes)
+          .where(and(
+            eq(comment_likes.comment_id, args.commentId),
+            eq(comment_likes.user_id, args.userId),
+          ))
 
-      if (deleteError) {
-        return { error: deleteError }
+        // Fetch updated likes_count
+        const comment = await db
+          .select({ likes_count: comments.likes_count })
+          .from(comments)
+          .where(eq(comments.id, args.commentId))
+
+        revalidateTag(cacheTags.eventComments(args.eventId))
+        revalidateTag(cacheTags.commentLikes(args.userId))
+
+        return {
+          data: {
+            likes_count: comment[0].likes_count,
+            user_has_liked: false,
+          },
+          error: null,
+        }
       }
+      else {
+        // Insert new like
+        await db
+          .insert(comment_likes)
+          .values({
+            comment_id: args.commentId,
+            user_id: args.userId,
+          })
 
-      const { data: comment, error: fetchError } = await supabaseAdmin
-        .from('comments')
-        .select('likes_count')
-        .eq('id', args.commentId)
-        .single()
+        // Fetch updated likes_count
+        const comment = await db
+          .select({ likes_count: comments.likes_count })
+          .from(comments)
+          .where(eq(comments.id, args.commentId))
 
-      if (fetchError) {
-        return { error: fetchError }
+        revalidateTag(cacheTags.eventComments(args.eventId))
+        revalidateTag(cacheTags.commentLikes(args.userId))
+
+        return {
+          data: {
+            likes_count: comment[0].likes_count,
+            user_has_liked: true,
+          },
+          error: null,
+        }
       }
-
-      revalidateTag(cacheTags.eventComments(args.eventId))
-      revalidateTag(cacheTags.commentLikes(args.userId))
-
-      return {
-        data: {
-          likes_count: comment.likes_count,
-          user_has_liked: false,
-        },
-        error: null,
-      }
-    }
-    else {
-      const { error: insertError } = await supabaseAdmin
-        .from('comment_likes')
-        .insert({
-          comment_id: args.commentId,
-          user_id: args.userId,
-        })
-
-      if (insertError) {
-        return { error: insertError }
-      }
-
-      const { data: comment, error: fetchError } = await supabaseAdmin
-        .from('comments')
-        .select('likes_count')
-        .eq('id', args.commentId)
-        .single()
-
-      if (fetchError) {
-        return { error: fetchError }
-      }
-
-      revalidateTag(cacheTags.eventComments(args.eventId))
-      revalidateTag(cacheTags.commentLikes(args.userId))
-
-      return {
-        data: {
-          likes_count: comment.likes_count,
-          user_has_liked: true,
-        },
-        error: null,
-      }
-    }
+    })
   },
 }

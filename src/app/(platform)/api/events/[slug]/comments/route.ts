@@ -87,7 +87,7 @@ export async function GET(
       )
     }
 
-    const likedIds = new Set(userLikes?.map(like => like.comment_id) || [])
+    const likedIds = new Set((userLikes as unknown as any[])?.map((like: any) => like.comment_id) || [])
 
     const commentsWithLikeStatus = normalizedComments.map((comment: any) => {
       const baseReplies = comment.recent_replies || []

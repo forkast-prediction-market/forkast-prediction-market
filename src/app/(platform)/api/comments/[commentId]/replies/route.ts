@@ -39,7 +39,7 @@ export async function GET(
         )
       }
 
-      const likedIds = new Set((userLikes ?? []).map(like => like.comment_id))
+      const likedIds = new Set(((userLikes as unknown as any[]) ?? []).map((like: any) => like.comment_id))
       normalizedReplies = normalizedReplies.map(reply => ({
         ...reply,
         user_avatar: reply.user_avatar ? getSupabaseImageUrl(reply.user_avatar) : `https://avatar.vercel.sh/${user.user_avatar}.png`,
