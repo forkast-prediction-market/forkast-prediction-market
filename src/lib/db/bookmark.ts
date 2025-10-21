@@ -1,53 +1,52 @@
+import { and, eq } from 'drizzle-orm'
 import { revalidateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
-import { supabaseAdmin } from '@/lib/supabase'
+import { bookmarks } from '@/lib/db/schema/bookmarks'
+import { db } from '@/lib/drizzle'
 
 export const BookmarkRepository = {
-  async toggleBookmark(userId: string, eventId: string) {
-    const { data: existing, error } = await supabaseAdmin
-      .from('bookmarks')
-      .select('event_id')
-      .eq('user_id', userId)
-      .eq('event_id', eventId)
-      .maybeSingle()
+  async toggleBookmark(user_id: string, event_id: string) {
+    try {
+      const existing = await db
+        .select({ eventId: bookmarks.event_id })
+        .from(bookmarks)
+        .where(
+          and(
+            eq(bookmarks.user_id, user_id),
+            eq(bookmarks.event_id, event_id),
+          ),
+        )
+        .limit(1)
 
-    if (error) {
-      console.error('Could not find bookmark.', error)
-      return { data: null, error: 'Could not find bookmark.' }
-    }
+      if (existing.length > 0) {
+        await db
+          .delete(bookmarks)
+          .where(
+            and(
+              eq(bookmarks.user_id, user_id),
+              eq(bookmarks.event_id, event_id),
+            ),
+          )
 
-    if (existing) {
-      const { error } = await supabaseAdmin
-        .from('bookmarks')
-        .delete()
-        .eq('user_id', userId)
-        .eq('event_id', eventId)
+        revalidateTag(cacheTags.events(user_id))
+        revalidateTag(cacheTags.event(`${event_id}:${user_id}`))
 
-      if (error) {
-        console.error('Could not delete bookmark.', error)
-        return { data: null, error: 'Could not delete bookmark.' }
+        return { data: null, error: null }
       }
+      else {
+        await db
+          .insert(bookmarks)
+          .values({ user_id, event_id })
 
-      revalidateTag(cacheTags.events(userId))
-      revalidateTag(cacheTags.event(`${eventId}:${userId}`))
+        revalidateTag(cacheTags.events(user_id))
+        revalidateTag(cacheTags.event(`${event_id}:${user_id}`))
 
-      return { data: null, error: null }
-    }
-    else {
-      const { error } = await supabaseAdmin
-        .from('bookmarks')
-        .insert({ user_id: userId, event_id: eventId })
-        .select()
-
-      if (error) {
-        console.error('Could not insert bookmark.', error)
-        return { data: null, error: 'Could not insert bookmark.' }
+        return { data: null, error: null }
       }
-
-      revalidateTag(cacheTags.events(userId))
-      revalidateTag(cacheTags.event(`${eventId}:${userId}`))
-
-      return { data: null, error: null }
+    }
+    catch (error) {
+      console.error('Bookmark operation failed:', error)
+      return { data: null, error: 'Bookmark operation failed.' }
     }
   },
 }
