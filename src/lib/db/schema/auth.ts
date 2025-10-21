@@ -19,7 +19,7 @@ export const users = pgTable('users', {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
   two_factor_enabled: boolean('two_factor_enabled').default(false),
-  username: text('username'),
+  username: text('username').unique(),
   settings: jsonb('settings'),
   affiliate_code: text('affiliate_code'),
   referred_by_user_id: text('referred_by_user_id'),
