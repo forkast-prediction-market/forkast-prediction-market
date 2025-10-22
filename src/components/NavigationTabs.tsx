@@ -36,13 +36,9 @@ export default function NavigationTabs({ tags, childParentMap }: NavigationTabsP
     tabRefs.current = Array.from({ length: tags.length }).fill(null) as (HTMLAnchorElement | null)[]
   }
 
-  const showBookmarkedOnly = searchParams?.get('bookmarked') === 'true'
   const isMentionsPage = pathname === '/mentions'
 
   let tagFromURL = searchParams?.get('tag') || 'trending'
-  if (showBookmarkedOnly && tagFromURL === 'trending') {
-    tagFromURL = ''
-  }
   if (isMentionsPage) {
     tagFromURL = 'mentions'
   }
