@@ -184,7 +184,7 @@ export const AffiliateRepository = {
           image: users.image,
         })
         .from(users)
-        .where(ilike(users.affiliate_code, code))
+        .where(eq(users.affiliate_code, code))
         .limit(1)
 
       return result.length > 0 ? result[0] : null
