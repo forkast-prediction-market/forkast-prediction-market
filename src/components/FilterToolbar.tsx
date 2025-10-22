@@ -66,21 +66,25 @@ export default function FilterToolbar({ search, bookmarked }: FilterToolbarProps
   }, [open])
 
   return (
-    <div className="flex w-full items-center gap-4 overflow-hidden">
-      <FilterToolbarSearchInput
-        search={search}
-        bookmarked={bookmarked}
-      />
+    <div className="flex w-full flex-col gap-4 overflow-hidden md:flex-row md:items-center md:gap-4">
+      <div className="flex w-full items-center gap-3 md:w-auto">
+        <div className="flex-1">
+          <FilterToolbarSearchInput
+            search={search}
+            bookmarked={bookmarked}
+          />
+        </div>
 
-      <BookmarkToggle
-        isBookmarked={isBookmarked}
-        isConnected={isConnected}
-        isLoading={isPending}
-        onToggle={handleBookmarkToggle}
-        onConnect={handleConnect}
-      />
+        <BookmarkToggle
+          isBookmarked={isBookmarked}
+          isConnected={isConnected}
+          isLoading={isPending}
+          onToggle={handleBookmarkToggle}
+          onConnect={handleConnect}
+        />
+      </div>
 
-      <Separator orientation="vertical" className="shrink-0" />
+      <Separator orientation="vertical" className="hidden shrink-0 md:flex" />
 
       <div id="navigation-tags" className="min-w-0 flex-1 overflow-hidden" />
     </div>

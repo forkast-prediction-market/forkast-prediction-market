@@ -61,7 +61,7 @@ export default function FilterToolbarSearchInput({ search, bookmarked = 'false' 
   const iconClasses = 'absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground'
 
   return (
-    <div className="relative w-48 shrink-0">
+    <div className="relative w-full md:w-64 lg:w-72 xl:w-80">
       {!isPending && <SearchIcon className={iconClasses} />}
       {isPending && <LoaderIcon className={`${iconClasses} animate-spin`} />}
       <Input
