@@ -2,8 +2,9 @@
 
 import type { Route } from 'next'
 import Link from 'next/link'
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 
 interface SubNavigationTabsProps {
   activeTag: string
@@ -34,10 +35,10 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
     isInitialized: false,
   })
 
-  const subNavItems = [
+  const subNavItems = useMemo(() => ([
     { slug: mainTag.slug, name: 'All', isMain: true },
     ...mainTag.childs.map(child => ({ ...child, isMain: false })),
-  ]
+  ]), [mainTag.childs, mainTag.slug])
 
   const activeIndex = subNavItems.findIndex(item => activeTag === item.slug)
 
@@ -78,13 +79,32 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
     updateBackgroundPosition()
   }, [updateBackgroundPosition])
 
+  useEffect(() => {
+    const container = containerRef.current
+
+    if (!container) {
+      return
+    }
+
+    function handleScroll() {
+      requestAnimationFrame(updateBackgroundPosition)
+    }
+
+    container.addEventListener('scroll', handleScroll, { passive: true })
+
+    return () => {
+      container.removeEventListener('scroll', handleScroll)
+    }
+  }, [updateBackgroundPosition])
+
   return (
-    <div ref={containerRef} className="relative flex items-center gap-2">
+    <div
+      ref={containerRef}
+      className="relative scrollbar-hide flex w-full max-w-full min-w-0 items-center gap-2 overflow-x-auto"
+    >
       {backgroundStyle.isInitialized && (
         <div
-          className={`
-            absolute z-0 rounded-md bg-primary text-primary-foreground shadow transition-all duration-300 ease-out
-          `}
+          className="pointer-events-none absolute z-0 rounded-md bg-primary/10 transition-all duration-300 ease-out"
           style={{
             left: `${backgroundStyle.left}px`,
             width: `${backgroundStyle.width}px`,
@@ -106,9 +126,14 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
           }}
         >
           <Button
-            variant={activeTag === item.slug ? 'default' : 'ghost'}
+            variant="ghost"
             size="sm"
-            className="relative"
+            className={cn(
+              'relative z-10 whitespace-nowrap hover:bg-transparent focus-visible:ring-0',
+              activeTag === item.slug
+                ? 'font-semibold text-foreground'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
           >
             {item.name}
           </Button>

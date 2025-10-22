@@ -111,9 +111,16 @@ export default function EventRelated({ event }: EventRelatedProps) {
 
     if (event.tags && event.tags.length > 0) {
       for (const tag of event.tags) {
-        if (tag.slug && !uniqueTags.has(tag.slug)) {
-          uniqueTags.set(tag.slug, tag.name)
+        if (!tag.slug || uniqueTags.has(tag.slug)) {
+          continue
         }
+
+        const tagLabel = tag.name?.trim()
+        if (tagLabel === 'Hide From New') {
+          continue
+        }
+
+        uniqueTags.set(tag.slug, tagLabel ?? tag.slug)
       }
     }
 
