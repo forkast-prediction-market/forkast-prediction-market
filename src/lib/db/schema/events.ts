@@ -34,6 +34,7 @@ export const events = pgTable(
     updated_at: timestamp('updated_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
+    end_date: timestamp('created_at', { withTimezone: true }),
   },
   table => ({
     statusCheck: check(

@@ -58,10 +58,13 @@ CREATE TABLE IF NOT EXISTS events
   rules                TEXT,        -- Event-specific rules
   active_markets_count INTEGER               DEFAULT 0,
   total_markets_count  INTEGER               DEFAULT 0,
+  end_date             TIMESTAMPTZ,
   created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   updated_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   CHECK (status IN ('draft', 'active', 'archived'))
 );
+
+CREATE INDEX IF NOT EXISTS events_end_date_idx ON events (end_date);
 
 -- Event-Tag relationship table - Many-to-many between events and tags
 CREATE TABLE IF NOT EXISTS event_tags
