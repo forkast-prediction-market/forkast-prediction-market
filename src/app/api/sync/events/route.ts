@@ -441,18 +441,54 @@ async function processCondition(market: SubgraphCondition) {
   console.log(`Processed condition: ${market.id}`)
 }
 
+function normalizeEventEndDate(rawValue: unknown): string | null {
+  if (typeof rawValue === 'string') {
+    const trimmed = rawValue.trim()
+    if (trimmed) {
+      const parsed = new Date(trimmed)
+      if (!Number.isNaN(parsed.getTime())) {
+        return parsed.toISOString()
+      }
+    }
+  }
+
+  if (typeof rawValue === 'number' && Number.isFinite(rawValue)) {
+    // Handle Unix seconds or milliseconds
+    const timestamp = rawValue > 10_000_000_000 ? rawValue : rawValue * 1000
+    const parsed = new Date(timestamp)
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toISOString()
+    }
+  }
+
+  return null
+}
+
 async function processEvent(eventData: any, creatorAddress: string) {
   if (!eventData || !eventData.slug || !eventData.title) {
     throw new Error(`Invalid event data: ${JSON.stringify(eventData)}`)
   }
 
+  const normalizedEndDate = normalizeEventEndDate(eventData.end_date ?? eventData.endDate)
+
   const { data: existingEvent } = await supabaseAdmin
     .from('events')
-    .select('id')
+    .select('id, end_date')
     .eq('slug', eventData.slug)
     .maybeSingle()
 
   if (existingEvent) {
+    if (normalizedEndDate && normalizedEndDate !== existingEvent.end_date) {
+      const { error: updateError } = await supabaseAdmin
+        .from('events')
+        .update({ end_date: normalizedEndDate })
+        .eq('id', existingEvent.id)
+
+      if (updateError) {
+        console.error(`Failed to update end_date for event ${existingEvent.id}:`, updateError)
+      }
+    }
+
     console.log(`Event ${eventData.slug} already exists, using existing ID: ${existingEvent.id}`)
     return existingEvent.id
   }
@@ -473,6 +509,7 @@ async function processEvent(eventData: any, creatorAddress: string) {
       icon_url: iconUrl,
       show_market_icons: eventData.show_market_icons !== false,
       rules: eventData.rules || null,
+      end_date: normalizedEndDate,
     })
     .select('id')
     .single()

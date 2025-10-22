@@ -27,6 +27,10 @@ function NavigationTab({ tag, childParentMap: _childParentMap, isActive, ref }: 
     : searchParams?.get('tag') || 'trending'
 
   function createHref(nextTag: string, context?: string): Route {
+    if (nextTag === 'mentions') {
+      return '/mentions' as Route
+    }
+
     const params = new URLSearchParams(currentSearch)
     params.set('tag', nextTag)
 
@@ -59,7 +63,7 @@ function NavigationTab({ tag, childParentMap: _childParentMap, isActive, ref }: 
         <span>{tag.name}</span>
       </Link>
 
-      {isActive && (
+      {isActive && tag.slug !== 'mentions' && (
         <Teleport to="#navigation-tags">
           <SubNavigationTabs
             activeTag={tagFromURL}

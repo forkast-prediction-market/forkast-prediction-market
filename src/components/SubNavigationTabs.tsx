@@ -104,7 +104,7 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
     >
       {backgroundStyle.isInitialized && (
         <div
-          className="pointer-events-none absolute z-0 rounded-md bg-primary/10 transition-all duration-300 ease-out"
+          className="pointer-events-none absolute rounded-md bg-primary/10 transition-all duration-300 ease-out"
           style={{
             left: `${backgroundStyle.left}px`,
             width: `${backgroundStyle.width}px`,
@@ -129,7 +129,7 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
             variant="ghost"
             size="sm"
             className={cn(
-              'relative z-10 whitespace-nowrap hover:bg-transparent focus-visible:ring-0',
+              'relative whitespace-nowrap hover:bg-transparent focus-visible:ring-0',
               activeTag === item.slug
                 ? 'font-semibold text-foreground'
                 : 'text-muted-foreground hover:text-foreground',

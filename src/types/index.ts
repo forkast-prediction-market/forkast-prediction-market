@@ -12,6 +12,7 @@ export interface Event {
   rules?: string
   active_markets_count: number
   total_markets_count: number
+  end_date: string | null
   created_at: string
   updated_at: string
   markets: Market[]
