@@ -188,11 +188,11 @@ export const TagRepository = {
           }
           return b.count - a.count
         })
-        .slice(0, 6)
         .map(({ name, slug }) => ({ name, slug })),
     }))
 
     const globalChilds = Array.from(globalCounts.values())
+      .filter(child => child.count > 0)
       .sort((a, b) => {
         if (b.count === a.count) {
           return a.name.localeCompare(b.name)

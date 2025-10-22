@@ -211,32 +211,110 @@ export const EventRepository = {
     cacheTag(cacheTags.events(userId))
 
     return executeQuery(async () => {
-      // Build where conditions array
-      const whereConditions = [eq(vVisibleEvents.status, 'active')]
-
-      // Add case-insensitive title search using ilike operator
-      if (search) {
-        whereConditions.push(ilike(vVisibleEvents.title, `%${search}%`))
-      }
-
       // Calculate pagination values
       const limit = 40
       const validOffset = Number.isNaN(offset) || offset < 0 ? 0 : offset
 
-      // Build base query using select approach for v_visible_events view
-      const query = db
-        .select()
-        .from(vVisibleEvents)
-        .where(and(...whereConditions))
-        .orderBy(desc(vVisibleEvents.id))
-        .limit(limit)
-        .offset(validOffset)
+      // Build where conditions
+      const whereConditions = [eq(vVisibleEvents.status, 'active')]
 
-      // Execute the base query
-      const baseResults = await query
+      // Add search filtering
+      if (search) {
+        whereConditions.push(ilike(vVisibleEvents.title, `%${search}%`))
+      }
 
-      // Now get the full event data with relations for each result
-      const eventIds = baseResults.map(event => event.id).filter(Boolean) as string[]
+      let baseResults: any[] = []
+
+      // Handle different query types based on filtering needs
+      if (tag && tag !== 'trending' && tag !== 'new') {
+        // Need to filter by tag - use joins
+        let tagQuery = db
+          .select({
+            id: vVisibleEvents.id,
+            slug: vVisibleEvents.slug,
+            title: vVisibleEvents.title,
+            creator: vVisibleEvents.creator,
+            icon_url: vVisibleEvents.icon_url,
+            show_market_icons: vVisibleEvents.show_market_icons,
+            status: vVisibleEvents.status,
+            rules: vVisibleEvents.rules,
+            active_markets_count: vVisibleEvents.active_markets_count,
+            total_markets_count: vVisibleEvents.total_markets_count,
+            created_at: vVisibleEvents.created_at,
+            updated_at: vVisibleEvents.updated_at,
+          })
+          .from(vVisibleEvents)
+          .innerJoin(markets, eq(vVisibleEvents.id, markets.event_id))
+          .innerJoin(event_tags, eq(vVisibleEvents.id, event_tags.event_id))
+          .innerJoin(tags, eq(event_tags.tag_id, tags.id))
+          .where(and(...whereConditions, eq(tags.slug, tag)))
+
+        if (bookmarked && userId) {
+          tagQuery = db
+            .select({
+              id: vVisibleEvents.id,
+              slug: vVisibleEvents.slug,
+              title: vVisibleEvents.title,
+              creator: vVisibleEvents.creator,
+              icon_url: vVisibleEvents.icon_url,
+              show_market_icons: vVisibleEvents.show_market_icons,
+              status: vVisibleEvents.status,
+              rules: vVisibleEvents.rules,
+              active_markets_count: vVisibleEvents.active_markets_count,
+              total_markets_count: vVisibleEvents.total_markets_count,
+              created_at: vVisibleEvents.created_at,
+              updated_at: vVisibleEvents.updated_at,
+            })
+            .from(vVisibleEvents)
+            .innerJoin(markets, eq(vVisibleEvents.id, markets.event_id))
+            .innerJoin(event_tags, eq(vVisibleEvents.id, event_tags.event_id))
+            .innerJoin(tags, eq(event_tags.tag_id, tags.id))
+            .innerJoin(bookmarks, eq(vVisibleEvents.id, bookmarks.event_id))
+            .where(and(...whereConditions, eq(tags.slug, tag), eq(bookmarks.user_id, userId)))
+        }
+
+        baseResults = await tagQuery
+          .orderBy(desc(vVisibleEvents.id))
+          .limit(limit)
+          .offset(validOffset)
+      }
+      else if (bookmarked && userId) {
+        // Need to filter by bookmarks only
+        baseResults = await db
+          .select({
+            id: vVisibleEvents.id,
+            slug: vVisibleEvents.slug,
+            title: vVisibleEvents.title,
+            creator: vVisibleEvents.creator,
+            icon_url: vVisibleEvents.icon_url,
+            show_market_icons: vVisibleEvents.show_market_icons,
+            status: vVisibleEvents.status,
+            rules: vVisibleEvents.rules,
+            active_markets_count: vVisibleEvents.active_markets_count,
+            total_markets_count: vVisibleEvents.total_markets_count,
+            created_at: vVisibleEvents.created_at,
+            updated_at: vVisibleEvents.updated_at,
+          })
+          .from(vVisibleEvents)
+          .innerJoin(bookmarks, eq(vVisibleEvents.id, bookmarks.event_id))
+          .where(and(...whereConditions, eq(bookmarks.user_id, userId)))
+          .orderBy(desc(vVisibleEvents.id))
+          .limit(limit)
+          .offset(validOffset)
+      }
+      else {
+        // No special filtering needed
+        baseResults = await db
+          .select()
+          .from(vVisibleEvents)
+          .where(and(...whereConditions))
+          .orderBy(desc(vVisibleEvents.id))
+          .limit(limit)
+          .offset(validOffset)
+      }
+
+      // Get unique event IDs
+      const eventIds = [...new Set(baseResults.map(event => event.id))].filter(Boolean) as string[]
 
       if (eventIds.length === 0) {
         return []
@@ -317,9 +395,9 @@ export const EventRepository = {
             .where(inArray(tags.id, tagIds))
         : []
 
-      // Get bookmarks if userId provided
+      // Get bookmarks if userId provided (and not already filtered)
       let bookmarksData: any[] = []
-      if (userId) {
+      if (userId && !bookmarked) {
         bookmarksData = await db
           .select()
           .from(bookmarks)
@@ -330,9 +408,16 @@ export const EventRepository = {
             ),
           )
       }
+      else if (bookmarked && userId) {
+        // If we filtered by bookmarks, get all bookmarks for these events
+        bookmarksData = await db
+          .select()
+          .from(bookmarks)
+          .where(inArray(bookmarks.event_id, eventIds))
+      }
 
       // Combine the data
-      let results = eventsData.map((eventRecord) => {
+      const results = eventsData.map((eventRecord) => {
         const eventMarkets = marketsData.filter(m => m.event_id === eventRecord.id)
         const eventTags = eventTagsData.filter(et => et.event_id === eventRecord.id)
         const eventBookmarks = bookmarksData.filter(b => b.event_id === eventRecord.id)
@@ -363,20 +448,6 @@ export const EventRepository = {
           bookmarks: eventBookmarks,
         }
       })
-
-      // Handle tag filtering by filtering results after query execution
-      if (tag && tag !== 'trending' && tag !== 'new') {
-        results = results.filter((eventResult: any) =>
-          eventResult.eventTags?.some((et: any) => et.tag?.slug === tag),
-        )
-      }
-
-      // Handle bookmark filtering with conditional joins
-      if (bookmarked && userId) {
-        results = results.filter((eventResult: any) =>
-          eventResult.bookmarks && eventResult.bookmarks.length > 0,
-        )
-      }
 
       // Transform results using eventResource function
       const transformedEvents = results.map((eventResult: any) =>
