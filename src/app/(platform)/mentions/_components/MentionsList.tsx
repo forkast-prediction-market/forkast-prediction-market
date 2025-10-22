@@ -86,7 +86,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
         'md:flex-row md:items-center md:gap-8 md:p-5',
       )}
     >
-      <div className="flex items-center gap-4 md:w-[240px] md:flex-shrink-0">
+      <div className="flex items-start gap-3 md:w-[240px] md:flex-shrink-0 md:items-center md:gap-4">
         <div className="flex w-16 flex-col items-center justify-center leading-none md:w-[68px]">
           <span className="text-3xl font-bold tracking-tight text-foreground md:text-[34px]">
             {dayLabel}
@@ -97,6 +97,15 @@ function MentionsListItem({ event }: MentionsListItemProps) {
             </span>
           )}
         </div>
+        <h2
+          className={cn(
+            'flex-1 text-base font-semibold text-foreground transition-colors',
+            'md:hidden',
+            'group-hover:text-foreground',
+          )}
+        >
+          {event.title}
+        </h2>
 
         <div
           className={cn(
@@ -119,6 +128,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
         <h2
           className={cn(
             'line-clamp-2 text-base font-semibold text-foreground transition-colors',
+            'hidden md:block',
             'group-hover:text-foreground',
             'md:text-lg',
           )}
@@ -138,75 +148,75 @@ function MentionsListItem({ event }: MentionsListItemProps) {
               {scheduleLabel}
             </Badge>
           )}
+        </div>
 
-          {(visibleBadges.length > 0 || hiddenBadges.length > 0) && (
-            <div className="ms-auto flex flex-wrap items-center gap-2">
-              {visibleBadges.map(label => (
-                <Badge
-                  key={label}
-                  variant="outline"
-                  className={cn(
-                    `
-                      cursor-pointer rounded-md border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium
-                      text-foreground transition-colors
-                      hover:bg-card/70
-                    `,
-                  )}
-                >
-                  {label}
-                </Badge>
-              ))}
+        {(visibleBadges.length > 0 || hiddenBadges.length > 0) && (
+          <div className="flex flex-wrap items-center gap-2 md:ms-auto">
+            {visibleBadges.map(label => (
+              <Badge
+                key={label}
+                variant="outline"
+                className={cn(
+                  `
+                    cursor-pointer rounded-md border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium
+                    text-foreground transition-colors
+                    hover:bg-card/70
+                  `,
+                )}
+              >
+                {label}
+              </Badge>
+            ))}
 
-              {hiddenBadges.length > 0 && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        `
-                          cursor-pointer rounded-md border border-border/60 bg-background/70 px-3 py-1 text-xs
-                          font-medium text-muted-foreground transition-colors
-                          hover:bg-card/70
-                        `,
-                      )}
-                    >
-                      {`+${hiddenBadges.length}`}
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent
-                    side="top"
-                    sideOffset={12}
+            {hiddenBadges.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Badge
+                    variant="outline"
                     className={cn(
                       `
-                        max-w-[calc(100vw-2.5rem)] rounded-xl border border-border bg-background/95 p-3 text-sm
-                        break-words whitespace-normal text-foreground shadow-xl backdrop-blur-sm
-                        sm:max-w-[360px]
+                        cursor-pointer rounded-md border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium
+                        text-muted-foreground transition-colors
+                        hover:bg-card/70
                       `,
                     )}
                   >
-                    <div className="flex flex-wrap items-center gap-2">
-                      {hiddenBadges.map(label => (
-                        <Badge
-                          key={label}
-                          variant="outline"
-                          className={cn(
-                            `
-                              cursor-pointer rounded-md border border-border/60 bg-background/80 px-2.5 py-1 text-[11px]
-                              font-medium text-muted-foreground transition-colors
-                              hover:bg-card/70
-                            `,
-                          )}
-                        >
-                          {label}
-                        </Badge>
-                      ))}
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              )}
-            </div>
-          )}
-        </div>
+                    {`+${hiddenBadges.length}`}
+                  </Badge>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  sideOffset={12}
+                  className={cn(
+                    `
+                      max-w-[calc(100vw-2.5rem)] rounded-xl border border-border bg-background/95 p-3 text-sm
+                      break-words whitespace-normal text-foreground shadow-xl backdrop-blur-sm
+                      sm:max-w-[360px]
+                    `,
+                  )}
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    {hiddenBadges.map(label => (
+                      <Badge
+                        key={label}
+                        variant="outline"
+                        className={cn(
+                          `
+                            cursor-pointer rounded-md border border-border/60 bg-background/80 px-2.5 py-1 text-[11px]
+                            font-medium text-muted-foreground transition-colors
+                            hover:bg-card/70
+                          `,
+                        )}
+                      >
+                        {label}
+                      </Badge>
+                    ))}
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="hidden md:flex md:w-[180px] md:flex-shrink-0 md:flex-col md:items-center md:justify-center">

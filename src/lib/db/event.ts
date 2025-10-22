@@ -90,11 +90,15 @@ export const EventRepository = {
       return { data, error }
     }
 
-    let eventsData = data ?? []
+    let eventsData: Array<Record<string, any>> = Array.isArray(data) ? (data as Array<Record<string, any>>) : []
 
-    const missingEndDateIds = eventsData
-      .filter(event => event.end_date == null)
-      .map(event => event.id)
+    const missingEndDateIds = eventsData.reduce<string[]>((ids, event) => {
+      const eventId = typeof event.id === 'string' ? event.id : null
+      if (eventId && (event.end_date == null)) {
+        ids.push(eventId)
+      }
+      return ids
+    }, [])
 
     if (missingEndDateIds.length > 0) {
       const { data: endDatesData, error: endDatesError } = await supabaseAdmin
@@ -107,10 +111,17 @@ export const EventRepository = {
       }
       else if (endDatesData) {
         const endDateMap = new Map(endDatesData.map(({ id, end_date }) => [id, end_date]))
-        eventsData = eventsData.map(event => ({
-          ...event,
-          end_date: event.end_date ?? endDateMap.get(event.id) ?? null,
-        }))
+        eventsData = eventsData.map((event) => {
+          const eventId = typeof event.id === 'string' ? event.id : undefined
+          if (!eventId) {
+            return event
+          }
+          const patchedEndDate = event.end_date ?? endDateMap.get(eventId) ?? null
+          return {
+            ...event,
+            end_date: patchedEndDate,
+          }
+        })
       }
     }
 
