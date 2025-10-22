@@ -2,13 +2,13 @@
 
 const fs = require('node:fs')
 const path = require('node:path')
-const { Client } = require('pg')
+const postgres = require('postgres')
 
-async function applyMigrations(client) {
+async function applyMigrations(sql) {
   console.log('Applying migrations...')
 
   console.log('Creating migrations tracking table...')
-  await client.query(`
+  await sql`
     CREATE TABLE IF NOT EXISTS migrations (
       version TEXT PRIMARY KEY,
       applied_at TIMESTAMPTZ DEFAULT NOW()
@@ -24,7 +24,7 @@ async function applyMigrations(client) {
         END IF;
       END
     $$;
-  `)
+  `
   console.log('Migrations table ready')
 
   const migrationsDir = path.join(__dirname, './migrations')
@@ -37,12 +37,11 @@ async function applyMigrations(client) {
   for (const file of migrationFiles) {
     const version = file.replace('.sql', '')
 
-    const result = await client.query(
-      'SELECT version FROM migrations WHERE version = $1',
-      [version],
-    )
+    const result = await sql`
+      SELECT version FROM migrations WHERE version = ${version}
+    `
 
-    if (result.rows.length > 0) {
+    if (result.length > 0) {
       console.log(`⏭️ Skipping ${file} (already applied)`)
       continue
     }
@@ -53,28 +52,20 @@ async function applyMigrations(client) {
       'utf8',
     )
 
-    await client.query('BEGIN')
-    try {
-      await client.query(migrationSql)
-      await client.query(
-        'INSERT INTO migrations (version) VALUES ($1)',
-        [version],
-      )
-      await client.query('COMMIT')
-      console.log(`✅ Applied ${file}`)
-    }
-    catch (e) {
-      await client.query('ROLLBACK')
-      throw e
-    }
+    await sql.begin(async (tx) => {
+      await tx.unsafe(migrationSql)
+      await tx`INSERT INTO migrations (version) VALUES (${version})`
+    })
+
+    console.log(`✅ Applied ${file}`)
   }
 
   console.log('✅ All migrations applied successfully')
 }
 
-async function createSyncEventsCron(client) {
+async function createSyncEventsCron(sql) {
   console.log('Creating sync-events cron job...')
-  const sql = `
+  const sqlQuery = `
   DO $$
   DECLARE
     job_id int;
@@ -97,11 +88,11 @@ async function createSyncEventsCron(client) {
     PERFORM cron.schedule('sync-events', '*/5 * * * *', cmd);
   END $$;`
 
-  const updatedSQL = sql
+  const updatedSQL = sqlQuery
     .replace('<<VERCEL_URL>>', process.env.VERCEL_PROJECT_PRODUCTION_URL)
     .replace('<<CRON_SECRET>>', process.env.CRON_SECRET)
 
-  await client.query(updatedSQL)
+  await sql.unsafe(updatedSQL)
   console.log('✅ Cron sync-events created successfully')
 }
 
@@ -115,15 +106,15 @@ async function run() {
   }
 
   const connectionString = process.env.POSTGRES_URL.replace('require', 'disable')
-  const client = new Client({ connectionString })
+  const sql = postgres(connectionString)
 
   try {
     console.log('Connecting to database...')
-    await client.connect()
+    await sql`SELECT 1`
     console.log('Connected to database successfully')
 
-    await applyMigrations(client)
-    await createSyncEventsCron(client)
+    await applyMigrations(sql)
+    await createSyncEventsCron(sql)
   }
   catch (error) {
     console.error('An error occurred:', error)
@@ -131,7 +122,7 @@ async function run() {
   }
   finally {
     console.log('Closing database connection...')
-    await client.end()
+    await sql.end()
     console.log('Connection closed.')
   }
 }
