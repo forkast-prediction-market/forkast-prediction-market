@@ -1,11 +1,10 @@
-import type { ActivityOrder, Event, QueryResult, Tag, TopHolder } from '@/types'
+import type { ActivityOrder, Event, QueryResult, TopHolder } from '@/types'
 import { and, desc, eq, exists, ilike, sql } from 'drizzle-orm'
 import { unstable_cacheTag as cacheTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
-
 import {
   bookmarks,
   conditions,
@@ -20,7 +19,6 @@ import {
 
 const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
 
-// TypeScript interfaces for query results
 interface ListEventsProps {
   tag: string
   search?: string
@@ -45,7 +43,6 @@ interface HoldersResult {
   noHolders: TopHolder[]
 }
 
-// Drizzle result types for complex queries
 type DrizzleEventResult = typeof events.$inferSelect & {
   markets: (typeof markets.$inferSelect & {
     condition: typeof conditions.$inferSelect & {
@@ -66,11 +63,10 @@ interface RelatedEvent {
   common_tags_count: number
 }
 
-// Event resource transformation function for Drizzle result types
 function eventResource(event: DrizzleEventResult, userId: string): Event {
-  const tagRecords: Tag[] = ((event.eventTags ?? []) as any[])
-    .map((et: any) => et.tag)
-    .filter((tag: any): tag is Tag => Boolean(tag?.slug))
+  const tagRecords = (event.eventTags ?? [])
+    .map(et => et.tag)
+    .filter(tag => Boolean(tag?.slug))
 
   return {
     id: event.id || '',
@@ -119,41 +115,30 @@ function eventResource(event: DrizzleEventResult, userId: string): Event {
       id: tag.id,
       name: tag.name,
       slug: tag.slug,
-      isMainCategory: tag.is_main_category,
+      isMainCategory: Boolean(tag.is_main_category),
     })),
     main_tag: getEventMainTag(tagRecords),
-    is_bookmarked: event.bookmarks?.some((bookmark: any) => bookmark.user_id === userId) || false,
-    is_trending: Math.random() > 0.3, // Placeholder - should be calculated from real data
+    is_bookmarked: event.bookmarks?.some(bookmark => bookmark.user_id === userId) || false,
+    is_trending: Math.random() > 0.3,
   }
 }
 
-// Helper function to get main tag from tag records
-function getEventMainTag(tags: Tag[] | undefined): string {
-  if (tags) {
-    const mainTag = tags?.find(tag => tag.is_main_category)
-
-    if (mainTag) {
-      return mainTag.name
-    }
-
-    if (tags.length > 0) {
-      return tags[0].name
-    }
+function getEventMainTag(tags: any[] | undefined): string {
+  if (!tags?.length) {
+    return 'World'
   }
 
-  return 'World'
+  const mainTag = tags.find(tag => tag.is_main_category)
+  return mainTag?.name || tags[0].name
 }
 
-// Helper function to transform activity order results
 function transformActivityOrder(order: any): ActivityOrder {
-  // Handle user image URL transformations and apply proper error handling
   const userImage = order.user_image
     ? getSupabaseImageUrl(order.user_image)
     : `https://avatar.vercel.sh/${order.user_address || 'unknown'}.png`
 
-  // Apply proper error handling and null value management
-  const amount = order.amount ? Number(order.amount) : 0
-  const price = order.price ? Number(order.price) : 0.5
+  const amount = Number(order.amount || 0)
+  const price = Number(order.price || 0.5)
   const totalValue = amount * price
 
   return {
@@ -182,7 +167,6 @@ function transformActivityOrder(order: any): ActivityOrder {
   }
 }
 
-// Drizzle-based Event Repository
 export const EventRepository = {
   async listEvents({
     tag = 'trending',
@@ -195,22 +179,17 @@ export const EventRepository = {
     cacheTag(cacheTags.events(userId))
 
     return await runQuery(async () => {
-      // Calculate pagination values
       const limit = 40
       const validOffset = Number.isNaN(offset) || offset < 0 ? 0 : offset
 
-      // Build where conditions for the single query
       const whereConditions = []
 
-      // Base condition - only active events
       whereConditions.push(eq(events.status, 'active'))
 
-      // Add search filtering directly in WHERE clause
       if (search) {
         whereConditions.push(ilike(events.title, `%${search}%`))
       }
 
-      // Tag filtering using EXISTS subquery (except for trending/new which are handled later)
       if (tag && tag !== 'trending' && tag !== 'new') {
         whereConditions.push(
           exists(
@@ -225,7 +204,6 @@ export const EventRepository = {
         )
       }
 
-      // New event filtering - exclude events with hide-from-new tag at database level
       if (tag === 'new') {
         whereConditions.push(
           sql`NOT ${exists(
@@ -240,7 +218,6 @@ export const EventRepository = {
         )
       }
 
-      // Bookmark filtering using EXISTS subquery
       if (bookmarked && userId) {
         whereConditions.push(
           exists(
@@ -254,60 +231,45 @@ export const EventRepository = {
         )
       }
 
-      // Execute single relational query using db.query API
-      const queryConfig: any = {
+      const eventsData = await db.query.events.findMany({
         where: and(...whereConditions),
         with: {
+
           markets: {
             with: {
               condition: {
-                with: {
-                  outcomes: true,
-                },
+                with: { outcomes: true },
               },
             },
           },
+
           eventTags: {
-            with: {
-              tag: true,
-            },
+            with: { tag: true },
           },
+
+          ...(userId && {
+            bookmarks: {
+              where: eq(bookmarks.user_id, userId),
+            },
+          }),
         },
         limit,
         offset: validOffset,
-        // Use created_at ordering for new events, otherwise use id ordering
         orderBy: tag === 'new' ? desc(events.created_at) : desc(events.id),
-      }
+      })
 
-      // Add bookmarks relation conditionally
-      if (userId) {
-        queryConfig.with.bookmarks = {
-          where: eq(bookmarks.user_id, userId),
+      const eventsWithMarkets = eventsData
+        .filter(event => event.markets?.length > 0)
+        .map(event => eventResource(event as DrizzleEventResult, userId))
+
+      if (!bookmarked && tag === 'trending') {
+        return {
+          data: eventsWithMarkets.filter(event => event.is_trending),
+          error: null,
         }
       }
 
-      const eventsData = await db.query.events.findMany(queryConfig)
-
-      // Filter out events without markets (equivalent to markets!inner in Supabase)
-      const eventsWithMarkets = (eventsData as any[]).filter((event: any) => event.markets && event.markets.length > 0)
-
-      // Transform results using eventResource function
-      const transformedEvents = eventsWithMarkets.map((eventResult: any) =>
-        eventResource(eventResult as DrizzleEventResult, userId),
-      )
-
-      // Handle trending filtering in application layer (business logic requirement)
-      if (!bookmarked && tag === 'trending') {
-        const trendingEvents = transformedEvents.filter((eventItem: Event) => eventItem.is_trending)
-        return { data: trendingEvents, error: null }
-      }
-
-      // New event filtering and sorting is handled at database level
-      if (tag === 'new') {
-        return { data: transformedEvents, error: null }
-      }
-
-      return { data: transformedEvents, error: null }
+      return { data: eventsWithMarkets, error: null }
     })
   },
 
@@ -315,7 +277,6 @@ export const EventRepository = {
     'use cache'
 
     return runQuery(async () => {
-      // Optimized single field query with proper indexing expectation
       const result = await db
         .select({ id: events.id })
         .from(events)
@@ -334,7 +295,6 @@ export const EventRepository = {
     'use cache'
 
     return runQuery(async () => {
-      // Optimized single field query with proper indexing expectation
       const result = await db
         .select({ title: events.title })
         .from(events)
@@ -353,45 +313,33 @@ export const EventRepository = {
     'use cache'
 
     return runQuery(async () => {
-      // Build query configuration for single relational query
-      const queryConfig: any = {
+      const eventResult = await db.query.events.findFirst({
         where: eq(events.slug, slug),
         with: {
           markets: {
             with: {
               condition: {
-                with: {
-                  outcomes: true,
-                },
+                with: { outcomes: true },
               },
             },
           },
           eventTags: {
-            with: {
-              tag: true,
-            },
+            with: { tag: true },
           },
+          ...(userId && {
+            bookmarks: {
+              where: eq(bookmarks.user_id, userId),
+            },
+          }),
         },
-      }
-
-      // Add bookmarks relation conditionally based on userId
-      if (userId) {
-        queryConfig.with.bookmarks = {
-          where: eq(bookmarks.user_id, userId),
-        }
-      }
-
-      // Execute single relational query using db.query API
-      const eventResult = await db.query.events.findFirst(queryConfig)
+      })
 
       if (!eventResult) {
         throw new Error('Event not found')
       }
 
-      // Transform the result using eventResource
       const transformedEvent = eventResource(eventResult as DrizzleEventResult, userId)
 
-      // Apply cache tagging for user-specific results
       cacheTag(cacheTags.event(`${transformedEvent.id}:${userId}`))
 
       return { data: transformedEvent, error: null }
@@ -404,7 +352,6 @@ export const EventRepository = {
     return runQuery(async () => {
       const tagSlug = options.tagSlug?.toLowerCase()
 
-      // Single optimized query using CTEs and JOINs to get related events with common tag counts
       const relatedEventsQuery = sql`
         WITH current_event_tags AS (
           SELECT et.tag_id, t.slug as tag_slug
@@ -447,12 +394,11 @@ export const EventRepository = {
 
       const results = await db.execute(relatedEventsQuery)
 
-      if (!results || results.length === 0) {
+      if (!results?.length) {
         return { data: [], error: null }
       }
 
-      // Transform results to RelatedEvent format
-      const transformedResults = results.map((row: any) => ({
+      const transformedResults = results.map(row => ({
         id: String(row.id),
         slug: String(row.slug),
         title: String(row.title),
@@ -468,16 +414,11 @@ export const EventRepository = {
     'use cache'
 
     return runQuery(async () => {
-      // Build where conditions for the optimized single query
       const whereConditions = [eq(events.slug, args.slug)]
 
-      // Add minimum amount filtering at database level if specified
       if (args.minAmount && args.minAmount > 0) {
-        // Calculate total_value at database level: amount * price >= minAmount
         whereConditions.push(sql`(${orders.amount} * ${orders.price}) >= ${args.minAmount}`)
       }
-
-      // Execute single optimized query with all necessary joins and filtering
       const results = await db
         .select({
           id: orders.id,
@@ -498,7 +439,6 @@ export const EventRepository = {
           market_slug: markets.slug,
           market_icon_url: markets.icon_url,
           event_slug: events.slug,
-          // Calculate total_value at database level for efficiency
           total_value: sql<number>`(${orders.amount} * ${orders.price})`.as('total_value'),
         })
         .from(orders)
@@ -512,14 +452,13 @@ export const EventRepository = {
         .limit(args.limit)
         .offset(args.offset)
 
-      if (!results || results.length === 0) {
+      if (!results?.length) {
         return { data: [], error: null }
       }
 
-      // Transform order records into ActivityOrder objects
       const activities: ActivityOrder[] = results
-        .filter((order: any) => order.user_id && order.outcome_text && order.event_slug)
-        .map((order: any) => transformActivityOrder(order))
+        .filter(order => order.user_id && order.outcome_text && order.event_slug)
+        .map(order => transformActivityOrder(order))
 
       return { data: activities, error: null }
     })
@@ -529,20 +468,17 @@ export const EventRepository = {
     'use cache'
 
     return runQuery(async () => {
-      // Execute optimized get_event_top_holders procedure using Drizzle
       const holdersData = await db.execute(
         sql`SELECT * FROM get_event_top_holders(${eventSlug}, ${conditionId}, 10)`,
       )
 
-      if (!holdersData || holdersData.length === 0) {
+      if (!holdersData?.length) {
         return { data: { yesHolders: [], noHolders: [] }, error: null }
       }
 
-      // Optimized data processing with single pass separation and transformation
       const yesHolders: TopHolder[] = []
       const noHolders: TopHolder[] = []
 
-      // Process holders in single pass with optimized transformations
       for (const holder of holdersData) {
         const holderData = holder as any
         const topHolder: TopHolder = {
@@ -559,7 +495,6 @@ export const EventRepository = {
           outcomeText: String(holderData.outcome_text),
         }
 
-        // Efficiently separate holders based on outcome index
         if (topHolder.outcomeIndex === 0) {
           yesHolders.push(topHolder)
         }
