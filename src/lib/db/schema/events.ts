@@ -43,7 +43,6 @@ export const events = pgTable(
   }),
 )
 
-// v_visible_events view definition
 export const vVisibleEvents = pgView('v_visible_events', {
   id: char('id', { length: 26 }),
   slug: varchar('slug', { length: 255 }),
@@ -59,7 +58,6 @@ export const vVisibleEvents = pgView('v_visible_events', {
   updated_at: timestamp('updated_at', { withTimezone: true }),
 }).existing()
 
-// Relations for events table
 export const eventsRelations = relations(events, ({ many }) => ({
   markets: many(markets),
   eventTags: many(event_tags),

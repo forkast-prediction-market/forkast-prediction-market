@@ -14,7 +14,6 @@ import {
 import { users } from './auth'
 import { events } from './events'
 
-// Comments table - Main discussion system
 export const comments = pgTable(
   'comments',
   {
@@ -60,7 +59,6 @@ export const comments = pgTable(
   }),
 )
 
-// Comment likes/reactions table
 export const comment_likes = pgTable(
   'comment_likes',
   {
@@ -76,7 +74,6 @@ export const comment_likes = pgTable(
   }),
 )
 
-// Comment reports table (for moderation)
 export const comment_reports = pgTable(
   'comment_reports',
   {
@@ -111,9 +108,8 @@ export const comment_reports = pgTable(
   }),
 )
 
-// View for comments with user information
 export const v_comments_with_user = pgView('v_comments_with_user', {
-  // Comment fields
+
   id: char('id', { length: 26 }),
   event_id: char('event_id', { length: 26 }),
   user_id: char('user_id', { length: 26 }),
@@ -124,15 +120,14 @@ export const v_comments_with_user = pgView('v_comments_with_user', {
   replies_count: integer('replies_count'),
   created_at: timestamp('created_at', { withTimezone: true }),
   updated_at: timestamp('updated_at', { withTimezone: true }),
-  // User fields
+
   username: text('username'),
   user_avatar: text('user_avatar'),
   user_address: varchar('user_address', { length: 42 }),
-  // Aggregated reply info
+
   recent_replies: text('recent_replies'), // JSON field
 }).existing()
 
-// Relations for comments table
 export const commentsRelations = relations(comments, ({ one, many }) => ({
   event: one(events, {
     fields: [comments.event_id],
@@ -154,7 +149,6 @@ export const commentsRelations = relations(comments, ({ one, many }) => ({
   reports: many(comment_reports),
 }))
 
-// Relations for comment_likes table
 export const commentLikesRelations = relations(comment_likes, ({ one }) => ({
   comment: one(comments, {
     fields: [comment_likes.comment_id],
@@ -166,7 +160,6 @@ export const commentLikesRelations = relations(comment_likes, ({ one }) => ({
   }),
 }))
 
-// Relations for comment_reports table
 export const commentReportsRelations = relations(comment_reports, ({ one }) => ({
   comment: one(comments, {
     fields: [comment_reports.comment_id],

@@ -7,8 +7,6 @@ export { bookmarksRelations } from './bookmarks'
 export * from './comments'
 export { commentLikesRelations, commentReportsRelations, commentsRelations } from './comments'
 export * from './events'
-
-// Export all relation definitions
 export { eventsRelations } from './events'
 export * from './notifications'
 export { notificationsRelations } from './notifications'

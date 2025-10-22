@@ -55,7 +55,6 @@ export const notifications = pgTable(
   }),
 )
 
-// Relations for notifications table
 export const notificationsRelations = relations(notifications, ({ one }) => ({
   user: one(users, {
     fields: [notifications.user_id],

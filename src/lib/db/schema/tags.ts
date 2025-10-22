@@ -66,7 +66,6 @@ export const v_main_tag_subcategories = pgView(
   },
 ).existing()
 
-// Relations for tags table
 export const tagsRelations = relations(tags, ({ many, one }) => ({
   eventTags: many(event_tags),
   parentTag: one(tags, {
@@ -79,7 +78,6 @@ export const tagsRelations = relations(tags, ({ many, one }) => ({
   }),
 }))
 
-// Relations for event_tags table
 export const eventTagsRelations = relations(event_tags, ({ one }) => ({
   event: one(events, {
     fields: [event_tags.event_id],

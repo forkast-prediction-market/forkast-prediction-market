@@ -18,7 +18,6 @@ export const bookmarks = pgTable(
   }),
 )
 
-// Relations for bookmarks table
 export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
   event: one(events, {
     fields: [bookmarks.event_id],

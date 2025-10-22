@@ -6,7 +6,6 @@ import {
 } from 'drizzle-orm/pg-core'
 import { users } from './auth'
 
-// Affiliate referral attribution table - tracks referral relationships
 export const affiliate_referrals = pgTable('affiliate_referrals', {
   id: char('id', { length: 26 })
     .primaryKey()
@@ -23,7 +22,6 @@ export const affiliate_referrals = pgTable('affiliate_referrals', {
     .defaultNow(),
 })
 
-// Relations for affiliate_referrals table
 export const affiliateReferralsRelations = relations(affiliate_referrals, ({ one }) => ({
   user: one(users, {
     fields: [affiliate_referrals.user_id],
@@ -37,7 +35,6 @@ export const affiliateReferralsRelations = relations(affiliate_referrals, ({ one
   }),
 }))
 
-// Relations for users table (extending existing users table with affiliate relations)
 export const usersAffiliateRelations = relations(users, ({ many }) => ({
   referrals: many(affiliate_referrals, { relationName: 'user_referrals' }),
   affiliateReferrals: many(affiliate_referrals, { relationName: 'affiliate_referrals' }),

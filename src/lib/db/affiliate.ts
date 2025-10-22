@@ -3,17 +3,8 @@ import { and, desc, eq, ilike, inArray, isNull, sql } from 'drizzle-orm'
 import { db } from '@/lib/drizzle'
 import { affiliate_referrals, users } from './schema'
 
-/**
- * Affiliate Repository - Drizzle ORM Implementation
- *
- * This repository manages affiliate and referral operations using Drizzle ORM
- * for type-safe database interactions. All methods use Drizzle query builders
- * and maintain compatibility with the existing API surface.
- */
-
 const AFFILIATE_CODE_BYTES = 4
 
-// TypeScript interfaces for query results
 interface QueryResult<T> {
   data: T | null
   error: string | null
@@ -80,9 +71,6 @@ interface ReferralList {
   }
 }
 
-/**
- * Utility functions for error handling and query execution with Drizzle ORM
- */
 async function executeQuery<T>(
   queryFn: () => Promise<T>,
 ): Promise<QueryResult<T>> {
@@ -99,7 +87,6 @@ async function executeQuery<T>(
   }
 }
 
-// Numeric type conversion utilities for handling PostgreSQL numeric types
 function convertToNumber(value: any): number {
   if (value === null || value === undefined) {
     return 0
@@ -127,9 +114,6 @@ function convertAffiliateOverview(rawData: any[]): AffiliateOverview[] {
   }))
 }
 
-/**
- * Affiliate code generation utilities using Drizzle ORM for uniqueness validation
- */
 function generateAffiliateCode(): string {
   return randomBytes(AFFILIATE_CODE_BYTES).toString('hex')
 }
@@ -138,7 +122,6 @@ async function generateUniqueAffiliateCode(): Promise<string> {
   for (let i = 0; i < 10; i++) {
     const candidate = generateAffiliateCode()
 
-    // Use Drizzle query to check for existing affiliate codes
     const existing = await db
       .select({ id: users.id })
       .from(users)
@@ -156,7 +139,6 @@ async function generateUniqueAffiliateCode(): Promise<string> {
 export const AffiliateRepository = {
   async ensureUserAffiliateCode(userId: string): Promise<QueryResult<string>> {
     return executeQuery(async () => {
-      // First, check if user already has an affiliate code
       const existingUser = await db
         .select({ affiliate_code: users.affiliate_code })
         .from(users)
@@ -169,15 +151,12 @@ export const AffiliateRepository = {
 
       const user = existingUser[0]
 
-      // If user already has a code, return it
       if (user.affiliate_code) {
         return user.affiliate_code
       }
 
-      // Generate a unique affiliate code
       const code = await generateUniqueAffiliateCode()
 
-      // Update the user with the new affiliate code
       const updatedUser = await db
         .update(users)
         .set({ affiliate_code: code })
@@ -246,12 +225,10 @@ export const AffiliateRepository = {
 
   async recordReferral(args: ReferralArgs): Promise<QueryResult<ReferralRecord>> {
     return executeQuery(async () => {
-      // Self-referral validation
       if (args.user_id === args.affiliate_user_id) {
         throw new Error('Self referrals are not allowed.')
       }
 
-      // Check for existing referral
       const existingReferral = await db
         .select({
           affiliate_user_id: affiliate_referrals.affiliate_user_id,
@@ -262,7 +239,6 @@ export const AffiliateRepository = {
         .where(eq(affiliate_referrals.user_id, args.user_id))
         .limit(1)
 
-      // If existing referral matches the new one, return it
       if (existingReferral.length > 0 && existingReferral[0].affiliate_user_id === args.affiliate_user_id) {
         return {
           user_id: existingReferral[0].user_id,
@@ -271,7 +247,6 @@ export const AffiliateRepository = {
         }
       }
 
-      // Perform upsert operation using Drizzle's onConflictDoUpdate
       const upsertResult = await db
         .insert(affiliate_referrals)
         .values({
@@ -296,7 +271,6 @@ export const AffiliateRepository = {
 
       const referralRecord = upsertResult[0]
 
-      // Update users table with referred_by_user_id only if it's currently null
       await db
         .update(users)
         .set({ referred_by_user_id: args.affiliate_user_id })
@@ -315,12 +289,10 @@ export const AffiliateRepository = {
     'use cache'
 
     return executeQuery(async () => {
-      // Execute get_affiliate_stats stored procedure using Drizzle SQL execution
       const result = await db.execute(
         sql`SELECT * FROM get_affiliate_stats(${userId})`,
       )
 
-      // Handle case when no data is returned - provide default values
       if (!result || result.length === 0) {
         return {
           total_referrals: 0,
@@ -331,7 +303,6 @@ export const AffiliateRepository = {
         }
       }
 
-      // Apply numeric type conversions for statistics fields
       const rawData = result[0]
       return convertAffiliateStats(rawData)
     })
@@ -341,17 +312,14 @@ export const AffiliateRepository = {
     'use cache'
 
     return executeQuery(async () => {
-      // Execute get_affiliate_overview stored procedure using Drizzle SQL execution
       const result = await db.execute(
         sql`SELECT * FROM get_affiliate_overview()`,
       )
 
-      // Process overview results and handle error conditions
       if (!result || result.length === 0) {
         return []
       }
 
-      // Apply numeric conversions for volume and fee calculations
       return convertAffiliateOverview(result)
     })
   },
@@ -360,12 +328,10 @@ export const AffiliateRepository = {
     'use cache'
 
     return executeQuery(async () => {
-      // Handle empty array input without executing queries
       if (!userIds.length) {
         return []
       }
 
-      // Query users table using Drizzle inArray operations for multiple user IDs
       const result = await db
         .select({
           id: users.id,
@@ -377,7 +343,6 @@ export const AffiliateRepository = {
         .from(users)
         .where(inArray(users.id, userIds))
 
-      // Select affiliate-specific fields and apply proper transformations
       return result.map(user => ({
         id: user.id,
         username: user.username,
@@ -392,7 +357,6 @@ export const AffiliateRepository = {
     'use cache'
 
     return executeQuery(async () => {
-      // Build query with affiliate_referrals and users table joins
       const result = await db
         .select({
           user_id: affiliate_referrals.user_id,
@@ -407,7 +371,6 @@ export const AffiliateRepository = {
         .orderBy(desc(affiliate_referrals.created_at)) // Apply descending order by created_at using Drizzle orderBy
         .limit(limit) // Implement pagination with configurable limit using Drizzle limit
 
-      // Transform the result to match the expected ReferralList structure
       return result.map(row => ({
         user_id: row.user_id,
         created_at: row.created_at,

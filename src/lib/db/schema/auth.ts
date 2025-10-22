@@ -97,7 +97,6 @@ export const two_factors = pgTable('two_factors', {
     .references(() => users.id, { onDelete: 'cascade' }),
 })
 
-// Relations for users table
 export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),
   accounts: many(accounts),
@@ -119,7 +118,6 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   }),
 }))
 
-// Relations for sessions table
 export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, {
     fields: [sessions.user_id],
@@ -127,7 +125,6 @@ export const sessionsRelations = relations(sessions, ({ one }) => ({
   }),
 }))
 
-// Relations for accounts table
 export const accountsRelations = relations(accounts, ({ one }) => ({
   user: one(users, {
     fields: [accounts.user_id],
@@ -135,7 +132,6 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
   }),
 }))
 
-// Relations for wallets table
 export const walletsRelations = relations(wallets, ({ one }) => ({
   user: one(users, {
     fields: [wallets.user_id],
@@ -143,7 +139,6 @@ export const walletsRelations = relations(wallets, ({ one }) => ({
   }),
 }))
 
-// Relations for two_factors table
 export const twoFactorsRelations = relations(two_factors, ({ one }) => ({
   user: one(users, {
     fields: [two_factors.user_id],

@@ -53,7 +53,6 @@ export const CommentRepository = {
         .where(eq(v_comments_with_user.parent_comment_id, commentId))
         .orderBy(asc(v_comments_with_user.created_at))
 
-      // Dynamically set cache tag based on event_id from first reply
       if (result && result.length > 0 && result[0].event_id) {
         cacheTag(cacheTags.eventComments(result[0].event_id))
       }
@@ -108,7 +107,6 @@ export const CommentRepository = {
 
   async toggleLike(args: { eventId: string, userId: string, commentId: string }) {
     return await runQuery(async () => {
-      // Check for existing like
       const existingLike = await db
         .select()
         .from(comment_likes)
@@ -118,7 +116,6 @@ export const CommentRepository = {
         ))
 
       if (existingLike.length > 0) {
-        // Delete existing like
         await db
           .delete(comment_likes)
           .where(and(
@@ -126,7 +123,6 @@ export const CommentRepository = {
             eq(comment_likes.user_id, args.userId),
           ))
 
-        // Fetch updated likes_count
         const comment = await db
           .select({ likes_count: comments.likes_count })
           .from(comments)
@@ -144,7 +140,6 @@ export const CommentRepository = {
         }
       }
       else {
-        // Insert new like
         await db
           .insert(comment_likes)
           .values({
@@ -152,7 +147,6 @@ export const CommentRepository = {
             user_id: args.userId,
           })
 
-        // Fetch updated likes_count
         const comment = await db
           .select({ likes_count: comments.likes_count })
           .from(comments)

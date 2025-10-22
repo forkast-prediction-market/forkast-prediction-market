@@ -85,7 +85,6 @@ export const orders = pgTable('orders', {
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
 
-// Relations for markets table
 export const marketsRelations = relations(markets, ({ one }) => ({
   event: one(events, {
     fields: [markets.event_id],
@@ -97,14 +96,12 @@ export const marketsRelations = relations(markets, ({ one }) => ({
   }),
 }))
 
-// Relations for conditions table
 export const conditionsRelations = relations(conditions, ({ many }) => ({
   outcomes: many(outcomes),
   markets: many(markets),
   orders: many(orders),
 }))
 
-// Relations for outcomes table
 export const outcomesRelations = relations(outcomes, ({ one, many }) => ({
   condition: one(conditions, {
     fields: [outcomes.condition_id],
@@ -113,7 +110,6 @@ export const outcomesRelations = relations(outcomes, ({ one, many }) => ({
   orders: many(orders),
 }))
 
-// Relations for orders table
 export const ordersRelations = relations(orders, ({ one }) => ({
   user: one(users, {
     fields: [orders.user_id],
