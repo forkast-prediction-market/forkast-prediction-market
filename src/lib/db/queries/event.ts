@@ -72,6 +72,7 @@ function eventResource(event: DrizzleEventResult, userId: string): Event {
     total_markets_count: Number(event.total_markets_count || 0),
     created_at: event.created_at?.toISOString() || new Date().toISOString(),
     updated_at: event.updated_at?.toISOString() || new Date().toISOString(),
+    end_date: event.end_date?.toISOString() || new Date().toISOString(),
     markets: event.markets.map((market: any) => ({
       ...market,
       question_id: market.condition?.id || '', // Map condition_id to question_id
@@ -245,7 +246,7 @@ export const EventRepository = {
         },
         limit,
         offset: validOffset,
-        orderBy: tag === 'new' ? desc(events.created_at) : desc(events.id),
+        orderBy: tag === 'new' || tag === 'mentions' ? desc(events.created_at) : desc(events.id),
       })
 
       const eventsWithMarkets = eventsData

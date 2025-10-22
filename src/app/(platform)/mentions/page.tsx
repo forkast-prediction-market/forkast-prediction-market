@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import MentionsList from '@/app/(platform)/mentions/_components/MentionsList'
-import { EventRepository } from '@/lib/db/event'
+import { EventRepository } from '@/lib/db/queries/event'
 
 export const metadata: Metadata = {
   title: 'Mentions',
