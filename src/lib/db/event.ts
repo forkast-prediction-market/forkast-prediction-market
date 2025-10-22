@@ -227,7 +227,7 @@ export const EventRepository = {
 
       // Handle different query types based on filtering needs
       if (tag && tag !== 'trending' && tag !== 'new') {
-        // Need to filter by tag - use joins
+        // Need to filter by tag - DON'T join with markets here, just get events with the tag
         let tagQuery = db
           .select({
             id: vVisibleEvents.id,
@@ -244,7 +244,6 @@ export const EventRepository = {
             updated_at: vVisibleEvents.updated_at,
           })
           .from(vVisibleEvents)
-          .innerJoin(markets, eq(vVisibleEvents.id, markets.event_id))
           .innerJoin(event_tags, eq(vVisibleEvents.id, event_tags.event_id))
           .innerJoin(tags, eq(event_tags.tag_id, tags.id))
           .where(and(...whereConditions, eq(tags.slug, tag)))
@@ -266,7 +265,6 @@ export const EventRepository = {
               updated_at: vVisibleEvents.updated_at,
             })
             .from(vVisibleEvents)
-            .innerJoin(markets, eq(vVisibleEvents.id, markets.event_id))
             .innerJoin(event_tags, eq(vVisibleEvents.id, event_tags.event_id))
             .innerJoin(tags, eq(event_tags.tag_id, tags.id))
             .innerJoin(bookmarks, eq(vVisibleEvents.id, bookmarks.event_id))
@@ -416,38 +414,40 @@ export const EventRepository = {
           .where(inArray(bookmarks.event_id, eventIds))
       }
 
-      // Combine the data
-      const results = eventsData.map((eventRecord) => {
-        const eventMarkets = marketsData.filter(m => m.event_id === eventRecord.id)
-        const eventTags = eventTagsData.filter(et => et.event_id === eventRecord.id)
-        const eventBookmarks = bookmarksData.filter(b => b.event_id === eventRecord.id)
+      // Combine the data - ONLY include events that have markets (like markets!inner in Supabase)
+      const results = eventsData
+        .map((eventRecord) => {
+          const eventMarkets = marketsData.filter(m => m.event_id === eventRecord.id)
+          const eventTags = eventTagsData.filter(et => et.event_id === eventRecord.id)
+          const eventBookmarks = bookmarksData.filter(b => b.event_id === eventRecord.id)
 
-        return {
-          ...eventRecord,
-          markets: eventMarkets.map((market) => {
-            const condition = conditionsData.find(c => c.id === market.condition_id)
-            const marketOutcomes = outcomesData.filter(o => o.condition_id === market.condition_id)
+          return {
+            ...eventRecord,
+            markets: eventMarkets.map((market) => {
+              const condition = conditionsData.find(c => c.id === market.condition_id)
+              const marketOutcomes = outcomesData.filter(o => o.condition_id === market.condition_id)
 
-            return {
-              ...market,
-              condition: condition
-                ? {
-                    ...condition,
-                    outcomes: marketOutcomes,
-                  }
-                : null,
-            }
-          }),
-          eventTags: eventTags.map((et) => {
-            const tag = tagsData.find(t => t.id === et.tag_id)
-            return {
-              ...et,
-              tag,
-            }
-          }),
-          bookmarks: eventBookmarks,
-        }
-      })
+              return {
+                ...market,
+                condition: condition
+                  ? {
+                      ...condition,
+                      outcomes: marketOutcomes,
+                    }
+                  : null,
+              }
+            }),
+            eventTags: eventTags.map((et) => {
+              const tag = tagsData.find(t => t.id === et.tag_id)
+              return {
+                ...et,
+                tag,
+              }
+            }),
+            bookmarks: eventBookmarks,
+          }
+        })
+        .filter(eventResult => eventResult.markets.length > 0) // Only events with markets (like markets!inner)
 
       // Transform results using eventResource function
       const transformedEvents = results.map((eventResult: any) =>
