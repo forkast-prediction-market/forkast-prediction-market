@@ -1,7 +1,7 @@
 import AdminAffiliateOverview from '@/app/admin/_components/AdminAffiliateOverview'
 import AdminAffiliateSettingsForm from '@/app/admin/_components/AdminAffiliateSettingsForm'
-import { AffiliateRepository } from '@/lib/db/affiliate'
-import { SettingsRepository } from '@/lib/db/settings'
+import { AffiliateRepository } from '@/lib/db/queries/affiliate'
+import { SettingsRepository } from '@/lib/db/queries/settings'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 interface AffiliateOverviewRow {

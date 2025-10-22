@@ -5,7 +5,7 @@ import { cacheTags } from '@/lib/cache-tags'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
-import { bookmarks, conditions, event_tags, events, markets, orders, outcomes, tags, users } from './schema'
+import { bookmarks, conditions, event_tags, events, markets, orders, outcomes, tags, users } from '../schema'
 
 const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
 

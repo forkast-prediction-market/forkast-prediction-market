@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { EventRepository } from '@/lib/db/event'
+import { EventRepository } from '@/lib/db/queries/event'
 
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params

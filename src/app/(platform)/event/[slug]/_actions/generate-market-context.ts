@@ -3,7 +3,7 @@
 import { z } from 'zod'
 import { generateMarketContext } from '@/lib/ai/market-context'
 import { loadMarketContextSettings } from '@/lib/ai/market-context-config'
-import { EventRepository } from '@/lib/db/event'
+import { EventRepository } from '@/lib/db/queries/event'
 
 const GenerateMarketContextSchema = z.object({
   slug: z.string(),

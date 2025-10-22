@@ -1,5 +1,5 @@
 import { MARKET_CONTEXT_PROMPT_DEFAULT } from '@/lib/ai/market-context-template'
-import { SettingsRepository } from '@/lib/db/settings'
+import { SettingsRepository } from '@/lib/db/queries/settings'
 import { decryptSecret } from '@/lib/encryption'
 
 type SettingsGroup = Record<string, { value: string, updated_at: string }>

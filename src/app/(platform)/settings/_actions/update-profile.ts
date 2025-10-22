@@ -4,7 +4,7 @@ import { Buffer } from 'node:buffer'
 import { revalidatePath } from 'next/cache'
 import sharp from 'sharp'
 import { z } from 'zod'
-import { UserRepository } from '@/lib/db/user'
+import { UserRepository } from '@/lib/db/queries/user'
 import { supabaseAdmin } from '@/lib/supabase'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024
