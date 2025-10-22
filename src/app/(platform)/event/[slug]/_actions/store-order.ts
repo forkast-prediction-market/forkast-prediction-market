@@ -65,7 +65,7 @@ export async function storeOrderAction(payload: StoreOrderInput, _: string) {
         order_type: validated.data.type.toUpperCase(),
         order_struct_metadata: { taker_address: user.address },
         referrer: process.env.FEE_RECIPIENT_WALLET,
-        affiliate: referral?.affiliate_user[0]?.address,
+        affiliate: referral?.affiliate_user?.address,
         fee_rate_bps: tradeFeeBps,
         affiliate_percentage: affiliateShareBps,
       }),
