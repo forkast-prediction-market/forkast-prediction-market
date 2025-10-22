@@ -1,23 +1,151 @@
 import { randomBytes } from 'node:crypto'
-import { supabaseAdmin } from '@/lib/supabase'
+import { and, desc, eq, ilike, inArray, isNull, sql } from 'drizzle-orm'
+import { db } from '@/lib/drizzle'
+import { affiliate_referrals, users } from './schema'
+
+/**
+ * Affiliate Repository - Drizzle ORM Implementation
+ *
+ * This repository manages affiliate and referral operations using Drizzle ORM
+ * for type-safe database interactions. All methods use Drizzle query builders
+ * and maintain compatibility with the existing API surface.
+ */
 
 const AFFILIATE_CODE_BYTES = 4
 
-function generateAffiliateCode() {
+// TypeScript interfaces for query results
+interface QueryResult<T> {
+  data: T | null
+  error: string | null
+}
+
+interface AffiliateUser {
+  id: string
+  affiliate_code: string | null
+  username: string | null
+  address: string
+  image: string | null
+}
+
+interface ReferralData {
+  user_id: string
+  affiliate_user_id: string
+  created_at: Date
+  affiliate_user: {
+    address: string
+  }
+}
+
+interface ReferralArgs {
+  user_id: string
+  affiliate_user_id: string
+}
+
+interface ReferralRecord {
+  user_id: string
+  affiliate_user_id: string
+  created_at: Date
+}
+
+interface AffiliateStats {
+  total_referrals: number
+  active_referrals: number
+  total_volume: number
+  total_affiliate_fees: number
+  total_fork_fees: number
+}
+
+interface AffiliateOverview {
+  affiliate_user_id: string
+  total_referrals: number
+  total_volume: number
+  total_affiliate_fees: number
+}
+
+interface AffiliateProfile {
+  id: string
+  username: string | null
+  address: string
+  image: string | null
+  affiliate_code: string | null
+}
+
+interface ReferralList {
+  user_id: string
+  created_at: Date
+  users: {
+    username: string | null
+    address: string
+    image: string | null
+  }
+}
+
+/**
+ * Utility functions for error handling and query execution with Drizzle ORM
+ */
+async function executeQuery<T>(
+  queryFn: () => Promise<T>,
+): Promise<QueryResult<T>> {
+  try {
+    const data = await queryFn()
+    return { data, error: null }
+  }
+  catch (error) {
+    console.error('Drizzle database query error:', error)
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : 'Unknown database error',
+    }
+  }
+}
+
+// Numeric type conversion utilities for handling PostgreSQL numeric types
+function convertToNumber(value: any): number {
+  if (value === null || value === undefined) {
+    return 0
+  }
+  const num = Number(value)
+  return Number.isNaN(num) ? 0 : num
+}
+
+function convertAffiliateStats(rawData: any): AffiliateStats {
+  return {
+    total_referrals: convertToNumber(rawData.total_referrals),
+    active_referrals: convertToNumber(rawData.active_referrals),
+    total_volume: convertToNumber(rawData.total_volume),
+    total_affiliate_fees: convertToNumber(rawData.total_affiliate_fees),
+    total_fork_fees: convertToNumber(rawData.total_fork_fees),
+  }
+}
+
+function convertAffiliateOverview(rawData: any[]): AffiliateOverview[] {
+  return rawData.map(item => ({
+    affiliate_user_id: item.affiliate_user_id,
+    total_referrals: convertToNumber(item.total_referrals),
+    total_volume: convertToNumber(item.total_volume),
+    total_affiliate_fees: convertToNumber(item.total_affiliate_fees),
+  }))
+}
+
+/**
+ * Affiliate code generation utilities using Drizzle ORM for uniqueness validation
+ */
+function generateAffiliateCode(): string {
   return randomBytes(AFFILIATE_CODE_BYTES).toString('hex')
 }
 
-async function generateUniqueAffiliateCode() {
+async function generateUniqueAffiliateCode(): Promise<string> {
   for (let i = 0; i < 10; i++) {
     const candidate = generateAffiliateCode()
 
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .select('id')
-      .eq('affiliate_code', candidate)
-      .maybeSingle()
+    // Use Drizzle query to check for existing affiliate codes
+    const existing = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.affiliate_code, candidate))
+      .limit(1)
 
-    if (!error && !data) {
+    if (existing.length === 0) {
       return candidate
     }
   }
@@ -26,156 +154,269 @@ async function generateUniqueAffiliateCode() {
 }
 
 export const AffiliateRepository = {
-  async ensureUserAffiliateCode(userId: string) {
-    const { data: user, error } = await supabaseAdmin
-      .from('users')
-      .select('affiliate_code')
-      .eq('id', userId)
-      .single()
+  async ensureUserAffiliateCode(userId: string): Promise<QueryResult<string>> {
+    return executeQuery(async () => {
+      // First, check if user already has an affiliate code
+      const existingUser = await db
+        .select({ affiliate_code: users.affiliate_code })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1)
 
-    if (error) {
-      return { data: null, error }
-    }
+      if (existingUser.length === 0) {
+        throw new Error('User not found')
+      }
 
-    if (user.affiliate_code) {
-      return { data: user.affiliate_code, error: null }
-    }
+      const user = existingUser[0]
 
-    const code = await generateUniqueAffiliateCode()
+      // If user already has a code, return it
+      if (user.affiliate_code) {
+        return user.affiliate_code
+      }
 
-    const { data: updated, error: updateError } = await supabaseAdmin
-      .from('users')
-      .update({ affiliate_code: code })
-      .eq('id', userId)
-      .select('affiliate_code')
-      .single()
+      // Generate a unique affiliate code
+      const code = await generateUniqueAffiliateCode()
 
-    return { data: updated?.affiliate_code ?? null, error: updateError }
-  },
+      // Update the user with the new affiliate code
+      const updatedUser = await db
+        .update(users)
+        .set({ affiliate_code: code })
+        .where(eq(users.id, userId))
+        .returning({ affiliate_code: users.affiliate_code })
 
-  async getAffiliateByCode(code: string) {
-    'use cache'
+      if (updatedUser.length === 0) {
+        throw new Error('Failed to update user with affiliate code')
+      }
 
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .select('id, affiliate_code, username, address, image')
-      .filter('affiliate_code', 'ilike', code)
-      .maybeSingle()
-
-    return { data, error }
-  },
-
-  async getReferral(userId: string) {
-    'use cache'
-
-    const { data, error } = await supabaseAdmin
-      .from('affiliate_referrals')
-      .select('user_id, affiliate_user_id, created_at, affiliate_user:users!affiliate_user_id(address)')
-      .eq('user_id', userId)
-      .maybeSingle()
-
-    return { data, error }
-  },
-
-  async recordReferral(args: { user_id: string, affiliate_user_id: string }) {
-    if (args.user_id === args.affiliate_user_id) {
-      return { data: null, error: 'Self referrals are not allowed.' }
-    }
-
-    const existingReferral = await supabaseAdmin
-      .from('affiliate_referrals')
-      .select('affiliate_user_id')
-      .eq('user_id', args.user_id)
-      .maybeSingle()
-
-    if (existingReferral.data && existingReferral.data.affiliate_user_id === args.affiliate_user_id) {
-      return { data: existingReferral.data, error: null }
-    }
-
-    const { data, error } = await supabaseAdmin
-      .from('affiliate_referrals')
-      .upsert({
-        user_id: args.user_id,
-        affiliate_user_id: args.affiliate_user_id,
-      }, { onConflict: 'user_id' })
-      .select('user_id, affiliate_user_id, source, created_at')
-      .single()
-
-    if (!error) {
-      await supabaseAdmin
-        .from('users')
-        .update({
-          referred_by_user_id: args.affiliate_user_id,
-        })
-        .eq('id', args.user_id)
-        .is('referred_by_user_id', null)
-    }
-
-    return { data, error }
-  },
-
-  async getUserAffiliateStats(userId: string) {
-    'use cache'
-
-    const { data, error } = await supabaseAdmin.rpc('get_affiliate_stats', {
-      target_user_id: userId,
+      return updatedUser[0].affiliate_code!
     })
+  },
 
-    if (error || !data) {
-      return { data: null, error }
-    }
+  async getAffiliateByCode(code: string): Promise<QueryResult<AffiliateUser | null>> {
+    'use cache'
 
-    return {
-      data: data.length > 0
-        ? data[0]
-        : {
-            total_referrals: 0,
-            active_referrals: 0,
-            total_volume: 0,
-            total_affiliate_fees: 0,
-            total_fork_fees: 0,
+    return executeQuery(async () => {
+      const result = await db
+        .select({
+          id: users.id,
+          affiliate_code: users.affiliate_code,
+          username: users.username,
+          address: users.address,
+          image: users.image,
+        })
+        .from(users)
+        .where(ilike(users.affiliate_code, code))
+        .limit(1)
+
+      return result.length > 0 ? result[0] : null
+    })
+  },
+
+  async getReferral(userId: string): Promise<QueryResult<ReferralData | null>> {
+    'use cache'
+
+    return executeQuery(async () => {
+      const result = await db
+        .select({
+          user_id: affiliate_referrals.user_id,
+          affiliate_user_id: affiliate_referrals.affiliate_user_id,
+          created_at: affiliate_referrals.created_at,
+          affiliate_user_address: users.address,
+        })
+        .from(affiliate_referrals)
+        .innerJoin(users, eq(affiliate_referrals.affiliate_user_id, users.id))
+        .where(eq(affiliate_referrals.user_id, userId))
+        .limit(1)
+
+      if (result.length === 0) {
+        return null
+      }
+
+      const row = result[0]
+      return {
+        user_id: row.user_id,
+        affiliate_user_id: row.affiliate_user_id,
+        created_at: row.created_at,
+        affiliate_user: {
+          address: row.affiliate_user_address,
+        },
+      }
+    })
+  },
+
+  async recordReferral(args: ReferralArgs): Promise<QueryResult<ReferralRecord>> {
+    return executeQuery(async () => {
+      // Self-referral validation
+      if (args.user_id === args.affiliate_user_id) {
+        throw new Error('Self referrals are not allowed.')
+      }
+
+      // Check for existing referral
+      const existingReferral = await db
+        .select({
+          affiliate_user_id: affiliate_referrals.affiliate_user_id,
+          user_id: affiliate_referrals.user_id,
+          created_at: affiliate_referrals.created_at,
+        })
+        .from(affiliate_referrals)
+        .where(eq(affiliate_referrals.user_id, args.user_id))
+        .limit(1)
+
+      // If existing referral matches the new one, return it
+      if (existingReferral.length > 0 && existingReferral[0].affiliate_user_id === args.affiliate_user_id) {
+        return {
+          user_id: existingReferral[0].user_id,
+          affiliate_user_id: existingReferral[0].affiliate_user_id,
+          created_at: existingReferral[0].created_at,
+        }
+      }
+
+      // Perform upsert operation using Drizzle's onConflictDoUpdate
+      const upsertResult = await db
+        .insert(affiliate_referrals)
+        .values({
+          user_id: args.user_id,
+          affiliate_user_id: args.affiliate_user_id,
+        })
+        .onConflictDoUpdate({
+          target: affiliate_referrals.user_id,
+          set: {
+            affiliate_user_id: args.affiliate_user_id,
           },
-      error: null,
-    }
+        })
+        .returning({
+          user_id: affiliate_referrals.user_id,
+          affiliate_user_id: affiliate_referrals.affiliate_user_id,
+          created_at: affiliate_referrals.created_at,
+        })
+
+      if (upsertResult.length === 0) {
+        throw new Error('Failed to create or update referral record')
+      }
+
+      const referralRecord = upsertResult[0]
+
+      // Update users table with referred_by_user_id only if it's currently null
+      await db
+        .update(users)
+        .set({ referred_by_user_id: args.affiliate_user_id })
+        .where(
+          and(
+            eq(users.id, args.user_id),
+            isNull(users.referred_by_user_id),
+          ),
+        )
+
+      return referralRecord
+    })
   },
 
-  async listAffiliateOverview() {
+  async getUserAffiliateStats(userId: string): Promise<QueryResult<AffiliateStats>> {
     'use cache'
 
-    const { data, error } = await supabaseAdmin.rpc('get_affiliate_overview')
+    return executeQuery(async () => {
+      // Execute get_affiliate_stats stored procedure using Drizzle SQL execution
+      const result = await db.execute(
+        sql`SELECT * FROM get_affiliate_stats(${userId})`,
+      )
 
-    return { data, error }
+      // Handle case when no data is returned - provide default values
+      if (!result || result.length === 0) {
+        return {
+          total_referrals: 0,
+          active_referrals: 0,
+          total_volume: 0,
+          total_affiliate_fees: 0,
+          total_fork_fees: 0,
+        }
+      }
+
+      // Apply numeric type conversions for statistics fields
+      const rawData = result[0]
+      return convertAffiliateStats(rawData)
+    })
   },
 
-  async getAffiliateProfiles(userIds: string[]) {
+  async listAffiliateOverview(): Promise<QueryResult<AffiliateOverview[]>> {
     'use cache'
 
-    if (!userIds.length) {
-      return { data: [] as any[], error: null }
-    }
+    return executeQuery(async () => {
+      // Execute get_affiliate_overview stored procedure using Drizzle SQL execution
+      const result = await db.execute(
+        sql`SELECT * FROM get_affiliate_overview()`,
+      )
 
-    const { data, error } = await supabaseAdmin
-      .from('users')
-      .select('id, username, address, image, affiliate_code')
-      .in('id', userIds)
+      // Process overview results and handle error conditions
+      if (!result || result.length === 0) {
+        return []
+      }
 
-    return { data, error }
+      // Apply numeric conversions for volume and fee calculations
+      return convertAffiliateOverview(result)
+    })
   },
 
-  async listReferralsByAffiliate(affiliateUserId: string, limit = 20) {
+  async getAffiliateProfiles(userIds: string[]): Promise<QueryResult<AffiliateProfile[]>> {
     'use cache'
 
-    const { data, error } = await supabaseAdmin
-      .from('affiliate_referrals')
-      .select(`
-        user_id,
-        created_at,
-        users:users!affiliate_referrals_user_id_fkey (username, address, image)
-      `)
-      .eq('affiliate_user_id', affiliateUserId)
-      .order('created_at', { ascending: false })
-      .limit(limit)
+    return executeQuery(async () => {
+      // Handle empty array input without executing queries
+      if (!userIds.length) {
+        return []
+      }
 
-    return { data, error }
+      // Query users table using Drizzle inArray operations for multiple user IDs
+      const result = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          address: users.address,
+          image: users.image,
+          affiliate_code: users.affiliate_code,
+        })
+        .from(users)
+        .where(inArray(users.id, userIds))
+
+      // Select affiliate-specific fields and apply proper transformations
+      return result.map(user => ({
+        id: user.id,
+        username: user.username,
+        address: user.address,
+        image: user.image,
+        affiliate_code: user.affiliate_code,
+      }))
+    })
+  },
+
+  async listReferralsByAffiliate(affiliateUserId: string, limit = 20): Promise<QueryResult<ReferralList[]>> {
+    'use cache'
+
+    return executeQuery(async () => {
+      // Build query with affiliate_referrals and users table joins
+      const result = await db
+        .select({
+          user_id: affiliate_referrals.user_id,
+          created_at: affiliate_referrals.created_at,
+          username: users.username,
+          address: users.address,
+          image: users.image,
+        })
+        .from(affiliate_referrals)
+        .innerJoin(users, eq(affiliate_referrals.user_id, users.id))
+        .where(eq(affiliate_referrals.affiliate_user_id, affiliateUserId))
+        .orderBy(desc(affiliate_referrals.created_at)) // Apply descending order by created_at using Drizzle orderBy
+        .limit(limit) // Implement pagination with configurable limit using Drizzle limit
+
+      // Transform the result to match the expected ReferralList structure
+      return result.map(row => ({
+        user_id: row.user_id,
+        created_at: row.created_at,
+        users: {
+          username: row.username,
+          address: row.address,
+          image: row.image,
+        },
+      }))
+    })
   },
 }

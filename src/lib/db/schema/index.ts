@@ -1,3 +1,4 @@
+export * from './affiliates'
 export * from './auth'
 export * from './bookmarks'
 export * from './comments'
