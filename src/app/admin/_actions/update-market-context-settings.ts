@@ -2,8 +2,8 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
-import { SettingsRepository } from '@/lib/db/settings'
-import { UserRepository } from '@/lib/db/user'
+import { SettingsRepository } from '@/lib/db/queries/settings'
+import { UserRepository } from '@/lib/db/queries/user'
 import { encryptSecret } from '@/lib/encryption'
 
 export interface MarketContextSettingsActionState {

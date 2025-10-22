@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation'
 import PublicProfileHeader from '@/app/(platform)/[username]/_components/PublicProfileHeader'
 import PublicProfileStatsCards from '@/app/(platform)/[username]/_components/PublicProfileStatsCards'
 import PublicProfileTabs from '@/app/(platform)/[username]/_components/PublicProfileTabs'
-import { UserRepository } from '@/lib/db/user'
+import { UserRepository } from '@/lib/db/queries/user'
 
 interface PublicProfileContentProps {
   username: string

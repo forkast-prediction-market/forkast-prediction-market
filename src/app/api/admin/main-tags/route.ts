@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { TagRepository } from '@/lib/db/tag'
-import { UserRepository } from '@/lib/db/user'
+import { TagRepository } from '@/lib/db/queries/tag'
+import { UserRepository } from '@/lib/db/queries/user'
 
 export async function GET() {
   const currentUser = await UserRepository.getCurrentUser()

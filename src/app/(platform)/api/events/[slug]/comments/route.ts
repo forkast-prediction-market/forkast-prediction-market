@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
-import { CommentRepository } from '@/lib/db/comment'
-import { EventRepository } from '@/lib/db/event'
-import { UserRepository } from '@/lib/db/user'
+import { CommentRepository } from '@/lib/db/queries/comment'
+import { EventRepository } from '@/lib/db/queries/event'
+import { UserRepository } from '@/lib/db/queries/user'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export async function GET(
@@ -87,7 +87,7 @@ export async function GET(
       )
     }
 
-    const likedIds = new Set(userLikes?.map(like => like.comment_id) || [])
+    const likedIds = new Set((userLikes as unknown as any[])?.map((like: any) => like.comment_id) || [])
 
     const commentsWithLikeStatus = normalizedComments.map((comment: any) => {
       const baseReplies = comment.recent_replies || []

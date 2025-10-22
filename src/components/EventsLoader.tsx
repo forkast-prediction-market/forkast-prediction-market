@@ -1,8 +1,8 @@
 import EventsEmptyState from '@/app/(platform)/event/[slug]/_components/EventsEmptyState'
 import { OpenCardProvider } from '@/components/EventOpenCardContext'
 import EventsGrid from '@/components/EventsGrid'
-import { EventRepository } from '@/lib/db/event'
-import { UserRepository } from '@/lib/db/user'
+import { EventRepository } from '@/lib/db/queries/event'
+import { UserRepository } from '@/lib/db/queries/user'
 
 interface EventsLoaderProps {
   tag: string

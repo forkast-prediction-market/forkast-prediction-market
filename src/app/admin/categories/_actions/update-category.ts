@@ -3,8 +3,8 @@
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { cacheTags } from '@/lib/cache-tags'
-import { TagRepository } from '@/lib/db/tag'
-import { UserRepository } from '@/lib/db/user'
+import { TagRepository } from '@/lib/db/queries/tag'
+import { UserRepository } from '@/lib/db/queries/user'
 
 const UpdateCategoryInputSchema = z.object({
   is_main_category: z.boolean().optional(),

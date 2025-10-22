@@ -26,11 +26,16 @@ export default function EventCommentForm({ eventId, user, onCommentAddedAction }
 
   useEffect(() => {
     if (state.comment) {
-      const commentWithUserData = {
+      const commentWithUserData: Comment = {
         ...state.comment,
         username: `${user?.username}`,
         user_avatar: `${user?.image}`,
         user_address: `${user?.address}`,
+        likes_count: state.comment.likes_count ?? 0,
+        replies_count: state.comment.replies_count ?? 0,
+        created_at: state.comment.created_at instanceof Date
+          ? state.comment.created_at.toISOString()
+          : state.comment.created_at,
       }
 
       onCommentAddedAction(commentWithUserData)

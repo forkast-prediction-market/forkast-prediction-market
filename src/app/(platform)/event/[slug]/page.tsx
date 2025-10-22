@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import EventContent from '@/app/(platform)/event/[slug]/_components/EventContent'
 import { loadMarketContextSettings } from '@/lib/ai/market-context-config'
-import { EventRepository } from '@/lib/db/event'
-import { UserRepository } from '@/lib/db/user'
+import { EventRepository } from '@/lib/db/queries/event'
+import { UserRepository } from '@/lib/db/queries/user'
 
 export async function generateMetadata({ params }: PageProps<'/event/[slug]'>): Promise<Metadata> {
   const { slug } = await params
@@ -22,7 +22,7 @@ export default async function EventPage({ params }: PageProps<'/event/[slug]'>) 
 
   try {
     const { data: event, error } = await EventRepository.getEventBySlug(slug, user?.id ?? '')
-    if (error) {
+    if (error || !event) {
       notFound()
     }
 
