@@ -87,7 +87,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
       )}
     >
       <div className="flex items-center gap-4 md:w-[240px] md:flex-shrink-0">
-        <div className="flex flex-col items-start justify-center leading-none">
+        <div className="flex w-16 flex-col items-center justify-center leading-none md:w-[68px]">
           <span className="text-3xl font-bold tracking-tight text-foreground md:text-[34px]">
             {dayLabel}
           </span>
@@ -220,8 +220,8 @@ function MentionsListItem({ event }: MentionsListItemProps) {
 
 function getEventDate(event: Event): Date | null {
   if (event.end_date) {
-    const parsed = new Date(event.end_date)
-    if (!Number.isNaN(parsed.getTime())) {
+    const parsed = parseDateCandidate(event.end_date)
+    if (parsed) {
       return parsed
     }
   }

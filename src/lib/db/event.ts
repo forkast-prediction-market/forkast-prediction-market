@@ -90,7 +90,31 @@ export const EventRepository = {
       return { data, error }
     }
 
-    const events = data?.map(event => eventResource(event, userId)) || []
+    let eventsData = data ?? []
+
+    const missingEndDateIds = eventsData
+      .filter(event => event.end_date == null)
+      .map(event => event.id)
+
+    if (missingEndDateIds.length > 0) {
+      const { data: endDatesData, error: endDatesError } = await supabaseAdmin
+        .from('events')
+        .select('id, end_date')
+        .in('id', missingEndDateIds)
+
+      if (endDatesError) {
+        console.error('Error fetching end dates for events:', endDatesError)
+      }
+      else if (endDatesData) {
+        const endDateMap = new Map(endDatesData.map(({ id, end_date }) => [id, end_date]))
+        eventsData = eventsData.map(event => ({
+          ...event,
+          end_date: event.end_date ?? endDateMap.get(event.id) ?? null,
+        }))
+      }
+    }
+
+    const events = eventsData.map(event => eventResource(event, userId))
 
     if (!bookmarked && tag === 'trending') {
       const trendingEvents = events.filter(event => event.is_trending)

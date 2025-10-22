@@ -15,6 +15,9 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
   const expiryTooltip = 'This is estimated end date.<br>See rules below for specific resolution details.'
   const volumeLabel = `Volume ${formatVolume(event.markets[0].total_volume)}`
 
+  const maybeEndDate = event.end_date ? new Date(event.end_date) : null
+  const expiryDate = maybeEndDate && !Number.isNaN(maybeEndDate.getTime()) ? maybeEndDate : null
+
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
       {hasRecentMarket
@@ -25,18 +28,20 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
             />
           )
         : <span>{volumeLabel}</span>}
-      {!hasRecentMarket && <span>•</span>}
-      <Tooltip>
-        <TooltipTrigger>
-          <div className="flex items-center gap-1">
-            <Clock3Icon className="size-3.5 text-muted-foreground" strokeWidth={2.5} />
-            <span>{formatDate(new Date(event.created_at))}</span>
-          </div>
-        </TooltipTrigger>
-        <TooltipContent collisionPadding={20}>
-          <p dangerouslySetInnerHTML={{ __html: expiryTooltip! }} className="text-center" />
-        </TooltipContent>
-      </Tooltip>
+      {!hasRecentMarket && expiryDate && <span>•</span>}
+      {expiryDate && (
+        <Tooltip>
+          <TooltipTrigger>
+            <div className="flex items-center gap-1">
+              <Clock3Icon className="size-3.5 text-muted-foreground" strokeWidth={2.5} />
+              <span>{formatDate(expiryDate)}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent collisionPadding={20}>
+            <p dangerouslySetInnerHTML={{ __html: expiryTooltip! }} className="text-center" />
+          </TooltipContent>
+        </Tooltip>
+      )}
     </div>
   )
 }
