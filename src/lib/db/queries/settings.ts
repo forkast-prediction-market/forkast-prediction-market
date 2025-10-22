@@ -30,7 +30,7 @@ export const SettingsRepository = {
       return { data: settingsByGroup, error: null }
     }
     catch (e: any) {
-      return { data: null, e }
+      return { data: null, error: e }
     }
   },
 
