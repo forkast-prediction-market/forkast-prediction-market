@@ -1,6 +1,6 @@
 import type { PublicProfile } from '@/types'
 import { NextResponse } from 'next/server'
-import { UserRepository } from '@/lib/db/user'
+import { UserRepository } from '@/lib/db/queries/user'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export async function GET(request: Request) {

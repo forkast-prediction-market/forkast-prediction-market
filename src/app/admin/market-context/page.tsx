@@ -2,7 +2,7 @@ import AdminMarketContextSettingsForm from '@/app/admin/_components/AdminMarketC
 import { parseMarketContextSettings } from '@/lib/ai/market-context-config'
 import { MARKET_CONTEXT_VARIABLES } from '@/lib/ai/market-context-template'
 import { fetchOpenRouterModels } from '@/lib/ai/openrouter'
-import { SettingsRepository } from '@/lib/db/settings'
+import { SettingsRepository } from '@/lib/db/queries/settings'
 
 export default async function AdminMarketContextSettingsPage() {
   const { data: allSettings } = await SettingsRepository.getSettings()

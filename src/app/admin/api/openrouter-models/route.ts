@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { fetchOpenRouterModels } from '@/lib/ai/openrouter'
-import { UserRepository } from '@/lib/db/user'
+import { UserRepository } from '@/lib/db/queries/user'
 
 const RequestSchema = z.object({
   apiKey: z.string().min(16, 'API key is required.'),

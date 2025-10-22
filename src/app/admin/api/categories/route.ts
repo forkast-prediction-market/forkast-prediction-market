@@ -1,7 +1,7 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
-import { TagRepository } from '@/lib/db/tag'
-import { UserRepository } from '@/lib/db/user'
+import { TagRepository } from '@/lib/db/queries/tag'
+import { UserRepository } from '@/lib/db/queries/user'
 
 export async function GET(request: NextRequest) {
   try {

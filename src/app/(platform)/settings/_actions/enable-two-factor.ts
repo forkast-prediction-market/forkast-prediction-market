@@ -3,7 +3,7 @@
 import type { ReadonlyHeaders } from 'next/dist/server/web/spec-extension/adapters/headers'
 import { headers } from 'next/headers'
 import { auth } from '@/lib/auth'
-import { UserRepository } from '@/lib/db/user'
+import { UserRepository } from '@/lib/db/queries/user'
 
 export async function enableTwoFactorAction() {
   const user = await UserRepository.getCurrentUser()

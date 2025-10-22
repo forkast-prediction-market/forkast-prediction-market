@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { EventRepository } from '@/lib/db/event'
-import { UserRepository } from '@/lib/db/user'
+import { EventRepository } from '@/lib/db/queries/event'
+import { UserRepository } from '@/lib/db/queries/user'
 
 export async function GET(request: Request) {
   const currentUser = await UserRepository.getCurrentUser()
@@ -18,7 +18,7 @@ export async function GET(request: Request) {
   const normalizedSlug = rawSlug.toLowerCase()
 
   const { data, error } = await EventRepository.getIdBySlug(normalizedSlug)
-  if (error && error.code !== 'PGRST116') {
+  if (error && !(error as string).includes('Event not found')) {
     console.error('Failed to validate slug uniqueness:', error)
     return NextResponse.json({ error: 'Failed to validate slug' }, { status: 500 })
   }

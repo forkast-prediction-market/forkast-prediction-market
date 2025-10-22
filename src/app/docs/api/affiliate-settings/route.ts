@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { SettingsRepository } from '@/lib/db/settings'
+import { SettingsRepository } from '@/lib/db/queries/settings'
 
 interface AffiliateSettingsResponse {
   tradeFeePercent: number
