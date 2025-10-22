@@ -8,7 +8,7 @@ async function applyMigrations(sql) {
   console.log('Applying migrations...')
 
   console.log('Creating migrations tracking table...')
-  await sql`
+  await sql.unsafe(`
     CREATE TABLE IF NOT EXISTS migrations (
       version TEXT PRIMARY KEY,
       applied_at TIMESTAMPTZ DEFAULT NOW()
@@ -24,7 +24,7 @@ async function applyMigrations(sql) {
         END IF;
       END
     $$;
-  `
+  `, [], { simple: true })
   console.log('Migrations table ready')
 
   const migrationsDir = path.join(__dirname, './migrations')
@@ -53,7 +53,7 @@ async function applyMigrations(sql) {
     )
 
     await sql.begin(async (tx) => {
-      await tx.unsafe(migrationSql)
+      await tx.unsafe(migrationSql, [], { simple: true })
       await tx`INSERT INTO migrations (version) VALUES (${version})`
     })
 
@@ -92,7 +92,7 @@ async function createSyncEventsCron(sql) {
     .replace('<<VERCEL_URL>>', process.env.VERCEL_PROJECT_PRODUCTION_URL)
     .replace('<<CRON_SECRET>>', process.env.CRON_SECRET)
 
-  await sql.unsafe(updatedSQL)
+  await sql.unsafe(updatedSQL, [], { simple: true })
   console.log('✅ Cron sync-events created successfully')
 }
 
