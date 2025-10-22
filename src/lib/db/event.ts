@@ -5,17 +5,7 @@ import { cacheTags } from '@/lib/cache-tags'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
-import {
-  bookmarks,
-  conditions,
-  event_tags,
-  events,
-  markets,
-  orders,
-  outcomes,
-  tags,
-  users,
-} from './schema'
+import { bookmarks, conditions, event_tags, events, markets, orders, outcomes, tags, users } from './schema'
 
 const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
 
@@ -352,59 +342,85 @@ export const EventRepository = {
     return runQuery(async () => {
       const tagSlug = options.tagSlug?.toLowerCase()
 
-      const relatedEventsQuery = sql`
-        WITH current_event_tags AS (
-          SELECT et.tag_id, t.slug as tag_slug
-          FROM events e
-          INNER JOIN event_tags et ON e.id = et.event_id
-          INNER JOIN tags t ON et.tag_id = t.id
-          WHERE e.slug = ${slug}
-        ),
-        target_tags AS (
-          SELECT tag_id
-          FROM current_event_tags
-          ${tagSlug ? sql`WHERE tag_slug = ${tagSlug}` : sql``}
-        ),
-        related_events_with_counts AS (
-          SELECT
-            e.id,
-            e.slug,
-            e.title,
-            m.icon_url,
-            COUNT(DISTINCT m.id) as market_count,
-            COUNT(DISTINCT et.tag_id) as common_tags_count
-          FROM events e
-          INNER JOIN markets m ON e.id = m.event_id
-          INNER JOIN event_tags et ON e.id = et.event_id
-          INNER JOIN target_tags tt ON et.tag_id = tt.tag_id
-          WHERE e.slug != ${slug}
-          GROUP BY e.id, e.slug, e.title, m.icon_url
-          HAVING COUNT(DISTINCT m.id) = 1 AND COUNT(DISTINCT et.tag_id) > 0
-          ORDER BY common_tags_count DESC, e.id DESC
-          LIMIT 3
-        )
-        SELECT
-          id,
-          slug,
-          title,
-          icon_url,
-          common_tags_count
-        FROM related_events_with_counts
-      `
+      const currentEvent = await db.query.events.findFirst({
+        where: eq(events.slug, slug),
+        with: {
+          eventTags: {
+            with: { tag: true },
+          },
+        },
+      })
 
-      const results = await db.execute(relatedEventsQuery)
+      if (!currentEvent) {
+        return { data: [], error: null }
+      }
+
+      let selectedTagIds = currentEvent.eventTags.map(et => et.tag_id)
+      if (tagSlug && tagSlug !== 'all' && tagSlug.trim() !== '') {
+        const matchingTags = currentEvent.eventTags.filter(et => et.tag.slug === tagSlug)
+        selectedTagIds = matchingTags.map(et => et.tag_id)
+
+        if (selectedTagIds.length === 0) {
+          return { data: [], error: null }
+        }
+      }
+
+      if (selectedTagIds.length === 0) {
+        return { data: [], error: null }
+      }
+
+      const relatedEvents = await db.query.events.findMany({
+        where: sql`${events.slug} != ${slug}`,
+        with: {
+          eventTags: true,
+          markets: {
+            columns: {
+              icon_url: true,
+            },
+          },
+        },
+        limit: 50,
+      })
+
+      const results = relatedEvents
+        .filter((event) => {
+          if (event.markets.length !== 1) {
+            return false
+          }
+
+          const eventTagIds = event.eventTags.map(et => et.tag_id)
+          return eventTagIds.some(tagId => selectedTagIds.includes(tagId))
+        })
+        .map((event) => {
+          const eventTagIds = event.eventTags.map(et => et.tag_id)
+          const commonTagsCount = eventTagIds.filter(tagId => selectedTagIds.includes(tagId)).length
+
+          return {
+            id: event.id,
+            slug: event.slug,
+            title: event.title,
+            icon_url: event.markets[0]?.icon_url || '',
+            common_tags_count: commonTagsCount,
+          }
+        })
+        .filter(event => event.common_tags_count > 0)
+        .sort((a, b) => b.common_tags_count - a.common_tags_count)
+        .slice(0, 20)
 
       if (!results?.length) {
         return { data: [], error: null }
       }
 
-      const transformedResults = results.map(row => ({
-        id: String(row.id),
-        slug: String(row.slug),
-        title: String(row.title),
-        icon_url: getSupabaseImageUrl(String(row.icon_url || '')),
-        common_tags_count: Number(row.common_tags_count),
-      }))
+      const transformedResults = results
+        .map(row => ({
+          id: String(row.id),
+          slug: String(row.slug),
+          title: String(row.title),
+          icon_url: getSupabaseImageUrl(String(row.icon_url || '')),
+          common_tags_count: Number(row.common_tags_count),
+        }))
+        .filter(event => event.common_tags_count > 0)
+        .slice(0, 3)
 
       return { data: transformedResults, error: null }
     })
