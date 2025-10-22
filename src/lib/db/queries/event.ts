@@ -58,6 +58,60 @@ function eventResource(event: DrizzleEventResult, userId: string): Event {
     .map(et => et.tag)
     .filter(tag => Boolean(tag?.slug))
 
+  const marketsWithDerivedValues = event.markets.map((market: any) => {
+    const rawOutcomes = (market.condition?.outcomes || []) as Array<typeof outcomes.$inferSelect>
+    const normalizedOutcomes = rawOutcomes.map((outcome) => {
+      const currentPrice = outcome.current_price != null ? Number(outcome.current_price) : undefined
+
+      return {
+        ...outcome,
+        outcome_index: Number(outcome.outcome_index || 0),
+        payout_value: outcome.payout_value != null ? Number(outcome.payout_value) : undefined,
+        current_price: currentPrice,
+        volume_24h: Number(outcome.volume_24h || 0),
+        total_volume: Number(outcome.total_volume || 0),
+      }
+    })
+
+    const primaryOutcome = normalizedOutcomes.find(outcome => outcome.outcome_index === 0) ?? normalizedOutcomes[0]
+    const yesPrice = typeof primaryOutcome?.current_price === 'number' ? primaryOutcome.current_price : null
+    const probability = typeof yesPrice === 'number' ? yesPrice * 100 : 0
+    const normalizedCurrentVolume24h = Number(market.current_volume_24h || 0)
+    const normalizedTotalVolume = Number(market.total_volume || 0)
+
+    return {
+      ...market,
+      question_id: market.condition?.id || '',
+      title: market.short_title || market.title,
+      probability,
+      price: typeof yesPrice === 'number' ? yesPrice : 0,
+      volume: normalizedTotalVolume,
+      current_volume_24h: normalizedCurrentVolume24h,
+      total_volume: normalizedTotalVolume,
+      outcomes: normalizedOutcomes,
+      icon_url: getSupabaseImageUrl(market.icon_url),
+      condition: market.condition
+        ? {
+            ...market.condition,
+            outcome_slot_count: Number(market.condition.outcome_slot_count || 0),
+            payout_denominator: market.condition.payout_denominator ? Number(market.condition.payout_denominator) : undefined,
+            total_volume: Number(market.condition.total_volume || 0),
+            open_interest: Number(market.condition.open_interest || 0),
+            active_positions_count: Number(market.condition.active_positions_count || 0),
+          }
+        : null,
+    }
+  })
+
+  const totalRecentVolume = marketsWithDerivedValues.reduce(
+    (sum: number, market: any) => sum + (typeof market.current_volume_24h === 'number' ? market.current_volume_24h : 0),
+    0,
+  )
+  const isRecentlyUpdated = event.updated_at instanceof Date
+    ? (Date.now() - event.updated_at.getTime()) < 1000 * 60 * 60 * 24 * 3
+    : false
+  const isTrending = totalRecentVolume > 0 || isRecentlyUpdated
+
   return {
     id: event.id || '',
     slug: event.slug || '',
@@ -73,35 +127,7 @@ function eventResource(event: DrizzleEventResult, userId: string): Event {
     created_at: event.created_at?.toISOString() || new Date().toISOString(),
     updated_at: event.updated_at?.toISOString() || new Date().toISOString(),
     end_date: event.end_date?.toISOString() || new Date().toISOString(),
-    markets: event.markets.map((market: any) => ({
-      ...market,
-      question_id: market.condition?.id || '', // Map condition_id to question_id
-      title: market.short_title || market.title,
-      probability: Math.random() * 100, // Placeholder - should be calculated from real data
-      price: Math.random() * 0.99 + 0.01, // Placeholder - should be calculated from real data
-      volume: Number(market.total_volume || 0), // Convert string to number
-      current_volume_24h: Number(market.current_volume_24h || 0), // Convert string to number
-      total_volume: Number(market.total_volume || 0), // Convert string to number
-      outcomes: (market.condition?.outcomes || []).map((outcome: any) => ({
-        ...outcome,
-        outcome_index: Number(outcome.outcome_index || 0),
-        payout_value: outcome.payout_value ? Number(outcome.payout_value) : undefined,
-        current_price: outcome.current_price ? Number(outcome.current_price) : undefined,
-        volume_24h: Number(outcome.volume_24h || 0),
-        total_volume: Number(outcome.total_volume || 0),
-      })),
-      icon_url: getSupabaseImageUrl(market.icon_url),
-      condition: market.condition
-        ? {
-            ...market.condition,
-            outcome_slot_count: Number(market.condition.outcome_slot_count || 0),
-            payout_denominator: market.condition.payout_denominator ? Number(market.condition.payout_denominator) : undefined,
-            total_volume: Number(market.condition.total_volume || 0),
-            open_interest: Number(market.condition.open_interest || 0),
-            active_positions_count: Number(market.condition.active_positions_count || 0),
-          }
-        : null,
-    })),
+    markets: marketsWithDerivedValues,
     tags: tagRecords.map(tag => ({
       id: tag.id,
       name: tag.name,
@@ -110,7 +136,7 @@ function eventResource(event: DrizzleEventResult, userId: string): Event {
     })),
     main_tag: getEventMainTag(tagRecords),
     is_bookmarked: event.bookmarks?.some(bookmark => bookmark.user_id === userId) || false,
-    is_trending: Math.random() > 0.3,
+    is_trending: isTrending,
   }
 }
 
@@ -246,7 +272,7 @@ export const EventRepository = {
         },
         limit,
         offset: validOffset,
-        orderBy: tag === 'new' || tag === 'mentions' ? desc(events.created_at) : desc(events.id),
+        orderBy: tag === 'new' ? desc(events.created_at) : desc(events.id),
       })
 
       const eventsWithMarkets = eventsData

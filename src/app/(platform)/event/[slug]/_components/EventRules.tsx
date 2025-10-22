@@ -1,10 +1,27 @@
 import type { Event } from '@/types'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { mockMarketDetails } from '@/lib/mockData'
 
 interface EventRulesProps {
   event: Event
+}
+
+const RESOLVER_GRADIENTS = [
+  'from-primary/80 to-primary',
+  'from-blue-500/70 to-indigo-500',
+  'from-emerald-500/70 to-teal-500',
+  'from-orange-500/70 to-rose-500',
+  'from-purple-500/70 to-fuchsia-500',
+  'from-sky-500/70 to-cyan-500',
+]
+
+function getResolverGradient(address?: string) {
+  if (!address) {
+    return RESOLVER_GRADIENTS[0]
+  }
+
+  const checksum = [...address.toLowerCase()].reduce((acc, char) => acc + char.charCodeAt(0), 0)
+  return RESOLVER_GRADIENTS[checksum % RESOLVER_GRADIENTS.length]
 }
 
 export default function EventRules({ event }: EventRulesProps) {
@@ -31,6 +48,10 @@ export default function EventRules({ event }: EventRulesProps) {
     const suffix = address.substring(address.length - 4)
     return `${prefix}...${suffix}`
   }
+
+  const primaryMarket = event.markets[0]
+  const resolverAddress = primaryMarket?.condition?.oracle
+  const resolverGradient = getResolverGradient(resolverAddress)
 
   return (
     <div className="rounded-lg border transition-all duration-200 ease-in-out">
@@ -86,7 +107,7 @@ export default function EventRules({ event }: EventRulesProps) {
               <div className="flex items-center justify-between">
                 <div className="flex items-start gap-3">
                   <div
-                    className={`size-10 bg-gradient-to-r ${mockMarketDetails.resolver.gradientColors}
+                    className={`size-10 bg-gradient-to-r ${resolverGradient}
                       flex flex-shrink-0 items-center justify-center rounded-sm
                     `}
                   >
@@ -96,12 +117,12 @@ export default function EventRules({ event }: EventRulesProps) {
                       Resolver
                     </div>
                     <a
-                      href={`https://polygonscan.com/address/${event.markets[0].condition.oracle}`}
+                      href={resolverAddress ? `https://polygonscan.com/address/${resolverAddress}` : '#'}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-primary hover:opacity-80"
                     >
-                      {formatOracleAddress(event.markets[0].condition.oracle)}
+                      {formatOracleAddress(resolverAddress || '')}
                     </a>
                   </div>
                 </div>
