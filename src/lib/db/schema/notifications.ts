@@ -1,6 +1,6 @@
-import { sql } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import { char, check, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
-import { users } from '.'
+import { users } from './auth'
 
 export const notifications = pgTable(
   'notifications',
@@ -54,3 +54,11 @@ export const notifications = pgTable(
     ),
   }),
 )
+
+// Relations for notifications table
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.user_id],
+    references: [users.id],
+  }),
+}))

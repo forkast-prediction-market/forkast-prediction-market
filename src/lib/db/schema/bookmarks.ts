@@ -1,5 +1,7 @@
+import { relations } from 'drizzle-orm'
 import { char, pgTable, primaryKey } from 'drizzle-orm/pg-core'
-import { events, users } from '.'
+import { users } from './auth'
+import { events } from './events'
 
 export const bookmarks = pgTable(
   'bookmarks',
@@ -15,3 +17,15 @@ export const bookmarks = pgTable(
     pk: primaryKey({ columns: [table.user_id, table.event_id] }),
   }),
 )
+
+// Relations for bookmarks table
+export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
+  event: one(events, {
+    fields: [bookmarks.event_id],
+    references: [events.id],
+  }),
+  user: one(users, {
+    fields: [bookmarks.user_id],
+    references: [users.id],
+  }),
+}))

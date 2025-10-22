@@ -1,3 +1,4 @@
+import { relations } from 'drizzle-orm'
 import {
   boolean,
   integer,
@@ -6,6 +7,10 @@ import {
   text,
   timestamp,
 } from 'drizzle-orm/pg-core'
+import { bookmarks } from './bookmarks'
+import { comment_likes, comment_reports, comments } from './comments'
+import { notifications } from './notifications'
+import { orders } from './orders'
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
@@ -91,3 +96,57 @@ export const two_factors = pgTable('two_factors', {
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
 })
+
+// Relations for users table
+export const usersRelations = relations(users, ({ many, one }) => ({
+  sessions: many(sessions),
+  accounts: many(accounts),
+  wallets: many(wallets),
+  twoFactors: many(two_factors),
+  bookmarks: many(bookmarks),
+  orders: many(orders),
+  comments: many(comments),
+  commentLikes: many(comment_likes),
+  commentReports: many(comment_reports),
+  notifications: many(notifications),
+  referredByUser: one(users, {
+    fields: [users.referred_by_user_id],
+    references: [users.id],
+    relationName: 'user_referrals',
+  }),
+  referredUsers: many(users, {
+    relationName: 'user_referrals',
+  }),
+}))
+
+// Relations for sessions table
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, {
+    fields: [sessions.user_id],
+    references: [users.id],
+  }),
+}))
+
+// Relations for accounts table
+export const accountsRelations = relations(accounts, ({ one }) => ({
+  user: one(users, {
+    fields: [accounts.user_id],
+    references: [users.id],
+  }),
+}))
+
+// Relations for wallets table
+export const walletsRelations = relations(wallets, ({ one }) => ({
+  user: one(users, {
+    fields: [wallets.user_id],
+    references: [users.id],
+  }),
+}))
+
+// Relations for two_factors table
+export const twoFactorsRelations = relations(two_factors, ({ one }) => ({
+  user: one(users, {
+    fields: [two_factors.user_id],
+    references: [users.id],
+  }),
+}))

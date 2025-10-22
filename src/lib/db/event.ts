@@ -1,9 +1,11 @@
 import type { ActivityOrder, Event, QueryResult, Tag, TopHolder } from '@/types'
-import { and, desc, eq, ilike, inArray, ne, sql } from 'drizzle-orm'
+import { and, desc, eq, exists, ilike, sql } from 'drizzle-orm'
 import { unstable_cacheTag as cacheTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
+import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
+
 import {
   bookmarks,
   conditions,
@@ -14,7 +16,6 @@ import {
   outcomes,
   tags,
   users,
-  vVisibleEvents,
 } from './schema'
 
 const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
@@ -45,7 +46,7 @@ interface HoldersResult {
 }
 
 // Drizzle result types for complex queries
-type DrizzleEventResult = typeof vVisibleEvents.$inferSelect & {
+type DrizzleEventResult = typeof events.$inferSelect & {
   markets: (typeof markets.$inferSelect & {
     condition: typeof conditions.$inferSelect & {
       outcomes: typeof outcomes.$inferSelect[]
@@ -63,23 +64,6 @@ interface RelatedEvent {
   title: string
   icon_url: string
   common_tags_count: number
-}
-
-// Query execution wrapper for consistent error handling
-async function executeQuery<T>(
-  queryFn: () => Promise<T>,
-): Promise<QueryResult<T>> {
-  try {
-    const data = await queryFn()
-    return { data, error: null }
-  }
-  catch (error) {
-    console.error('Database query error:', error)
-    return {
-      data: null,
-      error: error instanceof Error ? error.message : 'Unknown database error',
-    }
-  }
 }
 
 // Event resource transformation function for Drizzle result types
@@ -210,272 +194,128 @@ export const EventRepository = {
     'use cache'
     cacheTag(cacheTags.events(userId))
 
-    return executeQuery(async () => {
+    return await runQuery(async () => {
       // Calculate pagination values
       const limit = 40
       const validOffset = Number.isNaN(offset) || offset < 0 ? 0 : offset
 
-      // Build where conditions
-      const whereConditions = [eq(vVisibleEvents.status, 'active')]
+      // Build where conditions for the single query
+      const whereConditions = []
 
-      // Add search filtering
+      // Base condition - only active events
+      whereConditions.push(eq(events.status, 'active'))
+
+      // Add search filtering directly in WHERE clause
       if (search) {
-        whereConditions.push(ilike(vVisibleEvents.title, `%${search}%`))
+        whereConditions.push(ilike(events.title, `%${search}%`))
       }
 
-      let baseResults: any[] = []
-
-      // Handle different query types based on filtering needs
+      // Tag filtering using EXISTS subquery (except for trending/new which are handled later)
       if (tag && tag !== 'trending' && tag !== 'new') {
-        // Need to filter by tag - DON'T join with markets here, just get events with the tag
-        let tagQuery = db
-          .select({
-            id: vVisibleEvents.id,
-            slug: vVisibleEvents.slug,
-            title: vVisibleEvents.title,
-            creator: vVisibleEvents.creator,
-            icon_url: vVisibleEvents.icon_url,
-            show_market_icons: vVisibleEvents.show_market_icons,
-            status: vVisibleEvents.status,
-            rules: vVisibleEvents.rules,
-            active_markets_count: vVisibleEvents.active_markets_count,
-            total_markets_count: vVisibleEvents.total_markets_count,
-            created_at: vVisibleEvents.created_at,
-            updated_at: vVisibleEvents.updated_at,
-          })
-          .from(vVisibleEvents)
-          .innerJoin(event_tags, eq(vVisibleEvents.id, event_tags.event_id))
-          .innerJoin(tags, eq(event_tags.tag_id, tags.id))
-          .where(and(...whereConditions, eq(tags.slug, tag)))
+        whereConditions.push(
+          exists(
+            db.select()
+              .from(event_tags)
+              .innerJoin(tags, eq(event_tags.tag_id, tags.id))
+              .where(and(
+                eq(event_tags.event_id, events.id),
+                eq(tags.slug, tag),
+              )),
+          ),
+        )
+      }
 
-        if (bookmarked && userId) {
-          tagQuery = db
-            .select({
-              id: vVisibleEvents.id,
-              slug: vVisibleEvents.slug,
-              title: vVisibleEvents.title,
-              creator: vVisibleEvents.creator,
-              icon_url: vVisibleEvents.icon_url,
-              show_market_icons: vVisibleEvents.show_market_icons,
-              status: vVisibleEvents.status,
-              rules: vVisibleEvents.rules,
-              active_markets_count: vVisibleEvents.active_markets_count,
-              total_markets_count: vVisibleEvents.total_markets_count,
-              created_at: vVisibleEvents.created_at,
-              updated_at: vVisibleEvents.updated_at,
-            })
-            .from(vVisibleEvents)
-            .innerJoin(event_tags, eq(vVisibleEvents.id, event_tags.event_id))
-            .innerJoin(tags, eq(event_tags.tag_id, tags.id))
-            .innerJoin(bookmarks, eq(vVisibleEvents.id, bookmarks.event_id))
-            .where(and(...whereConditions, eq(tags.slug, tag), eq(bookmarks.user_id, userId)))
+      // New event filtering - exclude events with hide-from-new tag at database level
+      if (tag === 'new') {
+        whereConditions.push(
+          sql`NOT ${exists(
+            db.select()
+              .from(event_tags)
+              .innerJoin(tags, eq(event_tags.tag_id, tags.id))
+              .where(and(
+                eq(event_tags.event_id, events.id),
+                eq(tags.slug, HIDE_FROM_NEW_TAG_SLUG),
+              )),
+          )}`,
+        )
+      }
+
+      // Bookmark filtering using EXISTS subquery
+      if (bookmarked && userId) {
+        whereConditions.push(
+          exists(
+            db.select()
+              .from(bookmarks)
+              .where(and(
+                eq(bookmarks.event_id, events.id),
+                eq(bookmarks.user_id, userId),
+              )),
+          ),
+        )
+      }
+
+      // Execute single relational query using db.query API
+      const queryConfig: any = {
+        where: and(...whereConditions),
+        with: {
+          markets: {
+            with: {
+              condition: {
+                with: {
+                  outcomes: true,
+                },
+              },
+            },
+          },
+          eventTags: {
+            with: {
+              tag: true,
+            },
+          },
+        },
+        limit,
+        offset: validOffset,
+        // Use created_at ordering for new events, otherwise use id ordering
+        orderBy: tag === 'new' ? desc(events.created_at) : desc(events.id),
+      }
+
+      // Add bookmarks relation conditionally
+      if (userId) {
+        queryConfig.with.bookmarks = {
+          where: eq(bookmarks.user_id, userId),
         }
-
-        baseResults = await tagQuery
-          .orderBy(desc(vVisibleEvents.id))
-          .limit(limit)
-          .offset(validOffset)
-      }
-      else if (bookmarked && userId) {
-        // Need to filter by bookmarks only
-        baseResults = await db
-          .select({
-            id: vVisibleEvents.id,
-            slug: vVisibleEvents.slug,
-            title: vVisibleEvents.title,
-            creator: vVisibleEvents.creator,
-            icon_url: vVisibleEvents.icon_url,
-            show_market_icons: vVisibleEvents.show_market_icons,
-            status: vVisibleEvents.status,
-            rules: vVisibleEvents.rules,
-            active_markets_count: vVisibleEvents.active_markets_count,
-            total_markets_count: vVisibleEvents.total_markets_count,
-            created_at: vVisibleEvents.created_at,
-            updated_at: vVisibleEvents.updated_at,
-          })
-          .from(vVisibleEvents)
-          .innerJoin(bookmarks, eq(vVisibleEvents.id, bookmarks.event_id))
-          .where(and(...whereConditions, eq(bookmarks.user_id, userId)))
-          .orderBy(desc(vVisibleEvents.id))
-          .limit(limit)
-          .offset(validOffset)
-      }
-      else {
-        // No special filtering needed
-        baseResults = await db
-          .select()
-          .from(vVisibleEvents)
-          .where(and(...whereConditions))
-          .orderBy(desc(vVisibleEvents.id))
-          .limit(limit)
-          .offset(validOffset)
       }
 
-      // Get unique event IDs
-      const eventIds = [...new Set(baseResults.map(event => event.id))].filter(Boolean) as string[]
+      const eventsData = await db.query.events.findMany(queryConfig)
 
-      if (eventIds.length === 0) {
-        return []
-      }
-
-      // Get full event data with manual joins since relations aren't set up
-      const eventsQuery = db
-        .select({
-          // Event fields
-          id: events.id,
-          slug: events.slug,
-          title: events.title,
-          creator: events.creator,
-          icon_url: events.icon_url,
-          show_market_icons: events.show_market_icons,
-          status: events.status,
-          rules: events.rules,
-          active_markets_count: events.active_markets_count,
-          total_markets_count: events.total_markets_count,
-          created_at: events.created_at,
-          updated_at: events.updated_at,
-        })
-        .from(events)
-        .where(inArray(events.id, eventIds))
-
-      const eventsData = await eventsQuery
-
-      // Get markets data for these events
-      const marketsData = await db
-        .select({
-          event_id: markets.event_id,
-          condition_id: markets.condition_id,
-          title: markets.title,
-          short_title: markets.short_title,
-          slug: markets.slug,
-          icon_url: markets.icon_url,
-          is_active: markets.is_active,
-          is_resolved: markets.is_resolved,
-          current_volume_24h: markets.current_volume_24h,
-          total_volume: markets.total_volume,
-          created_at: markets.created_at,
-        })
-        .from(markets)
-        .where(inArray(markets.event_id, eventIds))
-
-      // Get conditions data
-      const conditionIds = marketsData.map(m => m.condition_id)
-      const conditionsData = conditionIds.length > 0
-        ? await db
-            .select()
-            .from(conditions)
-            .where(inArray(conditions.id, conditionIds))
-        : []
-
-      // Get outcomes data
-      const outcomesData = conditionIds.length > 0
-        ? await db
-            .select()
-            .from(outcomes)
-            .where(inArray(outcomes.condition_id, conditionIds))
-        : []
-
-      // Get event tags
-      const eventTagsData = await db
-        .select({
-          event_id: event_tags.event_id,
-          tag_id: event_tags.tag_id,
-        })
-        .from(event_tags)
-        .where(inArray(event_tags.event_id, eventIds))
-
-      // Get tags data
-      const tagIds = eventTagsData.map(et => et.tag_id)
-      const tagsData = tagIds.length > 0
-        ? await db
-            .select()
-            .from(tags)
-            .where(inArray(tags.id, tagIds))
-        : []
-
-      // Get bookmarks if userId provided (and not already filtered)
-      let bookmarksData: any[] = []
-      if (userId && !bookmarked) {
-        bookmarksData = await db
-          .select()
-          .from(bookmarks)
-          .where(
-            and(
-              inArray(bookmarks.event_id, eventIds),
-              eq(bookmarks.user_id, userId),
-            ),
-          )
-      }
-      else if (bookmarked && userId) {
-        // If we filtered by bookmarks, get all bookmarks for these events
-        bookmarksData = await db
-          .select()
-          .from(bookmarks)
-          .where(inArray(bookmarks.event_id, eventIds))
-      }
-
-      // Combine the data - ONLY include events that have markets (like markets!inner in Supabase)
-      const results = eventsData
-        .map((eventRecord) => {
-          const eventMarkets = marketsData.filter(m => m.event_id === eventRecord.id)
-          const eventTags = eventTagsData.filter(et => et.event_id === eventRecord.id)
-          const eventBookmarks = bookmarksData.filter(b => b.event_id === eventRecord.id)
-
-          return {
-            ...eventRecord,
-            markets: eventMarkets.map((market) => {
-              const condition = conditionsData.find(c => c.id === market.condition_id)
-              const marketOutcomes = outcomesData.filter(o => o.condition_id === market.condition_id)
-
-              return {
-                ...market,
-                condition: condition
-                  ? {
-                      ...condition,
-                      outcomes: marketOutcomes,
-                    }
-                  : null,
-              }
-            }),
-            eventTags: eventTags.map((et) => {
-              const tag = tagsData.find(t => t.id === et.tag_id)
-              return {
-                ...et,
-                tag,
-              }
-            }),
-            bookmarks: eventBookmarks,
-          }
-        })
-        .filter(eventResult => eventResult.markets.length > 0) // Only events with markets (like markets!inner)
+      // Filter out events without markets (equivalent to markets!inner in Supabase)
+      const eventsWithMarkets = (eventsData as any[]).filter((event: any) => event.markets && event.markets.length > 0)
 
       // Transform results using eventResource function
-      const transformedEvents = results.map((eventResult: any) =>
+      const transformedEvents = eventsWithMarkets.map((eventResult: any) =>
         eventResource(eventResult as DrizzleEventResult, userId),
       )
 
-      // Add trending event filtering using eventResource transformation
+      // Handle trending filtering in application layer (business logic requirement)
       if (!bookmarked && tag === 'trending') {
         const trendingEvents = transformedEvents.filter((eventItem: Event) => eventItem.is_trending)
-        return trendingEvents
+        return { data: trendingEvents, error: null }
       }
 
-      // Implement new event filtering excluding hide-from-new tag
+      // New event filtering and sorting is handled at database level
       if (tag === 'new') {
-        const newEvents = transformedEvents
-          .filter((eventItem: Event) => !eventItem.tags.some((t: any) => t.slug === HIDE_FROM_NEW_TAG_SLUG))
-          .sort((a: Event, b: Event) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-        return newEvents
+        return { data: transformedEvents, error: null }
       }
 
-      return transformedEvents
+      return { data: transformedEvents, error: null }
     })
   },
 
   async getIdBySlug(slug: string): Promise<QueryResult<{ id: string }>> {
     'use cache'
 
-    return executeQuery(async () => {
+    return runQuery(async () => {
+      // Optimized single field query with proper indexing expectation
       const result = await db
         .select({ id: events.id })
         .from(events)
@@ -486,14 +326,15 @@ export const EventRepository = {
         throw new Error('Event not found')
       }
 
-      return result[0]
+      return { data: result[0], error: null }
     })
   },
 
   async getEventTitleBySlug(slug: string): Promise<QueryResult<{ title: string }>> {
     'use cache'
 
-    return executeQuery(async () => {
+    return runQuery(async () => {
+      // Optimized single field query with proper indexing expectation
       const result = await db
         .select({ title: events.title })
         .from(events)
@@ -504,260 +345,140 @@ export const EventRepository = {
         throw new Error('Event not found')
       }
 
-      return result[0]
+      return { data: result[0], error: null }
     })
   },
 
   async getEventBySlug(slug: string, userId: string = ''): Promise<QueryResult<Event>> {
     'use cache'
 
-    return executeQuery(async () => {
-      // Get event data
-      const eventData = await db
-        .select()
-        .from(events)
-        .where(eq(events.slug, slug))
-        .limit(1)
+    return runQuery(async () => {
+      // Build query configuration for single relational query
+      const queryConfig: any = {
+        where: eq(events.slug, slug),
+        with: {
+          markets: {
+            with: {
+              condition: {
+                with: {
+                  outcomes: true,
+                },
+              },
+            },
+          },
+          eventTags: {
+            with: {
+              tag: true,
+            },
+          },
+        },
+      }
 
-      if (eventData.length === 0) {
+      // Add bookmarks relation conditionally based on userId
+      if (userId) {
+        queryConfig.with.bookmarks = {
+          where: eq(bookmarks.user_id, userId),
+        }
+      }
+
+      // Execute single relational query using db.query API
+      const eventResult = await db.query.events.findFirst(queryConfig)
+
+      if (!eventResult) {
         throw new Error('Event not found')
       }
 
-      const eventRecord = eventData[0]
-
-      // Get markets data for this event
-      const marketsData = await db
-        .select({
-          condition_id: markets.condition_id,
-          event_id: markets.event_id,
-          title: markets.title,
-          short_title: markets.short_title,
-          slug: markets.slug,
-          icon_url: markets.icon_url,
-          is_active: markets.is_active,
-          is_resolved: markets.is_resolved,
-          current_volume_24h: markets.current_volume_24h,
-          total_volume: markets.total_volume,
-          created_at: markets.created_at,
-        })
-        .from(markets)
-        .where(eq(markets.event_id, eventRecord.id))
-
-      // Get conditions data
-      const conditionIds = marketsData.map(m => m.condition_id)
-      const conditionsData = conditionIds.length > 0
-        ? await db
-            .select()
-            .from(conditions)
-            .where(inArray(conditions.id, conditionIds))
-        : []
-
-      // Get outcomes data
-      const outcomesData = conditionIds.length > 0
-        ? await db
-            .select()
-            .from(outcomes)
-            .where(inArray(outcomes.condition_id, conditionIds))
-        : []
-
-      // Get event tags
-      const eventTagsData = await db
-        .select({
-          event_id: event_tags.event_id,
-          tag_id: event_tags.tag_id,
-        })
-        .from(event_tags)
-        .where(eq(event_tags.event_id, eventRecord.id))
-
-      // Get tags data
-      const tagIds = eventTagsData.map(et => et.tag_id)
-      const tagsData = tagIds.length > 0
-        ? await db
-            .select()
-            .from(tags)
-            .where(inArray(tags.id, tagIds))
-        : []
-
-      // Get bookmarks if userId provided
-      let bookmarksData: any[] = []
-      if (userId) {
-        bookmarksData = await db
-          .select()
-          .from(bookmarks)
-          .where(
-            and(
-              eq(bookmarks.event_id, eventRecord.id),
-              eq(bookmarks.user_id, userId),
-            ),
-          )
-      }
-
-      // Combine the data
-      const result = {
-        ...eventRecord,
-        markets: marketsData.map((market) => {
-          const condition = conditionsData.find(c => c.id === market.condition_id)
-          const marketOutcomes = outcomesData.filter(o => o.condition_id === market.condition_id)
-
-          return {
-            ...market,
-            condition: condition
-              ? {
-                  ...condition,
-                  outcomes: marketOutcomes,
-                }
-              : null,
-          }
-        }),
-        eventTags: eventTagsData.map((et) => {
-          const tag = tagsData.find(t => t.id === et.tag_id)
-          return {
-            ...et,
-            tag,
-          }
-        }),
-        bookmarks: bookmarksData,
-      }
-
       // Transform the result using eventResource
-      const transformedEvent = eventResource(result as DrizzleEventResult, userId)
+      const transformedEvent = eventResource(eventResult as DrizzleEventResult, userId)
 
       // Apply cache tagging for user-specific results
       cacheTag(cacheTags.event(`${transformedEvent.id}:${userId}`))
 
-      return transformedEvent
+      return { data: transformedEvent, error: null }
     })
   },
 
   async getRelatedEventsBySlug(slug: string, options: RelatedEventOptions = {}): Promise<QueryResult<RelatedEvent[]>> {
     'use cache'
 
-    return executeQuery(async () => {
+    return runQuery(async () => {
       const tagSlug = options.tagSlug?.toLowerCase()
 
-      // Query current event tags using Drizzle joins
-      const currentEventResult = await db
-        .select({ id: events.id })
-        .from(events)
-        .where(eq(events.slug, slug))
-        .limit(1)
-
-      if (currentEventResult.length === 0) {
-        throw new Error('Could not retrieve event by slug.')
-      }
-
-      const currentEvent = currentEventResult[0]
-
-      // Handle tag slug filtering and ID extraction
-      const currentTagsResult = await db
-        .select({
-          tag_id: event_tags.tag_id,
-          tag_slug: tags.slug,
-        })
-        .from(event_tags)
-        .innerJoin(tags, eq(event_tags.tag_id, tags.id))
-        .where(eq(event_tags.event_id, currentEvent.id))
-
-      if (currentTagsResult.length === 0) {
-        return []
-      }
-
-      const tagRecords = currentTagsResult
-        .map(record => ({
-          id: record.tag_id,
-          slug: record.tag_slug,
-        }))
-        .filter(record => record.id !== null)
-
-      const currentTagIds = tagRecords.map(tag => tag.id)
-
-      const selectedTagIds = tagSlug
-        ? tagRecords.filter(tag => tag.slug === tagSlug).map(tag => tag.id)
-        : currentTagIds
-
-      if (selectedTagIds.length === 0) {
-        return []
-      }
-
-      // Create query for events with matching tags using Drizzle operations
-      const relatedEventsResult = await db
-        .select({
-          id: events.id,
-          slug: events.slug,
-          title: events.title,
-          market_icon_url: markets.icon_url,
-          tag_id: event_tags.tag_id,
-        })
-        .from(events)
-        .innerJoin(markets, eq(events.id, markets.event_id))
-        .innerJoin(event_tags, eq(events.id, event_tags.event_id))
-        .where(
-          and(
-            ne(events.slug, slug),
-            inArray(event_tags.tag_id, selectedTagIds),
-          ),
+      // Single optimized query using CTEs and JOINs to get related events with common tag counts
+      const relatedEventsQuery = sql`
+        WITH current_event_tags AS (
+          SELECT et.tag_id, t.slug as tag_slug
+          FROM events e
+          INNER JOIN event_tags et ON e.id = et.event_id
+          INNER JOIN tags t ON et.tag_id = t.id
+          WHERE e.slug = ${slug}
+        ),
+        target_tags AS (
+          SELECT tag_id
+          FROM current_event_tags
+          ${tagSlug ? sql`WHERE tag_slug = ${tagSlug}` : sql``}
+        ),
+        related_events_with_counts AS (
+          SELECT
+            e.id,
+            e.slug,
+            e.title,
+            m.icon_url,
+            COUNT(DISTINCT m.id) as market_count,
+            COUNT(DISTINCT et.tag_id) as common_tags_count
+          FROM events e
+          INNER JOIN markets m ON e.id = m.event_id
+          INNER JOIN event_tags et ON e.id = et.event_id
+          INNER JOIN target_tags tt ON et.tag_id = tt.tag_id
+          WHERE e.slug != ${slug}
+          GROUP BY e.id, e.slug, e.title, m.icon_url
+          HAVING COUNT(DISTINCT m.id) = 1 AND COUNT(DISTINCT et.tag_id) > 0
+          ORDER BY common_tags_count DESC, e.id DESC
+          LIMIT 3
         )
-        .limit(20)
+        SELECT
+          id,
+          slug,
+          title,
+          icon_url,
+          common_tags_count
+        FROM related_events_with_counts
+      `
 
-      if (relatedEventsResult.length === 0) {
-        return []
+      const results = await db.execute(relatedEventsQuery)
+
+      if (!results || results.length === 0) {
+        return { data: [], error: null }
       }
 
-      // Group results by event to handle multiple markets per event
-      const eventMap = new Map<string, {
-        id: string
-        slug: string
-        title: string
-        icon_url: string
-        tag_ids: number[]
-        market_count: number
-      }>()
+      // Transform results to RelatedEvent format
+      const transformedResults = results.map((row: any) => ({
+        id: String(row.id),
+        slug: String(row.slug),
+        title: String(row.title),
+        icon_url: getSupabaseImageUrl(String(row.icon_url || '')),
+        common_tags_count: Number(row.common_tags_count),
+      }))
 
-      relatedEventsResult.forEach((row) => {
-        const existing = eventMap.get(row.id)
-        if (existing) {
-          existing.tag_ids.push(row.tag_id)
-          existing.market_count++
-        }
-        else {
-          eventMap.set(row.id, {
-            id: row.id,
-            slug: row.slug,
-            title: row.title,
-            icon_url: row.market_icon_url || '',
-            tag_ids: [row.tag_id],
-            market_count: 1,
-          })
-        }
-      })
-
-      // Filter events with exactly one market and implement common tag count calculation
-      const tagsToCompare = tagSlug ? selectedTagIds : currentTagIds
-
-      return Array.from(eventMap.values())
-        .filter(event => event.market_count === 1)
-        .map((event) => {
-          const commonTagsCount = event.tag_ids.filter(tagId => tagsToCompare.includes(tagId)).length
-          return {
-            id: event.id,
-            slug: event.slug,
-            title: event.title,
-            icon_url: getSupabaseImageUrl(event.icon_url),
-            common_tags_count: commonTagsCount,
-          }
-        })
-        .filter(event => event.common_tags_count > 0)
-        .sort((a, b) => b.common_tags_count - a.common_tags_count)
-        .slice(0, 3)
+      return { data: transformedResults, error: null }
     })
   },
 
   async getEventActivity(args: ActivityArgs): Promise<QueryResult<ActivityOrder[]>> {
     'use cache'
 
-    return executeQuery(async () => {
-      // Build orders query with user, outcome, condition, market, and event joins
-      const baseQuery = db
+    return runQuery(async () => {
+      // Build where conditions for the optimized single query
+      const whereConditions = [eq(events.slug, args.slug)]
+
+      // Add minimum amount filtering at database level if specified
+      if (args.minAmount && args.minAmount > 0) {
+        // Calculate total_value at database level: amount * price >= minAmount
+        whereConditions.push(sql`(${orders.amount} * ${orders.price}) >= ${args.minAmount}`)
+      }
+
+      // Execute single optimized query with all necessary joins and filtering
+      const results = await db
         .select({
           id: orders.id,
           side: orders.side,
@@ -777,6 +498,8 @@ export const EventRepository = {
           market_slug: markets.slug,
           market_icon_url: markets.icon_url,
           event_slug: events.slug,
+          // Calculate total_value at database level for efficiency
+          total_value: sql<number>`(${orders.amount} * ${orders.price})`.as('total_value'),
         })
         .from(orders)
         .innerJoin(users, eq(orders.user_id, users.id))
@@ -784,82 +507,68 @@ export const EventRepository = {
         .innerJoin(conditions, eq(orders.condition_id, conditions.id))
         .innerJoin(markets, eq(conditions.id, markets.condition_id))
         .innerJoin(events, eq(markets.event_id, events.id))
-        .where(eq(events.slug, args.slug))
+        .where(and(...whereConditions))
         .orderBy(desc(orders.id))
-
-      // Handle pagination and optional minimum amount filtering
-      let results
-      if (args.minAmount && args.minAmount > 0) {
-        // If minimum amount filtering is needed, fetch more records initially
-        results = await baseQuery.limit(args.limit * 2).offset(args.offset)
-      }
-      else {
-        // Standard pagination
-        results = await baseQuery.limit(args.limit).offset(args.offset)
-      }
+        .limit(args.limit)
+        .offset(args.offset)
 
       if (!results || results.length === 0) {
-        return []
+        return { data: [], error: null }
       }
 
       // Transform order records into ActivityOrder objects
-      let activities: ActivityOrder[] = results
+      const activities: ActivityOrder[] = results
         .filter((order: any) => order.user_id && order.outcome_text && order.event_slug)
         .map((order: any) => transformActivityOrder(order))
 
-      // Implement total value calculation and minimum amount filtering
-      if (args.minAmount && args.minAmount > 0) {
-        const minAmount = args.minAmount
-        activities = activities.filter(activity => activity.total_value >= minAmount)
-        // Limit to requested amount after filtering
-        activities = activities.slice(0, args.limit)
-      }
-
-      return activities
+      return { data: activities, error: null }
     })
   },
 
   async getEventTopHolders(eventSlug: string, conditionId?: string | null): Promise<QueryResult<HoldersResult>> {
     'use cache'
 
-    return executeQuery(async () => {
-      // Execute get_event_top_holders procedure using Drizzle
+    return runQuery(async () => {
+      // Execute optimized get_event_top_holders procedure using Drizzle
       const holdersData = await db.execute(
         sql`SELECT * FROM get_event_top_holders(${eventSlug}, ${conditionId}, 10)`,
       )
 
       if (!holdersData || holdersData.length === 0) {
-        return { yesHolders: [], noHolders: [] }
+        return { data: { yesHolders: [], noHolders: [] }, error: null }
       }
 
+      // Optimized data processing with single pass separation and transformation
       const yesHolders: TopHolder[] = []
       const noHolders: TopHolder[] = []
 
-      // Separate yes and no holders based on outcome index
-      holdersData.forEach((holder: any) => {
+      // Process holders in single pass with optimized transformations
+      for (const holder of holdersData) {
+        const holderData = holder as any
         const topHolder: TopHolder = {
           user: {
-            id: holder.user_id,
-            username: holder.username,
-            address: holder.address,
-            image: holder.image
-              ? getSupabaseImageUrl(holder.image)
-              : `https://avatar.vercel.sh/${holder.address}.png`,
+            id: String(holderData.user_id),
+            username: holderData.username || null,
+            address: String(holderData.address),
+            image: holderData.image
+              ? getSupabaseImageUrl(String(holderData.image))
+              : `https://avatar.vercel.sh/${String(holderData.address)}.png`,
           },
-          netPosition: Number(holder.net_position),
-          outcomeIndex: holder.outcome_index,
-          outcomeText: holder.outcome_text,
+          netPosition: Number(holderData.net_position),
+          outcomeIndex: Number(holderData.outcome_index),
+          outcomeText: String(holderData.outcome_text),
         }
 
-        if (holder.outcome_index === 0) {
+        // Efficiently separate holders based on outcome index
+        if (topHolder.outcomeIndex === 0) {
           yesHolders.push(topHolder)
         }
-        else if (holder.outcome_index === 1) {
+        else if (topHolder.outcomeIndex === 1) {
           noHolders.push(topHolder)
         }
-      })
+      }
 
-      return { yesHolders, noHolders }
+      return { data: { yesHolders, noHolders }, error: null }
     })
   },
 }

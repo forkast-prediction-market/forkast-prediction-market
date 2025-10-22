@@ -1,5 +1,6 @@
+import { relations } from 'drizzle-orm'
 import { boolean, char, integer, pgTable, pgView, primaryKey, smallint, text, timestamp, varchar } from 'drizzle-orm/pg-core'
-import { events } from '.'
+import { events } from './events'
 
 export const tags = pgTable('tags', {
   id: smallint('id')
@@ -64,3 +65,28 @@ export const v_main_tag_subcategories = pgView(
     last_market_activity_at: timestamp('last_market_activity_at'),
   },
 ).existing()
+
+// Relations for tags table
+export const tagsRelations = relations(tags, ({ many, one }) => ({
+  eventTags: many(event_tags),
+  parentTag: one(tags, {
+    fields: [tags.parent_tag_id],
+    references: [tags.id],
+    relationName: 'parent_child',
+  }),
+  childTags: many(tags, {
+    relationName: 'parent_child',
+  }),
+}))
+
+// Relations for event_tags table
+export const eventTagsRelations = relations(event_tags, ({ one }) => ({
+  event: one(events, {
+    fields: [event_tags.event_id],
+    references: [events.id],
+  }),
+  tag: one(tags, {
+    fields: [event_tags.tag_id],
+    references: [tags.id],
+  }),
+}))

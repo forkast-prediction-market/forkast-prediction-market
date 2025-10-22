@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import {
   boolean,
   char,
@@ -84,3 +84,47 @@ export const orders = pgTable('orders', {
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 })
+
+// Relations for markets table
+export const marketsRelations = relations(markets, ({ one }) => ({
+  event: one(events, {
+    fields: [markets.event_id],
+    references: [events.id],
+  }),
+  condition: one(conditions, {
+    fields: [markets.condition_id],
+    references: [conditions.id],
+  }),
+}))
+
+// Relations for conditions table
+export const conditionsRelations = relations(conditions, ({ many }) => ({
+  outcomes: many(outcomes),
+  markets: many(markets),
+  orders: many(orders),
+}))
+
+// Relations for outcomes table
+export const outcomesRelations = relations(outcomes, ({ one, many }) => ({
+  condition: one(conditions, {
+    fields: [outcomes.condition_id],
+    references: [conditions.id],
+  }),
+  orders: many(orders),
+}))
+
+// Relations for orders table
+export const ordersRelations = relations(orders, ({ one }) => ({
+  user: one(users, {
+    fields: [orders.user_id],
+    references: [users.id],
+  }),
+  outcome: one(outcomes, {
+    fields: [orders.token_id],
+    references: [outcomes.token_id],
+  }),
+  condition: one(conditions, {
+    fields: [orders.condition_id],
+    references: [conditions.id],
+  }),
+}))

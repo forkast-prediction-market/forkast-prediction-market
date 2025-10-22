@@ -1,4 +1,4 @@
-import { sql } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import {
   boolean,
   char,
@@ -11,7 +11,8 @@ import {
   timestamp,
   varchar,
 } from 'drizzle-orm/pg-core'
-import { events, users } from '.'
+import { users } from './auth'
+import { events } from './events'
 
 // Comments table - Main discussion system
 export const comments = pgTable(
@@ -130,3 +131,49 @@ export const v_comments_with_user = pgView('v_comments_with_user', {
   // Aggregated reply info
   recent_replies: text('recent_replies'), // JSON field
 }).existing()
+
+// Relations for comments table
+export const commentsRelations = relations(comments, ({ one, many }) => ({
+  event: one(events, {
+    fields: [comments.event_id],
+    references: [events.id],
+  }),
+  user: one(users, {
+    fields: [comments.user_id],
+    references: [users.id],
+  }),
+  parentComment: one(comments, {
+    fields: [comments.parent_comment_id],
+    references: [comments.id],
+    relationName: 'comment_replies',
+  }),
+  replies: many(comments, {
+    relationName: 'comment_replies',
+  }),
+  likes: many(comment_likes),
+  reports: many(comment_reports),
+}))
+
+// Relations for comment_likes table
+export const commentLikesRelations = relations(comment_likes, ({ one }) => ({
+  comment: one(comments, {
+    fields: [comment_likes.comment_id],
+    references: [comments.id],
+  }),
+  user: one(users, {
+    fields: [comment_likes.user_id],
+    references: [users.id],
+  }),
+}))
+
+// Relations for comment_reports table
+export const commentReportsRelations = relations(comment_reports, ({ one }) => ({
+  comment: one(comments, {
+    fields: [comment_reports.comment_id],
+    references: [comments.id],
+  }),
+  reporter: one(users, {
+    fields: [comment_reports.reporter_user_id],
+    references: [users.id],
+  }),
+}))

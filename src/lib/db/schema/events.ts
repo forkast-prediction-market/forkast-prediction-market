@@ -1,5 +1,9 @@
-import { sql } from 'drizzle-orm'
+import { relations, sql } from 'drizzle-orm'
 import { boolean, char, check, integer, pgTable, pgView, text, timestamp, varchar } from 'drizzle-orm/pg-core'
+import { bookmarks } from './bookmarks'
+import { comments } from './comments'
+import { markets } from './orders'
+import { event_tags } from './tags'
 
 export const events = pgTable(
   'events',
@@ -54,3 +58,11 @@ export const vVisibleEvents = pgView('v_visible_events', {
   created_at: timestamp('created_at', { withTimezone: true }),
   updated_at: timestamp('updated_at', { withTimezone: true }),
 }).existing()
+
+// Relations for events table
+export const eventsRelations = relations(events, ({ many }) => ({
+  markets: many(markets),
+  eventTags: many(event_tags),
+  bookmarks: many(bookmarks),
+  comments: many(comments),
+}))
