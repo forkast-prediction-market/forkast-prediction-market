@@ -87,19 +87,9 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   }, [tagItems.length])
 
   useEffect(() => {
-    const mainTab = mainTabRef.current
-    if (!mainTab) {
-      return
-    }
-
-    let parent = mainTab.parentElement
-    while (parent) {
-      const styles = window.getComputedStyle(parent)
-      if (styles.overflowX === 'auto' || styles.overflowX === 'scroll' || parent.classList.contains('overflow-x-auto')) {
-        parentScrollContainerRef.current = parent as HTMLDivElement
-        break
-      }
-      parent = parent.parentElement
+    const parentContainer = document.getElementById('navigation-main-tags') as HTMLDivElement
+    if (parentContainer) {
+      parentScrollContainerRef.current = parentContainer
     }
   }, [])
 
@@ -127,7 +117,7 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
 
   useEffect(() => {
     const parentContainer = parentScrollContainerRef.current
-    if (!parentContainer) {
+    if (!parentContainer || tag.slug !== 'trending') {
       return
     }
 
@@ -177,7 +167,7 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
         '[-webkit-mask-image:linear-gradient(to_right,black,black_calc(100%-32px),transparent)]',
       )
     }
-  }, [showParentLeftShadow, showParentRightShadow])
+  }, [showParentLeftShadow, showParentRightShadow, tag.slug])
 
   useEffect(() => {
     if (!isActive || activeIndex < 0) {
