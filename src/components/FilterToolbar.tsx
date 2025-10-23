@@ -2,7 +2,6 @@
 
 import type { LucideIcon } from 'lucide-react'
 import type { Route } from 'next'
-
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { BookmarkIcon, ClockIcon, DropletIcon, FlameIcon, HandFistIcon, Settings2Icon, SparklesIcon, TrendingUpIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
