@@ -67,11 +67,6 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
     ]
   }, [tag.slug, tag.childs])
 
-  const activeIndex = useMemo(
-    () => tagItems.findIndex(item => item.slug === tagFromURL),
-    [tagFromURL, tagItems],
-  )
-
   const updateScrollShadows = useCallback(() => {
     const container = scrollContainerRef.current
     if (!container) {
@@ -190,13 +185,26 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   }, [showParentLeftShadow, showParentRightShadow, tag.slug])
 
   useEffect(() => {
-    if (!isActive || activeIndex < 0) {
+    if (!isActive) {
       return
     }
 
-    const activeButton = buttonRefs.current[activeIndex]
-    if (!activeButton) {
+    const childIndex = tag.childs.findIndex(child => child.slug === tagFromURL)
+    if (childIndex < 0) {
       return
+    }
+
+    const buttonIndex = childIndex + 1
+    const activeButton = buttonRefs.current[buttonIndex]
+
+    if (!activeButton) {
+      const timeoutId = setTimeout(() => {
+        const retryButton = buttonRefs.current[buttonIndex]
+        if (retryButton) {
+          retryButton.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+        }
+      }, 1000)
+      return () => clearTimeout(timeoutId)
     }
 
     const timeoutId = setTimeout(() => {
@@ -204,7 +212,7 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
     }, 100)
 
     return () => clearTimeout(timeoutId)
-  }, [activeIndex, isActive, tagFromURL])
+  }, [isActive, tagFromURL, tag.childs])
 
   useEffect(() => {
     if (!isActive) {
@@ -280,10 +288,6 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   }, [updateParentScrollShadows])
 
   function createHref(nextTag: string, context?: string): Route {
-    if (nextTag === 'mentions') {
-      return '/mentions' as Route
-    }
-
     const params = new URLSearchParams(currentSearch)
     params.set('tag', nextTag)
 
