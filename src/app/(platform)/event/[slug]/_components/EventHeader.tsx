@@ -23,8 +23,8 @@ export default function EventHeader({ event }: EventHeaderProps) {
 
   return (
     <div className={cn({
-      'sticky top-24 translate-y-[1px] border-b bg-background py-3': scrolled,
-    }, 'z-10 -mx-4 flex items-center gap-3 px-4 transition-all duration-500 ease-in-out')}
+      'sticky top-24 translate-y-[-5px] border-b bg-background py-3': scrolled,
+    }, 'z-10 -mx-4 flex items-center gap-3 px-4 transition-all ease-in-out')}
     >
       <Image
         src={event.icon_url}
@@ -32,13 +32,13 @@ export default function EventHeader({ event }: EventHeaderProps) {
         width={64}
         height={64}
         className={cn(
-          'flex-shrink-0 rounded-sm transition-all duration-500 ease-in-out',
+          'flex-shrink-0 rounded-sm transition-all ease-in-out',
           scrolled ? 'size-10' : 'size-12 lg:size-14',
         )}
       />
 
       <h1 className={cn(
-        'font-bold transition-all duration-500 ease-in-out',
+        'font-bold transition-all ease-in-out',
         scrolled ? 'text-xs lg:text-base' : 'text-sm lg:text-xl',
       )}
       >
