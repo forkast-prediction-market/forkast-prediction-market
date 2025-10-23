@@ -33,8 +33,12 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
 
   const [showLeftShadow, setShowLeftShadow] = useState(false)
   const [showRightShadow, setShowRightShadow] = useState(false)
+  const [showParentLeftShadow, setShowParentLeftShadow] = useState(false)
+  const [showParentRightShadow, setShowParentRightShadow] = useState(false)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const mainTabRef = useRef<HTMLAnchorElement>(null)
+  const parentScrollContainerRef = useRef<HTMLDivElement>(null)
 
   const tagItems = useMemo(() => {
     return [
@@ -63,9 +67,41 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
     setShowRightShadow(scrollLeft < maxScrollLeft - 4)
   }, [])
 
+  const updateParentScrollShadows = useCallback(() => {
+    const parentContainer = parentScrollContainerRef.current
+    if (!parentContainer) {
+      setShowParentLeftShadow(false)
+      setShowParentRightShadow(false)
+      return
+    }
+
+    const { scrollLeft, scrollWidth, clientWidth } = parentContainer
+    const maxScrollLeft = scrollWidth - clientWidth
+
+    setShowParentLeftShadow(scrollLeft > 4)
+    setShowParentRightShadow(scrollLeft < maxScrollLeft - 4)
+  }, [])
+
   useEffect(() => {
     buttonRefs.current = Array.from({ length: tagItems.length }).map((_, index) => buttonRefs.current[index] ?? null)
   }, [tagItems.length])
+
+  useEffect(() => {
+    const mainTab = mainTabRef.current
+    if (!mainTab) {
+      return
+    }
+
+    let parent = mainTab.parentElement
+    while (parent) {
+      const styles = window.getComputedStyle(parent)
+      if (styles.overflowX === 'auto' || styles.overflowX === 'scroll' || parent.classList.contains('overflow-x-auto')) {
+        parentScrollContainerRef.current = parent as HTMLDivElement
+        break
+      }
+      parent = parent.parentElement
+    }
+  }, [])
 
   useLayoutEffect(() => {
     if (!isActive) {
@@ -81,6 +117,68 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
     return () => cancelAnimationFrame(rafId)
   }, [isActive, updateScrollShadows, tag.childs.length])
 
+  useLayoutEffect(() => {
+    const rafId = requestAnimationFrame(() => {
+      updateParentScrollShadows()
+    })
+
+    return () => cancelAnimationFrame(rafId)
+  }, [updateParentScrollShadows])
+
+  useEffect(() => {
+    const parentContainer = parentScrollContainerRef.current
+    if (!parentContainer) {
+      return
+    }
+
+    const maskClasses = []
+
+    if (showParentLeftShadow || showParentRightShadow) {
+      if (showParentLeftShadow && showParentRightShadow) {
+        maskClasses.push(
+          '[mask-image:linear-gradient(to_right,transparent,black_32px,black_calc(100%-32px),transparent)]',
+          '[-webkit-mask-image:linear-gradient(to_right,transparent,black_32px,black_calc(100%-32px),transparent)]',
+        )
+      }
+      else if (showParentLeftShadow && !showParentRightShadow) {
+        maskClasses.push(
+          '[mask-image:linear-gradient(to_right,transparent,black_32px,black)]',
+          '[-webkit-mask-image:linear-gradient(to_right,transparent,black_32px,black)]',
+        )
+      }
+      else if (showParentRightShadow && !showParentLeftShadow) {
+        maskClasses.push(
+          '[mask-image:linear-gradient(to_right,black,black_calc(100%-32px),transparent)]',
+          '[-webkit-mask-image:linear-gradient(to_right,black,black_calc(100%-32px),transparent)]',
+        )
+      }
+    }
+
+    parentContainer.classList.remove(
+      '[mask-image:linear-gradient(to_right,transparent,black_32px,black_calc(100%-32px),transparent)]',
+      '[-webkit-mask-image:linear-gradient(to_right,transparent,black_32px,black_calc(100%-32px),transparent)]',
+      '[mask-image:linear-gradient(to_right,transparent,black_32px,black)]',
+      '[-webkit-mask-image:linear-gradient(to_right,transparent,black_32px,black)]',
+      '[mask-image:linear-gradient(to_right,black,black_calc(100%-32px),transparent)]',
+      '[-webkit-mask-image:linear-gradient(to_right,black,black_calc(100%-32px),transparent)]',
+    )
+
+    if (maskClasses.length > 0) {
+      parentContainer.classList.add(...maskClasses)
+    }
+
+    return () => {
+      parentContainer.classList.remove(
+        '[mask-image:linear-gradient(to_right,transparent,black_32px,black_calc(100%-32px),transparent)]',
+        '[-webkit-mask-image:linear-gradient(to_right,transparent,black_32px,black_calc(100%-32px),transparent)]',
+        '[mask-image:linear-gradient(to_right,transparent,black_32px,black)]',
+        '[-webkit-mask-image:linear-gradient(to_right,transparent,black_32px,black)]',
+        '[mask-image:linear-gradient(to_right,black,black_calc(100%-32px),transparent)]',
+        '[-webkit-mask-image:linear-gradient(to_right,black,black_calc(100%-32px),transparent)]',
+      )
+    }
+  }, [showParentLeftShadow, showParentRightShadow])
+
   useEffect(() => {
     if (!isActive || activeIndex < 0) {
       return
@@ -91,13 +189,29 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
       return
     }
 
-    // Use a timeout to ensure the button is rendered after navigation
     const timeoutId = setTimeout(() => {
       activeButton.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
     }, 100)
 
     return () => clearTimeout(timeoutId)
   }, [activeIndex, isActive, tagFromURL])
+
+  useEffect(() => {
+    if (!isActive) {
+      return
+    }
+
+    const mainTab = mainTabRef.current
+    if (!mainTab) {
+      return
+    }
+
+    const timeoutId = setTimeout(() => {
+      mainTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' })
+    }, 100)
+
+    return () => clearTimeout(timeoutId)
+  }, [isActive])
 
   useEffect(() => {
     const container = scrollContainerRef.current
@@ -127,6 +241,34 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
     }
   }, [updateScrollShadows, isActive])
 
+  useEffect(() => {
+    const parentContainer = parentScrollContainerRef.current
+    if (!parentContainer) {
+      return
+    }
+
+    let resizeTimeout: NodeJS.Timeout
+    function handleResize() {
+      clearTimeout(resizeTimeout)
+      resizeTimeout = setTimeout(() => {
+        updateParentScrollShadows()
+      }, 16)
+    }
+
+    function handleScroll() {
+      updateParentScrollShadows()
+    }
+
+    parentContainer.addEventListener('scroll', handleScroll)
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      parentContainer.removeEventListener('scroll', handleScroll)
+      window.removeEventListener('resize', handleResize)
+      clearTimeout(resizeTimeout)
+    }
+  }, [updateParentScrollShadows])
+
   function createHref(nextTag: string, context?: string): Route {
     const params = new URLSearchParams(currentSearch)
     params.set('tag', nextTag)
@@ -148,6 +290,7 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   return (
     <>
       <Link
+        ref={mainTabRef}
         href={createHref(tag.slug)}
         className={`flex items-center gap-1.5 border-b-2 py-2 pb-1 whitespace-nowrap transition-colors ${isActive
           ? 'border-primary text-foreground'
