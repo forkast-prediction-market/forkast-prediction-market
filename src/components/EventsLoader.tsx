@@ -8,9 +8,12 @@ interface EventsLoaderProps {
   tag: string
   search: string
   bookmarked: string
+  hideSports: boolean
+  hideCrypto: boolean
+  hideEarnings: boolean
 }
 
-export default async function EventsLoader({ tag, search, bookmarked }: EventsLoaderProps) {
+export default async function EventsLoader({ tag, search, bookmarked, hideSports, hideCrypto, hideEarnings }: EventsLoaderProps) {
   const user = await UserRepository.getCurrentUser()
   const { data: events, error } = await EventRepository.listEvents({
     tag,
@@ -33,7 +36,15 @@ export default async function EventsLoader({ tag, search, bookmarked }: EventsLo
 
   return (
     <OpenCardProvider>
-      <EventsGrid tag={tag} search={search} bookmarked={bookmarked} initialEvents={events} />
+      <EventsGrid
+        tag={tag}
+        search={search}
+        bookmarked={bookmarked}
+        hideSports={hideSports}
+        hideCrypto={hideCrypto}
+        hideEarnings={hideEarnings}
+        initialEvents={events}
+      />
     </OpenCardProvider>
   )
 }

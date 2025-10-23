@@ -18,13 +18,29 @@ export default async function HomePage({ searchParams }: PageProps<'/'>) {
   const search = (params.search as string) ?? ''
   const tag = (params.tag as string) ?? 'trending'
   const bookmarked = (params.bookmarked as string) ?? 'false'
+  const hideSports = (params.hideSports as string) === 'true'
+  const hideCrypto = (params.hideCrypto as string) === 'true'
+  const hideEarnings = (params.hideEarnings as string) === 'true'
 
   return (
     <main className="container grid gap-4 py-4">
-      <FilterToolbar search={search} bookmarked={bookmarked} />
+      <FilterToolbar
+        search={search}
+        bookmarked={bookmarked}
+        hideSports={hideSports}
+        hideCrypto={hideCrypto}
+        hideEarnings={hideEarnings}
+      />
 
       <Suspense fallback={<HomePageSkeleton />}>
-        <EventsLoader tag={tag} search={search} bookmarked={bookmarked} />
+        <EventsLoader
+          tag={tag}
+          search={search}
+          bookmarked={bookmarked}
+          hideSports={hideSports}
+          hideCrypto={hideCrypto}
+          hideEarnings={hideEarnings}
+        />
       </Suspense>
     </main>
   )
