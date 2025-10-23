@@ -156,7 +156,7 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
       >
         {backgroundStyle.isInitialized && (
           <div
-            className="pointer-events-none absolute rounded-md bg-primary/10 transition-all duration-300 ease-out"
+            className="pointer-events-none absolute rounded-md bg-primary transition-all duration-300 ease-out"
             style={{
               left: `${backgroundStyle.left}px`,
               width: `${backgroundStyle.width}px`,
@@ -181,9 +181,9 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
               variant="ghost"
               size="sm"
               className={cn(
-                'relative whitespace-nowrap hover:bg-transparent focus-visible:ring-0',
+                'relative z-10 whitespace-nowrap hover:bg-transparent focus-visible:ring-0',
                 activeTag === item.slug
-                  ? 'font-semibold text-foreground'
+                  ? 'font-semibold text-primary-foreground'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
@@ -195,10 +195,11 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
 
       {scrollIndicators.showStart && (
         <>
-          <div className={`
-            pointer-events-none absolute inset-y-0 left-0 z-10 w-12 bg-gradient-to-r from-background via-background/80
-            to-transparent
-          `}
+          <div
+            className={`
+              pointer-events-none absolute inset-y-0 left-0 z-10 w-12 rounded-r-sm bg-gradient-to-r from-background
+              via-background/80 to-transparent
+            `}
           />
           <Button
             type="button"
@@ -207,8 +208,8 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
             aria-label="Scroll subcategories left"
             onClick={() => scrollByStep('left')}
             className={`
-              absolute top-1/2 left-2 z-20 -translate-y-1/2 rounded-full bg-background/90 text-muted-foreground
-              shadow-sm transition
+              absolute top-1/2 left-2 z-20 -translate-y-1/2 rounded-sm bg-background/90 text-muted-foreground shadow-sm
+              transition
               hover:text-foreground
               focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
               focus-visible:ring-offset-background
@@ -221,10 +222,11 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
 
       {scrollIndicators.showEnd && (
         <>
-          <div className={`
-            pointer-events-none absolute inset-y-0 right-0 z-10 w-12 bg-gradient-to-l from-background via-background/80
-            to-transparent
-          `}
+          <div
+            className={`
+              pointer-events-none absolute inset-y-0 right-0 z-10 w-12 rounded-l-sm bg-gradient-to-l from-background
+              via-background/80 to-transparent
+            `}
           />
           <Button
             type="button"
@@ -233,8 +235,8 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
             aria-label="Scroll subcategories right"
             onClick={() => scrollByStep('right')}
             className={`
-              absolute top-1/2 right-2 z-20 -translate-y-1/2 rounded-full bg-background/90 text-muted-foreground
-              shadow-sm transition
+              absolute top-1/2 right-2 z-20 -translate-y-1/2 rounded-sm bg-background/90 text-muted-foreground shadow-sm
+              transition
               hover:text-foreground
               focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
               focus-visible:ring-offset-background
