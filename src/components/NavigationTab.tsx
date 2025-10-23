@@ -35,6 +35,26 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   const [showRightShadow, setShowRightShadow] = useState(false)
   const [showParentLeftShadow, setShowParentLeftShadow] = useState(false)
   const [showParentRightShadow, setShowParentRightShadow] = useState(false)
+  const [pendingTag, setPendingTag] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (pendingTag && tagFromURL === pendingTag) {
+      window.dispatchEvent(new CustomEvent('navigation-pending-change', {
+        detail: { pendingTag: null },
+      }))
+    }
+  }, [tagFromURL, pendingTag])
+
+  useEffect(() => {
+    function handlePendingChange(e: Event) {
+      const customEvent = e as CustomEvent
+      setPendingTag(customEvent.detail.pendingTag)
+    }
+
+    window.addEventListener('navigation-pending-change', handlePendingChange)
+    return () => window.removeEventListener('navigation-pending-change', handlePendingChange)
+  }, [])
+
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])
   const mainTabRef = useRef<HTMLAnchorElement>(null)
@@ -260,6 +280,10 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   }, [updateParentScrollShadows])
 
   function createHref(nextTag: string, context?: string): Route {
+    if (nextTag === 'mentions') {
+      return '/mentions' as Route
+    }
+
     const params = new URLSearchParams(currentSearch)
     params.set('tag', nextTag)
 
@@ -277,14 +301,24 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
     return (`/${params.toString() ? `?${params.toString()}` : ''}`) as Route
   }
 
+  function handleLinkClick(targetTag: string) {
+    window.dispatchEvent(new CustomEvent('navigation-pending-change', {
+      detail: { pendingTag: targetTag },
+    }))
+  }
+
   return (
     <>
       <Link
         ref={mainTabRef}
         href={createHref(tag.slug)}
-        className={`flex items-center gap-1.5 border-b-2 py-2 pb-1 whitespace-nowrap transition-colors ${isActive
-          ? 'border-primary text-foreground'
-          : 'border-transparent text-muted-foreground hover:text-foreground'
+        onClick={() => handleLinkClick(tag.slug)}
+        className={`flex items-center gap-1.5 border-b-2 py-2 pb-1 whitespace-nowrap transition-colors ${
+          pendingTag === tag.slug
+          || (isActive && !pendingTag)
+          || (pendingTag && childParentMap[pendingTag] === tag.slug)
+            ? 'border-primary text-foreground'
+            : 'border-transparent text-muted-foreground hover:text-foreground'
         }`}
       >
         {tag.slug === 'trending' && <TrendingUpIcon className="size-4" />}
@@ -315,16 +349,22 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
                 `,
               )}
             >
-              <Link href={createHref(tag.slug)} key={tag.slug}>
+              <Link href={createHref(tag.slug)} key={tag.slug} onClick={() => handleLinkClick(tag.slug)}>
                 <Button
                   ref={(el: HTMLButtonElement | null) => {
                     buttonRefs.current[0] = el
                   }}
-                  variant={tagFromURL === tag.slug ? 'default' : 'ghost'}
+                  variant={
+                    pendingTag === tag.slug || (tagFromURL === tag.slug && !pendingTag)
+                      ? 'default'
+                      : 'ghost'
+                  }
                   size="sm"
                   className={cn(
                     'h-8 shrink-0 text-sm whitespace-nowrap',
-                    tagFromURL === tag.slug ? undefined : 'text-muted-foreground hover:text-foreground',
+                    pendingTag === tag.slug || (tagFromURL === tag.slug && !pendingTag)
+                      ? undefined
+                      : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
                   All
@@ -338,16 +378,23 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
                     tag.slug === 'trending' || tag.slug === 'new' ? tag.slug : undefined,
                   )}
                   key={subtag.slug}
+                  onClick={() => handleLinkClick(subtag.slug)}
                 >
                   <Button
                     ref={(el: HTMLButtonElement | null) => {
                       buttonRefs.current[index + 1] = el
                     }}
-                    variant={tagFromURL === subtag.slug ? 'default' : 'ghost'}
+                    variant={
+                      pendingTag === subtag.slug || (tagFromURL === subtag.slug && !pendingTag)
+                        ? 'default'
+                        : 'ghost'
+                    }
                     size="sm"
                     className={cn(
                       'h-8 shrink-0 text-sm whitespace-nowrap',
-                      tagFromURL === subtag.slug ? undefined : 'text-muted-foreground hover:text-foreground',
+                      pendingTag === subtag.slug || (tagFromURL === subtag.slug && !pendingTag)
+                        ? undefined
+                        : 'text-muted-foreground hover:text-foreground',
                     )}
                   >
                     {subtag.name}
