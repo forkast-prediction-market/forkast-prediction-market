@@ -208,8 +208,7 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
             aria-label="Scroll subcategories left"
             onClick={() => scrollByStep('left')}
             className={`
-              absolute top-1/2 left-2 z-20 -translate-y-1/2 rounded-sm bg-background/90 text-muted-foreground shadow-sm
-              transition
+              absolute top-1/2 left-2 z-20 -translate-y-1/2 rounded-sm bg-background/90 text-muted-foreground transition
               hover:text-foreground
               focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
               focus-visible:ring-offset-background
@@ -235,7 +234,7 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
             aria-label="Scroll subcategories right"
             onClick={() => scrollByStep('right')}
             className={`
-              absolute top-1/2 right-2 z-20 -translate-y-1/2 rounded-sm bg-background/90 text-muted-foreground shadow-sm
+              absolute top-1/2 right-2 z-20 -translate-y-1/2 rounded-sm bg-background/90 text-muted-foreground
               transition
               hover:text-foreground
               focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
