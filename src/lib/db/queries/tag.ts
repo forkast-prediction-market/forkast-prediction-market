@@ -199,7 +199,6 @@ export const TagRepository = {
         }
         return b.count - a.count
       })
-      .slice(0, 6)
       .map(({ name, slug }) => ({ name, slug }))
 
     return { data: enhanced, error: null, globalChilds }

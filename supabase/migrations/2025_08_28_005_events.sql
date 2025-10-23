@@ -486,4 +486,9 @@ VALUES ('Politics', 'politics', TRUE, 1),
        ('Mentions', 'mentions', TRUE, 11)
 ON CONFLICT (slug) DO NOTHING;
 
+-- Hide specific categories by default to keep them out of the main feed
+UPDATE tags
+SET hide_events = TRUE
+WHERE slug IN ('crypto-prices', 'recurring', 'today-', 'today', '4h', 'daily');
+
 COMMIT;
