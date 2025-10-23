@@ -126,7 +126,7 @@ function eventResource(event: DrizzleEventResult, userId: string): Event {
     total_markets_count: Number(event.total_markets_count || 0),
     created_at: event.created_at?.toISOString() || new Date().toISOString(),
     updated_at: event.updated_at?.toISOString() || new Date().toISOString(),
-    end_date: event.end_date?.toISOString() || new Date().toISOString(),
+    end_date: event.end_date?.toISOString() ?? null,
     markets: marketsWithDerivedValues,
     tags: tagRecords.map(tag => ({
       id: tag.id,
