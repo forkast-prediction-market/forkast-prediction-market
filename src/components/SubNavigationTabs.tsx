@@ -97,6 +97,19 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
     })
   }, [])
 
+  const scrollByStep = useCallback((direction: 'left' | 'right') => {
+    const container = containerRef.current
+
+    if (!container) {
+      return
+    }
+
+    const baseAmount = container.clientWidth ? container.clientWidth * 0.6 : 200
+    const offset = direction === 'left' ? -Math.max(baseAmount, 160) : Math.max(baseAmount, 160)
+
+    container.scrollBy({ left: offset, behavior: 'smooth' })
+  }, [])
+
   useLayoutEffect(() => {
     updateBackgroundPosition()
     updateScrollIndicators()
@@ -187,9 +200,22 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
             to-transparent
           `}
           />
-          <div className="pointer-events-none absolute top-1/2 left-2 z-20 -translate-y-1/2 text-muted-foreground">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Scroll subcategories left"
+            onClick={() => scrollByStep('left')}
+            className={`
+              absolute top-1/2 left-2 z-20 -translate-y-1/2 rounded-full bg-background/90 text-muted-foreground
+              shadow-sm transition
+              hover:text-foreground
+              focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+              focus-visible:ring-offset-background
+            `}
+          >
             <ChevronLeftIcon className="size-5" />
-          </div>
+          </Button>
         </>
       )}
 
@@ -200,9 +226,22 @@ export default function SubNavigationTabs({ activeTag, mainTag, createHref }: Su
             to-transparent
           `}
           />
-          <div className="pointer-events-none absolute top-1/2 right-2 z-20 -translate-y-1/2 text-muted-foreground">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label="Scroll subcategories right"
+            onClick={() => scrollByStep('right')}
+            className={`
+              absolute top-1/2 right-2 z-20 -translate-y-1/2 rounded-full bg-background/90 text-muted-foreground
+              shadow-sm transition
+              hover:text-foreground
+              focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+              focus-visible:ring-offset-background
+            `}
+          >
             <ChevronRightIcon className="size-5" />
-          </div>
+          </Button>
         </>
       )}
     </div>
