@@ -6,7 +6,7 @@ import type { Route } from 'next'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { BookmarkIcon, ClockIcon, DropletIcon, FlameIcon, HandFistIcon, Settings2Icon, SparklesIcon, TrendingUpIcon } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useCallback, useMemo, useState, useTransition } from 'react'
+import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 import FilterToolbarSearchInput from '@/components/FilterToolbarSearchInput'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -23,6 +23,9 @@ import { cn } from '@/lib/utils'
 interface FilterToolbarProps {
   search: string
   bookmarked: string
+  hideSports: boolean
+  hideCrypto: boolean
+  hideEarnings: boolean
 }
 
 interface BookmarkToggleProps {
@@ -90,20 +93,25 @@ const BASE_FILTER_SETTINGS = {
   hideEarnings: false,
 } as const satisfies FilterSettings
 
-function createDefaultFilters(): FilterSettings {
+function createDefaultFilters(overrides: Partial<FilterSettings> = {}): FilterSettings {
   return {
     ...BASE_FILTER_SETTINGS,
+    ...overrides,
   }
 }
 
-export default function FilterToolbar({ search, bookmarked }: FilterToolbarProps) {
+export default function FilterToolbar({ search, bookmarked, hideSports, hideCrypto, hideEarnings }: FilterToolbarProps) {
   const { open } = useAppKit()
   const { isConnected } = useAppKitAccount()
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [optimisticBookmarked, setOptimisticBookmarked] = useState(bookmarked)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [filterSettings, setFilterSettings] = useState<FilterSettings>(createDefaultFilters)
+  const [filterSettings, setFilterSettings] = useState<FilterSettings>(() => createDefaultFilters({
+    hideSports,
+    hideCrypto,
+    hideEarnings,
+  }))
 
   const isBookmarked = useMemo(() => optimisticBookmarked === 'true', [optimisticBookmarked])
 
@@ -115,6 +123,56 @@ export default function FilterToolbar({ search, bookmarked }: FilterToolbarProps
     || filterSettings.hideCrypto !== BASE_FILTER_SETTINGS.hideCrypto
     || filterSettings.hideEarnings !== BASE_FILTER_SETTINGS.hideEarnings
   ), [filterSettings])
+
+  useEffect(() => {
+    setFilterSettings((prev) => {
+      if (
+        prev.hideSports === hideSports
+        && prev.hideCrypto === hideCrypto
+        && prev.hideEarnings === hideEarnings
+      ) {
+        return prev
+      }
+
+      return {
+        ...prev,
+        hideSports,
+        hideCrypto,
+        hideEarnings,
+      }
+    })
+  }, [hideSports, hideCrypto, hideEarnings])
+
+  const updateURLFilters = useCallback((next: FilterSettings) => {
+    if (typeof window === 'undefined') {
+      return
+    }
+
+    const url = new URL(window.location.href)
+
+    if (next.hideSports) {
+      url.searchParams.set('hideSports', 'true')
+    }
+    else {
+      url.searchParams.delete('hideSports')
+    }
+
+    if (next.hideCrypto) {
+      url.searchParams.set('hideCrypto', 'true')
+    }
+    else {
+      url.searchParams.delete('hideCrypto')
+    }
+
+    if (next.hideEarnings) {
+      url.searchParams.set('hideEarnings', 'true')
+    }
+    else {
+      url.searchParams.delete('hideEarnings')
+    }
+
+    router.replace(url.toString() as unknown as Route, { scroll: false })
+  }, [router])
 
   const toggleBookmarkFilter = useCallback((shouldShowBookmarked: boolean) => {
     try {
@@ -155,17 +213,33 @@ export default function FilterToolbar({ search, bookmarked }: FilterToolbarProps
   }, [])
 
   const handleFilterChange = useCallback((updates: Partial<FilterSettings>) => {
-    setFilterSettings(prev => ({ ...prev, ...updates }))
-  }, [])
+    setFilterSettings((prev) => {
+      const next = { ...prev, ...updates }
+
+      const hideSportsChanged = 'hideSports' in updates && updates.hideSports !== undefined && updates.hideSports !== prev.hideSports
+      const hideCryptoChanged = 'hideCrypto' in updates && updates.hideCrypto !== undefined && updates.hideCrypto !== prev.hideCrypto
+      const hideEarningsChanged = 'hideEarnings' in updates && updates.hideEarnings !== undefined && updates.hideEarnings !== prev.hideEarnings
+
+      if (hideSportsChanged || hideCryptoChanged || hideEarningsChanged) {
+        updateURLFilters(next)
+      }
+
+      return next
+    })
+  }, [updateURLFilters])
 
   const handleClearFilters = useCallback(() => {
-    setFilterSettings(createDefaultFilters())
-  }, [])
+    setFilterSettings(() => {
+      const next = createDefaultFilters()
+      updateURLFilters(next)
+      return next
+    })
+  }, [updateURLFilters])
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-3">
-      <div className="flex w-full min-w-0 flex-col gap-3 overflow-hidden md:flex-row md:items-center md:gap-4">
-        <div className="flex w-full min-w-0 items-center gap-3 md:w-auto md:min-w-0">
+      <div className="flex w-full min-w-0 flex-col gap-3 md:flex-row md:items-center md:gap-4">
+        <div className="order-1 flex w-full min-w-0 items-center gap-3 md:order-1 md:w-auto md:min-w-0">
           <div className="min-w-0 flex-1">
             <FilterToolbarSearchInput
               search={search}
@@ -190,13 +264,24 @@ export default function FilterToolbar({ search, bookmarked }: FilterToolbarProps
           </div>
         </div>
 
-        <Separator orientation="vertical" className="hidden shrink-0 md:flex" />
+        {isSettingsOpen && (
+          <FilterSettingsRow
+            className="order-2 scrollbar-hide flex w-full items-center overflow-x-auto px-1 md:hidden"
+            filters={filterSettings}
+            onChange={handleFilterChange}
+            onClear={handleClearFilters}
+            hasActiveFilters={hasActiveFilters}
+          />
+        )}
 
-        <div id="navigation-tags" className="max-w-full min-w-0 flex-1 overflow-hidden" />
+        <Separator orientation="vertical" className="order-4 hidden shrink-0 md:order-2 md:flex" />
+
+        <div id="navigation-tags" className="order-3 max-w-full min-w-0 flex-1 overflow-hidden md:order-3" />
       </div>
 
       {isSettingsOpen && (
         <FilterSettingsRow
+          className="hidden md:flex"
           filters={filterSettings}
           onChange={handleFilterChange}
           onClear={handleClearFilters}
@@ -268,11 +353,20 @@ interface FilterSettingsRowProps {
   onChange: (updates: Partial<FilterSettings>) => void
   onClear: () => void
   hasActiveFilters: boolean
+  className?: string
 }
 
-function FilterSettingsRow({ filters, onChange, onClear, hasActiveFilters }: FilterSettingsRowProps) {
+function FilterSettingsRow({ filters, onChange, onClear, hasActiveFilters, className }: FilterSettingsRowProps) {
   return (
-    <div className="flex w-full max-w-full flex-wrap items-center gap-2 md:gap-3">
+    <div
+      className={cn(
+        `
+          scrollbar-hide flex w-full max-w-full flex-nowrap items-center gap-2 overflow-x-auto
+          md:flex-wrap md:gap-3 md:overflow-visible
+        `,
+        className,
+      )}
+    >
       <FilterSettingsSelect
         label="Sort by:"
         value={filters.sortBy}
@@ -299,7 +393,10 @@ function FilterSettingsRow({ filters, onChange, onClear, hasActiveFilters }: Fil
           key={key}
           htmlFor={`filter-${key}`}
           className={cn(
-            'flex items-center gap-2 rounded-full bg-muted/60 px-3 py-2 text-xs font-medium text-muted-foreground',
+            `
+              flex flex-shrink-0 items-center gap-2 rounded-full bg-muted/60 px-3 py-2 text-xs font-medium
+              text-muted-foreground
+            `,
             'transition-colors hover:bg-muted',
           )}
         >
@@ -323,7 +420,7 @@ function FilterSettingsRow({ filters, onChange, onClear, hasActiveFilters }: Fil
           type="button"
           variant="ghost"
           className={cn(
-            'h-8 rounded-full px-3 text-xs font-medium text-muted-foreground',
+            'h-8 flex-shrink-0 rounded-full px-3 text-xs font-medium text-muted-foreground',
             'hover:text-foreground hover:underline',
           )}
           onClick={onClear}
@@ -356,7 +453,10 @@ function FilterSettingsSelect({ label, value, options, onChange }: FilterSetting
       <SelectTrigger
         size="sm"
         className={cn(
-          'h-9 min-w-[160px] gap-2 rounded-full border-none bg-muted/60 px-3 text-xs font-medium text-foreground/90',
+          `
+            h-9 min-w-[160px] flex-shrink-0 gap-2 rounded-full border-none bg-muted/60 px-3 text-xs font-medium
+            text-foreground/90
+          `,
           'shadow-none',
           'hover:bg-muted',
         )}
