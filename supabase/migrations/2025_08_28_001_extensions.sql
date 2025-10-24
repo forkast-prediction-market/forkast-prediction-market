@@ -11,7 +11,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pg_net SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
-
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 -- ============================================================
 
 -- pgulid is based on OK Log's Go implementation of the ULID spec

@@ -3,7 +3,7 @@
 import { and, asc, count, desc, eq, ilike, inArray, or } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { revalidatePath } from 'next/cache'
-import { tags, v_main_tag_subcategories } from '@/lib/db/schema/tags'
+import { tags, v_main_tag_subcategories } from '@/lib/db/schema/events/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 
@@ -29,6 +29,7 @@ interface AdminTagRow {
   slug: string
   is_main_category: boolean
   is_hidden: boolean
+  hide_events: boolean
   display_order: number
   parent_tag_id: number | null
   active_markets_count: number
@@ -267,6 +268,7 @@ export const TagRepository = {
         slug: tags.slug,
         is_main_category: tags.is_main_category,
         is_hidden: tags.is_hidden,
+        hide_events: tags.hide_events,
         display_order: tags.display_order,
         parent_tag_id: tags.parent_tag_id,
         active_markets_count: tags.active_markets_count,
@@ -319,6 +321,7 @@ export const TagRepository = {
       slug: row.slug,
       is_main_category: row.is_main_category,
       is_hidden: row.is_hidden,
+      hide_events: row.hide_events,
       display_order: row.display_order,
       parent_tag_id: row.parent_tag_id,
       active_markets_count: row.active_markets_count,
@@ -369,6 +372,7 @@ export const TagRepository = {
         slug: tags.slug,
         is_main_category: tags.is_main_category,
         is_hidden: tags.is_hidden,
+        hide_events: tags.hide_events,
         display_order: tags.display_order,
         parent_tag_id: tags.parent_tag_id,
         active_markets_count: tags.active_markets_count,
@@ -403,6 +407,7 @@ export const TagRepository = {
       slug: row.slug,
       is_main_category: row.is_main_category ?? false,
       is_hidden: row.is_hidden,
+      hide_events: row.hide_events,
       display_order: row.display_order ?? 0,
       parent_tag_id: row.parent_tag_id,
       active_markets_count: row.active_markets_count ?? 0,

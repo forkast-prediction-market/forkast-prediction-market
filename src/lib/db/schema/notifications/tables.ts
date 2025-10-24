@@ -1,6 +1,6 @@
-import { relations, sql } from 'drizzle-orm'
-import { char, check, jsonb, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
-import { users } from './auth'
+import { sql } from 'drizzle-orm'
+import { char, check, index, jsonb, pgPolicy, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
+import { users } from '@/lib/db/schema/auth/tables'
 
 export const notifications = pgTable(
   'notifications',
@@ -32,6 +32,23 @@ export const notifications = pgTable(
       .defaultNow(),
   },
   table => ({
+    // Performance-critical indexes for notification queries
+    userIdIdx: index('idx_notifications_user_id').on(table.user_id),
+    categoryIdx: index('idx_notifications_category').on(table.category),
+    createdAtIdx: index('idx_notifications_created_at').on(table.created_at),
+    userCreatedAtIdx: index('idx_notifications_user_created_at').on(table.user_id, table.created_at),
+    userCategoryIdx: index('idx_notifications_user_category').on(table.user_id, table.category),
+
+    // RLS Policy for notification privacy
+    serviceRolePolicy: pgPolicy('service_role_all_notifications', {
+      as: 'permissive',
+      to: 'service_role',
+      for: 'all',
+      using: sql`TRUE`,
+      withCheck: sql`TRUE`,
+    }),
+
+    // Check constraints for notification categories and link validations
     category_check: check(
       'category_check',
       sql`${table.category} IN ('trade', 'system', 'general')`,
@@ -53,11 +70,4 @@ export const notifications = pgTable(
       sql`${table.link_type} NOT IN ('market', 'event', 'order', 'settings', 'profile') OR ${table.link_target} IS NOT NULL`,
     ),
   }),
-)
-
-export const notificationsRelations = relations(notifications, ({ one }) => ({
-  user: one(users, {
-    fields: [notifications.user_id],
-    references: [users.id],
-  }),
-}))
+).enableRLS()

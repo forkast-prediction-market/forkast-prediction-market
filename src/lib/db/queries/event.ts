@@ -2,10 +2,13 @@ import type { ActivityOrder, Event, QueryResult, TopHolder } from '@/types'
 import { and, desc, eq, exists, ilike, sql } from 'drizzle-orm'
 import { unstable_cacheTag as cacheTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
+import { users } from '@/lib/db/schema/auth/tables'
+import { bookmarks } from '@/lib/db/schema/bookmarks/tables'
+import { conditions, event_tags, events, markets, outcomes, tags } from '@/lib/db/schema/events/tables'
+import { orders } from '@/lib/db/schema/orders/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
-import { bookmarks, conditions, event_tags, events, markets, orders, outcomes, tags, users } from '../schema'
 
 const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
 
@@ -26,6 +29,16 @@ interface ActivityArgs {
 
 interface RelatedEventOptions {
   tagSlug?: string
+}
+
+type EventWithTags = typeof events.$inferSelect & {
+  eventTags: (typeof event_tags.$inferSelect & {
+    tag: typeof tags.$inferSelect
+  })[]
+}
+
+type EventWithTagsAndMarkets = EventWithTags & {
+  markets: (typeof markets.$inferSelect)[]
 }
 
 interface HoldersResult {
@@ -248,10 +261,19 @@ export const EventRepository = {
         )
       }
 
+      whereConditions[0] = and(
+        eq(events.status, 'active'),
+        sql`NOT EXISTS (
+          SELECT 1
+          FROM ${event_tags} et
+          JOIN ${tags} t ON t.id = et.tag_id
+          WHERE et.event_id = ${events.id} AND t.hide_events = TRUE
+        )`,
+      )
+
       const eventsData = await db.query.events.findMany({
         where: and(...whereConditions),
         with: {
-
           markets: {
             with: {
               condition: {
@@ -273,7 +295,7 @@ export const EventRepository = {
         limit,
         offset: validOffset,
         orderBy: tag === 'new' ? desc(events.created_at) : desc(events.id),
-      })
+      }) as DrizzleEventResult[]
 
       const eventsWithMarkets = eventsData
         .filter(event => event.markets?.length > 0)
@@ -376,7 +398,7 @@ export const EventRepository = {
             with: { tag: true },
           },
         },
-      })
+      }) as EventWithTags | undefined
 
       if (!currentEvent) {
         return { data: [], error: null }
@@ -407,7 +429,7 @@ export const EventRepository = {
           },
         },
         limit: 50,
-      })
+      }) as EventWithTagsAndMarkets[]
 
       const results = relatedEvents
         .filter((event) => {

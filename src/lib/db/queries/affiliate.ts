@@ -1,7 +1,8 @@
 import { randomBytes } from 'node:crypto'
 import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
+import { affiliate_referrals } from '@/lib/db/schema/affiliates/tables'
+import { users } from '@/lib/db/schema/auth/tables'
 import { db } from '@/lib/drizzle'
-import { affiliate_referrals, users } from '../schema'
 
 const AFFILIATE_CODE_BYTES = 4
 

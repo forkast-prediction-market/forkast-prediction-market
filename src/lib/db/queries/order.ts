@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm'
-import { orders } from '@/lib/db/schema/orders'
+import { orders } from '@/lib/db/schema/orders/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 
