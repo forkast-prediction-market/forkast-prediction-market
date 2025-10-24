@@ -166,10 +166,66 @@ export const v_comments_with_user = pgView('v_comments_with_user', {
   replies_count: integer('replies_count'),
   created_at: timestamp('created_at', { withTimezone: true }),
   updated_at: timestamp('updated_at', { withTimezone: true }),
-
   username: text('username'),
   user_avatar: text('user_avatar'),
   user_address: varchar('user_address', { length: 42 }),
-
-  recent_replies: text('recent_replies'), // JSON field
-}).existing()
+  recent_replies: text('recent_replies'),
+}).as(sql`
+  SELECT
+    c.id,
+    c.event_id,
+    c.user_id,
+    c.parent_comment_id,
+    c.content,
+    c.is_deleted,
+    c.likes_count,
+    COALESCE(
+      (SELECT COUNT(*)::int
+       FROM ${comments} r
+       WHERE r.parent_comment_id = c.id
+         AND r.is_deleted = FALSE),
+      0
+    ) AS replies_count,
+    c.created_at,
+    c.updated_at,
+    u.username,
+    u.image AS user_avatar,
+    u.address AS user_address,
+    CASE
+      WHEN c.parent_comment_id IS NULL THEN (
+        SELECT JSON_AGG(
+                 JSON_BUILD_OBJECT(
+                   'id', r.id,
+                   'content', r.content,
+                   'user_id', r.user_id,
+                   'username', r.username,
+                   'user_avatar', r.user_avatar,
+                   'user_address', r.user_address,
+                   'likes_count', r.likes_count,
+                   'created_at', r.created_at
+                 )
+                 ORDER BY r.created_at
+               )
+        FROM (
+          SELECT
+            r.id,
+            r.content,
+            r.user_id,
+            ru.username,
+            ru.image AS user_avatar,
+            ru.address AS user_address,
+            r.likes_count,
+            r.created_at
+          FROM ${comments} r
+          JOIN ${users} ru ON r.user_id = ru.id
+          WHERE r.parent_comment_id = c.id
+            AND r.is_deleted = FALSE
+          ORDER BY r.created_at
+          LIMIT 3
+        ) r
+      )
+    END AS recent_replies
+  FROM ${comments} c
+  JOIN ${users} u ON c.user_id = u.id
+  WHERE c.is_deleted = FALSE
+`)
