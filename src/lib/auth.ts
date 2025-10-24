@@ -7,9 +7,43 @@ import { customSession, siwe, twoFactor } from 'better-auth/plugins'
 import { createPublicClient, http } from 'viem'
 import { isAdminWallet } from '@/lib/admin'
 import { projectId } from '@/lib/appkit'
-import * as schema from '@/lib/db/schema'
+import * as affiliatesRelations from '@/lib/db/schema/affiliates/relations'
+import * as affiliatesTables from '@/lib/db/schema/affiliates/tables'
+import * as authRelations from '@/lib/db/schema/auth/relations'
+import * as authTables from '@/lib/db/schema/auth/tables'
+import * as bookmarksRelations from '@/lib/db/schema/bookmarks/relations'
+import * as bookmarksTables from '@/lib/db/schema/bookmarks/tables'
+import * as commentsRelations from '@/lib/db/schema/comments/relations'
+import * as commentsTables from '@/lib/db/schema/comments/tables'
+import * as eventsRelations from '@/lib/db/schema/events/relations'
+import * as eventsTables from '@/lib/db/schema/events/tables'
+import * as notificationsRelations from '@/lib/db/schema/notifications/relations'
+import * as notificationsTables from '@/lib/db/schema/notifications/tables'
+import * as ordersRelations from '@/lib/db/schema/orders/relations'
+import * as ordersTables from '@/lib/db/schema/orders/tables'
+import * as settingsTables from '@/lib/db/schema/settings/tables'
+import * as subgraphTables from '@/lib/db/schema/subgraph/tables'
 import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
+
+const schema = {
+  ...affiliatesRelations,
+  ...affiliatesTables,
+  ...authRelations,
+  ...authTables,
+  ...bookmarksRelations,
+  ...bookmarksTables,
+  ...commentsRelations,
+  ...commentsTables,
+  ...eventsRelations,
+  ...eventsTables,
+  ...notificationsRelations,
+  ...notificationsTables,
+  ...ordersRelations,
+  ...ordersTables,
+  ...settingsTables,
+  ...subgraphTables,
+}
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {

@@ -1,5 +1,7 @@
 import { relations } from 'drizzle-orm'
-import { conditions, orders, outcomes, users } from '@/lib/db/schema'
+import { users } from '../auth/tables'
+import { conditions, outcomes } from '../events/tables'
+import { orders } from './tables'
 
 export const ordersRelations = relations(orders, ({ one }) => ({
   user: one(users, {

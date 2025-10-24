@@ -1,17 +1,9 @@
 import { relations } from 'drizzle-orm'
-import {
-  accounts,
-  bookmarks,
-  comment_likes,
-  comment_reports,
-  comments,
-  notifications,
-  orders,
-  sessions,
-  two_factors,
-  users,
-  wallets,
-} from '@/lib/db/schema'
+import { bookmarks } from '../bookmarks/tables'
+import { comment_likes, comment_reports, comments } from '../comments/tables'
+import { notifications } from '../notifications/tables'
+import { orders } from '../orders/tables'
+import { accounts, sessions, two_factors, users, wallets } from './tables'
 
 export const usersRelations = relations(users, ({ many, one }) => ({
   sessions: many(sessions),

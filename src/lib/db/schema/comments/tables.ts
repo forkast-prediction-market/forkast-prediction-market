@@ -13,7 +13,8 @@ import {
   timestamp,
   varchar,
 } from 'drizzle-orm/pg-core'
-import { events, users } from '@/lib/db/schema'
+import { users } from '../auth/tables'
+import { events } from '../events/tables'
 
 export const comments = pgTable(
   'comments',

@@ -1,5 +1,7 @@
 import { relations } from 'drizzle-orm'
-import { comment_likes, comment_reports, comments, events, users } from '@/lib/db/schema'
+import { users } from '../auth/tables'
+import { events } from '../events/tables'
+import { comment_likes, comment_reports, comments } from './tables'
 
 export const commentsRelations = relations(comments, ({ one, many }) => ({
   event: one(events, {

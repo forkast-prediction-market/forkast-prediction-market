@@ -1,5 +1,7 @@
 import { relations } from 'drizzle-orm'
-import { bookmarks, events, users } from '@/lib/db/schema'
+import { users } from '../auth/tables'
+import { events } from '../events/tables'
+import { bookmarks } from './tables'
 
 export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
   event: one(events, {

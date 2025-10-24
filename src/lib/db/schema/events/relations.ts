@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm'
-import { conditions, event_tags, events, markets, outcomes, tags } from '@/lib/db/schema'
+import { conditions, event_tags, events, markets, outcomes, tags } from './tables'
 
 export const conditionsRelations = relations(conditions, ({ many }) => ({
   markets: many(markets),
