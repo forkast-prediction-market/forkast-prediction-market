@@ -86,6 +86,7 @@ export const events = pgTable(
     createdAtIdx: index('idx_events_created_at').on(table.created_at),
     endDateIdx: index('idx_events_end_date').on(table.end_date),
     activeMarketsCountIdx: index('idx_events_active_markets_count').on(table.active_markets_count),
+    titleIdx: index('idx_events_title').using('gin', table.title.op('gin_trgm_ops')),
     // Unique indexes
     slugUniqueIdx: uniqueIndex('idx_events_slug_unique').on(table.slug),
     // RLS Policy

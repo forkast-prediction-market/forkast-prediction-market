@@ -251,7 +251,6 @@ export const EventRepository = {
       const eventsData = await db.query.events.findMany({
         where: and(...whereConditions),
         with: {
-
           markets: {
             with: {
               condition: {
