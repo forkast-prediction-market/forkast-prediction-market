@@ -28,6 +28,16 @@ interface RelatedEventOptions {
   tagSlug?: string
 }
 
+type EventWithTags = typeof events.$inferSelect & {
+  eventTags: (typeof event_tags.$inferSelect & {
+    tag: typeof tags.$inferSelect
+  })[]
+}
+
+type EventWithTagsAndMarkets = EventWithTags & {
+  markets: (typeof markets.$inferSelect)[]
+}
+
 interface HoldersResult {
   yesHolders: TopHolder[]
   noHolders: TopHolder[]
@@ -272,7 +282,7 @@ export const EventRepository = {
         limit,
         offset: validOffset,
         orderBy: tag === 'new' ? desc(events.created_at) : desc(events.id),
-      })
+      }) as DrizzleEventResult[]
 
       const eventsWithMarkets = eventsData
         .filter(event => event.markets?.length > 0)
@@ -375,7 +385,7 @@ export const EventRepository = {
             with: { tag: true },
           },
         },
-      })
+      }) as EventWithTags | undefined
 
       if (!currentEvent) {
         return { data: [], error: null }
@@ -406,7 +416,7 @@ export const EventRepository = {
           },
         },
         limit: 50,
-      })
+      }) as EventWithTagsAndMarkets[]
 
       const results = relatedEvents
         .filter((event) => {
