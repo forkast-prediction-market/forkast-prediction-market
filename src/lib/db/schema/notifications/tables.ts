@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { char, check, index, jsonb, pgPolicy, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
-import { users } from '../auth/tables'
+import { users } from '@/lib/db/schema/auth/tables'
 
 export const notifications = pgTable(
   'notifications',

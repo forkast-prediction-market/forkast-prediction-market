@@ -1,5 +1,5 @@
 import { relations } from 'drizzle-orm'
-import { users } from '../auth/tables'
+import { users } from '@/lib/db/schema/auth/tables'
 import { notifications } from './tables'
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({

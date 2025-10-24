@@ -11,8 +11,8 @@ import {
   timestamp,
   varchar,
 } from 'drizzle-orm/pg-core'
-import { users } from '../auth/tables'
-import { conditions, outcomes } from '../events/tables'
+import { users } from '@/lib/db/schema/auth/tables'
+import { conditions, outcomes } from '@/lib/db/schema/events/tables'
 
 export const orders = pgTable('orders', {
   id: text('id').primaryKey().default(sql`generate_ulid()`),
