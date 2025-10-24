@@ -20,3 +20,5 @@ export * from './orders/relations'
 export * from './orders/tables'
 
 export * from './settings/tables'
+
+export * from './subgraph/tables'
