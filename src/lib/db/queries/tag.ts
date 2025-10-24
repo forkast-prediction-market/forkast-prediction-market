@@ -3,7 +3,7 @@
 import { and, asc, count, desc, eq, ilike, inArray, or } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/pg-core'
 import { revalidatePath } from 'next/cache'
-import { tags, v_main_tag_subcategories } from '@/lib/db/schema/tags'
+import { tags, v_main_tag_subcategories } from '@/lib/db/schema/events'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 

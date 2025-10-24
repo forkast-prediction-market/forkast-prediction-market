@@ -3,7 +3,9 @@ import {
   boolean,
   char,
   check,
+  index,
   integer,
+  pgPolicy,
   pgTable,
   pgView,
   primaryKey,
@@ -44,6 +46,24 @@ export const comments = pgTable(
       .defaultNow(),
   },
   table => ({
+    // Performance-critical indexes
+    eventIdIdx: index('idx_comments_event_id').on(table.event_id),
+    userIdIdx: index('idx_comments_user_id').on(table.user_id),
+    parentCommentIdIdx: index('idx_comments_parent_comment_id').on(table.parent_comment_id),
+    isDeletedIdx: index('idx_comments_is_deleted').on(table.is_deleted),
+    createdAtIdx: index('idx_comments_created_at').on(table.created_at),
+    // Composite indexes for common query patterns
+    eventParentIdx: index('idx_comments_event_parent').on(table.event_id, table.parent_comment_id),
+    eventDeletedCreatedIdx: index('idx_comments_event_deleted_created').on(table.event_id, table.is_deleted, table.created_at),
+    // RLS Policy
+    serviceRolePolicy: pgPolicy('service_role_all_comments', {
+      as: 'permissive',
+      to: 'service_role',
+      for: 'all',
+      using: sql`TRUE`,
+      withCheck: sql`TRUE`,
+    }),
+    // Check constraints
     contentLengthCheck: check(
       'content_length_check',
       sql`LENGTH(${table.content}) >= 1 AND LENGTH(${table.content}) <= 2000`,
@@ -57,7 +77,7 @@ export const comments = pgTable(
       sql`${table.replies_count} >= 0`,
     ),
   }),
-)
+).enableRLS()
 
 export const comment_likes = pgTable(
   'comment_likes',
@@ -70,9 +90,21 @@ export const comment_likes = pgTable(
       .references(() => users.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
   },
   table => ({
+    // Primary key
     pk: primaryKey({ columns: [table.comment_id, table.user_id] }),
+    // Performance-critical indexes
+    commentIdIdx: index('idx_comment_likes_comment_id').on(table.comment_id),
+    userIdIdx: index('idx_comment_likes_user_id').on(table.user_id),
+    // RLS Policy
+    serviceRolePolicy: pgPolicy('service_role_all_comment_likes', {
+      as: 'permissive',
+      to: 'service_role',
+      for: 'all',
+      using: sql`TRUE`,
+      withCheck: sql`TRUE`,
+    }),
   }),
-)
+).enableRLS()
 
 export const comment_reports = pgTable(
   'comment_reports',
@@ -97,6 +129,22 @@ export const comment_reports = pgTable(
       .defaultNow(),
   },
   table => ({
+    // Performance-critical indexes
+    commentIdIdx: index('idx_comment_reports_comment_id').on(table.comment_id),
+    reporterUserIdIdx: index('idx_comment_reports_reporter_user_id').on(table.reporter_user_id),
+    statusIdx: index('idx_comment_reports_status').on(table.status),
+    createdAtIdx: index('idx_comment_reports_created_at').on(table.created_at),
+    // Composite indexes for common queries
+    statusCreatedIdx: index('idx_comment_reports_status_created').on(table.status, table.created_at),
+    // RLS Policy
+    serviceRolePolicy: pgPolicy('service_role_all_comment_reports', {
+      as: 'permissive',
+      to: 'service_role',
+      for: 'all',
+      using: sql`TRUE`,
+      withCheck: sql`TRUE`,
+    }),
+    // Check constraints
     reasonCheck: check(
       'reason_check',
       sql`${table.reason} IN ('spam', 'abuse', 'inappropriate', 'other')`,
@@ -106,7 +154,7 @@ export const comment_reports = pgTable(
       sql`${table.status} IN ('pending', 'reviewed', 'resolved', 'dismissed')`,
     ),
   }),
-)
+).enableRLS()
 
 export const v_comments_with_user = pgView('v_comments_with_user', {
 
