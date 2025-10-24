@@ -288,6 +288,10 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   }, [updateParentScrollShadows])
 
   function createHref(nextTag: string, context?: string): Route {
+    if (nextTag === 'mentions') {
+      return '/mentions' as Route
+    }
+
     const params = new URLSearchParams(currentSearch)
     params.set('tag', nextTag)
 
