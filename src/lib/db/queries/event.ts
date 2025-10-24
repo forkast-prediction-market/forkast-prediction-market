@@ -258,6 +258,16 @@ export const EventRepository = {
         )
       }
 
+      whereConditions[0] = and(
+        eq(events.status, 'active'),
+        sql`NOT EXISTS (
+          SELECT 1
+          FROM ${event_tags} et
+          JOIN ${tags} t ON t.id = et.tag_id
+          WHERE et.event_id = ${events.id} AND t.hide_events = TRUE
+        )`,
+      )
+
       const eventsData = await db.query.events.findMany({
         where: and(...whereConditions),
         with: {
