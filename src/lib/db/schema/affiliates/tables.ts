@@ -6,7 +6,7 @@ import {
   pgTable,
   timestamp,
 } from 'drizzle-orm/pg-core'
-import { users } from '../auth/tables'
+import { users } from '@/lib/db/schema'
 
 export const affiliate_referrals = pgTable(
   'affiliate_referrals',

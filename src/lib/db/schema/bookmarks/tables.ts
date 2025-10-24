@@ -1,7 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { char, index, pgPolicy, pgTable, primaryKey } from 'drizzle-orm/pg-core'
-import { users } from '../auth/tables'
-import { events } from '../events/tables'
+import { events, users } from '@/lib/db/schema'
 
 export const bookmarks = pgTable(
   'bookmarks',
