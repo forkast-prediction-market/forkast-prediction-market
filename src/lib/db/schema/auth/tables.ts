@@ -1,4 +1,4 @@
-import { relations, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import {
   boolean,
   check,
@@ -11,10 +11,6 @@ import {
   timestamp,
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
-import { bookmarks } from './bookmarks'
-import { comment_likes, comment_reports, comments } from './comments'
-import { notifications } from './notifications'
-import { orders } from './orders'
 
 export const users = pgTable('users', {
   id: text('id').primaryKey(),
@@ -189,52 +185,3 @@ export const two_factors = pgTable('two_factors', {
   secretCheck: check('secret_check', sql`LENGTH(${table.secret}) > 0`),
   backupCodesCheck: check('backup_codes_check', sql`LENGTH(${table.backup_codes}) > 0`),
 })).enableRLS()
-
-export const usersRelations = relations(users, ({ many, one }) => ({
-  sessions: many(sessions),
-  accounts: many(accounts),
-  wallets: many(wallets),
-  twoFactors: many(two_factors),
-  bookmarks: many(bookmarks),
-  orders: many(orders),
-  comments: many(comments),
-  commentLikes: many(comment_likes),
-  commentReports: many(comment_reports),
-  notifications: many(notifications),
-  referredByUser: one(users, {
-    fields: [users.referred_by_user_id],
-    references: [users.id],
-    relationName: 'user_referrals',
-  }),
-  referredUsers: many(users, {
-    relationName: 'user_referrals',
-  }),
-}))
-
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-  user: one(users, {
-    fields: [sessions.user_id],
-    references: [users.id],
-  }),
-}))
-
-export const accountsRelations = relations(accounts, ({ one }) => ({
-  user: one(users, {
-    fields: [accounts.user_id],
-    references: [users.id],
-  }),
-}))
-
-export const walletsRelations = relations(wallets, ({ one }) => ({
-  user: one(users, {
-    fields: [wallets.user_id],
-    references: [users.id],
-  }),
-}))
-
-export const twoFactorsRelations = relations(two_factors, ({ one }) => ({
-  user: one(users, {
-    fields: [two_factors.user_id],
-    references: [users.id],
-  }),
-}))

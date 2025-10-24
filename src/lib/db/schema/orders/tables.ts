@@ -1,4 +1,4 @@
-import { relations, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import {
   char,
   check,
@@ -11,8 +11,8 @@ import {
   timestamp,
   varchar,
 } from 'drizzle-orm/pg-core'
-import { users } from './auth'
-import { conditions, outcomes } from './events'
+import { users } from '../auth/tables'
+import { conditions, outcomes } from '../events/tables'
 
 export const orders = pgTable('orders', {
   id: text('id').primaryKey().default(sql`generate_ulid()`),
@@ -62,18 +62,3 @@ export const orders = pgTable('orders', {
   tradeFeeCheck: check('orders_trade_fee_bps_check', sql`${table.trade_fee_bps} >= 0 AND ${table.trade_fee_bps} <= 1000`),
   affiliateShareCheck: check('orders_affiliate_share_bps_check', sql`${table.affiliate_share_bps} >= 0 AND ${table.affiliate_share_bps} <= 10000`),
 })).enableRLS()
-
-export const ordersRelations = relations(orders, ({ one }) => ({
-  user: one(users, {
-    fields: [orders.user_id],
-    references: [users.id],
-  }),
-  outcome: one(outcomes, {
-    fields: [orders.token_id],
-    references: [outcomes.token_id],
-  }),
-  condition: one(conditions, {
-    fields: [orders.condition_id],
-    references: [conditions.id],
-  }),
-}))

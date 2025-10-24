@@ -1,6 +1,6 @@
-import { relations, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { char, check, index, jsonb, pgPolicy, pgTable, text, timestamp } from 'drizzle-orm/pg-core'
-import { users } from './auth'
+import { users } from '../auth/tables'
 
 export const notifications = pgTable(
   'notifications',
@@ -71,10 +71,3 @@ export const notifications = pgTable(
     ),
   }),
 ).enableRLS()
-
-export const notificationsRelations = relations(notifications, ({ one }) => ({
-  user: one(users, {
-    fields: [notifications.user_id],
-    references: [users.id],
-  }),
-}))

@@ -1,7 +1,7 @@
-import { relations, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import { char, index, pgPolicy, pgTable, primaryKey } from 'drizzle-orm/pg-core'
-import { users } from './auth'
-import { events } from './events'
+import { users } from '../auth/tables'
+import { events } from '../events/tables'
 
 export const bookmarks = pgTable(
   'bookmarks',
@@ -31,18 +31,3 @@ export const bookmarks = pgTable(
     }),
   }),
 ).enableRLS()
-
-export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
-  event: one(events, {
-    fields: [bookmarks.event_id],
-    references: [events.id],
-  }),
-  user: one(users, {
-    fields: [bookmarks.user_id],
-    references: [users.id],
-  }),
-}))
-
-export const eventsBookmarksRelations = relations(events, ({ many }) => ({
-  bookmarks: many(bookmarks),
-}))

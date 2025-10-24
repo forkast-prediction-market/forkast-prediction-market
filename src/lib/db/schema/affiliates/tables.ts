@@ -1,4 +1,4 @@
-import { relations, sql } from 'drizzle-orm'
+import { sql } from 'drizzle-orm'
 import {
   char,
   index,
@@ -6,7 +6,7 @@ import {
   pgTable,
   timestamp,
 } from 'drizzle-orm/pg-core'
-import { users } from './auth'
+import { users } from '../auth/tables'
 
 export const affiliate_referrals = pgTable(
   'affiliate_referrals',
@@ -41,21 +41,3 @@ export const affiliate_referrals = pgTable(
     }),
   }),
 ).enableRLS()
-
-export const affiliateReferralsRelations = relations(affiliate_referrals, ({ one }) => ({
-  user: one(users, {
-    fields: [affiliate_referrals.user_id],
-    references: [users.id],
-    relationName: 'user_referrals',
-  }),
-  affiliateUser: one(users, {
-    fields: [affiliate_referrals.affiliate_user_id],
-    references: [users.id],
-    relationName: 'affiliate_referrals',
-  }),
-}))
-
-export const usersAffiliateRelations = relations(users, ({ many }) => ({
-  referrals: many(affiliate_referrals, { relationName: 'user_referrals' }),
-  affiliateReferrals: many(affiliate_referrals, { relationName: 'affiliate_referrals' }),
-}))

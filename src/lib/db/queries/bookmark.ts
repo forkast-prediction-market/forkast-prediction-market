@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm'
 import { revalidateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
-import { bookmarks } from '@/lib/db/schema/bookmarks'
+import { bookmarks } from '@/lib/db/schema/bookmarks/tables'
 import { db } from '@/lib/drizzle'
 
 export const BookmarkRepository = {

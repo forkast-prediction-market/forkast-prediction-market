@@ -1,7 +1,7 @@
 import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm'
 import { unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
-import { comment_likes, comments, v_comments_with_user } from '@/lib/db/schema/comments'
+import { comment_likes, comments, v_comments_with_user } from '@/lib/db/schema/comments/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 
