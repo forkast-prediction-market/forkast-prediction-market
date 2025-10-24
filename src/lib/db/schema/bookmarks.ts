@@ -42,3 +42,7 @@ export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
     references: [users.id],
   }),
 }))
+
+export const eventsBookmarksRelations = relations(events, ({ many }) => ({
+  bookmarks: many(bookmarks),
+}))

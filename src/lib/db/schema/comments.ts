@@ -157,7 +157,6 @@ export const comment_reports = pgTable(
 ).enableRLS()
 
 export const v_comments_with_user = pgView('v_comments_with_user', {
-
   id: char('id', { length: 26 }),
   event_id: char('event_id', { length: 26 }),
   user_id: char('user_id', { length: 26 }),

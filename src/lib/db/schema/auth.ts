@@ -31,7 +31,7 @@ export const users = pgTable('users', {
   username: text('username').unique(),
   settings: jsonb('settings'),
   affiliate_code: text('affiliate_code'),
-  referred_by_user_id: text('referred_by_user_id'),
+  referred_by_user_id: text('referred_by_user_id').references((): any => users.id, { onDelete: 'set null' }),
 }, table => ({
   // Indexes from migration
   idxUsersEmail: uniqueIndex('idx_users_email').on(sql`LOWER(${table.email})`),
