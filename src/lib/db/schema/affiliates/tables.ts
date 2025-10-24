@@ -27,7 +27,6 @@ export const affiliate_referrals = pgTable(
   },
   table => ({
     // Performance-critical indexes for affiliate queries
-    userIdIdx: index('idx_affiliate_referrals_user_id').on(table.user_id),
     affiliateUserIdIdx: index('idx_affiliate_referrals_affiliate_user_id').on(table.affiliate_user_id),
     createdAtIdx: index('idx_affiliate_referrals_created_at').on(table.created_at),
 

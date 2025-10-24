@@ -18,7 +18,6 @@ export const bookmarks = pgTable(
     pk: primaryKey({ columns: [table.user_id, table.event_id] }),
 
     // Performance-critical indexes
-    userIdIdx: index('idx_bookmarks_user_id').on(table.user_id),
     eventIdIdx: index('idx_bookmarks_event_id').on(table.event_id),
 
     // RLS Policy for bookmark access control

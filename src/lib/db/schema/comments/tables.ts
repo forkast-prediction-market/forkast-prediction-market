@@ -5,6 +5,7 @@ import {
   check,
   index,
   integer,
+  jsonb,
   pgPolicy,
   pgTable,
   pgView,
@@ -170,7 +171,7 @@ export const v_comments_with_user = pgView('v_comments_with_user', {
   username: text('username'),
   user_avatar: text('user_avatar'),
   user_address: varchar('user_address', { length: 42 }),
-  recent_replies: text('recent_replies'),
+  recent_replies: jsonb('recent_replies'),
 }).as(sql`
   SELECT
     c.id,
