@@ -4,33 +4,31 @@
 
 CREATE TABLE orders
 (
-  id                   text PRIMARY KEY         DEFAULT generate_ulid() NOT NULL,
-
+  id                   TEXT PRIMARY KEY         DEFAULT generate_ulid() NOT NULL,
   -- begin blockchain data
-  salt                 bigint,
-  maker                text                                             NOT NULL,
-  signer               text                                             NOT NULL,
-  taker                text                                             NOT NULL,
-  referrer             text                                             NOT NULL,
-  affiliate            text,
-  token_id             text                                             NOT NULL,
-  maker_amount         bigint                                           NOT NULL,
-  taker_amount         bigint                                           NOT NULL,
-  expiration           bigint                                           NOT NULL,
-  nonce                bigint                                           NOT NULL,
-  fee_rate_bps         smallint                                         NOT NULL,
-  affiliate_percentage smallint                                         NOT NULL,
-  side                 smallint                                         NOT NULL,
-  signature            text,
+  salt                 BIGINT,
+  maker                TEXT                                             NOT NULL,
+  signer               TEXT                                             NOT NULL,
+  taker                TEXT                                             NOT NULL,
+  referrer             TEXT                                             NOT NULL,
+  affiliate            TEXT,
+  token_id             TEXT                                             NOT NULL,
+  maker_amount         BIGINT                                           NOT NULL,
+  taker_amount         BIGINT                                           NOT NULL,
+  expiration           BIGINT                                           NOT NULL,
+  nonce                BIGINT                                           NOT NULL,
+  fee_rate_bps         SMALLINT                                         NOT NULL,
+  affiliate_percentage SMALLINT                                         NOT NULL,
+  side                 SMALLINT                                         NOT NULL,
+  signature            TEXT,
   -- end blockchain data
-
-  user_id              text                                             NOT NULL,
-  condition_id         text                                             NOT NULL,
-  type                 smallint                                         NOT NULL,
-  status               text                     DEFAULT 'open'          NOT NULL,
-  affiliate_user_id    text,
-  created_at           timestamp with time zone DEFAULT NOW()           NOT NULL,
-  updated_at           timestamp with time zone DEFAULT NOW()           NOT NULL,
+  user_id              TEXT                                             NOT NULL,
+  condition_id         TEXT                                             NOT NULL,
+  TYPE                 SMALLINT                                         NOT NULL,
+  status               TEXT                     DEFAULT 'open'          NOT NULL,
+  affiliate_user_id    TEXT,
+  created_at           TIMESTAMP WITH TIME ZONE DEFAULT NOW()           NOT NULL,
+  updated_at           TIMESTAMP WITH TIME ZONE DEFAULT NOW()           NOT NULL,
   CONSTRAINT orders_type_check CHECK (orders.type IN (0, 1)),
   CONSTRAINT orders_side_check CHECK (orders.side IN (0, 1)),
   CONSTRAINT orders_status_check CHECK (orders.status IN ('open', 'filled', 'cancelled'))
@@ -39,7 +37,6 @@ CREATE TABLE orders
 -- ===========================================
 -- 2. INDEXES
 -- ===========================================
-
 CREATE INDEX idx_orders_user_id ON orders (user_id);
 CREATE INDEX idx_orders_condition ON orders (condition_id, token_id);
 CREATE INDEX idx_orders_status ON orders (status);
@@ -48,20 +45,17 @@ CREATE INDEX idx_orders_created_at ON orders (created_at);
 -- ===========================================
 -- 3. ROW LEVEL SECURITY
 -- ===========================================
-
 ALTER TABLE orders
   ENABLE ROW LEVEL SECURITY;
 
 -- ===========================================
 -- 4. SECURITY POLICIES
 -- ===========================================
-
 CREATE POLICY service_role_all_orders ON orders AS PERMISSIVE FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
 
 -- ===========================================
 -- 5. Functions
 -- ===========================================
-
 CREATE OR REPLACE FUNCTION get_event_top_holders(
   event_slug_arg TEXT,
   condition_id_arg TEXT DEFAULT NULL,
@@ -147,7 +141,6 @@ $$;
 -- ===========================================
 -- 6. TRIGGERS
 -- ===========================================
-
 CREATE TRIGGER set_orders_updated_at
   BEFORE UPDATE
   ON orders
