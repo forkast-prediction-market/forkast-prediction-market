@@ -117,3 +117,12 @@ export function triggerConfetti(color: 'primary' | 'yes' | 'no', event?: any) {
     colors,
   })
 }
+
+export function toMicro(amount: string): string {
+  const trimmed = amount.trim()
+  const [whole = '0', decimal = ''] = trimmed.split('.')
+
+  const paddedDecimals = (`${decimal}000000`).slice(0, 6)
+
+  return (whole + paddedDecimals).replace(/^0+/, '') || '0'
+}

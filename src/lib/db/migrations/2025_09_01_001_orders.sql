@@ -2,36 +2,36 @@
 -- 1. TABLES
 -- ===========================================
 
-CREATE TABLE "orders"
+CREATE TABLE orders
 (
-  "id"                   text PRIMARY KEY         DEFAULT generate_ulid() NOT NULL,
-  "user_id"              text                                             NOT NULL,
-  "condition_id"         text                                             NOT NULL,
-  "token_id"             text                                             NOT NULL,
-  "type"                 smallint                                         NOT NULL,
-  "side"                 smallint                                         NOT NULL,
-  "price"                bigint,
-  "share"                bigint,
-  "maker_amount"         bigint,
-  "status"               text                     DEFAULT 'open'          NOT NULL,
-  "maker_address"        text                                             NOT NULL,
-  "taker_address"        text                                             NOT NULL,
-  "signer_address"       text,
-  "salt"                 numeric(78, 0),
-  "expiration"           timestamp with time zone,
-  "nonce"                bigint,
-  "fee_rate_bps"         integer                                          NOT NULL,
-  "referrer"             text                                             NOT NULL,
-  "affiliate"            text,
-  "affiliate_percentage" integer,
-  "signature_type"       smallint                 DEFAULT 0,
-  "signature"            text,
-  "affiliate_user_id"    text,
-  "created_at"           timestamp with time zone DEFAULT NOW()           NOT NULL,
-  "updated_at"           timestamp with time zone DEFAULT NOW()           NOT NULL,
-  CONSTRAINT "orders_type_check" CHECK ("orders"."type" IN (0, 1)),
-  CONSTRAINT "orders_side_check" CHECK ("orders"."side" IN (0, 1)),
-  CONSTRAINT "orders_status_check" CHECK ("orders"."status" IN ('open', 'filled', 'cancelled'))
+  id                   text PRIMARY KEY         DEFAULT generate_ulid() NOT NULL,
+  user_id              text                                             NOT NULL,
+  condition_id         text                                             NOT NULL,
+  token_id             text                                             NOT NULL,
+  type                 smallint                                         NOT NULL,
+  side                 smallint                                         NOT NULL,
+  price                bigint,
+  share                bigint,
+  maker_amount         bigint,
+  status               text                     DEFAULT 'open'          NOT NULL,
+  maker_address        text                                             NOT NULL,
+  taker_address        text                                             NOT NULL,
+  signer_address       text,
+  salt                 numeric(78, 0),
+  expiration           timestamp with time zone,
+  nonce                bigint,
+  fee_rate_bps         integer                                          NOT NULL,
+  referrer             text                                             NOT NULL,
+  affiliate            text,
+  affiliate_percentage integer,
+  signature_type       smallint                 DEFAULT 0,
+  signature            text,
+  affiliate_user_id    text,
+  created_at           timestamp with time zone DEFAULT NOW()           NOT NULL,
+  updated_at           timestamp with time zone DEFAULT NOW()           NOT NULL,
+  CONSTRAINT orders_type_check CHECK (orders.type IN (0, 1)),
+  CONSTRAINT orders_side_check CHECK (orders.side IN (0, 1)),
+  CONSTRAINT orders_status_check CHECK (orders.status IN ('open', 'filled', 'cancelled'))
 );
 
 -- ===========================================
@@ -54,7 +54,7 @@ ALTER TABLE orders
 -- 4. SECURITY POLICIES
 -- ===========================================
 
-CREATE POLICY "service_role_all_orders" ON "orders" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY service_role_all_orders ON orders AS PERMISSIVE FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
 
 -- ===========================================
 -- 5. Functions

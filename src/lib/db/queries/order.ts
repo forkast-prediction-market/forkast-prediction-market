@@ -6,12 +6,14 @@ import { db } from '@/lib/drizzle'
 export const OrderRepository = {
   async createOrder(args: {
     user_id: string
+    maker_address: string
     condition_id: string
     token_id: string
-    side: 'buy' | 'sell'
-    amount: number
-    price?: number
-    type?: 'market' | 'limit'
+    side: 0 | 1
+    type: 0 | 1
+    maker_amount?: string
+    price?: string
+    shares?: string
     affiliate_user_id?: string | null
     trade_fee_bps?: number
     affiliate_share_bps?: number
@@ -21,13 +23,17 @@ export const OrderRepository = {
     return await runQuery(async () => {
       const insertData = {
         user_id: args.user_id,
+        maker_address: args.maker_address,
+        taker_address: '0x0000000000000000000000000000000000000000',
         condition_id: args.condition_id,
         token_id: args.token_id,
-        type: args.type || 'market',
+        type: args.type,
         side: args.side,
-        amount: args.amount.toString(),
-        price: args.price?.toString(),
-        status: 'pending',
+        maker_amount: args.maker_amount ? BigInt(args.maker_amount) : undefined,
+        price: args.price ? BigInt(args.price) : undefined,
+        shares: args.shares ? BigInt(args.shares) : null,
+        fee_rate_bps: 200,
+        referrer: process.env.FEE_RECIPIENT_WALLET!,
         affiliate_user_id: args.affiliate_user_id ?? null,
         trade_fee_bps: args.trade_fee_bps ?? 0,
         affiliate_share_bps: args.affiliate_share_bps ?? 0,
