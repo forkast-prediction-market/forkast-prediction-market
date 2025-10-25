@@ -2,7 +2,7 @@
 -- 1. TABLES
 -- ===========================================
 
-CREATE TABLE IF NOT EXISTS settings
+CREATE TABLE settings
 (
   id         SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "group"    TEXT        NOT NULL,

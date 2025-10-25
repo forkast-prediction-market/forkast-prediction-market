@@ -2,7 +2,7 @@
 -- 1. TABLES
 -- ===========================================
 
-CREATE TABLE IF NOT EXISTS bookmarks
+CREATE TABLE bookmarks
 (
   user_id  CHAR(26) NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
   event_id CHAR(26) NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,

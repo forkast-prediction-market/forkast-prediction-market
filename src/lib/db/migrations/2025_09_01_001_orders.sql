@@ -5,27 +5,30 @@
 CREATE TABLE orders
 (
   id                   text PRIMARY KEY         DEFAULT generate_ulid() NOT NULL,
-  user_id              text                                             NOT NULL,
-  condition_id         text                                             NOT NULL,
-  token_id             text                                             NOT NULL,
-  type                 smallint                                         NOT NULL,
-  side                 smallint                                         NOT NULL,
-  price                bigint,
-  share                bigint,
-  maker_amount         bigint,
-  status               text                     DEFAULT 'open'          NOT NULL,
-  maker_address        text                                             NOT NULL,
-  taker_address        text                                             NOT NULL,
-  signer_address       text,
-  salt                 numeric(78, 0),
-  expiration           timestamp with time zone,
-  nonce                bigint,
-  fee_rate_bps         integer                                          NOT NULL,
+
+  -- begin blockchain data
+  salt                 bigint,
+  maker                text                                             NOT NULL,
+  signer               text                                             NOT NULL,
+  taker                text                                             NOT NULL,
   referrer             text                                             NOT NULL,
   affiliate            text,
-  affiliate_percentage integer,
-  signature_type       smallint                 DEFAULT 0,
+  token_id             text                                             NOT NULL,
+  maker_amount         bigint                                           NOT NULL,
+  taker_amount         bigint                                           NOT NULL,
+  expiration           bigint                                           NOT NULL,
+  nonce                bigint                                           NOT NULL,
+  fee_rate_bps         smallint                                         NOT NULL,
+  affiliate_percentage smallint                                         NOT NULL,
+  side                 smallint                                         NOT NULL,
   signature            text,
+
+  -- end of blockchain data
+
+  user_id              text                                             NOT NULL,
+  condition_id         text                                             NOT NULL,
+  type                 smallint                                         NOT NULL,
+  status               text                     DEFAULT 'open'          NOT NULL,
   affiliate_user_id    text,
   created_at           timestamp with time zone DEFAULT NOW()           NOT NULL,
   updated_at           timestamp with time zone DEFAULT NOW()           NOT NULL,
@@ -38,10 +41,10 @@ CREATE TABLE orders
 -- 2. INDEXES
 -- ===========================================
 
-CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders (user_id);
-CREATE INDEX IF NOT EXISTS idx_orders_condition ON orders (condition_id, token_id);
-CREATE INDEX IF NOT EXISTS idx_orders_status ON orders (status);
-CREATE INDEX IF NOT EXISTS idx_orders_created_at ON orders (created_at);
+CREATE INDEX idx_orders_user_id ON orders (user_id);
+CREATE INDEX idx_orders_condition ON orders (condition_id, token_id);
+CREATE INDEX idx_orders_status ON orders (status);
+CREATE INDEX idx_orders_created_at ON orders (created_at);
 
 -- ===========================================
 -- 3. ROW LEVEL SECURITY

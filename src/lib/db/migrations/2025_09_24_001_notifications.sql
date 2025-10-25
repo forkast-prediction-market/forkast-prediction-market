@@ -2,7 +2,7 @@
 -- 1. TABLES
 -- ===========================================
 
-CREATE TABLE IF NOT EXISTS notifications
+CREATE TABLE notifications
 (
   id          CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
   user_id     CHAR(26)    NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -30,9 +30,9 @@ CREATE TABLE IF NOT EXISTS notifications
 -- 2. INDEXES
 -- ===========================================
 
-CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications (user_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_category ON notifications (category);
-CREATE INDEX IF NOT EXISTS idx_notifications_user_created_at ON notifications (user_id, created_at DESC);
+CREATE INDEX idx_notifications_user_id ON notifications (user_id);
+CREATE INDEX idx_notifications_category ON notifications (category);
+CREATE INDEX idx_notifications_user_created_at ON notifications (user_id, created_at DESC);
 
 -- ===========================================
 -- 3. ROW LEVEL SECURITY

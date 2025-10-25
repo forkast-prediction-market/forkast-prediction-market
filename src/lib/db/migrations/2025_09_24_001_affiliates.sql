@@ -3,7 +3,7 @@
 -- ===========================================
 
 -- Affiliate referral attribution table - tracks referral relationships
-CREATE TABLE IF NOT EXISTS affiliate_referrals
+CREATE TABLE affiliate_referrals
 (
   id                CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
   user_id           CHAR(26)    NOT NULL UNIQUE REFERENCES users (id) ON DELETE CASCADE, -- The referred user

@@ -31,9 +31,9 @@ CREATE TABLE comment_reports
   id               CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
   comment_id       CHAR(26)    NOT NULL REFERENCES comments (id) ON DELETE CASCADE ON UPDATE CASCADE,
   reporter_user_id CHAR(26)    NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  reason           VARCHAR(50) NOT NULL CHECK (reason IN ('spam', 'abuse', 'inappropriate', 'other')),
+  reason           TEXT        NOT NULL CHECK (reason IN ('spam', 'abuse', 'inappropriate', 'other')),
   description      TEXT,
-  status           VARCHAR(20)          DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'resolved', 'dismissed')),
+  status           TEXT                 DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'resolved', 'dismissed')),
   reviewed_at      TIMESTAMPTZ,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (comment_id, reporter_user_id)

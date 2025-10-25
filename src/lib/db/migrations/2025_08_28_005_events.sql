@@ -22,34 +22,34 @@ CREATE TABLE conditions
 CREATE TABLE tags
 (
   id                   SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  name                 VARCHAR(100) NOT NULL UNIQUE,
-  slug                 VARCHAR(100) NOT NULL UNIQUE,
-  is_main_category     BOOLEAN               DEFAULT FALSE,
-  is_hidden            BOOLEAN      NOT NULL DEFAULT FALSE,
-  hide_events          BOOLEAN      NOT NULL DEFAULT FALSE,
-  display_order        SMALLINT              DEFAULT 0,
+  name                 TEXT        NOT NULL UNIQUE,
+  slug                 TEXT        NOT NULL UNIQUE,
+  is_main_category     BOOLEAN              DEFAULT FALSE,
+  is_hidden            BOOLEAN     NOT NULL DEFAULT FALSE,
+  hide_events          BOOLEAN     NOT NULL DEFAULT FALSE,
+  display_order        SMALLINT             DEFAULT 0,
   parent_tag_id        SMALLINT REFERENCES tags (id),
-  active_markets_count INTEGER               DEFAULT 0,
-  created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-  updated_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+  active_markets_count INTEGER              DEFAULT 0,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Events table - Core content structure for prediction markets
 CREATE TABLE events
 (
-  id                   CHAR(26) PRIMARY KEY  DEFAULT generate_ulid(),
-  slug                 VARCHAR(255) NOT NULL UNIQUE,
-  title                TEXT         NOT NULL,
-  creator              VARCHAR(42), -- Ethereum address of creator
+  id                   CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
+  slug                 TEXT        NOT NULL UNIQUE,
+  title                TEXT        NOT NULL,
+  creator              CHAR(42), -- Ethereum address of creator
   icon_url             TEXT,
-  show_market_icons    BOOLEAN               DEFAULT TRUE,
-  status               VARCHAR(20)  NOT NULL DEFAULT 'active',
-  rules                TEXT,        -- Event-specific rules
-  active_markets_count INTEGER               DEFAULT 0,
-  total_markets_count  INTEGER               DEFAULT 0,
+  show_market_icons    BOOLEAN              DEFAULT TRUE,
+  status               TEXT        NOT NULL DEFAULT 'active',
+  rules                TEXT,     -- Event-specific rules
+  active_markets_count INTEGER              DEFAULT 0,
+  total_markets_count  INTEGER              DEFAULT 0,
   end_date             TIMESTAMPTZ,
-  created_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-  updated_at           TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CHECK (status IN ('draft', 'active', 'archived'))
 );
 
@@ -65,26 +65,26 @@ CREATE TABLE event_tags
 CREATE TABLE markets
 (
   -- IDs and Identifiers
-  condition_id       VARCHAR(66) PRIMARY KEY REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  condition_id       TEXT PRIMARY KEY REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
   -- Relationships
-  event_id           CHAR(26)     NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  event_id           CHAR(26)    NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
   -- Market Information
-  title              TEXT         NOT NULL,
-  slug               VARCHAR(255) NOT NULL,
-  short_title        VARCHAR(50),
+  title              TEXT        NOT NULL,
+  slug               TEXT        NOT NULL,
+  short_title        TEXT,
   -- Images
   icon_url           TEXT,  -- markets/icons/market-slug.jpg
   -- Status and Data
-  is_active          BOOLEAN               DEFAULT TRUE,
-  is_resolved        BOOLEAN               DEFAULT FALSE,
+  is_active          BOOLEAN              DEFAULT TRUE,
+  is_resolved        BOOLEAN              DEFAULT FALSE,
   -- Metadata
   metadata           JSONB, -- Metadata from Arweave
   -- Cached Trading Metrics (from subgraphs)
-  current_volume_24h DECIMAL(20, 6)        DEFAULT 0,
-  total_volume       DECIMAL(20, 6)        DEFAULT 0,
+  current_volume_24h DECIMAL(20, 6)       DEFAULT 0,
+  total_volume       DECIMAL(20, 6)       DEFAULT 0,
   -- Timestamps
-  created_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   -- Constraints
   UNIQUE (event_id, slug),
   CHECK (current_volume_24h >= 0),
@@ -123,9 +123,9 @@ CREATE TABLE outcomes
 CREATE TABLE subgraph_syncs
 (
   id              SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-  service_name    VARCHAR(50) NOT NULL,                -- 'activity_sync', 'pnl_sync', etc.
-  subgraph_name   VARCHAR(50) NOT NULL,                -- 'activity', 'pnl', 'oi', etc.
-  status          VARCHAR(20)          DEFAULT 'idle', -- 'running', 'completed', 'error'
+  service_name    text        NOT NULL,                -- 'activity_sync', 'pnl_sync', etc.
+  subgraph_name   text        NOT NULL,                -- 'activity', 'pnl', 'oi', etc.
+  status          text                 DEFAULT 'idle', -- 'running', 'completed', 'error'
   total_processed INTEGER              DEFAULT 0,
   error_message   TEXT,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -310,12 +310,11 @@ CREATE OR REPLACE VIEW v_visible_events AS
 SELECT events.*
 FROM events
 WHERE status = 'active'
-  AND NOT EXISTS (
-  SELECT 1
-  FROM event_tags
-         JOIN tags ON tags.id = event_tags.tag_id
-  WHERE event_tags.event_id = events.id AND tags.hide_events = true
-);
+  AND NOT EXISTS (SELECT 1
+                  FROM event_tags
+                         JOIN tags ON tags.id = event_tags.tag_id
+                  WHERE event_tags.event_id = events.id
+                    AND tags.hide_events = TRUE);
 
 CREATE OR REPLACE VIEW v_main_tag_subcategories AS
 SELECT main_tag.id                    AS main_tag_id,
