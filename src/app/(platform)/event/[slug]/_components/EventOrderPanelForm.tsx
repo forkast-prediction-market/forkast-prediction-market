@@ -87,8 +87,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       side: state.side === 'buy' ? 0 : 1 as Side,
       amount,
       type: state.type,
-      price: priceCents / 100,
+      price: (priceCents / 100) + 1,
     }
+
+    console.log(payload)
 
     const message = keccak256(stringToBytes(JSON.stringify(payload)))
 

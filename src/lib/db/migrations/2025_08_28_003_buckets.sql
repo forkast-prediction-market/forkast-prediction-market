@@ -1,18 +1,3 @@
-BEGIN;
-
--- ============================================================
--- STORAGE BUCKETS - Single Bucket Setup
--- ============================================================
--- Bucket: forkast-assets (single bucket for all assets)
--- Access: Public read, service role full access
--- Organization: Folder-based structure within bucket
--- ============================================================
-
--- ===========================================
--- 1. STORAGE BUCKET CREATION
--- ===========================================
-
--- Create main assets bucket with size and type restrictions
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES ('forkast-assets',
         'forkast-assets',
@@ -21,15 +6,6 @@ VALUES ('forkast-assets',
         ARRAY ['image/jpeg', 'image/png', 'image/webp'])
 ON CONFLICT (id) DO NOTHING;
 
--- ===========================================
--- 2. STORAGE POLICIES
--- ===========================================
-
--- ===========================================
--- PUBLIC READ ACCESS
--- ===========================================
-
--- Public read access for all assets (branding, icons, public content)
 DO
 $$
   BEGIN
@@ -45,11 +21,6 @@ $$
   END
 $$;
 
--- ===========================================
--- SERVICE ROLE ACCESS
--- ===========================================
-
--- Service role full access (for sync scripts and automated uploads)
 DO
 $$
   BEGIN
@@ -65,5 +36,3 @@ $$
     END IF;
   END
 $$;
-
-COMMIT;

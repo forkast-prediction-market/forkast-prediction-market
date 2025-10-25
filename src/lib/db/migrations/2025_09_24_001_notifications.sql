@@ -1,15 +1,5 @@
-BEGIN;
-
--- ============================================================
--- NOTIFICATIONS - User Notification System
--- ============================================================
--- Tables: notifications
--- Dependencies: users (required), wallets (optional context)
--- Business Logic: Persist user-facing notifications with flexible link targets
--- ============================================================
-
 -- ===========================================
--- 1. TABLE CREATION
+-- 1. TABLES
 -- ===========================================
 
 CREATE TABLE IF NOT EXISTS notifications
@@ -51,16 +41,8 @@ CREATE INDEX IF NOT EXISTS idx_notifications_user_created_at ON notifications (u
 ALTER TABLE notifications
   ENABLE ROW LEVEL SECURITY;
 
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1
-                   FROM pg_policies
-                   WHERE policyname = 'service_role_all_notifications'
-                     AND tablename = 'notifications') THEN
-      CREATE POLICY "service_role_all_notifications" ON notifications FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
+-- ===========================================
+-- 4. POLICIES
+-- ===========================================
 
-COMMIT;
+CREATE POLICY "service_role_all_notifications" ON "notifications" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);

@@ -482,13 +482,13 @@ export const EventRepository = {
       const whereConditions = [eq(events.slug, args.slug)]
 
       if (args.minAmount && args.minAmount > 0) {
-        whereConditions.push(sql`(${orders.amount} * ${orders.price}) >= ${args.minAmount}`)
+        whereConditions.push(sql`(${orders.maker_amount} * ${orders.price}) >= ${args.minAmount}`)
       }
       const results = await db
         .select({
           id: orders.id,
           side: orders.side,
-          amount: orders.amount,
+          amount: orders.maker_amount,
           price: orders.price,
           created_at: orders.created_at,
           status: orders.status,
@@ -504,7 +504,7 @@ export const EventRepository = {
           market_slug: markets.slug,
           market_icon_url: markets.icon_url,
           event_slug: events.slug,
-          total_value: sql<number>`(${orders.amount} * ${orders.price})`.as('total_value'),
+          total_value: sql<number>`(${orders.maker_amount} * ${orders.price})`.as('total_value'),
         })
         .from(orders)
         .innerJoin(users, eq(orders.user_id, users.id))

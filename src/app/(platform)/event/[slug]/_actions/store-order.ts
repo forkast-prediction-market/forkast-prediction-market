@@ -30,6 +30,7 @@ export async function storeOrderAction(payload: StoreOrderInput, _: string) {
   const validated = StoreOrderSchema.safeParse(payload)
 
   if (!validated.success) {
+    console.log(validated.error.issues)
     return {
       error: validated.error.issues[0].message,
     }
@@ -45,7 +46,7 @@ export async function storeOrderAction(payload: StoreOrderInput, _: string) {
     const tradeFeeBps = Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '0', 10)
     const affiliateShareBps = Number.parseInt(affiliateSettings?.affiliate_share_bps?.value || '0', 10)
 
-    const clobUrl = `${process.env.CLOB_URL}/api/v1/orders`
+    const clobUrl = `${process.env.CLOB_URL}/v1/orders`
     const clobResponse = await fetch(clobUrl, {
       method: 'POST',
       headers: {
@@ -55,18 +56,19 @@ export async function storeOrderAction(payload: StoreOrderInput, _: string) {
       },
       signal: AbortSignal.timeout(5000),
       body: JSON.stringify({
-        taker_address: user.address,
-        maker_address: user.address,
-        nonce: Math.floor(Math.random() * 1000),
-        expiration: Math.floor(Math.random() * 1000),
-        token_id: validated.data.token_id,
-        amount: validated.data.amount,
-        side: validated.data.side === 0 ? 'buy' : 'sell',
-        order_type: validated.data.type.toUpperCase(),
-        order_struct_metadata: { taker_address: user.address },
+        fee_rate_bps: tradeFeeBps, // ok
+        taker_address: user.address, // ok
+        maker_address: user.address, // ok
+        token_id: validated.data.token_id, // ok
+        condition_id: validated.data.condition_id, // ok
+        salt: 987654321, // ok
+        condition_expires_at: '2025-12-31T23:59:59Z', // ok
+        price: 610_000, // ok
+        shares: 150_000_000, // ok
+        side: validated.data.side, // ok
+        type: validated.data.type.toUpperCase(), // ok
         referrer: process.env.FEE_RECIPIENT_WALLET,
         affiliate: referral?.affiliate_user?.address,
-        fee_rate_bps: tradeFeeBps,
         affiliate_percentage: affiliateShareBps,
       }),
     })

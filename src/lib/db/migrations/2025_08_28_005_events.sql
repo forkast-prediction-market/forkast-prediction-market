@@ -1,20 +1,9 @@
-BEGIN;
-
--- ============================================================
--- EVENTS & MARKETS - Complete Domain Implementation
--- ============================================================
--- Tables: events, event_tags, markets, outcomes, subgraph_syncs, tags, conditions
--- Views: v_visible_events
--- Dependencies: None (self-contained domain)
--- Business Logic: Event-market relationships, trading mechanics, tag categorization
--- ============================================================
-
 -- ===========================================
--- 1. TABLE CREATION
+-- 1. TABLES
 -- ===========================================
 
 -- Conditions table - Primary entity from Activity/PnL subgraphs
-CREATE TABLE IF NOT EXISTS conditions
+CREATE TABLE conditions
 (
   id           CHAR(66) PRIMARY KEY,
   oracle       CHAR(42)    NOT NULL,
@@ -30,7 +19,7 @@ CREATE TABLE IF NOT EXISTS conditions
 );
 
 -- Tags table - Hierarchical categorization system for events
-CREATE TABLE IF NOT EXISTS tags
+CREATE TABLE tags
 (
   id                   SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   name                 VARCHAR(100) NOT NULL UNIQUE,
@@ -46,7 +35,7 @@ CREATE TABLE IF NOT EXISTS tags
 );
 
 -- Events table - Core content structure for prediction markets
-CREATE TABLE IF NOT EXISTS events
+CREATE TABLE events
 (
   id                   CHAR(26) PRIMARY KEY  DEFAULT generate_ulid(),
   slug                 VARCHAR(255) NOT NULL UNIQUE,
@@ -64,10 +53,8 @@ CREATE TABLE IF NOT EXISTS events
   CHECK (status IN ('draft', 'active', 'archived'))
 );
 
-CREATE INDEX IF NOT EXISTS events_end_date_idx ON events (end_date);
-
 -- Event-Tag relationship table - Many-to-many between events and tags
-CREATE TABLE IF NOT EXISTS event_tags
+CREATE TABLE event_tags
 (
   event_id CHAR(26) NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
   tag_id   SMALLINT NOT NULL REFERENCES tags (id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -75,7 +62,7 @@ CREATE TABLE IF NOT EXISTS event_tags
 );
 
 -- Markets table - Core trading markets (belongs to events)
-CREATE TABLE IF NOT EXISTS markets
+CREATE TABLE markets
 (
   -- IDs and Identifiers
   condition_id       VARCHAR(66) PRIMARY KEY REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -105,7 +92,7 @@ CREATE TABLE IF NOT EXISTS markets
 );
 
 -- Outcomes table - Individual market outcomes (belongs to markets via condition_id)
-CREATE TABLE IF NOT EXISTS outcomes
+CREATE TABLE outcomes
 (
   id                 CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
   condition_id       CHAR(66)    NOT NULL REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -133,7 +120,7 @@ CREATE TABLE IF NOT EXISTS outcomes
 );
 
 -- subgraph_syncs table - Blockchain synchronization tracking
-CREATE TABLE IF NOT EXISTS subgraph_syncs
+CREATE TABLE subgraph_syncs
 (
   id              SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   service_name    VARCHAR(50) NOT NULL,                -- 'activity_sync', 'pnl_sync', etc.
@@ -150,10 +137,15 @@ CREATE TABLE IF NOT EXISTS subgraph_syncs
 );
 
 -- ===========================================
--- 2. ROW LEVEL SECURITY
+-- 2. INDEXES
 -- ===========================================
 
--- Enable RLS on all event, market, and tag-related tables
+CREATE INDEX events_end_date_idx ON events (end_date);
+
+-- ===========================================
+-- 3. ROW LEVEL SECURITY
+-- ===========================================
+
 ALTER TABLE conditions
   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tags
@@ -170,96 +162,19 @@ ALTER TABLE subgraph_syncs
   ENABLE ROW LEVEL SECURITY;
 
 -- ===========================================
--- 3. SECURITY POLICIES
+-- 4. POLICIES
 -- ===========================================
 
--- Conditions policies
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1
-                   FROM pg_policies
-                   WHERE policyname = 'service_role_all_conditions'
-                     AND tablename = 'conditions') THEN
-      CREATE POLICY "service_role_all_conditions" ON conditions FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
-
--- Tags policies
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_tags' AND tablename = 'tags') THEN
-      CREATE POLICY "service_role_all_tags" ON tags FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
-
--- Events policies
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'service_role_all_events' AND tablename = 'events') THEN
-      CREATE POLICY "service_role_all_events" ON events FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
-
--- Event tags policies
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1
-                   FROM pg_policies
-                   WHERE policyname = 'service_role_all_event_tags'
-                     AND tablename = 'event_tags') THEN
-      CREATE POLICY "service_role_all_event_tags" ON event_tags FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
-
--- Markets policies
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1
-                   FROM pg_policies
-                   WHERE policyname = 'service_role_all_markets'
-                     AND tablename = 'markets') THEN
-      CREATE POLICY "service_role_all_markets" ON markets FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
-
--- Outcomes policies
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1
-                   FROM pg_policies
-                   WHERE policyname = 'service_role_all_outcomes'
-                     AND tablename = 'outcomes') THEN
-      CREATE POLICY "service_role_all_outcomes" ON outcomes FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
-
--- Sync status policies
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1
-                   FROM pg_policies
-                   WHERE policyname = 'service_role_all_subgraph_syncs'
-                     AND tablename = 'subgraph_syncs') THEN
-      CREATE POLICY "service_role_all_subgraph_syncs" ON subgraph_syncs FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
+CREATE POLICY "service_role_all_conditions" ON "conditions" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY "service_role_all_tags" ON "tags" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY "service_role_all_events" ON "events" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY "service_role_all_event_tags" ON "event_tags" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY "service_role_all_markets" ON "markets" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY "service_role_all_outcomes" ON "outcomes" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY "service_role_all_subgraph_syncs" ON "subgraph_syncs" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
 
 -- ===========================================
--- 4. BUSINESS LOGIC FUNCTIONS
+-- 5. FUNCTIONS
 -- ===========================================
 
 -- Function to update active markets count per event (business logic)
@@ -330,130 +245,65 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 -- ===========================================
--- 5. TRIGGERS
+-- 6. TRIGGERS
 -- ===========================================
 
--- Updated_at triggers for all tables
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_conditions_updated_at') THEN
-      CREATE TRIGGER update_conditions_updated_at
-        BEFORE UPDATE
-        ON conditions
-        FOR EACH ROW
-      EXECUTE FUNCTION update_updated_at_column();
-    END IF;
-  END
-$$;
+CREATE TRIGGER set_conditions_updated_at
+  BEFORE UPDATE
+  ON conditions
+  FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
 
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_tags_updated_at') THEN
-      CREATE TRIGGER update_tags_updated_at
-        BEFORE UPDATE
-        ON tags
-        FOR EACH ROW
-      EXECUTE FUNCTION update_updated_at_column();
-    END IF;
-  END
-$$;
+CREATE TRIGGER set_events_updated_at
+  BEFORE UPDATE
+  ON events
+  FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
 
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_events_updated_at') THEN
-      CREATE TRIGGER update_events_updated_at
-        BEFORE UPDATE
-        ON events
-        FOR EACH ROW
-      EXECUTE FUNCTION update_updated_at_column();
-    END IF;
-  END
-$$;
+CREATE TRIGGER set_markets_updated_at
+  BEFORE UPDATE
+  ON markets
+  FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
 
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_markets_updated_at') THEN
-      CREATE TRIGGER update_markets_updated_at
-        BEFORE UPDATE
-        ON markets
-        FOR EACH ROW
-      EXECUTE FUNCTION update_updated_at_column();
-    END IF;
-  END
-$$;
+CREATE TRIGGER set_outcomes_updated_at
+  BEFORE UPDATE
+  ON outcomes
+  FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
 
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_outcomes_updated_at') THEN
-      CREATE TRIGGER update_outcomes_updated_at
-        BEFORE UPDATE
-        ON outcomes
-        FOR EACH ROW
-      EXECUTE FUNCTION update_updated_at_column();
-    END IF;
-  END
-$$;
+CREATE TRIGGER set_tags_updated_at
+  BEFORE UPDATE
+  ON tags
+  FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
 
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_subgraph_syncs_updated_at') THEN
-      CREATE TRIGGER update_subgraph_syncs_updated_at
-        BEFORE UPDATE
-        ON subgraph_syncs
-        FOR EACH ROW
-      EXECUTE FUNCTION update_updated_at_column();
-    END IF;
-  END
-$$;
+CREATE TRIGGER set_subgraph_syncs_updated_at
+  BEFORE UPDATE
+  ON subgraph_syncs
+  FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
 
--- Business logic triggers for counting
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_event_markets_count') THEN
-      CREATE TRIGGER trigger_update_event_markets_count
-        AFTER INSERT OR UPDATE OR DELETE
-        ON markets
-        FOR EACH ROW
-      EXECUTE FUNCTION update_event_markets_count();
-    END IF;
-  END
-$$;
+CREATE TRIGGER trigger_update_event_markets_count
+  AFTER INSERT OR UPDATE OR DELETE
+  ON markets
+  FOR EACH ROW
+EXECUTE FUNCTION update_event_markets_count();
 
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_tag_markets_count') THEN
-      CREATE TRIGGER trigger_update_tag_markets_count
-        AFTER INSERT OR UPDATE OR DELETE
-        ON markets
-        FOR EACH ROW
-      EXECUTE FUNCTION update_tag_markets_count();
-    END IF;
-  END
-$$;
+CREATE TRIGGER trigger_update_tag_markets_count
+  AFTER INSERT OR UPDATE OR DELETE
+  ON markets
+  FOR EACH ROW
+EXECUTE FUNCTION update_tag_markets_count();
 
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_tag_markets_count_event_tags') THEN
-      CREATE TRIGGER trigger_update_tag_markets_count_event_tags
-        AFTER INSERT OR UPDATE OR DELETE
-        ON event_tags
-        FOR EACH ROW
-      EXECUTE FUNCTION update_tag_markets_count();
-    END IF;
-  END
-$$;
+CREATE TRIGGER trigger_update_tag_markets_count_event_tags
+  AFTER INSERT OR UPDATE OR DELETE
+  ON event_tags
+  FOR EACH ROW
+EXECUTE FUNCTION update_tag_markets_count();
 
 -- ===========================================
--- 6. VIEWS
+-- 7. VIEWS
 -- ===========================================
 
 CREATE OR REPLACE VIEW v_visible_events AS
@@ -467,8 +317,46 @@ WHERE status = 'active'
   WHERE event_tags.event_id = events.id AND tags.hide_events = true
 );
 
+CREATE OR REPLACE VIEW v_main_tag_subcategories AS
+SELECT main_tag.id                    AS main_tag_id,
+       main_tag.slug                  AS main_tag_slug,
+       main_tag.name                  AS main_tag_name,
+       main_tag.is_hidden             AS main_tag_is_hidden,
+       sub_tag.id                     AS sub_tag_id,
+       sub_tag.name                   AS sub_tag_name,
+       sub_tag.slug                   AS sub_tag_slug,
+       sub_tag.is_main_category       AS sub_tag_is_main_category,
+       sub_tag.is_hidden              AS sub_tag_is_hidden,
+       COUNT(DISTINCT m.condition_id) AS active_markets_count,
+       MAX(m.updated_at)              AS last_market_activity_at
+FROM tags AS main_tag
+       JOIN event_tags AS et_main
+            ON et_main.tag_id = main_tag.id
+       JOIN markets AS m
+            ON m.event_id = et_main.event_id
+       JOIN event_tags AS et_sub
+            ON et_sub.event_id = et_main.event_id
+       JOIN tags AS sub_tag
+            ON sub_tag.id = et_sub.tag_id
+WHERE main_tag.is_main_category = TRUE
+  AND main_tag.is_hidden = FALSE
+  AND m.is_active = TRUE
+  AND m.is_resolved = FALSE
+  AND sub_tag.id <> main_tag.id
+  AND sub_tag.is_main_category = FALSE
+  AND sub_tag.is_hidden = FALSE
+GROUP BY main_tag.id,
+         main_tag.slug,
+         main_tag.name,
+         main_tag.is_hidden,
+         sub_tag.id,
+         sub_tag.name,
+         sub_tag.slug,
+         sub_tag.is_main_category,
+         sub_tag.is_hidden;
+
 -- ===========================================
--- 7. SEED
+-- 8. SEED
 -- ===========================================
 
 -- Insert initial main tags
@@ -490,5 +378,3 @@ ON CONFLICT (slug) DO NOTHING;
 UPDATE tags
 SET hide_events = TRUE
 WHERE slug IN ('crypto-prices', 'recurring', 'today-', 'today', '4h', 'daily');
-
-COMMIT;

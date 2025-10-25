@@ -1,17 +1,3 @@
-BEGIN;
-
--- ============================================================
--- EXTENSIONS & ULID FUNCTION - Database Foundation
--- ============================================================
--- Extensions: pg_net, pg_cron, pgcrypto
--- Functions: generate_ulid() - ULID generation for primary keys
--- Dependencies: None (foundation layer)
--- ============================================================
-
-CREATE EXTENSION IF NOT EXISTS pg_net SCHEMA extensions;
-CREATE EXTENSION IF NOT EXISTS pg_cron;
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
 -- ============================================================
 
 -- pgulid is based on OK Log's Go implementation of the ULID spec
@@ -89,4 +75,10 @@ END
 $$ LANGUAGE plpgsql VOLATILE
                     SET search_path = 'extensions';
 
-COMMIT;
+CREATE OR REPLACE FUNCTION set_updated_at()
+  RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;

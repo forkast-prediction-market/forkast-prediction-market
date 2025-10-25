@@ -27,7 +27,7 @@ async function applyMigrations(sql) {
   `, [], { simple: true })
   console.log('Migrations table ready')
 
-  const migrationsDir = path.join(__dirname, './migrations')
+  const migrationsDir = path.join(__dirname, '../src/lib/db/migrations')
   const migrationFiles = fs.readdirSync(migrationsDir)
     .filter(file => file.endsWith('.sql'))
     .sort()

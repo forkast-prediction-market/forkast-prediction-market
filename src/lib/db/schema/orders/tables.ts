@@ -1,15 +1,15 @@
 import { sql } from 'drizzle-orm'
 import {
-  char,
+  bigint,
   check,
   index,
   integer,
   numeric,
   pgPolicy,
   pgTable,
+  smallint,
   text,
   timestamp,
-  varchar,
 } from 'drizzle-orm/pg-core'
 import { users } from '@/lib/db/schema/auth/tables'
 import { conditions, outcomes } from '@/lib/db/schema/events/tables'
@@ -19,30 +19,39 @@ export const orders = pgTable('orders', {
   user_id: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  condition_id: char('condition_id', { length: 66 })
+  condition_id: text('condition_id')
     .notNull()
     .references(() => conditions.id),
   token_id: text('token_id')
     .notNull()
     .references(() => outcomes.token_id),
-  type: varchar('type', { length: 10 }).notNull().default('market'), // 'market' | 'limit'
-  side: varchar('side', { length: 4 }).notNull(), // 'buy' | 'sell'
-  amount: numeric('amount').notNull(),
-  price: numeric('price'),
-  status: varchar('status', { length: 20 }).notNull().default('pending'),
+  type: smallint('type').notNull(),
+  side: smallint('side').notNull(),
+  price: bigint({ mode: 'bigint' }),
+  share: bigint({ mode: 'bigint' }),
+  maker_amount: bigint({ mode: 'bigint' }),
+  status: text('status').notNull().default('open'),
+  maker_address: text().notNull(),
+  taker_address: text().notNull(),
+  signer_address: text(),
+  salt: numeric({ precision: 78, scale: 0 }),
+  expiration: timestamp('expiration', { withTimezone: true }),
+  nonce: bigint({ mode: 'bigint' }),
+  fee_rate_bps: integer().notNull(),
+  referrer: text().notNull(),
+  affiliate: text(),
+  affiliate_percentage: integer(),
+  signature_type: smallint().default(0),
+  signature: text(),
   affiliate_user_id: text('affiliate_user_id').references(() => users.id),
-  trade_fee_bps: integer('trade_fee_bps').notNull().default(0),
-  affiliate_share_bps: integer('affiliate_share_bps').notNull().default(0),
-  fork_fee_amount: numeric('fork_fee_amount').notNull().default('0'),
-  affiliate_fee_amount: numeric('affiliate_fee_amount').notNull().default('0'),
   created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
   updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
 }, table => ({
   // Performance indexes
   idxOrdersUserId: index('idx_orders_user_id').on(table.user_id),
-  idxOrdersCondition: index('idx_orders_condition').on(table.condition_id, table.token_id),
+  idxOrdersCondition: index('idx_orders_condition_id').on(table.condition_id, table.token_id),
   idxOrdersStatus: index('idx_orders_status').on(table.status),
-  idxOrdersCreatedAt: index('idx_orders_created_at').on(table.created_at),
+  idxOrdersCreatedAt: index('idx_orders_created_at').using('brin', table.created_at),
 
   // RLS policies
   serviceRoleAllOrders: pgPolicy('service_role_all_orders', {
@@ -54,11 +63,7 @@ export const orders = pgTable('orders', {
   }),
 
   // Check constraints
-  typeCheck: check('orders_type_check', sql`${table.type} IN ('market', 'limit')`),
-  sideCheck: check('orders_side_check', sql`${table.side} IN ('buy', 'sell')`),
-  statusCheck: check('orders_status_check', sql`${table.status} IN ('pending', 'filled', 'cancelled')`),
-  amountCheck: check('orders_amount_check', sql`${table.amount} > 0`),
-  priceCheck: check('orders_price_check', sql`${table.price} IS NULL OR (${table.price} >= 0.0001 AND ${table.price} <= 0.9999)`),
-  tradeFeeCheck: check('orders_trade_fee_bps_check', sql`${table.trade_fee_bps} >= 0 AND ${table.trade_fee_bps} <= 1000`),
-  affiliateShareCheck: check('orders_affiliate_share_bps_check', sql`${table.affiliate_share_bps} >= 0 AND ${table.affiliate_share_bps} <= 10000`),
+  typeCheck: check('orders_type_check', sql`${table.type} IN (0, 1)`),
+  sideCheck: check('orders_side_check', sql`${table.side} IN (0, 1)`),
+  statusCheck: check('orders_status_check', sql`${table.status} IN ('open', 'filled', 'cancelled')`),
 })).enableRLS()
