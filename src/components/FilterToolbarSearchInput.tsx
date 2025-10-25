@@ -58,7 +58,7 @@ export default function FilterToolbarSearchInput({ search, bookmarked = 'false' 
     return () => clearTimeout(handler)
   }, [searchQuery, router])
 
-  const iconClasses = 'absolute top-1/2 left-3 z-10 size-4 -translate-y-1/2 text-muted-foreground'
+  const iconClasses = 'pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground'
 
   return (
     <div className="relative w-full md:w-64 lg:w-72 xl:w-80">
