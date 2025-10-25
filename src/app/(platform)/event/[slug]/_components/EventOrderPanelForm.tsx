@@ -1,4 +1,4 @@
-import type { Event } from '@/types'
+import type { Event, OrderSide, OrderType } from '@/types'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import Form from 'next/form'
 import { toast } from 'sonner'
@@ -143,22 +143,26 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       return
     }
 
-    type OrderSide = 0 | 1
-    type OrderType = 0 | 1
     const payload = {
-      fee_rate_bps: 200,
-      maker_address: user.address,
-      signature_type: 0,
+      // begin blockchain data
+      salt: 0,
+      maker: user.address,
+      signer: user.address,
+      taker: user.address,
+      referrer: user.address,
+      affiliate: user.address,
       token_id: state.outcome.token_id,
-      affiliate_percentage: 0,
-      taker_address: '0x0000000000000000000000000000000000000000',
-      side: state.side === 'buy' ? 0 : 1 as OrderSide,
-      type: state.type === 'market' ? 0 : 1 as OrderType,
-      referrer: '0x0000000000000000000000000000000000000000',
-      affiliate: '0x0000000000000000000000000000000000000000',
       maker_amount: toMicro(state.amount),
-      price: state.type === 'limit' ? toMicro(state.limitPrice) : undefined,
-      shares: state.type === 'limit' ? toMicro(state.limitShares) : undefined,
+      taker_amount: toMicro(state.amount),
+      expiration: 0,
+      nonce: 0,
+      fee_rate_bps: 200,
+      affiliate_percentage: 0,
+      side: state.side === 'buy' ? 0 : 1 as OrderSide,
+      signature: '',
+      // end blockchain data
+
+      type: state.type === 'market' ? 0 : 1 as OrderType,
       condition_id: state.market.condition_id,
     }
 

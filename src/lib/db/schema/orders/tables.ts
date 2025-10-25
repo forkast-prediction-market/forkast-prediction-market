@@ -14,9 +14,9 @@ export const orders = pgTable('orders', {
 
   // begin blockchain data
   salt: bigint({ mode: 'bigint' }),
-  maker_address: text().notNull(),
-  signer_address: text().notNull(),
-  taker_address: text().notNull(),
+  maker: text().notNull(),
+  signer: text().notNull(),
+  taker: text().notNull(),
   referrer: text().notNull(),
   affiliate: text(),
   token_id: text().notNull(),
@@ -28,8 +28,7 @@ export const orders = pgTable('orders', {
   affiliate_percentage: smallint(),
   side: smallint().notNull(),
   signature: text(),
-
-  // end of blockchain data
+  // end blockchain data
 
   user_id: text().notNull().references(() => users.id, { onDelete: 'cascade' }),
   condition_id: text().notNull().references(() => conditions.id),

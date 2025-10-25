@@ -22,8 +22,7 @@ CREATE TABLE orders
   affiliate_percentage smallint                                         NOT NULL,
   side                 smallint                                         NOT NULL,
   signature            text,
-
-  -- end of blockchain data
+  -- end blockchain data
 
   user_id              text                                             NOT NULL,
   condition_id         text                                             NOT NULL,
