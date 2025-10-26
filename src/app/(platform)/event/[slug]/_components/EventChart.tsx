@@ -15,7 +15,7 @@ export default function EventChart({ event }: EventChartProps) {
 
   const [activeTimeRange, setActiveTimeRange] = useState('1D')
   const timeRanges = ['1H', '6H', '1D', '1W', '1M', 'ALL']
-  const POLYMARKET_COLORS = ['#2D9CDB', '#FF5952', '#27AE60', '#9B51E0']
+  const POLYMARKET_COLORS = ['#FF6600', '#2D9CDB', '#4E6377', '#FDC500']
 
   function generateChartData() {
     const topMarkets = getTopMarkets()
