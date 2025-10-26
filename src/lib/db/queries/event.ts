@@ -218,7 +218,7 @@ export const EventRepository = {
       whereConditions.push(eq(events.status, 'active'))
 
       if (search) {
-        whereConditions.push(ilike(events.title, `%${search}%`))
+        whereConditions.push(ilike(events.title, `%${search.toLowerCase()}%`))
       }
 
       if (tag && tag !== 'trending' && tag !== 'new') {
@@ -302,7 +302,7 @@ export const EventRepository = {
         .filter(event => event.markets?.length > 0)
         .map(event => eventResource(event as DrizzleEventResult, userId))
 
-      if (!bookmarked && tag === 'trending') {
+      if (!bookmarked && tag === 'trending' && !search) {
         return {
           data: eventsWithMarkets.filter(event => event.is_trending),
           error: null,

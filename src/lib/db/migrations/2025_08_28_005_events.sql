@@ -140,7 +140,8 @@ CREATE TABLE subgraph_syncs
 -- 2. INDEXES
 -- ===========================================
 
-CREATE INDEX events_end_date_idx ON events (end_date);
+CREATE INDEX idx_events_end_date ON events (end_date);
+CREATE INDEX idx_events_title_lower_gin_trgm ON events USING GIN (LOWER(title) gin_trgm_ops);
 
 -- ===========================================
 -- 3. ROW LEVEL SECURITY
