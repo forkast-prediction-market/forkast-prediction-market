@@ -94,7 +94,7 @@ export function useIsBinaryMarket() {
 }
 
 export function useIsLimitOrder() {
-  return useOrder(state => state.type === ORDER_SIDE.SELL)
+  return useOrder(state => state.type === ORDER_TYPE.LIMIT)
 }
 
 export function getAvgSellPrice() {
