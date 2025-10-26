@@ -6,7 +6,7 @@ import { localPoint } from '@visx/event'
 import { Group } from '@visx/group'
 import { scaleLinear, scaleTime } from '@visx/scale'
 import { LinePath } from '@visx/shape'
-import { defaultStyles, TooltipWithBounds, useTooltip } from '@visx/tooltip'
+import { useTooltip } from '@visx/tooltip'
 import { bisector } from 'd3-array'
 import { useCallback, useLayoutEffect, useState } from 'react'
 
@@ -30,19 +30,6 @@ interface PredictionChartProps {
   margin?: { top: number, right: number, bottom: number, left: number }
 }
 
-const tooltipStyles = {
-  ...defaultStyles,
-  backgroundColor: 'hsl(var(--card))',
-  color: 'hsl(var(--card-foreground))',
-  border: '1px solid hsl(var(--border))',
-  borderRadius: '8px',
-  padding: '12px 16px',
-  fontSize: '12px',
-  fontWeight: '500',
-  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
-  backdropFilter: 'blur(8px)',
-}
-
 const bisectDate = bisector<DataPoint, Date>(d => d.date).left
 
 // Example usage with multiple custom series:
@@ -57,6 +44,12 @@ const bisectDate = bisector<DataPoint, Date>(d => d.date).left
 // <PredictionChart data={customData} series={customSeries} />
 
 const defaultMargin = { top: 30, right: 60, bottom: 40, left: 0 }
+const TOOLTIP_LABEL_HEIGHT = 20
+const TOOLTIP_LABEL_GAP = 6
+const TOOLTIP_LABEL_MAX_WIDTH = 160
+const TOOLTIP_LABEL_ANCHOR_OFFSET = 10
+const FUTURE_LINE_COLOR = '#2C3F4F'
+const FUTURE_LINE_OPACITY = 0.55
 
 export function PredictionChart({
   data: providedData,
@@ -72,7 +65,6 @@ export function PredictionChart({
   const {
     tooltipData,
     tooltipLeft,
-    tooltipTop,
     tooltipOpen,
     showTooltip,
     hideTooltip,
@@ -165,6 +157,99 @@ export function PredictionChart({
     nice: true,
   })
 
+  const tooltipActive
+    = tooltipOpen && tooltipData && tooltipLeft !== undefined
+  const clampedTooltipX = tooltipActive
+    ? Math.max(0, Math.min(tooltipLeft as number, innerWidth))
+    : 0
+  const cursorDate = tooltipActive
+    ? xScale.invert(clampedTooltipX)
+    : null
+  const cursorSplitIndex = cursorDate
+    ? Math.min(
+        data.length,
+        Math.max(1, bisectDate(data, cursorDate, 1)),
+      )
+    : data.length
+
+  interface TooltipEntry {
+    key: string
+    name: string
+    color: string
+    value: number
+    initialTop: number
+  }
+  type PositionedTooltipEntry = TooltipEntry & { top: number }
+
+  const tooltipEntries: TooltipEntry[] = tooltipActive && tooltipData
+    ? series
+        .map((seriesItem) => {
+          const value = tooltipData[seriesItem.key]
+          if (typeof value !== 'number') {
+            return null
+          }
+
+          return {
+            key: seriesItem.key,
+            name: seriesItem.name,
+            color: seriesItem.color,
+            value,
+            initialTop: margin.top
+              + yScale(value)
+              - TOOLTIP_LABEL_HEIGHT / 2,
+          }
+        })
+        .filter((entry): entry is TooltipEntry => entry !== null)
+    : []
+
+  let positionedTooltipEntries: PositionedTooltipEntry[] = []
+  if (tooltipEntries.length > 0) {
+    const sorted = [...tooltipEntries].sort(
+      (a, b) => a.initialTop - b.initialTop,
+    )
+
+    const minTop = margin.top
+    const rawMaxTop = margin.top + innerHeight - TOOLTIP_LABEL_HEIGHT
+    const maxTop = rawMaxTop < minTop ? minTop : rawMaxTop
+    const step = TOOLTIP_LABEL_HEIGHT + TOOLTIP_LABEL_GAP
+
+    const positioned: PositionedTooltipEntry[] = []
+    sorted.forEach((entry, index) => {
+      const clampedDesired = Math.max(
+        minTop,
+        Math.min(entry.initialTop, maxTop),
+      )
+      const previousTop = index > 0 ? positioned[index - 1].top : null
+      const top = previousTop === null
+        ? clampedDesired
+        : Math.max(clampedDesired, previousTop + step)
+
+      positioned.push({
+        ...entry,
+        top,
+      })
+    })
+
+    if (positioned.length > 0) {
+      const lastIndex = positioned.length - 1
+      const overflow = positioned[lastIndex].top - maxTop
+      if (overflow > 0) {
+        for (let i = 0; i < positioned.length; i += 1) {
+          positioned[i].top -= overflow
+        }
+      }
+
+      const underflow = minTop - positioned[0].top
+      if (underflow > 0) {
+        for (let i = 0; i < positioned.length; i += 1) {
+          positioned[i].top += underflow
+        }
+      }
+    }
+
+    positionedTooltipEntries = positioned
+  }
+
   function getDate(d: DataPoint) {
     return d.date
   }
@@ -183,7 +268,6 @@ export function PredictionChart({
         style={{ overflow: 'visible' }}
       >
         <Group left={margin.left} top={margin.top}>
-          {/* Grid lines horizontais pontilhadas - estilo Polymarket */}
           {[0, 20, 40, 60, 80, 100].map(value => (
             <line
               key={`grid-${value}`}
@@ -198,7 +282,6 @@ export function PredictionChart({
             />
           ))}
 
-          {/* Linha de 50% destacada */}
           <line
             x1={0}
             x2={innerWidth}
@@ -210,67 +293,105 @@ export function PredictionChart({
             opacity={0.8}
           />
 
-          {/* Linhas de dados com estilo Polymarket */}
-          {series.map(seriesItem => (
-            <LinePath<DataPoint>
-              key={seriesItem.key}
-              data={data}
-              x={d => xScale(getDate(d))}
-              y={d => yScale((d[seriesItem.key] as number) || 0)}
-              stroke={seriesItem.color}
-              strokeWidth={2.5}
-              curve={curveMonotoneX}
-              fill="transparent"
-            />
-          ))}
+          {series.map((seriesItem) => {
+            const seriesColor = seriesItem.color
 
-          {/* Markers circulares nas pontas - estilo Polymarket */}
-          {data.length > 0
-            && series.map(seriesItem => (
-              <g key={`${seriesItem.key}-marker`}>
-                {/* Círculo externo (borda branca) */}
-                <circle
-                  cx={getX(data[data.length - 1])}
-                  cy={yScale(
-                    (data[data.length - 1][seriesItem.key] as number) || 0,
-                  )}
-                  r={5}
-                  fill="white"
-                  stroke={seriesItem.color}
-                  strokeWidth={2}
-                />
-                {/* Círculo interno */}
-                <circle
-                  cx={getX(data[data.length - 1])}
-                  cy={yScale(
-                    (data[data.length - 1][seriesItem.key] as number) || 0,
-                  )}
-                  r={3}
-                  fill={seriesItem.color}
-                />
+            let coloredPoints: DataPoint[] = data
+            let mutedPoints: DataPoint[] = []
+
+            if (tooltipActive && cursorSplitIndex > 0) {
+              coloredPoints = data.slice(0, cursorSplitIndex)
+              mutedPoints = cursorSplitIndex < data.length
+                ? data.slice(cursorSplitIndex - 1)
+                : []
+            }
+
+            return (
+              <g key={seriesItem.key}>
+                {mutedPoints.length > 1 && (
+                  <LinePath<DataPoint>
+                    data={mutedPoints}
+                    x={d => xScale(getDate(d))}
+                    y={d => yScale((d[seriesItem.key] as number) || 0)}
+                    stroke={FUTURE_LINE_COLOR}
+                    strokeWidth={1.75}
+                    strokeDasharray="1 1"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeOpacity={FUTURE_LINE_OPACITY}
+                    curve={curveMonotoneX}
+                    fill="transparent"
+                  />
+                )}
+
+                {coloredPoints.length > 1 && (
+                  <LinePath<DataPoint>
+                    data={coloredPoints}
+                    x={d => xScale(getDate(d))}
+                    y={d => yScale((d[seriesItem.key] as number) || 0)}
+                    stroke={seriesColor}
+                    strokeWidth={1.75}
+                    strokeOpacity={1}
+                    strokeDasharray="1 1"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    curve={curveMonotoneX}
+                    fill="transparent"
+                  />
+                )}
               </g>
-            ))}
+            )
+          })}
 
-          {/* Eixo direito com porcentagens - estilo Polymarket */}
+          {/* Marcadores nas pontas das séries */}
+          {data.length > 0
+            && series.map((seriesItem) => {
+              const lastPoint = data[data.length - 1]
+              const value = (lastPoint[seriesItem.key] as number) || 0
+              const cx = getX(lastPoint)
+              const cy = yScale(value)
+
+              return (
+                <g key={`${seriesItem.key}-marker`}>
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={7}
+                    fill="transparent"
+                    stroke={seriesItem.color}
+                    strokeOpacity={0.18}
+                    strokeWidth={2}
+                  />
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={4}
+                    fill={seriesItem.color}
+                    stroke={seriesItem.color}
+                    strokeWidth={1.5}
+                  />
+                </g>
+              )
+            })}
+
           <AxisRight
             left={innerWidth}
             scale={yScale}
             tickFormat={value => `${value}%`}
-            stroke="#344452"
-            tickStroke="#344452"
+            stroke="transparent"
+            tickStroke="transparent"
             tickLabelProps={{
-              fill: '#6b7280',
+              fill: '#858D92',
               fontSize: 11,
+              fontFamily: 'Arial, sans-serif',
               textAnchor: 'start',
               dy: '0.33em',
               dx: '0.5em',
             }}
             numTicks={6}
-            strokeWidth={1}
-            tickLength={6}
+            tickLength={0}
           />
 
-          {/* Eixo inferior com datas formato americano */}
           <AxisBottom
             top={innerHeight}
             scale={xScale}
@@ -281,19 +402,19 @@ export function PredictionChart({
                 day: 'numeric',
               })
             }}
-            stroke="#344452"
-            tickStroke="#344452"
+            stroke="transparent"
+            tickStroke="transparent"
             tickLabelProps={{
-              fill: '#6b7280',
+              fill: '#858D92',
               fontSize: 11,
+              fontFamily: 'Arial, sans-serif',
               textAnchor: 'middle',
+              dy: '0.25em',
             }}
             numTicks={6}
-            strokeWidth={1}
-            tickLength={6}
+            tickLength={0}
           />
 
-          {/* Área interativa para tooltip */}
           <rect
             x={0}
             y={0}
@@ -306,67 +427,96 @@ export function PredictionChart({
             onMouseLeave={() => hideTooltip()}
           />
 
-          {/* Linha vertical do tooltip */}
-          {tooltipOpen && tooltipData && tooltipLeft !== undefined && (
+          {tooltipActive && (
             <line
-              x1={tooltipLeft}
-              x2={tooltipLeft}
-              y1={0}
+              x1={clampedTooltipX}
+              x2={clampedTooltipX}
+              y1={-16}
               y2={innerHeight}
-              stroke="#6b7280"
+              stroke="#2C3F4F"
               strokeWidth={1.5}
-              strokeDasharray="2,2"
-              opacity={0.7}
+              opacity={0.9}
+              pointerEvents="none"
             />
           )}
+
+          {tooltipActive
+            && positionedTooltipEntries.map(entry => (
+              <circle
+                key={`${entry.key}-tooltip-circle`}
+                cx={clampedTooltipX}
+                cy={yScale(entry.value)}
+                r={4}
+                fill={entry.color}
+                stroke={entry.color}
+                strokeOpacity={0.1}
+                strokeWidth={2}
+                pointerEvents="none"
+              />
+            ))}
         </Group>
       </svg>
 
-      {/* Tooltip original unificado */}
-      {tooltipOpen
-        && tooltipData
-        && tooltipLeft !== undefined
-        && tooltipTop !== undefined && (
-        <TooltipWithBounds
-          key={`tooltip-${tooltipData.date.getTime()}-${tooltipLeft}-${tooltipTop}`}
-          top={tooltipTop + margin.top}
-          left={tooltipLeft + margin.left}
-          style={tooltipStyles}
-        >
-          <div>
-            <div className="mb-2 border-b border-border pb-1 text-sm font-semibold text-card-foreground">
-              {tooltipData.date.toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-              })}
-            </div>
-            <div className="space-y-1">
-              {series.map(seriesItem => (
-                <div
-                  key={seriesItem.key}
-                  className="flex items-center justify-between gap-3 text-xs"
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="size-3 rounded-full border border-muted"
-                      style={{ backgroundColor: seriesItem.color }}
-                    />
-                    <span className="text-muted-foreground">
-                      {seriesItem.name}
-                    </span>
-                  </div>
-                  <span className="font-bold text-card-foreground">
-                    {((tooltipData[seriesItem.key] as number) || 0).toFixed(
-                      1,
-                    )}
-                    %
-                  </span>
-                </div>
-              ))}
-            </div>
+      {tooltipActive && positionedTooltipEntries.length > 0 && tooltipData && (
+        <div className="pointer-events-none absolute inset-0 z-10">
+          <div
+            className="absolute text-[12px] font-medium text-[#858D92]"
+            style={{
+              top: Math.max(margin.top - 28, 0),
+              left: margin.left + clampedTooltipX - 12,
+              transform: 'translateX(-100%)',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {tooltipData.date.toLocaleString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+            })}
           </div>
-        </TooltipWithBounds>
+
+          {(() => {
+            const labelRightBoundary = margin.left + innerWidth - 4
+            const labelLeftBoundary = Math.min(
+              labelRightBoundary,
+              margin.left + TOOLTIP_LABEL_MAX_WIDTH,
+            )
+            const baseLabelAnchor = margin.left
+              + clampedTooltipX
+              - TOOLTIP_LABEL_ANCHOR_OFFSET
+            const resolvedLeft = Math.min(
+              labelRightBoundary,
+              Math.max(labelLeftBoundary, baseLabelAnchor),
+            )
+
+            return positionedTooltipEntries.map(entry => (
+              <div
+                key={`${entry.key}-label`}
+                className={`
+                  absolute flex h-5 min-w-[112px] items-center justify-between gap-2 rounded px-2 text-[11px] leading-5
+                  font-semibold text-white
+                `}
+                style={{
+                  top: entry.top,
+                  left: resolvedLeft,
+                  maxWidth: `${TOOLTIP_LABEL_MAX_WIDTH}px`,
+                  transform: 'translateX(-100%)',
+                  backgroundColor: entry.color,
+                }}
+              >
+                <span className="max-w-[140px] truncate capitalize">
+                  {entry.name}
+                </span>
+                <span>
+                  {entry.value.toFixed(1)}
+                  %
+                </span>
+              </div>
+            ))
+          })()}
+        </div>
       )}
     </div>
   )
