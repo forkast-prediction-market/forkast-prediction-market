@@ -15,7 +15,7 @@ const StoreOrderSchema = z.object({
   token_id: z.string(),
   maker_amount: z.string(),
   taker_amount: z.string(),
-  expiration: z.string(),
+  expiration: z.number(),
   nonce: z.number(),
   fee_rate_bps: z.number(),
   affiliate_percentage: z.number(),

@@ -154,7 +154,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       token_id: state.outcome.token_id,
       maker_amount: toMicro(state.amount),
       taker_amount: toMicro(state.amount),
-      expiration: '2026-12-31T23:59:59Z',
+      expiration: 202612232334,
       nonce: 3003,
       fee_rate_bps: 200,
       affiliate_percentage: 0,
