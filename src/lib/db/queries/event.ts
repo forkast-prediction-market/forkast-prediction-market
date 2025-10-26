@@ -2,6 +2,7 @@ import type { ActivityOrder, Event, QueryResult, TopHolder } from '@/types'
 import { and, desc, eq, exists, ilike, sql } from 'drizzle-orm'
 import { unstable_cacheTag as cacheTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
+import { OUTCOME_INDEX } from '@/lib/constants'
 import { users } from '@/lib/db/schema/auth/tables'
 import { bookmarks } from '@/lib/db/schema/bookmarks/tables'
 import { conditions, event_tags, events, markets, outcomes, tags } from '@/lib/db/schema/events/tables'
@@ -86,7 +87,7 @@ function eventResource(event: DrizzleEventResult, userId: string): Event {
       }
     })
 
-    const primaryOutcome = normalizedOutcomes.find(outcome => outcome.outcome_index === 0) ?? normalizedOutcomes[0]
+    const primaryOutcome = normalizedOutcomes.find(outcome => outcome.outcome_index === OUTCOME_INDEX.YES) ?? normalizedOutcomes[0]
     const yesPrice = typeof primaryOutcome?.current_price === 'number' ? primaryOutcome.current_price : null
     const probability = typeof yesPrice === 'number' ? yesPrice * 100 : 0
     const normalizedCurrentVolume24h = Number(market.current_volume_24h || 0)
@@ -489,10 +490,10 @@ export const EventRepository = {
           id: orders.id,
           side: orders.side,
           amount: orders.maker_amount,
-          price: sql<number>`CASE 
-            WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0 
-            THEN ${orders.taker_amount}::numeric / (${orders.maker_amount} + ${orders.taker_amount})::numeric 
-            ELSE 0.5 
+          price: sql<number>`CASE
+            WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0
+            THEN ${orders.taker_amount}::numeric / (${orders.maker_amount} + ${orders.taker_amount})::numeric
+            ELSE 0.5
           END`.as('price'),
           created_at: orders.created_at,
           status: orders.status,
@@ -564,10 +565,10 @@ export const EventRepository = {
           outcomeText: String(holderData.outcome_text),
         }
 
-        if (topHolder.outcomeIndex === 0) {
+        if (topHolder.outcomeIndex === OUTCOME_INDEX.YES) {
           yesHolders.push(topHolder)
         }
-        else if (topHolder.outcomeIndex === 1) {
+        else {
           noHolders.push(topHolder)
         }
       }

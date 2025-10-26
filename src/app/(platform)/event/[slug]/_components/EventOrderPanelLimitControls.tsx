@@ -9,6 +9,7 @@ import {
   Select as UiSelect,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 import { getUserShares, useOrder } from '@/stores/useOrder'
 
 function clamp(value: number, min: number, max: number) {
@@ -50,7 +51,7 @@ export default function EventOrderPanelLimitControls() {
       return 0
     }
 
-    if (side === 'sell') {
+    if (side === ORDER_SIDE.SELL) {
       const total = (limitPriceNumber * limitSharesNumber) / 100
       return Number.isFinite(total) ? total : 0
     }
@@ -65,7 +66,7 @@ export default function EventOrderPanelLimitControls() {
     const nextPrice = clampedValue.toFixed(1)
     setLimitPrice(nextPrice)
 
-    if (type === 'limit') {
+    if (type === ORDER_TYPE.LIMIT) {
       const sharesValue = Number.parseFloat(limitShares) || 0
       const nextAmount = (clampedValue * sharesValue) / 100
 
@@ -80,7 +81,7 @@ export default function EventOrderPanelLimitControls() {
     const nextShares = clampedValue.toString()
     setLimitShares(nextShares)
 
-    if (type === 'limit') {
+    if (type === ORDER_TYPE.LIMIT) {
       const priceValue = Number.parseFloat(limitPrice) || 0
       const nextAmount = (priceValue * clampedValue) / 100
 
@@ -121,7 +122,7 @@ export default function EventOrderPanelLimitControls() {
                   : parts[0]
                 setLimitPrice(normalized || '0')
 
-                if (type === 'limit') {
+                if (type === ORDER_TYPE.LIMIT) {
                   const priceValue = Number.parseFloat(normalized) || 0
                   const sharesValue = Number.parseFloat(limitShares) || 0
                   const nextAmount = (priceValue * sharesValue) / 100
@@ -176,7 +177,7 @@ export default function EventOrderPanelLimitControls() {
             />
           </div>
         </div>
-        {side === 'sell'
+        {side === ORDER_SIDE.SELL
           ? (
               <div className="ml-auto flex h-8 w-1/2 justify-end gap-2">
                 {['25%', '50%', 'MAX'].map(label => (

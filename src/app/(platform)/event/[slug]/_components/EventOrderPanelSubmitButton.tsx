@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { ORDER_SIDE } from '@/lib/constants'
 import { getUserShares, useAmountAsNumber, useOrder } from '@/stores/useOrder'
 
 export default function EventOrderPanelSubmitButton() {
@@ -12,7 +13,7 @@ export default function EventOrderPanelSubmitButton() {
       disabled={
         state.isLoading
         || !amount
-        || (state.side === 'sell' && amount > getUserShares())
+        || (state.side === ORDER_SIDE.SELL && amount > getUserShares())
       }
       onClick={e => state.setLastMouseEvent(e)}
       className="w-full text-base font-bold"

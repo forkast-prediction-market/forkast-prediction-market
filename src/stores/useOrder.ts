@@ -1,10 +1,9 @@
 import type { RefObject } from 'react'
-import type { Event, Market, Outcome } from '@/types'
+import type { Event, Market, OrderSide, OrderType, Outcome } from '@/types'
 import { create } from 'zustand'
+import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { mockUser } from '@/lib/mockData'
 
-type Side = 'buy' | 'sell'
-export type OrderType = 'market' | 'limit'
 export type LimitExpirationOption = 'end-of-day' | 'custom'
 
 interface OrderState {
@@ -12,7 +11,7 @@ interface OrderState {
   event: Event | null
   market: Market | null
   outcome: Outcome | null
-  side: Side
+  side: OrderSide
   type: OrderType
   amount: string
   limitPrice: string
@@ -29,7 +28,7 @@ interface OrderState {
   setMarket: (market: Market) => void
   setOutcome: (outcome: Outcome) => void
   reset: () => void
-  setSide: (side: Side) => void
+  setSide: (side: OrderSide) => void
   setType: (type: OrderType) => void
   setAmount: (amount: string) => void
   setLimitPrice: (price: string) => void
@@ -45,8 +44,8 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   event: null,
   market: null,
   outcome: null,
-  side: 'buy',
-  type: 'market',
+  side: ORDER_SIDE.BUY,
+  type: ORDER_TYPE.MARKET,
   amount: '0.00',
   limitPrice: '0.0',
   limitShares: '0',
@@ -61,7 +60,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   setMarket: (market: Market) => set({ market }),
   setOutcome: (outcome: Outcome) => set({ outcome }),
   reset: () => set(store.getInitialState()),
-  setSide: (side: Side) => set({ side }),
+  setSide: (side: OrderSide) => set({ side }),
   setType: (type: OrderType) => set(state => ({
     type,
     amount: '0.00',
@@ -94,6 +93,10 @@ export function useIsBinaryMarket() {
   return useOrder(state => state.event?.total_markets_count === 1)
 }
 
+export function useIsLimitOrder() {
+  return useOrder(state => state.type === ORDER_TYPE.LIMIT)
+}
+
 export function getAvgSellPrice() {
   const state = useOrder.getState()
 
@@ -102,7 +105,7 @@ export function getAvgSellPrice() {
   }
 
   const sellPrice
-    = state.outcome.outcome_index === 0
+    = state.outcome.outcome_index === OUTCOME_INDEX.YES
       ? Math.round(state.market.probability * 0.95)
       : Math.round((100 - state.market.probability) * 0.95)
 
@@ -117,7 +120,7 @@ export function calculateSellAmount() {
   }
 
   const sellPrice
-    = state.outcome.outcome_index === 0
+    = state.outcome.outcome_index === OUTCOME_INDEX.YES
       ? (state.market.probability / 100) * 0.95
       : ((100 - state.market.probability) / 100) * 0.95
 
@@ -131,7 +134,7 @@ export function getUserShares() {
     return 0
   }
 
-  const outcomeKey = `${state.market.condition_id}-${state.outcome.outcome_index === 0 ? 'yes' : 'no'}` as keyof typeof mockUser.shares
+  const outcomeKey = `${state.market.condition_id}-${state.outcome.outcome_index === OUTCOME_INDEX.YES ? 'yes' : 'no'}` as keyof typeof mockUser.shares
   const shares = mockUser.shares[outcomeKey]
 
   return shares ?? 0
