@@ -20,6 +20,7 @@ CREATE TABLE orders
   fee_rate_bps         SMALLINT                                         NOT NULL,
   affiliate_percentage SMALLINT                                         NOT NULL,
   side                 SMALLINT                                         NOT NULL,
+  signature_type       SMALLINT                                         NOT NULL,
   signature            TEXT,
   -- end blockchain data
   user_id              TEXT                                             NOT NULL,

@@ -145,7 +145,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
     const payload = {
       // begin blockchain data
-      salt: 0,
+      salt: 333000003,
       maker: user.address,
       signer: user.address,
       taker: user.address,
@@ -154,12 +154,13 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       token_id: state.outcome.token_id,
       maker_amount: toMicro(state.amount),
       taker_amount: toMicro(state.amount),
-      expiration: 0,
-      nonce: 0,
+      expiration: '2026-12-31T23:59:59Z',
+      nonce: 3003,
       fee_rate_bps: 200,
       affiliate_percentage: 0,
       side: state.side === 'buy' ? 0 : 1 as OrderSide,
-      signature: '',
+      signature_type: 0,
+      signature: '0x',
       // end blockchain data
 
       type: state.type === 'market' ? 0 : 1 as OrderType,

@@ -27,6 +27,7 @@ export const orders = pgTable('orders', {
   fee_rate_bps: smallint().notNull(),
   affiliate_percentage: smallint(),
   side: smallint().notNull(),
+  signature_type: smallint().notNull(),
   signature: text(),
   // end blockchain data
 

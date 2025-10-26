@@ -15,11 +15,12 @@ const StoreOrderSchema = z.object({
   token_id: z.string(),
   maker_amount: z.string(),
   taker_amount: z.string(),
-  expiration: z.number(),
+  expiration: z.string(),
   nonce: z.number(),
   fee_rate_bps: z.number(),
   affiliate_percentage: z.number(),
   side: z.union([z.literal(0), z.literal(1)]),
+  signature_type: z.number(),
   signature: z.string(),
   // end blockchain data
 
@@ -40,6 +41,7 @@ export async function storeOrderAction(payload: StoreOrderInput, _: string) {
   const validated = StoreOrderSchema.safeParse(payload)
 
   if (!validated.success) {
+    console.log(validated.error.issues)
     return {
       error: validated.error.issues[0].message,
     }
@@ -72,7 +74,7 @@ export async function storeOrderAction(payload: StoreOrderInput, _: string) {
       maker_amount: BigInt(validated.data.maker_amount),
       taker_amount: BigInt(validated.data.taker_amount),
       nonce: BigInt(validated.data.nonce),
-      expiration: BigInt(validated.data.expiration),
+      expiration: BigInt(Math.floor(new Date(validated.data.expiration).getTime() / 1000)),
       user_id: user.id,
       affiliate_user_id: user.referred_by_user_id,
     })
