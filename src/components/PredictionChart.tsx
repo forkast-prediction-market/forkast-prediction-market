@@ -268,7 +268,6 @@ export function PredictionChart({
         style={{ overflow: 'visible' }}
       >
         <Group left={margin.left} top={margin.top}>
-          {/* Grid lines horizontais pontilhadas - estilo Polymarket */}
           {[0, 20, 40, 60, 80, 100].map(value => (
             <line
               key={`grid-${value}`}
@@ -283,7 +282,6 @@ export function PredictionChart({
             />
           ))}
 
-          {/* Linha de 50% destacada */}
           <line
             x1={0}
             x2={innerWidth}
@@ -295,7 +293,6 @@ export function PredictionChart({
             opacity={0.8}
           />
 
-          {/* Linhas de dados com estilo Polymarket */}
           {series.map((seriesItem) => {
             const seriesColor = seriesItem.color
 
@@ -377,7 +374,6 @@ export function PredictionChart({
               )
             })}
 
-          {/* Eixo direito com porcentagens - estilo Polymarket */}
           <AxisRight
             left={innerWidth}
             scale={yScale}
@@ -396,7 +392,6 @@ export function PredictionChart({
             tickLength={0}
           />
 
-          {/* Eixo inferior com datas formato americano */}
           <AxisBottom
             top={innerHeight}
             scale={xScale}
@@ -420,7 +415,6 @@ export function PredictionChart({
             tickLength={0}
           />
 
-          {/* Área interativa para tooltip */}
           <rect
             x={0}
             y={0}
@@ -433,7 +427,6 @@ export function PredictionChart({
             onMouseLeave={() => hideTooltip()}
           />
 
-          {/* Linha vertical e marcadores do tooltip */}
           {tooltipActive && (
             <line
               x1={clampedTooltipX}
@@ -518,7 +511,6 @@ export function PredictionChart({
                 </span>
                 <span>
                   {entry.value.toFixed(1)}
-                  {' '}
                   %
                 </span>
               </div>
