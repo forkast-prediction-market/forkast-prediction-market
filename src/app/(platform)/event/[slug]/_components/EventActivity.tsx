@@ -10,6 +10,7 @@ import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { OUTCOME_INDEX } from '@/lib/constants'
 
 interface EventActivityProps {
   event: Event
@@ -258,7 +259,7 @@ export default function EventActivity({ event }: EventActivityProps) {
                         {formatAmount(activity.amount)}
                       </span>
                       <span className={`ml-1 text-sm font-semibold ${
-                        activity.outcome.index === 0
+                        activity.outcome.index === OUTCOME_INDEX.YES
                           ? 'text-yes'
                           : 'text-no'
                       }`}

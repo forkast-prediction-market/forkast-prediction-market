@@ -3,6 +3,7 @@ import { RefreshCwIcon, TrendingDownIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
@@ -71,7 +72,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
             `)}
             onClick={() => {
               state.setMarket(market)
-              state.setSide('buy')
+              state.setSide(ORDER_SIDE.BUY)
             }}
           >
             {/* Mobile: Layout in column */}
@@ -115,13 +116,13 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                   size="outcome"
                   variant="yes"
                   className={cn({
-                    'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 0,
+                    'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === OUTCOME_INDEX.YES,
                   })}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
                     state.setOutcome(market.outcomes[0])
-                    state.setSide('buy')
+                    state.setSide(ORDER_SIDE.BUY)
                     state.setIsMobileOrderPanelOpen(true)
                   }}
                 >
@@ -139,13 +140,13 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                   size="outcome"
                   variant="no"
                   className={cn({
-                    'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 1,
+                    'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === OUTCOME_INDEX.NO,
                   })}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
                     state.setOutcome(market.outcomes[1])
-                    state.setSide('buy')
+                    state.setSide(ORDER_SIDE.BUY)
                     state.setIsMobileOrderPanelOpen(true)
                   }}
                 >
@@ -208,13 +209,13 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                   size="outcome"
                   variant="yes"
                   className={cn({
-                    'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 0,
+                    'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === OUTCOME_INDEX.YES,
                   }, 'w-36')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
                     state.setOutcome(market.outcomes[0])
-                    state.setSide('buy')
+                    state.setSide(ORDER_SIDE.BUY)
                     state.inputRef?.current?.focus()
                   }}
                 >
@@ -233,13 +234,13 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                   size="outcome"
                   variant="no"
                   className={cn({
-                    'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === 1,
+                    'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === OUTCOME_INDEX.NO,
                   }, 'w-36')}
                   onClick={(e) => {
                     e.stopPropagation()
                     state.setMarket(market)
                     state.setOutcome(market.outcomes[1])
-                    state.setSide('buy')
+                    state.setSide(ORDER_SIDE.BUY)
                     state.inputRef?.current?.focus()
                   }}
                 >

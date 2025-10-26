@@ -1,4 +1,5 @@
 import { useBalance } from '@/hooks/useBalance'
+import { ORDER_SIDE } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { getUserShares, useAmountAsNumber, useOrder, useOrderAmount, useOrderInputRef, useOrderSide } from '@/stores/useOrder'
 
@@ -17,7 +18,7 @@ export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputP
   function renderActionButtons(isMobile: boolean) {
     const baseButtonClasses = 'h-7 px-3 rounded-lg border text-[11px] transition-all duration-200 ease-in-out'
 
-    if (side === 'sell') {
+    if (side === ORDER_SIDE.SELL) {
       const userShares = getUserShares()
       const isDisabled = userShares <= 0
 
@@ -83,7 +84,7 @@ export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputP
                   onClick={() => {
                     const newValue = Math.max(
                       0,
-                      amount - (side === 'sell' ? 0.1 : 1),
+                      amount - (side === ORDER_SIDE.SELL ? 0.1 : 1),
                     )
                     state.setAmount(newValue.toFixed(2))
                   }}
@@ -105,24 +106,24 @@ export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputP
                       placeholder-muted-foreground outline-hidden
                       [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
                     `}
-                    placeholder={side === 'sell' ? '0' : '$1.00'}
+                    placeholder={side === ORDER_SIDE.SELL ? '0' : '$1.00'}
                     value={
-                      side === 'sell'
+                      side === ORDER_SIDE.SELL
                         ? orderAmount
                         : `$${orderAmount}`
                     }
                     onChange={(e) => {
-                      const rawValue = side === 'sell'
+                      const rawValue = side === ORDER_SIDE.SELL
                         ? e.target.value
                         : e.target.value.replace(/[^0-9.]/g, '')
 
-                      const value = side === 'sell'
+                      const value = side === ORDER_SIDE.SELL
                         ? Number.parseFloat(rawValue).toFixed(2)
                         : rawValue
 
                       const numericValue = Number.parseFloat(value)
 
-                      if (side === 'sell') {
+                      if (side === ORDER_SIDE.SELL) {
                         // For sell, limit by the amount of shares the user has
                         const userShares = getUserShares()
                         if (numericValue <= userShares || value === '') {
@@ -147,9 +148,9 @@ export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputP
                 <button
                   type="button"
                   onClick={() => {
-                    const newValue = amount + (side === 'sell' ? 0.1 : 1)
+                    const newValue = amount + (side === ORDER_SIDE.SELL ? 0.1 : 1)
 
-                    if (side === 'sell') {
+                    if (side === ORDER_SIDE.SELL) {
                       const userShares = getUserShares()
                       if (newValue <= userShares) {
                         state.setAmount(newValue.toFixed(2))
@@ -175,10 +176,10 @@ export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputP
             <div className="mb-2 flex items-center gap-3">
               <div className="shrink-0">
                 <div className="text-lg font-medium">
-                  {side === 'sell' ? 'Shares' : 'Amount'}
+                  {side === ORDER_SIDE.SELL ? 'Shares' : 'Amount'}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {side === 'sell'
+                  {side === ORDER_SIDE.SELL
                     ? ``
                     : `Balance $${balance.text || '0.00'}`}
                 </div>
@@ -195,24 +196,24 @@ export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputP
                     dark:text-slate-300 dark:placeholder-slate-500
                     [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
                   `}
-                  placeholder={side === 'sell' ? '0' : '$0.00'}
+                  placeholder={side === ORDER_SIDE.SELL ? '0' : '$0.00'}
                   value={
-                    side === 'sell'
+                    side === ORDER_SIDE.SELL
                       ? orderAmount
                       : `$${orderAmount}`
                   }
                   onChange={(e) => {
-                    const rawValue = side === 'sell'
+                    const rawValue = side === ORDER_SIDE.SELL
                       ? e.target.value
                       : e.target.value.replace(/[^0-9.]/g, '')
 
-                    const value = side === 'sell'
+                    const value = side === ORDER_SIDE.SELL
                       ? Number.parseFloat(rawValue).toFixed(2)
                       : rawValue
 
                     const numericValue = Number.parseFloat(value)
 
-                    if (side === 'sell') {
+                    if (side === ORDER_SIDE.SELL) {
                       // For sell, limit by the amount of shares the user has
                       const userShares = getUserShares()
                       if (numericValue <= userShares || value === '') {
@@ -249,13 +250,13 @@ export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputP
           type="button"
           className={cn(
             'h-7 rounded-lg border px-3 text-[11px] font-semibold transition-all duration-200 ease-in-out',
-            side === 'sell' && getUserShares() <= 0
+            side === ORDER_SIDE.SELL && getUserShares() <= 0
               ? 'cursor-not-allowed opacity-50'
               : 'hover:border-border hover:bg-white/10 dark:hover:bg-white/5',
           )}
-          disabled={side === 'sell' && getUserShares() <= 0}
+          disabled={side === ORDER_SIDE.SELL && getUserShares() <= 0}
           onClick={() => {
-            if (side === 'sell') {
+            if (side === ORDER_SIDE.SELL) {
               const userShares = getUserShares()
               if (userShares <= 0) {
                 return

@@ -1,4 +1,4 @@
-import type { Event, OrderSide, OrderType } from '@/types'
+import type { Event } from '@/types'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import Form from 'next/form'
 import { toast } from 'sonner'
@@ -15,12 +15,14 @@ import EventOrderPanelOutcomeButton from '@/app/(platform)/event/[slug]/_compone
 import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_components/EventOrderPanelSubmitButton'
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
+import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { cn, toMicro, triggerConfetti } from '@/lib/utils'
 import {
   calculateSellAmount,
   getAvgSellPrice,
   useAmountAsNumber,
   useIsBinaryMarket,
+  useIsLimitOrder,
   useNoPrice,
   useOrder,
   useYesPrice,
@@ -42,7 +44,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const noPrice = useNoPrice()
   const isBinaryMarket = useIsBinaryMarket()
   const amount = useAmountAsNumber()
-  const isLimitOrder = state.type === 'limit'
+  const isLimitOrder = useIsLimitOrder()
 
   async function storeOrder(payload: any, signature: string) {
     state.setIsLoading(true)
@@ -57,7 +59,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         return
       }
 
-      if (state.side === 'sell') {
+      if (state.side === ORDER_SIDE.SELL) {
         const sellValue = calculateSellAmount()
 
         toast.success(
@@ -97,7 +99,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         )
       }
 
-      triggerConfetti(state.outcome!.outcome_index === 0 ? 'yes' : 'no', state.lastMouseEvent)
+      triggerConfetti(state.outcome!.outcome_index === OUTCOME_INDEX.YES ? 'yes' : 'no', state.lastMouseEvent)
       state.setAmount('0.00')
     }
     catch {
@@ -158,12 +160,12 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       nonce: 3003,
       fee_rate_bps: 200,
       affiliate_percentage: 0,
-      side: state.side === 'buy' ? 0 : 1 as OrderSide,
+      side: state.side,
       signature_type: 0,
       signature: '0x',
       // end blockchain data
 
-      type: state.type === 'market' ? 0 : 1 as OrderType,
+      type: state.type,
       condition_id: state.market.condition_id,
     }
 
@@ -205,7 +207,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
           )
         : (
             <>
-              {state.side === 'sell' ? <EventOrderPanelUserShares /> : <div className="mb-4"></div>}
+              {state.side === ORDER_SIDE.SELL ? <EventOrderPanelUserShares /> : <div className="mb-4"></div>}
               <EventOrderPanelInput isMobile={isMobile} />
               {amount > 0 && <EventOrderPanelEarnings isMobile={isMobile} />}
             </>

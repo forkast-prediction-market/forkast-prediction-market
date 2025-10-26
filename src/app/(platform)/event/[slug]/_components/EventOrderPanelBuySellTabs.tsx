@@ -1,8 +1,9 @@
-import type { OrderType } from '@/stores/useOrder'
+import type { OrderType } from '@/types'
 import * as SelectPrimitive from '@radix-ui/react-select'
 import { ChevronDownIcon } from 'lucide-react'
 import { useEffect } from 'react'
 import { Select, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
+import { ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { useOrder } from '@/stores/useOrder'
 
@@ -23,9 +24,9 @@ export default function EventOrderPanelBuySellTabs() {
       return
     }
 
-    const storedType = window.localStorage.getItem(ORDER_TYPE_STORAGE_KEY)
+    const storedType = Number(window.localStorage.getItem(ORDER_TYPE_STORAGE_KEY)) as OrderType
 
-    if (storedType === 'market' || storedType === 'limit') {
+    if (storedType === ORDER_TYPE.MARKET || storedType === ORDER_TYPE.LIMIT) {
       setType(storedType)
     }
   }, [setType])
@@ -36,7 +37,7 @@ export default function EventOrderPanelBuySellTabs() {
     }
 
     try {
-      window.localStorage.setItem(ORDER_TYPE_STORAGE_KEY, type)
+      window.localStorage.setItem(ORDER_TYPE_STORAGE_KEY, `${type}`)
     }
     catch {}
   }, [type])
@@ -58,10 +59,10 @@ export default function EventOrderPanelBuySellTabs() {
                 dark:hover:!bg-transparent dark:focus:!bg-transparent dark:focus-visible:!bg-transparent
                 dark:active:!bg-transparent
               `,
-              side === 'buy' && 'border-primary text-foreground',
+              side === ORDER_SIDE.BUY && 'border-primary text-foreground',
             )}
             onClick={() => {
-              setSide('buy')
+              setSide(ORDER_SIDE.BUY)
               setAmount('')
               inputRef?.current?.focus()
             }}
@@ -81,10 +82,10 @@ export default function EventOrderPanelBuySellTabs() {
                 dark:hover:!bg-transparent dark:focus:!bg-transparent dark:focus-visible:!bg-transparent
                 dark:active:!bg-transparent
               `,
-              side === 'sell' && 'border-primary text-foreground',
+              side === ORDER_SIDE.SELL && 'border-primary text-foreground',
             )}
             onClick={() => {
-              setSide('sell')
+              setSide(ORDER_SIDE.SELL)
               setAmount('')
               inputRef?.current?.focus()
             }}
@@ -95,9 +96,9 @@ export default function EventOrderPanelBuySellTabs() {
 
         <Select
           key={type}
-          value={type}
-          onValueChange={(value: OrderType) => {
-            setType(value)
+          value={`${type}`}
+          onValueChange={(value) => {
+            setType(Number(value) as OrderType)
           }}
         >
           <SelectPrimitive.Trigger asChild>

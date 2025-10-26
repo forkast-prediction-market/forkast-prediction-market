@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { OUTCOME_INDEX } from '@/lib/constants'
 
 interface EventTag {
   label: string
@@ -807,7 +808,7 @@ export default function AdminCreateEventForm() {
                           key={`admin-event-market-outcome-${marketIndex}-${outcomeIndex}`}
                           value={outcome.outcome}
                           onChange={e => handleOutcomeChange(marketIndex, outcomeIndex, e.target.value)}
-                          placeholder={outcomeIndex === 0 ? 'Yes' : 'No'}
+                          placeholder={outcomeIndex === OUTCOME_INDEX.YES ? 'Yes' : 'No'}
                         />
                       ))}
                     </div>
