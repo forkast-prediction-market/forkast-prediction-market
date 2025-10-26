@@ -1,5 +1,5 @@
 import type { ActivityOrder, QueryResult } from '@/types'
-import { asc, count, desc, eq, ilike, inArray, or } from 'drizzle-orm'
+import { asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
@@ -326,8 +326,12 @@ export const UserRepository = {
 
           id: orders.id,
           side: orders.side,
-          amount: orders.amount,
-          price: orders.price,
+          amount: orders.maker_amount,
+          price: sql<number>`CASE 
+            WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0 
+            THEN ${orders.taker_amount}::numeric / (${orders.maker_amount} + ${orders.taker_amount})::numeric 
+            ELSE 0.5 
+          END`.as('price'),
           created_at: orders.created_at,
           status: orders.status,
 
@@ -366,7 +370,7 @@ export const UserRepository = {
               return null
             }
 
-            const amount = typeof row.amount === 'string' ? Number.parseFloat(row.amount) : (row.amount || 0)
+            const amount = typeof row.amount === 'bigint' ? Number(row.amount) : (typeof row.amount === 'string' ? Number.parseFloat(row.amount) : (row.amount || 0))
             const price = typeof row.price === 'string' ? Number.parseFloat(row.price) : (row.price || 0)
             const totalValue = amount * price
 
@@ -386,7 +390,7 @@ export const UserRepository = {
                 address: row.user_address,
                 image: userImage,
               },
-              side: row.side as 'buy' | 'sell',
+              side: row.side === 0 ? 'buy' : 'sell',
               amount,
               price,
               outcome: {

@@ -21,6 +21,7 @@ export const OrderRepository = {
     fee_rate_bps: number
     affiliate_percentage: number
     side: OrderSide
+    signature_type: number
     signature: string
     // end blockchain data
 
