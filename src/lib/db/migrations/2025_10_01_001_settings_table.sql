@@ -1,18 +1,8 @@
-BEGIN;
-
--- ============================================================
--- SETTINGS TABLE MIGRATION
--- ============================================================
--- Tables: settings
--- Business Logic: Flexible key-value settings system organized by groups
--- Migration: Replaces rigid fork_settings with extensible settings table
--- ============================================================
-
 -- ===========================================
--- 1. TABLE CREATION
+-- 1. TABLES
 -- ===========================================
 
-CREATE TABLE IF NOT EXISTS settings
+CREATE TABLE settings
 (
   id         SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
   "group"    TEXT        NOT NULL,
@@ -24,43 +14,34 @@ CREATE TABLE IF NOT EXISTS settings
 );
 
 -- ===========================================
--- 2. ROW LEVEL SECURITY / POLICIES
+-- 2. INDEXES
+-- ===========================================
+
+-- ===========================================
+-- 3. ROW LEVEL SECURITY
 -- ===========================================
 
 ALTER TABLE settings
   ENABLE ROW LEVEL SECURITY;
 
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1
-                   FROM pg_policies
-                   WHERE policyname = 'service_role_all_settings'
-                     AND tablename = 'settings') THEN
-      CREATE POLICY "service_role_all_settings" ON settings FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
-
 -- ===========================================
--- 3. TRIGGERS
+-- 4. POLICIES
 -- ===========================================
 
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_settings_updated_at') THEN
-      CREATE TRIGGER update_settings_updated_at
-        BEFORE UPDATE
-        ON settings
-        FOR EACH ROW
-      EXECUTE FUNCTION update_updated_at_column();
-    END IF;
-  END
-$$;
+CREATE POLICY "service_role_all_settings" ON "settings" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
 
 -- ===========================================
--- 4. SEED DATA
+-- 5. TRIGGERS
+-- ===========================================
+
+CREATE TRIGGER set_settings_updated_at
+  BEFORE UPDATE
+  ON settings
+  FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
+
+-- ===========================================
+-- 6. SEED
 -- ===========================================
 
 -- Insert default affiliate settings
@@ -75,5 +56,3 @@ VALUES ('ai', 'openrouter_api_key', ''),
        ('ai', 'openrouter_model', ''),
        ('ai', 'openrouter_enabled', 'false')
 ON CONFLICT ("group", key) DO NOTHING;
-
-COMMIT;

@@ -235,6 +235,9 @@ export interface TopHolder {
   outcomeText: string
 }
 
+export type OrderSide = 0 | 1 // 0 = buy, 1 = sell
+export type OrderType = 0 | 1 // 0 = market, 1 = limit
+
 export type QueryResult<T>
   = | { data: T, error: null }
     | { data: null, error: string }

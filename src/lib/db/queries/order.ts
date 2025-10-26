@@ -1,3 +1,4 @@
+import type { OrderSide, OrderType } from '@/types'
 import { and, eq } from 'drizzle-orm'
 import { orders } from '@/lib/db/schema/orders/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
@@ -5,39 +6,34 @@ import { db } from '@/lib/drizzle'
 
 export const OrderRepository = {
   async createOrder(args: {
-    user_id: string
-    condition_id: string
+    // begin blockchain data
+    salt: bigint
+    maker: string
+    signer: string
+    taker: string
+    referrer: string
+    affiliate: string
     token_id: string
-    side: 'buy' | 'sell'
-    amount: number
-    price?: number
-    type?: 'market' | 'limit'
-    affiliate_user_id?: string | null
-    trade_fee_bps?: number
-    affiliate_share_bps?: number
-    fork_fee_amount?: number
-    affiliate_fee_amount?: number
+    maker_amount: bigint
+    taker_amount: bigint
+    expiration: bigint
+    nonce: bigint
+    fee_rate_bps: number
+    affiliate_percentage: number
+    side: OrderSide
+    signature_type: number
+    signature: string
+    // end blockchain data
+
+    type: OrderType
+    user_id: string
+    affiliate_user_id: string
+    condition_id: string
   }) {
     return await runQuery(async () => {
-      const insertData = {
-        user_id: args.user_id,
-        condition_id: args.condition_id,
-        token_id: args.token_id,
-        type: args.type || 'market',
-        side: args.side,
-        amount: args.amount.toString(),
-        price: args.price?.toString(),
-        status: 'pending',
-        affiliate_user_id: args.affiliate_user_id ?? null,
-        trade_fee_bps: args.trade_fee_bps ?? 0,
-        affiliate_share_bps: args.affiliate_share_bps ?? 0,
-        fork_fee_amount: args.fork_fee_amount?.toString() ?? '0',
-        affiliate_fee_amount: args.affiliate_fee_amount?.toString() ?? '0',
-      }
-
       const result = await db
         .insert(orders)
-        .values(insertData)
+        .values(args)
         .returning()
 
       return { data: result[0], error: null }

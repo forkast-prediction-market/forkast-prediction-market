@@ -1,19 +1,9 @@
-BEGIN;
-
--- ============================================================
--- COMMENTS SYSTEM - Complete Domain Implementation
--- ============================================================
--- Tables: comments, comment_likes, comment_reports
--- Dependencies: users (comments.user_id), events (comments.event_id)
--- Business Logic: Like counting, reply threading, moderation
--- ============================================================
-
 -- ===========================================
--- 1. TABLE CREATION
+-- 1. TABLES
 -- ===========================================
 
--- Comments table - Main discussion system (depends on users + events)
-CREATE TABLE IF NOT EXISTS comments
+-- Comments table - Main discussion system
+CREATE TABLE comments
 (
   id                CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
   event_id          CHAR(26)    NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -28,7 +18,7 @@ CREATE TABLE IF NOT EXISTS comments
 );
 
 -- Comment likes/reactions
-CREATE TABLE IF NOT EXISTS comment_likes
+CREATE TABLE comment_likes
 (
   comment_id CHAR(26) NOT NULL REFERENCES comments (id) ON DELETE CASCADE ON UPDATE CASCADE,
   user_id    CHAR(26) NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -36,24 +26,27 @@ CREATE TABLE IF NOT EXISTS comment_likes
 );
 
 -- Comment reports (for moderation) (depends on comments + users)
-CREATE TABLE IF NOT EXISTS comment_reports
+CREATE TABLE comment_reports
 (
   id               CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
   comment_id       CHAR(26)    NOT NULL REFERENCES comments (id) ON DELETE CASCADE ON UPDATE CASCADE,
   reporter_user_id CHAR(26)    NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
-  reason           VARCHAR(50) NOT NULL CHECK (reason IN ('spam', 'abuse', 'inappropriate', 'other')),
+  reason           TEXT        NOT NULL CHECK (reason IN ('spam', 'abuse', 'inappropriate', 'other')),
   description      TEXT,
-  status           VARCHAR(20)          DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'resolved', 'dismissed')),
+  status           TEXT                 DEFAULT 'pending' CHECK (status IN ('pending', 'reviewed', 'resolved', 'dismissed')),
   reviewed_at      TIMESTAMPTZ,
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (comment_id, reporter_user_id)
 );
 
 -- ===========================================
--- 2. ROW LEVEL SECURITY
+-- 2. INDEXES
 -- ===========================================
 
--- Enable RLS on all comment-related tables
+-- ===========================================
+-- 3. ROW LEVEL SECURITY
+-- ===========================================
+
 ALTER TABLE comments
   ENABLE ROW LEVEL SECURITY;
 ALTER TABLE comment_likes
@@ -62,50 +55,15 @@ ALTER TABLE comment_reports
   ENABLE ROW LEVEL SECURITY;
 
 -- ===========================================
--- 3. SECURITY POLICIES
+-- 4. POLICIES
 -- ===========================================
 
--- Comments policies
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1
-                   FROM pg_policies
-                   WHERE policyname = 'service_role_all_comments'
-                     AND tablename = 'comments') THEN
-      CREATE POLICY "service_role_all_comments" ON comments FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
-
--- Comment likes policies
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1
-                   FROM pg_policies
-                   WHERE policyname = 'service_role_all_comment_likes'
-                     AND tablename = 'comment_likes') THEN
-      CREATE POLICY "service_role_all_comment_likes" ON comment_likes FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
-
--- Comment reports policies
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1
-                   FROM pg_policies
-                   WHERE policyname = 'service_role_all_comment_reports'
-                     AND tablename = 'comment_reports') THEN
-      CREATE POLICY "service_role_all_comment_reports" ON comment_reports FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
+CREATE POLICY "service_role_all_comments" ON "comments" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY "service_role_all_comment_likes" ON "comment_likes" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY "service_role_all_comment_reports" ON "comment_reports" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
 
 -- ===========================================
--- 4. BUSINESS LOGIC FUNCTIONS
+-- 5. FUNCTIONS
 -- ===========================================
 
 -- Function to update comment likes counter
@@ -164,52 +122,29 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 -- ===========================================
--- 5. TRIGGERS
+-- 6. TRIGGERS
 -- ===========================================
 
--- Updated_at trigger for comments
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_comments_updated_at') THEN
-      CREATE TRIGGER update_comments_updated_at
-        BEFORE UPDATE
-        ON comments
-        FOR EACH ROW
-      EXECUTE FUNCTION update_updated_at_column();
-    END IF;
-  END
-$$;
+CREATE TRIGGER set_comments_updated_at
+  BEFORE UPDATE
+  ON comments
+  FOR EACH ROW
+EXECUTE FUNCTION set_updated_at();
 
--- Business logic triggers for comment counters
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_comment_likes_count') THEN
-      CREATE TRIGGER trigger_update_comment_likes_count
-        AFTER INSERT OR DELETE
-        ON comment_likes
-        FOR EACH ROW
-      EXECUTE FUNCTION update_comment_likes_count();
-    END IF;
-  END
-$$;
+CREATE TRIGGER trigger_update_comment_likes_count
+  AFTER INSERT OR DELETE
+  ON comment_likes
+  FOR EACH ROW
+EXECUTE FUNCTION update_comment_likes_count();
 
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'trigger_update_comment_replies_count') THEN
-      CREATE TRIGGER trigger_update_comment_replies_count
-        AFTER INSERT OR UPDATE OR DELETE
-        ON comments
-        FOR EACH ROW
-      EXECUTE FUNCTION update_comment_replies_count();
-    END IF;
-  END
-$$;
+CREATE TRIGGER trigger_update_comment_replies_count
+  AFTER INSERT OR UPDATE OR DELETE
+  ON comments
+  FOR EACH ROW
+EXECUTE FUNCTION update_comment_replies_count();
 
 -- ===========================================
--- 6. VIEWS
+-- 7. VIEWS
 -- ===========================================
 
 CREATE OR REPLACE VIEW v_comments_with_user
@@ -263,4 +198,3 @@ FROM comments c
        JOIN users u ON c.user_id = u.id
 WHERE c.is_deleted = FALSE;
 
-COMMIT;

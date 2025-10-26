@@ -179,7 +179,7 @@ function transformActivityOrder(order: any): ActivityOrder {
       address: order.user_address || '',
       image: userImage,
     },
-    side: (order.side as 'buy' | 'sell') || 'buy',
+    side: order.side === 0 ? 'buy' : 'sell',
     amount,
     price,
     outcome: {
@@ -482,14 +482,18 @@ export const EventRepository = {
       const whereConditions = [eq(events.slug, args.slug)]
 
       if (args.minAmount && args.minAmount > 0) {
-        whereConditions.push(sql`(${orders.amount} * ${orders.price}) >= ${args.minAmount}`)
+        whereConditions.push(sql`${orders.maker_amount} >= ${args.minAmount}`)
       }
       const results = await db
         .select({
           id: orders.id,
           side: orders.side,
-          amount: orders.amount,
-          price: orders.price,
+          amount: orders.maker_amount,
+          price: sql<number>`CASE 
+            WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0 
+            THEN ${orders.taker_amount}::numeric / (${orders.maker_amount} + ${orders.taker_amount})::numeric 
+            ELSE 0.5 
+          END`.as('price'),
           created_at: orders.created_at,
           status: orders.status,
           user_id: users.id,
@@ -504,7 +508,7 @@ export const EventRepository = {
           market_slug: markets.slug,
           market_icon_url: markets.icon_url,
           event_slug: events.slug,
-          total_value: sql<number>`(${orders.amount} * ${orders.price})`.as('total_value'),
+          total_value: sql<number>`${orders.maker_amount}`.as('total_value'),
         })
         .from(orders)
         .innerJoin(users, eq(orders.user_id, users.id))

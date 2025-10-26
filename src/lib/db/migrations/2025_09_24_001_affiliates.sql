@@ -1,21 +1,9 @@
-BEGIN;
-
--- ============================================================
--- AFFILIATE DOMAIN - Referral Attribution System
--- ============================================================
--- Tables: affiliate_referrals
--- Dependencies: users (for referrer and referee relationships)
--- Business Logic: Store affiliate attribution data and referral relationships
--- Consolidation: User affiliate columns moved to auth migration, order fee columns moved to orders migration
--- ============================================================
-
 -- ===========================================
 -- 1. TABLE CREATION
 -- ===========================================
 
-
 -- Affiliate referral attribution table - tracks referral relationships
-CREATE TABLE IF NOT EXISTS affiliate_referrals
+CREATE TABLE affiliate_referrals
 (
   id                CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
   user_id           CHAR(26)    NOT NULL UNIQUE REFERENCES users (id) ON DELETE CASCADE, -- The referred user
@@ -24,27 +12,24 @@ CREATE TABLE IF NOT EXISTS affiliate_referrals
 );
 
 -- ===========================================
--- 2. ROW LEVEL SECURITY / POLICIES
+-- 2. INDEXES
 -- ===========================================
 
+-- ===========================================
+-- 3. ROW LEVEL SECURITY
+-- ===========================================
 
 ALTER TABLE affiliate_referrals
   ENABLE ROW LEVEL SECURITY;
 
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1
-                   FROM pg_policies
-                   WHERE policyname = 'service_role_all_affiliate_referrals'
-                     AND tablename = 'affiliate_referrals') THEN
-      CREATE POLICY "service_role_all_affiliate_referrals" ON affiliate_referrals FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
+-- ===========================================
+-- 4. POLICIES
+-- ===========================================
+
+CREATE POLICY "service_role_all_affiliate_referrals" ON "affiliate_referrals" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
 
 -- ===========================================
--- 3. FUNCTIONS
+-- 5. FUNCTIONS
 -- ===========================================
 
 CREATE OR REPLACE FUNCTION get_affiliate_stats(target_user_id CHAR(26))
@@ -67,15 +52,15 @@ SELECT COALESCE((SELECT COUNT(*) FROM affiliate_referrals ar WHERE ar.affiliate_
                  FROM orders o
                  WHERE o.affiliate_user_id = target_user_id
                    AND o.status != 'cancelled'), 0) AS active_referrals,
-       COALESCE((SELECT SUM(o.amount)
+       COALESCE((SELECT SUM(o.maker_amount)
                  FROM orders o
                  WHERE o.affiliate_user_id = target_user_id
                    AND o.status != 'cancelled'), 0) AS total_volume,
-       COALESCE((SELECT SUM(o.affiliate_fee_amount)
+       COALESCE((SELECT SUM(o.affiliate_percentage) -- affiliate fee amount
                  FROM orders o
                  WHERE o.affiliate_user_id = target_user_id
                    AND o.status != 'cancelled'), 0) AS total_affiliate_fees,
-       COALESCE((SELECT SUM(o.fork_fee_amount)
+       COALESCE((SELECT SUM(o.affiliate_percentage) -- fork fee amount
                  FROM orders o
                  WHERE o.affiliate_user_id = target_user_id
                    AND o.status != 'cancelled'), 0) AS total_fork_fees;
@@ -103,8 +88,8 @@ FROM users u
                   FROM affiliate_referrals
                   GROUP BY affiliate_user_id) ar ON ar.affiliate_user_id = u.id
        LEFT JOIN (SELECT affiliate_user_id,
-                         SUM(CASE WHEN status != 'cancelled' THEN amount ELSE 0 END)               AS total_volume,
-                         SUM(CASE WHEN status != 'cancelled' THEN affiliate_fee_amount ELSE 0 END) AS total_affiliate_fees
+                         SUM(CASE WHEN status != 'cancelled' THEN maker_amount ELSE 0 END)               AS total_volume,
+                         SUM(CASE WHEN status != 'cancelled' THEN affiliate_percentage ELSE 0 END) AS total_affiliate_fees -- affiliate_fee_amount
                   FROM orders
                   WHERE affiliate_user_id IS NOT NULL
                   GROUP BY affiliate_user_id) ord ON ord.affiliate_user_id = u.id
@@ -113,5 +98,3 @@ WHERE ar.count_referrals IS NOT NULL
 ORDER BY COALESCE(ord.total_volume, 0) DESC
 LIMIT 100;
 $$;
-
-COMMIT;

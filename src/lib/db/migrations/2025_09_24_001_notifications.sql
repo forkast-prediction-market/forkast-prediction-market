@@ -1,18 +1,8 @@
-BEGIN;
-
--- ============================================================
--- NOTIFICATIONS - User Notification System
--- ============================================================
--- Tables: notifications
--- Dependencies: users (required), wallets (optional context)
--- Business Logic: Persist user-facing notifications with flexible link targets
--- ============================================================
-
 -- ===========================================
--- 1. TABLE CREATION
+-- 1. TABLES
 -- ===========================================
 
-CREATE TABLE IF NOT EXISTS notifications
+CREATE TABLE notifications
 (
   id          CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
   user_id     CHAR(26)    NOT NULL REFERENCES users (id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -40,9 +30,9 @@ CREATE TABLE IF NOT EXISTS notifications
 -- 2. INDEXES
 -- ===========================================
 
-CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications (user_id);
-CREATE INDEX IF NOT EXISTS idx_notifications_category ON notifications (category);
-CREATE INDEX IF NOT EXISTS idx_notifications_user_created_at ON notifications (user_id, created_at DESC);
+CREATE INDEX idx_notifications_user_id ON notifications (user_id);
+CREATE INDEX idx_notifications_category ON notifications (category);
+CREATE INDEX idx_notifications_user_created_at ON notifications (user_id, created_at DESC);
 
 -- ===========================================
 -- 3. ROW LEVEL SECURITY
@@ -51,16 +41,8 @@ CREATE INDEX IF NOT EXISTS idx_notifications_user_created_at ON notifications (u
 ALTER TABLE notifications
   ENABLE ROW LEVEL SECURITY;
 
-DO
-$$
-  BEGIN
-    IF NOT EXISTS (SELECT 1
-                   FROM pg_policies
-                   WHERE policyname = 'service_role_all_notifications'
-                     AND tablename = 'notifications') THEN
-      CREATE POLICY "service_role_all_notifications" ON notifications FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
-    END IF;
-  END
-$$;
+-- ===========================================
+-- 4. POLICIES
+-- ===========================================
 
-COMMIT;
+CREATE POLICY "service_role_all_notifications" ON "notifications" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);

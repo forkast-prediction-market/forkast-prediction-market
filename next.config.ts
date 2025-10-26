@@ -42,7 +42,7 @@ const config: NextConfig = {
         : process.env.VERCEL_URL
           ? `https://${process.env.VERCEL_URL}`
           : 'http://localhost:3000',
-    CLOB_URL: 'https://clob.forka.st',
+    CLOB_URL: 'http://209.38.150.11:8080',
   },
 }
 

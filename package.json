@@ -70,7 +70,6 @@
     "@types/node": "^24.5.2",
     "@types/react": "^19.1.15",
     "@types/react-dom": "^19.2.2",
-    "drizzle-kit": "^0.31.5",
     "eslint": "^9.37.0",
     "eslint-plugin-better-tailwindcss": "^3.7.8",
     "eslint-plugin-react-hooks": "^7.0.0",
@@ -79,7 +78,6 @@
     "lint-staged": "^16.2.3",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13",
-    "tsx": "^4.20.6",
     "tw-animate-css": "^1.3.8",
     "typescript": "^5.9.3"
   },

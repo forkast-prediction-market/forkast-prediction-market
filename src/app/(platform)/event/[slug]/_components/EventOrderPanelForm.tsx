@@ -1,4 +1,4 @@
-import type { Event } from '@/types'
+import type { Event, OrderSide, OrderType } from '@/types'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import Form from 'next/form'
 import { toast } from 'sonner'
@@ -15,7 +15,7 @@ import EventOrderPanelOutcomeButton from '@/app/(platform)/event/[slug]/_compone
 import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_components/EventOrderPanelSubmitButton'
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
-import { cn, triggerConfetti } from '@/lib/utils'
+import { cn, toMicro, triggerConfetti } from '@/lib/utils'
 import {
   calculateSellAmount,
   getAvgSellPrice,
@@ -25,6 +25,7 @@ import {
   useOrder,
   useYesPrice,
 } from '@/stores/useOrder'
+import { useUser } from '@/stores/useUser'
 
 interface EventOrderPanelFormProps {
   isMobile: boolean
@@ -35,6 +36,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const { open } = useAppKit()
   const { isConnected } = useAppKitAccount()
   const { signMessage } = useSignMessage()
+  const user = useUser()
   const state = useOrder()
   const yesPrice = useYesPrice()
   const noPrice = useNoPrice()
@@ -42,8 +44,74 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const amount = useAmountAsNumber()
   const isLimitOrder = state.type === 'limit'
 
+  async function storeOrder(payload: any, signature: string) {
+    state.setIsLoading(true)
+
+    try {
+      const result = await storeOrderAction(payload, signature)
+
+      if (result?.error) {
+        toast.error('Trade failed', {
+          description: result.error,
+        })
+        return
+      }
+
+      if (state.side === 'sell') {
+        const sellValue = calculateSellAmount()
+
+        toast.success(
+          `Sell ${state.amount} shares on ${state.outcome!.outcome_text}`,
+          {
+            description: (
+              <div>
+                <div className="font-medium">{event.title}</div>
+                <div className="mt-1 text-xs opacity-80">
+                  Received $
+                  {sellValue.toFixed(2)}
+                  {' '}
+                  @ $
+                  {getAvgSellPrice()}
+                  ¢
+                </div>
+              </div>
+            ),
+          },
+        )
+      }
+      else { // Buy logic
+        toast.success(
+          `Buy $${state.amount} on ${state.outcome!.outcome_text}`,
+          {
+            description: (
+              <div>
+                <div className="font-medium">{event.title}</div>
+                <div className="mt-1 text-xs opacity-80">
+                  {amount}
+                  {' '}
+                  shares 10¢
+                </div>
+              </div>
+            ),
+          },
+        )
+      }
+
+      triggerConfetti(state.outcome!.outcome_index === 0 ? 'yes' : 'no', state.lastMouseEvent)
+      state.setAmount('0.00')
+    }
+    catch {
+      toast.error('Trade failed', {
+        description: 'An unexpected error occurred. Please try again.',
+      })
+    }
+    finally {
+      state.setIsLoading(false)
+    }
+  }
+
   async function onSubmit() {
-    if (!isConnected) {
+    if (!isConnected || !user) {
       queueMicrotask(() => open())
       return
     }
@@ -75,95 +143,41 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       return
     }
 
-    const marketPriceCents = state.outcome.outcome_index === 0 ? yesPrice : noPrice
-    const limitPriceValue = Number.parseFloat(state.limitPrice)
-    const priceCents = isLimitOrder && Number.isFinite(limitPriceValue) ? limitPriceValue : marketPriceCents
-
-    type Side = 0 | 1
     const payload = {
-      slug: event.slug,
-      condition_id: state.market.condition_id,
+      // begin blockchain data
+      salt: 333000003,
+      maker: user.address,
+      signer: user.address,
+      taker: user.address,
+      referrer: user.address,
+      affiliate: user.address,
       token_id: state.outcome.token_id,
-      side: state.side === 'buy' ? 0 : 1 as Side,
-      amount,
-      type: state.type,
-      price: priceCents / 100,
+      maker_amount: toMicro(state.amount),
+      taker_amount: toMicro(state.amount),
+      expiration: 202612232334,
+      nonce: 3003,
+      fee_rate_bps: 200,
+      affiliate_percentage: 0,
+      side: state.side === 'buy' ? 0 : 1 as OrderSide,
+      signature_type: 0,
+      signature: '0x',
+      // end blockchain data
+
+      type: state.type === 'market' ? 0 : 1 as OrderType,
+      condition_id: state.market.condition_id,
     }
 
-    const message = keccak256(stringToBytes(JSON.stringify(payload)))
+    await storeOrder(payload, 'testing')
 
-    signMessage({ message }, {
-      onSuccess: async (signature) => {
-        state.setIsLoading(true)
+    if (false) {
+      const message = keccak256(stringToBytes(JSON.stringify(payload)))
 
-        try {
-          const result = await storeOrderAction(payload, signature)
-
-          if (result?.error) {
-            toast.error('Trade failed', {
-              description: result.error,
-            })
-            return
-          }
-
-          if (state.side === 'sell') {
-            const sellValue = calculateSellAmount()
-
-            toast.success(
-              `Sell ${state.amount} shares on ${state.outcome!.outcome_text}`,
-              {
-                description: (
-                  <div>
-                    <div className="font-medium">{event.title}</div>
-                    <div className="mt-1 text-xs opacity-80">
-                      Received $
-                      {sellValue.toFixed(2)}
-                      {' '}
-                      @ $
-                      {getAvgSellPrice()}
-                      ¢
-                    </div>
-                  </div>
-                ),
-              },
-            )
-          }
-          else {
-            // Buy logic
-            const shares = priceCents > 0 ? ((amount / priceCents) * 100).toFixed(2) : '0'
-
-            toast.success(
-              `Buy $${state.amount} on ${state.outcome!.outcome_text}`,
-              {
-                description: (
-                  <div>
-                    <div className="font-medium">{event.title}</div>
-                    <div className="mt-1 text-xs opacity-80">
-                      {shares}
-                      {' '}
-                      shares @
-                      {priceCents}
-                      ¢
-                    </div>
-                  </div>
-                ),
-              },
-            )
-          }
-
-          triggerConfetti(state.outcome!.outcome_index === 0 ? 'yes' : 'no', state.lastMouseEvent)
-          state.setAmount('0.00')
-        }
-        catch {
-          toast.error('Trade failed', {
-            description: 'An unexpected error occurred. Please try again.',
-          })
-        }
-        finally {
-          state.setIsLoading(false)
-        }
-      },
-    })
+      signMessage({ message }, {
+        onSuccess: async (signature) => {
+          console.log(signature)
+        },
+      })
+    }
   }
 
   return (
