@@ -161,16 +161,135 @@ export function PredictionChart({
     = tooltipOpen && tooltipData && tooltipLeft !== undefined
   const clampedTooltipX = tooltipActive
     ? Math.max(0, Math.min(tooltipLeft as number, innerWidth))
-    : 0
+    : innerWidth
   const cursorDate = tooltipActive
     ? xScale.invert(clampedTooltipX)
     : null
-  const cursorSplitIndex = cursorDate
-    ? Math.min(
-        data.length,
-        Math.max(1, bisectDate(data, cursorDate, 1)),
-      )
-    : data.length
+  const insertionIndex = cursorDate ? bisectDate(data, cursorDate) : data.length
+  const previousPoint = insertionIndex > 0 ? data[insertionIndex - 1] : null
+  const nextPoint = insertionIndex < data.length ? data[insertionIndex] : null
+
+  let cursorPoint: DataPoint | null = null
+  if (tooltipActive && cursorDate) {
+    const cursorTime = cursorDate.getTime()
+
+    if (nextPoint && cursorTime === nextPoint.date.getTime()) {
+      cursorPoint = nextPoint
+    }
+    else if (previousPoint && cursorTime === previousPoint.date.getTime()) {
+      cursorPoint = previousPoint
+    }
+    else if (previousPoint && nextPoint) {
+      const prevTime = previousPoint.date.getTime()
+      const nextTime = nextPoint.date.getTime()
+      const denominator = nextTime - prevTime
+
+      if (denominator !== 0) {
+        const ratio = (cursorTime - prevTime) / denominator
+        const interpolated: DataPoint = { date: cursorDate }
+
+        series.forEach((seriesItem) => {
+          const prevValue = previousPoint[seriesItem.key]
+          const nextValue = nextPoint[seriesItem.key]
+
+          if (typeof prevValue === 'number' && typeof nextValue === 'number') {
+            interpolated[seriesItem.key] = prevValue
+              + (nextValue - prevValue) * ratio
+          }
+          else if (typeof prevValue === 'number') {
+            interpolated[seriesItem.key] = prevValue
+          }
+          else if (typeof nextValue === 'number') {
+            interpolated[seriesItem.key] = nextValue
+          }
+        })
+
+        cursorPoint = interpolated
+      }
+    }
+  }
+
+  let coloredPoints: DataPoint[] = data
+  let mutedPoints: DataPoint[] = []
+
+  if (tooltipActive) {
+    coloredPoints = data.slice(0, insertionIndex)
+    mutedPoints = data.slice(insertionIndex)
+
+    if (cursorPoint) {
+      const cursorTime = cursorPoint.date.getTime()
+
+      if (
+        coloredPoints.length === 0
+        || coloredPoints[coloredPoints.length - 1].date.getTime() !== cursorTime
+      ) {
+        coloredPoints = [...coloredPoints, cursorPoint]
+      }
+      else {
+        coloredPoints = [
+          ...coloredPoints.slice(0, coloredPoints.length - 1),
+          cursorPoint,
+        ]
+      }
+
+      if (
+        mutedPoints.length === 0
+        || mutedPoints[0].date.getTime() !== cursorTime
+      ) {
+        mutedPoints = [cursorPoint, ...mutedPoints]
+      }
+      else {
+        mutedPoints = [
+          cursorPoint,
+          ...mutedPoints.slice(1),
+        ]
+      }
+    }
+    else if (cursorDate && mutedPoints.length > 0) {
+      const firstMutedTime = mutedPoints[0].date.getTime()
+      if (cursorDate.getTime() >= firstMutedTime) {
+        coloredPoints = [...coloredPoints, mutedPoints[0]]
+      }
+    }
+
+    if (coloredPoints.length === 0 && data.length > 0) {
+      coloredPoints = [data[0]]
+    }
+  }
+
+  const lastDataPoint = data.length > 0 ? data[data.length - 1] : null
+  const isTooltipAtLastPoint = tooltipActive
+    && lastDataPoint !== null
+    && tooltipData === lastDataPoint
+  const showEndpointMarkers = Boolean(lastDataPoint)
+    && (!tooltipActive || isTooltipAtLastPoint)
+  const totalDurationHours = data.length > 1
+    ? (data[data.length - 1].date.valueOf() - data[0].date.valueOf()) / 36e5
+    : 0
+
+  function formatAxisTick(value: number | { valueOf: () => number }) {
+    const numericValue = typeof value === 'number' ? value : value.valueOf()
+    const date = new Date(numericValue)
+
+    if (totalDurationHours <= 48) {
+      return date.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+      })
+    }
+
+    if (totalDurationHours <= 24 * 45) {
+      return date.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      })
+    }
+
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      year: 'numeric',
+    })
+  }
 
   interface TooltipEntry {
     key: string
@@ -296,16 +415,6 @@ export function PredictionChart({
           {series.map((seriesItem) => {
             const seriesColor = seriesItem.color
 
-            let coloredPoints: DataPoint[] = data
-            let mutedPoints: DataPoint[] = []
-
-            if (tooltipActive && cursorSplitIndex > 0) {
-              coloredPoints = data.slice(0, cursorSplitIndex)
-              mutedPoints = cursorSplitIndex < data.length
-                ? data.slice(cursorSplitIndex - 1)
-                : []
-            }
-
             return (
               <g key={seriesItem.key}>
                 {mutedPoints.length > 1 && (
@@ -344,11 +453,11 @@ export function PredictionChart({
           })}
 
           {/* Marcadores nas pontas das séries */}
-          {data.length > 0
+          {showEndpointMarkers
+            && lastDataPoint
             && series.map((seriesItem) => {
-              const lastPoint = data[data.length - 1]
-              const value = (lastPoint[seriesItem.key] as number) || 0
-              const cx = getX(lastPoint)
+              const value = (lastDataPoint[seriesItem.key] as number) || 0
+              const cx = getX(lastDataPoint)
               const cy = yScale(value)
 
               return (
@@ -395,13 +504,7 @@ export function PredictionChart({
           <AxisBottom
             top={innerHeight}
             scale={xScale}
-            tickFormat={(value) => {
-              const date = new Date(Number(value))
-              return date.toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-              })
-            }}
+            tickFormat={formatAxisTick}
             stroke="transparent"
             tickStroke="transparent"
             tickLabelProps={{

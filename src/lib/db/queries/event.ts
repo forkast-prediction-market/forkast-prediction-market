@@ -272,6 +272,10 @@ export const EventRepository = {
         )`,
       )
 
+      const orderByClause = tag === 'new' || tag === 'trending'
+        ? desc(events.created_at)
+        : desc(events.id)
+
       const eventsData = await db.query.events.findMany({
         where: and(...whereConditions),
         with: {
@@ -295,19 +299,12 @@ export const EventRepository = {
         },
         limit,
         offset: validOffset,
-        orderBy: tag === 'new' ? desc(events.created_at) : desc(events.id),
+        orderBy: orderByClause,
       }) as DrizzleEventResult[]
 
       const eventsWithMarkets = eventsData
         .filter(event => event.markets?.length > 0)
         .map(event => eventResource(event as DrizzleEventResult, userId))
-
-      if (!bookmarked && tag === 'trending' && !search) {
-        return {
-          data: eventsWithMarkets.filter(event => event.is_trending),
-          error: null,
-        }
-      }
 
       return { data: eventsWithMarkets, error: null }
     })

@@ -16,11 +16,22 @@ export default function EventChart({ event }: EventChartProps) {
   const [activeTimeRange, setActiveTimeRange] = useState('1D')
   const timeRanges = ['1H', '6H', '1D', '1W', '1M', 'ALL']
   const POLYMARKET_COLORS = ['#FF6600', '#2D9CDB', '#4E6377', '#FDC500']
+  const TIME_RANGE_SETTINGS: Record<string, { durationHours: number, stepMinutes: number }> = {
+    '1H': { durationHours: 1, stepMinutes: 5 },
+    '6H': { durationHours: 6, stepMinutes: 15 },
+    '1D': { durationHours: 24, stepMinutes: 60 },
+    '1W': { durationHours: 24 * 7, stepMinutes: 180 },
+    '1M': { durationHours: 24 * 30, stepMinutes: 720 },
+    'ALL': { durationHours: 24 * 90, stepMinutes: 1440 },
+  }
 
-  function generateChartData() {
+  function generateChartData(range: string) {
     const topMarkets = getTopMarkets()
     const now = new Date()
     const data = []
+    const { durationHours, stepMinutes } = TIME_RANGE_SETTINGS[range] || TIME_RANGE_SETTINGS['1D']
+    const stepMilliseconds = stepMinutes * 60 * 1000
+    const totalSteps = Math.max(1, Math.round((durationHours * 60) / stepMinutes))
 
     const series = topMarkets.map((market, index) => ({
       key: `market_${market.condition_id}`,
@@ -28,17 +39,21 @@ export default function EventChart({ event }: EventChartProps) {
       color: POLYMARKET_COLORS[index] || '#8B5CF6',
     }))
 
-    for (let i = 29; i >= 0; i--) {
-      const date = new Date(now)
-      date.setDate(date.getDate() - i)
+    for (let i = totalSteps; i >= 0; i -= 1) {
+      const date = new Date(now.getTime() - i * stepMilliseconds)
+      const minutes = date.getMinutes()
+      const remainder = stepMinutes > 0 ? minutes % stepMinutes : 0
+      date.setMinutes(minutes - remainder, 0, 0)
 
       const dataPoint: { date: Date, [key: string]: number | Date } = { date }
+      const elapsedSteps = totalSteps - i
+      const progress = totalSteps === 0 ? 0 : elapsedSteps / totalSteps
 
-      topMarkets.forEach((market) => {
+      topMarkets.forEach((market, marketIndex) => {
         const key = `market_${market.condition_id}`
         const baseProbability = market.probability
-        const timeVariation = Math.sin((29 - i) * 0.1) * 5
-        const randomVariation = (Math.random() - 0.5) * 8
+        const timeVariation = Math.sin(progress * Math.PI * 2) * 4
+        const randomVariation = Math.sin((elapsedSteps + 1) * (marketIndex + 1) * 0.95) * 3
         const variation = timeVariation + randomVariation
 
         let value = baseProbability + variation
@@ -68,7 +83,7 @@ export default function EventChart({ event }: EventChartProps) {
   }
 
   // Generate dynamic data for the chart
-  const chartConfig = generateChartData()
+  const chartConfig = generateChartData(activeTimeRange)
 
   function getTopMarkets() {
     return [...event.markets].sort((a, b) => b.total_volume - a.total_volume).slice(0, 4)
