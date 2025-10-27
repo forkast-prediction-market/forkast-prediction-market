@@ -1,5 +1,6 @@
 'use cache'
 
+import PortfolioMarketsWonCard from '@/app/(platform)/portfolio/_components/PortfolioMarketsWonCard'
 import PortfolioProfitLossCard from '@/app/(platform)/portfolio/_components/PortfolioProfitLossCard'
 import PortfolioSummaryCard from '@/app/(platform)/portfolio/_components/PortfolioSummaryCard'
 
@@ -11,6 +12,9 @@ export default async function PortfolioLayout({ children }: LayoutProps<'/portfo
           <PortfolioSummaryCard />
           <PortfolioProfitLossCard />
         </div>
+
+        {/* TODO: Wire PortfolioMarketsWonCard to real claimable wins data and hide this block when nothing is available to claim. */}
+        <PortfolioMarketsWonCard />
 
         {children}
       </div>

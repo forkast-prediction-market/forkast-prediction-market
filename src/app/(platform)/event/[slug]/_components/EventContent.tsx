@@ -9,6 +9,7 @@ import EventMarkets from '@/app/(platform)/event/[slug]/_components/EventMarkets
 import EventMetaInformation from '@/app/(platform)/event/[slug]/_components/EventMetaInformation'
 import EventOrderPanelForm from '@/app/(platform)/event/[slug]/_components/EventOrderPanelForm'
 import EventOrderPanelMobile from '@/app/(platform)/event/[slug]/_components/EventOrderPanelMobile'
+import EventPositionsHistory from '@/app/(platform)/event/[slug]/_components/EventPositionsHistory'
 import EventRelated from '@/app/(platform)/event/[slug]/_components/EventRelated'
 import EventRules from '@/app/(platform)/event/[slug]/_components/EventRules'
 import EventTabs from '@/app/(platform)/event/[slug]/_components/EventTabs'
@@ -41,6 +42,7 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
         <EventMetaInformation event={event} />
         <EventChart event={event} />
         <EventMarkets event={event} />
+        <EventPositionsHistory />
         {marketContextEnabled && <EventMarketContext event={event} />}
         <EventRules event={event} />
         {isMobile && <EventRelated event={event} />}
