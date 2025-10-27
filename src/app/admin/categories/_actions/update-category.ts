@@ -77,7 +77,7 @@ export async function updateCategoryAction(
 
     revalidatePath('/admin/categories')
     revalidatePath('/')
-    revalidateTag(cacheTags.events(currentUser.id), 'max')
+    revalidateTag(cacheTags.events(currentUser.id))
 
     return {
       success: true,
