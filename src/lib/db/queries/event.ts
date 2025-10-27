@@ -1,6 +1,6 @@
 import type { ActivityOrder, Event, QueryResult, TopHolder } from '@/types'
 import { and, desc, eq, exists, ilike, sql } from 'drizzle-orm'
-import { unstable_cacheTag as cacheTag } from 'next/cache'
+import { cacheTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { users } from '@/lib/db/schema/auth/tables'

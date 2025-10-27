@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'
+import { cacheTag, revalidateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { settings } from '@/lib/db/schema/settings/tables'
 import { db } from '@/lib/drizzle'
@@ -51,7 +51,7 @@ export const SettingsRepository = {
         updated_at: settings.updated_at,
       })
 
-    revalidateTag(cacheTags.settings)
+    revalidateTag(cacheTags.settings, 'max')
 
     return { data, error: null }
   },

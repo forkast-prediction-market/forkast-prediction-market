@@ -28,8 +28,8 @@ export const BookmarkRepository = {
             ),
           )
 
-        revalidateTag(cacheTags.events(user_id))
-        revalidateTag(cacheTags.event(`${event_id}:${user_id}`))
+        revalidateTag(cacheTags.events(user_id), 'max')
+        revalidateTag(cacheTags.event(`${event_id}:${user_id}`), 'max')
 
         return { data: null, error: null }
       }
@@ -38,8 +38,8 @@ export const BookmarkRepository = {
           .insert(bookmarks)
           .values({ user_id, event_id })
 
-        revalidateTag(cacheTags.events(user_id))
-        revalidateTag(cacheTags.event(`${event_id}:${user_id}`))
+        revalidateTag(cacheTags.events(user_id), 'max')
+        revalidateTag(cacheTags.event(`${event_id}:${user_id}`), 'max')
 
         return { data: null, error: null }
       }
