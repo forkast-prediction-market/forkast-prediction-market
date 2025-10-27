@@ -5,9 +5,6 @@ const config: NextConfig = {
   experimental: {
     useCache: true,
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typedRoutes: true,
   reactStrictMode: false,
   images: {

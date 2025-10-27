@@ -1,5 +1,5 @@
 import { and, asc, desc, eq, inArray, isNull } from 'drizzle-orm'
-import { unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'
+import { cacheTag, revalidateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { comment_likes, comments, v_comments_with_user } from '@/lib/db/schema/comments/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
@@ -80,7 +80,7 @@ export const CommentRepository = {
           created_at: comments.created_at,
         })
 
-      revalidateTag(cacheTags.eventComments(eventId))
+      revalidateTag(cacheTags.eventComments(eventId), 'max')
 
       return { data: result[0], error: null }
     })
@@ -99,7 +99,7 @@ export const CommentRepository = {
           eq(comments.user_id, args.userId),
         ))
 
-      revalidateTag(cacheTags.eventComments(args.eventId))
+      revalidateTag(cacheTags.eventComments(args.eventId), 'max')
 
       return { data: result, error: null }
     })
@@ -128,8 +128,8 @@ export const CommentRepository = {
           .from(comments)
           .where(eq(comments.id, args.commentId))
 
-        revalidateTag(cacheTags.eventComments(args.eventId))
-        revalidateTag(cacheTags.commentLikes(args.userId))
+        revalidateTag(cacheTags.eventComments(args.eventId), 'max')
+        revalidateTag(cacheTags.commentLikes(args.userId), 'max')
 
         return {
           data: {
@@ -152,8 +152,8 @@ export const CommentRepository = {
           .from(comments)
           .where(eq(comments.id, args.commentId))
 
-        revalidateTag(cacheTags.eventComments(args.eventId))
-        revalidateTag(cacheTags.commentLikes(args.userId))
+        revalidateTag(cacheTags.eventComments(args.eventId), 'max')
+        revalidateTag(cacheTags.commentLikes(args.userId), 'max')
 
         return {
           data: {
