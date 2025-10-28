@@ -142,9 +142,14 @@ export default function EventChart({ event }: EventChartProps) {
 
   const chartConfig = useMemo(() => {
     const range = TIME_RANGE_SETTINGS[activeTimeRange] || TIME_RANGE_SETTINGS['1D']
+    const referenceTime
+      = event.markets[0]?.last_snapshot_at
+        || event.updated_at
+        || new Date().toISOString()
+    const referenceTimestamp = new Date(referenceTime).getTime()
     const rangeCutoff = activeTimeRange === 'ALL'
       ? null
-      : now - range.durationHours * 60 * 60 * 1000
+      : referenceTimestamp - range.durationHours * 60 * 60 * 1000
 
     if (isBinaryMarket) {
       const market = event.markets[0]
