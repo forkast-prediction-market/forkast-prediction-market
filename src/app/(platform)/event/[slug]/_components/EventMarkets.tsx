@@ -129,8 +129,8 @@ export default function EventMarkets({ event }: EventMarketsProps) {
             OUTCOMES
           </span>
         </div>
-        <div className="flex w-1/5 items-center gap-1">
-          <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+        <div className="flex w-1/5 items-center gap-2">
+          <span className="text-left text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             CHANCE
           </span>
           <Tooltip>

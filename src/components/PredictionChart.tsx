@@ -209,6 +209,10 @@ export function PredictionChart({
     }
   }
 
+  if (tooltipActive && !cursorPoint) {
+    cursorPoint = data[data.length - 1]
+  }
+
   let coloredPoints: DataPoint[] = data
   let mutedPoints: DataPoint[] = []
 

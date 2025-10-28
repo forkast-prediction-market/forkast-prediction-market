@@ -46,6 +46,7 @@ function getYesOutcome(market: Event['markets'][number]) {
 function buildSeriesData(
   sources: SeriesSource[],
   rangeCutoff: number | null,
+  normalizeProportions: boolean = false,
 ): { data: ChartDataPoint[], series: { key: string, name: string, color: string }[] } {
   const timeSet = new Set<number>()
 
@@ -123,6 +124,27 @@ function buildSeriesData(
     data.push(point)
   }
 
+  if (normalizeProportions) {
+    for (const point of data) {
+      let sum = 0
+      for (const source of sources) {
+        const value = point[source.key]
+        if (typeof value === 'number') {
+          sum += value
+        }
+      }
+
+      if (sum > 0) {
+        for (const source of sources) {
+          const value = point[source.key]
+          if (typeof value === 'number') {
+            point[source.key] = (value / sum) * 100
+          }
+        }
+      }
+    }
+  }
+
   return {
     data,
     series: sources.map(({ key, name, color }) => ({ key, name, color })),
@@ -140,16 +162,71 @@ export default function EventChart({ event }: EventChartProps) {
     [event.markets],
   )
 
+  const latestTimestamp = useMemo(() => {
+    let maxTimestamp = 0
+
+    for (const market of event.markets) {
+      if (market.last_snapshot_at) {
+        const snapshotTs = new Date(market.last_snapshot_at).getTime()
+        if (!Number.isNaN(snapshotTs)) {
+          maxTimestamp = Math.max(maxTimestamp, snapshotTs)
+        }
+      }
+
+      for (const outcome of market.outcomes) {
+        if (outcome.last_trade_ts) {
+          const lastTradeTs = new Date(outcome.last_trade_ts).getTime()
+          if (!Number.isNaN(lastTradeTs)) {
+            maxTimestamp = Math.max(maxTimestamp, lastTradeTs)
+          }
+        }
+
+        if (outcome.recent_trades?.length) {
+          outcome.recent_trades.forEach((trade) => {
+            const tradeTs = new Date(trade.executed_at).getTime()
+            if (!Number.isNaN(tradeTs)) {
+              maxTimestamp = Math.max(maxTimestamp, tradeTs)
+            }
+          })
+        }
+      }
+    }
+
+    if (!maxTimestamp && event.updated_at) {
+      const updatedTs = new Date(event.updated_at).getTime()
+      if (!Number.isNaN(updatedTs)) {
+        maxTimestamp = updatedTs
+      }
+    }
+
+    if (maxTimestamp) {
+      return maxTimestamp
+    }
+
+    const now = new Date().getTime()
+    return Number.isNaN(now) ? 0 : now
+  }, [event.markets, event.updated_at])
+
   const chartConfig = useMemo(() => {
     const range = TIME_RANGE_SETTINGS[activeTimeRange] || TIME_RANGE_SETTINGS['1D']
-    const referenceTime
-      = event.markets[0]?.last_snapshot_at
-        || event.updated_at
-        || new Date().toISOString()
-    const referenceTimestamp = new Date(referenceTime).getTime()
+    const fallbackSnapshot = event.markets[0]?.last_snapshot_at || event.updated_at
+    const effectiveReferenceCandidates = [fallbackSnapshot, latestTimestamp]
+    const effectiveReference = effectiveReferenceCandidates
+      .map((candidate) => {
+        if (!candidate) {
+          return null
+        }
+        if (typeof candidate === 'number') {
+          return candidate
+        }
+        const parsed = new Date(candidate).getTime()
+        return Number.isNaN(parsed) ? null : parsed
+      })
+      .find((candidate): candidate is number => candidate !== null)
+      ?? latestTimestamp
     const rangeCutoff = activeTimeRange === 'ALL'
       ? null
-      : referenceTimestamp - range.durationHours * 60 * 60 * 1000
+      : effectiveReference - range.durationHours * 60 * 60 * 1000
 
     if (isBinaryMarket) {
       const market = event.markets[0]
@@ -171,7 +248,7 @@ export default function EventChart({ event }: EventChartProps) {
         ? new Date(yesOutcome.last_trade_ts).getTime()
         : market.last_snapshot_at
           ? new Date(market.last_snapshot_at).getTime()
-          : new Date(market.updated_at ?? event.updated_at ?? '1970-01-01T00:00:00Z').getTime()
+          : latestTimestamp
 
       const seriesSources: SeriesSource[] = [{
         key: `outcome_${yesOutcome?.token_id ?? 'yes'}`,
@@ -200,7 +277,7 @@ export default function EventChart({ event }: EventChartProps) {
         ? new Date(yesOutcome.last_trade_ts).getTime()
         : market.last_snapshot_at
           ? new Date(market.last_snapshot_at).getTime()
-          : new Date(market.updated_at ?? event.updated_at ?? '1970-01-01T00:00:00Z').getTime()
+          : latestTimestamp
 
       return {
         key: `market_${market.condition_id}`,
@@ -212,8 +289,8 @@ export default function EventChart({ event }: EventChartProps) {
       }
     })
 
-    return buildSeriesData(seriesSources, rangeCutoff)
-  }, [activeTimeRange, event.markets, event.updated_at, isBinaryMarket, topMarkets])
+    return buildSeriesData(seriesSources, rangeCutoff, true)
+  }, [activeTimeRange, event.markets, event.updated_at, isBinaryMarket, latestTimestamp, topMarkets])
 
   const primarySeriesKey = chartConfig.series?.[0]?.key
 
