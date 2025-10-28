@@ -1,7 +1,7 @@
 'use client'
 
 import type { User } from '@/types'
-import { ArrowDownWideNarrow, ArrowUpDownIcon, CalendarIcon, DownloadIcon, SearchIcon, SlidersHorizontalIcon } from 'lucide-react'
+import { ArrowDownWideNarrow, SearchIcon, SlidersHorizontalIcon } from 'lucide-react'
 import { useState } from 'react'
 import PortfolioActivityList from '@/app/(platform)/portfolio/_components/PortfolioActivityList'
 import PortfolioOpenOrdersTable from '@/app/(platform)/portfolio/_components/PortfolioOpenOrdersTable'
@@ -60,50 +60,36 @@ export default function PortfolioTabs({ user, activeTab, onTabChange }: Portfoli
       </div>
 
       {/* Search bar and controls */}
-      <div className="flex flex-col gap-4 sm:flex-row">
-        <div className="relative flex-1">
-          <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="bg-transparent pl-10 dark:bg-transparent"
-          />
+      {activeTab !== 'history' && (
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <div className="relative flex-1">
+            <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="bg-transparent pl-10 dark:bg-transparent"
+            />
+          </div>
+
+          {/* Tab-specific controls */}
+          <div className="flex flex-wrap gap-2 sm:flex-nowrap">
+            {activeTab === 'positions' && (
+              <Button variant="outline" size="sm">
+                <ArrowDownWideNarrow className="h-4 w-4" />
+                Current value
+              </Button>
+            )}
+
+            {activeTab === 'open-orders' && (
+              <Button variant="outline" size="sm">
+                <SlidersHorizontalIcon className="h-4 w-4" />
+                Market
+              </Button>
+            )}
+          </div>
         </div>
-
-        {/* Tab-specific controls */}
-        <div className="flex flex-wrap gap-2 sm:flex-nowrap">
-          {activeTab === 'positions' && (
-            <Button variant="outline" size="sm">
-              <ArrowDownWideNarrow className="h-4 w-4" />
-              Current value
-            </Button>
-          )}
-
-          {activeTab === 'open-orders' && (
-            <Button variant="outline" size="sm">
-              <SlidersHorizontalIcon className="h-4 w-4" />
-              Market
-            </Button>
-          )}
-
-          {activeTab === 'history' && (
-            <>
-              <Button variant="outline" size="sm">
-                <ArrowUpDownIcon className="h-4 w-4" />
-                Newest
-              </Button>
-              <Button variant="outline" size="sm">
-                <CalendarIcon className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm">
-                <DownloadIcon className="h-4 w-4" />
-                Export
-              </Button>
-            </>
-          )}
-        </div>
-      </div>
+      )}
 
       {/* Tab content */}
       {renderTabContent()}
