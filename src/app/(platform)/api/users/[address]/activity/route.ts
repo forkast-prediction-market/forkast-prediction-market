@@ -13,6 +13,7 @@ export async function GET(
     const limit = Number.parseInt(searchParams.get('limit') || '50', 10)
     const offset = Number.parseInt(searchParams.get('offset') || '0', 10)
     const minAmountParam = searchParams.get('minAmount')
+    const searchQuery = searchParams.get('search')
     const validatedLimit = Number.isNaN(limit) ? 50 : Math.min(Math.max(1, limit), 100)
     const validatedOffset = Number.isNaN(offset) ? 0 : Math.max(0, offset)
 
@@ -24,6 +25,19 @@ export async function GET(
       }
       else {
         return NextResponse.json({ error: 'Invalid minAmount parameter. Must be a non-negative number.' }, { status: 400 })
+      }
+    }
+
+    // Validate search parameter
+    let validatedSearchQuery: string | undefined
+    if (searchQuery !== null) {
+      const trimmedSearch = searchQuery.trim()
+      if (trimmedSearch.length > 0) {
+        // Basic validation: ensure search query is not too long and contains valid characters
+        if (trimmedSearch.length > 200) {
+          return NextResponse.json({ error: 'Search query too long. Maximum 200 characters allowed.' }, { status: 400 })
+        }
+        validatedSearchQuery = trimmedSearch
       }
     }
 
@@ -39,6 +53,7 @@ export async function GET(
       limit: validatedLimit,
       offset: validatedOffset,
       minAmount: validatedMinAmount,
+      search: validatedSearchQuery,
     })
 
     if (result.error) {
