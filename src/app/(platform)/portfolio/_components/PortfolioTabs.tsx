@@ -1,19 +1,21 @@
 'use client'
 
+import type { User } from '@/types'
 import { ArrowDownWideNarrow, ArrowUpDownIcon, CalendarIcon, DownloadIcon, SearchIcon, SlidersHorizontalIcon } from 'lucide-react'
 import { useState } from 'react'
-import PortfolioHistoryTable from '@/app/(platform)/portfolio/_components/PortfolioHistoryTable'
+import PortfolioActivityList from '@/app/(platform)/portfolio/_components/PortfolioActivityList'
 import PortfolioOpenOrdersTable from '@/app/(platform)/portfolio/_components/PortfolioOpenOrdersTable'
 import PortfolioPositionsTable from '@/app/(platform)/portfolio/_components/PortfolioPositionsTable'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
 interface PortfolioTabsProps {
+  user: User
   activeTab: string
   onTabChange: (tab: string) => void
 }
 
-export default function PortfolioTabs({ activeTab, onTabChange }: PortfolioTabsProps) {
+export default function PortfolioTabs({ user, activeTab, onTabChange }: PortfolioTabsProps) {
   const [searchQuery, setSearchQuery] = useState('')
 
   const tabs = [
@@ -29,7 +31,7 @@ export default function PortfolioTabs({ activeTab, onTabChange }: PortfolioTabsP
       case 'open-orders':
         return <PortfolioOpenOrdersTable searchQuery={searchQuery} />
       case 'history':
-        return <PortfolioHistoryTable searchQuery={searchQuery} />
+        return <PortfolioActivityList user={user} />
       default:
         return <PortfolioPositionsTable searchQuery={searchQuery} />
     }
