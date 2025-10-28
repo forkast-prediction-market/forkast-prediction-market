@@ -222,11 +222,7 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
     setIsLoadingMore(false)
     setRetryCount(0)
     setSearchQuery(query)
-
-    queryClient.invalidateQueries({
-      queryKey: ['user-activity', userAddress],
-    })
-  }, [queryClient, userAddress])
+  }, [])
 
   useEffect(() => {
     queueMicrotask(() => {
