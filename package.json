@@ -60,7 +60,7 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.1.0",
-    "@eslint-react/eslint-plugin": "^2.2.2",
+    "@eslint-react/eslint-plugin": "^2.2.4",
     "@next/eslint-plugin-next": "^15.5.5",
     "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4.1.12",
