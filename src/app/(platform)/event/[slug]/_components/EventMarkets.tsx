@@ -14,8 +14,6 @@ interface EventMarketsProps {
   event: Event
 }
 
-const CHANCE_COLUMN_WIDTH_CLASS = 'w-1/5'
-
 export default function EventMarkets({ event }: EventMarketsProps) {
   const state = useOrder()
   const isBinaryMarket = useIsBinaryMarket()
@@ -131,7 +129,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
             OUTCOMES
           </span>
         </div>
-        <div className={cn('flex items-center justify-center gap-1', CHANCE_COLUMN_WIDTH_CLASS)}>
+        <div className="flex w-1/5 items-center gap-1">
           <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             CHANCE
           </span>
@@ -161,7 +159,6 @@ export default function EventMarkets({ event }: EventMarketsProps) {
             </TooltipContent>
           </Tooltip>
         </div>
-        <div className="flex flex-1 items-center justify-end gap-2" />
       </div>
 
       {[...event.markets]
@@ -235,7 +232,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     state.setIsMobileOrderPanelOpen(true)
                   }}
                 >
-                  <span className="truncate opacity-70">
+                  <span className="truncate">
                     Buy
                     {' '}
                     {market.outcomes[0].outcome_text}
@@ -259,7 +256,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     state.setIsMobileOrderPanelOpen(true)
                   }}
                 >
-                  <span className="truncate opacity-70">
+                  <span className="truncate text-muted-foreground">
                     Buy
                     {' '}
                     {market.outcomes[1].outcome_text}
@@ -273,7 +270,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
             </div>
 
             {/* Desktop layout */}
-            <div className="hidden w-full items-center gap-4 lg:flex">
+            <div className="hidden w-full items-center lg:flex">
               <div className="flex w-1/2 items-center gap-3">
                 {event.show_market_icons && (
                   <Image
@@ -284,7 +281,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     className="flex-shrink-0 rounded-full"
                   />
                 )}
-                <div className="min-w-0">
+                <div>
                   <div className="font-bold">
                     {market.title}
                   </div>
@@ -300,7 +297,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                 </div>
               </div>
 
-              <div className={cn('flex flex-col items-center gap-1', CHANCE_COLUMN_WIDTH_CLASS)}>
+              <div className="flex w-1/5 items-center justify-center gap-2">
                 <span className="text-2xl font-bold text-foreground">
                   {formatProbability(getDisplayProbability(market))}
                   %
@@ -348,7 +345,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     state.inputRef?.current?.focus()
                   }}
                 >
-                  <span className="truncate opacity-70">
+                  <span className="truncate">
                     Buy
                     {' '}
                     {market.outcomes[1].outcome_text}
