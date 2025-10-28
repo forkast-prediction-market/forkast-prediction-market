@@ -1,5 +1,5 @@
 import type { ActivityOrder, QueryResult } from '@/types'
-import { asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
@@ -311,6 +311,7 @@ export const UserRepository = {
     limit: number
     offset: number
     minAmount?: number
+    search?: string
   }): Promise<QueryResult<ActivityOrder[]>> {
     const { data: userData, error: userError } = await this.getProfileByUsername(args.address)
 
@@ -357,7 +358,14 @@ export const UserRepository = {
         .innerJoin(markets, eq(conditions.id, markets.condition_id))
         .innerJoin(events, eq(markets.event_id, events.id))
 
-        .where(eq(orders.user_id, userData.id))
+        .where(
+          args.search && args.search.trim()
+            ? and(
+                eq(orders.user_id, userData.id),
+                ilike(markets.title, `%${args.search.trim()}%`),
+              )
+            : eq(orders.user_id, userData.id),
+        )
         .orderBy(desc(orders.id))
 
         .limit(queryLimit)
