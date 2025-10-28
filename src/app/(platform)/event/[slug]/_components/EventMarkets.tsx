@@ -1,8 +1,11 @@
 import type { Event } from '@/types'
-import { RefreshCwIcon, TrendingDownIcon } from 'lucide-react'
+import { RefreshCwIcon, Triangle } from 'lucide-react'
 import Image from 'next/image'
-import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useTransition } from 'react'
+import { refreshMarketSnapshotAction } from '@/app/(platform)/event/[slug]/_actions/refresh-market-snapshot'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
@@ -11,9 +14,13 @@ interface EventMarketsProps {
   event: Event
 }
 
+const CHANCE_COLUMN_WIDTH_CLASS = 'w-1/5'
+
 export default function EventMarkets({ event }: EventMarketsProps) {
   const state = useOrder()
   const isBinaryMarket = useIsBinaryMarket()
+  const router = useRouter()
+  const [isRefreshing, startTransition] = useTransition()
 
   useEffect(() => {
     if (!state.market) {
@@ -31,8 +38,89 @@ export default function EventMarkets({ event }: EventMarketsProps) {
     }
   }, [state, event.markets, isBinaryMarket])
 
+  const totalProbability = useMemo(
+    () => event.markets.reduce(
+      (sum, market) => sum + (Number.isFinite(market.probability) ? market.probability : 0),
+      0,
+    ),
+    [event.markets],
+  )
+
   if (isBinaryMarket) {
     return <></>
+  }
+
+  function getYesOutcome(market: Event['markets'][number]) {
+    return market.outcomes.find(outcome => outcome.outcome_index === OUTCOME_INDEX.YES)
+      ?? market.outcomes[0]
+  }
+
+  function getDisplayProbability(market: Event['markets'][number]) {
+    if (totalProbability > 0) {
+      return (market.probability / totalProbability) * 100
+    }
+    return market.probability
+  }
+
+  function formatProbability(value: number) {
+    if (!Number.isFinite(value)) {
+      return '0'
+    }
+
+    return Math.round(value).toString()
+  }
+
+  function getProbabilityChange(market: Event['markets'][number]) {
+    const yesOutcome = getYesOutcome(market)
+    if (!yesOutcome?.recent_trades || yesOutcome.recent_trades.length < 2) {
+      return 0
+    }
+
+    const [latest, previous] = [...yesOutcome.recent_trades]
+      .sort((a, b) => new Date(b.executed_at).getTime() - new Date(a.executed_at).getTime())
+      .slice(0, 2)
+
+    if (!latest || !previous) {
+      return 0
+    }
+
+    return (latest.price - previous.price) * 100
+  }
+
+  function renderChangeIndicator(market: Event['markets'][number], size: 'sm' | 'lg') {
+    const change = getProbabilityChange(market)
+    const hasMovement = Math.abs(change) >= 0.01
+
+    if (!hasMovement) {
+      return null
+    }
+
+    const isPositive = change > 0
+    const value = Math.round(Math.abs(change))
+    const containerClass = size === 'lg'
+      ? 'flex items-center gap-1 text-xs font-semibold'
+      : 'flex items-center gap-1 text-[10px] font-semibold'
+
+    return (
+      <span className={cn(containerClass, isPositive ? 'text-yes' : 'text-no')}>
+        <Triangle
+          className={cn(size === 'lg' ? 'size-3' : 'size-2.5', isPositive ? '' : 'rotate-180')}
+          fill="currentColor"
+          strokeWidth={0}
+        />
+        {value}
+        %
+      </span>
+    )
+  }
+
+  function refreshSnapshot() {
+    startTransition(async () => {
+      const response = await refreshMarketSnapshotAction({ slug: event.slug })
+      if (!response?.error) {
+        router.refresh()
+      }
+    })
   }
 
   return (
@@ -43,17 +131,37 @@ export default function EventMarkets({ event }: EventMarketsProps) {
             OUTCOMES
           </span>
         </div>
-        <div className="flex w-1/5 items-center justify-center gap-1">
+        <div className={cn('flex items-center justify-center gap-1', CHANCE_COLUMN_WIDTH_CLASS)}>
           <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             CHANCE
           </span>
-          <a
-            href="#"
-            className="text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <RefreshCwIcon className="size-3" />
-          </a>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  `
+                    flex size-6 items-center justify-center rounded border border-border/60 text-muted-foreground
+                    transition-colors
+                  `,
+                  `
+                    hover:text-foreground
+                    focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none
+                  `,
+                )}
+                onClick={refreshSnapshot}
+                disabled={isRefreshing}
+                aria-label="Refresh chance"
+              >
+                <RefreshCwIcon className={cn('size-3', isRefreshing ? 'animate-spin' : '')} />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <span>Refresh</span>
+            </TooltipContent>
+          </Tooltip>
         </div>
+        <div className="flex flex-1 items-center justify-end gap-2" />
       </div>
 
       {[...event.markets]
@@ -75,9 +183,8 @@ export default function EventMarkets({ event }: EventMarketsProps) {
               state.setSide(ORDER_SIDE.BUY)
             }}
           >
-            {/* Mobile: Layout in column */}
+            {/* Mobile layout */}
             <div className="w-full lg:hidden">
-              {/* Row 1: Name and probability */}
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   {event.show_market_icons && (
@@ -104,13 +211,15 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     </div>
                   </div>
                 </div>
-                <span className="text-lg font-bold text-foreground">
-                  {Math.round(market.probability)}
-                  %
-                </span>
+                <div className="flex flex-col items-start">
+                  <span className="text-lg font-bold text-foreground">
+                    {formatProbability(getDisplayProbability(market))}
+                    %
+                  </span>
+                  {renderChangeIndicator(market, 'sm')}
+                </div>
               </div>
 
-              {/* Row 2: Buttons */}
               <div className="flex gap-2">
                 <Button
                   size="outcome"
@@ -163,8 +272,8 @@ export default function EventMarkets({ event }: EventMarketsProps) {
               </div>
             </div>
 
-            {/* Desktop: Original line layout */}
-            <div className="hidden w-full items-center lg:flex">
+            {/* Desktop layout */}
+            <div className="hidden w-full items-center gap-4 lg:flex">
               <div className="flex w-1/2 items-center gap-3">
                 {event.show_market_icons && (
                   <Image
@@ -175,7 +284,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     className="flex-shrink-0 rounded-full"
                   />
                 )}
-                <div>
+                <div className="min-w-0">
                   <div className="font-bold">
                     {market.title}
                   </div>
@@ -191,20 +300,15 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                 </div>
               </div>
 
-              <div className="flex w-1/5 justify-center">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold text-foreground">
-                    {Math.round(market.probability)}
-                    %
-                  </span>
-                  <div className="flex items-center gap-1 text-no">
-                    <TrendingDownIcon className="size-3" />
-                    <span className="text-xs font-semibold">3%</span>
-                  </div>
-                </div>
+              <div className={cn('flex flex-col items-center gap-1', CHANCE_COLUMN_WIDTH_CLASS)}>
+                <span className="text-2xl font-bold text-foreground">
+                  {formatProbability(getDisplayProbability(market))}
+                  %
+                </span>
+                {renderChangeIndicator(market, 'lg')}
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="ml-auto flex items-center gap-2">
                 <Button
                   size="outcome"
                   variant="yes"

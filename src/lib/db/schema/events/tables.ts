@@ -80,6 +80,7 @@ export const markets = pgTable(
     total_volume: numeric({ precision: 20, scale: 6 }).default('0').notNull(),
     created_at: timestamp({ withTimezone: true }).defaultNow().notNull(),
     updated_at: timestamp({ withTimezone: true }).defaultNow().notNull(),
+    last_snapshot_at: timestamp({ withTimezone: true }),
   },
 )
 
@@ -96,11 +97,19 @@ export const outcomes = pgTable(
     token_id: text().notNull().unique(),
     is_winning_outcome: boolean().default(false),
     payout_value: numeric({ precision: 20, scale: 6 }),
-    current_price: numeric({ precision: 8, scale: 4 }),
+    current_price: numeric({ precision: 20, scale: 10 }),
     volume_24h: numeric({ precision: 20, scale: 6 }).default('0').notNull(),
     total_volume: numeric({ precision: 20, scale: 6 }).default('0').notNull(),
     created_at: timestamp({ withTimezone: true }).defaultNow().notNull(),
     updated_at: timestamp({ withTimezone: true }).defaultNow().notNull(),
+    best_bid_price: numeric({ precision: 20, scale: 10 }),
+    best_bid_size: numeric({ precision: 28, scale: 8 }),
+    best_ask_price: numeric({ precision: 20, scale: 10 }),
+    best_ask_size: numeric({ precision: 28, scale: 8 }),
+    open_interest: numeric({ precision: 28, scale: 8 }),
+    last_trade_price: numeric({ precision: 20, scale: 10 }),
+    last_trade_ts: timestamp({ withTimezone: true }),
+    snapshot_ts: timestamp({ withTimezone: true }),
   },
 )
 
@@ -151,3 +160,20 @@ export const v_main_tag_subcategories = pgView(
     last_market_activity_at: timestamp(),
   },
 ).existing()
+
+export const outcome_recent_trades = pgTable(
+  'outcome_recent_trades',
+  {
+    trade_id: text().primaryKey(),
+    token_id: text()
+      .notNull()
+      .references(() => outcomes.token_id, { onDelete: 'cascade', onUpdate: 'cascade' }),
+    price: numeric({ precision: 20, scale: 10 }).notNull(),
+    size: numeric({ precision: 28, scale: 8 }).notNull(),
+    side: text().notNull(),
+    executed_at: timestamp({ withTimezone: true }).notNull(),
+    buyer_order_id: text(),
+    seller_order_id: text(),
+    inserted_at: timestamp({ withTimezone: true }).notNull().defaultNow(),
+  },
+)

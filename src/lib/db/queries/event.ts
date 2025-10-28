@@ -5,13 +5,14 @@ import { cacheTags } from '@/lib/cache-tags'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { users } from '@/lib/db/schema/auth/tables'
 import { bookmarks } from '@/lib/db/schema/bookmarks/tables'
-import { conditions, event_tags, events, markets, outcomes, tags } from '@/lib/db/schema/events/tables'
+import { conditions, event_tags, events, markets, outcome_recent_trades, outcomes, tags } from '@/lib/db/schema/events/tables'
 import { orders } from '@/lib/db/schema/orders/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
+const RECENT_TRADES_LIMIT = 10
 
 interface ListEventsProps {
   tag: string
@@ -47,10 +48,44 @@ interface HoldersResult {
   noHolders: TopHolder[]
 }
 
+function numberOrUndefined(value: unknown) {
+  if (value === null || value === undefined) {
+    return undefined
+  }
+  const numeric = Number(value)
+  return Number.isNaN(numeric) ? undefined : numeric
+}
+
+function numberOrZero(value: unknown) {
+  const numeric = Number(value ?? 0)
+  return Number.isNaN(numeric) ? 0 : numeric
+}
+
+function toIsoString(value: unknown): string | null {
+  if (!value) {
+    return null
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString()
+  }
+
+  if (typeof value === 'string') {
+    const parsed = new Date(value)
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString()
+  }
+
+  return null
+}
+
+type DrizzleOutcomeWithTrades = typeof outcomes.$inferSelect & {
+  recentTrades?: (typeof outcome_recent_trades.$inferSelect)[]
+}
+
 type DrizzleEventResult = typeof events.$inferSelect & {
   markets: (typeof markets.$inferSelect & {
     condition: typeof conditions.$inferSelect & {
-      outcomes: typeof outcomes.$inferSelect[]
+      outcomes: DrizzleOutcomeWithTrades[]
     }
   })[]
   eventTags: (typeof event_tags.$inferSelect & {
@@ -73,17 +108,37 @@ function eventResource(event: DrizzleEventResult, userId: string): Event {
     .filter(tag => Boolean(tag?.slug))
 
   const marketsWithDerivedValues = event.markets.map((market: any) => {
-    const rawOutcomes = (market.condition?.outcomes || []) as Array<typeof outcomes.$inferSelect>
+    const rawOutcomes = (market.condition?.outcomes || []) as DrizzleOutcomeWithTrades[]
     const normalizedOutcomes = rawOutcomes.map((outcome) => {
-      const currentPrice = outcome.current_price != null ? Number(outcome.current_price) : undefined
+      const { recentTrades, ...rest } = outcome
+      const currentPrice = numberOrUndefined(outcome.current_price)
+      const lastTradePrice = numberOrUndefined(outcome.last_trade_price)
 
       return {
-        ...outcome,
+        ...rest,
         outcome_index: Number(outcome.outcome_index || 0),
-        payout_value: outcome.payout_value != null ? Number(outcome.payout_value) : undefined,
+        payout_value: numberOrUndefined(outcome.payout_value),
         current_price: currentPrice,
-        volume_24h: Number(outcome.volume_24h || 0),
-        total_volume: Number(outcome.total_volume || 0),
+        volume_24h: numberOrZero(outcome.volume_24h),
+        total_volume: numberOrZero(outcome.total_volume),
+        best_bid_price: numberOrUndefined(outcome.best_bid_price),
+        best_bid_size: numberOrUndefined(outcome.best_bid_size),
+        best_ask_price: numberOrUndefined(outcome.best_ask_price),
+        best_ask_size: numberOrUndefined(outcome.best_ask_size),
+        open_interest: numberOrUndefined(outcome.open_interest),
+        last_trade_price: lastTradePrice,
+        last_trade_ts: toIsoString(outcome.last_trade_ts),
+        snapshot_ts: toIsoString(outcome.snapshot_ts),
+        recent_trades: (recentTrades ?? []).map(trade => ({
+          trade_id: trade.trade_id,
+          token_id: trade.token_id,
+          price: numberOrZero(trade.price),
+          size: numberOrZero(trade.size),
+          side: (trade.side === 'sell' ? 'sell' : 'buy') as 'buy' | 'sell',
+          executed_at: toIsoString(trade.executed_at) ?? new Date().toISOString(),
+          buyer_order_id: trade.buyer_order_id ?? null,
+          seller_order_id: trade.seller_order_id ?? null,
+        })),
       }
     })
 
@@ -103,6 +158,7 @@ function eventResource(event: DrizzleEventResult, userId: string): Event {
       current_volume_24h: normalizedCurrentVolume24h,
       total_volume: normalizedTotalVolume,
       outcomes: normalizedOutcomes,
+      last_snapshot_at: toIsoString(market.last_snapshot_at),
       icon_url: getSupabaseImageUrl(market.icon_url),
       condition: market.condition
         ? {
@@ -346,6 +402,38 @@ export const EventRepository = {
     })
   },
 
+  async getEventConditionIds(slug: string): Promise<QueryResult<{ eventId: string, conditionIds: string[] }>> {
+    return runQuery(async () => {
+      const eventRecord = await db.query.events.findFirst({
+        where: eq(events.slug, slug),
+        columns: {
+          id: true,
+        },
+      })
+
+      if (!eventRecord) {
+        throw new Error('Event not found')
+      }
+
+      const eventMarkets = await db.query.markets.findMany({
+        where: eq(markets.event_id, eventRecord.id),
+        columns: {
+          condition_id: true,
+        },
+      })
+
+      const conditionIds = eventMarkets.map(market => market.condition_id)
+
+      return {
+        data: {
+          eventId: eventRecord.id,
+          conditionIds,
+        },
+        error: null,
+      }
+    })
+  },
+
   async getEventBySlug(slug: string, userId: string = ''): Promise<QueryResult<Event>> {
     'use cache'
 
@@ -356,7 +444,16 @@ export const EventRepository = {
           markets: {
             with: {
               condition: {
-                with: { outcomes: true },
+                with: {
+                  outcomes: {
+                    with: {
+                      recentTrades: {
+                        orderBy: desc(outcome_recent_trades.executed_at),
+                        limit: RECENT_TRADES_LIMIT,
+                      },
+                    },
+                  },
+                },
               },
             },
           },

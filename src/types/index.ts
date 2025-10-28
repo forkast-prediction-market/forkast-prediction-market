@@ -42,8 +42,10 @@ export interface Market {
   metadata?: any // JSONB
   current_volume_24h: number
   total_volume: number
+  volume: number
   created_at: string
   updated_at: string
+  last_snapshot_at?: string | null
   price: number
   probability: number
   outcomes: Outcome[]
@@ -63,6 +65,26 @@ export interface Outcome {
   total_volume: number
   created_at: string
   updated_at: string
+  best_bid_price?: number
+  best_bid_size?: number
+  best_ask_price?: number
+  best_ask_size?: number
+  open_interest?: number
+  last_trade_price?: number
+  last_trade_ts?: string | null
+  snapshot_ts?: string | null
+  recent_trades?: OutcomeRecentTrade[]
+}
+
+export interface OutcomeRecentTrade {
+  trade_id: string
+  token_id: string
+  price: number
+  size: number
+  side: 'buy' | 'sell'
+  executed_at: string
+  buyer_order_id?: string | null
+  seller_order_id?: string | null
 }
 
 interface Condition {
