@@ -1,3 +1,5 @@
+'use cache'
+
 import type { Metadata } from 'next'
 import PublicProfileContent from '@/app/(platform)/[username]/_components/PublicProfileContent'
 import { truncateAddress } from '@/lib/utils'

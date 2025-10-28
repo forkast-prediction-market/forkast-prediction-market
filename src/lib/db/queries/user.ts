@@ -39,7 +39,7 @@ export const UserRepository = {
       const data = {
         id: rawData.id,
         address: rawData.address,
-        username: rawData.username || undefined, // Convert null to undefined
+        username: rawData.username || undefined,
         image: rawData.image ? getSupabaseImageUrl(rawData.image) : `https://avatar.vercel.sh/${rawData.address}.png`,
         created_at: rawData.created_at,
       }
@@ -328,10 +328,10 @@ export const UserRepository = {
           id: orders.id,
           side: orders.side,
           amount: orders.maker_amount,
-          price: sql<number>`CASE 
-            WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0 
-            THEN ${orders.taker_amount}::numeric / (${orders.maker_amount} + ${orders.taker_amount})::numeric 
-            ELSE 0.5 
+          price: sql<number>`CASE
+            WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0
+            THEN ${orders.taker_amount}::numeric / (${orders.maker_amount} + ${orders.taker_amount})::numeric
+            ELSE 0.5
           END`.as('price'),
           created_at: orders.created_at,
           status: orders.status,
