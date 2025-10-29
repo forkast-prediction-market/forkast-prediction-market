@@ -4,31 +4,22 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 
 export async function proxy(request: NextRequest) {
-  if (request.headers.get('purpose') === 'prefetch') {
-    return NextResponse.next()
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
+
+  if (!session) {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
-  try {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    })
-
-    if (!session) {
+  const url = new URL(request.url)
+  if (url.pathname.startsWith('/admin')) {
+    if (!session.user?.is_admin) {
       return NextResponse.redirect(new URL('/', request.url))
     }
-
-    const url = new URL(request.url)
-    if (url.pathname.startsWith('/admin')) {
-      if (!session.user?.is_admin) {
-        return NextResponse.redirect(new URL('/', request.url))
-      }
-    }
-
-    return NextResponse.next()
   }
-  catch {
-    return NextResponse.next()
-  }
+
+  return NextResponse.next()
 }
 
 export const config = {
