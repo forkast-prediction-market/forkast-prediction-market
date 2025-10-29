@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { revalidatePath, updateTag } from 'next/cache'
 import { z } from 'zod'
 import { cacheTags } from '@/lib/cache-tags'
 import { TagRepository } from '@/lib/db/queries/tag'
@@ -77,7 +77,7 @@ export async function updateCategoryAction(
 
     revalidatePath('/admin/categories')
     revalidatePath('/')
-    revalidateTag(cacheTags.events(currentUser.id))
+    updateTag(cacheTags.events(currentUser.id))
 
     return {
       success: true,

@@ -45,7 +45,7 @@ const STEPS = [
 
 export default function HeaderHowItWorks() {
   const isMounted = useClientMounted()
-  const { open: openAuthModal } = useAppKit()
+  const appKit = isMounted ? useAppKit() : null
   const { isConnected, status } = useAppKitAccount()
   const [isOpen, setIsOpen] = useState(false)
   const [activeStep, setActiveStep] = useState(0)
@@ -82,7 +82,7 @@ export default function HeaderHowItWorks() {
       triggerConfetti('primary')
       setIsOpen(false)
       setActiveStep(0)
-      openAuthModal()
+      appKit?.open()
       return
     }
 

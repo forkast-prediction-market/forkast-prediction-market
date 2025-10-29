@@ -2,12 +2,7 @@ import type { NextConfig } from 'next'
 import { createMDX } from 'fumadocs-mdx/next'
 
 const config: NextConfig = {
-  experimental: {
-    useCache: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  cacheComponents: true,
   typedRoutes: true,
   reactStrictMode: false,
   images: {
@@ -42,7 +37,7 @@ const config: NextConfig = {
         : process.env.VERCEL_URL
           ? `https://${process.env.VERCEL_URL}`
           : 'http://localhost:3000',
-    CLOB_URL: 'http://209.38.150.11:8080',
+    CLOB_URL: 'https://clob.forka.st',
   },
 }
 
