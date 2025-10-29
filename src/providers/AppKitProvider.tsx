@@ -19,7 +19,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
   createAppKit({
     projectId: projectId!,
     adapters: [wagmiAdapter],
-    themeMode: resolvedTheme as 'light' | 'dark',
+    themeMode: (resolvedTheme as 'light' | 'dark') || 'light',
     metadata: {
       name: process.env.NEXT_PUBLIC_SITE_NAME!,
       description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION!,

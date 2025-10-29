@@ -3,6 +3,7 @@
 import type { Event } from '@/types'
 import Image from 'next/image'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { NewBadge } from '@/components/ui/new-badge'
@@ -24,9 +25,11 @@ const SCHEDULE_FORMATTER = new Intl.DateTimeFormat('en-US', {
 export default function MentionsList({ events }: MentionsListProps) {
   return (
     <div className="mx-auto flex w-full flex-col gap-4 md:gap-5">
-      {events.map(event => (
-        <MentionsListItem key={event.id} event={event} />
-      ))}
+      <Suspense fallback={<span>...</span>}>
+        {events.map(event => (
+          <MentionsListItem key={event.id} event={event} />
+        ))}
+      </Suspense>
     </div>
   )
 }

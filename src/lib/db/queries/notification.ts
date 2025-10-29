@@ -1,5 +1,5 @@
 import { and, desc, eq } from 'drizzle-orm'
-import { unstable_cacheTag as cacheTag, revalidateTag } from 'next/cache'
+import { cacheTag, revalidateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { notifications } from '@/lib/db/schema/notifications/tables'
 import { db } from '@/lib/drizzle'
@@ -35,7 +35,7 @@ export const NotificationRepository = {
           ),
         )
 
-      revalidateTag(cacheTags.notifications(user_id))
+      revalidateTag(cacheTags.notifications(user_id), 'max')
 
       return { data: null, error: null }
     }
