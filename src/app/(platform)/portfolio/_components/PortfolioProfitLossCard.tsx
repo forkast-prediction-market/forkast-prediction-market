@@ -53,7 +53,7 @@ export default function PortfolioProfitLossCard() {
   }
 
   return (
-    <Card>
+    <Card className="border border-border/60 bg-transparent">
       <CardContent className="flex flex-col p-6">
         {/* Header with title and timeframe pills */}
         <div className="mb-4 flex items-center justify-between">
