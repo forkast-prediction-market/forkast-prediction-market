@@ -19,7 +19,7 @@ const { useSession } = createAuthClient()
 
 export default function HeaderMenu() {
   const isMounted = useClientMounted()
-  const appKit = isMounted ? useAppKit() : null
+  const { open } = useAppKit()
   const { isConnected, status } = useAppKitAccount()
   const { data: session } = useSession()
 
@@ -81,14 +81,14 @@ export default function HeaderMenu() {
             size="sm"
             variant="link"
             data-testid="header-login-button"
-            onClick={() => appKit?.open()}
+            onClick={() => open()}
           >
             Log In
           </Button>
           <Button
             size="sm"
             data-testid="header-signup-button"
-            onClick={() => appKit?.open()}
+            onClick={() => open()}
           >
             Sign Up
           </Button>

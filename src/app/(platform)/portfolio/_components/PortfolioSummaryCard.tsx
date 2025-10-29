@@ -15,7 +15,7 @@ export default function PortfolioSummaryCard() {
   const isMounted = useClientMounted()
   const { isLoadingBalance, balance } = useBalance()
   const { status } = useAppKitAccount()
-  const appKit = isMounted ? useAppKit() : null
+  const { open } = useAppKit()
 
   if (!isMounted || isLoadingBalance || status === 'connecting') {
     return <Skeleton className="h-56 w-full" />
@@ -83,11 +83,11 @@ export default function PortfolioSummaryCard() {
 
         {/* Action buttons */}
         <div className="mt-auto flex gap-3">
-          <Button className="h-11 flex-1" onClick={() => appKit?.open()}>
+          <Button className="h-11 flex-1" onClick={() => open()}>
             <ArrowDownToLine className="h-4 w-4" />
             Deposit
           </Button>
-          <Button variant="outline" className="h-11 flex-1" onClick={() => appKit?.open()}>
+          <Button variant="outline" className="h-11 flex-1" onClick={() => open()}>
             <ArrowUpFromLine className="h-4 w-4" />
             Withdraw
           </Button>

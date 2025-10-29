@@ -2,7 +2,7 @@
 
 import type { User } from '@/types'
 import { ArrowDownWideNarrow, SearchIcon, SlidersHorizontalIcon } from 'lucide-react'
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import PortfolioActivityList from '@/app/(platform)/portfolio/_components/PortfolioActivityList'
 import PortfolioOpenOrdersTable from '@/app/(platform)/portfolio/_components/PortfolioOpenOrdersTable'
 import PortfolioPositionsTable from '@/app/(platform)/portfolio/_components/PortfolioPositionsTable'
@@ -22,24 +22,20 @@ interface IndicatorStyle {
 }
 
 export default function PortfolioTabs({ user, activeTab, onTabChange }: PortfolioTabsProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-
-  // Sliding indicator state management
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
   const [indicatorStyle, setIndicatorStyle] = useState<IndicatorStyle>({ left: 0, width: 0 })
   const [isInitialized, setIsInitialized] = useState(false)
 
-  const tabs = [
+  const tabs = useMemo(() => [
     { id: 'positions', label: 'Positions' },
     { id: 'open-orders', label: 'Open orders' },
     { id: 'history', label: 'History' },
-  ]
+  ], [])
 
-  // Sliding indicator positioning logic
   useLayoutEffect(() => {
     const activeTabIndex = tabs.findIndex(tab => tab.id === activeTab)
 
-    // Bounds checking for activeTabIndex
     if (activeTabIndex < 0 || activeTabIndex >= tabRefs.current.length) {
       return
     }
@@ -49,7 +45,6 @@ export default function PortfolioTabs({ user, activeTab, onTabChange }: Portfoli
     if (activeTabElement) {
       const { offsetLeft, offsetWidth } = activeTabElement
 
-      // Use queueMicrotask for smooth indicator position updates
       queueMicrotask(() => {
         setIndicatorStyle(prev => ({
           ...prev,
@@ -60,7 +55,7 @@ export default function PortfolioTabs({ user, activeTab, onTabChange }: Portfoli
         setIsInitialized(prev => prev || true)
       })
     }
-  }, [activeTab])
+  }, [activeTab, tabs])
 
   function renderTabContent() {
     switch (activeTab) {
