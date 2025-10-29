@@ -100,7 +100,7 @@ Forkast is provided "as is" and should be used at your own risk. Review the [Mod
 **🗺️ [Roadmap](https://github.com/orgs/forkast-prediction-market/discussions/51)** •
 **💬 [Discussions](https://github.com/orgs/forkast-prediction-market/discussions)**
 
-**📱 [Discord](https://discord.gg/JVFARMzQ)** •
+**📱 [Discord](https://discord.gg/vSSnkJvypS)** •
 **🐛 [Issues](https://github.com/forkast-prediction-market/forkast-prediction-market/issues)** •
 **⭐ [Contribute](https://github.com/forkast-prediction-market/forkast-prediction-market/blob/main/CONTRIBUTING.md)**
 
