@@ -9,8 +9,8 @@ export default async function PlatformLayout({ children }: LayoutProps<'/'>) {
   return (
     <Providers>
       <Header />
-      <NavigationTabs />
       <Suspense fallback={<div>Loading...</div>}>
+        <NavigationTabs />
         {children}
       </Suspense>
     </Providers>
