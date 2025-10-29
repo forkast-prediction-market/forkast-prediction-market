@@ -19,7 +19,7 @@ const proceedsDisplay = '$2.04'
 
 const stats = [
   { label: 'Markets won', value: '1' },
-  { label: 'Total return', value: '104.17%' }
+  { label: 'Total return', value: '104.17%' },
   { label: 'Proceeds', value: proceedsDisplay },
 ]
 
