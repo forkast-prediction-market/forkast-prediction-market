@@ -7,12 +7,12 @@ import { Providers } from '@/providers/Providers'
 
 export default async function PlatformLayout({ children }: LayoutProps<'/'>) {
   return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <Providers>
-        <Header />
-        <NavigationTabs />
+    <Providers>
+      <Header />
+      <NavigationTabs />
+      <Suspense fallback={<div>Loading...</div>}>
         {children}
-      </Providers>
-    </Suspense>
+      </Suspense>
+    </Providers>
   )
 }
