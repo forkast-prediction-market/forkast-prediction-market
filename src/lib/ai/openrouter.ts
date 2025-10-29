@@ -113,11 +113,6 @@ export async function fetchOpenRouterModels(apiKey: string): Promise<OpenRouterM
     headers['X-Title'] = process.env.NEXT_PUBLIC_SITE_NAME
   }
 
-  // Skip fetch during prerendering to avoid hanging promises
-  if (process.env.NODE_ENV === 'production' && typeof window === 'undefined') {
-    return []
-  }
-
   const response = await fetch('https://openrouter.ai/api/v1/models', {
     method: 'GET',
     headers,
