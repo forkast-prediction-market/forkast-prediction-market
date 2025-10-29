@@ -15,7 +15,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 
-const proceedsDisplay = '$2,04'
+const proceedsDisplay = '$2.04'
 
 const stats = [
   { label: 'Markets won', value: '1' },
