@@ -1,6 +1,6 @@
 'use client'
 
-import { useAppKitAccount } from '@reown/appkit/react'
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -15,6 +15,7 @@ export default function PortfolioSummaryCard() {
   const isMounted = useClientMounted()
   const { isLoadingBalance, balance } = useBalance()
   const { status } = useAppKitAccount()
+  const { open } = useAppKit()
 
   if (!isMounted || isLoadingBalance || status === 'connecting') {
     return <Skeleton className="h-56 w-full" />
@@ -82,11 +83,11 @@ export default function PortfolioSummaryCard() {
 
         {/* Action buttons */}
         <div className="mt-auto flex gap-3">
-          <Button className="h-11 flex-1">
+          <Button className="h-11 flex-1" onClick={() => open()}>
             <ArrowDownToLine className="h-4 w-4" />
             Deposit
           </Button>
-          <Button variant="outline" className="h-11 flex-1">
+          <Button variant="outline" className="h-11 flex-1" onClick={() => open()}>
             <ArrowUpFromLine className="h-4 w-4" />
             Withdraw
           </Button>
