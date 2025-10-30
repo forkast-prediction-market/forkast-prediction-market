@@ -1,7 +1,7 @@
 'use client'
 
 import { TrendingUpIcon } from 'lucide-react'
-import { usePathname } from 'next/navigation'
+import { redirect, usePathname } from 'next/navigation'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Teleport } from '@/components/Teleport'
 import { Button } from '@/components/ui/button'
@@ -22,11 +22,10 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   const isHomePage = pathname === '/'
   const { filters, updateFilters } = useFilters()
 
-  // Only use filter context on homepage, fallback to default behavior on other pages
   const showBookmarkedOnly = isHomePage ? filters.bookmarked === 'true' : false
   const tagFromFilters = isHomePage
     ? (showBookmarkedOnly && filters.tag === 'trending' ? '' : filters.tag)
-    : 'trending' // Default to trending on non-homepage
+    : pathname === '/mentions' ? 'mentions' : 'trending'
 
   const parentSlug = childParentMap[tagFromFilters]
   const hasChildMatch = tag.childs.some(child => child.slug === tagFromFilters)
@@ -37,13 +36,6 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   const [showRightShadow, setShowRightShadow] = useState(false)
   const [showParentLeftShadow, setShowParentLeftShadow] = useState(false)
   const [showParentRightShadow, setShowParentRightShadow] = useState(false)
-  const [pendingTag, setPendingTag] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (pendingTag && tagFromFilters === pendingTag) {
-      setPendingTag(null)
-    }
-  }, [tagFromFilters, pendingTag])
 
   const scrollContainerRef = useRef<HTMLDivElement>(null)
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])
@@ -279,14 +271,10 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
 
   const handleTagClick = useCallback((targetTag: string) => {
     if (targetTag === 'mentions') {
-      // Handle mentions navigation separately if needed
-      window.location.href = '/mentions'
-      return
+      redirect('/mentions')
     }
 
     if (!isHomePage) {
-      // On non-homepage, navigate to homepage and set the tag in localStorage
-      // so HomeClient can pick it up on load
       try {
         const currentFilters = JSON.parse(localStorage.getItem('homepage-filters') || '{}')
         localStorage.setItem('homepage-filters', JSON.stringify({
@@ -294,15 +282,13 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
           tag: targetTag,
         }))
       }
-      catch (error) {
-        console.warn('Failed to save tag to localStorage:', error)
+      catch {
+
       }
-      window.location.href = '/'
-      return
+
+      redirect('/')
     }
 
-    // On homepage, update filter state
-    setPendingTag(targetTag)
     updateFilters({ tag: targetTag })
   }, [updateFilters, isHomePage])
 
@@ -313,9 +299,7 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
         ref={mainTabRef}
         onClick={() => handleTagClick(tag.slug)}
         className={`flex cursor-pointer items-center gap-1.5 border-b-2 py-2 pb-1 whitespace-nowrap transition-colors ${
-          pendingTag === tag.slug
-          || (isActive && !pendingTag)
-          || (pendingTag && childParentMap[pendingTag] === tag.slug)
+          isActive
             ? 'border-primary text-foreground'
             : 'border-transparent text-muted-foreground hover:text-foreground'
         }`}
@@ -354,14 +338,14 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
                 }}
                 onClick={() => handleTagClick(tag.slug)}
                 variant={
-                  pendingTag === tag.slug || (tagFromFilters === tag.slug && !pendingTag)
+                  tagFromFilters === tag.slug
                     ? 'default'
                     : 'ghost'
                 }
                 size="sm"
                 className={cn(
                   'h-8 shrink-0 text-sm whitespace-nowrap',
-                  pendingTag === tag.slug || (tagFromFilters === tag.slug && !pendingTag)
+                  tagFromFilters === tag.slug
                     ? undefined
                     : 'text-muted-foreground hover:text-foreground',
                 )}
@@ -377,14 +361,14 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
                   }}
                   onClick={() => handleTagClick(subtag.slug)}
                   variant={
-                    pendingTag === subtag.slug || (tagFromFilters === subtag.slug && !pendingTag)
+                    tagFromFilters === subtag.slug
                       ? 'default'
                       : 'ghost'
                   }
                   size="sm"
                   className={cn(
                     'h-8 shrink-0 text-sm whitespace-nowrap',
-                    pendingTag === subtag.slug || (tagFromFilters === subtag.slug && !pendingTag)
+                    tagFromFilters === subtag.slug
                       ? undefined
                       : 'text-muted-foreground hover:text-foreground',
                   )}

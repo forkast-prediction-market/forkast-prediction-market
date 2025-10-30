@@ -51,7 +51,7 @@ function PlatformLayoutSkeleton() {
             <Skeleton className="h-5 w-14 rounded" />
           </div>
           <div className="flex items-center">
-            <Skeleton className="h-5 w-18 rounded" />
+            <Skeleton className="h-5 w-16 rounded" />
           </div>
         </div>
       </nav>
@@ -67,7 +67,7 @@ function PlatformLayoutSkeleton() {
             <Skeleton className="h-8 w-16 shrink-0 rounded" />
             <Skeleton className="h-8 w-20 shrink-0 rounded" />
             <Skeleton className="h-8 w-14 shrink-0 rounded" />
-            <Skeleton className="h-8 w-18 shrink-0 rounded" />
+            <Skeleton className="h-8 w-16 shrink-0 rounded" />
             <Skeleton className="h-8 w-12 shrink-0 rounded" />
           </div>
         </div>
