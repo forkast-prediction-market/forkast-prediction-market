@@ -1,6 +1,7 @@
 'use client'
 
 import { TrendingUpIcon } from 'lucide-react'
+import Link from 'next/link'
 import { redirect, usePathname } from 'next/navigation'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Teleport } from '@/components/Teleport'
@@ -274,28 +275,42 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
       redirect('/mentions')
     }
 
-    if (!isHomePage) {
-      redirect('/')
-    }
-
     updateFilters({ tag: targetTag })
-  }, [updateFilters, isHomePage])
+  }, [updateFilters])
 
   return (
     <>
-      <button
-        type="button"
-        ref={mainTabRef}
-        onClick={() => handleTagClick(tag.slug)}
-        className={`flex cursor-pointer items-center gap-1.5 border-b-2 py-2 pb-1 whitespace-nowrap transition-colors ${
-          isActive
-            ? 'border-primary text-foreground'
-            : 'border-transparent text-muted-foreground hover:text-foreground'
+      {tag.slug === 'mentions' && (
+        <Link
+          href="/mentions"
+          className={`
+  flex cursor-pointer items-center gap-1.5 border-b-2 py-2 pb-1 whitespace-nowrap transition-colors
+  ${
+        isActive
+          ? 'border-primary text-foreground'
+          : 'border-transparent text-muted-foreground hover:text-foreground'
         }`}
-      >
-        {tag.slug === 'trending' && <TrendingUpIcon className="size-4" />}
-        <span>{tag.name}</span>
-      </button>
+        >
+          <span>{tag.name}</span>
+        </Link>
+      )}
+
+      {tag.slug !== 'mentions' && (
+        <span ref={mainTabRef}>
+          <Link
+            href="/"
+            onClick={() => handleTagClick(tag.slug)}
+            className={`flex cursor-pointer items-center gap-1.5 border-b-2 py-2 pb-1 whitespace-nowrap transition-colors ${
+              isActive
+                ? 'border-primary text-foreground'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {tag.slug === 'trending' && <TrendingUpIcon className="size-4" />}
+            <span>{tag.name}</span>
+          </Link>
+        </span>
+      )}
 
       {isActive && (
         <Teleport to="#navigation-tags">
