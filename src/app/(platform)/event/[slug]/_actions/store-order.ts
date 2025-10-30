@@ -41,14 +41,13 @@ export async function storeOrderAction(payload: StoreOrderInput, _: string) {
   const validated = StoreOrderSchema.safeParse(payload)
 
   if (!validated.success) {
-    console.log(validated.error.issues)
     return {
       error: validated.error.issues[0].message,
     }
   }
 
   try {
-    const clobUrl = `${process.env.CLOB_URL}/v1/orders`
+    const clobUrl = `${process.env.CLOB_URL}/orders`
     const clobResponse = await fetch(clobUrl, {
       method: 'POST',
       headers: {
@@ -62,9 +61,9 @@ export async function storeOrderAction(payload: StoreOrderInput, _: string) {
       }),
     })
 
+    const json = await clobResponse.json()
+
     if (!clobResponse.ok) {
-      const json = await clobResponse.json()
-      console.error('Failed to send order to CLOB.', json)
       return json
     }
 
