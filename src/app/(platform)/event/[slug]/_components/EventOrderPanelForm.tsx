@@ -46,11 +46,11 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const amount = useAmountAsNumber()
   const isLimitOrder = useIsLimitOrder()
 
-  async function storeOrder(payload: any, signature: string) {
+  async function storeOrder(payload: any) {
     state.setIsLoading(true)
 
     try {
-      const result = await storeOrderAction(payload, signature)
+      const result = await storeOrderAction(payload)
 
       if (result?.error) {
         toast.error('Trade failed', {
@@ -217,7 +217,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     }
 
     const signature = await sign(payload)
-    await storeOrder(payload, signature)
+    await storeOrder({
+      ...payload,
+      signature,
+    })
   }
 
   return (
