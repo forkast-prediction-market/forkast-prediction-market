@@ -1,5 +1,6 @@
 'use client'
 
+import type { FilterState } from '@/components/HomeClient'
 import type { Event } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
@@ -10,47 +11,32 @@ import EventCardSkeleton from '@/components/EventCardSkeleton'
 import { useColumns } from '@/hooks/useColumns'
 
 interface EventsGridProps {
-  tag: string
-  search: string
-  bookmarked: string
+  filters: FilterState
   initialEvents: Event[]
-  hideSports: boolean
-  hideCrypto: boolean
-  hideEarnings: boolean
 }
 
 const EMPTY_EVENTS: Event[] = []
 
 async function fetchEvents({
   pageParam = 0,
-  tag,
-  search,
-  bookmarked,
-  hideSports,
-  hideCrypto,
-  hideEarnings,
+  filters,
 }: {
   pageParam: number
-  tag: string
-  search: string
-  bookmarked: string
-  hideSports: boolean
-  hideCrypto: boolean
-  hideEarnings: boolean
+  filters: FilterState
 }): Promise<Event[]> {
   const params = new URLSearchParams({
-    tag,
-    search,
-    bookmarked,
+    tag: filters.tag,
+    search: filters.search,
+    bookmarked: filters.bookmarked,
     offset: pageParam.toString(),
   })
-  if (hideSports) {
+  if (filters.hideSports) {
     params.set('hideSports', 'true')
   }
-  if (hideCrypto) {
+  if (filters.hideCrypto) {
     params.set('hideCrypto', 'true')
   }
-  if (hideEarnings) {
+  if (filters.hideEarnings) {
     params.set('hideEarnings', 'true')
   }
   const response = await fetch(`/api/events?${params}`)
@@ -61,18 +47,17 @@ async function fetchEvents({
 }
 
 export default function EventsGrid({
-  tag,
-  search,
-  bookmarked,
+  filters,
   initialEvents = EMPTY_EVENTS,
-  hideSports,
-  hideCrypto,
-  hideEarnings,
 }: EventsGridProps) {
   const parentRef = useRef<HTMLDivElement | null>(null)
   const [hasInitialized, setHasInitialized] = useState(false)
   const [scrollMargin, setScrollMargin] = useState(0)
   const PAGE_SIZE = 40
+
+  // Only use initial data for the default trending state
+  const isDefaultState = filters.tag === 'trending' && filters.search === '' && filters.bookmarked === 'false'
+  const shouldUseInitialData = isDefaultState && initialEvents.length > 0
 
   const {
     status,
@@ -81,22 +66,17 @@ export default function EventsGrid({
     fetchNextPage,
     hasNextPage,
   } = useInfiniteQuery({
-    queryKey: ['events', tag, search, bookmarked, hideSports, hideCrypto, hideEarnings],
+    queryKey: ['events', filters.tag, filters.search, filters.bookmarked, filters.hideSports, filters.hideCrypto, filters.hideEarnings],
     queryFn: ({ pageParam }) => fetchEvents({
       pageParam,
-      tag,
-      search,
-      bookmarked,
-      hideSports,
-      hideCrypto,
-      hideEarnings,
+      filters,
     }),
     getNextPageParam: (lastPage, allPages) => lastPage.length > 0 ? allPages.length * PAGE_SIZE : undefined,
     initialPageParam: 0,
-    initialData: initialEvents.length > 0 ? { pages: [initialEvents], pageParams: [0] } : undefined,
+    initialData: shouldUseInitialData ? { pages: [initialEvents], pageParams: [0] } : undefined,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    staleTime: Infinity,
+    staleTime: 0, // Allow refetching when filters change
   })
 
   const allEvents = useMemo(() => (data ? data.pages.flat() : []), [data])
@@ -124,21 +104,21 @@ export default function EventsGrid({
       const hasCryptoTag = slugs.some(slug => slug.includes('crypto'))
       const hasEarningsTag = slugs.some(slug => slug.includes('earning'))
 
-      if (hideSports && hasSportsTag) {
+      if (filters.hideSports && hasSportsTag) {
         return false
       }
 
-      if (hideCrypto && hasCryptoTag) {
+      if (filters.hideCrypto && hasCryptoTag) {
         return false
       }
 
-      if (hideEarnings && hasEarningsTag) {
+      if (filters.hideEarnings && hasEarningsTag) {
         return false
       }
 
       return true
     })
-  }, [allEvents, hideSports, hideCrypto, hideEarnings])
+  }, [allEvents, filters.hideSports, filters.hideCrypto, filters.hideEarnings])
 
   const columns = useColumns()
 
@@ -184,7 +164,7 @@ export default function EventsGrid({
   }
 
   if (!allEvents || allEvents.length === 0) {
-    return <EventsEmptyState tag={tag} searchQuery={search} />
+    return <EventsEmptyState tag={filters.tag} searchQuery={filters.search} />
   }
 
   if (!visibleEvents || visibleEvents.length === 0) {

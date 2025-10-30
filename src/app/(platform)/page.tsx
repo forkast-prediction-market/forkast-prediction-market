@@ -1,47 +1,38 @@
-import { Suspense } from 'react'
-import EventCardSkeleton from '@/components/EventCardSkeleton'
-import EventsLoader from '@/components/EventsLoader'
-import FilterToolbar from '@/components/FilterToolbar'
+'use cache'
 
-function HomePageSkeleton() {
-  const skeletons = Array.from({ length: 20 }, (_, i) => `skeleton-${i}`)
+import type { Event } from '@/types'
+import HomeClient from '@/components/HomeClient'
+import { EventRepository } from '@/lib/db/queries/event'
 
-  return (
-    <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      {skeletons.map(id => <EventCardSkeleton key={id} />)}
-    </div>
-  )
-}
+export default async function HomePage() {
+  // Fetch initial trending events without user context for static caching
+  // This ensures the page can be cached with Next.js 16 Cache Components
+  let initialEvents: Event[] = []
 
-export default async function HomePage({ searchParams }: PageProps<'/'>) {
-  const params = await searchParams
-  const search = (params.search as string) ?? ''
-  const tag = (params.tag as string) ?? 'trending'
-  const bookmarked = (params.bookmarked as string) ?? 'false'
-  const hideSports = (params.hideSports as string) === 'true'
-  const hideCrypto = (params.hideCrypto as string) === 'true'
-  const hideEarnings = (params.hideEarnings as string) === 'true'
+  try {
+    const { data: events, error } = await EventRepository.listEvents({
+      tag: 'trending',
+      search: '',
+      userId: '', // Force anonymous for static caching
+      bookmarked: false,
+    })
+
+    if (error) {
+      console.warn('Failed to fetch initial events for static generation:', error)
+    }
+    else {
+      initialEvents = events ?? []
+    }
+  }
+  catch (error) {
+    // Fallback to empty state - client will fetch data after hydration
+    console.warn('Error during static generation, falling back to empty state:', error)
+    initialEvents = []
+  }
 
   return (
     <main className="container grid gap-4 py-4">
-      <FilterToolbar
-        search={search}
-        bookmarked={bookmarked}
-        hideSports={hideSports}
-        hideCrypto={hideCrypto}
-        hideEarnings={hideEarnings}
-      />
-
-      <Suspense fallback={<HomePageSkeleton />}>
-        <EventsLoader
-          tag={tag}
-          search={search}
-          bookmarked={bookmarked}
-          hideSports={hideSports}
-          hideCrypto={hideCrypto}
-          hideEarnings={hideEarnings}
-        />
-      </Suspense>
+      <HomeClient initialEvents={initialEvents} />
     </main>
   )
 }
