@@ -1,7 +1,7 @@
 'use cache'
 
 import { Suspense } from 'react'
-import EventCardSkeleton from '@/components/EventCardSkeleton'
+import EventsGridSkeleton from '@/components/EventsGridSkeleton'
 import Header from '@/components/Header'
 import NavigationTabs from '@/components/NavigationTabs'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -75,13 +75,7 @@ function PlatformLayoutSkeleton() {
 
       {/* Main content skeleton */}
       <main className="container grid gap-4 py-4">
-        <div className="w-full">
-          <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {Array.from({ length: 12 }, (_, i) => (
-              <EventCardSkeleton key={`skeleton-${i}`} />
-            ))}
-          </div>
-        </div>
+        <EventsGridSkeleton />
       </main>
     </>
   )

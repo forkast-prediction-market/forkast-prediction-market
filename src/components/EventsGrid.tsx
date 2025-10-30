@@ -8,6 +8,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import EventsEmptyState from '@/app/(platform)/event/[slug]/_components/EventsEmptyState'
 import EventCard from '@/components/EventCard'
 import EventCardSkeleton from '@/components/EventCardSkeleton'
+import EventsGridSkeleton from '@/components/EventsGridSkeleton'
 import { useColumns } from '@/hooks/useColumns'
 import { cn } from '@/lib/utils'
 
@@ -157,12 +158,8 @@ export default function EventsGrid({
 
   if (isLoadingNewData) {
     return (
-      <div ref={parentRef} className="w-full">
-        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 12 }, (_, i) => (
-            <EventCardSkeleton key={`skeleton-${i}`} />
-          ))}
-        </div>
+      <div ref={parentRef}>
+        <EventsGridSkeleton />
       </div>
     )
   }
