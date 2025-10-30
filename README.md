@@ -86,7 +86,7 @@ Forkast is provided "as is" and should be used at your own risk. Review the [Mod
 
 ## 🔧 Tech Stack
 
-- **Frontend:** Next.js 15 (React 19, TS, Tailwind, Zustand, @visx)
+- **Frontend:** Next.js 16 (React 19, TS, Tailwind, Zustand, @visx)
 - **Backend/DB:** Supabase (Postgres, Drizzle)
 - **Auth:** Better Auth + SIWE
 - **Blockchain:** Polygon (viem, wagmi)

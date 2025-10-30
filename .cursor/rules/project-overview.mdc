@@ -16,8 +16,8 @@ These rules are designed to help the AI assistant understand and interact with t
 
 ## 2. Tech Stack and Best Practices
 
-- **Frontend (Next.js 15, TypeScript, Tailwind CSS, shadcn):**
-  - **Next.js App Router:** Adhere to Next.js 15 App Router conventions for routing, data fetching, and component organization.
+- **Frontend (Next.js 16, TypeScript, Tailwind CSS, shadcn):**
+  - **Next.js App Router:** Adhere to Next.js 16 App Router conventions for routing, data fetching, and component organization.
   - **React 19:** Adhere to React 19 features and best practices.
   - **TypeScript:** Always use TypeScript for type safety. Colocate interfaces with components or define in types folder (`src/types/`) clearly if they must be shared. Always remember of this eslint rule 'func-style': ['error', 'declaration', { allowArrowFunctions: false }] and keep just one statement per line (style/max-statements-per-line).
   - **Tailwind CSS:** Utilize Tailwind CSS for styling. Avoid inline styles or custom CSS files unless absolutely necessary and justified.
