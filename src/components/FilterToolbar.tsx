@@ -1,11 +1,10 @@
 'use client'
 
 import type { LucideIcon } from 'lucide-react'
-import type { Route } from 'next'
+import type { FilterState } from '@/providers/FilterProvider'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { BookmarkIcon, ClockIcon, DropletIcon, FlameIcon, HandFistIcon, Settings2Icon, SparklesIcon, TrendingUpIcon } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import FilterToolbarSearchInput from '@/components/FilterToolbarSearchInput'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -20,17 +19,13 @@ import { Separator } from '@/components/ui/separator'
 import { cn } from '@/lib/utils'
 
 interface FilterToolbarProps {
-  search: string
-  bookmarked: string
-  hideSports: boolean
-  hideCrypto: boolean
-  hideEarnings: boolean
+  filters: FilterState
+  onFiltersChange: (filters: Partial<FilterState>) => void
 }
 
 interface BookmarkToggleProps {
   isBookmarked: boolean
   isConnected: boolean
-  isLoading?: boolean
   onToggle: () => void
   onConnect: () => void
 }
@@ -99,20 +94,17 @@ function createDefaultFilters(overrides: Partial<FilterSettings> = {}): FilterSe
   }
 }
 
-export default function FilterToolbar({ search, bookmarked, hideSports, hideCrypto, hideEarnings }: FilterToolbarProps) {
+export default function FilterToolbar({ filters, onFiltersChange }: FilterToolbarProps) {
   const { open } = useAppKit()
   const { isConnected } = useAppKitAccount()
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
-  const [optimisticBookmarked, setOptimisticBookmarked] = useState(bookmarked)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [filterSettings, setFilterSettings] = useState<FilterSettings>(() => createDefaultFilters({
-    hideSports,
-    hideCrypto,
-    hideEarnings,
+    hideSports: filters.hideSports,
+    hideCrypto: filters.hideCrypto,
+    hideEarnings: filters.hideEarnings,
   }))
 
-  const isBookmarked = useMemo(() => optimisticBookmarked === 'true', [optimisticBookmarked])
+  const isBookmarked = useMemo(() => filters.bookmarked === 'true', [filters.bookmarked])
 
   const hasActiveFilters = useMemo(() => (
     filterSettings.sortBy !== BASE_FILTER_SETTINGS.sortBy
@@ -126,82 +118,26 @@ export default function FilterToolbar({ search, bookmarked, hideSports, hideCryp
   useEffect(() => {
     setFilterSettings((prev) => {
       if (
-        prev.hideSports === hideSports
-        && prev.hideCrypto === hideCrypto
-        && prev.hideEarnings === hideEarnings
+        prev.hideSports === filters.hideSports
+        && prev.hideCrypto === filters.hideCrypto
+        && prev.hideEarnings === filters.hideEarnings
       ) {
         return prev
       }
 
       return {
         ...prev,
-        hideSports,
-        hideCrypto,
-        hideEarnings,
+        hideSports: filters.hideSports,
+        hideCrypto: filters.hideCrypto,
+        hideEarnings: filters.hideEarnings,
       }
     })
-  }, [hideSports, hideCrypto, hideEarnings])
-
-  const updateURLFilters = useCallback((next: FilterSettings) => {
-    if (typeof window === 'undefined') {
-      return
-    }
-
-    const url = new URL(window.location.href)
-
-    if (next.hideSports) {
-      url.searchParams.set('hideSports', 'true')
-    }
-    else {
-      url.searchParams.delete('hideSports')
-    }
-
-    if (next.hideCrypto) {
-      url.searchParams.set('hideCrypto', 'true')
-    }
-    else {
-      url.searchParams.delete('hideCrypto')
-    }
-
-    if (next.hideEarnings) {
-      url.searchParams.set('hideEarnings', 'true')
-    }
-    else {
-      url.searchParams.delete('hideEarnings')
-    }
-
-    router.replace(url.toString() as unknown as Route, { scroll: false })
-  }, [router])
-
-  const toggleBookmarkFilter = useCallback((shouldShowBookmarked: boolean) => {
-    try {
-      setOptimisticBookmarked(shouldShowBookmarked ? 'true' : 'false')
-
-      startTransition(() => {
-        const url = new URL(window.location.href)
-
-        if (shouldShowBookmarked) {
-          url.searchParams.set('bookmarked', 'true')
-        }
-        else {
-          url.searchParams.delete('bookmarked')
-        }
-
-        router.replace(url.toString() as unknown as Route, { scroll: false })
-      })
-    }
-    catch {
-      setOptimisticBookmarked(bookmarked)
-    }
-  }, [router, bookmarked])
-
-  useMemo(() => {
-    setOptimisticBookmarked(bookmarked)
-  }, [bookmarked])
+  }, [filters.hideSports, filters.hideCrypto, filters.hideEarnings])
 
   const handleBookmarkToggle = useCallback(() => {
-    toggleBookmarkFilter(!isBookmarked)
-  }, [toggleBookmarkFilter, isBookmarked])
+    const newBookmarked = isBookmarked ? 'false' : 'true'
+    onFiltersChange({ bookmarked: newBookmarked as 'true' | 'false' })
+  }, [isBookmarked, onFiltersChange])
 
   const handleConnect = useCallback(() => {
     queueMicrotask(() => open())
@@ -215,25 +151,44 @@ export default function FilterToolbar({ search, bookmarked, hideSports, hideCryp
     setFilterSettings((prev) => {
       const next = { ...prev, ...updates }
 
+      // Update parent component's filter state for hide options
       const hideSportsChanged = 'hideSports' in updates && updates.hideSports !== undefined && updates.hideSports !== prev.hideSports
       const hideCryptoChanged = 'hideCrypto' in updates && updates.hideCrypto !== undefined && updates.hideCrypto !== prev.hideCrypto
       const hideEarningsChanged = 'hideEarnings' in updates && updates.hideEarnings !== undefined && updates.hideEarnings !== prev.hideEarnings
 
       if (hideSportsChanged || hideCryptoChanged || hideEarningsChanged) {
-        updateURLFilters(next)
+        const filterUpdates: Partial<FilterState> = {}
+        if (hideSportsChanged) {
+          filterUpdates.hideSports = updates.hideSports
+        }
+        if (hideCryptoChanged) {
+          filterUpdates.hideCrypto = updates.hideCrypto
+        }
+        if (hideEarningsChanged) {
+          filterUpdates.hideEarnings = updates.hideEarnings
+        }
+        onFiltersChange(filterUpdates)
       }
 
       return next
     })
-  }, [updateURLFilters])
+  }, [onFiltersChange])
 
   const handleClearFilters = useCallback(() => {
-    setFilterSettings(() => {
-      const next = createDefaultFilters()
-      updateURLFilters(next)
-      return next
+    const defaultFilters = createDefaultFilters()
+    setFilterSettings(defaultFilters)
+
+    // Update parent component's filter state
+    onFiltersChange({
+      hideSports: defaultFilters.hideSports,
+      hideCrypto: defaultFilters.hideCrypto,
+      hideEarnings: defaultFilters.hideEarnings,
     })
-  }, [updateURLFilters])
+  }, [onFiltersChange])
+
+  const handleSearchChange = useCallback((search: string) => {
+    onFiltersChange({ search })
+  }, [onFiltersChange])
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-3">
@@ -241,8 +196,8 @@ export default function FilterToolbar({ search, bookmarked, hideSports, hideCryp
         <div className="order-1 flex w-full min-w-0 items-center gap-3 md:order-1 md:w-auto md:min-w-0">
           <div className="min-w-0 flex-1">
             <FilterToolbarSearchInput
-              search={search}
-              bookmarked={bookmarked}
+              search={filters.search}
+              onSearchChange={handleSearchChange}
             />
           </div>
 
@@ -256,7 +211,6 @@ export default function FilterToolbar({ search, bookmarked, hideSports, hideCryp
             <BookmarkToggle
               isBookmarked={isBookmarked}
               isConnected={isConnected}
-              isLoading={isPending}
               onToggle={handleBookmarkToggle}
               onConnect={handleConnect}
             />
@@ -291,7 +245,7 @@ export default function FilterToolbar({ search, bookmarked, hideSports, hideCryp
   )
 }
 
-function BookmarkToggle({ isBookmarked, isConnected, isLoading = false, onToggle, onConnect }: BookmarkToggleProps) {
+function BookmarkToggle({ isBookmarked, isConnected, onToggle, onConnect }: BookmarkToggleProps) {
   return (
     <Button
       type="button"
@@ -304,20 +258,13 @@ function BookmarkToggle({ isBookmarked, isConnected, isLoading = false, onToggle
           md:h-9 md:w-9
         `,
         isBookmarked && 'bg-muted/70 text-foreground hover:bg-muted/70 hover:text-foreground',
-        isLoading && 'pointer-events-none opacity-80',
       )}
       title={isBookmarked ? 'Show all items' : 'Show only bookmarked items'}
       aria-label={isBookmarked ? 'Remove bookmark filter' : 'Filter by bookmarks'}
       aria-pressed={isBookmarked}
-      disabled={isLoading}
       onClick={isConnected ? onToggle : onConnect}
     >
-      <BookmarkIcon
-        className={cn(
-          'size-6 md:size-5',
-          isLoading && 'animate-pulse opacity-70',
-        )}
-      />
+      <BookmarkIcon className="size-6 md:size-5" />
     </Button>
   )
 }
