@@ -2,8 +2,7 @@ import type { Event } from '@/types'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import Form from 'next/form'
 import { toast } from 'sonner'
-import { keccak256, stringToBytes } from 'viem'
-import { useSignMessage } from 'wagmi'
+import { useSignTypedData } from 'wagmi'
 import { storeOrderAction } from '@/app/(platform)/event/[slug]/_actions/store-order'
 import EventOrderPanelBuySellTabs from '@/app/(platform)/event/[slug]/_components/EventOrderPanelBuySellTabs'
 import EventOrderPanelEarnings from '@/app/(platform)/event/[slug]/_components/EventOrderPanelEarnings'
@@ -15,6 +14,7 @@ import EventOrderPanelOutcomeButton from '@/app/(platform)/event/[slug]/_compone
 import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_components/EventOrderPanelSubmitButton'
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
+import { defaultNetwork } from '@/lib/appkit'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { cn, toMicro, triggerConfetti } from '@/lib/utils'
 import {
@@ -37,7 +37,7 @@ interface EventOrderPanelFormProps {
 export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanelFormProps) {
   const { open } = useAppKit()
   const { isConnected } = useAppKitAccount()
-  const { signMessage } = useSignMessage()
+  const { signTypedDataAsync } = useSignTypedData()
   const user = useUser()
   const state = useOrder()
   const yesPrice = useYesPrice()
@@ -46,11 +46,11 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const amount = useAmountAsNumber()
   const isLimitOrder = useIsLimitOrder()
 
-  async function storeOrder(payload: any, signature: string) {
+  async function storeOrder(payload: any) {
     state.setIsLoading(true)
 
     try {
-      const result = await storeOrderAction(payload, signature)
+      const result = await storeOrderAction(payload)
 
       if (result?.error) {
         toast.error('Trade failed', {
@@ -112,6 +112,53 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     }
   }
 
+  async function sign(payload: any) {
+    return await signTypedDataAsync({
+      domain: {
+        name: 'Forkast CLOB',
+        version: '1',
+        chainId: defaultNetwork.id,
+      },
+      types: {
+        Order: [
+          { name: 'salt', type: 'uint256' },
+          { name: 'maker', type: 'address' },
+          { name: 'signer', type: 'address' },
+          { name: 'taker', type: 'address' },
+          { name: 'referrer', type: 'address' },
+          { name: 'affiliate', type: 'address' },
+          { name: 'tokenId', type: 'uint256' },
+          { name: 'makerAmount', type: 'uint256' },
+          { name: 'takerAmount', type: 'uint256' },
+          { name: 'expiration', type: 'uint256' },
+          { name: 'nonce', type: 'uint256' },
+          { name: 'feeRateBps', type: 'uint256' },
+          { name: 'affiliatePercentage', type: 'uint256' },
+          { name: 'side', type: 'uint8' },
+          { name: 'signatureType', type: 'uint8' },
+        ],
+      },
+      primaryType: 'Order',
+      message: {
+        salt: BigInt(payload.salt),
+        maker: payload.maker as `0x${string}`,
+        signer: payload.signer as `0x${string}`,
+        taker: payload.taker as `0x${string}`,
+        referrer: payload.referrer as `0x${string}`,
+        affiliate: payload.affiliate as `0x${string}`,
+        tokenId: BigInt(payload.token_id),
+        makerAmount: BigInt(payload.maker_amount),
+        takerAmount: BigInt(payload.taker_amount),
+        expiration: BigInt(payload.expiration),
+        nonce: BigInt(payload.nonce),
+        feeRateBps: BigInt(payload.fee_rate_bps),
+        affiliatePercentage: BigInt(payload.affiliate_percentage),
+        side: payload.side,
+        signatureType: payload.signature_type,
+      },
+    })
+  }
+
   async function onSubmit() {
     if (!isConnected || !user) {
       queueMicrotask(() => open())
@@ -169,17 +216,11 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       condition_id: state.market.condition_id,
     }
 
-    await storeOrder(payload, 'testing')
-
-    if (false) {
-      const message = keccak256(stringToBytes(JSON.stringify(payload)))
-
-      signMessage({ message }, {
-        onSuccess: async (signature) => {
-          console.log(signature)
-        },
-      })
-    }
+    const signature = await sign(payload)
+    await storeOrder({
+      ...payload,
+      signature,
+    })
   }
 
   return (

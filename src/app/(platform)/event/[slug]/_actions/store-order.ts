@@ -32,7 +32,7 @@ type StoreOrderInput = z.infer<typeof StoreOrderSchema>
 
 const DEFAULT_ERROR_MESSAGE = 'Something went wrong while processing your order. Please try again.'
 
-export async function storeOrderAction(payload: StoreOrderInput, _: string) {
+export async function storeOrderAction(payload: StoreOrderInput) {
   const user = await UserRepository.getCurrentUser()
   if (!user) {
     return { error: 'Unauthenticated.' }
