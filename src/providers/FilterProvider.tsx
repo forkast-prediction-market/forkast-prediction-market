@@ -1,8 +1,16 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import type { FilterState } from '@/components/HomeClient'
 import { createContext, use, useCallback, useMemo, useState } from 'react'
+
+export interface FilterState {
+  search: string
+  tag: string
+  bookmarked: 'true' | 'false'
+  hideSports: boolean
+  hideCrypto: boolean
+  hideEarnings: boolean
+}
 
 interface FilterContextType {
   filters: FilterState
@@ -13,7 +21,7 @@ const FilterContext = createContext<FilterContextType | null>(null)
 
 interface FilterProviderProps {
   children: ReactNode
-  initialFilters?: Partial<FilterState>
+  initialTag?: string
 }
 
 const DEFAULT_FILTERS: FilterState = {
@@ -25,12 +33,10 @@ const DEFAULT_FILTERS: FilterState = {
   hideEarnings: false,
 }
 
-const INITIAL_FILTERS = {}
-
-export function FilterProvider({ children, initialFilters = INITIAL_FILTERS }: FilterProviderProps) {
+export function FilterProvider({ children, initialTag }: FilterProviderProps) {
   const [filters, setFilters] = useState<FilterState>({
     ...DEFAULT_FILTERS,
-    ...initialFilters,
+    ...(initialTag && { tag: initialTag }),
   })
 
   const updateFilters = useCallback((updates: Partial<FilterState>) => {

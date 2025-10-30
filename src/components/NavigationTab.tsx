@@ -275,17 +275,6 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
     }
 
     if (!isHomePage) {
-      try {
-        const currentFilters = JSON.parse(localStorage.getItem('homepage-filters') || '{}')
-        localStorage.setItem('homepage-filters', JSON.stringify({
-          ...currentFilters,
-          tag: targetTag,
-        }))
-      }
-      catch {
-
-      }
-
       redirect('/')
     }
 

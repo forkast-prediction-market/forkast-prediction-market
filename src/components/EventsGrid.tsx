@@ -1,6 +1,6 @@
 'use client'
 
-import type { FilterState } from '@/components/HomeClient'
+import type { FilterState } from '@/providers/FilterProvider'
 import type { Event } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
