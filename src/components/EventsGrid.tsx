@@ -9,6 +9,7 @@ import EventsEmptyState from '@/app/(platform)/event/[slug]/_components/EventsEm
 import EventCard from '@/components/EventCard'
 import EventCardSkeleton from '@/components/EventCardSkeleton'
 import { useColumns } from '@/hooks/useColumns'
+import { cn } from '@/lib/utils'
 
 interface EventsGridProps {
   filters: FilterState
@@ -218,7 +219,7 @@ export default function EventsGrid({
                 }px)`,
               }}
             >
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+              <div className={cn('grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4', { 'opacity-80': isFetching })}>
                 {rowEvents.map(event => <EventCard key={event.id} event={event} />)}
                 {isFetchingNextPage && <EventCardSkeleton />}
               </div>
