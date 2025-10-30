@@ -5,8 +5,8 @@ import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Teleport } from '@/components/Teleport'
 import { Button } from '@/components/ui/button'
-import { useFilters } from '@/contexts/FilterContext'
 import { cn } from '@/lib/utils'
+import { useFilters } from '@/providers/FilterProvider'
 
 interface NavigationTabProps {
   tag: {

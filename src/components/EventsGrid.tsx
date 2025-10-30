@@ -54,17 +54,17 @@ export default function EventsGrid({
   const [hasInitialized, setHasInitialized] = useState(false)
   const [scrollMargin, setScrollMargin] = useState(0)
   const PAGE_SIZE = 40
-
-  // Only use initial data for the default trending state
   const isDefaultState = filters.tag === 'trending' && filters.search === '' && filters.bookmarked === 'false'
   const shouldUseInitialData = isDefaultState && initialEvents.length > 0
 
   const {
     status,
     data,
+    isFetching,
     isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
+    isPending,
   } = useInfiniteQuery({
     queryKey: ['events', filters.tag, filters.search, filters.bookmarked, filters.hideSports, filters.hideCrypto, filters.hideEarnings],
     queryFn: ({ pageParam }) => fetchEvents({
@@ -76,7 +76,8 @@ export default function EventsGrid({
     initialData: shouldUseInitialData ? { pages: [initialEvents], pageParams: [0] } : undefined,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
-    staleTime: 0, // Allow refetching when filters change
+    staleTime: 0,
+    placeholderData: previousData => previousData,
   })
 
   const allEvents = useMemo(() => (data ? data.pages.flat() : []), [data])
@@ -112,11 +113,7 @@ export default function EventsGrid({
         return false
       }
 
-      if (filters.hideEarnings && hasEarningsTag) {
-        return false
-      }
-
-      return true
+      return !(filters.hideEarnings && hasEarningsTag)
     })
   }, [allEvents, filters.hideSports, filters.hideCrypto, filters.hideEarnings])
 
@@ -155,6 +152,20 @@ export default function EventsGrid({
     },
   })
 
+  const isLoadingNewData = isPending || (isFetching && !isFetchingNextPage && (!data || data.pages.length === 0))
+
+  if (isLoadingNewData) {
+    return (
+      <div ref={parentRef} className="w-full">
+        <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          {Array.from({ length: 12 }, (_, i) => (
+            <EventCardSkeleton key={`skeleton-${i}`} />
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   if (status === 'error') {
     return (
       <p className="text-center text-sm text-muted-foreground">
@@ -179,7 +190,7 @@ export default function EventsGrid({
   }
 
   return (
-    <div ref={parentRef} className="w-full">
+    <div ref={parentRef} className="relative w-full">
       <div
         style={{
           height: `${virtualizer.getTotalSize()}px`,

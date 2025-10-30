@@ -14,7 +14,6 @@ export default function FilterToolbarSearchInput({ search, onSearchChange }: Fil
   const isFirstRender = useRef(true)
   const prevSearch = useRef(search)
 
-  // Update local state when search prop changes (e.g., from localStorage restore)
   useEffect(() => {
     if (prevSearch.current !== search) {
       prevSearch.current = search
@@ -22,7 +21,6 @@ export default function FilterToolbarSearchInput({ search, onSearchChange }: Fil
     }
   }, [search])
 
-  // Debounced search callback to parent component
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false
@@ -31,7 +29,7 @@ export default function FilterToolbarSearchInput({ search, onSearchChange }: Fil
 
     const handler = setTimeout(() => {
       onSearchChange(searchQuery)
-    }, 500)
+    }, 150)
 
     return () => clearTimeout(handler)
   }, [searchQuery, onSearchChange])

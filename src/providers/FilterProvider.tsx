@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react'
 import type { FilterState } from '@/components/HomeClient'
-import { createContext, use, useCallback, useState } from 'react'
+import { createContext, use, useCallback, useMemo, useState } from 'react'
 
 interface FilterContextType {
   filters: FilterState
@@ -25,7 +25,9 @@ const DEFAULT_FILTERS: FilterState = {
   hideEarnings: false,
 }
 
-export function FilterProvider({ children, initialFilters = {} }: FilterProviderProps) {
+const INITIAL_FILTERS = {}
+
+export function FilterProvider({ children, initialFilters = INITIAL_FILTERS }: FilterProviderProps) {
   const [filters, setFilters] = useState<FilterState>({
     ...DEFAULT_FILTERS,
     ...initialFilters,
@@ -35,8 +37,10 @@ export function FilterProvider({ children, initialFilters = {} }: FilterProvider
     setFilters(prev => ({ ...prev, ...updates }))
   }, [])
 
+  const filterContextValue = useMemo(() => ({ filters, updateFilters }), [filters, updateFilters])
+
   return (
-    <FilterContext value={{ filters, updateFilters }}>
+    <FilterContext value={filterContextValue}>
       {children}
     </FilterContext>
   )
@@ -45,13 +49,9 @@ export function FilterProvider({ children, initialFilters = {} }: FilterProvider
 export function useFilters() {
   const context = use(FilterContext)
   if (!context) {
-    // Fallback for components that might be rendered outside FilterProvider
-    console.warn('useFilters called outside FilterProvider, using default values')
     return {
       filters: DEFAULT_FILTERS,
-      updateFilters: () => {
-        console.warn('updateFilters called outside FilterProvider - no-op')
-      },
+      updateFilters: () => {},
     }
   }
   return context
