@@ -87,7 +87,7 @@ export default function PortfolioSummaryCard() {
             <ArrowDownToLine className="h-4 w-4" />
             Deposit
           </Button>
-          <Button variant="outline" className="h-11 flex-1" onClick={() => open()}>
+          <Button variant="outline" className="h-11 flex-1" onClick={() => open({ view: 'WalletSend' })}>
             <ArrowUpFromLine className="h-4 w-4" />
             Withdraw
           </Button>
