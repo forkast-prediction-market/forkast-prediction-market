@@ -1,6 +1,8 @@
 import type { LimitExpirationOption } from '@/stores/useOrder'
-import { BanknoteIcon, MinusIcon, PlusIcon } from 'lucide-react'
+import { BanknoteIcon } from 'lucide-react'
 import { useMemo } from 'react'
+import { Button } from '@/components/ui/button'
+import { NumberInput } from '@/components/ui/number-input'
 import {
   SelectContent,
   SelectItem,
@@ -97,55 +99,23 @@ export default function EventOrderPanelLimitControls() {
         <span className="text-lg font-medium text-foreground">
           Limit Price
         </span>
-        <div className="flex w-1/2 items-center justify-end gap-2">
-          <button
-            type="button"
-            className={`
-              flex size-8 items-center justify-center rounded-md border text-base font-semibold transition-colors
-              hover:bg-muted
-            `}
-            onClick={() => updateLimitPrice(limitPriceNumber - 0.1)}
-          >
-            <MinusIcon className="size-4" />
-          </button>
-          <div className="flex flex-1 items-center justify-between rounded-md border px-2 py-2">
-            <input
-              type="text"
-              inputMode="decimal"
-              pattern="\d+(\.\d{0,1})?"
-              value={limitPrice}
-              onChange={(event) => {
-                const sanitized = event.target.value.replace(/[^0-9.]/g, '')
-                const parts = sanitized.split('.')
-                const normalized = parts.length > 1
-                  ? `${parts[0]}.${parts[1].slice(0, 1)}`
-                  : parts[0]
-                setLimitPrice(normalized || '0')
 
-                if (type === ORDER_TYPE.LIMIT) {
-                  const priceValue = Number.parseFloat(normalized) || 0
-                  const sharesValue = Number.parseFloat(limitShares) || 0
-                  const nextAmount = (priceValue * sharesValue) / 100
-                  setAmount(nextAmount > 0 ? nextAmount.toFixed(2) : '0.00')
-                }
-              }}
-              onBlur={() => updateLimitPrice(Number.parseFloat(limitPrice))}
-              placeholder="0.0"
-              className="w-full bg-transparent text-center text-base font-semibold outline-none md:text-sm"
-            />
-            <span className="ml-2 text-sm font-medium text-muted-foreground">c</span>
-          </div>
-          <button
-            type="button"
-            className={`
-              flex size-8 items-center justify-center rounded-md border text-base font-semibold transition-colors
-              hover:bg-muted
-            `}
-            onClick={() => updateLimitPrice(limitPriceNumber + 0.1)}
-          >
-            <PlusIcon className="size-4" />
-          </button>
-        </div>
+        <NumberInput
+          value={limitPriceNumber}
+          onChange={(val) => {
+            const normalized = val.toFixed(1)
+            setLimitPrice(normalized)
+
+            if (type === ORDER_TYPE.LIMIT) {
+              const priceValue = Number.parseFloat(normalized) || 0
+              const sharesValue = Number.parseFloat(limitShares) || 0
+              const nextAmount = (priceValue * sharesValue) / 100
+              setAmount(nextAmount > 0 ? nextAmount.toFixed(2) : '0.00')
+            }
+
+            updateLimitPrice(val)
+          }}
+        />
       </div>
 
       <div className="my-4 border-b border-border"></div>
@@ -168,7 +138,7 @@ export default function EventOrderPanelLimitControls() {
                 updateLimitShares(value)
               }}
               className={`
-                w-full
+                h-10 w-full
                 [appearance:textfield]
                 rounded-md border px-3 py-2 text-right text-base font-semibold outline-none
                 md:text-sm
@@ -212,26 +182,22 @@ export default function EventOrderPanelLimitControls() {
             )
           : (
               <div className="ml-auto flex h-8 w-1/2 justify-end gap-2">
-                <button
+                <Button
+                  size="sm"
+                  variant="outline"
                   type="button"
-                  className={`
-                    rounded-md bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors
-                    hover:bg-muted/80
-                  `}
                   onClick={() => updateLimitShares(limitSharesNumber - 10)}
                 >
                   -10
-                </button>
-                <button
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
                   type="button"
-                  className={`
-                    rounded-md bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors
-                    hover:bg-muted/80
-                  `}
                   onClick={() => updateLimitShares(limitSharesNumber + 10)}
                 >
                   +10
-                </button>
+                </Button>
               </div>
             )}
       </div>
