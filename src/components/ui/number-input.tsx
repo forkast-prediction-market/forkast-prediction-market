@@ -1,5 +1,5 @@
 import { MinusIcon, PlusIcon } from 'lucide-react'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -15,52 +15,54 @@ export function NumberInput({
   const MAX = 99.9
   const initialString = value === 0 ? '' : value.toFixed(1).replace(/\.0$/, '')
   const [inputValue, setInputValue] = useState<string>(initialString)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const newVal = value === 0 ? '' : value.toFixed(1).replace(/\.0$/, '')
     if (newVal !== inputValue) {
       setInputValue(newVal)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value])
 
-  function formatPolymarketStyle(raw: string): string {
-    const digits = raw.replace(/\D/g, '')
-    if (!digits) {
-      return ''
-    }
-    if (digits.length === 1) {
-      return digits
-    }
-    if (digits.length === 2) {
-      return digits
-    }
-    if (digits.length === 3) {
-      const before = digits.slice(0, 2)
-      const after = digits.slice(2)
-      return `${before}.${after}`
-    }
-    if (digits.length > 3) {
-      const before = digits.slice(0, 2)
-      const after = digits.slice(2, 3)
-      return `${before}.${after}`
-    }
-    return digits
-  }
-
   function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const raw = e.target.value
-    const prevDigits = inputValue.replace(/\D/g, '')
-    const newDigits = raw.replace(/\D/g, '')
-    if ((inputValue === '0' || inputValue === '' || inputValue === '0.0') && newDigits.length === 1) {
-      setInputValue(newDigits)
+    const input = e.target
+    const raw = input.value
+    const selectionStart = input.selectionStart ?? raw.length
+    const prev = inputValue
+    const dotIndex = prev.indexOf('.')
+    const isDelete = prev.length > raw.length
+
+    if (
+      dotIndex !== -1
+      && selectionStart > dotIndex + 1
+      && !isDelete
+    ) {
+      setInputValue(prev)
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.setSelectionRange(selectionStart - 1, selectionStart - 1)
+        }
+      }, 0)
       return
     }
-    if (prevDigits.length === 3 && newDigits.length > prevDigits.length) {
-      if (raw.length >= inputValue.length) {
-        return
-      }
+
+    const rawDigits = raw.replace(/\D/g, '')
+    let formatted = ''
+    if (!rawDigits) {
+      formatted = ''
     }
-    const formatted = formatPolymarketStyle(raw)
+    else if (rawDigits.length === 1) {
+      formatted = rawDigits
+    }
+    else if (rawDigits.length === 2) {
+      formatted = rawDigits
+    }
+    else if (rawDigits.length >= 3) {
+      const before = rawDigits.slice(-3, -1)
+      const after = rawDigits.slice(-1)
+      formatted = `${before}.${after}`
+    }
     if (formatted && !Number.isNaN(Number(formatted)) && Number(formatted) > MAX) {
       setInputValue(MAX.toFixed(1))
       onChange(MAX)
@@ -117,6 +119,7 @@ export function NumberInput({
 
       <div className="relative flex-1">
         <Input
+          ref={inputRef}
           type="text"
           inputMode="decimal"
           value={inputValue}
