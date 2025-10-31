@@ -1,25 +1,29 @@
 'use client'
 
 import type { SIWECreateMessageArgs, SIWESession, SIWEVerifyMessageArgs } from '@reown/appkit-siwe'
-import type { Route } from 'next'
 import type { ReactNode } from 'react'
 import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/appkit-siwe'
-import { createAppKit } from '@reown/appkit/react'
+import { createAppKit, useAppKitTheme } from '@reown/appkit/react'
 import { generateRandomString } from 'better-auth/crypto'
 import { useTheme } from 'next-themes'
 import { redirect } from 'next/navigation'
+import { useEffect } from 'react'
 import { WagmiProvider } from 'wagmi'
 import { defaultNetwork, networks, projectId, wagmiAdapter, wagmiConfig } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
-export default function AppKitProvider({ children }: { children: ReactNode }) {
-  const { resolvedTheme } = useTheme()
+let hasInitializedAppKit = false
+
+function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
+  if (hasInitializedAppKit) {
+    return
+  }
 
   createAppKit({
     projectId: projectId!,
     adapters: [wagmiAdapter],
-    themeMode: (resolvedTheme as 'light' | 'dark') || 'light',
+    themeMode,
     metadata: {
       name: process.env.NEXT_PUBLIC_SITE_NAME!,
       description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION!,
@@ -66,19 +70,16 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
         try {
           const address = getAddressFromMessage(message)
-
           await authClient.siwe.nonce({
             walletAddress: address,
             chainId: defaultNetwork.id,
           })
-
           const { data } = await authClient.siwe.verify({
             message,
             signature,
             walletAddress: address,
             chainId: defaultNetwork.id,
           })
-
           return Boolean(data?.success)
         }
         catch {
@@ -88,10 +89,8 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       signOut: async () => {
         try {
           await authClient.signOut()
-
           useUser.setState(null)
-          queueMicrotask(() => redirect(window.location.pathname as unknown as Route))
-
+          queueMicrotask(() => redirect('/'))
           return true
         }
         catch {
@@ -108,6 +107,19 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       },
     }),
   })
+
+  hasInitializedAppKit = true
+}
+
+initializeAppKitSingleton('light')
+
+export default function AppKitProvider({ children }: { children: ReactNode }) {
+  const { resolvedTheme } = useTheme()
+  const { setThemeMode } = useAppKitTheme()
+
+  useEffect(() => {
+    setThemeMode((resolvedTheme as 'light' | 'dark'))
+  }, [resolvedTheme, setThemeMode])
 
   return (
     <WagmiProvider config={wagmiConfig}>

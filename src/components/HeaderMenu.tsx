@@ -1,9 +1,7 @@
 'use client'
 
-import type { Route } from 'next'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import { createAuthClient } from 'better-auth/react'
-import { redirect } from 'next/navigation'
 import { useEffect } from 'react'
 import HeaderDropdownUserMenuAuth from '@/components/HeaderDropdownUserMenuAuth'
 import HeaderDropdownUserMenuGuest from '@/components/HeaderDropdownUserMenuGuest'
@@ -12,7 +10,6 @@ import HeaderPortfolio from '@/components/HeaderPortfolio'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useClientMounted } from '@/hooks/useClientMounted'
-import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
 const { useSession } = createAuthClient()
@@ -22,28 +19,6 @@ export default function HeaderMenu() {
   const { open } = useAppKit()
   const { isConnected, status } = useAppKitAccount()
   const { data: session } = useSession()
-
-  useEffect(() => {
-    const timeout = setTimeout(async () => {
-      if (status === 'connecting') {
-        await authClient.signOut({
-          fetchOptions: {
-            onSuccess: () => {
-              Object.keys(localStorage).forEach((key) => {
-                if (key.startsWith('@appkit')) {
-                  localStorage.removeItem(key)
-                }
-              })
-
-              queueMicrotask(() => redirect(window.location.pathname as unknown as Route))
-            },
-          },
-        })
-      }
-    }, 20000)
-
-    return () => clearTimeout(timeout)
-  }, [status])
 
   useEffect(() => {
     if (session?.user) {
