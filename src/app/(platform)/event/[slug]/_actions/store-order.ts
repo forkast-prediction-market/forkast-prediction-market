@@ -61,14 +61,24 @@ export async function storeOrderAction(payload: StoreOrderInput) {
           ...validated.data,
         },
         order_type: 'GTC',
-        owner: 'testing',
+        owner: process.env.CLOB_API_KEY!,
       }),
     })
 
-    const json = await clobResponse.json()
+    const text = await clobResponse.text()
+    const data = (() => {
+      try {
+        return JSON.parse(text)
+      }
+      catch {
+        return null
+      }
+    })()
 
     if (!clobResponse.ok) {
-      return json
+      const message = data?.error || text || `Status ${clobResponse.status} (${clobResponse.statusText})`
+      console.error('Failed to send order to CLOB.', message)
+      return { error: DEFAULT_ERROR_MESSAGE }
     }
 
     const { error } = await OrderRepository.createOrder({
