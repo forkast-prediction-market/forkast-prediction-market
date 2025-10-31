@@ -47,7 +47,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
   }
 
   try {
-    const clobUrl = `${process.env.CLOB_URL}/orders`
+    const clobUrl = `${process.env.CLOB_URL}/order`
     const clobResponse = await fetch(clobUrl, {
       method: 'POST',
       headers: {
@@ -57,7 +57,11 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       },
       signal: AbortSignal.timeout(5000),
       body: JSON.stringify({
-        ...validated.data,
+        order: {
+          ...validated.data,
+        },
+        order_type: 'GTC',
+        owner: 'testing',
       }),
     })
 
