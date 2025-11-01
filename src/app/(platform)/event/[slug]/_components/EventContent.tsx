@@ -47,12 +47,14 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
         <EventTabs event={event} user={user} />
       </div>
 
-      <Teleport to="#event-order-panel">
-        {!isMobile && <EventOrderPanelForm event={event} isMobile={false} />}
-        {!isMobile && <EventRelated event={event} />}
-      </Teleport>
-
-      {isMobile && <EventOrderPanelMobile event={event} />}
+      {isMobile
+        ? <EventOrderPanelMobile event={event} />
+        : (
+            <Teleport to="#event-order-panel">
+              <EventOrderPanelForm event={event} isMobile={false} />
+              <EventRelated event={event} />
+            </Teleport>
+          )}
     </>
   )
 }

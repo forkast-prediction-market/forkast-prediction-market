@@ -38,14 +38,14 @@ export default function EventMarkets({ event }: EventMarketsProps) {
   return (
     <div className="-mx-4 overflow-hidden bg-background lg:mx-0">
       <div className="hidden items-center rounded-t-lg border-b py-3 lg:flex">
-        <div className="w-1/2">
+        <div className="w-2/5">
           <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             OUTCOMES
           </span>
         </div>
         <div className="flex w-1/5 items-center justify-center gap-1">
           <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            CHANCE
+            % CHANCE
           </span>
           <a
             href="#"
@@ -165,7 +165,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
 
             {/* Desktop: Original line layout */}
             <div className="hidden w-full items-center lg:flex">
-              <div className="flex w-1/2 items-center gap-3">
+              <div className="flex w-2/5 items-center gap-3">
                 {event.show_market_icons && (
                   <Image
                     src={market.icon_url}
@@ -193,7 +193,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
 
               <div className="flex w-1/5 justify-center">
                 <div className="flex items-center gap-2">
-                  <span className="text-2xl font-bold text-foreground">
+                  <span className="text-3xl font-bold text-foreground">
                     {Math.round(market.probability)}
                     %
                   </span>
@@ -204,7 +204,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="ms-auto flex items-center gap-2">
                 <Button
                   size="outcome"
                   variant="yes"
