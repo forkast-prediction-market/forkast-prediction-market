@@ -73,7 +73,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         return
       }
 
-      triggerToast(state, event.title)
+      triggerToast()
       triggerConfetti(state.outcome!.outcome_index === OUTCOME_INDEX.YES ? 'yes' : 'no', state.lastMouseEvent)
       state.setAmount('0.00')
     }
@@ -112,41 +112,86 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     })
   }
 
-  async function onSubmit() {
-    let makerAmount = 0n
-    let takerAmount = 0n
+  function validateOrder(): boolean {
+    if (state.isLoading) {
+      return false
+    }
 
     if (!isConnected || !user) {
       queueMicrotask(() => open())
-      return
-    }
-
-    if (state.isLoading) {
-      return
+      return true
     }
 
     if (!state.market || !state.outcome) {
-      return
+      toast.error('Market not available', {
+        description: 'Please select a valid market and outcome.',
+      })
+
+      return false
     }
 
     if (amount <= 0) {
-      return
+      toast.error('Invalid amount', {
+        description: 'Please enter an amount greater than 0.',
+      })
+
+      return false
     }
 
     if (isLimitOrder) {
       const limitPriceValue = Number.parseFloat(state.limitPrice)
-
       if (!Number.isFinite(limitPriceValue) || limitPriceValue <= 0) {
-        toast.error('Enter a valid limit price before submitting.')
-        return
+        toast.error('Invalid limit price', {
+          description: 'Enter a valid limit price before submitting.',
+        })
+
+        return false
       }
 
       const limitSharesValue = Number.parseFloat(state.limitShares)
       if (!Number.isFinite(limitSharesValue) || limitSharesValue <= 0) {
-        toast.error('Enter the number of shares for your limit order.')
-        return
-      }
+        toast.error('Invalid shares', {
+          description: 'Enter the number of shares for your limit order.',
+        })
 
+        return false
+      }
+    }
+
+    return true
+  }
+
+  function buildOrderPayload(): BlockchainOrder | null {
+    if (!state.market || !state.outcome || !user) {
+      return null
+    }
+
+    const { makerAmount, takerAmount } = calculateOrderAmounts()
+
+    return {
+      salt: 333000003n,
+      maker: user.address as `0x${string}`,
+      signer: user.address as `0x${string}`,
+      taker: user.address as `0x${string}`,
+      referrer: user.address as `0x${string}`,
+      affiliate: user.address as `0x${string}`,
+      token_id: BigInt(state.outcome.token_id),
+      maker_amount: makerAmount,
+      taker_amount: takerAmount,
+      expiration: 1764548576n,
+      nonce: 3003n,
+      fee_rate_bps: 200n,
+      affiliate_percentage: 0n,
+      side: state.side,
+      signature_type: 0,
+    }
+  }
+
+  function calculateOrderAmounts(): { makerAmount: bigint, takerAmount: bigint } {
+    let makerAmount: bigint
+    let takerAmount: bigint
+
+    if (isLimitOrder) {
       const priceMicro = BigInt(toMicro(state.limitPrice))
       const sharesMicro = BigInt(toMicro(state.limitShares))
 
@@ -170,22 +215,54 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       }
     }
 
-    const payload: BlockchainOrder = {
-      salt: 333000003n,
-      maker: user.address as `0x${string}`,
-      signer: user.address as `0x${string}`,
-      taker: user.address as `0x${string}`,
-      referrer: user.address as `0x${string}`,
-      affiliate: user.address as `0x${string}`,
-      token_id: BigInt(state.outcome.token_id),
-      maker_amount: makerAmount,
-      taker_amount: takerAmount,
-      expiration: 1764548576n,
-      nonce: 3003n,
-      fee_rate_bps: 200n,
-      affiliate_percentage: 0n,
-      side: state.side,
-      signature_type: 0,
+    return { makerAmount, takerAmount }
+  }
+
+  function triggerToast() {
+    if (state.side === ORDER_SIDE.SELL) {
+      const sellValue = calculateSellAmount()
+
+      toast.success(
+        `Sell ${state.amount} shares on ${state.outcome!.outcome_text}`,
+        {
+          description: (
+            <EventTradeToast title={event.title}>
+              Received $
+              {sellValue.toFixed(2)}
+              {' '}
+              @ $
+              {getAvgSellPrice()}
+              ¢
+            </EventTradeToast>
+          ),
+        },
+      )
+    }
+    else {
+      toast.success(
+        `Buy $${state.amount} on ${state.outcome!.outcome_text}`,
+        {
+          description: (
+            <EventTradeToast title={event.title}>
+              {state.amount}
+              {' '}
+              shares 10¢
+            </EventTradeToast>
+          ),
+        },
+      )
+    }
+  }
+
+  async function onSubmit() {
+    const valid = validateOrder()
+    if (!valid) {
+      return
+    }
+
+    const payload = buildOrderPayload()
+    if (!payload) {
+      return
     }
 
     const signature = await sign(payload)
@@ -230,40 +307,4 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       <EventOrderPanelTermsDisclaimer />
     </Form>
   )
-}
-
-function triggerToast(state: any, title: string) {
-  if (state.side === ORDER_SIDE.SELL) {
-    const sellValue = calculateSellAmount()
-
-    toast.success(
-      `Sell ${state.amount} shares on ${state.outcome!.outcome_text}`,
-      {
-        description: (
-          <EventTradeToast title={title}>
-            Received $
-            {sellValue.toFixed(2)}
-            {' '}
-            @ $
-            {getAvgSellPrice()}
-            ¢
-          </EventTradeToast>
-        ),
-      },
-    )
-  }
-  else {
-    toast.success(
-      `Buy $${state.amount} on ${state.outcome!.outcome_text}`,
-      {
-        description: (
-          <EventTradeToast title={title}>
-            {state.amount}
-            {' '}
-            shares 10¢
-          </EventTradeToast>
-        ),
-      },
-    )
-  }
 }
