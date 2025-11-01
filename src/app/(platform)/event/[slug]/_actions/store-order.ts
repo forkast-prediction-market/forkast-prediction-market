@@ -1,6 +1,8 @@
 'use server'
 
+import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
+import { cacheTags } from '@/lib/cache-tags'
 import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
 
@@ -26,6 +28,7 @@ const StoreOrderSchema = z.object({
 
   type: z.union([z.literal(0), z.literal(1)]),
   condition_id: z.string(),
+  slug: z.string(),
 })
 
 type StoreOrderInput = z.infer<typeof StoreOrderSchema>
@@ -99,6 +102,8 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       console.error('Failed to create order.', error)
       return { error: DEFAULT_ERROR_MESSAGE }
     }
+
+    revalidateTag(cacheTags.activity(validated.data.slug), 'max')
   }
   catch (error) {
     console.error('Failed to create order.', error)

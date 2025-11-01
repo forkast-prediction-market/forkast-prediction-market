@@ -273,7 +273,7 @@ export default function EventActivity({ event }: EventActivityProps) {
                         {' '}
                       </span>
                       <span className="text-sm font-semibold">
-                        {formatPrice(activity.price)}
+                        {formatPrice(Number(activity.price))}
                       </span>
                       <span className="text-sm text-muted-foreground">
                         {' '}

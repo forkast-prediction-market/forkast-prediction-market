@@ -15,7 +15,7 @@ import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_componen
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
 import { defaultNetwork } from '@/lib/appkit'
-import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
+import { CAP_MICRO, FLOOR_MICRO, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { cn, toMicro, triggerConfetti } from '@/lib/utils'
 import {
   calculateSellAmount,
@@ -63,6 +63,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         side: payload.side as OrderSide,
         type: state.type,
         condition_id: state.market!.condition_id,
+        slug: event.slug,
       })
 
       if (result?.error) {
@@ -189,6 +190,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       return
     }
 
+    if (amount <= 0) {
+      return
+    }
+
     if (isLimitOrder) {
       const limitPriceValue = Number.parseFloat(state.limitPrice)
 
@@ -215,9 +220,15 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         takerAmount = (priceMicro * sharesMicro) / 1_000_000n
       }
     }
+    else {
+      makerAmount = BigInt(toMicro(state.amount))
 
-    if (amount <= 0) {
-      return
+      if (state.side === ORDER_SIDE.BUY) {
+        takerAmount = makerAmount * 1_000_000n / CAP_MICRO
+      }
+      else {
+        takerAmount = FLOOR_MICRO * makerAmount / 1_000_000n
+      }
     }
 
     const payload: BlockchainOrder = {
@@ -250,7 +261,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       action={onSubmit}
       className={cn({
         'rounded-lg border lg:w-[340px]': !isMobile,
-      }, 'w-full p-4 shadow-xl/5 lg:max-w-[340px]')}
+      }, 'w-full p-4 shadow-xl/5')}
     >
       {!isMobile && !isBinaryMarket && <EventOrderPanelMarketInfo />}
       {isMobile && <EventOrderPanelMobileMarketInfo />}

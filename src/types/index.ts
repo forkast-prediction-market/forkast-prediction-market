@@ -204,7 +204,7 @@ export interface ActivityOrder {
   }
   side: 'buy' | 'sell'
   amount: string
-  price: number | null
+  price: string
   outcome: {
     index: number
     text: string
