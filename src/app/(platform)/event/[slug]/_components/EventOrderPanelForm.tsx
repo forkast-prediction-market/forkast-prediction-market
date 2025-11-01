@@ -14,8 +14,8 @@ import EventOrderPanelOutcomeButton from '@/app/(platform)/event/[slug]/_compone
 import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_components/EventOrderPanelSubmitButton'
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
-import { defaultNetwork } from '@/lib/appkit'
-import { CAP_MICRO, FLOOR_MICRO, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
+import EventTradeToast from '@/app/(platform)/event/[slug]/_components/EventTradeToast'
+import { CAP_MICRO, EIP712_DOMAIN, EIP712_TYPES, FLOOR_MICRO, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { cn, toMicro, triggerConfetti } from '@/lib/utils'
 import {
   calculateSellAmount,
@@ -73,46 +73,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         return
       }
 
-      if (state.side === ORDER_SIDE.SELL) {
-        const sellValue = calculateSellAmount()
-
-        toast.success(
-          `Sell ${state.amount} shares on ${state.outcome!.outcome_text}`,
-          {
-            description: (
-              <div>
-                <div className="font-medium">{event.title}</div>
-                <div className="mt-1 text-xs opacity-80">
-                  Received $
-                  {sellValue.toFixed(2)}
-                  {' '}
-                  @ $
-                  {getAvgSellPrice()}
-                  ¢
-                </div>
-              </div>
-            ),
-          },
-        )
-      }
-      else { // Buy logic
-        toast.success(
-          `Buy $${state.amount} on ${state.outcome!.outcome_text}`,
-          {
-            description: (
-              <div>
-                <div className="font-medium">{event.title}</div>
-                <div className="mt-1 text-xs opacity-80">
-                  {amount}
-                  {' '}
-                  shares 10¢
-                </div>
-              </div>
-            ),
-          },
-        )
-      }
-
+      triggerToast(state, event.title)
       triggerConfetti(state.outcome!.outcome_index === OUTCOME_INDEX.YES ? 'yes' : 'no', state.lastMouseEvent)
       state.setAmount('0.00')
     }
@@ -128,30 +89,8 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
   async function sign(payload: BlockchainOrder) {
     return await signTypedDataAsync({
-      domain: {
-        name: 'Forkast CLOB',
-        version: '1',
-        chainId: defaultNetwork.id,
-      },
-      types: {
-        Order: [
-          { name: 'salt', type: 'uint256' },
-          { name: 'maker', type: 'address' },
-          { name: 'signer', type: 'address' },
-          { name: 'taker', type: 'address' },
-          { name: 'referrer', type: 'address' },
-          { name: 'affiliate', type: 'address' },
-          { name: 'tokenId', type: 'uint256' },
-          { name: 'makerAmount', type: 'uint256' },
-          { name: 'takerAmount', type: 'uint256' },
-          { name: 'expiration', type: 'uint256' },
-          { name: 'nonce', type: 'uint256' },
-          { name: 'feeRateBps', type: 'uint256' },
-          { name: 'affiliatePercentage', type: 'uint256' },
-          { name: 'side', type: 'uint8' },
-          { name: 'signatureType', type: 'uint8' },
-        ],
-      },
+      domain: EIP712_DOMAIN,
+      types: EIP712_TYPES,
       primaryType: 'Order',
       message: {
         salt: payload.salt,
@@ -291,4 +230,40 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       <EventOrderPanelTermsDisclaimer />
     </Form>
   )
+}
+
+function triggerToast(state: any, title: string) {
+  if (state.side === ORDER_SIDE.SELL) {
+    const sellValue = calculateSellAmount()
+
+    toast.success(
+      `Sell ${state.amount} shares on ${state.outcome!.outcome_text}`,
+      {
+        description: (
+          <EventTradeToast title={title}>
+            Received $
+            {sellValue.toFixed(2)}
+            {' '}
+            @ $
+            {getAvgSellPrice()}
+            ¢
+          </EventTradeToast>
+        ),
+      },
+    )
+  }
+  else {
+    toast.success(
+      `Buy $${state.amount} on ${state.outcome!.outcome_text}`,
+      {
+        description: (
+          <EventTradeToast title={title}>
+            {state.amount}
+            {' '}
+            shares 10¢
+          </EventTradeToast>
+        ),
+      },
+    )
+  }
 }
