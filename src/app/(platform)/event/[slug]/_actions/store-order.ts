@@ -92,7 +92,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       taker_amount: BigInt(validated.data.taker_amount),
       nonce: BigInt(validated.data.nonce),
       fee_rate_bps: Number(validated.data.fee_rate_bps),
-      affiliate_percentage: Number(validated.data.fee_rate_bps),
+      affiliate_percentage: Number(validated.data.affiliate_percentage),
       expiration: BigInt(validated.data.expiration),
       user_id: user.id,
       affiliate_user_id: user.referred_by_user_id,
