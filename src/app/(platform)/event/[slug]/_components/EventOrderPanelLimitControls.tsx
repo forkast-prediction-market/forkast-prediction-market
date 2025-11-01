@@ -129,6 +129,7 @@ export default function EventOrderPanelLimitControls() {
           <div className="flex w-1/2 items-center justify-end gap-2">
             <Input
               placeholder="0"
+              inputMode="decimal"
               value={limitShares}
               onChange={(event) => {
                 const value = Number.parseInt(event.target.value || '0', 10)
