@@ -400,7 +400,7 @@ export const UserRepository = {
               },
               side: row.side === 0 ? 'buy' : 'sell',
               amount: amount.toString(),
-              price: amount.toString(),
+              price: price.toString(),
               outcome: {
                 index: row.outcome_index || 0,
                 text: row.outcome_text || '',
