@@ -6,7 +6,7 @@ import { UserRepository } from '@/lib/db/queries/user'
 
 const StoreOrderSchema = z.object({
   // begin blockchain data
-  salt: z.number(),
+  salt: z.string(),
   maker: z.string(),
   signer: z.string(),
   taker: z.string(),
@@ -15,10 +15,10 @@ const StoreOrderSchema = z.object({
   token_id: z.string(),
   maker_amount: z.string(),
   taker_amount: z.string(),
-  expiration: z.number(),
-  nonce: z.number(),
-  fee_rate_bps: z.number(),
-  affiliate_percentage: z.number(),
+  expiration: z.string(),
+  nonce: z.string(),
+  fee_rate_bps: z.string(),
+  affiliate_percentage: z.string(),
   side: z.union([z.literal(0), z.literal(1)]),
   signature_type: z.number(),
   signature: z.string(),
@@ -59,6 +59,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       body: JSON.stringify({
         order: {
           ...validated.data,
+          affiliate_percentage: Number(validated.data.affiliate_percentage),
         },
         order_type: 'GTC',
         owner: process.env.CLOB_API_KEY!,
@@ -87,7 +88,9 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       maker_amount: BigInt(validated.data.maker_amount),
       taker_amount: BigInt(validated.data.taker_amount),
       nonce: BigInt(validated.data.nonce),
-      expiration: BigInt(Math.floor(new Date(validated.data.expiration).getTime() / 1000)),
+      fee_rate_bps: Number(validated.data.fee_rate_bps),
+      affiliate_percentage: Number(validated.data.fee_rate_bps),
+      expiration: BigInt(validated.data.expiration),
       user_id: user.id,
       affiliate_user_id: user.referred_by_user_id,
     })

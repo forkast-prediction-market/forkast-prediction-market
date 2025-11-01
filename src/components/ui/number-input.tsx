@@ -128,7 +128,7 @@ export function NumberInput({
           maxLength={5}
           placeholder="0.0"
           className={`
-            h-10 rounded-none border-none !bg-transparent text-center font-semibold shadow-none
+            h-10 rounded-none border-none !bg-transparent text-center !text-lg font-bold shadow-none
             focus-visible:ring-0 focus-visible:ring-offset-0
           `}
         />

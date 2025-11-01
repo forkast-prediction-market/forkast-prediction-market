@@ -168,7 +168,7 @@ function transformActivityOrder(order: any): ActivityOrder {
     ? getSupabaseImageUrl(order.user_image)
     : `https://avatar.vercel.sh/${order.user_address || 'unknown'}.png`
 
-  const amount = Number(order.amount || 0)
+  const amount = order.amount
   const price = Number(order.price || 0.5)
   const totalValue = amount * price
 
@@ -486,7 +486,7 @@ export const EventRepository = {
         .select({
           id: orders.id,
           side: orders.side,
-          amount: orders.maker_amount,
+          amount: orders.taker_amount,
           price: sql<number>`CASE
             WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0
             THEN ${orders.taker_amount}::numeric / (${orders.maker_amount} + ${orders.taker_amount})::numeric
