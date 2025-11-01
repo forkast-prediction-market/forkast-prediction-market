@@ -137,7 +137,7 @@ function ActivityItemComponent({ item }: { item: ActivityOrder }) {
             >
               {outcomeText}
               {' '}
-              {formatPrice(Number(item.price))}
+              {formatPrice(item.price == null ? null : Number(item.price))}
             </span>
             <span className="text-xs text-muted-foreground">
               {formatAmount(Number(item.amount))}
