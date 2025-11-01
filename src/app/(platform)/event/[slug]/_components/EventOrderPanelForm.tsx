@@ -14,8 +14,8 @@ import EventOrderPanelOutcomeButton from '@/app/(platform)/event/[slug]/_compone
 import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_components/EventOrderPanelSubmitButton'
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
-import { defaultNetwork } from '@/lib/appkit'
-import { CAP_MICRO, FLOOR_MICRO, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
+import EventTradeToast from '@/app/(platform)/event/[slug]/_components/EventTradeToast'
+import { CAP_MICRO, EIP712_DOMAIN, EIP712_TYPES, FLOOR_MICRO, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { cn, toMicro, triggerConfetti } from '@/lib/utils'
 import {
   calculateSellAmount,
@@ -73,46 +73,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         return
       }
 
-      if (state.side === ORDER_SIDE.SELL) {
-        const sellValue = calculateSellAmount()
-
-        toast.success(
-          `Sell ${state.amount} shares on ${state.outcome!.outcome_text}`,
-          {
-            description: (
-              <div>
-                <div className="font-medium">{event.title}</div>
-                <div className="mt-1 text-xs opacity-80">
-                  Received $
-                  {sellValue.toFixed(2)}
-                  {' '}
-                  @ $
-                  {getAvgSellPrice()}
-                  ¢
-                </div>
-              </div>
-            ),
-          },
-        )
-      }
-      else { // Buy logic
-        toast.success(
-          `Buy $${state.amount} on ${state.outcome!.outcome_text}`,
-          {
-            description: (
-              <div>
-                <div className="font-medium">{event.title}</div>
-                <div className="mt-1 text-xs opacity-80">
-                  {amount}
-                  {' '}
-                  shares 10¢
-                </div>
-              </div>
-            ),
-          },
-        )
-      }
-
+      triggerToast()
       triggerConfetti(state.outcome!.outcome_index === OUTCOME_INDEX.YES ? 'yes' : 'no', state.lastMouseEvent)
       state.setAmount('0.00')
     }
@@ -128,30 +89,8 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
   async function sign(payload: BlockchainOrder) {
     return await signTypedDataAsync({
-      domain: {
-        name: 'Forkast CLOB',
-        version: '1',
-        chainId: defaultNetwork.id,
-      },
-      types: {
-        Order: [
-          { name: 'salt', type: 'uint256' },
-          { name: 'maker', type: 'address' },
-          { name: 'signer', type: 'address' },
-          { name: 'taker', type: 'address' },
-          { name: 'referrer', type: 'address' },
-          { name: 'affiliate', type: 'address' },
-          { name: 'tokenId', type: 'uint256' },
-          { name: 'makerAmount', type: 'uint256' },
-          { name: 'takerAmount', type: 'uint256' },
-          { name: 'expiration', type: 'uint256' },
-          { name: 'nonce', type: 'uint256' },
-          { name: 'feeRateBps', type: 'uint256' },
-          { name: 'affiliatePercentage', type: 'uint256' },
-          { name: 'side', type: 'uint8' },
-          { name: 'signatureType', type: 'uint8' },
-        ],
-      },
+      domain: EIP712_DOMAIN,
+      types: EIP712_TYPES,
       primaryType: 'Order',
       message: {
         salt: payload.salt,
@@ -173,41 +112,86 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     })
   }
 
-  async function onSubmit() {
-    let makerAmount = 0n
-    let takerAmount = 0n
+  function validateOrder(): boolean {
+    if (state.isLoading) {
+      return false
+    }
 
     if (!isConnected || !user) {
       queueMicrotask(() => open())
-      return
-    }
-
-    if (state.isLoading) {
-      return
+      return false
     }
 
     if (!state.market || !state.outcome) {
-      return
+      toast.error('Market not available', {
+        description: 'Please select a valid market and outcome.',
+      })
+
+      return false
     }
 
     if (amount <= 0) {
-      return
+      toast.error('Invalid amount', {
+        description: 'Please enter an amount greater than 0.',
+      })
+
+      return false
     }
 
     if (isLimitOrder) {
       const limitPriceValue = Number.parseFloat(state.limitPrice)
-
       if (!Number.isFinite(limitPriceValue) || limitPriceValue <= 0) {
-        toast.error('Enter a valid limit price before submitting.')
-        return
+        toast.error('Invalid limit price', {
+          description: 'Enter a valid limit price before submitting.',
+        })
+
+        return false
       }
 
       const limitSharesValue = Number.parseFloat(state.limitShares)
       if (!Number.isFinite(limitSharesValue) || limitSharesValue <= 0) {
-        toast.error('Enter the number of shares for your limit order.')
-        return
-      }
+        toast.error('Invalid shares', {
+          description: 'Enter the number of shares for your limit order.',
+        })
 
+        return false
+      }
+    }
+
+    return true
+  }
+
+  function buildOrderPayload(): BlockchainOrder | null {
+    if (!state.market || !state.outcome || !user) {
+      return null
+    }
+
+    const { makerAmount, takerAmount } = calculateOrderAmounts()
+
+    return {
+      salt: 333000003n,
+      maker: user.address as `0x${string}`,
+      signer: user.address as `0x${string}`,
+      taker: user.address as `0x${string}`,
+      referrer: user.address as `0x${string}`,
+      affiliate: user.address as `0x${string}`,
+      token_id: BigInt(state.outcome.token_id),
+      maker_amount: makerAmount,
+      taker_amount: takerAmount,
+      expiration: 1764548576n,
+      nonce: 3003n,
+      fee_rate_bps: 200n,
+      affiliate_percentage: 0n,
+      side: state.side,
+      signature_type: 0,
+    }
+  }
+
+  function calculateOrderAmounts(): { makerAmount: bigint, takerAmount: bigint } {
+    let makerAmount: bigint
+    let takerAmount: bigint
+
+    if (isLimitOrder) {
       const priceMicro = BigInt(toMicro(state.limitPrice))
       const sharesMicro = BigInt(toMicro(state.limitShares))
 
@@ -231,22 +215,54 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       }
     }
 
-    const payload: BlockchainOrder = {
-      salt: 333000003n,
-      maker: user.address as `0x${string}`,
-      signer: user.address as `0x${string}`,
-      taker: user.address as `0x${string}`,
-      referrer: user.address as `0x${string}`,
-      affiliate: user.address as `0x${string}`,
-      token_id: BigInt(state.outcome.token_id),
-      maker_amount: makerAmount,
-      taker_amount: takerAmount,
-      expiration: 1764548576n,
-      nonce: 3003n,
-      fee_rate_bps: 200n,
-      affiliate_percentage: 0n,
-      side: state.side,
-      signature_type: 0,
+    return { makerAmount, takerAmount }
+  }
+
+  function triggerToast() {
+    if (state.side === ORDER_SIDE.SELL) {
+      const sellValue = calculateSellAmount()
+
+      toast.success(
+        `Sell ${state.amount} shares on ${state.outcome!.outcome_text}`,
+        {
+          description: (
+            <EventTradeToast title={event.title}>
+              Received $
+              {sellValue.toFixed(2)}
+              {' '}
+              @ $
+              {getAvgSellPrice()}
+              ¢
+            </EventTradeToast>
+          ),
+        },
+      )
+    }
+    else {
+      toast.success(
+        `Buy $${state.amount} on ${state.outcome!.outcome_text}`,
+        {
+          description: (
+            <EventTradeToast title={event.title}>
+              {state.amount}
+              {' '}
+              shares 10¢
+            </EventTradeToast>
+          ),
+        },
+      )
+    }
+  }
+
+  async function onSubmit() {
+    const valid = validateOrder()
+    if (!valid) {
+      return
+    }
+
+    const payload = buildOrderPayload()
+    if (!payload) {
+      return
     }
 
     const signature = await sign(payload)
