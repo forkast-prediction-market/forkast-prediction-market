@@ -120,10 +120,9 @@ export function triggerConfetti(color: 'primary' | 'yes' | 'no', event?: any) {
 }
 
 export function toMicro(amount: string): string {
-  const trimmed = amount.trim()
-  const [whole = '0', decimal = ''] = trimmed.split('.')
+  return Math.round(Number(amount) * 1e6).toString()
+}
 
-  const paddedDecimals = (`${decimal}000000`).slice(0, 6)
-
-  return (whole + paddedDecimals).replace(/^0+/, '') || '0'
+export function fromMicro(amount: string): string {
+  return (Number(amount) / 1e6).toFixed(2)
 }
