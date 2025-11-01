@@ -168,7 +168,7 @@ function transformActivityOrder(order: any): ActivityOrder {
     ? getSupabaseImageUrl(order.user_image)
     : `https://avatar.vercel.sh/${order.user_address || 'unknown'}.png`
 
-  const amount = Number(order.amount || 0)
+  const amount = Number(order.amount)
   const price = Number(order.price || 0.5)
   const totalValue = amount * price
 
@@ -181,8 +181,8 @@ function transformActivityOrder(order: any): ActivityOrder {
       image: userImage,
     },
     side: order.side === 0 ? 'buy' : 'sell',
-    amount,
-    price,
+    amount: amount.toString(),
+    price: price.toString(),
     outcome: {
       index: order.outcome_index || 0,
       text: order.outcome_text || '',
@@ -475,6 +475,7 @@ export const EventRepository = {
 
   async getEventActivity(args: ActivityArgs): Promise<QueryResult<ActivityOrder[]>> {
     'use cache'
+    cacheTag(cacheTags.activity(args.slug))
 
     return runQuery(async () => {
       const whereConditions = [eq(events.slug, args.slug)]
@@ -482,11 +483,12 @@ export const EventRepository = {
       if (args.minAmount && args.minAmount > 0) {
         whereConditions.push(sql`${orders.maker_amount} >= ${args.minAmount}`)
       }
+
       const results = await db
         .select({
           id: orders.id,
           side: orders.side,
-          amount: orders.maker_amount,
+          amount: orders.taker_amount,
           price: sql<number>`CASE
             WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0
             THEN ${orders.taker_amount}::numeric / (${orders.maker_amount} + ${orders.taker_amount})::numeric

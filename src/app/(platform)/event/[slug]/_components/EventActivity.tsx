@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { OUTCOME_INDEX } from '@/lib/constants'
+import { fromMicro } from '@/lib/utils'
 
 interface EventActivityProps {
   event: Event
@@ -136,10 +137,6 @@ export default function EventActivity({ event }: EventActivityProps) {
     return price < 1 ? `${(price * 100).toFixed(1)}¢` : `${price.toFixed(2)}`
   }
 
-  function formatAmount(amount: number) {
-    return amount.toLocaleString('en-US')
-  }
-
   function formatTotalValue(totalValue: number) {
     return totalValue < 1 ? `${(totalValue * 100).toFixed(0)}¢` : `${totalValue.toFixed(2)}`
   }
@@ -256,7 +253,7 @@ export default function EventActivity({ event }: EventActivityProps) {
                         {' '}
                       </span>
                       <span className="text-sm font-semibold">
-                        {formatAmount(activity.amount)}
+                        {fromMicro(activity.amount)}
                       </span>
                       <span className={`ml-1 text-sm font-semibold ${
                         activity.outcome.index === OUTCOME_INDEX.YES
@@ -276,7 +273,7 @@ export default function EventActivity({ event }: EventActivityProps) {
                         {' '}
                       </span>
                       <span className="text-sm font-semibold">
-                        {formatPrice(activity.price)}
+                        {formatPrice(Number(activity.price))}
                       </span>
                       <span className="text-sm text-muted-foreground">
                         {' '}

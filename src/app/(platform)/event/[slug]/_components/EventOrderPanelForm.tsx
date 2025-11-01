@@ -1,4 +1,4 @@
-import type { Event } from '@/types'
+import type { BlockchainOrder, Event, OrderSide } from '@/types'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
 import Form from 'next/form'
 import { toast } from 'sonner'
@@ -15,7 +15,7 @@ import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_componen
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
 import { defaultNetwork } from '@/lib/appkit'
-import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
+import { CAP_MICRO, FLOOR_MICRO, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { cn, toMicro, triggerConfetti } from '@/lib/utils'
 import {
   calculateSellAmount,
@@ -46,11 +46,25 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const amount = useAmountAsNumber()
   const isLimitOrder = useIsLimitOrder()
 
-  async function storeOrder(payload: any) {
+  async function storeOrder(payload: BlockchainOrder & { signature: string }) {
     state.setIsLoading(true)
 
     try {
-      const result = await storeOrderAction(payload)
+      const result = await storeOrderAction({
+        ...payload,
+        salt: payload.salt.toString(),
+        token_id: payload.token_id.toString(),
+        maker_amount: payload.maker_amount.toString(),
+        taker_amount: payload.taker_amount.toString(),
+        expiration: payload.expiration.toString(),
+        nonce: payload.nonce.toString(),
+        fee_rate_bps: payload.fee_rate_bps.toString(),
+        affiliate_percentage: payload.affiliate_percentage.toString(),
+        side: payload.side as OrderSide,
+        type: state.type,
+        condition_id: state.market!.condition_id,
+        slug: event.slug,
+      })
 
       if (result?.error) {
         toast.error('Trade failed', {
@@ -112,7 +126,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     }
   }
 
-  async function sign(payload: any) {
+  async function sign(payload: BlockchainOrder) {
     return await signTypedDataAsync({
       domain: {
         name: 'Forkast CLOB',
@@ -140,19 +154,19 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       },
       primaryType: 'Order',
       message: {
-        salt: BigInt(payload.salt),
-        maker: payload.maker as `0x${string}`,
-        signer: payload.signer as `0x${string}`,
-        taker: payload.taker as `0x${string}`,
-        referrer: payload.referrer as `0x${string}`,
-        affiliate: payload.affiliate as `0x${string}`,
-        tokenId: BigInt(payload.token_id),
-        makerAmount: BigInt(payload.maker_amount),
-        takerAmount: BigInt(payload.taker_amount),
-        expiration: BigInt(payload.expiration),
-        nonce: BigInt(payload.nonce),
-        feeRateBps: BigInt(payload.fee_rate_bps),
-        affiliatePercentage: BigInt(payload.affiliate_percentage),
+        salt: payload.salt,
+        maker: payload.maker,
+        signer: payload.signer,
+        taker: payload.taker,
+        referrer: payload.referrer,
+        affiliate: payload.affiliate,
+        tokenId: payload.token_id,
+        makerAmount: payload.maker_amount,
+        takerAmount: payload.taker_amount,
+        expiration: payload.expiration,
+        nonce: payload.nonce,
+        feeRateBps: payload.fee_rate_bps,
+        affiliatePercentage: payload.affiliate_percentage,
         side: payload.side,
         signatureType: payload.signature_type,
       },
@@ -160,6 +174,9 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   }
 
   async function onSubmit() {
+    let makerAmount = 0n
+    let takerAmount = 0n
+
     if (!isConnected || !user) {
       queueMicrotask(() => open())
       return
@@ -170,6 +187,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     }
 
     if (!state.market || !state.outcome) {
+      return
+    }
+
+    if (amount <= 0) {
       return
     }
 
@@ -186,34 +207,46 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         toast.error('Enter the number of shares for your limit order.')
         return
       }
+
+      const priceMicro = BigInt(toMicro(state.limitPrice))
+      const sharesMicro = BigInt(toMicro(state.limitShares))
+
+      if (state.side === ORDER_SIDE.BUY) {
+        makerAmount = (priceMicro * sharesMicro) / 1_000_000n
+        takerAmount = sharesMicro
+      }
+      else {
+        makerAmount = sharesMicro
+        takerAmount = (priceMicro * sharesMicro) / 1_000_000n
+      }
+    }
+    else {
+      makerAmount = BigInt(toMicro(state.amount))
+
+      if (state.side === ORDER_SIDE.BUY) {
+        takerAmount = makerAmount * 1_000_000n / CAP_MICRO
+      }
+      else {
+        takerAmount = FLOOR_MICRO * makerAmount / 1_000_000n
+      }
     }
 
-    if (amount <= 0) {
-      return
-    }
-
-    const payload = {
-      // begin blockchain data
-      salt: 333000003,
-      maker: user.address,
-      signer: user.address,
-      taker: user.address,
-      referrer: user.address,
-      affiliate: user.address,
-      token_id: state.outcome.token_id,
-      maker_amount: toMicro(state.amount),
-      taker_amount: toMicro(state.amount),
-      expiration: 202612232334,
-      nonce: 3003,
-      fee_rate_bps: 200,
-      affiliate_percentage: 0,
+    const payload: BlockchainOrder = {
+      salt: 333000003n,
+      maker: user.address as `0x${string}`,
+      signer: user.address as `0x${string}`,
+      taker: user.address as `0x${string}`,
+      referrer: user.address as `0x${string}`,
+      affiliate: user.address as `0x${string}`,
+      token_id: BigInt(state.outcome.token_id),
+      maker_amount: makerAmount,
+      taker_amount: takerAmount,
+      expiration: 1764548576n,
+      nonce: 3003n,
+      fee_rate_bps: 200n,
+      affiliate_percentage: 0n,
       side: state.side,
       signature_type: 0,
-      signature: '0x',
-      // end blockchain data
-
-      type: state.type,
-      condition_id: state.market.condition_id,
     }
 
     const signature = await sign(payload)
@@ -228,7 +261,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       action={onSubmit}
       className={cn({
         'rounded-lg border lg:w-[340px]': !isMobile,
-      }, 'w-full p-4 shadow-xl/5 lg:max-w-[340px]')}
+      }, 'w-full p-4 shadow-xl/5')}
     >
       {!isMobile && !isBinaryMarket && <EventOrderPanelMarketInfo />}
       {isMobile && <EventOrderPanelMobileMarketInfo />}

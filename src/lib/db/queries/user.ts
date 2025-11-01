@@ -399,8 +399,8 @@ export const UserRepository = {
                 image: userImage,
               },
               side: row.side === 0 ? 'buy' : 'sell',
-              amount,
-              price,
+              amount: amount.toString(),
+              price: price.toString(),
               outcome: {
                 index: row.outcome_index || 0,
                 text: row.outcome_text || '',

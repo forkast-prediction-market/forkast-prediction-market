@@ -2,6 +2,7 @@ import type { LimitExpirationOption } from '@/stores/useOrder'
 import { BanknoteIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import {
   SelectContent,
@@ -126,24 +127,15 @@ export default function EventOrderPanelLimitControls() {
             Shares
           </span>
           <div className="flex w-1/2 items-center justify-end gap-2">
-            <input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              step={1}
+            <Input
               placeholder="0"
+              inputMode="decimal"
               value={limitShares}
               onChange={(event) => {
                 const value = Number.parseInt(event.target.value || '0', 10)
                 updateLimitShares(value)
               }}
-              className={`
-                h-10 w-full
-                [appearance:textfield]
-                rounded-md border px-3 py-2 text-right text-base font-semibold outline-none
-                md:text-sm
-                [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
-              `}
+              className="h-10 !bg-transparent text-right !text-lg font-bold"
             />
           </div>
         </div>
