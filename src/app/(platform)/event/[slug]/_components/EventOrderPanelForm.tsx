@@ -119,7 +119,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
     if (!isConnected || !user) {
       queueMicrotask(() => open())
-      return true
+      return false
     }
 
     if (!state.market || !state.outcome) {
