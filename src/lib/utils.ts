@@ -81,16 +81,18 @@ export function formatCurrency(value: number) {
   return `$${value.toFixed(2)}`
 }
 
-export function formatPosition(amount: number): string {
-  if (amount < 1000) {
+export function formatPosition(amountMicro: string): string {
+  const amount = Number.parseFloat(fromMicro(amountMicro))
+
+  if (amount < 1_000) {
     return amount.toString()
   }
 
-  if (amount < 1000000) {
-    return amount.toLocaleString('en-US')
+  if (amount < 1_000_000) {
+    return Math.floor(amount).toLocaleString('en-US')
   }
 
-  const millions = amount / 1000000
+  const millions = amount / 1_000_000
   return `${millions.toFixed(1)}M`
 }
 

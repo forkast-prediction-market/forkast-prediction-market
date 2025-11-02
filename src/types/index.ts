@@ -230,9 +230,9 @@ export interface TopHolder {
     address: string
     image: string
   }
-  netPosition: number
-  outcomeIndex: number
-  outcomeText: string
+  net_position: string
+  outcome_index: number
+  outcome_text: string
 }
 
 export type OrderSide = 0 | 1 // 0 = buy, 1 = sell

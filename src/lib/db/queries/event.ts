@@ -559,12 +559,12 @@ export const EventRepository = {
               ? getSupabaseImageUrl(String(holderData.image))
               : `https://avatar.vercel.sh/${String(holderData.address)}.png`,
           },
-          netPosition: Number(holderData.net_position),
-          outcomeIndex: Number(holderData.outcome_index),
-          outcomeText: String(holderData.outcome_text),
+          net_position: String(holderData.net_position),
+          outcome_index: Number(holderData.outcome_index),
+          outcome_text: String(holderData.outcome_text),
         }
 
-        if (topHolder.outcomeIndex === OUTCOME_INDEX.YES) {
+        if (topHolder.outcome_index === OUTCOME_INDEX.YES) {
           yesHolders.push(topHolder)
         }
         else {
