@@ -81,7 +81,7 @@ WITH event_orders AS (
   -- Get all filled orders for the specific event, optionally filtered by condition_id
   SELECT o.user_id,
          o.side,
-         o.maker_amount,
+         o.taker_amount,
          out.outcome_index,
          out.outcome_text,
          u.username,
@@ -94,7 +94,7 @@ WITH event_orders AS (
          JOIN events e ON m.event_id = e.id
          JOIN users u ON o.user_id = u.id
   WHERE e.slug = event_slug_arg
-    AND o.status IN ('filled', 'pending')
+    AND o.status IN ('open', 'filled', 'pending')
     AND (condition_id_arg IS NULL OR c.id = condition_id_arg)),
      user_positions AS (
        -- Calculate net positions per user per outcome
@@ -104,20 +104,10 @@ WITH event_orders AS (
               image,
               outcome_index,
               outcome_text,
-              SUM(
-                CASE
-                  WHEN side = 0 THEN maker_amount
-                  ELSE maker_amount
-                  END
-              ) AS net_position
+              SUM(taker_amount) AS net_position
        FROM event_orders
        GROUP BY user_id, username, address, image, outcome_index, outcome_text
-       HAVING SUM(
-                CASE
-                  WHEN side = 0 THEN maker_amount
-                  ELSE maker_amount
-                  END
-              ) > 0),
+       HAVING SUM(taker_amount) > 0),
      ranked_positions AS (
        -- Rank positions within each outcome
        SELECT *,

@@ -153,7 +153,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
                       position={index + 1}
                     >
                       <span className="text-xs font-semibold text-yes">
-                        {formatPosition(holder.netPosition)}
+                        {formatPosition(holder.net_position)}
                         {' '}
                         shares
                       </span>
@@ -176,7 +176,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
                       position={index + 1}
                     >
                       <span className="text-xs font-semibold text-no">
-                        {formatPosition(holder.netPosition)}
+                        {formatPosition(holder.net_position)}
                         {' '}
                         shares
                       </span>
