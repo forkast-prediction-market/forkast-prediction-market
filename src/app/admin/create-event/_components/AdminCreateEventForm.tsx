@@ -111,7 +111,7 @@ export default function AdminCreateEventForm() {
   useEffect(() => {
     async function loadTags() {
       try {
-        const response = await fetch('/api/admin/main-tags', { cache: 'no-store' })
+        const response = await fetch('/admin/api/main-tags', { cache: 'no-store' })
         if (!response.ok) {
           throw new Error(`Failed to load tags (${response.status})`)
         }
@@ -194,7 +194,7 @@ export default function AdminCreateEventForm() {
 
     const timeoutId = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/admin/events/check-slug?slug=${encodeURIComponent(slug)}`, {
+        const response = await fetch(`/admin/api/events/check-slug?slug=${encodeURIComponent(slug)}`, {
           cache: 'no-store',
         })
 
