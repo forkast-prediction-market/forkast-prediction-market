@@ -1,15 +1,14 @@
 'use client'
 
-import type { User } from '@/types'
+import type { MarketOrderType, User } from '@/types'
 import Form from 'next/form'
 import { startTransition, useOptimistic, useRef, useState } from 'react'
 import { updateTradingSettingsAction } from '@/app/(platform)/settings/_actions/update-trading-settings'
 import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
+import { CLOB_ORDER_TYPE } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
-
-type MarketOrderType = 'fak' | 'fok'
 
 const ORDER_TYPE_OPTIONS: Array<{
   value: MarketOrderType
@@ -18,12 +17,12 @@ const ORDER_TYPE_OPTIONS: Array<{
   badge?: string
 }> = [
   {
-    value: 'fak',
+    value: CLOB_ORDER_TYPE.FAK,
     title: 'Fill and Kill (FAK)',
     description: 'Fills as much as possible at the best available prices and cancels any remaining unfilled portion',
   },
   {
-    value: 'fok',
+    value: CLOB_ORDER_TYPE.FOK,
     title: 'Fill or Kill (FOK)',
     description: 'Executes the entire order immediately at the specified price or cancels it completely',
   },
@@ -32,7 +31,7 @@ const ORDER_TYPE_OPTIONS: Array<{
 export default function SettingsTradingTab({ user }: { user: User }) {
   const [status, setStatus] = useState<{ error?: string, success?: string } | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
-  const initialOrderType = (user.settings?.trading?.market_order_type as MarketOrderType) ?? 'fak'
+  const initialOrderType = (user.settings?.trading?.market_order_type as MarketOrderType) ?? CLOB_ORDER_TYPE.FAK
 
   const [optimisticOrderType, setOptimisticOrderType] = useOptimistic<MarketOrderType, MarketOrderType>(
     initialOrderType,

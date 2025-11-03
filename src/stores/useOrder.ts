@@ -45,7 +45,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   market: null,
   outcome: null,
   side: ORDER_SIDE.BUY,
-  type: ORDER_TYPE.FAK,
+  type: ORDER_TYPE.MARKET,
   amount: '0.00',
   limitPrice: '0.0',
   limitShares: '0',
@@ -94,7 +94,7 @@ export function useIsBinaryMarket() {
 }
 
 export function useIsLimitOrder() {
-  return useOrder(state => state.type === ORDER_TYPE.GTC || state.type === ORDER_TYPE.GTD)
+  return useOrder(state => state.type === ORDER_TYPE.LIMIT)
 }
 
 export function getAvgSellPrice() {

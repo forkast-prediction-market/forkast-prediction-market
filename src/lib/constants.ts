@@ -6,6 +6,11 @@ export const ORDER_SIDE = {
 } as const
 
 export const ORDER_TYPE = {
+  MARKET: 'MARKET',
+  LIMIT: 'LIMIT',
+} as const
+
+export const CLOB_ORDER_TYPE = {
   FOK: 'FOK',
   FAK: 'FAK',
   GTC: 'GTC',

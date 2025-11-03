@@ -7,7 +7,7 @@ UPDATE users
 SET settings = jsonb_set(
   COALESCE(settings, '{}'::jsonb),
   '{trading}',
-  jsonb_build_object('market_order_type', 'fak'),
+  jsonb_build_object('market_order_type', 'FAK'),
   true
 )
 WHERE settings->'trading' IS NULL;
@@ -17,7 +17,7 @@ UPDATE users
 SET settings = jsonb_set(
   settings,
   '{trading,market_order_type}',
-  to_jsonb('fak'::text),
+  to_jsonb('FAK'::text),
   true
 )
 WHERE settings #>> '{trading,market_order_type}' IS NULL;
@@ -27,5 +27,5 @@ ALTER TABLE users
   ALTER COLUMN settings
   SET DEFAULT jsonb_build_object(
     'trading',
-    jsonb_build_object('market_order_type', 'fak')
+    jsonb_build_object('market_order_type', 'FAK')
   );

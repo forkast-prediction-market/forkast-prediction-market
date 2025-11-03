@@ -1,7 +1,8 @@
-import type { ActivityOrder, QueryResult } from '@/types'
+import type { ActivityOrder, MarketOrderType, QueryResult } from '@/types'
 import { and, asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
+import { CLOB_ORDER_TYPE } from '@/lib/constants'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
 import { users } from '@/lib/db/schema/auth/tables'
 import { conditions, events, markets, outcomes } from '@/lib/db/schema/events/tables'
@@ -114,7 +115,7 @@ export const UserRepository = {
     })
   },
 
-  async updateUserTradingSettingsById(userId: string, tradingSettings: { market_order_type: 'fak' | 'fok' }) {
+  async updateUserTradingSettingsById(userId: string, tradingSettings: { market_order_type: MarketOrderType }) {
     return await runQuery(async () => {
       const currentUserResult = await db
         .select({ settings: users.settings })
@@ -205,17 +206,13 @@ export const UserRepository = {
         }
       }
 
-      if (
-        !user.settings.trading
-        || typeof user.settings.trading !== 'object'
-        || user.settings.trading === null
-      ) {
+      if (!user.settings.trading || typeof user.settings.trading !== 'object') {
         user.settings.trading = {
-          market_order_type: 'fak',
+          market_order_type: CLOB_ORDER_TYPE.FAK,
         }
       }
       else if (!user.settings.trading.market_order_type) {
-        user.settings.trading.market_order_type = 'fak'
+        user.settings.trading.market_order_type = CLOB_ORDER_TYPE.FAK
       }
 
       if (!user.affiliate_code) {

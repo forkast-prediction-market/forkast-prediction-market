@@ -121,8 +121,8 @@ export default function EventOrderPanelBuySellTabs() {
             </button>
           </SelectPrimitive.Trigger>
           <SelectContent align="end" className="min-w-[8rem]">
-            <SelectItem className="cursor-pointer" value={ORDER_TYPE.FAK}>Market</SelectItem>
-            <SelectItem className="cursor-pointer" value={ORDER_TYPE.GTC}>Limit</SelectItem>
+            <SelectItem className="cursor-pointer" value={ORDER_TYPE.MARKET}>Market</SelectItem>
+            <SelectItem className="cursor-pointer" value={ORDER_TYPE.LIMIT}>Limit</SelectItem>
           </SelectContent>
         </Select>
       </div>
