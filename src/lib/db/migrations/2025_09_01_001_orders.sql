@@ -25,7 +25,7 @@ CREATE TABLE orders
   -- end blockchain data
   user_id              TEXT                                             NOT NULL,
   condition_id         TEXT                                             NOT NULL,
-  TYPE                 SMALLINT                                         NOT NULL,
+  type                 TEXT                                             NOT NULL,
   status               TEXT                     DEFAULT 'open'          NOT NULL,
   affiliate_user_id    TEXT,
   created_at           TIMESTAMP WITH TIME ZONE DEFAULT NOW()           NOT NULL,

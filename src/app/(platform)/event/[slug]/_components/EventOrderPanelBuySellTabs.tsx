@@ -24,9 +24,8 @@ export default function EventOrderPanelBuySellTabs() {
       return
     }
 
-    const storedType = Number(window.localStorage.getItem(ORDER_TYPE_STORAGE_KEY)) as OrderType
-
-    if (storedType === ORDER_TYPE.MARKET || storedType === ORDER_TYPE.LIMIT) {
+    const storedType = window.localStorage.getItem(ORDER_TYPE_STORAGE_KEY) as OrderType
+    if (Object.values(ORDER_TYPE).includes(storedType as any)) {
       setType(storedType)
     }
   }, [setType])
@@ -37,7 +36,7 @@ export default function EventOrderPanelBuySellTabs() {
     }
 
     try {
-      window.localStorage.setItem(ORDER_TYPE_STORAGE_KEY, `${type}`)
+      window.localStorage.setItem(ORDER_TYPE_STORAGE_KEY, type)
     }
     catch {}
   }, [type])
@@ -96,10 +95,8 @@ export default function EventOrderPanelBuySellTabs() {
 
         <Select
           key={type}
-          value={`${type}`}
-          onValueChange={(value) => {
-            setType(Number(value) as OrderType)
-          }}
+          value={type}
+          onValueChange={value => setType(value as OrderType)}
         >
           <SelectPrimitive.Trigger asChild>
             <button
@@ -124,8 +121,8 @@ export default function EventOrderPanelBuySellTabs() {
             </button>
           </SelectPrimitive.Trigger>
           <SelectContent align="end" className="min-w-[8rem]">
-            <SelectItem className="cursor-pointer" value={`${ORDER_TYPE.MARKET}`}>Market</SelectItem>
-            <SelectItem className="cursor-pointer" value={`${ORDER_TYPE.LIMIT}`}>Limit</SelectItem>
+            <SelectItem className="cursor-pointer" value={ORDER_TYPE.MARKET}>Market</SelectItem>
+            <SelectItem className="cursor-pointer" value={ORDER_TYPE.LIMIT}>Limit</SelectItem>
           </SelectContent>
         </Select>
       </div>

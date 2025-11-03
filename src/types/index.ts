@@ -91,7 +91,7 @@ interface UserSettings {
     inapp_resolutions?: boolean
   }
   trading?: {
-    market_order_type?: 'fak' | 'fok'
+    market_order_type?: ClobOrderType
   }
   [key: string]: any
 }
@@ -239,7 +239,9 @@ export interface TopHolder {
 }
 
 export type OrderSide = 0 | 1 // 0 = buy, 1 = sell
-export type OrderType = 0 | 1 // 0 = market, 1 = limit
+export type OrderType = 'MARKET' | 'LIMIT'
+export type ClobOrderType = 'FOK' | 'FAK' | 'GTC' | 'GTD'
+export type MarketOrderType = 'FAK' | 'FOK'
 
 export type QueryResult<T>
   = | { data: T, error: null }

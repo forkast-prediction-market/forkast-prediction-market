@@ -17,7 +17,7 @@ export async function updateNotificationPreferencesAction(formData: FormData) {
       return { error: 'Unauthenticated.' }
     }
 
-    await UserRepository.updateUserNotificationPreferencesById(user.id, preferences)
+    await UserRepository.updateUserNotificationPreferences(user, preferences)
 
     revalidatePath('/settings')
   }

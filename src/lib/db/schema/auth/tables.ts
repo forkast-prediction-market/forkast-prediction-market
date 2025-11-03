@@ -6,6 +6,7 @@ import {
   text,
   timestamp,
 } from 'drizzle-orm/pg-core'
+import { CLOB_ORDER_TYPE } from '@/lib/constants'
 
 export const users = pgTable('users', {
   id: text().primaryKey(),
@@ -24,7 +25,7 @@ export const users = pgTable('users', {
     .$type<Record<string, any>>()
     .default({
       trading: {
-        market_order_type: 'fak',
+        market_order_type: CLOB_ORDER_TYPE.FAK,
       },
     }),
   affiliate_code: text(),

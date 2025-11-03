@@ -1,4 +1,4 @@
-import type { OrderSide, OrderType } from '@/types'
+import type { ClobOrderType, OrderSide } from '@/types'
 import { and, eq } from 'drizzle-orm'
 import { orders } from '@/lib/db/schema/orders/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
@@ -25,7 +25,7 @@ export const OrderRepository = {
     signature: string
     // end blockchain data
 
-    type: OrderType
+    type: ClobOrderType
     user_id: string
     affiliate_user_id: string
     condition_id: string

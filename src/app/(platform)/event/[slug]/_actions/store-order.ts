@@ -3,6 +3,7 @@
 import { revalidateTag } from 'next/cache'
 import { z } from 'zod'
 import { cacheTags } from '@/lib/cache-tags'
+import { CLOB_ORDER_TYPE, ORDER_TYPE } from '@/lib/constants'
 import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
 import { buildForkastHmacSignature } from '@/lib/hmac'
@@ -27,7 +28,7 @@ const StoreOrderSchema = z.object({
   signature: z.string(),
   // end blockchain data
 
-  type: z.union([z.literal(0), z.literal(1)]),
+  type: z.union([z.literal(ORDER_TYPE.MARKET), z.literal(ORDER_TYPE.LIMIT)]),
   condition_id: z.string(),
   slug: z.string(),
 })
@@ -50,6 +51,10 @@ export async function storeOrderAction(payload: StoreOrderInput) {
     }
   }
 
+  const clobOrderType = validated.data.type === ORDER_TYPE.MARKET
+    ? user.settings.trading.market_order_type
+    : CLOB_ORDER_TYPE.GTC
+
   try {
     const clobPayload = JSON.stringify({
       order: {
@@ -70,7 +75,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
         signatureType: validated.data.signature_type,
         signature: validated.data.signature,
       },
-      orderType: 'GTC',
+      orderType: clobOrderType,
       owner: process.env.FORKAST_API_KEY!,
     })
 
@@ -118,6 +123,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       expiration: BigInt(validated.data.expiration),
       user_id: user.id,
       affiliate_user_id: user.referred_by_user_id,
+      type: clobOrderType,
     })
 
     if (error) {
