@@ -39,7 +39,7 @@
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.44.6",
     "fumadocs-core": "^16.0.5",
-    "fumadocs-mdx": "^13.0.2",
+    "fumadocs-mdx": "^13.0.5",
     "fumadocs-ui": "^16.0.5",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.546.0",
