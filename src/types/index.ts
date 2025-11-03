@@ -90,6 +90,9 @@ interface UserSettings {
     inapp_hide_small_fills?: boolean
     inapp_resolutions?: boolean
   }
+  trading?: {
+    market_order_type?: 'fak' | 'fok'
+  }
   [key: string]: any
 }
 

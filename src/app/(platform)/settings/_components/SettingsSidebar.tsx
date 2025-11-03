@@ -8,6 +8,7 @@ interface SettingsSidebarProps {
 const menuItems = [
   { id: 'profile', label: 'Profile' },
   { id: 'notifications', label: 'Notifications' },
+  { id: 'trading', label: 'Trading' },
   { id: 'affiliate', label: 'Affiliate' },
   { id: 'two-factor', label: 'Two-Factor Auth' },
   { id: 'export-key', label: 'Export Private Key' },
