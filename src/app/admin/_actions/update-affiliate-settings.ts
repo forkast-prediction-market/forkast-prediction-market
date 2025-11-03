@@ -46,6 +46,6 @@ export async function updateForkSettingsAction(
     return { error: 'Failed to update settings.' }
   }
 
-  revalidatePath('/admin')
+  revalidatePath('/admin/affiliate')
   return { success: 'Settings updated successfully.' }
 }
