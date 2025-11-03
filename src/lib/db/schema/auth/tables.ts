@@ -20,7 +20,13 @@ export const users = pgTable('users', {
     .notNull(),
   two_factor_enabled: boolean().default(false),
   username: text().unique(),
-  settings: jsonb(),
+  settings: jsonb()
+    .$type<Record<string, any>>()
+    .default({
+      trading: {
+        market_order_type: 'fak',
+      },
+    }),
   affiliate_code: text(),
   referred_by_user_id: text().references((): any => users.id, { onDelete: 'set null' }),
 })

@@ -114,6 +114,59 @@ export const UserRepository = {
     })
   },
 
+  async updateUserTradingSettingsById(userId: string, tradingSettings: { market_order_type: 'fak' | 'fok' }) {
+    return await runQuery(async () => {
+      const currentUserResult = await db
+        .select({ settings: users.settings })
+        .from(users)
+        .where(eq(users.id, userId))
+        .limit(1)
+
+      const currentUser = currentUserResult[0]
+      let settingsPayload: any = currentUser?.settings ?? {}
+
+      if (typeof settingsPayload === 'string') {
+        try {
+          settingsPayload = JSON.parse(settingsPayload)
+        }
+        catch {
+          settingsPayload = {}
+        }
+      }
+
+      const currentTradingSettings = (
+        settingsPayload
+        && typeof settingsPayload === 'object'
+        && typeof settingsPayload.trading === 'object'
+        && settingsPayload.trading !== null
+      )
+        ? settingsPayload.trading
+        : {}
+
+      const mergedSettings = {
+        ...settingsPayload,
+        trading: {
+          ...currentTradingSettings,
+          ...tradingSettings,
+        },
+      }
+
+      const result = await db
+        .update(users)
+        .set({ settings: mergedSettings })
+        .where(eq(users.id, userId))
+        .returning({ id: users.id })
+
+      const data = result[0] || null
+
+      if (!data) {
+        return { data: null, error: 'Failed to update trading settings.' }
+      }
+
+      return { data, error: null }
+    })
+  },
+
   async getCurrentUser({ disableCookieCache = false }: { disableCookieCache?: boolean } = {}) {
     try {
       const session = await auth.api.getSession({
@@ -150,6 +203,19 @@ export const UserRepository = {
         catch {
           user.settings = {}
         }
+      }
+
+      if (
+        !user.settings.trading
+        || typeof user.settings.trading !== 'object'
+        || user.settings.trading === null
+      ) {
+        user.settings.trading = {
+          market_order_type: 'fak',
+        }
+      }
+      else if (!user.settings.trading.market_order_type) {
+        user.settings.trading.market_order_type = 'fak'
       }
 
       if (!user.affiliate_code) {

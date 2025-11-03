@@ -7,6 +7,7 @@ import SettingsExportPrivateKeyTab from '@/app/(platform)/settings/_components/S
 import SettingsNotificationsTab from '@/app/(platform)/settings/_components/SettingsNotificationsTab'
 import SettingsProfileTab from '@/app/(platform)/settings/_components/SettingsProfileTab'
 import SettingsSidebar from '@/app/(platform)/settings/_components/SettingsSidebar'
+import SettingsTradingTab from '@/app/(platform)/settings/_components/SettingsTradingTab'
 import SettingsTwoFactorAuthTab from '@/app/(platform)/settings/_components/SettingsTwoFactorAuthTab'
 
 interface SettingsContentProps {
@@ -32,6 +33,8 @@ export default function SettingsContent({ user, tab, affiliateData }: SettingsCo
         return <SettingsTwoFactorAuthTab user={user} />
       case 'export-key':
         return <SettingsExportPrivateKeyTab />
+      case 'trading':
+        return <SettingsTradingTab user={user} />
       default:
         return <SettingsProfileTab user={user} />
     }
