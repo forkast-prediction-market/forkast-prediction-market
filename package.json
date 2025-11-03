@@ -34,7 +34,7 @@
     "@visx/shape": "3.13.0-alpha.0",
     "@visx/tooltip": "3.13.0-alpha.0",
     "better-auth": "1.3.34",
-    "canvas-confetti": "^1.9.3",
+    "canvas-confetti": "^1.9.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.44.6",
