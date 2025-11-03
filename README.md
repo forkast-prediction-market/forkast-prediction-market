@@ -48,6 +48,7 @@ Complete Step 3 (Supabase) and Step 4 (environment) first, then redeploy from yo
 
    1. **Download** the `.env.example` file from this repository
    2. **Edit** it with your configuration:
+      - **Forkast CLOB Ordersbook**: Connect your wallet at [auth.forka.st](https://auth.forka.st), sign to verify ownership, and copy the API key, secret, and passphrase
       - **Reown AppKit**: Get Project ID at [dashboard.reown.com](https://dashboard.reown.com)
       - **Better Auth**: Generate secret at [better-auth.com](https://www.better-auth.com/docs/installation#set-environment-variables)
       - **CRON_SECRET**: Create a random secret of at least 16 characters
