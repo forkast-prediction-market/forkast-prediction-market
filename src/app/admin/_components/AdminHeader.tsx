@@ -1,7 +1,7 @@
 import HeaderLogo from '@/components/HeaderLogo'
 import HeaderMenu from '@/components/HeaderMenu'
 
-export default function AdminHeader() {
+export default async function AdminHeader() {
   return (
     <header className="sticky top-0 z-50 bg-background">
       <div className="container flex h-14 items-center gap-4">

@@ -76,8 +76,8 @@ export function useAdminUsers(params: UseAdminUsersParams = {}) {
       sortOrder,
       pageIndex,
     }),
-    staleTime: 30000, // 30 seconds
-    gcTime: 300000, // 5 minutes
+    staleTime: 30_000,
+    gcTime: 300_000,
   })
 
   const retry = useCallback(() => {
