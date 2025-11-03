@@ -115,79 +115,84 @@ export const UserRepository = {
   },
 
   async getCurrentUser({ disableCookieCache = false }: { disableCookieCache?: boolean } = {}) {
-    const session = await auth.api.getSession({
-      query: {
-        disableCookieCache,
-      },
-      headers: await headers(),
-    })
+    try {
+      const session = await auth.api.getSession({
+        query: {
+          disableCookieCache,
+        },
+        headers: await headers(),
+      })
 
-    if (!session?.user) {
-      return null
-    }
-
-    const user: any = session.user
-    const productionDomain = process.env.VERCEL_PROJECT_PRODUCTION_URL
-    const rawEmail = typeof user.email === 'string' ? user.email : ''
-    const shouldRedactEmail = Boolean(
-      rawEmail
-      && (
-        (productionDomain && rawEmail.includes(productionDomain))
-        || rawEmail.includes('vercel.app')
-      ),
-    )
-
-    user.email = shouldRedactEmail ? '' : rawEmail
-
-    if (!user.settings) {
-      user.settings = {}
-    }
-    else if (typeof user.settings === 'string') {
-      try {
-        user.settings = JSON.parse(user.settings)
+      if (!session?.user) {
+        return null
       }
-      catch {
+
+      const user: any = session.user
+      const productionDomain = process.env.VERCEL_PROJECT_PRODUCTION_URL
+      const rawEmail = typeof user.email === 'string' ? user.email : ''
+      const shouldRedactEmail = Boolean(
+        rawEmail
+        && (
+          (productionDomain && rawEmail.includes(productionDomain))
+          || rawEmail.includes('vercel.app')
+        ),
+      )
+
+      user.email = shouldRedactEmail ? '' : rawEmail
+
+      if (!user.settings) {
         user.settings = {}
       }
-    }
-
-    if (!user.affiliate_code) {
-      try {
-        const { data: code } = await AffiliateRepository.ensureUserAffiliateCode(user.id)
-        if (code) {
-          user.affiliate_code = code
+      else if (typeof user.settings === 'string') {
+        try {
+          user.settings = JSON.parse(user.settings)
+        }
+        catch {
+          user.settings = {}
         }
       }
-      catch (error) {
-        console.error('Failed to ensure affiliate code', error)
-      }
-    }
 
-    if (!user.referred_by_user_id) {
-      try {
-        const cookieStore = await cookies()
-        const referralCookie = cookieStore.get('platform_affiliate')
-
-        if (referralCookie?.value) {
-          const parsed = JSON.parse(referralCookie.value) as {
-            affiliateUserId?: string
-            timestamp?: number
-          }
-
-          if (parsed?.affiliateUserId) {
-            await AffiliateRepository.recordReferral({
-              user_id: user.id,
-              affiliate_user_id: parsed.affiliateUserId,
-            })
+      if (!user.affiliate_code) {
+        try {
+          const { data: code } = await AffiliateRepository.ensureUserAffiliateCode(user.id)
+          if (code) {
+            user.affiliate_code = code
           }
         }
+        catch (error) {
+          console.error('Failed to ensure affiliate code', error)
+        }
       }
-      catch (error) {
-        console.error('Failed to record affiliate referral', error)
-      }
-    }
 
-    return user
+      if (!user.referred_by_user_id) {
+        try {
+          const cookieStore = await cookies()
+          const referralCookie = cookieStore.get('platform_affiliate')
+
+          if (referralCookie?.value) {
+            const parsed = JSON.parse(referralCookie.value) as {
+              affiliateUserId?: string
+              timestamp?: number
+            }
+
+            if (parsed?.affiliateUserId) {
+              await AffiliateRepository.recordReferral({
+                user_id: user.id,
+                affiliate_user_id: parsed.affiliateUserId,
+              })
+            }
+          }
+        }
+        catch (error) {
+          console.error('Failed to record affiliate referral', error)
+        }
+      }
+
+      return user
+    }
+    catch {
+      return null
+    }
   },
 
   async listUsers(params: {

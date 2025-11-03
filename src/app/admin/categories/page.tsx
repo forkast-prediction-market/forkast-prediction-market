@@ -1,3 +1,5 @@
+'use cache'
+
 import AdminCategoriesTable from '@/app/admin/categories/_components/AdminCategoriesTable'
 
 export default async function AdminCategoriesPage() {

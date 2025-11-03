@@ -96,7 +96,7 @@ export interface OpenRouterModelSummary {
 }
 
 export async function fetchOpenRouterModels(apiKey: string): Promise<OpenRouterModelSummary[]> {
-  if (!apiKey) {
+  if (!apiKey || typeof window === 'undefined') {
     return []
   }
 
@@ -128,7 +128,6 @@ export async function fetchOpenRouterModels(apiKey: string): Promise<OpenRouterM
   const models = Array.isArray(payload.data) ? payload.data : []
 
   return models
-    .filter(model => typeof model.id === 'string')
     .map<OpenRouterModelSummary>((model) => {
       const contextLength = typeof model.context_length === 'number'
         ? model.context_length

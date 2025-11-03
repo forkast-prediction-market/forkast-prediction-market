@@ -1,3 +1,5 @@
+'use cache'
+
 import AdminUsersTable from '@/app/admin/_components/AdminUsersTable'
 
 export default async function AdminUsersPage() {

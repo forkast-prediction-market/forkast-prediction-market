@@ -1,4 +1,4 @@
-import AdminUsersTable from '@/app/admin/_components/AdminUsersTable'
+import { DataTableSkeleton } from '@/app/admin/_components/DataTableSkeleton'
 
 export default function Loading() {
   return (
@@ -10,7 +10,7 @@ export default function Loading() {
         </p>
       </div>
       <div className="min-w-0">
-        <AdminUsersTable />
+        <DataTableSkeleton />
       </div>
     </section>
   )

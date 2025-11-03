@@ -86,6 +86,6 @@ export async function updateMarketContextSettingsAction(
     return { error: 'Failed to update settings. Try again shortly.' }
   }
 
-  revalidatePath('/admin')
+  revalidatePath('/admin/market-context')
   return { success: 'Market context settings updated.' }
 }
