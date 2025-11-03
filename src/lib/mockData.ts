@@ -1,28 +1,3 @@
-// Function to form complete URL for Supabase Storage images
-
-// Data for specific market sections
-export const mockMarketDetails = {
-
-  // Oracle/resolver info
-  resolver: {
-    address: '0x2F5e...3684cb',
-    name: 'UMA Oracle',
-    avatar: 'https://avatar.vercel.sh/umaoracle.png',
-    gradientColors: 'from-red-500 to-pink-500',
-  },
-
-  // UI configurations
-  timeRanges: ['1H', '6H', '1D', '1W', '1M', 'ALL'],
-  eventTabs: ['comments', 'holders', 'activity'],
-  activityFilters: ['All', 'Min amount'],
-
-  // Dummy data for statistics
-  trendingData: {
-    changePercentage: 94,
-    direction: 'down',
-  },
-}
-
 export function calculateWinnings(amount: number, price: number): number {
   return amount / price - amount
 }

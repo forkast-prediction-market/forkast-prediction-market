@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { cacheTags } from '@/lib/cache-tags'
 import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
+import { buildForkastHmacSignature } from '@/lib/hmac'
 
 const StoreOrderSchema = z.object({
   // begin blockchain data
@@ -50,23 +51,44 @@ export async function storeOrderAction(payload: StoreOrderInput) {
   }
 
   try {
+    const clobPayload = JSON.stringify({
+      order: {
+        salt: validated.data.salt,
+        maker: validated.data.maker,
+        signer: validated.data.signer,
+        taker: validated.data.taker,
+        referrer: validated.data.referrer,
+        affiliate: validated.data.affiliate,
+        tokenId: validated.data.token_id,
+        makerAmount: validated.data.maker_amount,
+        takerAmount: validated.data.taker_amount,
+        expiration: validated.data.expiration,
+        nonce: validated.data.nonce,
+        feeRateBps: validated.data.fee_rate_bps,
+        affiliatePercentage: Number(validated.data.affiliate_percentage),
+        side: validated.data.side === 0 ? 'BUY' : 'SELL',
+        signatureType: validated.data.signature_type,
+        signature: validated.data.signature,
+      },
+      orderType: 'GTC',
+      owner: process.env.FORKAST_API_KEY!,
+    })
+
+    const sig = buildForkastHmacSignature('POST', '/order', clobPayload)
     const clobUrl = `${process.env.CLOB_URL}/order`
     const clobResponse = await fetch(clobUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'X-API-Key': process.env.CLOB_API_KEY!,
+        'FORKAST_ADDRESS': process.env.FORKAST_ADDRESS!,
+        'FORKAST_TIMESTAMP': String(Math.floor(Date.now() / 1000)),
+        'FORKAST_API_KEY': process.env.FORKAST_API_KEY!,
+        'FORKAST_SIGNATURE': sig,
+        'FORKAST_PASSPHRASE': process.env.FORKAST_PASSPHRASE!,
       },
       signal: AbortSignal.timeout(5000),
-      body: JSON.stringify({
-        order: {
-          ...validated.data,
-          affiliate_percentage: Number(validated.data.affiliate_percentage),
-        },
-        order_type: 'GTC',
-        owner: process.env.CLOB_API_KEY!,
-      }),
+      body: clobPayload,
     })
 
     const text = await clobResponse.text()
