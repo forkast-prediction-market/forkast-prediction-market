@@ -2,7 +2,6 @@ import type { ActivityOrder, MarketOrderType, QueryResult } from '@/types'
 import { and, asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
-import { CLOB_ORDER_TYPE } from '@/lib/constants'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
 import { users } from '@/lib/db/schema/auth/tables'
 import { conditions, events, markets, outcomes } from '@/lib/db/schema/events/tables'
@@ -193,27 +192,6 @@ export const UserRepository = {
       )
 
       user.email = shouldRedactEmail ? '' : rawEmail
-
-      if (!user.settings) {
-        user.settings = {}
-      }
-      else if (typeof user.settings === 'string') {
-        try {
-          user.settings = JSON.parse(user.settings)
-        }
-        catch {
-          user.settings = {}
-        }
-      }
-
-      if (!user.settings.trading || typeof user.settings.trading !== 'object') {
-        user.settings.trading = {
-          market_order_type: CLOB_ORDER_TYPE.FAK,
-        }
-      }
-      else if (!user.settings.trading.market_order_type) {
-        user.settings.trading.market_order_type = CLOB_ORDER_TYPE.FAK
-      }
 
       if (!user.affiliate_code) {
         try {
