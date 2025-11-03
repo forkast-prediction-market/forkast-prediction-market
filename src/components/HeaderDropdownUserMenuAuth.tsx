@@ -1,7 +1,10 @@
+'use client'
+
 import { useDisconnect } from '@reown/appkit-controllers/react'
 import { ChevronDownIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import ThemeSelector from '@/components/ThemeSelector'
 import { Button } from '@/components/ui/button'
 import {
@@ -17,13 +20,15 @@ import { useUser } from '@/stores/useUser'
 export default function HeaderDropdownUserMenuAuth() {
   const { disconnect } = useDisconnect()
   const user = useUser()
+  const pathname = usePathname()
+  const isAdmin = pathname.startsWith('/admin')
 
   if (!user) {
     return <></>
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu key={isAdmin ? 'admin' : 'platform'}>
       <DropdownMenuTrigger asChild>
         <Button
           type="button"

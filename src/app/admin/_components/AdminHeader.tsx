@@ -1,7 +1,7 @@
 'use cache'
 
+import HeaderDropdownUserMenuAuth from '@/components/HeaderDropdownUserMenuAuth'
 import HeaderLogo from '@/components/HeaderLogo'
-import HeaderMenu from '@/components/HeaderMenu'
 
 export default async function AdminHeader() {
   return (
@@ -10,7 +10,7 @@ export default async function AdminHeader() {
         <HeaderLogo />
         <span>Admin</span>
         <div className="ms-auto flex shrink-0 items-center gap-1 sm:gap-2 lg:gap-4">
-          <HeaderMenu />
+          <HeaderDropdownUserMenuAuth />
         </div>
       </div>
     </header>
