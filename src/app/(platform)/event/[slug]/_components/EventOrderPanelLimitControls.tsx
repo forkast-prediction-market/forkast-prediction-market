@@ -12,8 +12,8 @@ import {
   Select as UiSelect,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
-import { getUserShares, useOrder } from '@/stores/useOrder'
+import { ORDER_SIDE } from '@/lib/constants'
+import { getUserShares, useIsLimitOrder, useOrder } from '@/stores/useOrder'
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
@@ -21,7 +21,6 @@ function clamp(value: number, min: number, max: number) {
 
 export default function EventOrderPanelLimitControls() {
   const {
-    type,
     side,
     limitPrice,
     limitShares,
@@ -33,6 +32,8 @@ export default function EventOrderPanelLimitControls() {
     setLimitExpirationOption,
     setAmount,
   } = useOrder()
+
+  const isLimitOrder = useIsLimitOrder()
 
   const limitPriceNumber = useMemo(
     () => Number.parseFloat(limitPrice) || 0,
@@ -69,7 +70,7 @@ export default function EventOrderPanelLimitControls() {
     const nextPrice = clampedValue.toFixed(1)
     setLimitPrice(nextPrice)
 
-    if (type === ORDER_TYPE.LIMIT) {
+    if (isLimitOrder) {
       const sharesValue = Number.parseFloat(limitShares) || 0
       const nextAmount = (clampedValue * sharesValue) / 100
 
@@ -84,7 +85,7 @@ export default function EventOrderPanelLimitControls() {
     const nextShares = clampedValue.toString()
     setLimitShares(nextShares)
 
-    if (type === ORDER_TYPE.LIMIT) {
+    if (isLimitOrder) {
       const priceValue = Number.parseFloat(limitPrice) || 0
       const nextAmount = (priceValue * clampedValue) / 100
 
@@ -107,7 +108,7 @@ export default function EventOrderPanelLimitControls() {
             const normalized = val.toFixed(1)
             setLimitPrice(normalized)
 
-            if (type === ORDER_TYPE.LIMIT) {
+            if (isLimitOrder) {
               const priceValue = Number.parseFloat(normalized) || 0
               const sharesValue = Number.parseFloat(limitShares) || 0
               const nextAmount = (priceValue * sharesValue) / 100

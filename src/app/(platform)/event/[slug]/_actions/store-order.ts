@@ -27,7 +27,7 @@ const StoreOrderSchema = z.object({
   signature: z.string(),
   // end blockchain data
 
-  type: z.union([z.literal(0), z.literal(1)]),
+  type: z.union([z.literal('FOK'), z.literal('FAK'), z.literal('GTC'), z.literal('GTD')]),
   condition_id: z.string(),
   slug: z.string(),
 })
@@ -70,7 +70,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
         signatureType: validated.data.signature_type,
         signature: validated.data.signature,
       },
-      orderType: 'GTC',
+      orderType: validated.data.type,
       owner: process.env.FORKAST_API_KEY!,
     })
 
