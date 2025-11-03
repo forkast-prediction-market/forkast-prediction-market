@@ -17,7 +17,7 @@ export async function updateTradingSettingsAction(formData: FormData) {
       return { error: 'Unauthenticated.' }
     }
 
-    await UserRepository.updateUserTradingSettingsById(user.id, {
+    await UserRepository.updateUserTradingSettings(user, {
       market_order_type: marketOrderType as MarketOrderType,
     })
 

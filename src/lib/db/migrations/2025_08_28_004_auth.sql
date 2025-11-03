@@ -159,9 +159,9 @@ SET settings = '{
   "trading": { "market_order_type": "FAK" },
   "notifications": {
     "email_resolutions": true,
-    "inapp_order_fills": false,
-    "inapp_resolutions": false,
-    "inapp_hide_small_fills": false
+    "inapp_order_fills": true,
+    "inapp_resolutions": true,
+    "inapp_hide_small_fills": true
   }
 }'::jsonb
 WHERE TRUE;
