@@ -1,3 +1,5 @@
+'use cache'
+
 import AdminMarketContextSettingsForm from '@/app/admin/_components/AdminMarketContextSettingsForm'
 import { parseMarketContextSettings } from '@/lib/ai/market-context-config'
 import { MARKET_CONTEXT_VARIABLES } from '@/lib/ai/market-context-template'

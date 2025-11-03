@@ -1,3 +1,5 @@
+'use cache'
+
 import HeaderLogo from '@/components/HeaderLogo'
 import HeaderMenu from '@/components/HeaderMenu'
 

@@ -1,3 +1,5 @@
+'use cache'
+
 import AdminAffiliateOverview from '@/app/admin/_components/AdminAffiliateOverview'
 import AdminAffiliateSettingsForm from '@/app/admin/_components/AdminAffiliateSettingsForm'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'

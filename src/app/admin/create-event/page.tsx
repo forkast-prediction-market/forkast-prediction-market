@@ -1,3 +1,5 @@
+'use cache'
+
 import AdminCreateEventForm from '@/app/admin/create-event/_components/AdminCreateEventForm'
 
 export default async function AdminCreateEventPage() {
