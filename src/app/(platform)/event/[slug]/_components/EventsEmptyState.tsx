@@ -1,6 +1,6 @@
 import { BarChart3Icon, SearchIcon, XIcon } from 'lucide-react'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { useFilters } from '@/providers/FilterProvider'
 
 interface EventsEmptyStateProps {
   tag: string
@@ -8,6 +8,17 @@ interface EventsEmptyStateProps {
 }
 
 export default function EventsEmptyState({ searchQuery, tag }: EventsEmptyStateProps) {
+  const { updateFilters } = useFilters()
+
+  function handleClearFilters() {
+    updateFilters({
+      search: '',
+      bookmarked: false,
+      hideSports: false,
+      hideCrypto: false,
+      hideEarnings: false,
+    })
+  }
   return (
     <div className="col-span-full py-12 text-center">
       <div className="mb-2 flex justify-center text-muted-foreground">
@@ -41,12 +52,10 @@ export default function EventsEmptyState({ searchQuery, tag }: EventsEmptyStateP
             )}
       </p>
 
-      <Link href="/">
-        <Button type="button">
-          <XIcon />
-          Clear filters
-        </Button>
-      </Link>
+      <Button type="button" onClick={handleClearFilters}>
+        <XIcon />
+        Clear filters
+      </Button>
     </div>
   )
 }

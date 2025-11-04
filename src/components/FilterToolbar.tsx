@@ -176,8 +176,8 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
     const defaultFilters = createDefaultFilters()
     setFilterSettings(defaultFilters)
 
-    // Update parent component's filter state
     onFiltersChange({
+      search: '',
       bookmarked: false,
       hideSports: defaultFilters.hideSports,
       hideCrypto: defaultFilters.hideCrypto,
