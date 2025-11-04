@@ -2,19 +2,15 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 export default function Loading() {
   return (
-    <>
-      <aside className="lg:sticky lg:top-28 lg:self-start">
-        <nav className="grid gap-1">
-          <Skeleton className="h-9 w-full" />
-          <Skeleton className="h-9 w-full" />
-          <Skeleton className="h-9 w-full" />
-          <Skeleton className="h-9 w-full" />
-          <Skeleton className="h-9 w-full" />
-        </nav>
-      </aside>
+    <section className="grid gap-8">
+      <div className="grid gap-2">
+        <Skeleton className="h-11 w-1/5" />
+        <Skeleton className="h-6 w-2/5" />
+      </div>
+
       <div className="mx-auto max-w-2xl lg:mx-0">
         <Skeleton className="h-96 w-full" />
       </div>
-    </>
+    </section>
   )
 }
