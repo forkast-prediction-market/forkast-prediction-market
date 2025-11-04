@@ -15,6 +15,57 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useDebounce } from '@/hooks/useDebounce'
 import { cn, fromMicro } from '@/lib/utils'
 
+interface ControlsProps {
+  searchQuery: string
+  minAmountFilter: string
+  handleSearchChange: (query: string) => void
+  handleFilterChange: (query: string) => void
+}
+
+function FilterControls({ searchQuery, handleSearchChange, minAmountFilter, handleFilterChange }: ControlsProps) {
+  return (
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+        <div className="relative">
+          <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search markets..."
+            value={searchQuery}
+            onChange={e => handleSearchChange(e.target.value)}
+            className="w-full pr-9 pl-9 sm:w-64"
+          />
+          {searchQuery && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => handleSearchChange('')}
+              className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 p-0 hover:bg-muted"
+            >
+              <XIcon className="h-3 w-3" />
+              <span className="sr-only">Clear search</span>
+            </Button>
+          )}
+        </div>
+        <Select value={minAmountFilter} onValueChange={handleFilterChange}>
+          <SelectTrigger className="w-full sm:w-48">
+            <SelectValue placeholder="All" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="All">Min amount: None</SelectItem>
+            <SelectItem value="10">$10</SelectItem>
+            <SelectItem value="100">$100</SelectItem>
+            <SelectItem value="1000">$1,000</SelectItem>
+            <SelectItem value="10000">$10,000</SelectItem>
+            <SelectItem value="100000">$100,000</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  )
+}
+
 interface FetchUserActivityParams {
   pageParam: number
   userAddress: string
@@ -79,7 +130,7 @@ function formatRelativeTime(date: Date): string {
   return date.toLocaleDateString()
 }
 
-function ActivityItemComponent({ item }: { item: ActivityOrder }) {
+function ActivityItem({ item }: { item: ActivityOrder }) {
   const outcomeText = item.outcome.text
   const outcomeChipColor = outcomeText === 'Yes'
     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
@@ -273,11 +324,9 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
   const isSearchActive = debouncedSearchQuery.trim().length > 0
 
   useEffect(() => {
-    queueMicrotask(() => {
-      if (parentRef.current) {
-        setScrollMargin(parentRef.current.offsetTop)
-      }
-    })
+    if (parentRef.current) {
+      setScrollMargin(parentRef.current.offsetTop)
+    }
   }, [])
 
   useEffect(() => {
@@ -371,52 +420,18 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
     setInfiniteScrollError(null)
     setIsLoadingMore(false)
     setHasInitialized(false)
-    refetch()
+    void refetch()
   }, [refetch])
 
   if (hasInitialError) {
     return (
-      <div className="space-y-6">
-        {/* Filter Controls - Show even in error state */}
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-            <div className="relative">
-              <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Search markets..."
-                value={searchQuery}
-                onChange={e => handleSearchChange(e.target.value)}
-                className="w-full pr-9 pl-9 sm:w-64"
-              />
-              {searchQuery && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleSearchChange('')}
-                  className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 p-0 hover:bg-muted"
-                >
-                  <XIcon className="h-3 w-3" />
-                  <span className="sr-only">Clear search</span>
-                </Button>
-              )}
-            </div>
-            <Select value={minAmountFilter} onValueChange={handleFilterChange}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Min amount:" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All</SelectItem>
-                <SelectItem value="10">$10</SelectItem>
-                <SelectItem value="100">$100</SelectItem>
-                <SelectItem value="1000">$1,000</SelectItem>
-                <SelectItem value="10000">$10,000</SelectItem>
-                <SelectItem value="100000">$100,000</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+      <div className="grid gap-6">
+        <FilterControls
+          searchQuery={searchQuery}
+          minAmountFilter={minAmountFilter}
+          handleSearchChange={handleSearchChange}
+          handleFilterChange={handleFilterChange}
+        />
 
         <div className="overflow-hidden rounded-lg border border-border">
           <div className="p-8">
@@ -463,45 +478,12 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
   return (
     <div ref={parentRef} className="space-y-6">
       {/* Filter Controls */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-          <div className="relative">
-            <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search markets..."
-              value={searchQuery}
-              onChange={e => handleSearchChange(e.target.value)}
-              className="w-full pr-9 pl-9 sm:w-64"
-            />
-            {searchQuery && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleSearchChange('')}
-                className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 p-0 hover:bg-muted"
-              >
-                <XIcon className="h-3 w-3" />
-                <span className="sr-only">Clear search</span>
-              </Button>
-            )}
-          </div>
-          <Select value={minAmountFilter} onValueChange={handleFilterChange}>
-            <SelectTrigger className="w-full sm:w-48">
-              <SelectValue placeholder="Min amount:" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All</SelectItem>
-              <SelectItem value="10">$10</SelectItem>
-              <SelectItem value="100">$100</SelectItem>
-              <SelectItem value="1000">$1,000</SelectItem>
-              <SelectItem value="10000">$10,000</SelectItem>
-              <SelectItem value="100000">$100,000</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <FilterControls
+        searchQuery={searchQuery}
+        minAmountFilter={minAmountFilter}
+        handleSearchChange={handleSearchChange}
+        handleFilterChange={handleFilterChange}
+      />
 
       {/* Column Headers */}
       <div className={`
@@ -748,7 +730,7 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
                     }px)`,
                   }}
                 >
-                  <ActivityItemComponent item={activity} />
+                  <ActivityItem item={activity} />
                 </div>
               )
             })}
@@ -865,7 +847,6 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
                         onClick={() => {
                           setInfiniteScrollError(null)
                           setRetryCount(0)
-                          // Reset to first page
                           queryClient.invalidateQueries({
                             queryKey: ['user-activity', userAddress, minAmountFilter, debouncedSearchQuery],
                           })

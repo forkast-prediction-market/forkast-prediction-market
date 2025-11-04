@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
+    "@radix-ui/react-separator": "^1.1.8",
     "@reown/appkit": "1.8.13",
     "@reown/appkit-adapter-wagmi": "1.8.13",
     "@reown/appkit-siwe": "1.8.13",

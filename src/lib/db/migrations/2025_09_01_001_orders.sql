@@ -32,12 +32,13 @@ CREATE TABLE orders
   updated_at           TIMESTAMP WITH TIME ZONE DEFAULT NOW()           NOT NULL,
   CONSTRAINT orders_type_check CHECK (orders.type IN ('FAK', 'FOK', 'GTC', 'GTD')),
   CONSTRAINT orders_side_check CHECK (orders.side IN (0, 1)),
-  CONSTRAINT orders_status_check CHECK (orders.status IN ('open', 'filled', 'cancelled'))
+  CONSTRAINT orders_status_check CHECK (orders.status IN ('live', 'matched', 'delayed', 'unmatched'))
 );
 
 -- ===========================================
 -- 2. INDEXES
 -- ===========================================
+
 CREATE INDEX idx_orders_user_id ON orders (user_id);
 CREATE INDEX idx_orders_condition ON orders (condition_id, token_id);
 CREATE INDEX idx_orders_status ON orders (status);
@@ -46,17 +47,20 @@ CREATE INDEX idx_orders_created_at ON orders (created_at);
 -- ===========================================
 -- 3. ROW LEVEL SECURITY
 -- ===========================================
+
 ALTER TABLE orders
   ENABLE ROW LEVEL SECURITY;
 
 -- ===========================================
 -- 4. SECURITY POLICIES
 -- ===========================================
+
 CREATE POLICY service_role_all_orders ON orders AS PERMISSIVE FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
 
 -- ===========================================
 -- 5. Functions
 -- ===========================================
+
 CREATE OR REPLACE FUNCTION get_event_top_holders(
   event_slug_arg TEXT,
   condition_id_arg TEXT DEFAULT NULL,
@@ -132,6 +136,7 @@ $$;
 -- ===========================================
 -- 6. TRIGGERS
 -- ===========================================
+
 CREATE TRIGGER set_orders_updated_at
   BEFORE UPDATE
   ON orders
