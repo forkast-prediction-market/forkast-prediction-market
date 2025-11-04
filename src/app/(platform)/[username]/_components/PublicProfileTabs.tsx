@@ -2,7 +2,7 @@
 
 import { useLayoutEffect, useRef, useState } from 'react'
 import PublicActivityList from '@/app/(platform)/[username]/_components/PublicActivityList'
-import PublicPositionsEmpty from '@/app/(platform)/[username]/_components/PublicPositionsEmpty'
+import PublicPositionsList from '@/app/(platform)/[username]/_components/PublicPositionsList'
 import { cn, sanitizeSvg } from '@/lib/utils'
 
 type TabType = 'positions' | 'activity'
@@ -94,7 +94,7 @@ export default function PublicProfileTabs({ userAddress }: PublicProfileTabsProp
       </div>
 
       <div className="min-h-[400px]">
-        {activeTab === 'positions' && <PublicPositionsEmpty />}
+        {activeTab === 'positions' && <PublicPositionsList userAddress={userAddress} />}
         {activeTab === 'activity' && <PublicActivityList userAddress={userAddress} />}
       </div>
     </div>

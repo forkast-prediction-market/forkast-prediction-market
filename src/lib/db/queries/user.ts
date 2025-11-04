@@ -1,4 +1,4 @@
-import type { ActivityOrder, MarketOrderType, QueryResult, User } from '@/types'
+import type { ActivityOrder, MarketOrderType, PositionsQueryParams, QueryResult, User, UserPosition } from '@/types'
 import { and, asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
@@ -438,6 +438,127 @@ export const UserRepository = {
       }
 
       return { data: filteredActivities, error: null }
+    })
+  },
+
+  async getUserPositions(params: PositionsQueryParams): Promise<QueryResult<{ data: UserPosition[], hasMore: boolean, total: number }>> {
+    const { data: userData, error: userError } = await this.getProfileByUsername(params.address)
+
+    if (userError || !userData) {
+      return { data: null, error: 'User not found' }
+    }
+
+    return await runQuery(async () => {
+      // Build the WHERE conditions
+      const whereConditions = [eq(orders.user_id, userData.id)]
+
+      // Add market status filter
+      if (params.status === 'active') {
+        whereConditions.push(eq(markets.is_active, true))
+        whereConditions.push(eq(markets.is_resolved, false))
+      }
+      else if (params.status === 'closed') {
+        const closedCondition = or(
+          eq(markets.is_active, false),
+          eq(markets.is_resolved, true),
+        )
+        if (closedCondition) {
+          whereConditions.push(closedCondition)
+        }
+      }
+
+      // Add search filter for market titles
+      if (params.search && params.search.trim()) {
+        whereConditions.push(ilike(markets.title, `%${params.search.trim()}%`))
+      }
+
+      const whereCondition = whereConditions.length > 1 ? and(...whereConditions) : whereConditions[0]
+
+      // For simplicity, we'll calculate total count after filtering
+      // This is less efficient but avoids complex subquery issues
+      let totalCount = 0
+
+      // Main query to get aggregated positions
+      const baseQuery = db
+        .select({
+          condition_id: markets.condition_id,
+          title: markets.title,
+          slug: markets.slug,
+          icon_url: markets.icon_url,
+          is_active: markets.is_active,
+          is_resolved: markets.is_resolved,
+          average_position: sql<number>`AVG(${orders.maker_amount}::numeric)`.as('average_position'),
+          total_position_value: sql<number>`SUM(${orders.maker_amount}::numeric)`.as('total_position_value'),
+          order_count: count(orders.id).as('order_count'),
+          last_activity_at: sql<string>`MAX(${orders.created_at})`.as('last_activity_at'),
+        })
+        .from(orders)
+        .innerJoin(conditions, eq(orders.condition_id, conditions.id))
+        .innerJoin(markets, eq(conditions.id, markets.condition_id))
+        .innerJoin(events, eq(markets.event_id, events.id))
+        .where(whereCondition)
+        .groupBy(
+          markets.condition_id,
+          markets.title,
+          markets.slug,
+          markets.icon_url,
+          markets.is_active,
+          markets.is_resolved,
+        )
+
+      // Execute query with or without having clause
+      const result = params.minAmount && params.minAmount > 0
+        ? await baseQuery
+            .having(sql`SUM(${orders.maker_amount}::numeric) >= ${params.minAmount}`)
+            .orderBy(desc(sql`MAX(${orders.created_at})`))
+            .limit(params.limit)
+            .offset(params.offset)
+        : await baseQuery
+            .orderBy(desc(sql`MAX(${orders.created_at})`))
+            .limit(params.limit)
+            .offset(params.offset)
+
+      const positions: UserPosition[] = result.map((row) => {
+        const iconUrl = row.icon_url ? getSupabaseImageUrl(row.icon_url) : ''
+
+        return {
+          market: {
+            condition_id: row.condition_id,
+            title: row.title,
+            slug: row.slug,
+            icon_url: iconUrl,
+            is_active: row.is_active,
+            is_resolved: row.is_resolved,
+          },
+          average_position: typeof row.average_position === 'string'
+            ? Number.parseFloat(row.average_position)
+            : (row.average_position || 0),
+          total_position_value: typeof row.total_position_value === 'string'
+            ? Number.parseFloat(row.total_position_value)
+            : (row.total_position_value || 0),
+          order_count: typeof row.order_count === 'string'
+            ? Number.parseInt(row.order_count, 10)
+            : (row.order_count || 0),
+          last_activity_at: typeof row.last_activity_at === 'string'
+            ? row.last_activity_at
+            : (row.last_activity_at ? new Date(row.last_activity_at).toISOString() : ''),
+        }
+      })
+
+      // Calculate if there are more results by checking if we got a full page
+      const hasMore = positions.length === params.limit
+
+      // For total count, we'll use a simple approximation
+      totalCount = params.offset + positions.length + (hasMore ? 1 : 0)
+
+      return {
+        data: {
+          data: positions,
+          hasMore,
+          total: totalCount,
+        },
+        error: null,
+      }
     })
   },
 }

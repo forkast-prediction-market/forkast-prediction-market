@@ -277,3 +277,33 @@ export interface BlockchainOrder {
   side: number
   signature_type: number
 }
+
+export interface UserPosition {
+  market: {
+    condition_id: string
+    title: string
+    slug: string
+    icon_url: string
+    is_active: boolean
+    is_resolved: boolean
+  }
+  average_position: number
+  total_position_value: number
+  order_count: number
+  last_activity_at: string
+}
+
+export interface PositionsQueryParams {
+  address: string
+  limit: number
+  offset: number
+  status?: 'active' | 'closed'
+  minAmount?: number
+  search?: string
+}
+
+export interface PositionsResponse {
+  data: UserPosition[]
+  hasMore: boolean
+  total: number
+}

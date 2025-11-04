@@ -50,10 +50,10 @@ function FilterControls({ searchQuery, handleSearchChange, minAmountFilter, hand
         </div>
         <Select value={minAmountFilter} onValueChange={handleFilterChange}>
           <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="Min amount:" />
+            <SelectValue placeholder="All" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="All">All</SelectItem>
+            <SelectItem value="All">Min amount: None</SelectItem>
             <SelectItem value="10">$10</SelectItem>
             <SelectItem value="100">$100</SelectItem>
             <SelectItem value="1000">$1,000</SelectItem>
