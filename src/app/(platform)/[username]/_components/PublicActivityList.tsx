@@ -5,6 +5,7 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { AlertCircleIcon, RefreshCwIcon, SearchIcon, SquareArrowOutUpRightIcon, XIcon } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -12,7 +13,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebounce } from '@/hooks/useDebounce'
-import { cn } from '@/lib/utils'
+import { cn, fromMicro } from '@/lib/utils'
 
 interface FetchUserActivityParams {
   pageParam: number
@@ -91,13 +92,6 @@ function ActivityItemComponent({ item }: { item: ActivityOrder }) {
     return price < 1 ? `${(price * 100).toFixed(1)}¢` : `$${price.toFixed(2)}`
   }
 
-  function formatAmount(amount: number) {
-    if (!amount || amount < 0) {
-      return '0'
-    }
-    return amount.toLocaleString('en-US')
-  }
-
   return (
     <div className={`
       flex items-center gap-3 border-b border-border px-3 py-4 transition-colors
@@ -113,8 +107,10 @@ function ActivityItemComponent({ item }: { item: ActivityOrder }) {
 
       {/* Market */}
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-        {/* Market Icon with Fallback */}
-        <div className="size-10 flex-shrink-0 overflow-hidden rounded-lg bg-muted sm:size-12">
+        <Link
+          href={`/event/${item.market.slug}`}
+          className="size-10 flex-shrink-0 overflow-hidden rounded bg-muted sm:size-12"
+        >
           <Image
             src={item.market.icon_url}
             alt={item.market.title}
@@ -122,11 +118,11 @@ function ActivityItemComponent({ item }: { item: ActivityOrder }) {
             height={48}
             className="size-full object-cover"
           />
-        </div>
+        </Link>
 
         <div className="min-w-0 flex-1">
           <h4 className="mb-1 line-clamp-2 text-xs font-medium sm:text-sm">
-            {item.market.title}
+            <Link href={`/event/${item.market.slug}`}>{item.market.title}</Link>
           </h4>
 
           <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:gap-2">
@@ -139,8 +135,8 @@ function ActivityItemComponent({ item }: { item: ActivityOrder }) {
               {' '}
               {formatPrice(item.price == null ? null : Number(item.price))}
             </span>
-            <span className="text-xs text-muted-foreground">
-              {formatAmount(Number(item.amount))}
+            <span className="text-xs font-semibold text-muted-foreground">
+              {fromMicro(item.amount)}
               {' '}
               shares
             </span>
@@ -152,7 +148,7 @@ function ActivityItemComponent({ item }: { item: ActivityOrder }) {
       <div className="flex-shrink-0 space-y-1 text-right">
         <div className="text-xs font-semibold sm:text-sm">
           $
-          {(item.total_value || 0).toFixed(2)}
+          {fromMicro(String(item.total_value))}
         </div>
         <div className="flex items-center justify-end gap-1 sm:gap-2">
           <span className="hidden text-xs text-muted-foreground sm:inline">
