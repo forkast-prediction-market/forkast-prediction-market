@@ -1,7 +1,7 @@
 import type { OrderType } from '@/types'
 import * as SelectPrimitive from '@radix-ui/react-select'
 import { ChevronDownIcon } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
 import { ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 import { cn } from '@/lib/utils'
@@ -10,6 +10,7 @@ import { useOrder } from '@/stores/useOrder'
 const ORDER_TYPE_STORAGE_KEY = 'forkast:order-panel-type'
 
 export default function EventOrderPanelBuySellTabs() {
+  const [open, setOpen] = useState(false)
   const {
     side,
     setSide,
@@ -96,21 +97,22 @@ export default function EventOrderPanelBuySellTabs() {
         <Select
           key={type}
           value={type}
+          open={open}
+          onOpenChange={setOpen}
           onValueChange={value => setType(value as OrderType)}
         >
           <SelectPrimitive.Trigger asChild>
             <button
               type="button"
-              className={cn(
-                `
-                  group flex cursor-pointer items-center gap-1 bg-transparent pb-2 text-sm font-semibold
-                  text-muted-foreground transition-colors duration-200
-                  hover:text-foreground
-                  focus:outline-none
-                  focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none
-                  data-[state=open]:text-foreground
-                `,
-              )}
+              onMouseEnter={() => setOpen(true)}
+              className={cn(`
+                group flex cursor-pointer items-center gap-1 bg-transparent pb-2 text-sm font-semibold
+                text-muted-foreground transition-colors duration-200
+                hover:text-foreground
+                focus:outline-none
+                focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none
+                data-[state=open]:text-foreground
+              `)}
             >
               <SelectValue />
               <ChevronDownIcon className={`
