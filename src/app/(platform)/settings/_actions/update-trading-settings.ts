@@ -12,7 +12,7 @@ export async function updateTradingSettingsAction(formData: FormData) {
       ? rawOrderType
       : CLOB_ORDER_TYPE.FAK
 
-    const user = await UserRepository.getCurrentUser()
+    const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
     if (!user) {
       return { error: 'Unauthenticated.' }
     }
@@ -22,8 +22,6 @@ export async function updateTradingSettingsAction(formData: FormData) {
     })
 
     revalidatePath('/settings')
-
-    return { success: true }
   }
   catch {
     return { error: 'Failed to update trading settings' }

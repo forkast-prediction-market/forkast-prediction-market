@@ -3,7 +3,8 @@
 import type { User } from '@/types'
 import Form from 'next/form'
 import { startTransition, useOptimistic, useRef, useState } from 'react'
-import { updateNotificationPreferencesAction } from '@/app/(platform)/settings/_actions/update-notifications-preferences'
+import { toast } from 'sonner'
+import { updateNotificationSettingsAction } from '@/app/(platform)/settings/_actions/update-notification-settings'
 import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -44,7 +45,7 @@ export default function SettingsNotificationsTab({ user }: { user: User }) {
     })
 
     queueMicrotask(async () => {
-      const result = await updateNotificationPreferencesAction(
+      const result = await updateNotificationSettingsAction(
         new FormData(formRef.current!),
       )
 
@@ -55,6 +56,7 @@ export default function SettingsNotificationsTab({ user }: { user: User }) {
         setStatus(result)
       }
       else {
+        toast.success('Notification settings updated.')
         setStatus(null)
       }
     })
