@@ -251,20 +251,13 @@ function BookmarkToggle({ isBookmarked, isConnected, onToggle, onConnect }: Book
       type="button"
       variant="ghost"
       size="icon"
-      className={cn(
-        `
-          h-10 w-10 rounded-sm border border-transparent bg-transparent p-0 text-muted-foreground transition-none
-          hover:bg-transparent hover:text-muted-foreground
-          md:h-9 md:w-9
-        `,
-        isBookmarked && 'bg-muted/70 text-foreground hover:bg-muted/70 hover:text-foreground',
-      )}
       title={isBookmarked ? 'Show all items' : 'Show only bookmarked items'}
       aria-label={isBookmarked ? 'Remove bookmark filter' : 'Filter by bookmarks'}
       aria-pressed={isBookmarked}
       onClick={isConnected ? onToggle : onConnect}
+      className="text-muted-foreground"
     >
-      <BookmarkIcon className="size-6 md:size-5" />
+      <BookmarkIcon className={cn(`size-6 md:size-5`, { 'fill-primary text-primary': isBookmarked })} />
     </Button>
   )
 }

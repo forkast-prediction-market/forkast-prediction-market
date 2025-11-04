@@ -56,7 +56,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
     : CLOB_ORDER_TYPE.GTC
 
   try {
-    const clobPayload = JSON.stringify({
+    const clobPayload = {
       order: {
         salt: validated.data.salt,
         maker: validated.data.maker,
@@ -64,6 +64,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
         taker: validated.data.taker,
         referrer: validated.data.referrer,
         affiliate: validated.data.affiliate,
+        conditionId: validated.data.condition_id,
         tokenId: validated.data.token_id,
         makerAmount: validated.data.maker_amount,
         takerAmount: validated.data.taker_amount,
@@ -77,23 +78,32 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       },
       orderType: clobOrderType,
       owner: process.env.FORKAST_API_KEY!,
-    })
+    }
 
-    const sig = buildForkastHmacSignature('POST', '/order', clobPayload)
-    const clobUrl = `${process.env.CLOB_URL}/order`
-    const clobResponse = await fetch(clobUrl, {
-      method: 'POST',
+    const method = 'POST'
+    const path = '/order'
+    const body = JSON.stringify(clobPayload)
+    const timestamp = Math.floor(Date.now() / 1000).toString()
+    const signature = buildForkastHmacSignature(
+      method,
+      path,
+      body,
+      timestamp,
+      process.env.FORKAST_API_SECRET!,
+    )
+
+    const clobResponse = await fetch(`${process.env.CLOB_URL}${path}`, {
+      method,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'FORKAST_ADDRESS': process.env.FORKAST_ADDRESS!,
-        'FORKAST_TIMESTAMP': String(Math.floor(Date.now() / 1000)),
         'FORKAST_API_KEY': process.env.FORKAST_API_KEY!,
-        'FORKAST_SIGNATURE': sig,
         'FORKAST_PASSPHRASE': process.env.FORKAST_PASSPHRASE!,
+        'FORKAST_TIMESTAMP': timestamp,
+        'FORKAST_SIGNATURE': signature,
       },
-      signal: AbortSignal.timeout(5000),
-      body: clobPayload,
+      body,
     })
 
     const text = await clobResponse.text()
