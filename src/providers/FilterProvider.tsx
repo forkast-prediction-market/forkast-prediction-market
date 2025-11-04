@@ -6,7 +6,7 @@ import { createContext, use, useCallback, useMemo, useState } from 'react'
 export interface FilterState {
   search: string
   tag: string
-  bookmarked: 'true' | 'false'
+  bookmarked: boolean
   hideSports: boolean
   hideCrypto: boolean
   hideEarnings: boolean
@@ -27,7 +27,7 @@ interface FilterProviderProps {
 const DEFAULT_FILTERS: FilterState = {
   search: '',
   tag: 'trending',
-  bookmarked: 'false',
+  bookmarked: false,
   hideSports: false,
   hideCrypto: false,
   hideEarnings: false,

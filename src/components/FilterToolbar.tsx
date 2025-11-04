@@ -104,8 +104,6 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
     hideEarnings: filters.hideEarnings,
   }))
 
-  const isBookmarked = useMemo(() => filters.bookmarked === 'true', [filters.bookmarked])
-
   const hasActiveFilters = useMemo(() => (
     filterSettings.sortBy !== BASE_FILTER_SETTINGS.sortBy
     || filterSettings.frequency !== BASE_FILTER_SETTINGS.frequency
@@ -113,7 +111,8 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
     || filterSettings.hideSports !== BASE_FILTER_SETTINGS.hideSports
     || filterSettings.hideCrypto !== BASE_FILTER_SETTINGS.hideCrypto
     || filterSettings.hideEarnings !== BASE_FILTER_SETTINGS.hideEarnings
-  ), [filterSettings])
+    || filters.bookmarked
+  ), [filterSettings, filters.bookmarked])
 
   useEffect(() => {
     setFilterSettings((prev) => {
@@ -135,9 +134,8 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
   }, [filters.hideSports, filters.hideCrypto, filters.hideEarnings])
 
   const handleBookmarkToggle = useCallback(() => {
-    const newBookmarked = isBookmarked ? 'false' : 'true'
-    onFiltersChange({ bookmarked: newBookmarked as 'true' | 'false' })
-  }, [isBookmarked, onFiltersChange])
+    onFiltersChange({ bookmarked: !filters.bookmarked })
+  }, [filters.bookmarked, onFiltersChange])
 
   const handleConnect = useCallback(() => {
     queueMicrotask(() => open())
@@ -178,8 +176,9 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
     const defaultFilters = createDefaultFilters()
     setFilterSettings(defaultFilters)
 
-    // Update parent component's filter state
     onFiltersChange({
+      search: '',
+      bookmarked: false,
       hideSports: defaultFilters.hideSports,
       hideCrypto: defaultFilters.hideCrypto,
       hideEarnings: defaultFilters.hideEarnings,
@@ -209,7 +208,7 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
             />
 
             <BookmarkToggle
-              isBookmarked={isBookmarked}
+              isBookmarked={filters.bookmarked}
               isConnected={isConnected}
               onToggle={handleBookmarkToggle}
               onConnect={handleConnect}

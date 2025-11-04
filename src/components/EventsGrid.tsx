@@ -29,7 +29,7 @@ async function fetchEvents({
   const params = new URLSearchParams({
     tag: filters.tag,
     search: filters.search,
-    bookmarked: filters.bookmarked,
+    bookmarked: filters.bookmarked.toString(),
     offset: pageParam.toString(),
   })
   if (filters.hideSports) {
@@ -56,7 +56,7 @@ export default function EventsGrid({
   const [hasInitialized, setHasInitialized] = useState(false)
   const [scrollMargin, setScrollMargin] = useState(0)
   const PAGE_SIZE = 40
-  const isDefaultState = filters.tag === 'trending' && filters.search === '' && filters.bookmarked === 'false'
+  const isDefaultState = filters.tag === 'trending' && filters.search === '' && filters.bookmarked === false
   const shouldUseInitialData = isDefaultState && initialEvents.length > 0
 
   const {

@@ -23,7 +23,7 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   const isHomePage = pathname === '/'
   const { filters, updateFilters } = useFilters()
 
-  const showBookmarkedOnly = isHomePage ? filters.bookmarked === 'true' : false
+  const showBookmarkedOnly = isHomePage ? filters.bookmarked : false
   const tagFromFilters = isHomePage
     ? (showBookmarkedOnly && filters.tag === 'trending' ? '' : filters.tag)
     : pathname === '/mentions' ? 'mentions' : 'trending'
