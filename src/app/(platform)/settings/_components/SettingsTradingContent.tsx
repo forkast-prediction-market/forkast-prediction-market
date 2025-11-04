@@ -29,7 +29,7 @@ const ORDER_TYPE_OPTIONS: Array<{
   },
 ]
 
-export default function SettingsTradingTab({ user }: { user: User }) {
+export default function SettingsTradingContent({ user }: { user: User }) {
   const [status, setStatus] = useState<{ error: string } | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const initialOrderType = (user.settings?.trading?.market_order_type as MarketOrderType) ?? CLOB_ORDER_TYPE.FAK
@@ -90,13 +90,6 @@ export default function SettingsTradingTab({ user }: { user: User }) {
 
   return (
     <div className="grid gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Trading Settings</h1>
-        <p className="mt-2 text-muted-foreground">
-          Market order preferences for your account.
-        </p>
-      </div>
-
       {status?.error && <InputError message={status.error} />}
 
       <Form ref={formRef} action={() => {}} className="grid gap-6">

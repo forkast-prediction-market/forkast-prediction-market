@@ -6,26 +6,27 @@ import { Button } from '@/components/ui/button'
 import { useClipboard } from '@/hooks/useClipboard'
 import { formatCurrency, formatPercent, truncateAddress } from '@/lib/utils'
 
-interface SettingsAffiliateTabProps {
-  affiliateData: AffiliateData
+interface SettingsAffiliateContentProps {
+  affiliateData?: AffiliateData
 }
 
-export default function SettingsAffiliateTab({ affiliateData }: SettingsAffiliateTabProps) {
+export default function SettingsAffiliateContent({ affiliateData }: SettingsAffiliateContentProps) {
   const { copied, copy } = useClipboard()
 
+  if (!affiliateData) {
+    return (
+      <div className="rounded-lg border p-6 text-sm text-muted-foreground">
+        Unable to load affiliate information. Please try again later.
+      </div>
+    )
+  }
+
   function handleCopyReferralUrl() {
-    copy(affiliateData.referralUrl)
+    copy(affiliateData!.referralUrl)
   }
 
   return (
     <div className="grid gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Affiliate Program</h1>
-        <p className="mt-2 text-muted-foreground">
-          Share your referral link to earn a percentage of every trade from users you invite.
-        </p>
-      </div>
-
       <div className="rounded-lg border p-4 sm:p-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex-1 space-y-1">
