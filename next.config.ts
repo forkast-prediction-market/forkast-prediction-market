@@ -4,6 +4,9 @@ import { createMDX } from 'fumadocs-mdx/next'
 const config: NextConfig = {
   cacheComponents: true,
   typedRoutes: true,
+  reactCompiler: {
+    compilationMode: 'all',
+  },
   reactStrictMode: false,
   images: {
     unoptimized: true,

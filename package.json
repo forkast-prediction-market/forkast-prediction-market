@@ -70,6 +70,7 @@
     "@types/node": "^24.5.2",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
+    "babel-plugin-react-compiler": "^1.0.0",
     "eslint": "^9.39.0",
     "eslint-plugin-better-tailwindcss": "^3.7.8",
     "eslint-plugin-react-hooks": "^7.0.0",
