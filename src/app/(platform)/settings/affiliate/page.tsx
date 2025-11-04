@@ -1,0 +1,69 @@
+'use cache: private'
+
+import type { Metadata } from 'next'
+import SettingsAffiliateContent from '@/app/(platform)/settings/_components/SettingsAffiliateContent'
+import { AffiliateRepository } from '@/lib/db/queries/affiliate'
+import { SettingsRepository } from '@/lib/db/queries/settings'
+import { UserRepository } from '@/lib/db/queries/user'
+
+export const metadata: Metadata = {
+  title: 'Affiliate Settings',
+}
+
+export default async function AffiliateSettingsPage() {
+  const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
+  const affiliateCode = user.affiliate_code ?? (await AffiliateRepository.ensureUserAffiliateCode(user.id)).data
+
+  const { data: allSettings } = await SettingsRepository.getSettings()
+  const affiliateSettings = allSettings?.affiliate
+  const { data: statsData } = await AffiliateRepository.getUserAffiliateStats(user.id)
+  const { data: referralsData } = await AffiliateRepository.listReferralsByAffiliate(user.id)
+
+  const tradeFeeBps = Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '100', 10)
+  const affiliateShareBps = Number.parseInt(affiliateSettings?.affiliate_share_bps?.value || '5000', 10)
+  const commissionPercent = Number(tradeFeeBps * affiliateShareBps) / 1000000
+
+  function resolveBaseUrl() {
+    const raw = process.env.NEXT_PUBLIC_SITE_URL!
+
+    return raw.startsWith('http') ? raw : `https://${raw}`
+  }
+
+  const affiliateData = affiliateCode
+    ? {
+        referralUrl: `${resolveBaseUrl()}/r/${affiliateCode}`,
+        commissionPercent,
+        stats: {
+          total_referrals: Number(statsData?.total_referrals ?? 0),
+          active_referrals: Number(statsData?.active_referrals ?? 0),
+          total_volume: Number(statsData?.total_volume ?? 0),
+          total_affiliate_fees: Number(statsData?.total_affiliate_fees ?? 0),
+        },
+        recentReferrals: (referralsData ?? []).map((referral: any) => {
+          const userInfo = Array.isArray(referral.users) ? referral.users[0] : referral.users
+
+          return {
+            user_id: referral.user_id as string,
+            username: userInfo?.username as string | undefined,
+            address: (userInfo?.address as string | undefined) ?? referral.user_id as string,
+            created_at: referral.created_at as string,
+          }
+        }),
+      }
+    : undefined
+
+  return (
+    <section className="grid gap-8">
+      <div className="grid gap-2">
+        <h1 className="text-2xl font-semibold tracking-tight">Affiliate Program</h1>
+        <p className="text-muted-foreground">
+          Share your referral link to earn a percentage of every trade from users you invite.
+        </p>
+      </div>
+
+      <div className="mx-auto max-w-2xl lg:mx-0">
+        <SettingsAffiliateContent affiliateData={affiliateData} />
+      </div>
+    </section>
+  )
+}

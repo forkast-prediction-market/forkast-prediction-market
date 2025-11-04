@@ -16,7 +16,7 @@ interface NotificationSettings {
   inapp_resolutions: boolean
 }
 
-export default function SettingsNotificationsTab({ user }: { user: User }) {
+export default function SettingsNotificationsContent({ user }: { user: User }) {
   const [status, setStatus] = useState<{ error: string } | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const initialSettings = user.settings?.notifications ?? {
@@ -64,13 +64,6 @@ export default function SettingsNotificationsTab({ user }: { user: User }) {
 
   return (
     <div className="grid gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Notifications</h1>
-        <p className="mt-2 text-muted-foreground">
-          Configure how you receive notifications.
-        </p>
-      </div>
-
       {status?.error && <InputError message={status.error} />}
 
       <Form ref={formRef} action={() => {}} className="grid gap-6">

@@ -13,7 +13,7 @@ import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
 import { useUser } from '@/stores/useUser'
 
-export default function SettingsProfileTab({ user }: { user: User }) {
+export default function SettingsProfileContent({ user }: { user: User }) {
   const [state, formAction, isPending] = useActionState((_: any, formData: any) => updateUserAction(formData), {})
   const fileInputRef = useRef<HTMLInputElement>(null)
   const prevPending = useRef(false)
@@ -52,13 +52,7 @@ export default function SettingsProfileTab({ user }: { user: User }) {
 
   return (
     <div className="grid gap-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Profile Settings</h1>
-        <p className="mt-2 text-muted-foreground">
-          Manage your account profile and preferences.
-        </p>
-        <p className="text-sm text-destructive">{state.error}</p>
-      </div>
+      {state?.error && <InputError message={state.error} />}
 
       <Form action={formAction} className="grid gap-6" formEncType="multipart/form-data">
         <div className="rounded-lg border p-6">
