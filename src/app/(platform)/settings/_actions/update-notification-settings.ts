@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { UserRepository } from '@/lib/db/queries/user'
 
-export async function updateNotificationPreferencesAction(formData: FormData) {
+export async function updateNotificationSettingsAction(formData: FormData) {
   try {
     const preferences = {
       email_resolutions: formData.get('email_resolutions') === 'on',
@@ -12,12 +12,12 @@ export async function updateNotificationPreferencesAction(formData: FormData) {
       inapp_resolutions: formData.get('inapp_resolutions') === 'on',
     }
 
-    const user = await UserRepository.getCurrentUser()
+    const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
     if (!user) {
       return { error: 'Unauthenticated.' }
     }
 
-    await UserRepository.updateUserNotificationPreferences(user, preferences)
+    await UserRepository.updateUserNotificationSettings(user, preferences)
 
     revalidatePath('/settings')
   }

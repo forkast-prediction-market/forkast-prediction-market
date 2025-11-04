@@ -73,7 +73,7 @@ export const UserRepository = {
     }
   },
 
-  async updateUserNotificationPreferences(currentUser: User, preferences: any) {
+  async updateUserNotificationSettings(currentUser: User, preferences: any) {
     return await runQuery(async () => {
       const settingsPayload: any = currentUser?.settings ?? {}
 
@@ -104,7 +104,7 @@ export const UserRepository = {
 
       const mergedSettings = {
         ...settingsPayload,
-        settings: preferences,
+        trading: preferences,
       }
 
       const result = await db

@@ -3,6 +3,7 @@
 import type { MarketOrderType, User } from '@/types'
 import Form from 'next/form'
 import { startTransition, useOptimistic, useRef, useState } from 'react'
+import { toast } from 'sonner'
 import { updateTradingSettingsAction } from '@/app/(platform)/settings/_actions/update-trading-settings'
 import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
@@ -29,7 +30,7 @@ const ORDER_TYPE_OPTIONS: Array<{
 ]
 
 export default function SettingsTradingTab({ user }: { user: User }) {
-  const [status, setStatus] = useState<{ error?: string, success?: string } | null>(null)
+  const [status, setStatus] = useState<{ error: string } | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const initialOrderType = (user.settings?.trading?.market_order_type as MarketOrderType) ?? CLOB_ORDER_TYPE.FAK
 
@@ -81,7 +82,7 @@ export default function SettingsTradingTab({ user }: { user: User }) {
         setStatus({ error: result.error })
       }
       else {
-        setStatus({ success: 'Trading settings updated.' })
+        toast.success('Trading settings updated.')
         updateGlobalUser(value)
       }
     })
@@ -97,9 +98,6 @@ export default function SettingsTradingTab({ user }: { user: User }) {
       </div>
 
       {status?.error && <InputError message={status.error} />}
-      {status?.success && (
-        <p className="text-sm font-medium text-emerald-600">{status.success}</p>
-      )}
 
       <Form ref={formRef} action={() => {}} className="grid gap-6">
         <input type="hidden" name="market_order_type" value={optimisticOrderType} />
