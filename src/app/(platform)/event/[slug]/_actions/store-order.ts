@@ -6,7 +6,7 @@ import { cacheTags } from '@/lib/cache-tags'
 import { CLOB_ORDER_TYPE, ORDER_TYPE } from '@/lib/constants'
 import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
-import { buildForkastHmacSignature } from '@/lib/hmac'
+import { buildClobHmacSignature } from '@/lib/hmac'
 
 const StoreOrderSchema = z.object({
   // begin blockchain data
@@ -83,13 +83,13 @@ export async function storeOrderAction(payload: StoreOrderInput) {
     const method = 'POST'
     const path = '/order'
     const body = JSON.stringify(clobPayload)
-    const timestamp = Math.floor(Date.now() / 1000).toString()
-    const signature = buildForkastHmacSignature(
+    const timestamp = Math.floor(Date.now() / 1000)
+    const signature = buildClobHmacSignature(
+      process.env.FORKAST_API_SECRET!,
+      timestamp,
       method,
       path,
       body,
-      timestamp,
-      process.env.FORKAST_API_SECRET!,
     )
 
     const clobResponse = await fetch(`${process.env.CLOB_URL}${path}`, {
@@ -100,7 +100,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
         'FORKAST_ADDRESS': process.env.FORKAST_ADDRESS!,
         'FORKAST_API_KEY': process.env.FORKAST_API_KEY!,
         'FORKAST_PASSPHRASE': process.env.FORKAST_PASSPHRASE!,
-        'FORKAST_TIMESTAMP': timestamp,
+        'FORKAST_TIMESTAMP': timestamp.toString(),
         'FORKAST_SIGNATURE': signature,
       },
       body,
