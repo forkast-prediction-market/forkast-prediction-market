@@ -144,6 +144,7 @@ export const auth = betterAuth({
       providerId: 'provider_id',
       accessToken: 'access_token',
       refreshToken: 'refresh_token',
+      idToken: 'id_token',
       accessTokenExpiresAt: 'access_token_expires_at',
       refreshTokenExpiresAt: 'refresh_token_expires_at',
       scope: 'scope',

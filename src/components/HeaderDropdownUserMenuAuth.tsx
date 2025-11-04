@@ -63,7 +63,7 @@ export default function HeaderDropdownUserMenuAuth() {
 
         {user?.is_admin && (
           <DropdownMenuItem asChild>
-            <Link href="/admin/users">Admin</Link>
+            <Link href="/admin">Admin</Link>
           </DropdownMenuItem>
         )}
 

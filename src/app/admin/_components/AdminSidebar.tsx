@@ -12,7 +12,7 @@ interface AdminMenuItem {
 }
 
 const adminMenuItems: AdminMenuItem[] = [
-  { id: 'users', label: 'Users', href: '/admin/users' as Route },
+  { id: 'users', label: 'Users', href: '/admin' as Route },
   { id: 'categories', label: 'Categories', href: '/admin/categories' as Route },
   { id: 'create-event', label: 'Create Event', href: '/admin/create-event' as Route },
   { id: 'affiliate', label: 'Affiliate Settings', href: '/admin/affiliate' as Route },
@@ -21,7 +21,7 @@ const adminMenuItems: AdminMenuItem[] = [
 
 export default function AdminSidebar() {
   const pathname = usePathname()
-  const activeItem = adminMenuItems.find(item => pathname?.startsWith(item.href))
+  const activeItem = adminMenuItems.find(item => pathname === item.href)
   const active = activeItem?.id ?? 'users'
 
   return (

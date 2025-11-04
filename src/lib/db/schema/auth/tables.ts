@@ -56,7 +56,7 @@ export const accounts = pgTable('accounts', {
     .references(() => users.id, { onDelete: 'cascade' }),
   access_token: text(),
   refresh_token: text(),
-  idToken: text(),
+  id_token: text(),
   access_token_expires_at: timestamp(),
   refresh_token_expires_at: timestamp(),
   scope: text(),
