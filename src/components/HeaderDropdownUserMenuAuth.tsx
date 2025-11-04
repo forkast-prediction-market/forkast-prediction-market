@@ -15,13 +15,19 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import UserInfoSection from '@/components/UserInfoSection'
+import { useFilters } from '@/providers/FilterProvider'
 import { useUser } from '@/stores/useUser'
 
 export default function HeaderDropdownUserMenuAuth() {
   const { disconnect } = useDisconnect()
+  const { filters, updateFilters } = useFilters()
   const user = useUser()
   const pathname = usePathname()
   const isAdmin = pathname.startsWith('/admin')
+
+  function handleWatchlistClick() {
+    updateFilters({ bookmarked: !filters.bookmarked })
+  }
 
   if (!user) {
     return <></>
@@ -68,7 +74,15 @@ export default function HeaderDropdownUserMenuAuth() {
         )}
 
         <DropdownMenuItem asChild>
-          <Link href="/?bookmarked=true">Watchlist</Link>
+          <button
+            type="button"
+            className="w-full text-left"
+            onClick={handleWatchlistClick}
+          >
+            Watchlist
+            {' '}
+            {filters.bookmarked && '✓'}
+          </button>
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
