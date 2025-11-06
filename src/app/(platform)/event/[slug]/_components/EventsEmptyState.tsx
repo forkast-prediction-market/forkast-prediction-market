@@ -19,6 +19,7 @@ export default function EventsEmptyState({ searchQuery, tag }: EventsEmptyStateP
       hideEarnings: false,
     })
   }
+
   return (
     <div className="col-span-full py-12 text-center">
       <div className="mb-2 flex justify-center text-muted-foreground">

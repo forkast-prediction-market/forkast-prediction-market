@@ -4,7 +4,7 @@ import { useDisconnect } from '@reown/appkit-controllers/react'
 import { ChevronDownIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { redirect, usePathname } from 'next/navigation'
 import ThemeSelector from '@/components/ThemeSelector'
 import { Button } from '@/components/ui/button'
 import {
@@ -27,6 +27,7 @@ export default function HeaderDropdownUserMenuAuth() {
 
   function handleWatchlistClick() {
     updateFilters({ bookmarked: !filters.bookmarked })
+    queueMicrotask(() => redirect('/'))
   }
 
   if (!user) {
