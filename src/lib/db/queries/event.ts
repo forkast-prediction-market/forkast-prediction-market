@@ -13,6 +13,64 @@ import { getSupabaseImageUrl } from '@/lib/supabase'
 
 const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
 
+type PriceApiResponse = Record<string, { BUY?: string, SELL?: string } | undefined>
+
+async function fetchOutcomePrices(tokenIds: string[]): Promise<Map<string, number>> {
+  const uniqueTokenIds = Array.from(new Set(tokenIds.filter(Boolean)))
+
+  if (uniqueTokenIds.length === 0) {
+    return new Map()
+  }
+
+  const endpointBase = process.env.CLOB_URL!
+  const endpoint = `${endpointBase.replace(/\/+$/, '')}/prices`
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(uniqueTokenIds.map(tokenId => ({
+        token_id: tokenId,
+      }))),
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      return new Map(uniqueTokenIds.map(tokenId => [tokenId, 0.5]))
+    }
+
+    const data = await response.json() as PriceApiResponse
+    const priceMap = new Map<string, number>()
+
+    for (const [tokenId, priceBySide] of Object.entries(data ?? {})) {
+      const priceValue = priceBySide?.SELL ?? priceBySide?.BUY
+      if (priceValue == null) {
+        continue
+      }
+
+      const parsed = Number(priceValue)
+      if (Number.isFinite(parsed)) {
+        priceMap.set(tokenId, parsed)
+      }
+    }
+
+    for (const tokenId of uniqueTokenIds) {
+      if (!priceMap.has(tokenId)) {
+        priceMap.set(tokenId, 0.5)
+      }
+    }
+
+    return priceMap
+  }
+  catch (error) {
+    console.error('Failed to fetch outcome prices from CLOB.', error)
+    return new Map(uniqueTokenIds.map(tokenId => [tokenId, 0.5]))
+  }
+}
+
 interface ListEventsProps {
   tag: string
   search?: string
@@ -67,7 +125,7 @@ interface RelatedEvent {
   common_tags_count: number
 }
 
-function eventResource(event: DrizzleEventResult, userId: string): Event {
+function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<string, number>): Event {
   const tagRecords = (event.eventTags ?? [])
     .map(et => et.tag)
     .filter(tag => Boolean(tag?.slug))
@@ -75,13 +133,15 @@ function eventResource(event: DrizzleEventResult, userId: string): Event {
   const marketsWithDerivedValues = event.markets.map((market: any) => {
     const rawOutcomes = (market.condition?.outcomes || []) as Array<typeof outcomes.$inferSelect>
     const normalizedOutcomes = rawOutcomes.map((outcome) => {
-      const currentPrice = outcome.current_price != null ? Number(outcome.current_price) : undefined
+      const latestPrice = outcome.token_id ? priceMap.get(outcome.token_id) : undefined
+      const storedPrice = outcome.current_price != null ? Number(outcome.current_price) : undefined
+      const currentPrice = latestPrice ?? storedPrice
 
       return {
         ...outcome,
         outcome_index: Number(outcome.outcome_index || 0),
         payout_value: outcome.payout_value != null ? Number(outcome.payout_value) : undefined,
-        current_price: currentPrice,
+        current_price: typeof currentPrice === 'number' ? Number(currentPrice * 100).toPrecision(2) : undefined,
         volume_24h: Number(outcome.volume_24h || 0),
         total_volume: Number(outcome.total_volume || 0),
       }
@@ -302,9 +362,17 @@ export const EventRepository = {
         orderBy: orderByClause,
       }) as DrizzleEventResult[]
 
+      const tokensForPricing = eventsData.flatMap(event =>
+        (event.markets ?? []).flatMap(market =>
+          (market.condition?.outcomes ?? []).map(outcome => outcome.token_id).filter(Boolean),
+        ),
+      )
+
+      const priceMap = await fetchOutcomePrices(tokensForPricing)
+
       const eventsWithMarkets = eventsData
         .filter(event => event.markets?.length > 0)
-        .map(event => eventResource(event as DrizzleEventResult, userId))
+        .map(event => eventResource(event as DrizzleEventResult, userId, priceMap))
 
       return { data: eventsWithMarkets, error: null }
     })
@@ -369,13 +437,19 @@ export const EventRepository = {
             },
           }),
         },
-      })
+      }) as DrizzleEventResult
 
       if (!eventResult) {
         throw new Error('Event not found')
       }
 
-      const transformedEvent = eventResource(eventResult as DrizzleEventResult, userId)
+      const outcomeTokenIds = (eventResult.markets ?? []).flatMap((market: any) =>
+        (market.condition?.outcomes ?? []).map((outcome: any) => outcome.token_id).filter(Boolean),
+      )
+
+      const priceMap = await fetchOutcomePrices(outcomeTokenIds)
+
+      const transformedEvent = eventResource(eventResult as DrizzleEventResult, userId, priceMap)
 
       cacheTag(cacheTags.event(`${transformedEvent.id}:${userId}`))
 

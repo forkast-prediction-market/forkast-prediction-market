@@ -81,12 +81,11 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
 }))
 
 export function useYesPrice() {
-  return useOrder(state => Math.round(state.market?.probability || 0))
+  return useOrder(state => state.market?.outcomes[0].current_price || 0.5)
 }
 
 export function useNoPrice() {
-  const yesPrice = useYesPrice()
-  return 100 - yesPrice
+  return useOrder(state => state.market?.outcomes[1].current_price || 0.5)
 }
 
 export function useIsBinaryMarket() {
