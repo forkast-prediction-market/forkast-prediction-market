@@ -132,7 +132,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     {market.outcomes[0].outcome_text}
                   </span>
                   <span className="shrink-0 text-base font-bold">
-                    {Math.round(market.probability)}
+                    {market.outcomes[0].current_price}
                     ¢
                   </span>
                 </Button>
@@ -156,7 +156,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     {market.outcomes[1].outcome_text}
                   </span>
                   <span className="shrink-0 text-base font-bold">
-                    {100 - Math.round(market.probability)}
+                    {market.outcomes[1].current_price}
                     ¢
                   </span>
                 </Button>
@@ -225,7 +225,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     {market.outcomes[0].outcome_text}
                   </span>
                   <span className="shrink-0 text-base font-bold">
-                    {Math.round(market.probability)}
+                    {market.outcomes[0].current_price}
                     ¢
                   </span>
                 </Button>
@@ -250,7 +250,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     {market.outcomes[1].outcome_text}
                   </span>
                   <span className="shrink-0 text-base font-bold">
-                    {100 - Math.round(market.probability)}
+                    {market.outcomes[1].current_price}
                     ¢
                   </span>
                 </Button>

@@ -141,7 +141,7 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
         ...outcome,
         outcome_index: Number(outcome.outcome_index || 0),
         payout_value: outcome.payout_value != null ? Number(outcome.payout_value) : undefined,
-        current_price: typeof currentPrice === 'number' ? currentPrice : undefined,
+        current_price: typeof currentPrice === 'number' ? Number(currentPrice * 100).toPrecision(2) : undefined,
         volume_24h: Number(outcome.volume_24h || 0),
         total_volume: Number(outcome.total_volume || 0),
       }
