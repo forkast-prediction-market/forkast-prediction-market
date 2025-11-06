@@ -22,32 +22,39 @@ export default function EventHeader({ event }: EventHeaderProps) {
   }, [])
 
   return (
-    <div className={cn({
-      'sticky top-24 translate-y-[-5px] border-b bg-background py-3': scrolled,
-    }, 'z-10 -mx-4 flex items-center gap-3 px-4 transition-all ease-in-out')}
-    >
-      <Image
-        src={event.icon_url}
-        alt={event.creator || 'Market creator'}
-        width={64}
-        height={64}
-        className={cn(
-          'flex-shrink-0 rounded-sm transition-all ease-in-out',
-          scrolled ? 'size-10' : 'size-12 lg:size-14',
-        )}
-      />
-
-      <h1 className={cn(
-        'font-bold transition-all ease-in-out',
-        scrolled ? 'text-xs lg:text-base' : 'text-sm lg:text-xl',
+    <div
+      className={cn(
+        'relative z-10 -mx-4 px-4 transition-all ease-in-out',
+        scrolled ? 'sticky top-24 translate-y-[-5px] bg-background py-3' : 'flex items-center gap-3',
       )}
-      >
-        {event.title}
-      </h1>
+    >
+      {scrolled && (
+        <span className="pointer-events-none absolute inset-x-4 bottom-0 border-b border-border" />
+      )}
+      <div className="relative z-10 flex items-center gap-3">
+        <Image
+          src={event.icon_url}
+          alt={event.creator || 'Market creator'}
+          width={64}
+          height={64}
+          className={cn(
+            'flex-shrink-0 rounded-sm transition-all ease-in-out',
+            scrolled ? 'size-10' : 'size-12 lg:size-14',
+          )}
+        />
 
-      <div className="ms-auto flex gap-3 text-muted-foreground">
-        <EventShare />
-        <EventBookmark event={event} />
+        <h1 className={cn(
+          'font-bold transition-all ease-in-out',
+          scrolled ? 'text-xs lg:text-base' : 'text-sm lg:text-xl',
+        )}
+        >
+          {event.title}
+        </h1>
+
+        <div className="ms-auto flex gap-3 text-muted-foreground">
+          <EventShare />
+          <EventBookmark event={event} />
+        </div>
       </div>
     </div>
   )
