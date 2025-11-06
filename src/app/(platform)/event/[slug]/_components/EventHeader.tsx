@@ -56,7 +56,6 @@ export default function EventHeader({ event }: EventHeaderProps) {
           <EventBookmark event={event} />
         </div>
       </div>
-      {scrolled ? null : null}
     </div>
   )
 }
