@@ -13,6 +13,7 @@
     "start": "next start",
     "lint": "eslint . --fix",
     "test": "npx playwright test",
+    "test:unit": "vitest run",
     "prepare": "husky",
     "db:push": "node supabase/migrate.js"
   },
@@ -66,6 +67,9 @@
     "@playwright/test": "^1.55.0",
     "@tailwindcss/postcss": "^4.1.12",
     "@tailwindcss/typography": "^0.5.19",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.6.0",
     "@types/canvas-confetti": "^1.9.0",
     "@types/mdx": "^2.0.13",
     "@types/node": "^24.5.2",
@@ -76,11 +80,13 @@
     "eslint-plugin-react-hooks": "^7.0.0",
     "eslint-plugin-react-refresh": "^0.4.24",
     "husky": "^9.1.7",
+    "jsdom": "^24.1.3",
     "lint-staged": "^16.2.3",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13",
     "tw-animate-css": "^1.3.8",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   },
   "overrides": {
     "pino": "^9.12.0"
