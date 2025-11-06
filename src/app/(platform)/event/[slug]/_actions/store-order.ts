@@ -77,7 +77,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
         signature: validated.data.signature,
       },
       orderType: clobOrderType,
-      owner: process.env.FORKAST_API_KEY!,
+      owner: process.env.FORKAST_ADDRESS!,
     }
 
     const method = 'POST'
