@@ -6,6 +6,7 @@ import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 
 const {
   mockOpen,
+  mockClose,
   mockSignTypedDataAsync,
   mockTriggerConfetti,
   mockToastError,
@@ -15,6 +16,7 @@ const {
   mockGetAvgSellPrice,
 } = vi.hoisted(() => ({
   mockOpen: vi.fn(),
+  mockClose: vi.fn(),
   mockSignTypedDataAsync: vi.fn(),
   mockTriggerConfetti: vi.fn(),
   mockToastError: vi.fn(),
@@ -25,6 +27,7 @@ const {
 }))
 
 let mockIsConnected = true
+let mockEmbeddedWalletInfo: any
 let mockUser: { address: string } | null = { address: '0xUser' }
 let mockAmountAsNumber = 10
 let mockYesPrice = 60
@@ -48,8 +51,8 @@ vi.mock('@/stores/useOrder', () => ({
 }))
 
 vi.mock('@reown/appkit/react', () => ({
-  useAppKit: () => ({ open: mockOpen }),
-  useAppKitAccount: () => ({ isConnected: mockIsConnected }),
+  useAppKit: () => ({ open: mockOpen, close: mockClose }),
+  useAppKitAccount: () => ({ isConnected: mockIsConnected, embeddedWalletInfo: mockEmbeddedWalletInfo }),
 }))
 
 vi.mock('wagmi', () => ({
@@ -129,6 +132,7 @@ vi.mock('@/app/(platform)/event/[slug]/_components/EventTradeToast', () => ({
 describe('eventOrderPanelForm', () => {
   beforeEach(() => {
     mockOpen.mockClear()
+    mockClose.mockClear()
     mockSignTypedDataAsync.mockReset()
     mockTriggerConfetti.mockClear()
     mockToastError.mockClear()
@@ -140,6 +144,7 @@ describe('eventOrderPanelForm', () => {
     mockGetAvgSellPrice.mockReturnValue('42')
 
     mockIsConnected = true
+    mockEmbeddedWalletInfo = undefined
     mockUser = { address: '0xUser' }
     mockAmountAsNumber = 10
     mockYesPrice = 60
@@ -211,6 +216,8 @@ describe('eventOrderPanelForm', () => {
     await waitFor(() => expect(storeOrderActionMock).toHaveBeenCalledTimes(1))
 
     expect(mockSignTypedDataAsync).toHaveBeenCalledTimes(1)
+    expect(mockOpen).toHaveBeenCalledWith(expect.objectContaining({ view: 'ApproveTransaction' }))
+    expect(mockClose).toHaveBeenCalled()
 
     const payload = storeOrderActionMock.mock.calls[0][0]
 
@@ -236,6 +243,21 @@ describe('eventOrderPanelForm', () => {
     )
   })
 
+  it('avoids opening the approve transaction modal for embedded wallets', async () => {
+    mockEmbeddedWalletInfo = { user: {}, authProvider: 'email', accountType: 'eoa', isSmartAccountDeployed: false }
+    mockSignTypedDataAsync.mockResolvedValue('0xsigned')
+    storeOrderActionMock.mockResolvedValue(null)
+
+    renderComponent()
+    fireEvent.submit(screen.getByTestId('event-order-form'))
+
+    await waitFor(() => expect(storeOrderActionMock).toHaveBeenCalledTimes(1))
+
+    expect(mockSignTypedDataAsync).toHaveBeenCalledTimes(1)
+    expect(mockOpen).not.toHaveBeenCalled()
+    expect(mockClose).not.toHaveBeenCalled()
+  })
+
   it('shows an error toast when the trade fails to persist', async () => {
     mockSignTypedDataAsync.mockResolvedValue('0xsigned')
     storeOrderActionMock.mockResolvedValue({ error: 'No liquidity' })
@@ -247,5 +269,7 @@ describe('eventOrderPanelForm', () => {
 
     expect(orderState.setAmount).not.toHaveBeenCalledWith('0.00')
     expect(mockTriggerConfetti).not.toHaveBeenCalled()
+    expect(mockOpen).toHaveBeenCalledWith(expect.objectContaining({ view: 'ApproveTransaction' }))
+    expect(mockClose).toHaveBeenCalled()
   })
 })
