@@ -392,7 +392,7 @@ export const TagRepository = {
     })
 
     if (selectError || !selectResult?.[0]) {
-      return { data: null, error: selectError }
+      return { data: null, error: selectError ?? 'Unknown error' }
     }
 
     revalidatePath('/')
