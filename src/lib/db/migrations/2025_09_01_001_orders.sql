@@ -168,7 +168,7 @@ WITH holder_positions AS (
        SELECT
          *,
          ROW_NUMBER() OVER (
-           PARTITION BY outcome_index
+           PARTITION BY condition_id, outcome_index
            ORDER BY net_position DESC
            ) AS rank
        FROM holder_positions
