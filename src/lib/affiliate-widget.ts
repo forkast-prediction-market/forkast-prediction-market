@@ -87,7 +87,7 @@ function toWidgetEvent(event: Event): AffiliateWidgetEvent {
           id: event.id,
           label: 'Yes',
           probability: Math.max(0, Math.min(100, normalizeProbability(primaryMarket?.price ?? 0))),
-          kind: 'yes',
+          kind: 'yes' as const,
         }],
   }
 }
