@@ -203,7 +203,7 @@ export default function EventChart({ event }: EventChartProps) {
               series={chartConfig.series}
               width={800}
               height={280}
-              margin={{ top: 30, right: 40, bottom: 40, left: 0 }}
+              margin={{ top: 30, right: 40, bottom: 52, left: 0 }}
               onCursorDataChange={setCursorSnapshot}
             />
           </div>
