@@ -1,15 +1,12 @@
+import type { QueryResult } from '@/types'
 import { randomBytes } from 'node:crypto'
 import { and, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { affiliate_referrals } from '@/lib/db/schema/affiliates/tables'
 import { users } from '@/lib/db/schema/auth/tables'
+import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 
 const AFFILIATE_CODE_BYTES = 4
-
-interface QueryResult<T> {
-  data: T | null
-  error: string | null
-}
 
 interface AffiliateUser {
   id: string
@@ -72,22 +69,6 @@ interface ReferralList {
   }
 }
 
-async function executeQuery<T>(
-  queryFn: () => Promise<T>,
-): Promise<QueryResult<T>> {
-  try {
-    const data = await queryFn()
-    return { data, error: null }
-  }
-  catch (error) {
-    console.error('Drizzle database query error:', error)
-    return {
-      data: null,
-      error: error instanceof Error ? error.message : 'Unknown database error',
-    }
-  }
-}
-
 function convertToNumber(value: any): number {
   if (value === null || value === undefined) {
     return 0
@@ -139,7 +120,7 @@ async function generateUniqueAffiliateCode(): Promise<string> {
 
 export const AffiliateRepository = {
   async ensureUserAffiliateCode(userId: string): Promise<QueryResult<string>> {
-    return executeQuery(async () => {
+    return runQuery(async () => {
       const existingUser = await db
         .select({ affiliate_code: users.affiliate_code })
         .from(users)
@@ -147,16 +128,23 @@ export const AffiliateRepository = {
         .limit(1)
 
       if (existingUser.length === 0) {
-        throw new Error('User not found')
+        return { data: null, error: 'User not found' }
       }
 
       const user = existingUser[0]
 
       if (user.affiliate_code) {
-        return user.affiliate_code
+        return { data: user.affiliate_code, error: null }
       }
 
-      const code = await generateUniqueAffiliateCode()
+      let code: string
+      try {
+        code = await generateUniqueAffiliateCode()
+      }
+      catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to generate affiliate code'
+        return { data: null, error: message }
+      }
 
       const updatedUser = await db
         .update(users)
@@ -165,17 +153,17 @@ export const AffiliateRepository = {
         .returning({ affiliate_code: users.affiliate_code })
 
       if (updatedUser.length === 0) {
-        throw new Error('Failed to update user with affiliate code')
+        return { data: null, error: 'Failed to update user with affiliate code' }
       }
 
-      return updatedUser[0].affiliate_code!
+      return { data: updatedUser[0].affiliate_code!, error: null }
     })
   },
 
   async getAffiliateByCode(code: string): Promise<QueryResult<AffiliateUser | null>> {
     'use cache'
 
-    return executeQuery(async () => {
+    return runQuery(async () => {
       const result = await db
         .select({
           id: users.id,
@@ -188,14 +176,17 @@ export const AffiliateRepository = {
         .where(eq(users.affiliate_code, code))
         .limit(1)
 
-      return result.length > 0 ? result[0] : null
+      return {
+        data: result.length > 0 ? result[0] : null,
+        error: null,
+      }
     })
   },
 
   async getReferral(userId: string): Promise<QueryResult<ReferralData | null>> {
     'use cache'
 
-    return executeQuery(async () => {
+    return runQuery(async () => {
       const result = await db
         .select({
           user_id: affiliate_referrals.user_id,
@@ -209,11 +200,11 @@ export const AffiliateRepository = {
         .limit(1)
 
       if (result.length === 0) {
-        return null
+        return { data: null, error: null }
       }
 
       const row = result[0]
-      return {
+      const data = {
         user_id: row.user_id,
         affiliate_user_id: row.affiliate_user_id,
         created_at: row.created_at,
@@ -221,13 +212,15 @@ export const AffiliateRepository = {
           address: row.affiliate_user_address,
         },
       }
+
+      return { data, error: null }
     })
   },
 
   async recordReferral(args: ReferralArgs): Promise<QueryResult<ReferralRecord>> {
-    return executeQuery(async () => {
+    return runQuery(async () => {
       if (args.user_id === args.affiliate_user_id) {
-        throw new Error('Self referrals are not allowed.')
+        return { data: null, error: 'Self referrals are not allowed.' }
       }
 
       const existingReferral = await db
@@ -242,9 +235,12 @@ export const AffiliateRepository = {
 
       if (existingReferral.length > 0 && existingReferral[0].affiliate_user_id === args.affiliate_user_id) {
         return {
-          user_id: existingReferral[0].user_id,
-          affiliate_user_id: existingReferral[0].affiliate_user_id,
-          created_at: existingReferral[0].created_at,
+          data: {
+            user_id: existingReferral[0].user_id,
+            affiliate_user_id: existingReferral[0].affiliate_user_id,
+            created_at: existingReferral[0].created_at,
+          },
+          error: null,
         }
       }
 
@@ -267,7 +263,7 @@ export const AffiliateRepository = {
         })
 
       if (upsertResult.length === 0) {
-        throw new Error('Failed to create or update referral record')
+        return { data: null, error: 'Failed to create or update referral record' }
       }
 
       const referralRecord = upsertResult[0]
@@ -282,55 +278,56 @@ export const AffiliateRepository = {
           ),
         )
 
-      return referralRecord
+      return { data: referralRecord, error: null }
     })
   },
 
   async getUserAffiliateStats(userId: string): Promise<QueryResult<AffiliateStats>> {
     'use cache'
 
-    return executeQuery(async () => {
+    return runQuery(async () => {
       const result = await db.execute(
         sql`SELECT * FROM get_affiliate_stats(${userId})`,
       )
 
       if (!result || result.length === 0) {
-        return {
+        const fallback = {
           total_referrals: 0,
           active_referrals: 0,
           total_volume: 0,
           total_affiliate_fees: 0,
           total_fork_fees: 0,
         }
+        return { data: fallback, error: null }
       }
 
       const rawData = result[0]
-      return convertAffiliateStats(rawData)
+      return { data: convertAffiliateStats(rawData), error: null }
     })
   },
 
   async listAffiliateOverview(): Promise<QueryResult<AffiliateOverview[]>> {
     'use cache'
 
-    return executeQuery(async () => {
+    return runQuery(async () => {
       const result = await db.execute(
         sql`SELECT * FROM get_affiliate_overview()`,
       )
 
       if (!result || result.length === 0) {
-        return []
+        return { data: [], error: null }
       }
 
-      return convertAffiliateOverview(result)
+      return { data: convertAffiliateOverview(result), error: null }
     })
   },
 
   async getAffiliateProfiles(userIds: string[]): Promise<QueryResult<AffiliateProfile[]>> {
     'use cache'
 
-    return executeQuery(async () => {
+    return runQuery(async () => {
       if (!userIds.length) {
-        return []
+        return { data: [], error: null }
       }
 
       const result = await db
@@ -344,20 +341,22 @@ export const AffiliateRepository = {
         .from(users)
         .where(inArray(users.id, userIds))
 
-      return result.map(user => ({
+      const data = result.map(user => ({
         id: user.id,
         username: user.username,
         address: user.address,
         image: user.image,
         affiliate_code: user.affiliate_code,
       }))
+
+      return { data, error: null }
     })
   },
 
   async listReferralsByAffiliate(affiliateUserId: string, limit = 20): Promise<QueryResult<ReferralList[]>> {
     'use cache'
 
-    return executeQuery(async () => {
+    return runQuery(async () => {
       const result = await db
         .select({
           user_id: affiliate_referrals.user_id,
@@ -372,7 +371,7 @@ export const AffiliateRepository = {
         .orderBy(desc(affiliate_referrals.created_at)) // Apply descending order by created_at using Drizzle orderBy
         .limit(limit) // Implement pagination with configurable limit using Drizzle limit
 
-      return result.map(row => ({
+      const data = result.map(row => ({
         user_id: row.user_id,
         created_at: row.created_at,
         users: {
@@ -381,6 +380,8 @@ export const AffiliateRepository = {
           image: row.image,
         },
       }))
+
+      return { data, error: null }
     })
   },
 }
