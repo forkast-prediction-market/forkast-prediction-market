@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 
-const DEFAULT_CLOB_URL = 'https://clob.forka.st'
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const tokenId = searchParams.get('token_id')
@@ -13,8 +11,7 @@ export async function GET(request: Request) {
     )
   }
 
-  const baseEndpoint = (process.env.CLOB_URL || DEFAULT_CLOB_URL).replace(/\/+$/, '')
-  const endpoint = `${baseEndpoint}/book?${new URLSearchParams({ token_id: tokenId }).toString()}`
+  const endpoint = `${process.env.CLOB_URL!}/book?${new URLSearchParams({ token_id: tokenId }).toString()}`
 
   try {
     const response = await fetch(endpoint, {

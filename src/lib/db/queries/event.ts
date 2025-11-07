@@ -12,7 +12,6 @@ import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
-const DEFAULT_CLOB_URL = 'https://clob.forka.st'
 
 type PriceApiResponse = Record<string, { BUY?: string, SELL?: string } | undefined>
 interface OutcomePrices { buy: number, sell: number }
@@ -24,8 +23,7 @@ async function fetchOutcomePrices(tokenIds: string[]): Promise<Map<string, Outco
     return new Map()
   }
 
-  const endpointBase = process.env.CLOB_URL || DEFAULT_CLOB_URL
-  const endpoint = `${endpointBase.replace(/\/+$/, '')}/prices`
+  const endpoint = `${process.env.CLOB_URL!}/prices`
 
   try {
     const response = await fetch(endpoint, {

@@ -680,7 +680,7 @@ export function PredictionChart({
                   <circle
                     r={6}
                     fill={seriesItem.color}
-                    fillOpacity={0.2}
+                    fillOpacity={0.4}
                     pointerEvents="none"
                     style={{
                       transformOrigin: 'center',

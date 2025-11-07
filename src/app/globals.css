@@ -165,15 +165,15 @@
 
 @keyframes prediction-chart-radar {
   0% {
-    transform: scale(0.35);
-    opacity: 0.45;
+    transform: scale(0.4);
+    opacity: 0.9;
   }
-  60% {
-    transform: scale(1.5);
-    opacity: 0;
+  50% {
+    transform: scale(1.6);
+    opacity: 0.25;
   }
   100% {
-    transform: scale(1.5);
+    transform: scale(1.8);
     opacity: 0;
   }
 }
