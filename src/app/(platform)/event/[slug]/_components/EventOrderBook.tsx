@@ -185,15 +185,18 @@ export default function EventOrderBook({ market, outcome }: EventOrderBookProps)
 
         <div
           className={`
-            sticky top-[36px] bottom-0 z-[1] grid h-9 grid-cols-[40%_20%_20%_20%] items-center border-y border-border/60
-            bg-background px-4 text-xs font-medium text-muted-foreground
+            sticky top-[36px] bottom-0 z-[1] grid h-9 cursor-pointer grid-cols-[40%_20%_20%_20%] items-center border-y
+            border-border/60 bg-background px-4 text-xs font-medium text-muted-foreground transition-colors
+            hover:bg-muted/60
+            dark:hover:bg-white/10
           `}
+          role="presentation"
         >
-          <div className="flex h-full items-center">
+          <div className="flex h-full cursor-pointer items-center">
             Last:&nbsp;
             {formatPrice(lastPrice)}
           </div>
-          <div className="flex h-full items-center justify-center">
+          <div className="flex h-full cursor-pointer items-center justify-center">
             Spread:&nbsp;
             {formatPrice(spread)}
           </div>

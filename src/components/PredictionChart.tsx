@@ -65,8 +65,10 @@ const TOOLTIP_LABEL_HEIGHT = 20
 const TOOLTIP_LABEL_GAP = 6
 const TOOLTIP_LABEL_MAX_WIDTH = 160
 const TOOLTIP_LABEL_ANCHOR_OFFSET = 10
-const FUTURE_LINE_COLOR = '#2C3F4F'
-const FUTURE_LINE_OPACITY = 0.55
+const FUTURE_LINE_COLOR_DARK = '#2C3F4F'
+const FUTURE_LINE_COLOR_LIGHT = '#99A6B5'
+const FUTURE_LINE_OPACITY_DARK = 0.55
+const FUTURE_LINE_OPACITY_LIGHT = 0.35
 const INITIAL_REVEAL_DURATION = 1400
 const INTERACTION_BASE_REVEAL_DURATION = 1100
 
@@ -207,6 +209,10 @@ export function PredictionChart({
   const [data, setData] = useState<DataPoint[]>([])
   const [series, setSeries] = useState<SeriesConfig[]>([])
   const [isClient, setIsClient] = useState(false)
+  const [isDarkMode, setIsDarkMode] = useState(
+    () => typeof document !== 'undefined'
+      && document.documentElement.classList.contains('dark'),
+  )
   const [revealProgress, setRevealProgress] = useState(0)
   const revealAnimationFrameRef = useRef<number | null>(null)
   const hasPointerInteractionRef = useRef(false)
@@ -363,6 +369,25 @@ export function PredictionChart({
       })
     }
   }, [data, revealAnimationFrameRef])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return
+    }
+
+    const root = document.documentElement
+
+    function updateTheme() {
+      setIsDarkMode(root.classList.contains('dark'))
+    }
+
+    updateTheme()
+
+    const observer = new MutationObserver(updateTheme)
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] })
+
+    return () => observer.disconnect()
+  }, [])
 
   if (!isClient || data.length === 0 || series.length === 0) {
     return (
@@ -592,6 +617,13 @@ export function PredictionChart({
     return xScale(getDate(d))
   }
 
+  const futureLineColor = isDarkMode
+    ? FUTURE_LINE_COLOR_DARK
+    : FUTURE_LINE_COLOR_LIGHT
+  const futureLineOpacity = isDarkMode
+    ? FUTURE_LINE_OPACITY_DARK
+    : FUTURE_LINE_OPACITY_LIGHT
+
   return (
     <div className="relative h-full w-full">
       <svg
@@ -637,12 +669,12 @@ export function PredictionChart({
                     data={mutedPoints}
                     x={d => xScale(getDate(d))}
                     y={d => yScale((d[seriesItem.key] as number) || 0)}
-                    stroke={FUTURE_LINE_COLOR}
+                    stroke={futureLineColor}
                     strokeWidth={1.75}
                     strokeDasharray="1 1"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    strokeOpacity={FUTURE_LINE_OPACITY}
+                    strokeOpacity={futureLineOpacity}
                     curve={curveMonotoneX}
                     fill="transparent"
                   />
