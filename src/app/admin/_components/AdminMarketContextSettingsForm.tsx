@@ -15,8 +15,7 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 
 const initialState = {
-  error: undefined as string | undefined,
-  success: undefined as string | undefined,
+  error: null,
 }
 
 const AUTOMATIC_MODEL_VALUE = '__AUTOMATIC__'
