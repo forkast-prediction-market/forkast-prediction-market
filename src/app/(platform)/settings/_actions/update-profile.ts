@@ -80,11 +80,7 @@ export async function updateUserAction(formData: FormData): Promise<ActionState>
 
     const { error } = await UserRepository.updateUserProfileById(user.id, updateData)
     if (error) {
-      if (typeof error === 'string') {
-        return { error }
-      }
-
-      return { errors: error }
+      return { error }
     }
 
     revalidatePath('/settings')
