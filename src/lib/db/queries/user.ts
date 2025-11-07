@@ -172,7 +172,7 @@ export const UserRepository = {
               timestamp?: number
             }
 
-            if (parsed?.affiliateUserId) {
+            if (parsed?.affiliateUserId && parsed.affiliateUserId !== user.id) {
               await AffiliateRepository.recordReferral({
                 user_id: user.id,
                 affiliate_user_id: parsed.affiliateUserId,

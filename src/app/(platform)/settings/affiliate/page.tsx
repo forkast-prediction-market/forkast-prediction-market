@@ -2,8 +2,10 @@
 
 import type { Metadata } from 'next'
 import SettingsAffiliateContent from '@/app/(platform)/settings/_components/SettingsAffiliateContent'
+import { fetchAffiliateWidgetEvents } from '@/lib/affiliate-widget'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
 import { SettingsRepository } from '@/lib/db/queries/settings'
+import { TagRepository } from '@/lib/db/queries/tag'
 import { UserRepository } from '@/lib/db/queries/user'
 
 export const metadata: Metadata = {
@@ -24,7 +26,10 @@ export default async function AffiliateSettingsPage() {
   const commissionPercent = Number(tradeFeeBps * affiliateShareBps) / 1000000
 
   function resolveBaseUrl() {
-    const raw = process.env.NEXT_PUBLIC_SITE_URL!
+    const raw = process.env.NEXT_PUBLIC_SITE_URL?.trim()
+    if (!raw) {
+      return 'https://forkast.xyz'
+    }
 
     return raw.startsWith('http') ? raw : `https://${raw}`
   }
@@ -52,6 +57,26 @@ export default async function AffiliateSettingsPage() {
       }
     : undefined
 
+  const [widgetEvents, mainTags] = await Promise.all([
+    fetchAffiliateWidgetEvents({ category: 'new', limit: 5 }),
+    TagRepository.getMainTags(),
+  ])
+
+  const widgetCategories = [
+    { label: 'Newest markets (default)', value: 'new' },
+    ...(mainTags.data ?? []).map(tag => ({ label: tag.name, value: tag.slug })),
+  ].filter((category, index, self) => self.findIndex(item => item.value === category.value) === index)
+
+  const widgetConfig = affiliateCode
+    ? {
+        events: widgetEvents,
+        categories: widgetCategories,
+        siteName: process.env.NEXT_PUBLIC_SITE_NAME ?? 'Forkast',
+        baseUrl: resolveBaseUrl(),
+        logoSvg: process.env.NEXT_PUBLIC_SITE_LOGO_SVG,
+      }
+    : undefined
+
   return (
     <section className="grid gap-8">
       <div className="grid gap-2">
@@ -62,7 +87,11 @@ export default async function AffiliateSettingsPage() {
       </div>
 
       <div className="mx-auto max-w-2xl lg:mx-0">
-        <SettingsAffiliateContent affiliateData={affiliateData} />
+        <SettingsAffiliateContent
+          affiliateData={affiliateData}
+          affiliateCode={affiliateCode}
+          widgetConfig={widgetConfig}
+        />
       </div>
     </section>
   )

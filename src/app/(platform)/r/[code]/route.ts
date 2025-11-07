@@ -6,6 +6,10 @@ const AFFILIATE_COOKIE_MAX_AGE = 60 * 60 * 24 * 30 // 30 days
 
 export async function GET(request: Request, context: { params: Promise<{ code: string }> }) {
   const { code } = await context.params
+  const currentUrl = new URL(request.url)
+  const redirectParam = currentUrl.searchParams.get('redirect') ?? ''
+  const hasSafeRedirect = redirectParam.startsWith('/') && !redirectParam.startsWith('//')
+  const redirectPath = hasSafeRedirect ? redirectParam : '/'
   const { data: affiliate } = await AffiliateRepository.getAffiliateByCode(code)
 
   if (!affiliate) {
@@ -17,8 +21,7 @@ export async function GET(request: Request, context: { params: Promise<{ code: s
     affiliateUserId: affiliate.id,
     timestamp: Date.now(),
   })
-
-  const response = NextResponse.redirect(new URL('/', request.url))
+  const response = NextResponse.redirect(new URL(redirectPath, request.url))
   response.cookies.set({
     name: AFFILIATE_COOKIE_NAME,
     value: cookieValue,

@@ -77,6 +77,7 @@ interface ListEventsProps {
   userId?: string | undefined
   bookmarked?: boolean
   offset?: number
+  limit?: number
 }
 
 interface ActivityArgs {
@@ -265,12 +266,14 @@ export const EventRepository = {
     userId = '',
     bookmarked = false,
     offset = 0,
+    limit = 40,
   }: ListEventsProps): Promise<QueryResult<Event[]>> {
     'use cache'
     cacheTag(cacheTags.events(userId))
 
     return await runQuery(async () => {
-      const limit = 40
+      const pageSize = Math.min(Math.max(limit, 1), 50)
+      const resolvedLimit = pageSize
       const validOffset = Number.isNaN(offset) || offset < 0 ? 0 : offset
 
       const whereConditions = []
@@ -332,9 +335,7 @@ export const EventRepository = {
         )`,
       )
 
-      const orderByClause = tag === 'new' || tag === 'trending'
-        ? desc(events.created_at)
-        : desc(events.id)
+      const orderByClause = desc(events.created_at)
 
       const eventsData = await db.query.events.findMany({
         where: and(...whereConditions),
@@ -357,7 +358,7 @@ export const EventRepository = {
             },
           }),
         },
-        limit,
+        limit: resolvedLimit,
         offset: validOffset,
         orderBy: orderByClause,
       }) as DrizzleEventResult[]
