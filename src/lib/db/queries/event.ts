@@ -12,17 +12,19 @@ import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
+const DEFAULT_CLOB_URL = 'https://clob.forka.st'
 
 type PriceApiResponse = Record<string, { BUY?: string, SELL?: string } | undefined>
+interface OutcomePrices { buy: number, sell: number }
 
-async function fetchOutcomePrices(tokenIds: string[]): Promise<Map<string, number>> {
+async function fetchOutcomePrices(tokenIds: string[]): Promise<Map<string, OutcomePrices>> {
   const uniqueTokenIds = Array.from(new Set(tokenIds.filter(Boolean)))
 
   if (uniqueTokenIds.length === 0) {
     return new Map()
   }
 
-  const endpointBase = process.env.CLOB_URL!
+  const endpointBase = process.env.CLOB_URL || DEFAULT_CLOB_URL
   const endpoint = `${endpointBase.replace(/\/+$/, '')}/prices`
 
   try {
@@ -39,27 +41,31 @@ async function fetchOutcomePrices(tokenIds: string[]): Promise<Map<string, numbe
     })
 
     if (!response.ok) {
-      return new Map(uniqueTokenIds.map(tokenId => [tokenId, 0.5]))
+      return new Map(uniqueTokenIds.map(tokenId => [tokenId, { buy: 0.5, sell: 0.5 }]))
     }
 
     const data = await response.json() as PriceApiResponse
-    const priceMap = new Map<string, number>()
+    const priceMap = new Map<string, OutcomePrices>()
 
     for (const [tokenId, priceBySide] of Object.entries(data ?? {})) {
-      const priceValue = priceBySide?.SELL ?? priceBySide?.BUY
-      if (priceValue == null) {
+      if (!priceBySide) {
         continue
       }
 
-      const parsed = Number(priceValue)
-      if (Number.isFinite(parsed)) {
-        priceMap.set(tokenId, parsed)
-      }
+      const parsedBuy = priceBySide.BUY != null ? Number(priceBySide.BUY) : undefined
+      const parsedSell = priceBySide.SELL != null ? Number(priceBySide.SELL) : undefined
+      const normalizedBuy = parsedBuy != null && Number.isFinite(parsedBuy) ? parsedBuy : undefined
+      const normalizedSell = parsedSell != null && Number.isFinite(parsedSell) ? parsedSell : undefined
+
+      priceMap.set(tokenId, {
+        buy: normalizedBuy ?? normalizedSell ?? 0.5,
+        sell: normalizedSell ?? normalizedBuy ?? 0.5,
+      })
     }
 
     for (const tokenId of uniqueTokenIds) {
       if (!priceMap.has(tokenId)) {
-        priceMap.set(tokenId, 0.5)
+        priceMap.set(tokenId, { buy: 0.5, sell: 0.5 })
       }
     }
 
@@ -67,7 +73,7 @@ async function fetchOutcomePrices(tokenIds: string[]): Promise<Map<string, numbe
   }
   catch (error) {
     console.error('Failed to fetch outcome prices from CLOB.', error)
-    return new Map(uniqueTokenIds.map(tokenId => [tokenId, 0.5]))
+    return new Map(uniqueTokenIds.map(tokenId => [tokenId, { buy: 0.5, sell: 0.5 }]))
   }
 }
 
@@ -125,7 +131,7 @@ interface RelatedEvent {
   common_tags_count: number
 }
 
-function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<string, number>): Event {
+function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<string, OutcomePrices>): Event {
   const tagRecords = (event.eventTags ?? [])
     .map(et => et.tag)
     .filter(tag => Boolean(tag?.slug))
@@ -133,15 +139,18 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
   const marketsWithDerivedValues = event.markets.map((market: any) => {
     const rawOutcomes = (market.condition?.outcomes || []) as Array<typeof outcomes.$inferSelect>
     const normalizedOutcomes = rawOutcomes.map((outcome) => {
-      const latestPrice = outcome.token_id ? priceMap.get(outcome.token_id) : undefined
-      const storedPrice = outcome.current_price != null ? Number(outcome.current_price) : undefined
-      const currentPrice = latestPrice ?? storedPrice
+      const outcomePrice = outcome.token_id ? priceMap.get(outcome.token_id) : undefined
+      const buyPrice = Number(Number(outcomePrice?.buy ?? 0.5) * 100).toPrecision(2)
+      const sellPrice = Number(Number(outcomePrice?.sell ?? 0.5) * 100).toPrecision(2)
+      const currentPrice = sellPrice
 
       return {
         ...outcome,
         outcome_index: Number(outcome.outcome_index || 0),
         payout_value: outcome.payout_value != null ? Number(outcome.payout_value) : undefined,
         current_price: typeof currentPrice === 'number' ? Number(currentPrice * 100).toPrecision(2) : undefined,
+        buy_price: buyPrice,
+        sell_price: sellPrice,
         volume_24h: Number(outcome.volume_24h || 0),
         total_volume: Number(outcome.total_volume || 0),
       }
@@ -448,7 +457,6 @@ export const EventRepository = {
       )
 
       const priceMap = await fetchOutcomePrices(outcomeTokenIds)
-
       const transformedEvent = eventResource(eventResult as DrizzleEventResult, userId, priceMap)
 
       cacheTag(cacheTags.event(`${transformedEvent.id}:${userId}`))

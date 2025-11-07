@@ -58,7 +58,8 @@ export interface Outcome {
   token_id: string
   is_winning_outcome: boolean
   payout_value?: number
-  current_price?: number
+  buy_price?: number
+  sell_price?: number
   volume_24h: number
   total_volume: number
   created_at: string

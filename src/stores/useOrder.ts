@@ -81,11 +81,17 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
 }))
 
 export function useYesPrice() {
-  return useOrder(state => state.market?.outcomes[0].current_price || 0.5)
+  return useOrder(state => state.side === 0
+    ? state.market?.outcomes[0].buy_price
+    : state.market?.outcomes[0].sell_price,
+  ) || 50
 }
 
 export function useNoPrice() {
-  return useOrder(state => state.market?.outcomes[1].current_price || 0.5)
+  return useOrder(state => state.side === 0
+    ? state.market?.outcomes[1].buy_price
+    : state.market?.outcomes[1].sell_price,
+  ) || 50
 }
 
 export function useIsBinaryMarket() {
