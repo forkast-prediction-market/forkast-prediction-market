@@ -58,8 +58,8 @@ async function fetchOutcomePrices(tokenIds: string[]): Promise<Map<string, Outco
       const normalizedSell = parsedSell != null && Number.isFinite(parsedSell) ? parsedSell : undefined
 
       priceMap.set(tokenId, {
-        buy: normalizedBuy ?? normalizedSell ?? 0.5,
-        sell: normalizedSell ?? normalizedBuy ?? 0.5,
+        buy: normalizedSell ?? normalizedBuy ?? 0.5,
+        sell: normalizedBuy ?? normalizedSell ?? 0.5,
       })
     }
 
@@ -140,15 +140,13 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
     const rawOutcomes = (market.condition?.outcomes || []) as Array<typeof outcomes.$inferSelect>
     const normalizedOutcomes = rawOutcomes.map((outcome) => {
       const outcomePrice = outcome.token_id ? priceMap.get(outcome.token_id) : undefined
-      const buyPrice = Number(Number(outcomePrice?.buy ?? 0.5) * 100).toPrecision(2)
-      const sellPrice = Number(Number(outcomePrice?.sell ?? 0.5) * 100).toPrecision(2)
-      const currentPrice = sellPrice
+      const buyPrice = outcomePrice?.buy ?? 0.5
+      const sellPrice = outcomePrice?.sell ?? 0.5
 
       return {
         ...outcome,
         outcome_index: Number(outcome.outcome_index || 0),
         payout_value: outcome.payout_value != null ? Number(outcome.payout_value) : undefined,
-        current_price: typeof currentPrice === 'number' ? Number(currentPrice * 100).toPrecision(2) : undefined,
         buy_price: buyPrice,
         sell_price: sellPrice,
         volume_24h: Number(outcome.volume_24h || 0),
@@ -157,8 +155,10 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
     })
 
     const primaryOutcome = normalizedOutcomes.find(outcome => outcome.outcome_index === OUTCOME_INDEX.YES) ?? normalizedOutcomes[0]
-    const yesPrice = typeof primaryOutcome?.current_price === 'number' ? primaryOutcome.current_price : null
-    const probability = typeof yesPrice === 'number' ? yesPrice * 100 : 0
+    const yesBuyPrice = primaryOutcome?.buy_price ?? 0.5
+    const yesSellPrice = primaryOutcome?.sell_price ?? yesBuyPrice
+    const yesMidPrice = (yesBuyPrice + yesSellPrice) / 2
+    const probability = yesMidPrice * 100
     const normalizedCurrentVolume24h = Number(market.current_volume_24h || 0)
     const normalizedTotalVolume = Number(market.total_volume || 0)
 
@@ -167,7 +167,7 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
       question_id: market.condition?.id || '',
       title: market.short_title || market.title,
       probability,
-      price: typeof yesPrice === 'number' ? yesPrice : 0,
+      price: yesMidPrice,
       volume: normalizedTotalVolume,
       current_volume_24h: normalizedCurrentVolume24h,
       total_volume: normalizedTotalVolume,

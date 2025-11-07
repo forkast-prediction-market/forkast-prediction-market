@@ -174,10 +174,11 @@ function OrderBookRow({ level, maxShares, showBadge }: OrderBookRowProps) {
 function buildOrderBookSnapshot(market: Market, outcome?: Outcome) {
   const outcomeToUse = outcome ?? market.outcomes[0]
   const yesOutcome = market.outcomes.find(entry => entry.outcome_index === OUTCOME_INDEX.YES) ?? market.outcomes[0]
-  const yesPrice = Math.round((yesOutcome.current_price ?? market.price) * 100)
+  const yesMidPrice = getOutcomeMidPrice(yesOutcome)
+  const yesPriceInCents = Math.round(yesMidPrice * 100)
   const rawBasePrice = outcomeToUse.outcome_index === OUTCOME_INDEX.YES
-    ? yesPrice
-    : 100 - yesPrice
+    ? yesPriceInCents
+    : 100 - yesPriceInCents
   const basePrice = Math.max(1, Math.min(99, rawBasePrice))
   const ladderBase = basePrice
 
@@ -256,6 +257,25 @@ function calculateShares(baseLiquidity: number, distance: number, depth: number)
   const proximityFactor = (depth - distance + 1) / depth
   const rawShares = baseLiquidity * proximityFactor
   return Math.max(5, Math.round(rawShares / (distance * 0.8)))
+}
+
+function getOutcomeMidPrice(outcome?: Outcome) {
+  const buy = typeof outcome?.buy_price === 'number' && Number.isFinite(outcome.buy_price)
+    ? clamp01(outcome.buy_price)
+    : undefined
+  const sell = typeof outcome?.sell_price === 'number' && Number.isFinite(outcome.sell_price)
+    ? clamp01(outcome.sell_price)
+    : undefined
+
+  if (typeof buy === 'number' && typeof sell === 'number') {
+    return (buy + sell) / 2
+  }
+
+  return buy ?? sell ?? 0.5
+}
+
+function clamp01(value: number) {
+  return Math.min(1, Math.max(0, value))
 }
 
 function formatPrice(price: number) {

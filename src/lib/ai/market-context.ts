@@ -36,15 +36,14 @@ function formatSharePrice(value: number | null | undefined) {
 }
 
 function formatOutcome(outcome: Outcome) {
-  const price = typeof outcome.current_price === 'number'
-    ? `${(outcome.current_price * 100).toFixed(1)}¢`
-    : 'price unknown'
+  const buyPrice = formatSharePrice(outcome.buy_price)
+  const sellPrice = formatSharePrice(outcome.sell_price)
 
   const totalVolume = typeof outcome.total_volume === 'number'
     ? formatCurrency(outcome.total_volume, 2)
     : 'volume unknown'
 
-  return `- ${sanitizeForPrompt(outcome.outcome_text)}: ${price}, lifetime volume ${totalVolume}`
+  return `- ${sanitizeForPrompt(outcome.outcome_text)}: buy ${buyPrice}, sell ${sellPrice}, lifetime volume ${totalVolume}`
 }
 
 function resolveEstimatedEndDate(market: Market) {

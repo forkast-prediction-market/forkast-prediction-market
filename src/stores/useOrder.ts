@@ -81,17 +81,33 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
 }))
 
 export function useYesPrice() {
-  return useOrder(state => state.side === 0
-    ? state.market?.outcomes[0].buy_price
-    : state.market?.outcomes[0].sell_price,
-  ) || 50
+  return useOrder((state) => {
+    const yesOutcome = state.market?.outcomes?.[OUTCOME_INDEX.YES]
+    if (!yesOutcome) {
+      return undefined
+    }
+
+    const rawPrice = state.side === ORDER_SIDE.BUY
+      ? yesOutcome.buy_price
+      : yesOutcome.sell_price
+
+    return formatPriceToCents(rawPrice)
+  }) ?? formatPriceToCents()
 }
 
 export function useNoPrice() {
-  return useOrder(state => state.side === 0
-    ? state.market?.outcomes[1].buy_price
-    : state.market?.outcomes[1].sell_price,
-  ) || 50
+  return useOrder((state) => {
+    const noOutcome = state.market?.outcomes?.[OUTCOME_INDEX.NO]
+    if (!noOutcome) {
+      return undefined
+    }
+
+    const rawPrice = state.side === ORDER_SIDE.BUY
+      ? noOutcome.buy_price
+      : noOutcome.sell_price
+
+    return formatPriceToCents(rawPrice)
+  }) ?? formatPriceToCents()
 }
 
 export function useIsBinaryMarket() {
@@ -191,4 +207,12 @@ export function useOrderAmount() {
 
 export function useOrderInputRef() {
   return useOrder(state => state.inputRef)
+}
+
+function formatPriceToCents(price?: number) {
+  const normalized = typeof price === 'number' && Number.isFinite(price)
+    ? Math.min(Math.max(price, 0), 1)
+    : 0.5
+
+  return Number((normalized * 100).toFixed(2))
 }

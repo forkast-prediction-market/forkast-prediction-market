@@ -160,7 +160,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[0].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {market.outcomes[0].buy_price}
+                        {formatOutcomePrice(market.outcomes[0].buy_price)}
                         ¢
                       </span>
                     </Button>
@@ -184,7 +184,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[1].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {market.outcomes[1].sell_price}
+                        {formatOutcomePrice(market.outcomes[1].buy_price)}
                         ¢
                       </span>
                     </Button>
@@ -253,7 +253,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[0].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {market.outcomes[0].buy_price}
+                        {formatOutcomePrice(market.outcomes[0].buy_price)}
                         ¢
                       </span>
                     </Button>
@@ -278,7 +278,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[1].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {market.outcomes[1].sell_price}
+                        {formatOutcomePrice(market.outcomes[1].buy_price)}
                         ¢
                       </span>
                     </Button>
@@ -300,4 +300,12 @@ export default function EventMarkets({ event }: EventMarketsProps) {
         })}
     </div>
   )
+}
+
+function formatOutcomePrice(price?: number) {
+  if (typeof price === 'number' && Number.isFinite(price)) {
+    return Number((Math.min(Math.max(price, 0), 1) * 100).toFixed(2))
+  }
+
+  return 50
 }
