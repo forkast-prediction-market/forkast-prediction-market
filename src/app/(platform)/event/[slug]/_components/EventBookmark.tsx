@@ -7,6 +7,8 @@ import { toggleBookmarkAction } from '@/app/(platform)/event/[slug]/_actions/tog
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
+const headerIconButtonClass = 'h-10 w-10 rounded-sm border border-transparent bg-transparent text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring md:h-9 md:w-9'
+
 interface EventBookmarkProps {
   event: {
     id: string
@@ -53,9 +55,11 @@ export default function EventBookmark({ event }: EventBookmarkProps) {
       disabled={isPending}
       aria-pressed={isBookmarked}
       title={isBookmarked ? 'Remove Bookmark' : 'Bookmark'}
-      className={cn({
-        'opacity-50': isPending,
-      }, 'size-auto p-0')}
+      className={cn(
+        headerIconButtonClass,
+        'size-auto p-0',
+        isPending && 'opacity-50',
+      )}
     >
       <BookmarkIcon className={cn({ 'fill-current text-primary': isBookmarked })} />
     </Button>

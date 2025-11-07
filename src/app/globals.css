@@ -162,3 +162,18 @@
     display: none;
   }
 }
+
+@keyframes prediction-chart-radar {
+  0% {
+    transform: scale(0.35);
+    opacity: 0.45;
+  }
+  60% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}

@@ -1,12 +1,19 @@
+'use client'
+
 import type { Market, Outcome } from '@/types'
-import { useMemo } from 'react'
-import { OUTCOME_INDEX } from '@/lib/constants'
+import { useQuery } from '@tanstack/react-query'
+import { Loader2Icon } from 'lucide-react'
+import { useCallback, useMemo } from 'react'
+import { ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
+import { useOrder } from '@/stores/useOrder'
 
 interface OrderBookLevel {
   side: 'ask' | 'bid'
-  price: number
+  rawPrice: number
+  priceCents: number
   shares: number
   total: number
+  cumulativeShares: number
 }
 
 interface EventOrderBookProps {
@@ -14,8 +21,30 @@ interface EventOrderBookProps {
   outcome?: Outcome
 }
 
-const priceFormatter = new Intl.NumberFormat('en-US', {
-  maximumFractionDigits: 0,
+interface OrderbookLevelSummary {
+  price: string
+  size: string
+}
+
+interface OrderBookSummaryResponse {
+  bids?: OrderbookLevelSummary[]
+  asks?: OrderbookLevelSummary[]
+}
+
+interface OrderBookSnapshot {
+  asks: OrderBookLevel[]
+  bids: OrderBookLevel[]
+  lastPrice: number | null
+  spread: number | null
+  maxShares: number
+  outcomeLabel: string
+}
+
+const DEFAULT_MAX_LEVELS = 12
+
+const priceFormatter = new Intl.NumberFormat('pt-BR', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1,
 })
 
 const sharesFormatter = new Intl.NumberFormat('en-US', {
@@ -30,7 +59,38 @@ const usdFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 })
 
+async function fetchOrderBookSummary(tokenId: string): Promise<OrderBookSummaryResponse> {
+  const params = new URLSearchParams({ token_id: tokenId })
+  const response = await fetch(`/api/orderbook?${params.toString()}`, { cache: 'no-store' })
+
+  if (!response.ok) {
+    throw new Error('Failed to load order book')
+  }
+
+  return response.json()
+}
+
+function useOrderBookSummary(tokenId?: string) {
+  return useQuery({
+    queryKey: ['orderbook-summary', tokenId],
+    queryFn: () => fetchOrderBookSummary(tokenId!),
+    enabled: Boolean(tokenId),
+    staleTime: 15_000,
+    gcTime: 60_000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  })
+}
+
 export default function EventOrderBook({ market, outcome }: EventOrderBookProps) {
+  const tokenId = outcome?.token_id || market.outcomes[0]?.token_id
+  const { data, isLoading, isError } = useOrderBookSummary(tokenId)
+  const setType = useOrder(state => state.setType)
+  const setLimitPrice = useOrder(state => state.setLimitPrice)
+  const setLimitShares = useOrder(state => state.setLimitShares)
+  const inputRef = useOrder(state => state.inputRef)
+  const currentOrderType = useOrder(state => state.type)
+
   const {
     asks,
     bids,
@@ -38,14 +98,50 @@ export default function EventOrderBook({ market, outcome }: EventOrderBookProps)
     spread,
     maxShares,
     outcomeLabel,
-  } = useMemo(() => buildOrderBookSnapshot(market, outcome), [market, outcome])
+  } = useMemo(
+    () => buildOrderBookSnapshot(data ?? null, market, outcome),
+    [data, market, outcome],
+  )
 
-  const hasLevels = asks.length > 0 || bids.length > 0
+  const renderedAsks = useMemo(
+    () => [...asks].sort((a, b) => b.priceCents - a.priceCents),
+    [asks],
+  )
 
-  if (!hasLevels) {
+  const handleLevelSelect = useCallback((level: OrderBookLevel) => {
+    if (currentOrderType !== ORDER_TYPE.LIMIT) {
+      setType(ORDER_TYPE.LIMIT)
+    }
+    setLimitPrice(level.priceCents.toFixed(1))
+
+    if (level.side === 'ask') {
+      setLimitShares(formatSharesInput(level.cumulativeShares))
+    }
+
+    queueMicrotask(() => inputRef?.current?.focus())
+  }, [currentOrderType, setType, setLimitPrice, setLimitShares, inputRef])
+
+  if (!tokenId) {
     return (
       <div className="px-4 py-6 text-center text-sm text-muted-foreground">
-        Order book data is unavailable for this market right now.
+        Order book data is unavailable for this outcome.
+      </div>
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center gap-2 px-4 py-6 text-sm text-muted-foreground">
+        <Loader2Icon className="size-4 animate-spin" />
+        Loading order book...
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+        Failed to load order book. Please try again later.
       </div>
     )
   }
@@ -73,14 +169,19 @@ export default function EventOrderBook({ market, outcome }: EventOrderBookProps)
           </div>
         </div>
 
-        {asks.map((level, index) => (
-          <OrderBookRow
-            key={`ask-${level.price}`}
-            level={level}
-            maxShares={maxShares}
-            showBadge={index === asks.length - 1 ? 'ask' : undefined}
-          />
-        ))}
+        {renderedAsks.length > 0
+          ? (
+              renderedAsks.map((level, index) => (
+                <OrderBookRow
+                  key={`ask-${level.priceCents}-${index}`}
+                  level={level}
+                  maxShares={maxShares}
+                  showBadge={index === renderedAsks.length - 1 ? 'ask' : undefined}
+                  onSelect={handleLevelSelect}
+                />
+              ))
+            )
+          : <OrderBookEmptyRow label="No asks" />}
 
         <div
           className={`
@@ -100,14 +201,19 @@ export default function EventOrderBook({ market, outcome }: EventOrderBookProps)
           <div className="flex h-full items-center justify-center" />
         </div>
 
-        {bids.map((level, index) => (
-          <OrderBookRow
-            key={`bid-${level.price}`}
-            level={level}
-            maxShares={maxShares}
-            showBadge={index === 0 ? 'bid' : undefined}
-          />
-        ))}
+        {bids.length > 0
+          ? (
+              bids.map((level, index) => (
+                <OrderBookRow
+                  key={`bid-${level.priceCents}-${index}`}
+                  level={level}
+                  maxShares={maxShares}
+                  showBadge={index === 0 ? 'bid' : undefined}
+                  onSelect={handleLevelSelect}
+                />
+              ))
+            )
+          : <OrderBookEmptyRow label="No bids" />}
       </div>
     </div>
   )
@@ -117,9 +223,10 @@ interface OrderBookRowProps {
   level: OrderBookLevel
   maxShares: number
   showBadge?: 'ask' | 'bid'
+  onSelect?: (level: OrderBookLevel) => void
 }
 
-function OrderBookRow({ level, maxShares, showBadge }: OrderBookRowProps) {
+function OrderBookRow({ level, maxShares, showBadge, onSelect }: OrderBookRowProps) {
   const isAsk = level.side === 'ask'
   const backgroundClass = isAsk ? 'bg-no/25 dark:bg-no/20' : 'bg-yes/25 dark:bg-yes/20'
   const hoverClass = isAsk ? 'hover:bg-no/10' : 'hover:bg-yes/10'
@@ -130,9 +237,10 @@ function OrderBookRow({ level, maxShares, showBadge }: OrderBookRowProps) {
   return (
     <div
       className={`
-        relative grid h-9 grid-cols-[40%_20%_20%_20%] items-center pr-4 pl-0 transition-colors
+        relative grid h-9 cursor-pointer grid-cols-[40%_20%_20%_20%] items-center pr-4 pl-0 transition-colors
         ${hoverClass}
       `}
+      onClick={() => onSelect?.(level)}
     >
       <div className="flex h-full items-center">
         <div className="relative h-full w-full overflow-hidden">
@@ -144,7 +252,7 @@ function OrderBookRow({ level, maxShares, showBadge }: OrderBookRowProps) {
       </div>
       <div className="flex h-full items-center justify-center px-4">
         <span className={`text-sm font-medium ${priceClass}`}>
-          {formatPrice(level.price)}
+          {formatPrice(level.priceCents)}
         </span>
       </div>
       <div className="flex h-full items-center justify-center px-4">
@@ -171,113 +279,107 @@ function OrderBookRow({ level, maxShares, showBadge }: OrderBookRowProps) {
   )
 }
 
-function buildOrderBookSnapshot(market: Market, outcome?: Outcome) {
+function buildOrderBookSnapshot(
+  summary: OrderBookSummaryResponse | null,
+  market: Market,
+  outcome?: Outcome,
+): OrderBookSnapshot {
   const outcomeToUse = outcome ?? market.outcomes[0]
-  const yesOutcome = market.outcomes.find(entry => entry.outcome_index === OUTCOME_INDEX.YES) ?? market.outcomes[0]
-  const yesMidPrice = getOutcomeMidPrice(yesOutcome)
-  const yesPriceInCents = Math.round(yesMidPrice * 100)
-  const rawBasePrice = outcomeToUse.outcome_index === OUTCOME_INDEX.YES
-    ? yesPriceInCents
-    : 100 - yesPriceInCents
-  const basePrice = Math.max(1, Math.min(99, rawBasePrice))
-  const ladderBase = basePrice
-
-  const depth = 12
-  const totalVolume = Math.max(0, market.total_volume || 0)
-  const baseLiquidity = Math.max(150, Math.sqrt(totalVolume + 100) * 6)
-
-  const asks: OrderBookLevel[] = []
-  const bids: OrderBookLevel[] = []
-
-  let stopAsks = false
-  let stopBids = false
-
-  for (let index = 0; index < depth; index += 1) {
-    const distance = index + 1
-    if (!stopAsks) {
-      const askPrice = Math.min(99, ladderBase + distance)
-      const previousAskPrice = asks[asks.length - 1]?.price
-      if (askPrice > 0 && askPrice !== previousAskPrice) {
-        const askShares = calculateShares(baseLiquidity, distance, depth)
-        asks.push({
-          side: 'ask',
-          price: askPrice,
-          shares: askShares,
-          total: Number(((askShares * askPrice) / 100).toFixed(2)),
-        })
-      }
-      else {
-        stopAsks = true
-      }
-    }
-
-    if (!stopBids) {
-      const bidPrice = Math.max(1, ladderBase - distance)
-      const previousBidPrice = bids[bids.length - 1]?.price
-      if (bidPrice > 0 && bidPrice !== previousBidPrice) {
-        const bidShares = calculateShares(baseLiquidity, distance, depth)
-        bids.push({
-          side: 'bid',
-          price: bidPrice,
-          shares: bidShares,
-          total: Number(((bidShares * bidPrice) / 100).toFixed(2)),
-        })
-      }
-      else {
-        stopBids = true
-      }
-    }
-
-    if (stopAsks && stopBids) {
-      break
-    }
-  }
-
+  const normalizedAsks = normalizeLevels(summary?.asks, 'ask')
+  const normalizedBids = normalizeLevels(summary?.bids, 'bid')
   const maxShares = Math.max(
     1,
-    ...asks.map(level => level.shares),
-    ...bids.map(level => level.shares),
+    normalizedAsks.reduce((max, level) => Math.max(max, level.shares), 0),
+    normalizedBids.reduce((max, level) => Math.max(max, level.shares), 0),
   )
 
-  const bestAsk = asks[0]?.price ?? basePrice
-  const bestBid = bids[0]?.price ?? basePrice
-  const spread = Math.max(0, bestAsk - bestBid)
+  const bestAsk = normalizedAsks[0]?.priceCents
+  const bestBid = normalizedBids[0]?.priceCents
+
+  let lastPrice: number | null = null
+  if (typeof bestBid === 'number') {
+    lastPrice = bestBid
+  }
+  else if (typeof bestAsk === 'number') {
+    lastPrice = bestAsk
+  }
+
+  const spread = typeof bestAsk === 'number' && typeof bestBid === 'number'
+    ? Math.max(0, Number((bestAsk - bestBid).toFixed(1)))
+    : null
 
   return {
-    asks,
-    bids,
+    asks: normalizedAsks,
+    bids: normalizedBids,
     maxShares,
-    lastPrice: basePrice,
+    lastPrice,
     spread,
-    outcomeLabel: outcomeToUse.outcome_index === OUTCOME_INDEX.YES ? 'Yes' : 'No',
+    outcomeLabel: outcomeToUse?.outcome_index === OUTCOME_INDEX.YES ? 'Yes' : 'No',
   }
 }
 
-function calculateShares(baseLiquidity: number, distance: number, depth: number) {
-  const proximityFactor = (depth - distance + 1) / depth
-  const rawShares = baseLiquidity * proximityFactor
-  return Math.max(5, Math.round(rawShares / (distance * 0.8)))
-}
-
-function getOutcomeMidPrice(outcome?: Outcome) {
-  const buy = typeof outcome?.buy_price === 'number' && Number.isFinite(outcome.buy_price)
-    ? clamp01(outcome.buy_price)
-    : undefined
-  const sell = typeof outcome?.sell_price === 'number' && Number.isFinite(outcome.sell_price)
-    ? clamp01(outcome.sell_price)
-    : undefined
-
-  if (typeof buy === 'number' && typeof sell === 'number') {
-    return (buy + sell) / 2
+function normalizeLevels(levels: OrderbookLevelSummary[] | undefined, side: 'ask' | 'bid'): OrderBookLevel[] {
+  if (!levels?.length) {
+    return []
   }
 
-  return buy ?? sell ?? 0.5
+  const parsed = levels
+    .map((entry) => {
+      const price = Number(entry.price)
+      const size = Number(entry.size)
+      if (!Number.isFinite(price) || !Number.isFinite(size) || price <= 0 || size <= 0) {
+        return null
+      }
+
+      return { price, size }
+    })
+    .filter((entry): entry is { price: number, size: number } => entry !== null)
+
+  const sorted = parsed
+    .sort((a, b) => (side === 'ask' ? a.price - b.price : b.price - a.price))
+    .slice(0, DEFAULT_MAX_LEVELS)
+
+  let runningTotal = 0
+  let runningShares = 0
+
+  return sorted.map((entry) => {
+    const displayCents = Number((entry.price * 100).toFixed(1))
+    runningTotal += entry.price * entry.size
+    runningShares += entry.size
+
+    return {
+      side,
+      rawPrice: entry.price,
+      priceCents: displayCents,
+      shares: entry.size,
+      cumulativeShares: runningShares,
+      total: runningTotal,
+    }
+  })
 }
 
-function clamp01(value: number) {
-  return Math.min(1, Math.max(0, value))
+function OrderBookEmptyRow({ label }: { label: string }) {
+  return (
+    <div className="grid h-16 grid-cols-[40%_20%_20%_20%] items-center px-4">
+      <span className="col-span-4 text-center text-xs font-medium text-muted-foreground">
+        {label}
+      </span>
+    </div>
+  )
 }
 
-function formatPrice(price: number) {
-  return `${priceFormatter.format(price)}¢`
+function formatPrice(value: number | null | undefined) {
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return '—'
+  }
+
+  return `${priceFormatter.format(value)}¢`
+}
+
+function formatSharesInput(value: number) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return '0'
+  }
+
+  return Number(value.toFixed(2)).toString()
 }

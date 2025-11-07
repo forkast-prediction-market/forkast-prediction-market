@@ -676,21 +676,24 @@ export function PredictionChart({
               const cy = yScale(value)
 
               return (
-                <g key={`${seriesItem.key}-marker`}>
+                <g key={`${seriesItem.key}-marker`} transform={`translate(${cx}, ${cy})`}>
                   <circle
-                    cx={cx}
-                    cy={cy}
-                    r={9}
+                    r={6}
                     fill={seriesItem.color}
-                    fillOpacity={0.18}
+                    fillOpacity={0.2}
+                    pointerEvents="none"
+                    style={{
+                      transformOrigin: 'center',
+                      transformBox: 'fill-box',
+                      animation: 'prediction-chart-radar 2.6s ease-out infinite',
+                    }}
                   />
                   <circle
-                    cx={cx}
-                    cy={cy}
-                    r={3}
+                    r={2.8}
                     fill={seriesItem.color}
                     stroke={seriesItem.color}
                     strokeWidth={1.5}
+                    pointerEvents="none"
                   />
                 </g>
               )
