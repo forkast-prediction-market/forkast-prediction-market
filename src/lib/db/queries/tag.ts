@@ -358,7 +358,7 @@ export const TagRepository = {
     })
 
     if (error || !updateResult?.[0]) {
-      return { data: null, error }
+      return { data: null, error: error ?? 'Unknown error' }
     }
 
     const parentTags = alias(tags, 'parent_tags')
