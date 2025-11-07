@@ -29,7 +29,12 @@ interface OrderbookLevelSummary {
 interface OrderBookSummaryResponse {
   bids?: OrderbookLevelSummary[]
   asks?: OrderbookLevelSummary[]
+  spread?: string
+  last_trade_price?: string
+  last_trade_side?: 'BUY' | 'SELL'
 }
+
+type OrderBookSummariesResponse = Record<string, OrderBookSummaryResponse>
 
 interface OrderBookSnapshot {
   asks: OrderBookLevel[]
@@ -59,8 +64,12 @@ const usdFormatter = new Intl.NumberFormat('en-US', {
   maximumFractionDigits: 2,
 })
 
-async function fetchOrderBookSummary(tokenId: string): Promise<OrderBookSummaryResponse> {
-  const params = new URLSearchParams({ token_id: tokenId })
+async function fetchOrderBookSummaries(tokenIds: string[]): Promise<OrderBookSummariesResponse> {
+  if (!tokenIds.length) {
+    return {}
+  }
+
+  const params = new URLSearchParams({ token_ids: tokenIds.join(',') })
   const response = await fetch(`/api/orderbook?${params.toString()}`, { cache: 'no-store' })
 
   if (!response.ok) {
@@ -70,11 +79,13 @@ async function fetchOrderBookSummary(tokenId: string): Promise<OrderBookSummaryR
   return response.json()
 }
 
-function useOrderBookSummary(tokenId?: string) {
+function useOrderBookSummaries(tokenIds: string[]) {
+  const tokenIdsKey = tokenIds.slice().sort().join(',')
+
   return useQuery({
-    queryKey: ['orderbook-summary', tokenId],
-    queryFn: () => fetchOrderBookSummary(tokenId!),
-    enabled: Boolean(tokenId),
+    queryKey: ['orderbook-summary', tokenIdsKey],
+    queryFn: () => fetchOrderBookSummaries(tokenIds),
+    enabled: tokenIds.length > 0,
     staleTime: 15_000,
     gcTime: 60_000,
     refetchOnWindowFocus: false,
@@ -84,7 +95,15 @@ function useOrderBookSummary(tokenId?: string) {
 
 export default function EventOrderBook({ market, outcome }: EventOrderBookProps) {
   const tokenId = outcome?.token_id || market.outcomes[0]?.token_id
-  const { data, isLoading, isError } = useOrderBookSummary(tokenId)
+  const tokenIds = useMemo(() => {
+    const ids = market.outcomes
+      .map(currentOutcome => currentOutcome.token_id)
+      .filter((value): value is string => Boolean(value))
+    return Array.from(new Set(ids))
+  }, [market.outcomes])
+
+  const { data, isLoading } = useOrderBookSummaries(tokenIds)
+  const summary = tokenId ? data?.[tokenId] ?? null : null
   const setType = useOrder(state => state.setType)
   const setLimitPrice = useOrder(state => state.setLimitPrice)
   const setLimitShares = useOrder(state => state.setLimitShares)
@@ -99,8 +118,8 @@ export default function EventOrderBook({ market, outcome }: EventOrderBookProps)
     maxShares,
     outcomeLabel,
   } = useMemo(
-    () => buildOrderBookSnapshot(data ?? null, market, outcome),
-    [data, market, outcome],
+    () => buildOrderBookSnapshot(summary, market, outcome),
+    [summary, market, outcome],
   )
 
   const renderedAsks = useMemo(
@@ -134,14 +153,6 @@ export default function EventOrderBook({ market, outcome }: EventOrderBookProps)
       <div className="flex items-center justify-center gap-2 px-4 py-6 text-sm text-muted-foreground">
         <Loader2Icon className="size-4 animate-spin" />
         Loading order book...
-      </div>
-    )
-  }
-
-  if (isError) {
-    return (
-      <div className="px-4 py-6 text-center text-sm text-muted-foreground">
-        Failed to load order book. Please try again later.
       </div>
     )
   }
@@ -299,17 +310,24 @@ function buildOrderBookSnapshot(
   const bestAsk = normalizedAsks[0]?.priceCents
   const bestBid = normalizedBids[0]?.priceCents
 
-  let lastPrice: number | null = null
-  if (typeof bestBid === 'number') {
-    lastPrice = bestBid
-  }
-  else if (typeof bestAsk === 'number') {
-    lastPrice = bestAsk
+  const spreadOverride = toDisplayCents(summary?.spread)
+  const lastPriceOverride = toDisplayCents(summary?.last_trade_price)
+
+  let lastPrice: number | null = lastPriceOverride ?? null
+  if (lastPrice === null) {
+    if (typeof bestBid === 'number') {
+      lastPrice = bestBid
+    }
+    else if (typeof bestAsk === 'number') {
+      lastPrice = bestAsk
+    }
   }
 
-  const spread = typeof bestAsk === 'number' && typeof bestBid === 'number'
+  const computedSpread = typeof bestAsk === 'number' && typeof bestBid === 'number'
     ? Math.max(0, Number((bestAsk - bestBid).toFixed(1)))
     : null
+
+  const spread = spreadOverride ?? computedSpread
 
   return {
     asks: normalizedAsks,
@@ -385,4 +403,17 @@ function formatSharesInput(value: number) {
   }
 
   return Number(value.toFixed(2)).toString()
+}
+
+function toDisplayCents(value?: string | number | null) {
+  if (value === null || value === undefined) {
+    return null
+  }
+
+  const numeric = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(numeric)) {
+    return null
+  }
+
+  return Number((numeric * 100).toFixed(1))
 }

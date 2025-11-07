@@ -738,7 +738,7 @@ export function PredictionChart({
             stroke="transparent"
             tickStroke="transparent"
             tickLabelProps={{
-              fill: '#858D92',
+              fill: 'var(--muted-foreground)',
               fontSize: 11,
               fontFamily: 'Arial, sans-serif',
               textAnchor: 'start',
@@ -756,11 +756,11 @@ export function PredictionChart({
             stroke="transparent"
             tickStroke="transparent"
             tickLabelProps={{
-              fill: '#858D92',
+              fill: 'var(--muted-foreground)',
               fontSize: 11,
               fontFamily: 'Arial, sans-serif',
               textAnchor: 'middle',
-              dy: '0.25em',
+              dy: '0.6em',
             }}
             numTicks={6}
             tickLength={0}
