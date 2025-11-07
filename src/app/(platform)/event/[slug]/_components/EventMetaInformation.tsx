@@ -2,7 +2,7 @@ import type { Event } from '@/types'
 import { Clock3Icon } from 'lucide-react'
 import { NewBadge } from '@/components/ui/new-badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { formatDate, formatVolume, isMarketNew } from '@/lib/utils'
+import { formatDate, isMarketNew } from '@/lib/utils'
 
 interface EventMetaInformationProps {
   event: Event
@@ -13,7 +13,10 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
     market => isMarketNew(market.created_at),
   )
   const expiryTooltip = 'This is estimated end date.<br>See rules below for specific resolution details.'
-  const volumeLabel = `Volume ${formatVolume(event.markets[0].total_volume)}`
+  const primaryMarket = event.markets[0]
+  const totalVolume = Math.max(0, primaryMarket?.total_volume ?? 0)
+  const formattedVolume = totalVolume.toLocaleString('en-US')
+  const volumeLabel = `$${formattedVolume} Vol.`
 
   const maybeEndDate = event.end_date ? new Date(event.end_date) : null
   const expiryDate = maybeEndDate && !Number.isNaN(maybeEndDate.getTime()) ? maybeEndDate : null
@@ -27,7 +30,7 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
               className="rounded-sm p-2"
             />
           )
-        : <span>{volumeLabel}</span>}
+        : <span className="text-sm font-semibold">{volumeLabel}</span>}
       {!hasRecentMarket && expiryDate && <span>•</span>}
       {expiryDate && (
         <Tooltip>

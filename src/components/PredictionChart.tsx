@@ -1,5 +1,10 @@
 'use client'
 
+import type {
+  Dispatch,
+  MutableRefObject,
+  SetStateAction,
+} from 'react'
 import { AxisBottom, AxisRight } from '@visx/axis'
 import { curveMonotoneX } from '@visx/curve'
 import { localPoint } from '@visx/event'
@@ -8,7 +13,13 @@ import { scaleLinear, scaleTime } from '@visx/scale'
 import { LinePath } from '@visx/shape'
 import { useTooltip } from '@visx/tooltip'
 import { bisector } from 'd3-array'
-import { useCallback, useLayoutEffect, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react'
 
 // Data types
 interface DataPoint {
@@ -28,9 +39,15 @@ interface PredictionChartProps {
   width?: number
   height?: number
   margin?: { top: number, right: number, bottom: number, left: number }
+  onCursorDataChange?: (snapshot: PredictionChartCursorSnapshot | null) => void
 }
 
 const bisectDate = bisector<DataPoint, Date>(d => d.date).left
+
+export interface PredictionChartCursorSnapshot {
+  date: Date
+  values: Record<string, number>
+}
 
 // Example usage with multiple custom series:
 // const customData = [
@@ -50,6 +67,134 @@ const TOOLTIP_LABEL_MAX_WIDTH = 160
 const TOOLTIP_LABEL_ANCHOR_OFFSET = 10
 const FUTURE_LINE_COLOR = '#2C3F4F'
 const FUTURE_LINE_OPACITY = 0.55
+const INITIAL_REVEAL_DURATION = 1400
+const INTERACTION_BASE_REVEAL_DURATION = 1100
+
+function clamp01(value: number) {
+  if (value < 0) {
+    return 0
+  }
+
+  if (value > 1) {
+    return 1
+  }
+
+  return value
+}
+
+function easeOutCubic(t: number) {
+  return 1 - (1 - t) ** 3
+}
+
+interface RevealAnimationOptions {
+  from: number
+  to: number
+  duration?: number
+  frameRef: MutableRefObject<number | null>
+  setProgress: Dispatch<SetStateAction<number>>
+}
+
+function stopRevealAnimation(frameRef: MutableRefObject<number | null>) {
+  if (frameRef.current !== null) {
+    cancelAnimationFrame(frameRef.current)
+    frameRef.current = null
+  }
+}
+
+function runRevealAnimation({
+  from,
+  to,
+  duration = INTERACTION_BASE_REVEAL_DURATION,
+  frameRef,
+  setProgress,
+}: RevealAnimationOptions) {
+  const clampedFrom = clamp01(from)
+  const clampedTo = clamp01(to)
+
+  stopRevealAnimation(frameRef)
+
+  if (clampedFrom === clampedTo) {
+    setProgress(clampedTo)
+    return
+  }
+
+  let startTimestamp: number | null = null
+
+  function step(timestamp: number) {
+    if (startTimestamp === null) {
+      startTimestamp = timestamp
+    }
+
+    const elapsed = timestamp - startTimestamp
+    const progress = clamp01(duration === 0 ? 1 : elapsed / duration)
+    const nextValue = clampedFrom + (clampedTo - clampedFrom) * easeOutCubic(progress)
+
+    setProgress(nextValue)
+
+    if (progress < 1) {
+      frameRef.current = requestAnimationFrame(step)
+    }
+    else {
+      frameRef.current = null
+    }
+  }
+
+  setProgress(clampedFrom)
+  frameRef.current = requestAnimationFrame(step)
+}
+
+function interpolateSeriesPoint(
+  targetDate: Date,
+  previousPoint: DataPoint | null,
+  nextPoint: DataPoint | null,
+  series: SeriesConfig[],
+): DataPoint | null {
+  if (!previousPoint && !nextPoint) {
+    return null
+  }
+
+  const targetTime = targetDate.getTime()
+
+  if (nextPoint && targetTime === nextPoint.date.getTime()) {
+    return nextPoint
+  }
+
+  if (previousPoint && targetTime === previousPoint.date.getTime()) {
+    return previousPoint
+  }
+
+  if (!previousPoint || !nextPoint) {
+    return previousPoint ?? nextPoint ?? null
+  }
+
+  const prevTime = previousPoint.date.getTime()
+  const nextTime = nextPoint.date.getTime()
+  const denominator = nextTime - prevTime
+
+  if (denominator === 0) {
+    return previousPoint
+  }
+
+  const ratio = (targetTime - prevTime) / denominator
+  const interpolated: DataPoint = { date: targetDate }
+
+  series.forEach((seriesItem) => {
+    const prevValue = previousPoint[seriesItem.key]
+    const nextValue = nextPoint[seriesItem.key]
+
+    if (typeof prevValue === 'number' && typeof nextValue === 'number') {
+      interpolated[seriesItem.key] = prevValue + (nextValue - prevValue) * ratio
+    }
+    else if (typeof prevValue === 'number') {
+      interpolated[seriesItem.key] = prevValue
+    }
+    else if (typeof nextValue === 'number') {
+      interpolated[seriesItem.key] = nextValue
+    }
+  })
+
+  return interpolated
+}
 
 export function PredictionChart({
   data: providedData,
@@ -57,10 +202,42 @@ export function PredictionChart({
   width = 800,
   height = 400,
   margin = defaultMargin,
+  onCursorDataChange,
 }: PredictionChartProps): React.ReactElement {
   const [data, setData] = useState<DataPoint[]>([])
   const [series, setSeries] = useState<SeriesConfig[]>([])
   const [isClient, setIsClient] = useState(false)
+  const [revealProgress, setRevealProgress] = useState(0)
+  const revealAnimationFrameRef = useRef<number | null>(null)
+  const hasPointerInteractionRef = useRef(false)
+  const lastCursorProgressRef = useRef(0)
+  const emitCursorDataChange = useCallback(
+    (point: DataPoint | null) => {
+      if (!onCursorDataChange) {
+        return
+      }
+
+      if (!point) {
+        onCursorDataChange(null)
+        return
+      }
+
+      const values: Record<string, number> = {}
+
+      series.forEach((seriesItem) => {
+        const value = point[seriesItem.key]
+        if (typeof value === 'number' && Number.isFinite(value)) {
+          values[seriesItem.key] = value
+        }
+      })
+
+      onCursorDataChange({
+        date: point.date,
+        values,
+      })
+    },
+    [onCursorDataChange, series],
+  )
 
   const {
     tooltipData,
@@ -81,13 +258,12 @@ export function PredictionChart({
       const { x } = localPoint(event) || { x: 0 }
       const innerWidth = width - margin.left - margin.right
       const innerHeight = height - margin.top - margin.bottom
+      const domainStart = Math.min(...data.map(d => d.date.getTime()))
+      const domainEnd = Math.max(...data.map(d => d.date.getTime()))
 
       const xScale = scaleTime<number>({
         range: [0, innerWidth],
-        domain: [
-          Math.min(...data.map(d => d.date.getTime())),
-          Math.max(...data.map(d => d.date.getTime())),
-        ],
+        domain: [domainStart, domainEnd],
       })
 
       const yScale = scaleLinear<number>({
@@ -97,24 +273,65 @@ export function PredictionChart({
       })
 
       const x0 = xScale.invert(x - margin.left)
+      const domainSpan = Math.max(1, domainEnd - domainStart)
+      const hoverProgress = clamp01((Math.max(domainStart, Math.min(domainEnd, x0.getTime())) - domainStart) / domainSpan)
+      lastCursorProgressRef.current = hoverProgress
+      hasPointerInteractionRef.current = true
+      stopRevealAnimation(revealAnimationFrameRef)
       const index = bisectDate(data, x0, 1)
-      const d0 = data[index - 1]
-      const d1 = data[index]
-      let d = d0
-      if (d1 && d1.date) {
-        d
-          = x0.valueOf() - d0.date.valueOf() > d1.date.valueOf() - x0.valueOf()
-            ? d1
-            : d0
-      }
+      const d0 = data[index - 1] ?? null
+      const d1 = data[index] ?? null
+      const resolvedPoint = interpolateSeriesPoint(x0, d0, d1, series)
+      const tooltipPoint = resolvedPoint ?? d0 ?? d1 ?? data[0]
+
       showTooltip({
-        tooltipData: d,
+        tooltipData: tooltipPoint,
         tooltipLeft: x - margin.left,
-        tooltipTop: yScale((d[series[0].key] as number) || 0),
+        tooltipTop: yScale((tooltipPoint[series[0].key] as number) || 0),
       })
+
+      emitCursorDataChange(resolvedPoint ?? tooltipPoint ?? null)
     },
-    [showTooltip, data, series, width, height, margin],
+    [
+      showTooltip,
+      data,
+      series,
+      width,
+      height,
+      margin,
+      revealAnimationFrameRef,
+      emitCursorDataChange,
+    ],
   )
+
+  const dataLength = data.length
+
+  const handleInteractionEnd = useCallback(() => {
+    hideTooltip()
+    emitCursorDataChange(null)
+
+    if (!dataLength) {
+      return
+    }
+
+    if (!hasPointerInteractionRef.current) {
+      return
+    }
+
+    hasPointerInteractionRef.current = false
+
+    const startProgress = clamp01(lastCursorProgressRef.current)
+    const distance = Math.abs(1 - startProgress)
+    const duration = Math.max(400, distance * INTERACTION_BASE_REVEAL_DURATION)
+
+    runRevealAnimation({
+      from: startProgress,
+      to: 1,
+      duration,
+      frameRef: revealAnimationFrameRef,
+      setProgress: setRevealProgress,
+    })
+  }, [hideTooltip, emitCursorDataChange, dataLength, revealAnimationFrameRef])
 
   useLayoutEffect(() => {
     queueMicrotask(() => {
@@ -123,9 +340,29 @@ export function PredictionChart({
       if (providedData && providedSeries) {
         setData(providedData)
         setSeries(providedSeries)
+        setRevealProgress(0)
       }
     })
   }, [providedData, providedSeries])
+
+  useEffect(
+    () => () => stopRevealAnimation(revealAnimationFrameRef),
+    [revealAnimationFrameRef],
+  )
+
+  useEffect(() => {
+    if (data.length > 0) {
+      hasPointerInteractionRef.current = false
+      lastCursorProgressRef.current = 0
+      runRevealAnimation({
+        from: 0,
+        to: 1,
+        duration: INITIAL_REVEAL_DURATION,
+        frameRef: revealAnimationFrameRef,
+        setProgress: setRevealProgress,
+      })
+    }
+  }, [data, revealAnimationFrameRef])
 
   if (!isClient || data.length === 0 || series.length === 0) {
     return (
@@ -171,42 +408,7 @@ export function PredictionChart({
 
   let cursorPoint: DataPoint | null = null
   if (tooltipActive && cursorDate) {
-    const cursorTime = cursorDate.getTime()
-
-    if (nextPoint && cursorTime === nextPoint.date.getTime()) {
-      cursorPoint = nextPoint
-    }
-    else if (previousPoint && cursorTime === previousPoint.date.getTime()) {
-      cursorPoint = previousPoint
-    }
-    else if (previousPoint && nextPoint) {
-      const prevTime = previousPoint.date.getTime()
-      const nextTime = nextPoint.date.getTime()
-      const denominator = nextTime - prevTime
-
-      if (denominator !== 0) {
-        const ratio = (cursorTime - prevTime) / denominator
-        const interpolated: DataPoint = { date: cursorDate }
-
-        series.forEach((seriesItem) => {
-          const prevValue = previousPoint[seriesItem.key]
-          const nextValue = nextPoint[seriesItem.key]
-
-          if (typeof prevValue === 'number' && typeof nextValue === 'number') {
-            interpolated[seriesItem.key] = prevValue
-              + (nextValue - prevValue) * ratio
-          }
-          else if (typeof prevValue === 'number') {
-            interpolated[seriesItem.key] = prevValue
-          }
-          else if (typeof nextValue === 'number') {
-            interpolated[seriesItem.key] = nextValue
-          }
-        })
-
-        cursorPoint = interpolated
-      }
-    }
+    cursorPoint = interpolateSeriesPoint(cursorDate, previousPoint, nextPoint, series)
   }
 
   let coloredPoints: DataPoint[] = data
@@ -256,6 +458,18 @@ export function PredictionChart({
       coloredPoints = [data[0]]
     }
   }
+  else if (data.length > 0) {
+    const totalSegments = Math.max(1, data.length - 1)
+    const revealIndex = Math.round(totalSegments * clamp01(revealProgress))
+    const clampedIndex = Math.min(revealIndex, data.length - 1)
+
+    coloredPoints = data.slice(0, clampedIndex + 1)
+    mutedPoints = data.slice(clampedIndex + 1)
+
+    if (coloredPoints.length === 0) {
+      coloredPoints = [data[0]]
+    }
+  }
 
   const lastDataPoint = data.length > 0 ? data[data.length - 1] : null
   const isTooltipAtLastPoint = tooltipActive
@@ -263,6 +477,7 @@ export function PredictionChart({
     && tooltipData === lastDataPoint
   const showEndpointMarkers = Boolean(lastDataPoint)
     && (!tooltipActive || isTooltipAtLastPoint)
+    && mutedPoints.length === 0
   const totalDurationHours = data.length > 1
     ? (data[data.length - 1].date.valueOf() - data[0].date.valueOf()) / 36e5
     : 0
@@ -417,7 +632,7 @@ export function PredictionChart({
 
             return (
               <g key={seriesItem.key}>
-                {mutedPoints.length > 1 && (
+                {tooltipActive && mutedPoints.length > 1 && (
                   <LinePath<DataPoint>
                     data={mutedPoints}
                     x={d => xScale(getDate(d))}
@@ -465,16 +680,14 @@ export function PredictionChart({
                   <circle
                     cx={cx}
                     cy={cy}
-                    r={7}
-                    fill="transparent"
-                    stroke={seriesItem.color}
-                    strokeOpacity={0.18}
-                    strokeWidth={2}
+                    r={9}
+                    fill={seriesItem.color}
+                    fillOpacity={0.18}
                   />
                   <circle
                     cx={cx}
                     cy={cy}
-                    r={4}
+                    r={3}
                     fill={seriesItem.color}
                     stroke={seriesItem.color}
                     strokeWidth={1.5}
@@ -527,7 +740,9 @@ export function PredictionChart({
             onTouchStart={handleTooltip}
             onTouchMove={handleTooltip}
             onMouseMove={handleTooltip}
-            onMouseLeave={() => hideTooltip()}
+            onMouseLeave={handleInteractionEnd}
+            onTouchEnd={handleInteractionEnd}
+            onTouchCancel={handleInteractionEnd}
           />
 
           {tooltipActive && (
@@ -566,8 +781,8 @@ export function PredictionChart({
             className="absolute text-[12px] font-medium text-[#858D92]"
             style={{
               top: Math.max(margin.top - 28, 0),
-              left: margin.left + clampedTooltipX - 12,
-              transform: 'translateX(-100%)',
+              left: margin.left + clampedTooltipX,
+              transform: 'translateX(-50%)',
               whiteSpace: 'nowrap',
             }}
           >
