@@ -86,7 +86,7 @@ export const TagRepository = {
     })
 
     if (error || !mainTagsResult) {
-      const errorMessage = typeof error === 'string' ? error : error?.message || 'Unknown error'
+      const errorMessage = typeof error === 'string' ? error : 'Unknown error'
       return { data: null, error: errorMessage, globalChilds: [] }
     }
 
@@ -117,7 +117,7 @@ export const TagRepository = {
 
     if (viewError || !subcategoriesResult) {
       const tagsWithChilds = mainVisibleTags.map((tag: any) => ({ ...tag, childs: [] }))
-      const errorMessage = typeof viewError === 'string' ? viewError : viewError?.message || null
+      const errorMessage = typeof viewError === 'string' ? viewError : 'Unknown error'
       return { data: tagsWithChilds, error: errorMessage, globalChilds: [] }
     }
 
@@ -307,10 +307,9 @@ export const TagRepository = {
 
     if (error || countError) {
       const errorMessage = error || countError
-      const finalError = typeof errorMessage === 'string' ? errorMessage : errorMessage?.message || 'Unknown error'
       return {
         data: [],
-        error: finalError,
+        error: errorMessage,
         totalCount: 0,
       }
     }
@@ -359,8 +358,7 @@ export const TagRepository = {
     })
 
     if (error || !updateResult?.[0]) {
-      const errorMessage = typeof error === 'string' ? error : error?.message || 'Unknown error'
-      return { data: null, error: errorMessage }
+      return { data: null, error: error ?? 'Unknown error' }
     }
 
     const parentTags = alias(tags, 'parent_tags')
@@ -394,8 +392,7 @@ export const TagRepository = {
     })
 
     if (selectError || !selectResult?.[0]) {
-      const errorMessage = typeof selectError === 'string' ? selectError : selectError?.message || 'Unknown error'
-      return { data: null, error: errorMessage }
+      return { data: null, error: selectError ?? 'Unknown error' }
     }
 
     revalidatePath('/')

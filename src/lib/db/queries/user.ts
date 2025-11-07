@@ -49,28 +49,35 @@ export const UserRepository = {
   },
 
   async updateUserProfileById(userId: string, input: any) {
-    try {
-      const result = await db
-        .update(users)
-        .set(input)
-        .where(eq(users.id, userId))
-        .returning({ id: users.id })
+    return runQuery(async () => {
+      try {
+        const result = await db
+          .update(users)
+          .set(input)
+          .where(eq(users.id, userId))
+          .returning()
 
-      const data = result[0] || null
+        const data = result[0] as typeof users.$inferSelect | undefined
 
-      return { data, error: null }
-    }
-    catch (error: any) {
-      if (error.code === '23505') {
-        if (error.detail?.includes('email') || error.constraint?.includes('email')) {
-          return { data: null, error: { email: 'Email is already taken.' } }
+        if (!data) {
+          return { data: null, error: 'User not found.' }
         }
-        if (error.detail?.includes('username') || error.constraint?.includes('username')) {
-          return { data: null, error: { username: 'Username is already taken.' } }
-        }
+
+        return { data: data!, error: null }
       }
-      return { data: null, error: 'Failed to update user.' }
-    }
+      catch (error: any) {
+        if (error.code === '23505') {
+          if (error.detail?.includes('email') || error.constraint?.includes('email')) {
+            return { data: null, error: 'Email is already taken.' }
+          }
+          if (error.detail?.includes('username') || error.constraint?.includes('username')) {
+            return { data: null, error: 'Username is already taken.' }
+          }
+        }
+        console.error('Failed to update user profile:', error)
+        return { data: null, error: 'Failed to update user.' }
+      }
+    })
   },
 
   async updateUserNotificationSettings(currentUser: User, preferences: any) {
@@ -201,91 +208,99 @@ export const UserRepository = {
   } = {}) {
     'use cache'
 
-    try {
-      const {
-        limit: rawLimit = 100,
-        offset = 0,
-        search,
-        sortBy = 'created_at',
-        sortOrder = 'desc',
-      } = params
+    const { data, error } = await runQuery(async () => {
+      try {
+        const {
+          limit: rawLimit = 100,
+          offset = 0,
+          search,
+          sortBy = 'created_at',
+          sortOrder = 'desc',
+        } = params
 
-      const limit = Math.min(Math.max(rawLimit, 1), 1000)
+        const limit = Math.min(Math.max(rawLimit, 1), 1000)
 
-      let whereCondition
-      if (search && search.trim()) {
-        const searchTerm = search.trim()
-        const sanitizedSearchTerm = searchTerm
-          .replace(/[,()]/g, ' ')
-          .replace(/['"]/g, '')
-          .replace(/\s+/g, ' ')
-          .trim()
+        let whereCondition
+        if (search && search.trim()) {
+          const searchTerm = search.trim()
+          const sanitizedSearchTerm = searchTerm
+            .replace(/[,()]/g, ' ')
+            .replace(/['"]/g, '')
+            .replace(/\s+/g, ' ')
+            .trim()
 
-        if (sanitizedSearchTerm) {
-          whereCondition = or(
-            ilike(users.username, `%${sanitizedSearchTerm}%`),
-            ilike(users.email, `%${sanitizedSearchTerm}%`),
-            ilike(users.address, `%${sanitizedSearchTerm}%`),
-          )
+          if (sanitizedSearchTerm) {
+            whereCondition = or(
+              ilike(users.username, `%${sanitizedSearchTerm}%`),
+              ilike(users.email, `%${sanitizedSearchTerm}%`),
+              ilike(users.address, `%${sanitizedSearchTerm}%`),
+            )
+          }
         }
-      }
 
-      let orderByClause
-      if (sortBy === 'username') {
-        const sortDirection = sortOrder === 'asc' ? asc : desc
-        orderByClause = [sortDirection(users.username), sortDirection(users.address)]
-      }
-      else {
-        let sortColumn
-        switch (sortBy) {
-          case 'email':
-            sortColumn = users.email
-            break
-          case 'address':
-            sortColumn = users.address
-            break
-          case 'created_at':
-            sortColumn = users.created_at
-            break
-          default:
-            sortColumn = users.created_at
+        let orderByClause
+        if (sortBy === 'username') {
+          const sortDirection = sortOrder === 'asc' ? asc : desc
+          orderByClause = [sortDirection(users.username), sortDirection(users.address)]
         }
-        const sortDirection = sortOrder === 'asc' ? asc : desc
-        orderByClause = [sortDirection(sortColumn)]
+        else {
+          let sortColumn
+          switch (sortBy) {
+            case 'email':
+              sortColumn = users.email
+              break
+            case 'address':
+              sortColumn = users.address
+              break
+            case 'created_at':
+              sortColumn = users.created_at
+              break
+            default:
+              sortColumn = users.created_at
+          }
+          const sortDirection = sortOrder === 'asc' ? asc : desc
+          orderByClause = [sortDirection(sortColumn)]
+        }
+
+        const queryBuilder = db
+          .select({
+            id: users.id,
+            username: users.username,
+            email: users.email,
+            address: users.address,
+            created_at: users.created_at,
+            image: users.image,
+            affiliate_code: users.affiliate_code,
+            referred_by_user_id: users.referred_by_user_id,
+          })
+          .from(users)
+
+        const rows = await (whereCondition
+          ? queryBuilder.where(whereCondition).orderBy(...orderByClause).limit(limit).offset(offset)
+          : queryBuilder.orderBy(...orderByClause).limit(limit).offset(offset))
+
+        const countQueryBuilder = db
+          .select({ count: count() })
+          .from(users)
+
+        const countResult = await (whereCondition
+          ? countQueryBuilder.where(whereCondition)
+          : countQueryBuilder)
+        const totalCount = countResult[0]?.count || 0
+
+        return { data: { users: rows, count: totalCount }, error: null }
       }
+      catch (err) {
+        console.error('Error in listUsers:', err)
+        return { data: null, error: 'Failed to fetch users' }
+      }
+    })
 
-      const queryBuilder = db
-        .select({
-          id: users.id,
-          username: users.username,
-          email: users.email,
-          address: users.address,
-          created_at: users.created_at,
-          image: users.image,
-          affiliate_code: users.affiliate_code,
-          referred_by_user_id: users.referred_by_user_id,
-        })
-        .from(users)
-
-      const data = await (whereCondition
-        ? queryBuilder.where(whereCondition).orderBy(...orderByClause).limit(limit).offset(offset)
-        : queryBuilder.orderBy(...orderByClause).limit(limit).offset(offset))
-
-      const countQueryBuilder = db
-        .select({ count: count() })
-        .from(users)
-
-      const countResult = await (whereCondition
-        ? countQueryBuilder.where(whereCondition)
-        : countQueryBuilder)
-      const totalCount = countResult[0]?.count || 0
-
-      return { data, error: null, count: totalCount }
+    if (!data || error) {
+      return { data: null, error: error || 'Failed to fetch users', count: 0 }
     }
-    catch (error) {
-      console.error('Error in listUsers:', error)
-      return { data: null, error: 'Failed to fetch users', count: 0 }
-    }
+
+    return { data: data.users, error: null, count: data.count }
   },
 
   async getUsersByIds(ids: string[]) {
