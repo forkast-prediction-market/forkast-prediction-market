@@ -1,5 +1,6 @@
 import type { PublicProfile } from '@/types'
 import { NextResponse } from 'next/server'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
@@ -20,8 +21,7 @@ export async function GET(request: Request) {
     })
 
     if (error) {
-      console.error('Error searching users:', error)
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
 
     const profiles: PublicProfile[] = (data || []).map(user => ({
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
     return NextResponse.json(profiles)
   }
   catch (error) {
-    console.error('Error in user search API:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('API Error:', error)
+    return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
   }
 }

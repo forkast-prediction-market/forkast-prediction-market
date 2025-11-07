@@ -12,42 +12,30 @@ export const NotificationRepository = {
     cacheTag(cacheTags.notifications(user_id))
 
     return runQuery(async () => {
-      try {
-        const data = await db
-          .select()
-          .from(notifications)
-          .where(eq(notifications.user_id, user_id))
-          .orderBy(desc(notifications.created_at))
+      const data = await db
+        .select()
+        .from(notifications)
+        .where(eq(notifications.user_id, user_id))
+        .orderBy(desc(notifications.created_at))
 
-        return { data, error: null }
-      }
-      catch (error) {
-        console.error('Failed to fetch notifications:', error)
-        return { data: null, error: 'Failed to fetch notifications.' }
-      }
+      return { data, error: null }
     })
   },
 
   async deleteById(notificationId: string, user_id: string): Promise<QueryResult<null>> {
     return runQuery(async () => {
-      try {
-        await db
-          .delete(notifications)
-          .where(
-            and(
-              eq(notifications.id, notificationId),
-              eq(notifications.user_id, user_id),
-            ),
-          )
+      await db
+        .delete(notifications)
+        .where(
+          and(
+            eq(notifications.id, notificationId),
+            eq(notifications.user_id, user_id),
+          ),
+        )
 
-        revalidateTag(cacheTags.notifications(user_id), 'max')
+      revalidateTag(cacheTags.notifications(user_id), 'max')
 
-        return { data: null, error: null }
-      }
-      catch (error) {
-        console.error('Failed to delete notification:', error)
-        return { data: null, error: 'Failed to delete notification.' }
-      }
+      return { data: null, error: null }
     })
   },
 }

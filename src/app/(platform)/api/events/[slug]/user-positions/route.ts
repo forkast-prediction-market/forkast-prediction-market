@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
 
 export async function GET(
@@ -12,7 +13,7 @@ export async function GET(
     if (!slug) {
       return NextResponse.json(
         { error: 'Event slug is required.' },
-        { status: 400 },
+        { status: 422 },
       )
     }
 
@@ -20,26 +21,19 @@ export async function GET(
       return NextResponse.json({ data: [] })
     }
 
-    const result = await UserRepository.getUserOutcomePositionsByEvent({
+    const { data, error } = await UserRepository.getUserOutcomePositionsByEvent({
       userId: user.id,
       eventSlug: slug,
     })
 
-    if (result.error) {
-      console.error('Error fetching user positions for event:', result.error)
-      return NextResponse.json(
-        { error: 'Failed to fetch positions.' },
-        { status: 500 },
-      )
+    if (error) {
+      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
 
-    return NextResponse.json({ data: result.data ?? [] })
+    return NextResponse.json({ data: data ?? [] })
   }
   catch (error) {
-    console.error('Unexpected error in event user positions API:', error)
-    return NextResponse.json(
-      { error: 'Internal server error.' },
-      { status: 500 },
-    )
+    console.error('API Error:', error)
+    return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
   }
 }

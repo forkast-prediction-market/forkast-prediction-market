@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { EventRepository } from '@/lib/db/queries/event'
 
 export async function GET(
@@ -13,8 +14,7 @@ export async function GET(
     const { data: holdersData, error: holdersError } = await EventRepository.getEventTopHolders(slug, conditionId)
 
     if (!holdersData || holdersError) {
-      console.error('Error fetching event holders:', holdersError)
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
 
     return NextResponse.json({
@@ -23,7 +23,7 @@ export async function GET(
     })
   }
   catch (error) {
-    console.error('Unexpected error in holders API route:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('API error:', error)
+    return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
   }
 }

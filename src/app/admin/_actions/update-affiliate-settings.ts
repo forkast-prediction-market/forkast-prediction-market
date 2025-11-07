@@ -2,12 +2,12 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { SettingsRepository } from '@/lib/db/queries/settings'
 import { UserRepository } from '@/lib/db/queries/user'
 
 export interface ForkSettingsActionState {
-  error?: string
-  success?: string
+  error: string | null
 }
 
 const UpdateForkSettingsSchema = z.object({
@@ -21,7 +21,7 @@ export async function updateForkSettingsAction(
 ): Promise<ForkSettingsActionState> {
   const user = await UserRepository.getCurrentUser()
   if (!user || !user.is_admin) {
-    return { error: 'Not authorized.' }
+    return { error: 'Unauthenticated.' }
   }
 
   const parsed = UpdateForkSettingsSchema.safeParse({
@@ -42,10 +42,10 @@ export async function updateForkSettingsAction(
   ])
 
   if (error) {
-    console.error('Failed to update fork settings', error)
-    return { error: 'Failed to update settings.' }
+    return { error: DEFAULT_ERROR_MESSAGE }
   }
 
   revalidatePath('/admin/affiliate')
-  return { success: 'Settings updated successfully.' }
+
+  return { error: null }
 }

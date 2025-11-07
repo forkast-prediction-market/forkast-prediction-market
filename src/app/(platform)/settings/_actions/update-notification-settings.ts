@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
 
 export async function updateNotificationSettingsAction(formData: FormData) {
@@ -17,11 +18,15 @@ export async function updateNotificationSettingsAction(formData: FormData) {
       return { error: 'Unauthenticated.' }
     }
 
-    await UserRepository.updateUserNotificationSettings(user, preferences)
+    const { error } = await UserRepository.updateUserNotificationSettings(user, preferences)
+
+    if (error) {
+      return { error }
+    }
 
     revalidatePath('/settings')
   }
   catch {
-    return { error: 'Failed to update notification settings' }
+    return { error: DEFAULT_ERROR_MESSAGE }
   }
 }

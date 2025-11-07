@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -7,7 +8,7 @@ export async function GET(request: Request) {
   if (!tokenId) {
     return NextResponse.json(
       { error: 'token_id is required' },
-      { status: 400 },
+      { status: 422 },
     )
   }
 
@@ -25,11 +26,7 @@ export async function GET(request: Request) {
     const text = await response.text()
 
     if (!response.ok) {
-      console.error('Failed to fetch order book summary:', response.status, text)
-      return NextResponse.json(
-        { error: 'Failed to fetch order book summary' },
-        { status: response.status || 500 },
-      )
+      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
 
     try {
@@ -38,17 +35,11 @@ export async function GET(request: Request) {
     }
     catch (error) {
       console.error('Failed to parse order book response', error)
-      return NextResponse.json(
-        { error: 'Failed to parse order book response' },
-        { status: 500 },
-      )
+      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
   }
   catch (error) {
     console.error('Unexpected error while fetching order book summary', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch order book summary' },
-      { status: 500 },
-    )
+    return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
   }
 }

@@ -84,7 +84,7 @@ function buildMarketContextVariables(event: Event, market: Market) {
 
   return {
     'event-title': sanitizeForPrompt(event.title),
-    'event-description': sanitizeForPrompt(event.description),
+    'event-description': sanitizeForPrompt(event.rules),
     'event-main-tag': sanitizeForPrompt(event.main_tag),
     'event-creator': sanitizeForPrompt(event.creator),
     'event-created-at': sanitizeForPrompt(event.created_at),

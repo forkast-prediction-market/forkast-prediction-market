@@ -60,18 +60,16 @@ export default function AdminMarketContextSettingsForm({
   const [state, formAction, isPending] = useActionState(updateMarketContextSettingsAction, initialState)
 
   useEffect(() => {
-    if (state.success) {
-      toast.success(state.success)
+    if (!isPending && state.error === null) {
+      toast.success('Settings updated successfully!')
     }
-    if (state.error) {
+    else if (!isPending && state.error) {
       toast.error(state.error)
     }
-  }, [state.error, state.success])
+  }, [isPending, state.error])
 
   useEffect(() => {
-    queueMicrotask(() => {
-      setModelOptions(models)
-    })
+    queueMicrotask(() => setModelOptions(models))
   }, [models])
 
   useEffect(() => {

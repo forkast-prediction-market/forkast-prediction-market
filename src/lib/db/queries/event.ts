@@ -197,7 +197,6 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
     id: event.id || '',
     slug: event.slug || '',
     title: event.title || '',
-    description: event.rules || '', // Use rules as description since Event interface requires it
     creator: event.creator || '',
     icon_url: getSupabaseImageUrl(event.icon_url),
     show_market_icons: event.show_market_icons ?? true,

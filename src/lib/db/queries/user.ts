@@ -2,6 +2,7 @@ import type { ActivityOrder, MarketOrderType, PositionsQueryParams, QueryResult,
 import { and, asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
 import { users } from '@/lib/db/schema/auth/tables'
 import { conditions, events, markets, outcomes } from '@/lib/db/schema/events/tables'
@@ -97,7 +98,7 @@ export const UserRepository = {
       const data = result[0] || null
 
       if (!data) {
-        return { data: null, error: 'Failed to update notification preferences.' }
+        return { data: null, error: DEFAULT_ERROR_MESSAGE }
       }
 
       return { data, error: null }
@@ -122,7 +123,7 @@ export const UserRepository = {
       const data = result[0] || null
 
       if (!data) {
-        return { data: null, error: 'Failed to update trading settings.' }
+        return { data: null, error: DEFAULT_ERROR_MESSAGE }
       }
 
       return { data, error: null }
@@ -208,95 +209,89 @@ export const UserRepository = {
     'use cache'
 
     const { data, error } = await runQuery(async () => {
-      try {
-        const {
-          limit: rawLimit = 100,
-          offset = 0,
-          search,
-          sortBy = 'created_at',
-          sortOrder = 'desc',
-        } = params
+      const {
+        limit: rawLimit = 100,
+        offset = 0,
+        search,
+        sortBy = 'created_at',
+        sortOrder = 'desc',
+      } = params
 
-        const limit = Math.min(Math.max(rawLimit, 1), 1000)
+      const limit = Math.min(Math.max(rawLimit, 1), 1000)
 
-        let whereCondition
-        if (search && search.trim()) {
-          const searchTerm = search.trim()
-          const sanitizedSearchTerm = searchTerm
-            .replace(/[,()]/g, ' ')
-            .replace(/['"]/g, '')
-            .replace(/\s+/g, ' ')
-            .trim()
+      let whereCondition
+      if (search && search.trim()) {
+        const searchTerm = search.trim()
+        const sanitizedSearchTerm = searchTerm
+          .replace(/[,()]/g, ' ')
+          .replace(/['"]/g, '')
+          .replace(/\s+/g, ' ')
+          .trim()
 
-          if (sanitizedSearchTerm) {
-            whereCondition = or(
-              ilike(users.username, `%${sanitizedSearchTerm}%`),
-              ilike(users.email, `%${sanitizedSearchTerm}%`),
-              ilike(users.address, `%${sanitizedSearchTerm}%`),
-            )
-          }
+        if (sanitizedSearchTerm) {
+          whereCondition = or(
+            ilike(users.username, `%${sanitizedSearchTerm}%`),
+            ilike(users.email, `%${sanitizedSearchTerm}%`),
+            ilike(users.address, `%${sanitizedSearchTerm}%`),
+          )
         }
-
-        let orderByClause
-        if (sortBy === 'username') {
-          const sortDirection = sortOrder === 'asc' ? asc : desc
-          orderByClause = [sortDirection(users.username), sortDirection(users.address)]
-        }
-        else {
-          let sortColumn
-          switch (sortBy) {
-            case 'email':
-              sortColumn = users.email
-              break
-            case 'address':
-              sortColumn = users.address
-              break
-            case 'created_at':
-              sortColumn = users.created_at
-              break
-            default:
-              sortColumn = users.created_at
-          }
-          const sortDirection = sortOrder === 'asc' ? asc : desc
-          orderByClause = [sortDirection(sortColumn)]
-        }
-
-        const queryBuilder = db
-          .select({
-            id: users.id,
-            username: users.username,
-            email: users.email,
-            address: users.address,
-            created_at: users.created_at,
-            image: users.image,
-            affiliate_code: users.affiliate_code,
-            referred_by_user_id: users.referred_by_user_id,
-          })
-          .from(users)
-
-        const rows = await (whereCondition
-          ? queryBuilder.where(whereCondition).orderBy(...orderByClause).limit(limit).offset(offset)
-          : queryBuilder.orderBy(...orderByClause).limit(limit).offset(offset))
-
-        const countQueryBuilder = db
-          .select({ count: count() })
-          .from(users)
-
-        const countResult = await (whereCondition
-          ? countQueryBuilder.where(whereCondition)
-          : countQueryBuilder)
-        const totalCount = countResult[0]?.count || 0
-
-        return { data: { users: rows, count: totalCount }, error: null }
       }
-      catch (err) {
-        console.error('Error in listUsers:', err)
-        return { data: null, error: 'Failed to fetch users' }
+
+      let orderByClause
+      if (sortBy === 'username') {
+        const sortDirection = sortOrder === 'asc' ? asc : desc
+        orderByClause = [sortDirection(users.username), sortDirection(users.address)]
       }
+      else {
+        let sortColumn
+        switch (sortBy) {
+          case 'email':
+            sortColumn = users.email
+            break
+          case 'address':
+            sortColumn = users.address
+            break
+          case 'created_at':
+            sortColumn = users.created_at
+            break
+          default:
+            sortColumn = users.created_at
+        }
+        const sortDirection = sortOrder === 'asc' ? asc : desc
+        orderByClause = [sortDirection(sortColumn)]
+      }
+
+      const queryBuilder = db
+        .select({
+          id: users.id,
+          username: users.username,
+          email: users.email,
+          address: users.address,
+          created_at: users.created_at,
+          image: users.image,
+          affiliate_code: users.affiliate_code,
+          referred_by_user_id: users.referred_by_user_id,
+        })
+        .from(users)
+
+      const rows = await (whereCondition
+        ? queryBuilder.where(whereCondition).orderBy(...orderByClause).limit(limit).offset(offset)
+        : queryBuilder.orderBy(...orderByClause).limit(limit).offset(offset))
+
+      const countQueryBuilder = db
+        .select({ count: count() })
+        .from(users)
+
+      const countResult = await (whereCondition
+        ? countQueryBuilder.where(whereCondition)
+        : countQueryBuilder)
+      const totalCount = countResult[0]?.count || 0
+
+      return { data: { users: rows, count: totalCount }, error: null }
     })
 
     if (!data || error) {
-      return { data: null, error: error || 'Failed to fetch users', count: 0 }
+      return { data: null, error: error || DEFAULT_ERROR_MESSAGE, count: 0 }
     }
 
     return { data: data.users, error: null, count: data.count }
@@ -332,7 +327,7 @@ export const UserRepository = {
     const { data: userData, error: userError } = await this.getProfileByUsername(args.address)
 
     if (userError || !userData) {
-      return { data: null, error: 'User not found' }
+      return { data: null, error: DEFAULT_ERROR_MESSAGE }
     }
 
     return await runQuery(async () => {
@@ -348,7 +343,6 @@ export const UserRepository = {
 
       const result = await db
         .select({
-
           id: orders.id,
           side: orders.side,
           amount: orders.maker_amount,
@@ -460,17 +454,15 @@ export const UserRepository = {
     const { data: userData, error: userError } = await this.getProfileByUsername(params.address)
 
     if (userError || !userData) {
-      return { data: null, error: 'User not found' }
+      return { data: null, error: DEFAULT_ERROR_MESSAGE }
     }
 
     return await runQuery(async () => {
-      // Build the WHERE conditions
       const whereConditions = [
         eq(orders.user_id, userData.id),
         eq(orders.status, 'matched'),
       ]
 
-      // Add market status filter
       if (params.status === 'active') {
         whereConditions.push(eq(markets.is_active, true))
         whereConditions.push(eq(markets.is_resolved, false))
@@ -485,18 +477,14 @@ export const UserRepository = {
         }
       }
 
-      // Add search filter for market titles
       if (params.search && params.search.trim()) {
         whereConditions.push(ilike(markets.title, `%${params.search.trim()}%`))
       }
 
       const whereCondition = whereConditions.length > 1 ? and(...whereConditions) : whereConditions[0]
 
-      // For simplicity, we'll calculate total count after filtering
-      // This is less efficient but avoids complex subquery issues
       let totalCount = 0
 
-      // Main query to get aggregated positions
       const baseQuery = db
         .select({
           condition_id: markets.condition_id,
@@ -524,7 +512,6 @@ export const UserRepository = {
           markets.is_resolved,
         )
 
-      // Execute query with or without having clause
       const result = params.minAmount && params.minAmount > 0
         ? await baseQuery
             .having(sql`SUM(${orders.maker_amount}::numeric) >= ${params.minAmount}`)
@@ -563,10 +550,8 @@ export const UserRepository = {
         }
       })
 
-      // Calculate if there are more results by checking if we got a full page
       const hasMore = positions.length === params.limit
 
-      // For total count, we'll use a simple approximation
       totalCount = params.offset + positions.length + (hasMore ? 1 : 0)
 
       return {

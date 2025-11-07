@@ -2,7 +2,6 @@ export interface Event {
   id: string
   slug: string
   title: string
-  description: string
   creator: string
   icon_url: string
   show_market_icons: boolean

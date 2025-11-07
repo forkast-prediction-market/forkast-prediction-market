@@ -10,8 +10,7 @@ import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
 
 const initialState = {
-  error: undefined as string | undefined,
-  success: undefined as string | undefined,
+  error: null,
 }
 
 interface AdminAffiliateSettingsFormProps {
@@ -24,13 +23,13 @@ export default function AdminAffiliateSettingsForm({ tradeFeeBps, affiliateShare
   const [state, formAction, isPending] = useActionState(updateForkSettingsAction, initialState)
 
   useEffect(() => {
-    if (state.success) {
-      toast.success(state.success)
+    if (!isPending && state.error === null) {
+      toast.success('Settings updated successfully!')
     }
-    if (state.error) {
+    else if (!isPending && state.error) {
       toast.error(state.error)
     }
-  }, [state.success, state.error])
+  }, [isPending, state.error])
 
   return (
     <Form action={formAction} className="grid gap-6 rounded-lg border p-6">
