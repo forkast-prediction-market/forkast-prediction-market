@@ -58,7 +58,7 @@ function toWidgetEvent(event: Event): AffiliateWidgetEvent {
   const [primaryMarket] = event.markets
   const outcomes = primaryMarket?.outcomes ?? []
   const normalizedOutcomes = outcomes.slice(0, 3).map((outcome: Outcome) => {
-    const kind = outcome.outcome_index === OUTCOME_INDEX.YES
+    const kind: AffiliateWidgetEvent['outcomes'][number]['kind'] = outcome.outcome_index === OUTCOME_INDEX.YES
       ? 'yes'
       : outcome.outcome_index === OUTCOME_INDEX.NO
         ? 'no'
