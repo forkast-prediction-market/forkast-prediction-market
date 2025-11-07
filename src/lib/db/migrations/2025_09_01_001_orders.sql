@@ -26,7 +26,7 @@ CREATE TABLE orders
   user_id              TEXT                                             NOT NULL,
   condition_id         TEXT                                             NOT NULL,
   type                 TEXT                                             NOT NULL,
-  status               TEXT                     DEFAULT 'open'          NOT NULL,
+  status               TEXT                     DEFAULT 'live'          NOT NULL,
   affiliate_user_id    TEXT,
   created_at           TIMESTAMP WITH TIME ZONE DEFAULT NOW()           NOT NULL,
   updated_at           TIMESTAMP WITH TIME ZONE DEFAULT NOW()           NOT NULL,

@@ -2,7 +2,8 @@ import type { RefObject } from 'react'
 import type { Event, Market, OrderSide, OrderType, Outcome } from '@/types'
 import { create } from 'zustand'
 import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
-import { mockUser } from '@/lib/mockData'
+
+type ConditionShares = Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>
 
 export type LimitExpirationOption = 'end-of-day' | 'custom'
 
@@ -23,6 +24,8 @@ interface OrderState {
   inputRef: RefObject<HTMLInputElement | null>
   lastMouseEvent: any
 
+  userShares: Record<string, ConditionShares>
+
   // Actions
   setEvent: (event: Event) => void
   setMarket: (market: Market) => void
@@ -38,6 +41,7 @@ interface OrderState {
   setIsLoading: (loading: boolean) => void
   setIsMobileOrderPanelOpen: (loading: boolean) => void
   setLastMouseEvent: (lastMouseEvent: any) => void
+  setUserShares: (shares: Record<string, ConditionShares>) => void
 }
 
 export const useOrder = create<OrderState>()((set, _, store) => ({
@@ -55,6 +59,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   isMobileOrderPanelOpen: false,
   inputRef: { current: null as HTMLInputElement | null },
   lastMouseEvent: null,
+  userShares: {},
 
   setEvent: (event: Event) => set({ event }),
   setMarket: (market: Market) => set({ market }),
@@ -78,6 +83,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   setIsLoading: (loading: boolean) => set({ isLoading: loading }),
   setIsMobileOrderPanelOpen: (open: boolean) => set({ isMobileOrderPanelOpen: open }),
   setLastMouseEvent: (lastMouseEvent: any) => set({ lastMouseEvent }),
+  setUserShares: (shares: Record<string, ConditionShares>) => set({ userShares: shares }),
 }))
 
 export function useYesPrice() {
@@ -155,42 +161,15 @@ export function getUserShares() {
     return 0
   }
 
-  const outcomeKey = `${state.market.condition_id}-${state.outcome.outcome_index === OUTCOME_INDEX.YES ? 'yes' : 'no'}` as keyof typeof mockUser.shares
-  const shares = mockUser.shares[outcomeKey]
-
-  return shares ?? 0
+  return getSharesForOutcome(state.market.condition_id, state.outcome.outcome_index)
 }
 
-export function getYesShares(outcomeId: string) {
-  if (outcomeId.includes('-yes')) {
-    const shareKey = outcomeId as keyof typeof mockUser.shares
-    return mockUser.shares[shareKey] || 0
-  }
-
-  if (outcomeId.includes('-no')) {
-    const baseId = outcomeId.replace('-no', '-yes')
-    const shareKey = baseId as keyof typeof mockUser.shares
-    return mockUser.shares[shareKey] || 0
-  }
-
-  const shareKey = `${outcomeId}-yes` as keyof typeof mockUser.shares
-  return mockUser.shares[shareKey] || 0
+export function getYesShares(conditionId: string) {
+  return getSharesForOutcome(conditionId, OUTCOME_INDEX.YES)
 }
 
-export function getNoShares(outcomeId: string) {
-  if (outcomeId.includes('-no')) {
-    const shareKey = outcomeId as keyof typeof mockUser.shares
-    return mockUser.shares[shareKey] || 0
-  }
-
-  if (outcomeId.includes('-yes')) {
-    const baseId = outcomeId.replace('-yes', '-no')
-    const shareKey = baseId as keyof typeof mockUser.shares
-    return mockUser.shares[shareKey] || 0
-  }
-
-  const shareKey = `${outcomeId}-no` as keyof typeof mockUser.shares
-  return mockUser.shares[shareKey] || 0
+export function getNoShares(conditionId: string) {
+  return getSharesForOutcome(conditionId, OUTCOME_INDEX.NO)
 }
 
 export function useAmountAsNumber() {
@@ -215,4 +194,15 @@ function formatPriceToCents(price?: number) {
     : 0.5
 
   return Number((normalized * 100).toFixed(2))
+}
+
+function getSharesForOutcome(conditionId: string, outcomeIndex: number) {
+  const { userShares } = useOrder.getState()
+  const conditionShares = userShares[conditionId]
+
+  if (!conditionShares) {
+    return 0
+  }
+
+  return conditionShares[outcomeIndex as keyof ConditionShares] ?? 0
 }
