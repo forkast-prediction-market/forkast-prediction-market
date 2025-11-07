@@ -36,7 +36,7 @@ export const orders = pgTable('orders', {
   user_id: text().notNull().references(() => users.id, { onDelete: 'cascade' }),
   condition_id: text().notNull().references(() => conditions.id),
   type: text().notNull(),
-  status: text().notNull().default('open'),
+  status: text().notNull().default('live'),
   affiliate_user_id: text().references(() => users.id),
   created_at: timestamp({ withTimezone: true }).defaultNow().notNull(),
   updated_at: timestamp({ withTimezone: true }).defaultNow().notNull(),
