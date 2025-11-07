@@ -66,15 +66,14 @@ export const UserRepository = {
         return { data: data!, error: null }
       }
       catch (error: any) {
-        if (error.code === '23505') {
-          if (error.detail?.includes('email') || error.constraint?.includes('email')) {
-            return { data: null, error: 'Email is already taken.' }
-          }
-          if (error.detail?.includes('username') || error.constraint?.includes('username')) {
-            return { data: null, error: 'Username is already taken.' }
-          }
+        if (error.cause?.toString().includes('idx_users_email')) {
+          return { data: null, error: 'Email is already taken.' }
         }
-        console.error('Failed to update user profile:', error)
+
+        if (error.cause?.toString().includes('idx_users_username')) {
+          return { data: null, error: 'Username is already taken.' }
+        }
+
         return { data: null, error: 'Failed to update user.' }
       }
     })
