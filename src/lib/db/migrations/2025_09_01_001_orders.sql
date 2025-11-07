@@ -26,7 +26,7 @@ CREATE TABLE orders
   user_id              TEXT                                             NOT NULL,
   condition_id         TEXT                                             NOT NULL,
   type                 TEXT                                             NOT NULL,
-  status               TEXT                     DEFAULT 'open'          NOT NULL,
+  status               TEXT                     DEFAULT 'live'          NOT NULL,
   affiliate_user_id    TEXT,
   created_at           TIMESTAMP WITH TIME ZONE DEFAULT NOW()           NOT NULL,
   updated_at           TIMESTAMP WITH TIME ZONE DEFAULT NOW()           NOT NULL,
@@ -58,7 +58,73 @@ ALTER TABLE orders
 CREATE POLICY service_role_all_orders ON orders AS PERMISSIVE FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
 
 -- ===========================================
--- 5. Functions
+-- 5. VIEWS
+-- ===========================================
+
+CREATE OR REPLACE VIEW v_user_outcome_positions AS
+WITH normalized_orders AS (
+  SELECT
+    o.id,
+    o.user_id,
+    o.condition_id,
+    o.token_id,
+    o.side,
+    o.created_at,
+    CASE
+      WHEN o.side = 0 THEN o.taker_amount::numeric
+      ELSE o.maker_amount::numeric
+      END AS shares_micro,
+    CASE
+      WHEN o.side = 0 THEN o.maker_amount::numeric
+      ELSE o.taker_amount::numeric
+      END AS value_micro
+  FROM orders o
+  WHERE o.status = 'matched'
+)
+SELECT
+  n.user_id,
+  n.condition_id,
+  n.token_id,
+  out.outcome_index,
+  out.outcome_text,
+  SUM(
+    CASE
+      WHEN n.side = 0 THEN n.shares_micro
+      ELSE -n.shares_micro
+      END
+  ) AS net_shares_micro,
+  SUM(
+    CASE
+      WHEN n.side = 0 THEN n.value_micro
+      ELSE 0
+      END
+  ) AS total_cost_micro,
+  SUM(
+    CASE
+      WHEN n.side = 1 THEN n.value_micro
+      ELSE 0
+      END
+  ) AS total_proceeds_micro,
+  COUNT(*)::bigint AS order_count,
+  MAX(n.created_at) AS last_activity_at
+FROM normalized_orders n
+       JOIN outcomes out ON out.token_id = n.token_id
+GROUP BY
+  n.user_id,
+  n.condition_id,
+  n.token_id,
+  out.outcome_index,
+  out.outcome_text
+HAVING
+  SUM(
+    CASE
+      WHEN n.side = 0 THEN n.shares_micro
+      ELSE -n.shares_micro
+      END
+  ) <> 0;
+
+-- ===========================================
+-- 6. FUNCTIONS
 -- ===========================================
 
 CREATE OR REPLACE FUNCTION get_event_top_holders(
@@ -81,60 +147,48 @@ CREATE OR REPLACE FUNCTION get_event_top_holders(
   SET search_path = public
 AS
 $$
-WITH event_orders AS (
-  -- Get all filled orders for the specific event, optionally filtered by condition_id
-  SELECT o.user_id,
-         o.side,
-         o.taker_amount,
-         out.outcome_index,
-         out.outcome_text,
-         u.username,
-         u.address,
-         u.image
-  FROM orders o
-         JOIN outcomes out ON o.token_id = out.token_id
-         JOIN conditions c ON out.condition_id = c.id
-         JOIN markets m ON c.id = m.condition_id
-         JOIN events e ON m.event_id = e.id
-         JOIN users u ON o.user_id = u.id
+WITH holder_positions AS (
+  SELECT
+    v.user_id,
+    v.condition_id,
+    v.outcome_index,
+    v.outcome_text,
+    (v.net_shares_micro / 1000000::numeric) AS net_position,
+    u.username,
+    u.address,
+    u.image
+  FROM v_user_outcome_positions v
+         JOIN users u ON u.id = v.user_id
+         JOIN markets m ON m.condition_id = v.condition_id
+         JOIN events e ON e.id = m.event_id
   WHERE e.slug = event_slug_arg
-    AND o.status IN ('open', 'filled', 'pending')
-    AND (condition_id_arg IS NULL OR c.id = condition_id_arg)),
-     user_positions AS (
-       -- Calculate net positions per user per outcome
-       SELECT user_id,
-              username,
-              address,
-              image,
-              outcome_index,
-              outcome_text,
-              SUM(taker_amount) AS net_position
-       FROM event_orders
-       GROUP BY user_id, username, address, image, outcome_index, outcome_text
-       HAVING SUM(taker_amount) > 0),
+    AND (condition_id_arg IS NULL OR v.condition_id = condition_id_arg)
+),
      ranked_positions AS (
-       -- Rank positions within each outcome
-       SELECT *,
-              ROW_NUMBER() OVER (
-                PARTITION BY outcome_index
-                ORDER BY net_position DESC
-                ) AS rank
-       FROM user_positions)
--- Return top holders for each outcome
-SELECT user_id,
-       username,
-       address,
-       image,
-       outcome_index,
-       outcome_text,
-       net_position
+       SELECT
+         *,
+         ROW_NUMBER() OVER (
+           PARTITION BY condition_id, outcome_index
+           ORDER BY net_position DESC
+           ) AS rank
+       FROM holder_positions
+       WHERE net_position > 0
+     )
+SELECT
+  user_id,
+  username,
+  address,
+  image,
+  outcome_index,
+  outcome_text,
+  net_position
 FROM ranked_positions
 WHERE rank <= limit_arg
 ORDER BY outcome_index, net_position DESC;
 $$;
 
 -- ===========================================
--- 6. TRIGGERS
+-- 7. TRIGGERS
 -- ===========================================
 
 CREATE TRIGGER set_orders_updated_at

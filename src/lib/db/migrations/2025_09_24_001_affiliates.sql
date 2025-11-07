@@ -51,19 +51,19 @@ SELECT COALESCE((SELECT COUNT(*) FROM affiliate_referrals ar WHERE ar.affiliate_
        COALESCE((SELECT COUNT(DISTINCT o.user_id)
                  FROM orders o
                  WHERE o.affiliate_user_id = target_user_id
-                   AND o.status != 'cancelled'), 0) AS active_referrals,
+                   AND o.status = 'matched'), 0) AS active_referrals,
        COALESCE((SELECT SUM(o.maker_amount)
                  FROM orders o
                  WHERE o.affiliate_user_id = target_user_id
-                   AND o.status != 'cancelled'), 0) AS total_volume,
-       COALESCE((SELECT SUM(o.affiliate_percentage) -- affiliate fee amount
+                   AND o.status = 'matched'), 0) AS total_volume,
+       COALESCE((SELECT SUM(o.affiliate_percentage)
                  FROM orders o
                  WHERE o.affiliate_user_id = target_user_id
-                   AND o.status != 'cancelled'), 0) AS total_affiliate_fees,
-       COALESCE((SELECT SUM(o.affiliate_percentage) -- fork fee amount
+                   AND o.status = 'matched'), 0) AS total_affiliate_fees,
+       COALESCE((SELECT SUM(o.affiliate_percentage)
                  FROM orders o
                  WHERE o.affiliate_user_id = target_user_id
-                   AND o.status != 'cancelled'), 0) AS total_fork_fees;
+                   AND o.status = 'matched'), 0) AS total_fork_fees;
 $$;
 
 CREATE OR REPLACE FUNCTION get_affiliate_overview()
@@ -88,8 +88,8 @@ FROM users u
                   FROM affiliate_referrals
                   GROUP BY affiliate_user_id) ar ON ar.affiliate_user_id = u.id
        LEFT JOIN (SELECT affiliate_user_id,
-                         SUM(CASE WHEN status != 'cancelled' THEN maker_amount ELSE 0 END)               AS total_volume,
-                         SUM(CASE WHEN status != 'cancelled' THEN affiliate_percentage ELSE 0 END) AS total_affiliate_fees -- affiliate_fee_amount
+                         SUM(CASE WHEN status = 'matched' THEN maker_amount ELSE 0 END)               AS total_volume,
+                         SUM(CASE WHEN status = 'matched' THEN affiliate_percentage ELSE 0 END) AS total_affiliate_fees
                   FROM orders
                   WHERE affiliate_user_id IS NOT NULL
                   GROUP BY affiliate_user_id) ord ON ord.affiliate_user_id = u.id

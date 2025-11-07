@@ -294,6 +294,16 @@ export interface UserPosition {
   last_activity_at: string
 }
 
+export interface UserMarketOutcomePosition {
+  condition_id: string
+  token_id: string
+  outcome_index: number
+  outcome_text: string
+  shares_micro: string
+  order_count: number
+  last_activity_at: string | null
+}
+
 export interface PositionsQueryParams {
   address: string
   limit: number

@@ -77,6 +77,16 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
   const conditionId = isBinaryMarket ? undefined : (selectedMarket || undefined)
   const { data, isLoading, error } = useEventHolders(event.slug, conditionId)
 
+  function formatShares(value: string) {
+    const numeric = Number(value)
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      return '0'
+    }
+
+    const micro = Math.round(numeric * 1_000_000).toString()
+    return formatPosition(micro)
+  }
+
   function handleMarketChange(conditionId: string) {
     setSelectedMarket(conditionId)
 
@@ -153,7 +163,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
                       position={index + 1}
                     >
                       <span className="text-xs font-semibold text-yes">
-                        {formatPosition(holder.net_position)}
+                        {formatShares(holder.net_position)}
                         {' '}
                         shares
                       </span>
@@ -176,7 +186,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
                       position={index + 1}
                     >
                       <span className="text-xs font-semibold text-no">
-                        {formatPosition(holder.net_position)}
+                        {formatShares(holder.net_position)}
                         {' '}
                         shares
                       </span>

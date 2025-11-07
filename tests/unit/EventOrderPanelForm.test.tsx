@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import EventOrderPanelForm from '@/app/(platform)/event/[slug]/_components/EventOrderPanelForm'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 
@@ -11,6 +12,7 @@ const {
   mockTriggerConfetti,
   mockToastError,
   mockToastSuccess,
+  mockToastInfo,
   storeOrderActionMock,
   mockCalculateSellAmount,
   mockGetAvgSellPrice,
@@ -21,6 +23,7 @@ const {
   mockTriggerConfetti: vi.fn(),
   mockToastError: vi.fn(),
   mockToastSuccess: vi.fn(),
+  mockToastInfo: vi.fn(),
   storeOrderActionMock: vi.fn(),
   mockCalculateSellAmount: vi.fn(() => 12.34),
   mockGetAvgSellPrice: vi.fn(() => '42'),
@@ -34,13 +37,24 @@ let mockYesPrice = 60
 let mockIsBinaryMarket = false
 let mockIsLimitOrder = false
 let orderState: any
+let queryClient: QueryClient
+const fetchMock = vi.fn()
+const originalFetch = globalThis.fetch
+
+beforeAll(() => {
+  globalThis.fetch = fetchMock
+})
+
+afterAll(() => {
+  globalThis.fetch = originalFetch
+})
 
 vi.mock('@/lib/appkit', () => ({
   defaultNetwork: { id: 137 },
 }))
 
 vi.mock('@/stores/useOrder', () => ({
-  useOrder: () => orderState,
+  useOrder: (selector?: any) => (selector ? selector(orderState) : orderState),
   useAmountAsNumber: () => mockAmountAsNumber,
   useYesPrice: () => mockYesPrice,
   useNoPrice: () => 100 - mockYesPrice,
@@ -63,6 +77,7 @@ vi.mock('sonner', () => ({
   toast: {
     error: mockToastError,
     success: mockToastSuccess,
+    info: mockToastInfo,
   },
 }))
 
@@ -143,6 +158,12 @@ describe('eventOrderPanelForm', () => {
     mockGetAvgSellPrice.mockClear()
     mockGetAvgSellPrice.mockReturnValue('42')
 
+    queryClient = new QueryClient()
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({ data: [] }),
+    } as any)
+
     mockIsConnected = true
     mockEmbeddedWalletInfo = undefined
     mockUser = { address: '0xUser' }
@@ -171,11 +192,16 @@ describe('eventOrderPanelForm', () => {
       lastMouseEvent: null,
       setIsLoading: vi.fn(),
       setAmount: vi.fn(),
+      setUserShares: vi.fn(),
     }
   })
 
   function renderComponent(isMobile = false) {
-    return render(<EventOrderPanelForm isMobile={isMobile} event={{ slug: 'event-slug', title: 'Sample Event' } as any} />)
+    return render(
+      <QueryClientProvider client={queryClient}>
+        <EventOrderPanelForm isMobile={isMobile} event={{ slug: 'event-slug', title: 'Sample Event' } as any} />
+      </QueryClientProvider>,
+    )
   }
 
   it('opens the wallet modal when the user is not connected', async () => {

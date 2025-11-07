@@ -1,6 +1,8 @@
-import type { BlockchainOrder, Event, OrderSide } from '@/types'
+import type { BlockchainOrder, Event, OrderSide, UserMarketOutcomePosition } from '@/types'
 import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Form from 'next/form'
+import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { useSignTypedData } from 'wagmi'
 import { storeOrderAction } from '@/app/(platform)/event/[slug]/_actions/store-order'
@@ -40,11 +42,75 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const { signTypedDataAsync } = useSignTypedData()
   const user = useUser()
   const state = useOrder()
+  const setUserShares = useOrder(store => store.setUserShares)
+  const queryClient = useQueryClient()
   const yesPrice = useYesPrice()
   const noPrice = useNoPrice()
   const isBinaryMarket = useIsBinaryMarket()
   const amount = useAmountAsNumber()
   const isLimitOrder = useIsLimitOrder()
+
+  const { data: userOutcomePositions } = useQuery<UserMarketOutcomePosition[]>({
+    queryKey: ['user-event-positions', event.slug, user?.id],
+    enabled: Boolean(user?.id),
+    staleTime: 30_000,
+    retry: false,
+    queryFn: async () => {
+      const response = await fetch(`/api/events/${event.slug}/user-positions`, {
+        cache: 'no-store',
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to load user positions.')
+      }
+
+      const payload = await response.json()
+      return (payload.data ?? []) as UserMarketOutcomePosition[]
+    },
+  })
+
+  useEffect(() => {
+    if (!user?.id) {
+      setUserShares({})
+      return
+    }
+
+    if (!userOutcomePositions) {
+      setUserShares({})
+      return
+    }
+
+    const sharesByCondition = userOutcomePositions.reduce<Record<string, { [OUTCOME_INDEX.YES]: number, [OUTCOME_INDEX.NO]: number }>>((acc, position) => {
+      const rawMicro = typeof position.shares_micro === 'string'
+        ? Number(position.shares_micro)
+        : Number(position.shares_micro || 0)
+
+      if (!Number.isFinite(rawMicro)) {
+        return acc
+      }
+
+      const decimalShares = Number((rawMicro / 1_000_000).toFixed(4))
+      if (decimalShares <= 0) {
+        return acc
+      }
+
+      if (!acc[position.condition_id]) {
+        acc[position.condition_id] = {
+          [OUTCOME_INDEX.YES]: 0,
+          [OUTCOME_INDEX.NO]: 0,
+        }
+      }
+
+      const outcomeKey = position.outcome_index === OUTCOME_INDEX.NO
+        ? OUTCOME_INDEX.NO
+        : OUTCOME_INDEX.YES
+
+      acc[position.condition_id][outcomeKey] = decimalShares
+      return acc
+    }, {})
+
+    setUserShares(sharesByCondition)
+  }, [user?.id, userOutcomePositions, setUserShares])
 
   async function storeOrder(payload: BlockchainOrder & { signature: string }) {
     state.setIsLoading(true)
@@ -76,6 +142,11 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       triggerToast()
       triggerConfetti(state.outcome!.outcome_index === OUTCOME_INDEX.YES ? 'yes' : 'no', state.lastMouseEvent)
       state.setAmount('0.00')
+      if (user?.id) {
+        queryClient.invalidateQueries({
+          queryKey: ['user-event-positions', event.slug, user.id],
+        })
+      }
     }
     catch {
       toast.error('Trade failed', {

@@ -560,7 +560,10 @@ export const EventRepository = {
     cacheTag(cacheTags.activity(args.slug))
 
     return runQuery(async () => {
-      const whereConditions = [eq(events.slug, args.slug)]
+      const whereConditions = [
+        eq(events.slug, args.slug),
+        eq(orders.status, 'matched'),
+      ]
 
       if (args.minAmount && args.minAmount > 0) {
         whereConditions.push(sql`${orders.maker_amount} >= ${args.minAmount}`)

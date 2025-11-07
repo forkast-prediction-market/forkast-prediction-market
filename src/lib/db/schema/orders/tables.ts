@@ -1,7 +1,9 @@
 import { sql } from 'drizzle-orm'
 import {
   bigint,
+  numeric,
   pgTable,
+  pgView,
   smallint,
   text,
   timestamp,
@@ -34,8 +36,21 @@ export const orders = pgTable('orders', {
   user_id: text().notNull().references(() => users.id, { onDelete: 'cascade' }),
   condition_id: text().notNull().references(() => conditions.id),
   type: text().notNull(),
-  status: text().notNull().default('open'),
+  status: text().notNull().default('live'),
   affiliate_user_id: text().references(() => users.id),
   created_at: timestamp({ withTimezone: true }).defaultNow().notNull(),
   updated_at: timestamp({ withTimezone: true }).defaultNow().notNull(),
 })
+
+export const v_user_outcome_positions = pgView('v_user_outcome_positions', {
+  user_id: text(),
+  condition_id: text(),
+  token_id: text(),
+  outcome_index: smallint(),
+  outcome_text: text(),
+  net_shares_micro: numeric(),
+  total_cost_micro: numeric(),
+  total_proceeds_micro: numeric(),
+  order_count: bigint({ mode: 'bigint' }),
+  last_activity_at: timestamp({ withTimezone: true }),
+}).existing()
