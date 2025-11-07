@@ -1,7 +1,6 @@
 import { BanknoteIcon } from 'lucide-react'
 import { ORDER_SIDE } from '@/lib/constants'
-import { calculateWinnings } from '@/lib/mockData'
-import { cn } from '@/lib/utils'
+import { calculateWinnings, cn } from '@/lib/utils'
 import { calculateSellAmount, getAvgSellPrice, useOrder } from '@/stores/useOrder'
 
 interface EventOrderPanelEarningsProps {

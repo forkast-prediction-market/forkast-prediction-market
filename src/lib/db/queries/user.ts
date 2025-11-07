@@ -602,7 +602,7 @@ export const UserRepository = {
         last_activity_at: row.last_activity_at instanceof Date
           ? row.last_activity_at.toISOString()
           : (row.last_activity_at ? new Date(row.last_activity_at).toISOString() : null),
-      }))
+      })) as UserMarketOutcomePosition[]
 
       return { data, error: null }
     })

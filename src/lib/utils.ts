@@ -128,3 +128,7 @@ export function toMicro(amount: string): string {
 export function fromMicro(amount: string): string {
   return (Number(amount) / 1e6).toFixed(2)
 }
+
+export function calculateWinnings(amount: number, price: number): number {
+  return amount / price - amount
+}
