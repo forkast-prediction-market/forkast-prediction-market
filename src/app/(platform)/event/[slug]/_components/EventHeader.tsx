@@ -24,14 +24,14 @@ export default function EventHeader({ event }: EventHeaderProps) {
   return (
     <div
       className={cn(
-        'relative z-10 -mx-4 px-4 transition-all ease-in-out',
-        scrolled ? 'sticky top-24 translate-y-[-5px] bg-background py-3' : 'flex items-center gap-3',
+        'relative z-10 -mx-4 flex w-full items-center gap-3 px-4 transition-all ease-in-out',
+        scrolled ? 'sticky top-24 translate-y-[-5px] bg-background py-3' : '',
       )}
     >
       {scrolled && (
         <span className="pointer-events-none absolute inset-x-4 bottom-0 border-b border-border" />
       )}
-      <div className="relative z-10 flex items-center gap-3">
+      <div className="relative z-10 flex flex-1 items-center gap-3">
         <Image
           src={event.icon_url}
           alt={event.creator || 'Market creator'}
@@ -50,11 +50,11 @@ export default function EventHeader({ event }: EventHeaderProps) {
         >
           {event.title}
         </h1>
+      </div>
 
-        <div className="ms-auto flex gap-3 text-muted-foreground">
-          <EventShare />
-          <EventBookmark event={event} />
-        </div>
+      <div className="flex items-center gap-3 text-muted-foreground">
+        <EventShare />
+        <EventBookmark event={event} />
       </div>
     </div>
   )
