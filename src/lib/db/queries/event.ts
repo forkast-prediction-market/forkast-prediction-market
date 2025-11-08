@@ -586,7 +586,7 @@ export const EventRepository = {
           outcome_index: outcomes.outcome_index,
           outcome_token_id: outcomes.token_id,
           condition_id: conditions.id,
-          market_title: markets.title,
+          market_title: markets.short_title,
           market_slug: markets.slug,
           market_icon_url: markets.icon_url,
           event_slug: events.slug,
