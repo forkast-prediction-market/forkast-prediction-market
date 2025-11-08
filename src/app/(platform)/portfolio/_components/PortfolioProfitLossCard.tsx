@@ -42,13 +42,13 @@ export default function PortfolioProfitLossCard() {
   // Function to get the appropriate icon and color
   function getStatusIcon() {
     if (isPositive) {
-      return <TriangleIcon className="h-4 w-4 fill-green-600 text-green-600" />
+      return <TriangleIcon className="size-4 fill-green-600 text-green-600" />
     }
     else if (isNegative) {
-      return <TriangleIcon className="h-4 w-4 rotate-180 fill-red-600 text-red-600" />
+      return <TriangleIcon className="size-4 rotate-180 fill-red-600 text-red-600" />
     }
     else {
-      return <MinusIcon className="h-4 w-4 text-muted-foreground" />
+      return <MinusIcon className="size-4 text-muted-foreground" />
     }
   }
 

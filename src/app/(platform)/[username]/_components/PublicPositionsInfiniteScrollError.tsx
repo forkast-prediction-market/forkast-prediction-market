@@ -25,7 +25,7 @@ export default function PublicPositionsInfiniteScrollError({
   return (
     <div className="border-t bg-muted/30 p-4">
       <Alert variant="destructive">
-        <AlertCircleIcon className="h-4 w-4" />
+        <AlertCircleIcon className="size-4" />
         <AlertTitle>Failed to load more positions</AlertTitle>
         <AlertDescription className="mt-2 space-y-3">
           <p className="text-sm">
@@ -50,7 +50,7 @@ export default function PublicPositionsInfiniteScrollError({
                 className="flex items-center gap-2"
                 disabled={isLoadingMore}
               >
-                <RefreshCwIcon className={cn('h-3 w-3', isLoadingMore && 'animate-spin')} />
+                <RefreshCwIcon className={cn('size-3', isLoadingMore && 'animate-spin')} />
                 {isLoadingMore ? 'Retrying...' : 'Try again'}
               </Button>
             )}

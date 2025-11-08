@@ -75,7 +75,7 @@ export default function PortfolioMarketsWonCard() {
 
           <DialogTrigger asChild>
             <Button className="h-11 shrink-0 px-6">
-              <BanknoteArrowDown className="h-4 w-4" />
+              <BanknoteArrowDown className="size-4" />
               Claim
             </Button>
           </DialogTrigger>
@@ -89,7 +89,7 @@ export default function PortfolioMarketsWonCard() {
 
         <div className="flex justify-center">
           <div className="flex size-16 items-center justify-center rounded-full bg-green-500/15">
-            <CircleCheck className="h-14 w-14 text-green-500" />
+            <CircleCheck className="size-14 text-green-500" />
           </div>
         </div>
 

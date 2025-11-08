@@ -165,7 +165,7 @@ export default function EventChart({ event }: EventChartProps) {
                   {legendEntries.map(entry => (
                     <div key={entry.key} className="flex items-center gap-2">
                       <div
-                        className="h-2 w-2 shrink-0 rounded-full"
+                        className="size-2 shrink-0 rounded-full"
                         style={{ backgroundColor: entry.color }}
                       />
                       <span className="text-xs font-medium text-muted-foreground">

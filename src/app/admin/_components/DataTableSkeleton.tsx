@@ -54,11 +54,11 @@ export function DataTableSkeleton({
                 {Array.from({ length: columnCount }).map((_, cellIndex) => (
                   <TableCell key={`cell-${cellIndex}`} className="whitespace-nowrap">
                     {cellIndex === 0
-                      ? <Skeleton className="h-4 w-4" />
+                      ? <Skeleton className="size-4" />
                       : cellIndex === 1
                         ? (
                             <div className="flex min-w-[200px] items-start gap-3">
-                              <Skeleton className="h-10 w-10 flex-shrink-0 rounded-full" />
+                              <Skeleton className="size-10 flex-shrink-0 rounded-full" />
                               <div className="flex min-w-0 flex-col gap-1">
                                 <Skeleton className="h-4 w-[120px]" />
                                 <Skeleton className="h-3 w-[60px]" />
@@ -68,7 +68,7 @@ export function DataTableSkeleton({
                         : cellIndex === 2
                           ? (
                               <div className="min-w-[80px]">
-                                <Skeleton className="h-4 w-4" />
+                                <Skeleton className="size-4" />
                               </div>
                             )
                           : cellIndex === 3
@@ -105,10 +105,10 @@ export function DataTableSkeleton({
               <Skeleton className="h-4 w-[100px]" />
             </div>
             <div className="flex items-center space-x-2">
-              <Skeleton className="h-8 w-8" />
-              <Skeleton className="h-8 w-8" />
-              <Skeleton className="h-8 w-8" />
-              <Skeleton className="h-8 w-8" />
+              <Skeleton className="size-8" />
+              <Skeleton className="size-8" />
+              <Skeleton className="size-8" />
+              <Skeleton className="size-8" />
             </div>
           </div>
         </div>

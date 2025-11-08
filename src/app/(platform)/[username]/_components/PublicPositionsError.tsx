@@ -26,7 +26,7 @@ export default function PublicPositionsError({
     <div className="overflow-hidden rounded-lg border border-border">
       <div className="p-8">
         <Alert variant="destructive">
-          <AlertCircleIcon className="h-4 w-4" />
+          <AlertCircleIcon className="size-4" />
           <AlertTitle>Failed to load positions</AlertTitle>
           <AlertDescription className="mt-2 space-y-3">
             <p>
@@ -51,7 +51,7 @@ export default function PublicPositionsError({
                   className="flex items-center gap-2"
                   disabled={isLoading}
                 >
-                  <RefreshCwIcon className={cn('h-3 w-3', isLoading && 'animate-spin')} />
+                  <RefreshCwIcon className={cn('size-3', isLoading && 'animate-spin')} />
                   {isLoading ? 'Retrying...' : 'Try again'}
                 </Button>
               )}

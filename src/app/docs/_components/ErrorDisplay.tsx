@@ -37,7 +37,7 @@ export function ErrorDisplay({ fallbackValue, className = '', showRefresh = true
           className="h-auto p-1 text-xs text-muted-foreground hover:text-foreground"
           title="Refresh to retry"
         >
-          <RefreshCw className="h-3 w-3" />
+          <RefreshCw className="size-3" />
         </Button>
       )}
     </span>
@@ -73,7 +73,7 @@ export function ErrorDisplayBlock({
             onClick={handleRefresh}
             className="text-xs"
           >
-            <RefreshCw className="mr-1 h-3 w-3" />
+            <RefreshCw className="mr-1 size-3" />
             Refresh Page
           </Button>
         </div>

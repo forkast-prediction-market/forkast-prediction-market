@@ -112,7 +112,7 @@ export default function PortfolioTabs({ user, activeTab, onTabChange }: Portfoli
       {activeTab !== 'history' && (
         <div className="flex flex-col gap-4 sm:flex-row">
           <div className="relative flex-1">
-            <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder="Search"
               value={searchQuery}
@@ -125,14 +125,14 @@ export default function PortfolioTabs({ user, activeTab, onTabChange }: Portfoli
           <div className="flex flex-wrap gap-2 sm:flex-nowrap">
             {activeTab === 'positions' && (
               <Button variant="outline" size="sm">
-                <ArrowDownWideNarrow className="h-4 w-4" />
+                <ArrowDownWideNarrow className="size-4" />
                 Current value
               </Button>
             )}
 
             {activeTab === 'open-orders' && (
               <Button variant="outline" size="sm">
-                <SlidersHorizontalIcon className="h-4 w-4" />
+                <SlidersHorizontalIcon className="size-4" />
                 Market
               </Button>
             )}

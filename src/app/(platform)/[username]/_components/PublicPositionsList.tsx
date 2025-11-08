@@ -53,7 +53,7 @@ function PositionsFilterControls({
         </ButtonGroup>
 
         <div className="relative">
-          <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search markets..."
@@ -67,9 +67,9 @@ function PositionsFilterControls({
               variant="ghost"
               size="sm"
               onClick={() => handleSearchChange('')}
-              className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 p-0 hover:bg-muted"
+              className="absolute top-1/2 right-1 size-7 -translate-y-1/2 p-0 hover:bg-muted"
             >
-              <XIcon className="h-3 w-3" />
+              <XIcon className="size-3" />
               <span className="sr-only">Clear search</span>
             </Button>
           )}

@@ -115,7 +115,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
 
         <div
           className={cn(
-            'relative h-16 w-16 overflow-hidden rounded-2xl border border-border/80 bg-muted/50 transition-transform',
+            'relative size-16 overflow-hidden rounded-2xl border border-border/80 bg-muted/50 transition-transform',
             'duration-300 group-hover:scale-105 md:h-20 md:w-20',
           )}
         >

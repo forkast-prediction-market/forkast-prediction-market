@@ -29,7 +29,7 @@ export default function PortfolioSummaryCard() {
           <div className="flex items-center gap-2">
             <div className="rounded border border-border/60 p-1">
               <svg
-                className="h-4 w-4 text-muted-foreground"
+                className="size-4 text-muted-foreground"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -84,11 +84,11 @@ export default function PortfolioSummaryCard() {
         {/* Action buttons */}
         <div className="mt-auto flex gap-3">
           <Button className="h-11 flex-1" onClick={() => open()}>
-            <ArrowDownToLine className="h-4 w-4" />
+            <ArrowDownToLine className="size-4" />
             Deposit
           </Button>
           <Button variant="outline" className="h-11 flex-1" onClick={() => open({ view: 'WalletSend' })}>
-            <ArrowUpFromLine className="h-4 w-4" />
+            <ArrowUpFromLine className="size-4" />
             Withdraw
           </Button>
         </div>

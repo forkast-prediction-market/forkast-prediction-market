@@ -128,7 +128,7 @@ export function DataTable<TData, TValue>({
           <div className="flex flex-col items-center justify-center px-4 py-12 text-center">
             <div className="mb-4 text-muted-foreground">
               <svg
-                className="mx-auto h-12 w-12 text-muted-foreground"
+                className="mx-auto size-12 text-muted-foreground"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -237,7 +237,7 @@ export function DataTable<TData, TValue>({
                               <div className="flex flex-col items-center justify-center py-8">
                                 <div className="mb-2 text-muted-foreground">
                                   <svg
-                                    className="mx-auto h-8 w-8"
+                                    className="mx-auto size-8"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"
@@ -259,7 +259,7 @@ export function DataTable<TData, TValue>({
                               <div className="flex flex-col items-center justify-center py-8">
                                 <div className="mb-2 text-muted-foreground">
                                   <svg
-                                    className="mx-auto h-8 w-8"
+                                    className="mx-auto size-8"
                                     fill="none"
                                     viewBox="0 0 24 24"
                                     stroke="currentColor"

@@ -7,7 +7,7 @@ import { toggleBookmarkAction } from '@/app/(platform)/event/[slug]/_actions/tog
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
-const headerIconButtonClass = 'h-10 w-10 rounded-sm border border-transparent bg-transparent text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring md:h-9 md:w-9'
+const headerIconButtonClass = 'size-10 rounded-sm border border-transparent bg-transparent text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring md:h-9 md:w-9'
 
 interface EventBookmarkProps {
   event: {

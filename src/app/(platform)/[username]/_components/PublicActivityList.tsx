@@ -28,7 +28,7 @@ function FilterControls({ searchQuery, handleSearchChange, minAmountFilter, hand
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
         <div className="relative">
-          <SearchIcon className="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search markets..."
@@ -42,9 +42,9 @@ function FilterControls({ searchQuery, handleSearchChange, minAmountFilter, hand
               variant="ghost"
               size="sm"
               onClick={() => handleSearchChange('')}
-              className="absolute top-1/2 right-1 h-7 w-7 -translate-y-1/2 p-0 hover:bg-muted"
+              className="absolute top-1/2 right-1 size-7 -translate-y-1/2 p-0 hover:bg-muted"
             >
-              <XIcon className="h-3 w-3" />
+              <XIcon className="size-3" />
               <span className="sr-only">Clear search</span>
             </Button>
           )}
@@ -430,7 +430,7 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
         <div className="overflow-hidden rounded-lg border border-border">
           <div className="p-8">
             <Alert variant="destructive">
-              <AlertCircleIcon className="h-4 w-4" />
+              <AlertCircleIcon className="size-4" />
               <AlertTitle>Failed to load activity</AlertTitle>
               <AlertDescription className="mt-2 space-y-3">
                 <p>
@@ -447,7 +447,7 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
                     className="flex items-center gap-2"
                     disabled={loading}
                   >
-                    <RefreshCwIcon className={cn('h-3 w-3', loading && 'animate-spin')} />
+                    <RefreshCwIcon className={cn('size-3', loading && 'animate-spin')} />
                     {loading ? 'Retrying...' : 'Try again'}
                   </Button>
                   {retryCount > 2 && (
@@ -815,7 +815,7 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
           {infiniteScrollError && (
             <div className="border-t bg-muted/30 p-4">
               <Alert variant="destructive">
-                <AlertCircleIcon className="h-4 w-4" />
+                <AlertCircleIcon className="size-4" />
                 <AlertTitle>Failed to load more activity</AlertTitle>
                 <AlertDescription className="mt-2 space-y-3">
                   <p className="text-sm">
@@ -832,7 +832,7 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
                       className="flex items-center gap-2"
                       disabled={isLoadingMore}
                     >
-                      <RefreshCwIcon className={cn('h-3 w-3', isLoadingMore && 'animate-spin')} />
+                      <RefreshCwIcon className={cn('size-3', isLoadingMore && 'animate-spin')} />
                       {isLoadingMore ? 'Retrying...' : 'Try again'}
                     </Button>
                     {retryCount > 2 && (

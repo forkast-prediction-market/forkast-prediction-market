@@ -90,7 +90,7 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
                 aria-hidden="true"
                 className={cn(
                   `
-                    pointer-events-none flex h-8 w-8 items-center justify-center rounded-md border border-border/60
+                    pointer-events-none flex size-8 items-center justify-center rounded-md border border-border/60
                     bg-background text-muted-foreground transition
                   `,
                   contextExpanded ? 'bg-muted/50' : '',

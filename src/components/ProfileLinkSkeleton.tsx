@@ -14,9 +14,9 @@ export default function ProfileLinkSkeleton({
   return (
     <div className="flex items-start gap-3 border-b border-border/30 py-2 last:border-b-0">
       <div className="relative shrink-0">
-        <Skeleton className="h-8 w-8 rounded-full" />
+        <Skeleton className="size-8 rounded-full" />
         {showPosition && (
-          <Skeleton className="absolute top-0 -right-2 h-5 w-5 rounded-full" />
+          <Skeleton className="absolute top-0 -right-2 size-5 rounded-full" />
         )}
       </div>
 

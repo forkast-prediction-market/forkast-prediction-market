@@ -58,7 +58,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
           className="h-auto p-0 text-xs font-medium text-muted-foreground uppercase hover:text-foreground"
         >
           User
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ml-2 size-4" />
         </Button>
       )
     },
@@ -100,7 +100,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
           className="h-auto p-0 text-xs font-medium text-muted-foreground uppercase hover:text-foreground"
         >
           Email
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown className="ml-2 size-4" />
         </Button>
       )
     },
@@ -177,7 +177,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
             className="h-auto p-0 text-xs font-medium text-muted-foreground uppercase hover:text-foreground"
           >
             Created
-            <ArrowUpDown className="ml-2 h-4 w-4" />
+            <ArrowUpDown className="ml-2 size-4" />
           </Button>
         </div>
       )

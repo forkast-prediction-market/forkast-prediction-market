@@ -46,7 +46,7 @@ export function DataTableToolbar<TData>({
             disabled={isLoading}
           >
             Reset
-            <X className="ml-2 h-4 w-4" />
+            <X className="ml-2 size-4" />
           </Button>
         )}
       </div>

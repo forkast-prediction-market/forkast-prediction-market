@@ -78,7 +78,7 @@ export default function HeaderNotifications() {
           {unreadCount > 0 && (
             <span
               className={`
-                absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-xs
+                absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-destructive text-xs
                 font-medium text-destructive-foreground
               `}
             >
@@ -100,21 +100,21 @@ export default function HeaderNotifications() {
         <div className="max-h-[400px] overflow-y-auto">
           {isLoading && (
             <div className="p-4 text-center text-muted-foreground">
-              <BellIcon className="mx-auto mb-2 h-8 w-8 animate-pulse opacity-50" />
+              <BellIcon className="mx-auto mb-2 size-8 animate-pulse opacity-50" />
               <p className="text-sm">Loading notifications...</p>
             </div>
           )}
 
           {error && (
             <div className="p-4 text-center text-muted-foreground">
-              <BellIcon className="mx-auto mb-2 h-8 w-8 opacity-50" />
+              <BellIcon className="mx-auto mb-2 size-8 opacity-50" />
               <p className="text-sm text-destructive">Failed to load notifications</p>
             </div>
           )}
 
           {!isLoading && !error && !hasNotifications && (
             <div className="p-4 text-center text-muted-foreground">
-              <BellIcon className="mx-auto mb-2 h-8 w-8 opacity-50" />
+              <BellIcon className="mx-auto mb-2 size-8 opacity-50" />
               <p className="text-sm">You have no notifications.</p>
             </div>
           )}
@@ -127,7 +127,7 @@ export default function HeaderNotifications() {
                 const linkIsExternal = notification.link_type === 'external'
                 const linkIcon = (
                   <ExternalLinkIcon
-                    className={`h-3 w-3 text-muted-foreground ${hasLink ? '' : 'opacity-0'}`}
+                    className={`size-3 text-muted-foreground ${hasLink ? '' : 'opacity-0'}`}
                   />
                 )
 

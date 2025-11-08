@@ -4,7 +4,7 @@ export default function EventCardSkeleton() {
       <div className="mb-3 flex items-start gap-2">
         <div className="size-10 rounded bg-muted"></div>
         <div className="flex-1 space-y-2">
-          <div className="h-3 w-3/4 rounded bg-muted"></div>
+          <div className="size-3/4 rounded bg-muted"></div>
           <div className="h-3 w-1/2 rounded bg-muted"></div>
         </div>
         <div className="h-12 w-14 rounded bg-muted"></div>
