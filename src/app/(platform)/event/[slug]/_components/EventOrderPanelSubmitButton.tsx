@@ -6,15 +6,13 @@ export default function EventOrderPanelSubmitButton() {
   const state = useOrder()
   const amount = useAmountAsNumber()
 
+  const isSellOverPosition = state.side === ORDER_SIDE.SELL && amount > getUserShares()
+
   return (
     <Button
       type="submit"
       size="outcome"
-      disabled={
-        state.isLoading
-        || !amount
-        || (state.side === ORDER_SIDE.SELL && amount > getUserShares())
-      }
+      aria-disabled={state.isLoading || !amount || isSellOverPosition}
       onClick={e => state.setLastMouseEvent(e)}
       className="w-full text-base font-bold"
     >
