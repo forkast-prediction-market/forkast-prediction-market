@@ -1,6 +1,7 @@
 'use client'
 
 import Image from 'next/image'
+import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 
 interface OpenOrder {
   id: string
@@ -85,8 +86,7 @@ export default function PortfolioOpenOrdersTable({ searchQuery }: PortfolioOpenO
 
                       {/* Price */}
                       <div className="text-sm font-medium">
-                        {order.price.toFixed(2)}
-                        ¢
+                        {formatCentsLabel(order.price)}
                       </div>
 
                       {/* Filled */}
@@ -97,8 +97,7 @@ export default function PortfolioOpenOrdersTable({ searchQuery }: PortfolioOpenO
 
                       {/* Total */}
                       <div className="text-sm font-medium">
-                        $
-                        {order.total.toFixed(2)}
+                        {formatCurrency(order.total)}
                       </div>
 
                       {/* Expiration */}

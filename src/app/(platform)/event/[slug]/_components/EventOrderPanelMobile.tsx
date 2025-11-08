@@ -4,6 +4,7 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import EventOrderPanelForm from '@/app/(platform)/event/[slug]/_components/EventOrderPanelForm'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
+import { formatCentsLabel } from '@/lib/formatters'
 import { useIsBinaryMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
 
 interface EventMobileOrderPanelProps {
@@ -44,8 +45,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
                   {state.market!.outcomes[0].outcome_text}
                 </span>
                 <span className="shrink-0 font-bold">
-                  {yesPrice}
-                  ¢
+                  {formatCentsLabel(yesPrice)}
                 </span>
               </Button>
               <Button
@@ -66,8 +66,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
                   {state.market!.outcomes[1].outcome_text}
                 </span>
                 <span className="shrink-0 font-bold">
-                  {noPrice}
-                  ¢
+                  {formatCentsLabel(noPrice)}
                 </span>
               </Button>
             </div>

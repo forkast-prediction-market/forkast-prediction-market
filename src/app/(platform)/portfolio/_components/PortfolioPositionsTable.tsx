@@ -2,6 +2,7 @@
 
 import { MoveRightIcon } from 'lucide-react'
 import Image from 'next/image'
+import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 
 interface PortfolioPositionsTableProps {
   searchQuery: string
@@ -90,11 +91,11 @@ export default function PortfolioPositionsTable({ searchQuery }: PortfolioPositi
                       {/* AVG → NOW */}
                       <div className="text-sm">
                         <div>
-                          {position.avgPrice.toFixed(2)}
-                          ¢ →
+                          {formatCentsLabel(position.avgPrice)}
                           {' '}
-                          {position.currentPrice.toFixed(2)}
-                          ¢
+                          →
+                          {' '}
+                          {formatCentsLabel(position.currentPrice)}
                         </div>
                         <div className={`text-xs ${position.currentPrice > position.avgPrice
                           ? 'text-green-600'
@@ -108,26 +109,22 @@ export default function PortfolioPositionsTable({ searchQuery }: PortfolioPositi
 
                       {/* Bet */}
                       <div className="text-sm font-medium">
-                        $
-                        {position.bet.toFixed(2)}
+                        {formatCurrency(position.bet)}
                       </div>
 
                       {/* To Win */}
                       <div className="text-sm font-medium">
-                        $
-                        {position.toWin.toFixed(2)}
+                        {formatCurrency(position.toWin)}
                       </div>
 
                       {/* Value */}
                       <div className="text-sm font-medium">
                         <div>
-                          $
-                          {position.value.toFixed(2)}
+                          {formatCurrency(position.value)}
                         </div>
-                        <div className={`text-xs ${position.value > position.bet ? 'text-green-600' : 'text-red-600'}`}>
-                          {position.value > position.bet ? '+' : ''}
-                          $
-                          {(position.value - position.bet).toFixed(2)}
+                        <div className={`text-xs ${position.value >= position.bet ? 'text-green-600' : 'text-red-600'}`}>
+                          {position.value - position.bet >= 0 ? '+' : '-'}
+                          {formatCurrency(Math.abs(position.value - position.bet))}
                         </div>
                       </div>
 

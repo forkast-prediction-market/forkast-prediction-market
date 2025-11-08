@@ -3,7 +3,7 @@ import type { OpenRouterMessage } from '@/lib/ai/openrouter'
 import type { Event, Market, Outcome } from '@/types'
 import { loadMarketContextSettings } from '@/lib/ai/market-context-config'
 import { requestOpenRouterCompletion, sanitizeForPrompt } from '@/lib/ai/openrouter'
-import { formatCurrency as formatUsd } from '@/lib/formatters'
+import { formatCentsLabel, formatCurrency as formatUsd } from '@/lib/formatters'
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -26,13 +26,7 @@ function formatCurrencyValue(value: number | null | undefined, digits = 0) {
 }
 
 function formatSharePrice(value: number | null | undefined) {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
-    return 'unknown'
-  }
-
-  const normalized = value > 1 ? value : value * 100
-
-  return `${normalized.toFixed(1)}¢`
+  return formatCentsLabel(value, { fallback: 'unknown' })
 }
 
 function formatOutcome(outcome: Outcome) {

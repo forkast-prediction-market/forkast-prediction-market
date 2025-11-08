@@ -135,14 +135,56 @@ interface CentsFormatOptions {
 }
 
 export function formatCentsLabel(
-  value: number | null | undefined,
+  value: number | string | null | undefined,
   options: CentsFormatOptions = {},
 ) {
   const fallback = options.fallback ?? '—'
-  if (typeof value !== 'number' || Number.isNaN(value)) {
+  if (value === null || value === undefined) {
     return fallback
   }
-  return `${priceFormatter.format(value)}¢`
+
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) {
+    return fallback
+  }
+
+  if (numeric <= 1) {
+    const cents = toCents(numeric)
+    return cents === null ? fallback : `${priceFormatter.format(cents)}¢`
+  }
+
+  const cents = Number(numeric.toFixed(1))
+  return `${priceFormatter.format(cents)}¢`
+}
+
+interface SharePriceFormatOptions extends CentsFormatOptions {
+  currencyDigits?: number
+}
+
+export function formatSharePriceLabel(
+  value: number | string | null | undefined,
+  options: SharePriceFormatOptions = {},
+) {
+  const fallback = options.fallback ?? '50.0¢'
+
+  if (value === null || value === undefined) {
+    return fallback
+  }
+
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric)) {
+    return fallback
+  }
+
+  if (numeric < 1) {
+    return formatCentsLabel(toCents(numeric), { fallback })
+  }
+
+  const digits = options.currencyDigits ?? 2
+  return formatCurrency(numeric, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  })
 }
 
 export function formatPosition(amountMicro: string): string {
