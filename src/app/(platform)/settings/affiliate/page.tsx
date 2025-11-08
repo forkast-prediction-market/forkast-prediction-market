@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default async function AffiliateSettingsPage() {
   const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
-  const affiliateCode = user.affiliate_code ?? (await AffiliateRepository.ensureUserAffiliateCode(user.id)).data
+  const affiliateCode = user.affiliate_code
 
   const { data: allSettings } = await SettingsRepository.getSettings()
   const affiliateSettings = allSettings?.affiliate

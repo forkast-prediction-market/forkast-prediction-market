@@ -15,8 +15,7 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 
 const initialState = {
-  error: undefined as string | undefined,
-  success: undefined as string | undefined,
+  error: null,
 }
 
 const AUTOMATIC_MODEL_VALUE = '__AUTOMATIC__'
@@ -58,20 +57,23 @@ export default function AdminMarketContextSettingsForm({
   const [modelsStateError, setModelsStateError] = useState<string | undefined>(modelsError)
   const [isRefreshingModels, setIsRefreshingModels] = useState(false)
   const [state, formAction, isPending] = useActionState(updateMarketContextSettingsAction, initialState)
+  const wasPendingRef = useRef(isPending)
 
   useEffect(() => {
-    if (state.success) {
-      toast.success(state.success)
+    const transitionedToIdle = wasPendingRef.current && !isPending
+
+    if (transitionedToIdle && state.error === null) {
+      toast.success('Settings updated successfully!')
     }
-    if (state.error) {
+    else if (transitionedToIdle && state.error) {
       toast.error(state.error)
     }
-  }, [state.error, state.success])
+
+    wasPendingRef.current = isPending
+  }, [isPending, state.error])
 
   useEffect(() => {
-    queueMicrotask(() => {
-      setModelOptions(models)
-    })
+    queueMicrotask(() => setModelOptions(models))
   }, [models])
 
   useEffect(() => {

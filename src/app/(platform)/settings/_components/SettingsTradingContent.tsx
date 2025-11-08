@@ -30,7 +30,7 @@ const ORDER_TYPE_OPTIONS: Array<{
 ]
 
 export default function SettingsTradingContent({ user }: { user: User }) {
-  const [status, setStatus] = useState<{ error: string } | null>(null)
+  const [error, setError] = useState<string | null>(null)
   const formRef = useRef<HTMLFormElement>(null)
   const initialOrderType = (user.settings?.trading?.market_order_type as MarketOrderType) ?? CLOB_ORDER_TYPE.FAK
 
@@ -73,15 +73,16 @@ export default function SettingsTradingContent({ user }: { user: User }) {
       const formData = new FormData(formRef.current ?? undefined)
       formData.set('market_order_type', value)
 
-      const result = await updateTradingSettingsAction(formData)
+      const { error } = await updateTradingSettingsAction(formData)
 
-      if (result?.error) {
+      if (error) {
         startTransition(() => {
           setOptimisticOrderType(previousValue)
         })
-        setStatus({ error: result.error })
+        setError(error)
       }
       else {
+        setError(error)
         toast.success('Trading settings updated.')
         updateGlobalUser(value)
       }
@@ -90,7 +91,7 @@ export default function SettingsTradingContent({ user }: { user: User }) {
 
   return (
     <div className="grid gap-8">
-      {status?.error && <InputError message={status.error} />}
+      {error && <InputError message={error} />}
 
       <Form ref={formRef} action={() => {}} className="grid gap-6">
         <input type="hidden" name="market_order_type" value={optimisticOrderType} />

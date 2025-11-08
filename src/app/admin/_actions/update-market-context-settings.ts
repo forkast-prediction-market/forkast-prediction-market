@@ -2,13 +2,13 @@
 
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { SettingsRepository } from '@/lib/db/queries/settings'
 import { UserRepository } from '@/lib/db/queries/user'
 import { encryptSecret } from '@/lib/encryption'
 
 export interface MarketContextSettingsActionState {
-  error?: string
-  success?: string
+  error: string | null
 }
 
 const UpdateMarketContextSettingsSchema = z.object({
@@ -41,7 +41,7 @@ export async function updateMarketContextSettingsAction(
   const user = await UserRepository.getCurrentUser()
 
   if (!user || !user.is_admin) {
-    return { error: 'Not authorized.' }
+    return { error: 'Unauthenticated.' }
   }
 
   const parsed = UpdateMarketContextSettingsSchema.safeParse({
@@ -69,7 +69,7 @@ export async function updateMarketContextSettingsAction(
   }
   catch (error) {
     console.error('Failed to encrypt OpenRouter API key', error)
-    return { error: 'Unable to secure the OpenRouter API key. Check server configuration.' }
+    return { error: DEFAULT_ERROR_MESSAGE }
   }
 
   const updates = [
@@ -82,10 +82,10 @@ export async function updateMarketContextSettingsAction(
   const { error } = await SettingsRepository.updateSettings(updates)
 
   if (error) {
-    console.error('Failed to update market context settings', error)
-    return { error: 'Failed to update settings. Try again shortly.' }
+    return { error: DEFAULT_ERROR_MESSAGE }
   }
 
   revalidatePath('/admin/market-context')
-  return { success: 'Market context settings updated.' }
+
+  return { error: null }
 }

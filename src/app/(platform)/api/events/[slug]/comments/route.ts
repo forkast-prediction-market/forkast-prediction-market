@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { CommentRepository } from '@/lib/db/queries/comment'
 import { EventRepository } from '@/lib/db/queries/event'
 import { UserRepository } from '@/lib/db/queries/user'
@@ -16,10 +17,7 @@ export async function GET(
 
     const { data: event, error: eventError } = await EventRepository.getIdBySlug(slug)
     if (!event || eventError) {
-      return NextResponse.json(
-        { error: 'Event not found.' },
-        { status: 404 },
-      )
+      return NextResponse.json({ error: 'Event not found.' }, { status: 404 })
     }
 
     const user = await UserRepository.getCurrentUser()
@@ -27,10 +25,7 @@ export async function GET(
 
     const { data: comments, error: rootCommentsError } = await CommentRepository.getEventComments(event.id, limit, offset)
     if (rootCommentsError) {
-      return NextResponse.json(
-        { error: 'Failed to fetch comments.' },
-        { status: 500 },
-      )
+      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
 
     const normalizedComments = (comments ?? []).map((comment: any) => ({
@@ -81,10 +76,7 @@ export async function GET(
 
     const { data: userLikes, error: userLikesError } = await CommentRepository.getCommentsIdsLikedByUser(currentUserId, allIds)
     if (userLikesError) {
-      return NextResponse.json(
-        { error: 'Failed to fetch comments.' },
-        { status: 500 },
-      )
+      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
 
     const likedIds = new Set((userLikes as unknown as any[])?.map((like: any) => like.comment_id) || [])
@@ -110,10 +102,8 @@ export async function GET(
 
     return NextResponse.json(commentsWithLikeStatus)
   }
-  catch {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 },
-    )
+  catch (error) {
+    console.error('API Error:', error)
+    return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
   }
 }

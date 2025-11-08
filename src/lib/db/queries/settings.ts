@@ -41,33 +41,27 @@ export const SettingsRepository = {
 
   async updateSettings(settingsArray: Array<{ group: string, key: string, value: string }>): Promise<QueryResult<Array<typeof settings.$inferSelect>>> {
     return runQuery(async () => {
-      try {
-        const data = await db
-          .insert(settings)
-          .values(settingsArray)
-          .onConflictDoUpdate({
-            target: [settings.group, settings.key],
-            set: {
-              value: sql`EXCLUDED.value`,
-            },
-          })
-          .returning({
-            id: settings.id,
-            group: settings.group,
-            key: settings.key,
-            value: settings.value,
-            created_at: settings.created_at,
-            updated_at: settings.updated_at,
-          })
+      const data = await db
+        .insert(settings)
+        .values(settingsArray)
+        .onConflictDoUpdate({
+          target: [settings.group, settings.key],
+          set: {
+            value: sql`EXCLUDED.value`,
+          },
+        })
+        .returning({
+          id: settings.id,
+          group: settings.group,
+          key: settings.key,
+          value: settings.value,
+          created_at: settings.created_at,
+          updated_at: settings.updated_at,
+        })
 
-        revalidateTag(cacheTags.settings, 'max')
+      revalidateTag(cacheTags.settings, 'max')
 
-        return { data, error: null }
-      }
-      catch (error) {
-        console.error('Failed to update settings:', error)
-        return { data: null, error: 'Failed to update settings.' }
-      }
+      return { data, error: null }
     })
   },
 }

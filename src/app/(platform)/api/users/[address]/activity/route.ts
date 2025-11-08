@@ -1,5 +1,6 @@
 import type { ActivityOrder, QueryResult } from '@/types'
 import { NextResponse } from 'next/server'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
 
 export async function GET(
@@ -28,12 +29,10 @@ export async function GET(
       }
     }
 
-    // Validate search parameter
     let validatedSearchQuery: string | undefined
     if (searchQuery !== null) {
       const trimmedSearch = searchQuery.trim()
       if (trimmedSearch.length > 0) {
-        // Basic validation: ensure search query is not too long and contains valid characters
         if (trimmedSearch.length > 200) {
           return NextResponse.json({ error: 'Search query too long. Maximum 200 characters allowed.' }, { status: 400 })
         }
@@ -48,7 +47,7 @@ export async function GET(
       )
     }
 
-    const result: QueryResult<ActivityOrder[]> = await UserRepository.getUserActivity({
+    const { data, error }: QueryResult<ActivityOrder[]> = await UserRepository.getUserActivity({
       address: address.trim(),
       limit: validatedLimit,
       offset: validatedOffset,
@@ -56,23 +55,15 @@ export async function GET(
       search: validatedSearchQuery,
     })
 
-    if (result.error) {
-      console.error('Error fetching user activity:', result.error)
-      return NextResponse.json(
-        { error: 'Failed to fetch user activity. Please try again later.' },
-        { status: 500 },
-      )
+    if (error) {
+      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
 
-    const activities = result.data || []
+    const activities = data || []
     return NextResponse.json(activities)
   }
   catch (error) {
-    console.error('Error fetching user activity:', error)
-
-    return NextResponse.json(
-      { error: 'Internal server error. Please try again later.' },
-      { status: 500 },
-    )
+    console.error('API Error:', error)
+    return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
   }
 }

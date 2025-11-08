@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { fetchOpenRouterModels } from '@/lib/ai/openrouter'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
 
 const RequestSchema = z.object({
@@ -32,7 +33,7 @@ export async function POST(request: Request) {
     })
   }
   catch (error) {
-    console.error('Failed to fetch OpenRouter models', error)
-    return NextResponse.json({ error: 'Unable to load models from OpenRouter.' }, { status: 502 })
+    console.error('API Error:', error)
+    return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
   }
 }

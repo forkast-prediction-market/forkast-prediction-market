@@ -1,4 +1,5 @@
 import type { QueryResult } from '@/types'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 
 export async function runQuery<T>(queryFn: () => Promise<QueryResult<T>>): Promise<QueryResult<T>> {
   try {
@@ -9,7 +10,7 @@ export async function runQuery<T>(queryFn: () => Promise<QueryResult<T>>): Promi
     console.error('Query failed:', err.cause ?? err)
     return {
       data: null,
-      error: 'Internal server error',
+      error: DEFAULT_ERROR_MESSAGE,
     }
   }
 }

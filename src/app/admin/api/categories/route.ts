@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { TagRepository } from '@/lib/db/queries/tag'
 import { UserRepository } from '@/lib/db/queries/user'
 
@@ -27,8 +28,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (error) {
-      console.error('Error fetching admin tags:', error)
-      return NextResponse.json({ error: 'Failed to fetch categories' }, { status: 500 })
+      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
 
     const transformed = data.map(({ parent, ...tag }) => ({
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     })
   }
   catch (error) {
-    console.error('Admin categories GET error:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('API Error:', error)
+    return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
   }
 }

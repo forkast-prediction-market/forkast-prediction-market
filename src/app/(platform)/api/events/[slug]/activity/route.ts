@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { EventRepository } from '@/lib/db/queries/event'
 
 export async function GET(
@@ -34,14 +35,13 @@ export async function GET(
     })
 
     if (activitiesError) {
-      console.error('Error fetching event activity:', activitiesError)
-      return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
 
     return NextResponse.json(activities || [])
   }
   catch (error) {
-    console.error('Unexpected error in activity API route:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('API error:', error)
+    return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
   }
 }

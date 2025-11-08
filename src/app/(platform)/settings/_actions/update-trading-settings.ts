@@ -2,7 +2,7 @@
 
 import type { MarketOrderType } from '@/types'
 import { revalidatePath } from 'next/cache'
-import { CLOB_ORDER_TYPE } from '@/lib/constants'
+import { CLOB_ORDER_TYPE, DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
 
 export async function updateTradingSettingsAction(formData: FormData) {
@@ -17,13 +17,19 @@ export async function updateTradingSettingsAction(formData: FormData) {
       return { error: 'Unauthenticated.' }
     }
 
-    await UserRepository.updateUserTradingSettings(user, {
+    const { error } = await UserRepository.updateUserTradingSettings(user, {
       market_order_type: marketOrderType as MarketOrderType,
     })
 
+    if (error) {
+      return { error }
+    }
+
     revalidatePath('/settings')
+
+    return { error: null }
   }
   catch {
-    return { error: 'Failed to update trading settings' }
+    return { error: DEFAULT_ERROR_MESSAGE }
   }
 }

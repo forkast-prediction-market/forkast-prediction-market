@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { SettingsRepository } from '@/lib/db/queries/settings'
 
 interface AffiliateSettingsResponse {
@@ -13,10 +14,7 @@ export async function GET() {
     const { data: settings, error } = await SettingsRepository.getSettings()
 
     if (error || !settings?.affiliate) {
-      return NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 },
-      )
+      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
 
     const affiliateSettings = settings.affiliate
@@ -24,10 +22,7 @@ export async function GET() {
     const affiliateShareBps = affiliateSettings.affiliate_share_bps?.value
 
     if (!tradeFeeBps || !affiliateShareBps) {
-      return NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 },
-      )
+      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
 
     const tradeFeePercent = Number.parseFloat(tradeFeeBps) / 100
@@ -35,10 +30,7 @@ export async function GET() {
     const platformSharePercent = 100 - affiliateSharePercent
 
     if (Number.isNaN(tradeFeePercent) || Number.isNaN(affiliateSharePercent)) {
-      return NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 },
-      )
+      return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
 
     const lastUpdated = Math.max(
@@ -61,10 +53,7 @@ export async function GET() {
     })
   }
   catch (error) {
-    console.error('Error in affiliate settings API:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 },
-    )
+    console.error('API Error:', error)
+    return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
   }
 }
