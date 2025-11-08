@@ -1,3 +1,5 @@
+import { formatCurrency, formatPercent } from '@/lib/formatters'
+
 export interface AffiliateSettingsResponse {
   tradeFeePercent: number
   affiliateSharePercent: number
@@ -42,9 +44,9 @@ export async function fetchAffiliateSettingsFromAPI(): Promise<AffiliateDataResu
     const apiData: AffiliateSettingsResponse = await response.json()
 
     const formattedData: FormattedAffiliateSettings = {
-      tradeFeePercent: formatPercentage(apiData.tradeFeePercent),
-      affiliateSharePercent: formatPercentage(apiData.affiliateSharePercent),
-      platformSharePercent: formatPercentage(apiData.platformSharePercent),
+      tradeFeePercent: formatPercent(apiData.tradeFeePercent, { includeSymbol: false }),
+      affiliateSharePercent: formatPercent(apiData.affiliateSharePercent, { includeSymbol: false }),
+      platformSharePercent: formatPercent(apiData.platformSharePercent, { includeSymbol: false }),
       tradeFeeDecimal: apiData.tradeFeePercent / 100,
       affiliateShareDecimal: apiData.affiliateSharePercent / 100,
       platformShareDecimal: apiData.platformSharePercent / 100,
@@ -64,14 +66,6 @@ export async function fetchAffiliateSettingsFromAPI(): Promise<AffiliateDataResu
       },
     }
   }
-}
-
-export function formatPercentage(percentage: number): string {
-  return percentage.toFixed(2)
-}
-
-export function formatCurrency(amount: number): string {
-  return amount.toFixed(2)
 }
 
 export function calculateTradingFee(amount: number, feeDecimal: number): number {
@@ -95,10 +89,10 @@ export function createFeeCalculationExample(
   const platformShare = calculatePlatformShare(tradingFee, affiliateSettings.platformShareDecimal)
 
   return {
-    tradeAmount: formatCurrency(tradeAmount),
-    tradingFee: formatCurrency(tradingFee),
-    affiliateCommission: formatCurrency(affiliateCommission),
-    platformShare: formatCurrency(platformShare),
+    tradeAmount: formatCurrency(tradeAmount, { includeSymbol: false }),
+    tradingFee: formatCurrency(tradingFee, { includeSymbol: false }),
+    affiliateCommission: formatCurrency(affiliateCommission, { includeSymbol: false }),
+    platformShare: formatCurrency(platformShare, { includeSymbol: false }),
     tradeFeePercent: affiliateSettings.tradeFeePercent,
     affiliateSharePercent: affiliateSettings.affiliateSharePercent,
     platformSharePercent: affiliateSettings.platformSharePercent,

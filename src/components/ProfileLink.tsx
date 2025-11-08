@@ -2,7 +2,8 @@ import type { ReactNode } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
-import { cn, formatTimeAgo, truncateAddress } from '@/lib/utils'
+import { formatTimeAgo, truncateAddress } from '@/lib/formatters'
+import { cn } from '@/lib/utils'
 
 interface ProfileLinkProps {
   user: {

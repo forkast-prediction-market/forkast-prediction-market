@@ -2,7 +2,8 @@ import type { Event } from '@/types'
 import { Clock3Icon } from 'lucide-react'
 import { NewBadge } from '@/components/ui/new-badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { formatDate, isMarketNew } from '@/lib/utils'
+import { formatDate } from '@/lib/formatters'
+import { isMarketNew } from '@/lib/utils'
 
 interface EventMetaInformationProps {
   event: Event

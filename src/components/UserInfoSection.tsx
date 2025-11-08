@@ -3,7 +3,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { useClipboard } from '@/hooks/useClipboard'
-import { truncateAddress } from '@/lib/utils'
+import { truncateAddress } from '@/lib/formatters'
 import { useUser } from '@/stores/useUser'
 
 export default function UserInfoSection() {

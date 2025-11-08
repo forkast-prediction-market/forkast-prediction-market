@@ -5,8 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Loader2Icon } from 'lucide-react'
 import { useCallback, useMemo } from 'react'
 import { ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
-import { priceFormatter, sharesFormatter, usdFormatter } from '@/lib/formatters'
-import { toCents } from '@/lib/utils'
+import { priceFormatter, sharesFormatter, toCents, usdFormatter } from '@/lib/formatters'
 import { useOrder } from '@/stores/useOrder'
 
 interface OrderBookLevel {

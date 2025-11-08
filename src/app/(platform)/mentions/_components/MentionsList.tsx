@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { NewBadge } from '@/components/ui/new-badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { cn, formatVolume, isMarketNew } from '@/lib/utils'
+import { formatVolume } from '@/lib/formatters'
+import { cn, isMarketNew } from '@/lib/utils'
 
 interface MentionsListProps {
   events: Event[]

@@ -11,7 +11,8 @@ import { OpenCardContext } from '@/components/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { NewBadge } from '@/components/ui/new-badge'
-import { formatVolume, isMarketNew, triggerConfetti } from '@/lib/utils'
+import { formatVolume } from '@/lib/formatters'
+import { isMarketNew, triggerConfetti } from '@/lib/utils'
 
 interface EventCardProps {
   event: Event

@@ -5,7 +5,8 @@ import { useEffect, useState } from 'react'
 import EventOrderBook from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
 import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
-import { cn, toCents } from '@/lib/utils'
+import { toCents } from '@/lib/formatters'
+import { cn } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
 interface EventMarketsProps {
