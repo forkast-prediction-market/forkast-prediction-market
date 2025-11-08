@@ -125,8 +125,16 @@ export function toMicro(amount: string): string {
   return Math.round(Number(amount) * 1e6).toString()
 }
 
-export function fromMicro(amount: string, precision: number = 2): string {
+export function fromMicro(amount: string, precision: number = 1): string {
   return (Number(amount) / 1e6).toFixed(precision)
+}
+
+export function toCents(price?: number) {
+  const normalized = typeof price === 'number' && Number.isFinite(price)
+    ? Math.min(Math.max(price, 0), 1)
+    : 0.5
+
+  return Number((normalized * 100).toFixed(1))
 }
 
 export function calculateWinnings(amount: number, price: number): number {

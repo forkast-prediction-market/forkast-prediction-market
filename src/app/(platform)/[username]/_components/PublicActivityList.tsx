@@ -187,7 +187,7 @@ function ActivityItem({ item }: { item: ActivityOrder }) {
               {formatPrice(item.price == null ? null : Number(item.price))}
             </span>
             <span className="text-xs font-semibold text-muted-foreground">
-              {fromMicro(item.amount, 1)}
+              {fromMicro(item.amount)}
               {' '}
               shares
             </span>
@@ -199,7 +199,7 @@ function ActivityItem({ item }: { item: ActivityOrder }) {
       <div className="flex-shrink-0 space-y-1 text-right">
         <div className="text-xs font-semibold sm:text-sm">
           $
-          {fromMicro(String(item.total_value))}
+          {fromMicro(String(item.total_value), 2)}
         </div>
         <div className="flex items-center justify-end gap-1 sm:gap-2">
           <span className="hidden text-xs text-muted-foreground sm:inline">

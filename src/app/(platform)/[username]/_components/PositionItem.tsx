@@ -91,7 +91,7 @@ export default function PositionItem({ item }: PositionItemProps) {
       <div className="flex-shrink-0 text-right">
         <div className="text-xs font-semibold sm:text-sm">
           $
-          {fromMicro(String(item.average_position))}
+          {fromMicro(String(item.average_position), 2)}
         </div>
         <div className="text-xs text-muted-foreground">Avg</div>
       </div>
@@ -100,7 +100,7 @@ export default function PositionItem({ item }: PositionItemProps) {
       <div className="flex-shrink-0 text-right">
         <div className="text-xs font-semibold sm:text-sm">
           $
-          {fromMicro(String(item.total_position_value))}
+          {fromMicro(String(item.total_position_value), 2)}
         </div>
         <div className="text-xs text-muted-foreground">Total</div>
         {/* Show timestamp on mobile below the amount */}

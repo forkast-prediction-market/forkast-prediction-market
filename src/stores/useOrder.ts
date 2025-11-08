@@ -2,6 +2,7 @@ import type { RefObject } from 'react'
 import type { Event, Market, OrderSide, OrderType, Outcome } from '@/types'
 import { create } from 'zustand'
 import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
+import { toCents } from '@/lib/utils'
 
 type ConditionShares = Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>
 
@@ -97,8 +98,8 @@ export function useYesPrice() {
       ? yesOutcome.buy_price
       : yesOutcome.sell_price
 
-    return formatPriceToCents(rawPrice)
-  }) ?? formatPriceToCents()
+    return toCents(rawPrice)
+  }) ?? 50
 }
 
 export function useNoPrice() {
@@ -112,8 +113,8 @@ export function useNoPrice() {
       ? noOutcome.buy_price
       : noOutcome.sell_price
 
-    return formatPriceToCents(rawPrice)
-  }) ?? formatPriceToCents()
+    return toCents(rawPrice)
+  }) ?? 50
 }
 
 export function useIsBinaryMarket() {
@@ -186,14 +187,6 @@ export function useOrderAmount() {
 
 export function useOrderInputRef() {
   return useOrder(state => state.inputRef)
-}
-
-function formatPriceToCents(price?: number) {
-  const normalized = typeof price === 'number' && Number.isFinite(price)
-    ? Math.min(Math.max(price, 0), 1)
-    : 0.5
-
-  return Number((normalized * 100).toFixed(2))
 }
 
 function getSharesForOutcome(conditionId: string, outcomeIndex: number) {

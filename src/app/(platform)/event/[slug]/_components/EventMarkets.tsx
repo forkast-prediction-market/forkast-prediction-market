@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import EventOrderBook from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
 import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
-import { cn } from '@/lib/utils'
+import { cn, toCents } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
 interface EventMarketsProps {
@@ -160,7 +160,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[0].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {formatOutcomePrice(market.outcomes[0].buy_price, market.outcomes.length)}
+                        {toCents(market.outcomes[0].buy_price)}
                         ¢
                       </span>
                     </Button>
@@ -184,7 +184,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[1].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {formatOutcomePrice(market.outcomes[1].buy_price, market.outcomes.length)}
+                        {toCents(market.outcomes[1].buy_price)}
                         ¢
                       </span>
                     </Button>
@@ -253,7 +253,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[0].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {formatOutcomePrice(market.outcomes[0].buy_price, market.outcomes.length)}
+                        {toCents(market.outcomes[0].buy_price)}
                         ¢
                       </span>
                     </Button>
@@ -278,7 +278,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[1].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {formatOutcomePrice(market.outcomes[1].buy_price, market.outcomes.length)}
+                        {toCents(market.outcomes[1].buy_price)}
                         ¢
                       </span>
                     </Button>
@@ -300,14 +300,4 @@ export default function EventMarkets({ event }: EventMarketsProps) {
         })}
     </div>
   )
-}
-
-function formatOutcomePrice(price?: number, outcomeCount?: number) {
-  if (typeof price === 'number' && Number.isFinite(price)) {
-    return Number((Math.min(Math.max(price, 0), 1) * 100).toFixed(2))
-  }
-
-  const totalOutcomes = Number.isFinite(outcomeCount) && outcomeCount ? outcomeCount : 2
-  const fallbackProbability = 100 / Math.max(totalOutcomes, 1)
-  return Number(fallbackProbability.toFixed(2))
 }
