@@ -2,7 +2,7 @@ import type { RefObject } from 'react'
 import type { Event, Market, OrderSide, OrderType, Outcome } from '@/types'
 import { create } from 'zustand'
 import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
-import { toCents } from '@/lib/utils'
+import { toCents } from '@/lib/formatters'
 
 type ConditionShares = Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>
 

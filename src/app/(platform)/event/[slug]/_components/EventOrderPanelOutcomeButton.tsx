@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { formatCentsLabel } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useOrder } from '@/stores/useOrder'
 
@@ -38,8 +39,7 @@ export default function EventOrderPanelOutcomeButton({ type, price }: EventOrder
           : state.market.outcomes[1].outcome_text}
       </span>
       <span className="shrink-0 text-base font-bold">
-        {price}
-        ¢
+        {formatCentsLabel(price)}
       </span>
     </Button>
   )

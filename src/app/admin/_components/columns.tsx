@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { truncateAddress } from '@/lib/utils'
+import { truncateAddress } from '@/lib/formatters'
 
 interface AdminUserRow {
   id: string

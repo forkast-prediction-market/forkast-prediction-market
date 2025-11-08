@@ -3,6 +3,7 @@ import type { OpenRouterMessage } from '@/lib/ai/openrouter'
 import type { Event, Market, Outcome } from '@/types'
 import { loadMarketContextSettings } from '@/lib/ai/market-context-config'
 import { requestOpenRouterCompletion, sanitizeForPrompt } from '@/lib/ai/openrouter'
+import { formatCentsLabel, formatCurrency as formatUsd } from '@/lib/formatters'
 
 function formatPercent(value: number | null | undefined, digits = 1) {
   if (typeof value !== 'number' || Number.isNaN(value)) {
@@ -14,25 +15,18 @@ function formatPercent(value: number | null | undefined, digits = 1) {
   return `${normalized.toFixed(digits)}%`
 }
 
-function formatCurrency(value: number | null | undefined, digits = 0) {
+function formatCurrencyValue(value: number | null | undefined, digits = 0) {
   if (typeof value !== 'number' || Number.isNaN(value)) {
     return 'unknown'
   }
-
-  return `$${value.toLocaleString('en-US', {
+  return formatUsd(value, {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
-  })}`
+  })
 }
 
 function formatSharePrice(value: number | null | undefined) {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
-    return 'unknown'
-  }
-
-  const normalized = value > 1 ? value : value * 100
-
-  return `${normalized.toFixed(1)}¢`
+  return formatCentsLabel(value, { fallback: 'unknown' })
 }
 
 function formatOutcome(outcome: Outcome) {
@@ -40,7 +34,7 @@ function formatOutcome(outcome: Outcome) {
   const sellPrice = formatSharePrice(outcome.sell_price)
 
   const totalVolume = typeof outcome.total_volume === 'number'
-    ? formatCurrency(outcome.total_volume, 2)
+    ? formatCurrencyValue(outcome.total_volume, 2)
     : 'volume unknown'
 
   return `- ${sanitizeForPrompt(outcome.outcome_text)}: buy ${buyPrice}, sell ${sellPrice}, lifetime volume ${totalVolume}`
@@ -92,8 +86,8 @@ function buildMarketContextVariables(event: Event, market: Market) {
     'market-title': sanitizeForPrompt(market.title),
     'market-probability': formatPercent(market.probability),
     'market-price': formatSharePrice(market.price),
-    'market-volume-24h': formatCurrency(market.current_volume_24h, 2),
-    'market-volume-total': formatCurrency(market.total_volume, 2),
+    'market-volume-24h': formatCurrencyValue(market.current_volume_24h, 2),
+    'market-volume-total': formatCurrencyValue(market.total_volume, 2),
     'market-outcomes': outcomes,
   }
 }

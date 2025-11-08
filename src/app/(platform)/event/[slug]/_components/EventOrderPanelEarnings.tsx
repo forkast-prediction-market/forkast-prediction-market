@@ -1,5 +1,6 @@
 import { BanknoteIcon } from 'lucide-react'
 import { ORDER_SIDE } from '@/lib/constants'
+import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 import { calculateWinnings, cn } from '@/lib/utils'
 import { calculateSellAmount, getAvgSellPrice, useOrder } from '@/stores/useOrder'
 
@@ -9,6 +10,13 @@ interface EventOrderPanelEarningsProps {
 
 export default function EventOrderPanelEarnings({ isMobile }: EventOrderPanelEarningsProps) {
   const state = useOrder()
+  const sellAmount = calculateSellAmount()
+  const sellAmountLabel = formatCurrency(sellAmount)
+  const amountNumber = Number.parseFloat(state.amount || '0') || 0
+  const buyWinningsSample = formatCurrency(calculateWinnings(amountNumber, 0.72))
+  const buyWinningsDesktop = formatCurrency(calculateWinnings(amountNumber, 0.26))
+  const avgSellPriceLabel = formatCentsLabel(getAvgSellPrice(), { fallback: '—' })
+  const avgBuyPriceLabel = formatCentsLabel(state.outcome?.buy_price, { fallback: '—' })
 
   return (
     <div className={`${isMobile ? 'mb-4 text-center' : 'mb-4'}`}>
@@ -27,8 +35,8 @@ export default function EventOrderPanelEarnings({ isMobile }: EventOrderPanelEar
             {isMobile && (
               <span className="text-2xl font-bold text-yes">
                 {state.side === ORDER_SIDE.SELL
-                  ? `$${calculateSellAmount().toFixed(2)}`
-                  : `$${calculateWinnings(Number.parseFloat(state.amount), 0.72).toFixed(2)}`}
+                  ? sellAmountLabel
+                  : buyWinningsSample}
               </span>
             )}
           </div>
@@ -39,15 +47,15 @@ export default function EventOrderPanelEarnings({ isMobile }: EventOrderPanelEar
             )}
           >
             {state.side === ORDER_SIDE.SELL
-              ? `Avg. price ${getAvgSellPrice()}¢`
-              : 'Avg. Price 72¢'}
+              ? `Avg. price ${avgSellPriceLabel}`
+              : `Avg. price ${avgBuyPriceLabel}`}
           </div>
         </div>
         {!isMobile && (
           <div className="text-4xl font-bold text-yes">
             {state.side === ORDER_SIDE.SELL
-              ? `$${calculateSellAmount().toFixed(2)}`
-              : `$${calculateWinnings(Number.parseFloat(state.amount), 0.26).toFixed(2)}`}
+              ? sellAmountLabel
+              : buyWinningsDesktop}
           </div>
         )}
       </div>

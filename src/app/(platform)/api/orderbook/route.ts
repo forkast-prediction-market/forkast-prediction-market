@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 
 interface OrderbookLevelSummary {
   price: string

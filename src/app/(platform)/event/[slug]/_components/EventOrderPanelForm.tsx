@@ -18,7 +18,8 @@ import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_compo
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
 import EventTradeToast from '@/app/(platform)/event/[slug]/_components/EventTradeToast'
 import { CAP_MICRO, EIP712_DOMAIN, EIP712_TYPES, FLOOR_MICRO, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
-import { cn, toMicro, triggerConfetti } from '@/lib/utils'
+import { formatCentsLabel, formatCurrency, toMicro } from '@/lib/formatters'
+import { cn, triggerConfetti } from '@/lib/utils'
 import {
   calculateSellAmount,
   getAvgSellPrice,
@@ -315,32 +316,40 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   function triggerToast() {
     if (state.side === ORDER_SIDE.SELL) {
       const sellValue = calculateSellAmount()
+      const avgPriceLabel = formatCentsLabel(getAvgSellPrice(), { fallback: '—' })
 
       toast.success(
         `Sell ${state.amount} shares on ${state.outcome!.outcome_text}`,
         {
           description: (
             <EventTradeToast title={event.title}>
-              Received $
-              {sellValue.toFixed(2)}
+              Received
               {' '}
-              @ $
-              {getAvgSellPrice()}
-              ¢
+              {formatCurrency(sellValue)}
+              {' '}
+              @
+              {' '}
+              {avgPriceLabel}
             </EventTradeToast>
           ),
         },
       )
     }
     else {
+      const amountValue = Number.parseFloat(state.amount || '0') || 0
+      const buyAmountLabel = formatCurrency(amountValue)
+      const priceLabel = formatCentsLabel(state.outcome?.buy_price, { fallback: '—' })
+
       toast.success(
-        `Buy $${state.amount} on ${state.outcome!.outcome_text}`,
+        `Buy ${buyAmountLabel} on ${state.outcome!.outcome_text}`,
         {
           description: (
             <EventTradeToast title={event.title}>
-              {state.amount}
+              {buyAmountLabel}
               {' '}
-              shares 10¢
+              @
+              {' '}
+              {priceLabel}
             </EventTradeToast>
           ),
         },

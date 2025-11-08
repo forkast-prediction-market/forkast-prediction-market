@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebounce } from '@/hooks/useDebounce'
-import { cn, fromMicro } from '@/lib/utils'
+import { formatCurrency, formatSharePriceLabel, fromMicro } from '@/lib/formatters'
+import { cn } from '@/lib/utils'
 
 interface ControlsProps {
   searchQuery: string
@@ -135,13 +136,7 @@ function ActivityItem({ item }: { item: ActivityOrder }) {
   const outcomeChipColor = outcomeText === 'Yes'
     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
     : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-
-  function formatPrice(price: number | null) {
-    if (price === null || price === undefined) {
-      return '50.0¢'
-    }
-    return price < 1 ? `${(price * 100).toFixed(1)}¢` : `$${price.toFixed(2)}`
-  }
+  const totalValueUsd = Number(fromMicro(String(item.total_value), 2)) || 0
 
   return (
     <div className={`
@@ -184,7 +179,7 @@ function ActivityItem({ item }: { item: ActivityOrder }) {
             >
               {outcomeText}
               {' '}
-              {formatPrice(item.price == null ? null : Number(item.price))}
+              {formatSharePriceLabel(item.price == null ? null : Number(item.price))}
             </span>
             <span className="text-xs font-semibold text-muted-foreground">
               {fromMicro(item.amount)}
@@ -198,8 +193,7 @@ function ActivityItem({ item }: { item: ActivityOrder }) {
       {/* Amount & Time */}
       <div className="flex-shrink-0 space-y-1 text-right">
         <div className="text-xs font-semibold sm:text-sm">
-          $
-          {fromMicro(String(item.total_value), 2)}
+          {formatCurrency(totalValueUsd)}
         </div>
         <div className="flex items-center justify-end gap-1 sm:gap-2">
           <span className="hidden text-xs text-muted-foreground sm:inline">

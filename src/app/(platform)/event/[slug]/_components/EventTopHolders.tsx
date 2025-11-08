@@ -9,7 +9,7 @@ import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
 import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatPosition } from '@/lib/utils'
+import { formatPosition } from '@/lib/formatters'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
 interface EventTopHoldersProps {

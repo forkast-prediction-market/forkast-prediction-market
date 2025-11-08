@@ -11,7 +11,8 @@ import { OpenCardContext } from '@/components/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { NewBadge } from '@/components/ui/new-badge'
-import { formatVolume, isMarketNew, triggerConfetti } from '@/lib/utils'
+import { formatCentsLabel, formatCurrency, formatVolume } from '@/lib/formatters'
+import { isMarketNew, triggerConfetti } from '@/lib/utils'
 
 interface EventCardProps {
   event: Event
@@ -92,6 +93,7 @@ export default function EventCard({ event }: EventCardProps) {
 
       // Calculate shares and price
       const amountNum = Number.parseFloat(tradeAmount)
+      const safeAmount = Number.isFinite(amountNum) ? amountNum : 0
       const outcome = event.markets[0].outcomes.find(o => o.id === selectedOutcome.id)
       if (outcome) {
         const probability = event.markets[0].probability
@@ -103,7 +105,7 @@ export default function EventCard({ event }: EventCardProps) {
 
         // Show success toast in Polymarket style
         toast.success(
-          `Buy $${tradeAmount} on ${
+          `Buy ${formatCurrency(safeAmount)} on ${
             selectedOutcome.type === 'yes'
               ? selectedOutcome.name
               : (isBinaryMarket ? selectedOutcome.name : `Against ${selectedOutcome.name}`)
@@ -116,8 +118,8 @@ export default function EventCard({ event }: EventCardProps) {
                   {shares}
                   {' '}
                   shares @
-                  {price}
-                  ¢
+                  {' '}
+                  {formatCentsLabel(price)}
                 </div>
               </div>
             ),
@@ -129,7 +131,7 @@ export default function EventCard({ event }: EventCardProps) {
       setTradeAmount('1')
       // Here would be the actual trade execution
       console.log(
-        `Trade executed: $${tradeAmount} on ${selectedOutcome.name} (${selectedOutcome.type})`,
+        `Trade executed: ${formatCurrency(safeAmount)} on ${selectedOutcome.name} (${selectedOutcome.type})`,
       )
     }, 1000)
   }

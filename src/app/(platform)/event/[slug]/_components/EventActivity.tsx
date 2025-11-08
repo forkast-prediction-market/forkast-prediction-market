@@ -11,7 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { OUTCOME_INDEX } from '@/lib/constants'
-import { fromMicro, toMicro } from '@/lib/utils'
+import { formatCurrency, formatSharePriceLabel, fromMicro, toMicro } from '@/lib/formatters'
 
 interface EventActivityProps {
   event: Event
@@ -130,19 +130,9 @@ export default function EventActivity({ event }: EventActivityProps) {
     },
   })
 
-  function formatPrice(price: number | null) {
-    if (price === null) {
-      return '50.0¢'
-    }
-    return price < 1 ? `${(price * 100).toFixed(1)}¢` : `${price.toFixed(2)}`
-  }
-
   function formatTotalValue(totalValueMicro: number) {
     const totalValue = totalValueMicro / 1e6
-    if (totalValue < 1) {
-      return `${(totalValue * 100).toFixed(0)}¢`
-    }
-    return `$${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    return formatSharePriceLabel(totalValue, { fallback: '0¢' })
   }
 
   function retryInfiniteScroll() {
@@ -204,7 +194,9 @@ export default function EventActivity({ event }: EventActivityProps) {
         <div className="text-center">
           <div className="text-sm text-muted-foreground">
             {minAmountFilter && minAmountFilter !== 'none'
-              ? `No activity found with minimum amount of $${Number.parseInt(minAmountFilter).toLocaleString()}.`
+              ? `No activity found with minimum amount of ${
+                formatCurrency(Number.parseInt(minAmountFilter, 10) || 0, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+              }.`
               : 'No trading activity yet for this event.'}
           </div>
           {minAmountFilter && minAmountFilter !== 'none' && (
@@ -277,7 +269,7 @@ export default function EventActivity({ event }: EventActivityProps) {
                         {' '}
                       </span>
                       <span className="text-sm font-semibold">
-                        {formatPrice(Number(activity.price))}
+                        {formatSharePriceLabel(Number(activity.price))}
                       </span>
                       <span className="text-sm text-muted-foreground">
                         {' '}

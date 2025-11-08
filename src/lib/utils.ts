@@ -30,72 +30,6 @@ export function sanitizeSvg(svg: string) {
     .replace(/data:/gi, '')
 }
 
-export function formatTimeAgo(dateString: string) {
-  const date = new Date(dateString)
-  const now = new Date()
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-
-  if (diffInSeconds < 60) {
-    return `${diffInSeconds}s ago`
-  }
-
-  if (diffInSeconds < 3600) {
-    return `${Math.floor(diffInSeconds / 60)}m ago`
-  }
-
-  if (diffInSeconds < 86400) {
-    return `${Math.floor(diffInSeconds / 3600)}h ago`
-  }
-
-  return `${Math.floor(diffInSeconds / 86400)}d ago`
-}
-
-export function truncateAddress(address: string) {
-  return `${address.slice(0, 4)}…${address.slice(-6)}`
-}
-
-export function formatVolume(volume: number): string {
-  if (volume >= 1000000) {
-    return `$${(volume / 1000000).toFixed(1)}M`
-  }
-  else if (volume >= 1000) {
-    return `$${(volume / 1000).toFixed(0)}k`
-  }
-  return `$${volume.toFixed(0)}`
-}
-
-export function formatDate(date: Date): string {
-  return date.toLocaleDateString('pt-BR', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-    timeZone: 'UTC',
-  })
-}
-
-export function formatPercent(value: number) {
-  return `${value.toFixed(2)}%`
-}
-
-export function formatCurrency(value: number) {
-  return `$${value.toFixed(2)}`
-}
-
-export function formatPosition(amountMicro: string): string {
-  const amount = Number.parseFloat(fromMicro(amountMicro))
-
-  if (amount < 1_000) {
-    return amount.toString()
-  }
-
-  if (amount < 1_000_000) {
-    return Math.floor(amount).toLocaleString('en-US')
-  }
-
-  const millions = amount / 1_000_000
-  return `${millions.toFixed(1)}M`
-}
-
 export function triggerConfetti(color: 'primary' | 'yes' | 'no', event?: any) {
   let origin: { x?: number, y: number } = { y: 0.6 }
 
@@ -119,26 +53,6 @@ export function triggerConfetti(color: 'primary' | 'yes' | 'no', event?: any) {
     origin,
     colors,
   })
-}
-
-export function toMicro(amount: string): string {
-  return Math.round(Number(amount) * 1e6).toString()
-}
-
-export function fromMicro(amount: string, precision: number = 1): string {
-  return (Number(amount) / 1e6).toFixed(precision)
-}
-
-export function toCents(value?: string | number) {
-  if (value === null || value === undefined) {
-    return null
-  }
-
-  const normalized = typeof value === 'number' && Number.isFinite(value)
-    ? Math.min(Math.max(value, 0), 1)
-    : 0.5
-
-  return Number((normalized * 100).toFixed(1))
 }
 
 export function calculateWinnings(amount: number, price: number): number {

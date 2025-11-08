@@ -4,7 +4,7 @@ import type { AffiliateData } from '@/types'
 import { CheckIcon, CopyIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useClipboard } from '@/hooks/useClipboard'
-import { formatCurrency, formatPercent, truncateAddress } from '@/lib/utils'
+import { formatCurrency, formatPercent, truncateAddress } from '@/lib/formatters'
 
 interface SettingsAffiliateContentProps {
   affiliateData?: AffiliateData

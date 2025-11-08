@@ -2,6 +2,7 @@
 
 import type { PublicProfileStats } from '@/types'
 import { ActivityIcon, BarChart2Icon, CheckCircle2Icon, TrendingDownIcon, TrendingUpIcon } from 'lucide-react'
+import { usdFormatter } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
 interface StatCardProps {
@@ -40,15 +41,6 @@ interface PublicProfileStatsCardsProps {
 }
 
 export default function PublicProfileStatsCards({ stats }: PublicProfileStatsCardsProps) {
-  function formatCurrency(amount: number) {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount)
-  }
-
   const profitLossIcon = stats.profit_loss >= 0 ? TrendingUpIcon : TrendingDownIcon
   const isProfitable = stats.profit_loss >= 0
 
@@ -57,20 +49,20 @@ export default function PublicProfileStatsCards({ stats }: PublicProfileStatsCar
       <StatCard
         icon={ActivityIcon}
         label="Positions value"
-        value={formatCurrency(stats.positions_value)}
+        value={usdFormatter.format(stats.positions_value)}
       />
 
       <StatCard
         icon={profitLossIcon}
         label="Profit/loss"
-        value={formatCurrency(stats.profit_loss)}
+        value={usdFormatter.format(stats.profit_loss)}
         isProfit={isProfitable}
       />
 
       <StatCard
         icon={BarChart2Icon}
         label="Volume traded"
-        value={formatCurrency(stats.volume_traded)}
+        value={usdFormatter.format(stats.volume_traded)}
       />
 
       <StatCard

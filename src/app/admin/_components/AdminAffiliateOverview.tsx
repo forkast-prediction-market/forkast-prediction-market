@@ -1,6 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { truncateAddress } from '@/lib/utils'
+import { formatCurrency, truncateAddress } from '@/lib/formatters'
 
 interface AffiliateRow {
   id: string
@@ -11,14 +11,6 @@ interface AffiliateRow {
   total_referrals: number
   total_volume: number
   total_affiliate_fees: number
-}
-
-function formatCurrency(value: number) {
-  if (Number.isNaN(value)) {
-    return '$0.00'
-  }
-
-  return `${value.toFixed(2)}`
 }
 
 interface AdminAffiliateOverviewProps {
@@ -88,10 +80,10 @@ export default function AdminAffiliateOverview({ rows }: AdminAffiliateOverviewP
                   {row.total_referrals}
                 </td>
                 <td className="px-6 py-4 text-right text-sm font-medium">
-                  {formatCurrency(row.total_volume)}
+                  {formatCurrency(row.total_volume, { includeSymbol: false })}
                 </td>
                 <td className="px-6 py-4 text-right text-sm font-medium">
-                  {formatCurrency(row.total_affiliate_fees)}
+                  {formatCurrency(row.total_affiliate_fees, { includeSymbol: false })}
                 </td>
               </tr>
             ))}
@@ -134,11 +126,11 @@ export default function AdminAffiliateOverview({ rows }: AdminAffiliateOverviewP
               </div>
               <div className="text-center">
                 <p className="text-xs font-medium text-muted-foreground uppercase">Volume</p>
-                <p className="font-medium">{formatCurrency(row.total_volume)}</p>
+                <p className="font-medium">{formatCurrency(row.total_volume, { includeSymbol: false })}</p>
               </div>
               <div className="text-center">
                 <p className="text-xs font-medium text-muted-foreground uppercase">Fees</p>
-                <p className="font-medium">{formatCurrency(row.total_affiliate_fees)}</p>
+                <p className="font-medium">{formatCurrency(row.total_affiliate_fees, { includeSymbol: false })}</p>
               </div>
             </div>
           </div>

@@ -6,7 +6,7 @@ import PublicProfileHeader from '@/app/(platform)/[username]/_components/PublicP
 import PublicProfileStatsCards from '@/app/(platform)/[username]/_components/PublicProfileStatsCards'
 import PublicProfileTabs from '@/app/(platform)/[username]/_components/PublicProfileTabs'
 import { UserRepository } from '@/lib/db/queries/user'
-import { truncateAddress } from '@/lib/utils'
+import { truncateAddress } from '@/lib/formatters'
 
 export async function generateMetadata({ params }: PageProps<'/[username]'>): Promise<Metadata> {
   const { username } = await params

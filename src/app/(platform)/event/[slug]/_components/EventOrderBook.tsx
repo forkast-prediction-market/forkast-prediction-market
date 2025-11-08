@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Loader2Icon } from 'lucide-react'
 import { useCallback, useMemo } from 'react'
 import { ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
-import { toCents } from '@/lib/utils'
+import { formatCentsLabel, sharesFormatter, toCents, usdFormatter } from '@/lib/formatters'
 import { useOrder } from '@/stores/useOrder'
 
 interface OrderBookLevel {
@@ -47,23 +47,6 @@ interface OrderBookSnapshot {
 }
 
 const DEFAULT_MAX_LEVELS = 12
-
-const priceFormatter = new Intl.NumberFormat('pt-BR', {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-})
-
-const sharesFormatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-})
-
-const usdFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 
 async function fetchOrderBookSummaries(tokenIds: string[]): Promise<OrderBookSummariesResponse> {
   if (!tokenIds.length) {
@@ -206,11 +189,11 @@ export default function EventOrderBook({ market, outcome }: EventOrderBookProps)
         >
           <div className="flex h-full cursor-pointer items-center">
             Last:&nbsp;
-            {formatPrice(lastPrice)}
+            {formatCentsLabel(lastPrice)}
           </div>
           <div className="flex h-full cursor-pointer items-center justify-center">
             Spread:&nbsp;
-            {formatPrice(spread)}
+            {formatCentsLabel(spread)}
           </div>
           <div className="flex h-full items-center justify-center" />
           <div className="flex h-full items-center justify-center" />
@@ -267,7 +250,7 @@ function OrderBookRow({ level, maxShares, showBadge, onSelect }: OrderBookRowPro
       </div>
       <div className="flex h-full items-center justify-center px-4">
         <span className={`text-sm font-medium ${priceClass}`}>
-          {formatPrice(level.priceCents)}
+          {formatCentsLabel(level.priceCents)}
         </span>
       </div>
       <div className="flex h-full items-center justify-center px-4">
@@ -388,14 +371,6 @@ function OrderBookEmptyRow({ label }: { label: string }) {
       </span>
     </div>
   )
-}
-
-function formatPrice(value: number | null | undefined) {
-  if (typeof value !== 'number' || Number.isNaN(value)) {
-    return '—'
-  }
-
-  return `${priceFormatter.format(value)}¢`
 }
 
 function formatSharesInput(value: number) {
