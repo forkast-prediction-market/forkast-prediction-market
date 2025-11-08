@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import EventOrderBook from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
 import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
-import { toCents } from '@/lib/formatters'
+import { formatCentsLabel, toCents } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
@@ -161,8 +161,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[0].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {toCents(market.outcomes[0].buy_price)}
-                        ¢
+                        {formatCentsLabel(toCents(market.outcomes[0].buy_price))}
                       </span>
                     </Button>
                     <Button
@@ -185,8 +184,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[1].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {toCents(market.outcomes[1].buy_price)}
-                        ¢
+                        {formatCentsLabel(toCents(market.outcomes[1].buy_price))}
                       </span>
                     </Button>
                   </div>
@@ -254,8 +252,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[0].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {toCents(market.outcomes[0].buy_price)}
-                        ¢
+                        {formatCentsLabel(toCents(market.outcomes[0].buy_price))}
                       </span>
                     </Button>
 
@@ -279,8 +276,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[1].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {toCents(market.outcomes[1].buy_price)}
-                        ¢
+                        {formatCentsLabel(toCents(market.outcomes[1].buy_price))}
                       </span>
                     </Button>
                   </div>

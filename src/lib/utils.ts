@@ -55,14 +55,6 @@ export function triggerConfetti(color: 'primary' | 'yes' | 'no', event?: any) {
   })
 }
 
-export function toMicro(amount: string): string {
-  return Math.round(Number(amount) * 1e6).toString()
-}
-
-export function fromMicro(amount: string, precision: number = 1): string {
-  return (Number(amount) / 1e6).toFixed(precision)
-}
-
 export function calculateWinnings(amount: number, price: number): number {
   return amount / price - amount
 }

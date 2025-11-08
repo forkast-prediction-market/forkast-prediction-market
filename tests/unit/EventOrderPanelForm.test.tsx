@@ -83,7 +83,6 @@ vi.mock('sonner', () => ({
 
 vi.mock('@/lib/utils', () => ({
   cn: (...inputs: any[]) => inputs.filter(Boolean).join(' '),
-  toMicro: (value: string) => Math.round(Number(value) * 1e6).toString(),
   triggerConfetti: mockTriggerConfetti,
 }))
 

@@ -18,7 +18,8 @@ import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_compo
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
 import EventTradeToast from '@/app/(platform)/event/[slug]/_components/EventTradeToast'
 import { CAP_MICRO, EIP712_DOMAIN, EIP712_TYPES, FLOOR_MICRO, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
-import { cn, toMicro, triggerConfetti } from '@/lib/utils'
+import { toMicro } from '@/lib/formatters'
+import { cn, triggerConfetti } from '@/lib/utils'
 import {
   calculateSellAmount,
   getAvgSellPrice,

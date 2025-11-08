@@ -11,7 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { OUTCOME_INDEX } from '@/lib/constants'
-import { fromMicro, toMicro } from '@/lib/utils'
+import { fromMicro, toMicro } from '@/lib/formatters'
 
 interface EventActivityProps {
   event: Event

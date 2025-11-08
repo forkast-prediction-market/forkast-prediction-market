@@ -130,14 +130,23 @@ export function truncateAddress(address: string) {
   return `${address.slice(0, 4)}…${address.slice(-6)}`
 }
 
-export function formatPosition(amountMicro: string): string {
-  const numeric = Number(amountMicro)
-  if (!Number.isFinite(numeric)) {
-    return '0'
+interface CentsFormatOptions {
+  fallback?: string
+}
+
+export function formatCentsLabel(
+  value: number | null | undefined,
+  options: CentsFormatOptions = {},
+) {
+  const fallback = options.fallback ?? '—'
+  if (typeof value !== 'number' || Number.isNaN(value)) {
+    return fallback
   }
+  return `${priceFormatter.format(value)}¢`
+}
 
-  const amount = Number.parseFloat((numeric / 1e6).toFixed(1))
-
+export function formatPosition(amountMicro: string): string {
+  const amount = Number.parseFloat(fromMicro(amountMicro))
   if (amount < 1_000) {
     return amount.toString()
   }
@@ -160,4 +169,20 @@ export function toCents(value?: string | number) {
     : 0.5
 
   return Number((normalized * 100).toFixed(1))
+}
+
+export function toMicro(amount: string | number): string {
+  const numeric = Number(amount)
+  if (!Number.isFinite(numeric)) {
+    return '0'
+  }
+  return Math.round(numeric * 1e6).toString()
+}
+
+export function fromMicro(amount: string | number, precision: number = 1): string {
+  const numeric = Number(amount)
+  if (!Number.isFinite(numeric)) {
+    return (0).toFixed(precision)
+  }
+  return (numeric / 1e6).toFixed(precision)
 }

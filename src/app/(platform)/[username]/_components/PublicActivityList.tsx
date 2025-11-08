@@ -13,7 +13,8 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDebounce } from '@/hooks/useDebounce'
-import { cn, fromMicro } from '@/lib/utils'
+import { fromMicro } from '@/lib/formatters'
+import { cn } from '@/lib/utils'
 
 interface ControlsProps {
   searchQuery: string

@@ -3,7 +3,7 @@
 import type { UserPosition } from '@/types'
 import Image from 'next/image'
 import Link from 'next/link'
-import { fromMicro } from '@/lib/utils'
+import { fromMicro } from '@/lib/formatters'
 
 interface PositionItemProps {
   item: UserPosition
