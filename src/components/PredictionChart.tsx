@@ -17,6 +17,7 @@ import {
   useCallback,
   useEffect,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react'
@@ -71,6 +72,9 @@ const FUTURE_LINE_OPACITY_DARK = 0.55
 const FUTURE_LINE_OPACITY_LIGHT = 0.35
 const INITIAL_REVEAL_DURATION = 1400
 const INTERACTION_BASE_REVEAL_DURATION = 1100
+const DEFAULT_Y_AXIS_MAX = 100
+const MIN_Y_AXIS_MAX = 20
+const Y_AXIS_STEP = 20
 
 function clamp01(value: number) {
   if (value < 0) {
@@ -198,6 +202,26 @@ function interpolateSeriesPoint(
   return interpolated
 }
 
+function calculateYAxisMax(data: DataPoint[], series: SeriesConfig[]): number {
+  let maxValue = 0
+
+  data.forEach((point) => {
+    series.forEach((seriesItem) => {
+      const value = point[seriesItem.key]
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        maxValue = Math.max(maxValue, value)
+      }
+    })
+  })
+
+  if (maxValue <= 0) {
+    return DEFAULT_Y_AXIS_MAX
+  }
+
+  const stepped = Math.ceil(maxValue / Y_AXIS_STEP) * Y_AXIS_STEP
+  return Math.min(DEFAULT_Y_AXIS_MAX, Math.max(MIN_Y_AXIS_MAX, stepped))
+}
+
 export function PredictionChart({
   data: providedData,
   series: providedSeries,
@@ -252,6 +276,26 @@ export function PredictionChart({
     showTooltip,
     hideTooltip,
   } = useTooltip<DataPoint>()
+  const yAxisMax = useMemo(
+    () => calculateYAxisMax(data, series),
+    [data, series],
+  )
+  const yAxisTicks = useMemo(() => {
+    const ticks: number[] = []
+    if (yAxisMax <= 0) {
+      return [0, DEFAULT_Y_AXIS_MAX]
+    }
+
+    for (let value = 0; value <= yAxisMax; value += Y_AXIS_STEP) {
+      ticks.push(value)
+    }
+
+    if (ticks[ticks.length - 1] !== yAxisMax) {
+      ticks.push(yAxisMax)
+    }
+
+    return ticks
+  }, [yAxisMax])
 
   const handleTooltip = useCallback(
     (
@@ -274,7 +318,7 @@ export function PredictionChart({
 
       const yScale = scaleLinear<number>({
         range: [innerHeight, 0],
-        domain: [0, 100],
+        domain: [0, yAxisMax],
         nice: true,
       })
 
@@ -307,6 +351,7 @@ export function PredictionChart({
       margin,
       revealAnimationFrameRef,
       emitCursorDataChange,
+      yAxisMax,
     ],
   )
 
@@ -415,7 +460,7 @@ export function PredictionChart({
 
   const yScale = scaleLinear<number>({
     range: [innerHeight, 0],
-    domain: [0, 100],
+    domain: [0, yAxisMax],
     nice: true,
   })
 
@@ -634,7 +679,7 @@ export function PredictionChart({
         style={{ overflow: 'visible' }}
       >
         <Group left={margin.left} top={margin.top}>
-          {[0, 20, 40, 60, 80, 100].map(value => (
+          {yAxisTicks.map(value => (
             <line
               key={`grid-${value}`}
               x1={0}
@@ -648,16 +693,18 @@ export function PredictionChart({
             />
           ))}
 
-          <line
-            x1={0}
-            x2={innerWidth}
-            y1={yScale(50)}
-            y2={yScale(50)}
-            stroke="#344452"
-            strokeWidth={1.5}
-            strokeDasharray="2,4"
-            opacity={0.8}
-          />
+          {yAxisMax >= 50 && (
+            <line
+              x1={0}
+              x2={innerWidth}
+              y1={yScale(50)}
+              y2={yScale(50)}
+              stroke="#344452"
+              strokeWidth={1.5}
+              strokeDasharray="2,4"
+              opacity={0.8}
+            />
+          )}
 
           {series.map((seriesItem) => {
             const seriesColor = seriesItem.color
@@ -735,6 +782,7 @@ export function PredictionChart({
             left={innerWidth}
             scale={yScale}
             tickFormat={value => `${value}%`}
+            tickValues={yAxisTicks}
             stroke="transparent"
             tickStroke="transparent"
             tickLabelProps={{
@@ -745,7 +793,6 @@ export function PredictionChart({
               dy: '0.33em',
               dx: '0.5em',
             }}
-            numTicks={6}
             tickLength={0}
           />
 
