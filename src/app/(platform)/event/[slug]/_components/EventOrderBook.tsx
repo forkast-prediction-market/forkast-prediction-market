@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Loader2Icon } from 'lucide-react'
 import { useCallback, useMemo } from 'react'
 import { ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
+import { toCents } from '@/lib/utils'
 import { useOrder } from '@/stores/useOrder'
 
 interface OrderBookLevel {
@@ -310,8 +311,8 @@ function buildOrderBookSnapshot(
   const bestAsk = normalizedAsks[0]?.priceCents
   const bestBid = normalizedBids[0]?.priceCents
 
-  const spreadOverride = toDisplayCents(summary?.spread)
-  const lastPriceOverride = toDisplayCents(summary?.last_trade_price)
+  const spreadOverride = toCents(summary?.spread)
+  const lastPriceOverride = toCents(summary?.last_trade_price)
 
   let lastPrice: number | null = lastPriceOverride ?? null
   if (lastPrice === null) {
@@ -403,17 +404,4 @@ function formatSharesInput(value: number) {
   }
 
   return Number(value.toFixed(2)).toString()
-}
-
-function toDisplayCents(value?: string | number | null) {
-  if (value === null || value === undefined) {
-    return null
-  }
-
-  const numeric = typeof value === 'number' ? value : Number(value)
-  if (!Number.isFinite(numeric)) {
-    return null
-  }
-
-  return Number((numeric * 100).toFixed(1))
 }

@@ -129,9 +129,13 @@ export function fromMicro(amount: string, precision: number = 1): string {
   return (Number(amount) / 1e6).toFixed(precision)
 }
 
-export function toCents(price?: number) {
-  const normalized = typeof price === 'number' && Number.isFinite(price)
-    ? Math.min(Math.max(price, 0), 1)
+export function toCents(value?: string | number) {
+  if (value === null || value === undefined) {
+    return null
+  }
+
+  const normalized = typeof value === 'number' && Number.isFinite(value)
+    ? Math.min(Math.max(value, 0), 1)
     : 0.5
 
   return Number((normalized * 100).toFixed(1))
