@@ -1,7 +1,7 @@
 'use client'
 
 import Form from 'next/form'
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { updateForkSettingsAction } from '@/app/admin/_actions/update-affiliate-settings'
 import { Button } from '@/components/ui/button'
@@ -21,14 +21,19 @@ interface AdminAffiliateSettingsFormProps {
 
 export default function AdminAffiliateSettingsForm({ tradeFeeBps, affiliateShareBps, updatedAtLabel }: AdminAffiliateSettingsFormProps) {
   const [state, formAction, isPending] = useActionState(updateForkSettingsAction, initialState)
+  const wasPendingRef = useRef(isPending)
 
   useEffect(() => {
-    if (!isPending && state.error === null) {
+    const transitionedToIdle = wasPendingRef.current && !isPending
+
+    if (transitionedToIdle && state.error === null) {
       toast.success('Settings updated successfully!')
     }
-    else if (!isPending && state.error) {
+    else if (transitionedToIdle && state.error) {
       toast.error(state.error)
     }
+
+    wasPendingRef.current = isPending
   }, [isPending, state.error])
 
   return (

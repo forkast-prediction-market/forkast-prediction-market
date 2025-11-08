@@ -57,14 +57,19 @@ export default function AdminMarketContextSettingsForm({
   const [modelsStateError, setModelsStateError] = useState<string | undefined>(modelsError)
   const [isRefreshingModels, setIsRefreshingModels] = useState(false)
   const [state, formAction, isPending] = useActionState(updateMarketContextSettingsAction, initialState)
+  const wasPendingRef = useRef(isPending)
 
   useEffect(() => {
-    if (!isPending && state.error === null) {
+    const transitionedToIdle = wasPendingRef.current && !isPending
+
+    if (transitionedToIdle && state.error === null) {
       toast.success('Settings updated successfully!')
     }
-    else if (!isPending && state.error) {
+    else if (transitionedToIdle && state.error) {
       toast.error(state.error)
     }
+
+    wasPendingRef.current = isPending
   }, [isPending, state.error])
 
   useEffect(() => {
