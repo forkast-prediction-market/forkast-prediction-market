@@ -54,3 +54,14 @@ export const v_user_outcome_positions = pgView('v_user_outcome_positions', {
   order_count: bigint({ mode: 'bigint' }),
   last_activity_at: timestamp({ withTimezone: true }),
 }).existing()
+
+export const v_condition_top_holders = pgView('v_condition_top_holders', {
+  user_id: text(),
+  username: text(),
+  address: text(),
+  image: text(),
+  condition_id: text(),
+  outcome_index: smallint(),
+  outcome_text: text(),
+  net_position: numeric(),
+}).existing()

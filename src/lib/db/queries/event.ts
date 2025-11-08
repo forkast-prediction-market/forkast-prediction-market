@@ -6,7 +6,7 @@ import { OUTCOME_INDEX } from '@/lib/constants'
 import { users } from '@/lib/db/schema/auth/tables'
 import { bookmarks } from '@/lib/db/schema/bookmarks/tables'
 import { conditions, event_tags, events, markets, outcomes, tags } from '@/lib/db/schema/events/tables'
-import { orders } from '@/lib/db/schema/orders/tables'
+import { orders, v_condition_top_holders } from '@/lib/db/schema/orders/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
@@ -615,13 +615,26 @@ export const EventRepository = {
     })
   },
 
-  async getEventTopHolders(eventSlug: string, conditionId?: string | null): Promise<QueryResult<HoldersResult>> {
+  async getEventTopHolders(conditionId: string): Promise<QueryResult<HoldersResult>> {
     'use cache'
 
     return runQuery(async () => {
-      const holdersData = await db.execute(
-        sql`SELECT * FROM get_event_top_holders(${eventSlug}, ${conditionId}, 10)`,
-      )
+      const holdersData = await db
+        .select({
+          user_id: v_condition_top_holders.user_id,
+          username: v_condition_top_holders.username,
+          address: v_condition_top_holders.address,
+          image: v_condition_top_holders.image,
+          outcome_index: v_condition_top_holders.outcome_index,
+          outcome_text: v_condition_top_holders.outcome_text,
+          net_position: v_condition_top_holders.net_position,
+        })
+        .from(v_condition_top_holders)
+        .where(eq(v_condition_top_holders.condition_id, conditionId))
+        .orderBy(
+          v_condition_top_holders.outcome_index,
+          desc(v_condition_top_holders.net_position),
+        )
 
       if (!holdersData?.length) {
         return { data: { yesHolders: [], noHolders: [] }, error: null }

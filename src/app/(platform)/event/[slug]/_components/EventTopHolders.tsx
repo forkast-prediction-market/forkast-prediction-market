@@ -21,11 +21,13 @@ interface HoldersResponse {
   noHolders: TopHolder[]
 }
 
-async function fetchEventHolders(eventSlug: string, conditionId?: string): Promise<HoldersResponse> {
-  const params = new URLSearchParams()
-  if (conditionId) {
-    params.set('condition_id', conditionId)
+async function fetchEventHolders(eventSlug: string, conditionId: string): Promise<HoldersResponse> {
+  if (!conditionId) {
+    throw new Error('conditionId is required')
   }
+
+  const params = new URLSearchParams()
+  params.set('condition_id', conditionId)
 
   const url = `/api/events/${eventSlug}/holders${params.toString() ? `?${params}` : ''}`
   const response = await fetch(url)
@@ -39,11 +41,9 @@ async function fetchEventHolders(eventSlug: string, conditionId?: string): Promi
 
 function useEventHolders(eventSlug: string, conditionId?: string) {
   return useQuery({
-    queryKey: conditionId
-      ? ['event-holders', eventSlug, conditionId]
-      : ['event-holders', eventSlug],
-    queryFn: () => fetchEventHolders(eventSlug, conditionId),
-    enabled: true,
+    queryKey: ['event-holders', eventSlug, conditionId],
+    queryFn: () => fetchEventHolders(eventSlug, conditionId!),
+    enabled: Boolean(conditionId),
     staleTime: 30_000,
     gcTime: 300_000,
     refetchOnWindowFocus: false,
@@ -55,6 +55,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
   const isBinaryMarket = useIsBinaryMarket()
   const orderState = useOrder()
   const [selectedMarket, setSelectedMarket] = useState<string>('')
+  const fallbackConditionId = event.markets[0]?.condition_id
 
   useEffect(() => {
     if (isBinaryMarket) {
@@ -74,7 +75,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
     }
   }, [isBinaryMarket, orderState.market, selectedMarket])
 
-  const conditionId = isBinaryMarket ? undefined : (selectedMarket || undefined)
+  const conditionId = selectedMarket || fallbackConditionId
   const { data, isLoading, error } = useEventHolders(event.slug, conditionId)
 
   function formatShares(value: string) {
@@ -97,6 +98,17 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
         orderState.setOutcome(market.outcomes[0])
       }
     }
+  }
+
+  if (!conditionId) {
+    return (
+      <div className="mt-6">
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>No market available for this event</AlertTitle>
+        </Alert>
+      </div>
+    )
   }
 
   if (isLoading) {
