@@ -36,7 +36,7 @@ function PositionsFilterControls({
 }: PositionsFilterControlsProps) {
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+      <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
         <ButtonGroup>
           <Button
             variant={marketStatusFilter === 'active' ? 'secondary' : 'outline'}
@@ -52,14 +52,14 @@ function PositionsFilterControls({
           </Button>
         </ButtonGroup>
 
-        <div className="relative">
+        <div className="relative w-full">
           <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search markets..."
             value={searchQuery}
             onChange={e => handleSearchChange(e.target.value)}
-            className="w-full pr-9 pl-9 sm:w-64"
+            className="w-full pr-9 pl-9"
           />
           {searchQuery && (
             <Button

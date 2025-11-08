@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import PortfolioContent from '@/app/(platform)/portfolio/_components/PortfolioContent'
+import PublicProfileTabs from '@/app/(platform)/[username]/_components/PublicProfileTabs'
 import { UserRepository } from '@/lib/db/queries/user'
 
 export const metadata: Metadata = {
@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 export default async function PortfolioPage() {
   const user = await UserRepository.getCurrentUser()
 
-  return <PortfolioContent user={user} />
+  return <PublicProfileTabs userAddress={user.address} />
 }
