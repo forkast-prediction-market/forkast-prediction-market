@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Loader2Icon } from 'lucide-react'
 import { useCallback, useMemo } from 'react'
 import { ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
+import { priceFormatter, sharesFormatter, usdFormatter } from '@/lib/formatters'
 import { toCents } from '@/lib/utils'
 import { useOrder } from '@/stores/useOrder'
 
@@ -47,23 +48,6 @@ interface OrderBookSnapshot {
 }
 
 const DEFAULT_MAX_LEVELS = 12
-
-const priceFormatter = new Intl.NumberFormat('pt-BR', {
-  minimumFractionDigits: 1,
-  maximumFractionDigits: 1,
-})
-
-const sharesFormatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 2,
-})
-
-const usdFormatter = new Intl.NumberFormat('en-US', {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-})
 
 async function fetchOrderBookSummaries(tokenIds: string[]): Promise<OrderBookSummariesResponse> {
   if (!tokenIds.length) {

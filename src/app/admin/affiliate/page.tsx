@@ -4,6 +4,7 @@ import AdminAffiliateOverview from '@/app/admin/_components/AdminAffiliateOvervi
 import AdminAffiliateSettingsForm from '@/app/admin/_components/AdminAffiliateSettingsForm'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
 import { SettingsRepository } from '@/lib/db/queries/settings'
+import { usdFormatter } from '@/lib/formatters'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 interface AffiliateOverviewRow {
@@ -86,13 +87,6 @@ export default async function AdminSettingsPage() {
     return acc
   }, { totalVolume: 0, totalAffiliateFees: 0, totalReferrals: 0 })
 
-  const currencyFormatter = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  })
-
   return (
     <>
       <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
@@ -116,13 +110,13 @@ export default async function AdminSettingsPage() {
             <div className="rounded-lg bg-muted/40 p-4">
               <p className="text-xs text-muted-foreground uppercase">Volume</p>
               <p className="mt-1 text-2xl font-semibold">
-                {currencyFormatter.format(aggregate.totalVolume)}
+                {usdFormatter.format(aggregate.totalVolume)}
               </p>
             </div>
             <div className="rounded-lg bg-muted/40 p-4">
               <p className="text-xs text-muted-foreground uppercase">Affiliate fees</p>
               <p className="mt-1 text-2xl font-semibold">
-                {currencyFormatter.format(aggregate.totalAffiliateFees)}
+                {usdFormatter.format(aggregate.totalAffiliateFees)}
               </p>
             </div>
           </div>

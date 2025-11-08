@@ -65,7 +65,7 @@ export function formatVolume(volume: number): string {
 }
 
 export function formatDate(date: Date): string {
-  return date.toLocaleDateString('pt-BR', {
+  return date.toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
