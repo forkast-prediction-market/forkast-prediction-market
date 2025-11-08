@@ -187,7 +187,7 @@ function ActivityItem({ item }: { item: ActivityOrder }) {
               {formatPrice(item.price == null ? null : Number(item.price))}
             </span>
             <span className="text-xs font-semibold text-muted-foreground">
-              {fromMicro(item.amount)}
+              {fromMicro(item.amount, 1)}
               {' '}
               shares
             </span>

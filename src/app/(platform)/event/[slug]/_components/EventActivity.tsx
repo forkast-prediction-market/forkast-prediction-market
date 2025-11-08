@@ -11,7 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { OUTCOME_INDEX } from '@/lib/constants'
-import { fromMicro } from '@/lib/utils'
+import { fromMicro, toMicro } from '@/lib/utils'
 
 interface EventActivityProps {
   event: Event
@@ -34,7 +34,7 @@ async function fetchActivities({
   })
 
   if (minAmountFilter && minAmountFilter !== 'none') {
-    params.set('minAmount', minAmountFilter)
+    params.set('minAmount', toMicro(minAmountFilter))
   }
 
   const response = await fetch(`/api/events/${eventSlug}/activity?${params}`)
@@ -137,8 +137,12 @@ export default function EventActivity({ event }: EventActivityProps) {
     return price < 1 ? `${(price * 100).toFixed(1)}¢` : `${price.toFixed(2)}`
   }
 
-  function formatTotalValue(totalValue: number) {
-    return totalValue < 1 ? `${(totalValue * 100).toFixed(0)}¢` : `${totalValue.toFixed(2)}`
+  function formatTotalValue(totalValueMicro: number) {
+    const totalValue = totalValueMicro / 1e6
+    if (totalValue < 1) {
+      return `${(totalValue * 100).toFixed(0)}¢`
+    }
+    return `$${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
   function retryInfiniteScroll() {
