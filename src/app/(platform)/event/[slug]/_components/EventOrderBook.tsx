@@ -20,6 +20,8 @@ interface OrderBookLevel {
 interface EventOrderBookProps {
   market: Market
   outcome?: Outcome
+  summaries?: OrderBookSummariesResponse
+  isLoadingSummaries: boolean
 }
 
 interface OrderbookLevelSummary {
@@ -35,14 +37,14 @@ interface OrderBookSummaryResponse {
   last_trade_side?: 'BUY' | 'SELL'
 }
 
-type OrderBookSummariesResponse = Record<string, OrderBookSummaryResponse>
+export type OrderBookSummariesResponse = Record<string, OrderBookSummaryResponse>
 
 interface OrderBookSnapshot {
   asks: OrderBookLevel[]
   bids: OrderBookLevel[]
   lastPrice: number | null
   spread: number | null
-  maxShares: number
+  maxTotal: number
   outcomeLabel: string
 }
 
@@ -63,31 +65,32 @@ async function fetchOrderBookSummaries(tokenIds: string[]): Promise<OrderBookSum
   return response.json()
 }
 
-function useOrderBookSummaries(tokenIds: string[]) {
+export function useOrderBookSummaries(tokenIds: string[], options?: { enabled?: boolean }) {
   const tokenIdsKey = tokenIds.slice().sort().join(',')
+  const shouldEnable = options?.enabled ?? true
 
   return useQuery({
     queryKey: ['orderbook-summary', tokenIdsKey],
     queryFn: () => fetchOrderBookSummaries(tokenIds),
-    enabled: tokenIds.length > 0,
-    staleTime: 15_000,
+    enabled: tokenIds.length > 0 && shouldEnable,
+    staleTime: 60_000,
     gcTime: 60_000,
+    refetchInterval: 60_000,
+    refetchIntervalInBackground: true,
     refetchOnWindowFocus: false,
     retry: 1,
   })
 }
 
-export default function EventOrderBook({ market, outcome }: EventOrderBookProps) {
+export default function EventOrderBook({
+  market,
+  outcome,
+  summaries,
+  isLoadingSummaries,
+}: EventOrderBookProps) {
   const tokenId = outcome?.token_id || market.outcomes[0]?.token_id
-  const tokenIds = useMemo(() => {
-    const ids = market.outcomes
-      .map(currentOutcome => currentOutcome.token_id)
-      .filter((value): value is string => Boolean(value))
-    return Array.from(new Set(ids))
-  }, [market.outcomes])
 
-  const { data, isLoading } = useOrderBookSummaries(tokenIds)
-  const summary = tokenId ? data?.[tokenId] ?? null : null
+  const summary = tokenId ? summaries?.[tokenId] ?? null : null
   const setType = useOrder(state => state.setType)
   const setLimitPrice = useOrder(state => state.setLimitPrice)
   const setLimitShares = useOrder(state => state.setLimitShares)
@@ -99,7 +102,7 @@ export default function EventOrderBook({ market, outcome }: EventOrderBookProps)
     bids,
     lastPrice,
     spread,
-    maxShares,
+    maxTotal,
     outcomeLabel,
   } = useMemo(
     () => buildOrderBookSnapshot(summary, market, outcome),
@@ -132,7 +135,7 @@ export default function EventOrderBook({ market, outcome }: EventOrderBookProps)
     )
   }
 
-  if (isLoading) {
+  if (isLoadingSummaries) {
     return (
       <div className="flex items-center justify-center gap-2 px-4 py-6 text-sm text-muted-foreground">
         <Loader2Icon className="size-4 animate-spin" />
@@ -170,7 +173,7 @@ export default function EventOrderBook({ market, outcome }: EventOrderBookProps)
                 <OrderBookRow
                   key={`ask-${level.priceCents}-${index}`}
                   level={level}
-                  maxShares={maxShares}
+                  maxTotal={maxTotal}
                   showBadge={index === renderedAsks.length - 1 ? 'ask' : undefined}
                   onSelect={handleLevelSelect}
                 />
@@ -205,7 +208,7 @@ export default function EventOrderBook({ market, outcome }: EventOrderBookProps)
                 <OrderBookRow
                   key={`bid-${level.priceCents}-${index}`}
                   level={level}
-                  maxShares={maxShares}
+                  maxTotal={maxTotal}
                   showBadge={index === 0 ? 'bid' : undefined}
                   onSelect={handleLevelSelect}
                 />
@@ -219,17 +222,17 @@ export default function EventOrderBook({ market, outcome }: EventOrderBookProps)
 
 interface OrderBookRowProps {
   level: OrderBookLevel
-  maxShares: number
+  maxTotal: number
   showBadge?: 'ask' | 'bid'
   onSelect?: (level: OrderBookLevel) => void
 }
 
-function OrderBookRow({ level, maxShares, showBadge, onSelect }: OrderBookRowProps) {
+function OrderBookRow({ level, maxTotal, showBadge, onSelect }: OrderBookRowProps) {
   const isAsk = level.side === 'ask'
   const backgroundClass = isAsk ? 'bg-no/25 dark:bg-no/20' : 'bg-yes/25 dark:bg-yes/20'
   const hoverClass = isAsk ? 'hover:bg-no/10' : 'hover:bg-yes/10'
   const priceClass = isAsk ? 'text-no' : 'text-yes'
-  const widthPercent = maxShares > 0 ? (level.shares / maxShares) * 100 : 0
+  const widthPercent = maxTotal > 0 ? (level.total / maxTotal) * 100 : 0
   const barWidth = Math.min(100, Math.max(8, widthPercent))
 
   return (
@@ -285,10 +288,10 @@ function buildOrderBookSnapshot(
   const outcomeToUse = outcome ?? market.outcomes[0]
   const normalizedAsks = normalizeLevels(summary?.asks, 'ask')
   const normalizedBids = normalizeLevels(summary?.bids, 'bid')
-  const maxShares = Math.max(
+  const maxTotal = Math.max(
     1,
-    normalizedAsks.reduce((max, level) => Math.max(max, level.shares), 0),
-    normalizedBids.reduce((max, level) => Math.max(max, level.shares), 0),
+    normalizedAsks.reduce((max, level) => Math.max(max, level.total), 0),
+    normalizedBids.reduce((max, level) => Math.max(max, level.total), 0),
   )
 
   const bestAsk = normalizedAsks[0]?.priceCents
@@ -316,7 +319,7 @@ function buildOrderBookSnapshot(
   return {
     asks: normalizedAsks,
     bids: normalizedBids,
-    maxShares,
+    maxTotal,
     lastPrice,
     spread,
     outcomeLabel: outcomeToUse?.outcome_index === OUTCOME_INDEX.YES ? 'Yes' : 'No',

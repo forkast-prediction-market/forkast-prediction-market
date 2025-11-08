@@ -1,8 +1,8 @@
 import type { Event } from '@/types'
 import { RefreshCwIcon, TrendingDownIcon } from 'lucide-react'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
-import EventOrderBook from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
+import { useEffect, useMemo, useState } from 'react'
+import EventOrderBook, { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
 import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel } from '@/lib/formatters'
@@ -17,6 +17,26 @@ export default function EventMarkets({ event }: EventMarketsProps) {
   const state = useOrder()
   const isBinaryMarket = useIsBinaryMarket()
   const [expandedMarketId, setExpandedMarketId] = useState<string | null>(null)
+  const [orderBookPollingEnabled, setOrderBookPollingEnabled] = useState(false)
+  const eventTokenIds = useMemo(() => {
+    const ids = new Set<string>()
+
+    event.markets.forEach((market) => {
+      market.outcomes.forEach((currentOutcome) => {
+        if (currentOutcome.token_id) {
+          ids.add(currentOutcome.token_id)
+        }
+      })
+    })
+
+    return Array.from(ids)
+  }, [event.markets])
+  const shouldEnableOrderBookPolling = !isBinaryMarket && orderBookPollingEnabled
+  const {
+    data: orderBookSummaries,
+    isLoading: isOrderBookLoading,
+  } = useOrderBookSummaries(eventTokenIds, { enabled: shouldEnableOrderBookPolling })
+  const shouldShowOrderBookLoader = !shouldEnableOrderBookPolling || (isOrderBookLoading && !orderBookSummaries)
 
   useEffect(() => {
     if (!state.market) {
@@ -36,6 +56,10 @@ export default function EventMarkets({ event }: EventMarketsProps) {
 
   useEffect(() => {
     setExpandedMarketId(null)
+  }, [event.id])
+
+  useEffect(() => {
+    setOrderBookPollingEnabled(false)
   }, [event.id])
 
   if (isBinaryMarket) {
@@ -74,7 +98,11 @@ export default function EventMarkets({ event }: EventMarketsProps) {
 
           function handleToggle() {
             const currentlyExpanded = expandedMarketId === market.condition_id
-            setExpandedMarketId(currentlyExpanded ? null : market.condition_id)
+            const willExpand = !currentlyExpanded
+            if (willExpand && !orderBookPollingEnabled) {
+              setOrderBookPollingEnabled(true)
+            }
+            setExpandedMarketId(willExpand ? market.condition_id : null)
             state.setMarket(market)
             state.setSide(ORDER_SIDE.BUY)
             if (!state.outcome || state.outcome.condition_id !== market.condition_id) {
@@ -285,7 +313,12 @@ export default function EventMarkets({ event }: EventMarketsProps) {
 
               {isExpanded && (
                 <div className="pt-2">
-                  <EventOrderBook market={market} outcome={outcomeForMarket} />
+                  <EventOrderBook
+                    market={market}
+                    outcome={outcomeForMarket}
+                    summaries={orderBookSummaries}
+                    isLoadingSummaries={shouldShowOrderBookLoader}
+                  />
                 </div>
               )}
 
