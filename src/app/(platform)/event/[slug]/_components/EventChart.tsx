@@ -8,6 +8,7 @@ import { useIsBinaryMarket, useYesPrice } from '@/stores/useOrder'
 
 interface EventChartProps {
   event: Event
+  isMobile: boolean
 }
 
 const POLYMARKET_COLORS = ['#FF6600', '#2D9CDB', '#4E6377', '#FDC500']
@@ -83,7 +84,7 @@ function generateChartData(topMarkets: Event['markets'], range: string) {
   return { data, series }
 }
 
-export default function EventChart({ event }: EventChartProps) {
+export default function EventChart({ event, isMobile }: EventChartProps) {
   const yesPrice = useYesPrice()
   const isBinaryMarket = useIsBinaryMarket()
 
@@ -138,6 +139,8 @@ export default function EventChart({ event }: EventChartProps) {
       }))
       .sort((a, b) => b.value - a.value)
   }, [chartConfig, cursorSnapshot])
+
+  const chartWidth = isMobile ? 400 : 900
 
   return (
     <div className="grid gap-4">
@@ -201,7 +204,7 @@ export default function EventChart({ event }: EventChartProps) {
             <PredictionChart
               data={chartConfig.data}
               series={chartConfig.series}
-              width={800}
+              width={chartWidth}
               height={280}
               margin={{ top: 30, right: 40, bottom: 52, left: 0 }}
               onCursorDataChange={setCursorSnapshot}
