@@ -3,9 +3,10 @@
 .idea
 .kiro
 .vscode
-.aider*
-openspec/changes
-openspec/specs
+.aider
+.cursor
+openspec
+AGENTS.md
 
 # dependencies
 /node_modules
