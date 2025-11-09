@@ -4,6 +4,8 @@
 .kiro
 .vscode
 .aider*
+openspec/changes
+openspec/specs
 
 # dependencies
 /node_modules
