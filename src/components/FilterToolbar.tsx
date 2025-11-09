@@ -16,7 +16,7 @@ import {
   SelectTrigger,
 } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
-import { useWalletModal } from '@/hooks/useWalletModal'
+import { useAppKit } from '@/hooks/useAppKit'
 import { cn } from '@/lib/utils'
 
 interface FilterToolbarProps {
@@ -96,7 +96,7 @@ function createDefaultFilters(overrides: Partial<FilterSettings> = {}): FilterSe
 }
 
 export default function FilterToolbar({ filters, onFiltersChange }: FilterToolbarProps) {
-  const { open } = useWalletModal()
+  const { open } = useAppKit()
   const { isConnected } = useAppKitAccount()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [filterSettings, setFilterSettings] = useState<FilterSettings>(() => createDefaultFilters({

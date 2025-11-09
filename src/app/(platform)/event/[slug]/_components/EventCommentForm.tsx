@@ -8,7 +8,7 @@ import { storeCommentAction } from '@/app/(platform)/event/[slug]/_actions/store
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
-import { useWalletModal } from '@/hooks/useWalletModal'
+import { useAppKit } from '@/hooks/useAppKit'
 
 interface EventCommentFormProps {
   eventId: string
@@ -17,7 +17,7 @@ interface EventCommentFormProps {
 }
 
 export default function EventCommentForm({ eventId, user, onCommentAddedAction }: EventCommentFormProps) {
-  const { open } = useWalletModal()
+  const { open } = useAppKit()
   const formRef = useRef<HTMLFormElement>(null)
   const [state, formAction, isPending] = useActionState(
     (_: any, formData: any) => storeCommentAction(eventId, formData),

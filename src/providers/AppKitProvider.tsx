@@ -10,56 +10,22 @@ import { useTheme } from 'next-themes'
 import { redirect } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { WagmiProvider } from 'wagmi'
-import { defaultWalletModalValue, WalletModalContext } from '@/hooks/useWalletModal'
+import { AppKitContext, defaultAppKitValue } from '@/hooks/useAppKit'
 import { defaultNetwork, networks, projectId, wagmiAdapter, wagmiConfig } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
-const REOWN_CONFIG_WARNING_PREFIX = '[Reown Config]'
-
 let hasInitializedAppKit = false
-let hasPatchedConfigWarning = false
-let hasLoggedConfigFailure = false
 let appKitInstance: AppKit | null = null
 
 function isBrowser() {
   return typeof window !== 'undefined'
 }
 
-function patchConfigWarning() {
-  if (hasPatchedConfigWarning || !isBrowser()) {
-    return
-  }
-
-  // Deduplicate noisy Reown config warnings so CI/build logs stay readable.
-  const originalWarn = console.warn.bind(console)
-
-  console.warn = (...args: any[]) => {
-    const firstArg = args[0]
-    if (
-      typeof firstArg === 'string'
-      && firstArg.startsWith(`${REOWN_CONFIG_WARNING_PREFIX} Failed to fetch remote project configuration`)
-    ) {
-      if (hasLoggedConfigFailure) {
-        return
-      }
-      hasLoggedConfigFailure = true
-      originalWarn(...args)
-      return
-    }
-
-    originalWarn(...args)
-  }
-
-  hasPatchedConfigWarning = true
-}
-
 function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
   if (hasInitializedAppKit || !isBrowser()) {
     return appKitInstance
   }
-
-  patchConfigWarning()
 
   try {
     appKitInstance = createAppKit({
@@ -154,13 +120,7 @@ function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
     return appKitInstance
   }
   catch (error) {
-    if (!hasLoggedConfigFailure) {
-      hasLoggedConfigFailure = true
-      console.warn(
-        `${REOWN_CONFIG_WARNING_PREFIX} Wallet initialization failed. Using local/default values.`,
-        error,
-      )
-    }
+    console.warn('Wallet initialization failed. Using local/default values.', error)
     return null
   }
 }
@@ -179,7 +139,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
   const { resolvedTheme } = useTheme()
   const [appKitThemeMode, setAppKitThemeMode] = useState<'light' | 'dark'>('light')
   const [canSyncTheme, setCanSyncTheme] = useState(false)
-  const [walletModalValue, setWalletModalValue] = useState(defaultWalletModalValue)
+  const [AppKitValue, setAppKitValue] = useState(defaultAppKitValue)
 
   useEffect(() => {
     if (!isBrowser()) {
@@ -192,7 +152,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
     if (instance) {
       setAppKitThemeMode(nextThemeMode)
       setCanSyncTheme(true)
-      setWalletModalValue({
+      setAppKitValue({
         open: async (options) => {
           await instance.open(options)
         },
@@ -206,10 +166,10 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
 
   return (
     <WagmiProvider config={wagmiConfig}>
-      <WalletModalContext value={walletModalValue}>
+      <AppKitContext value={AppKitValue}>
         {children}
         {canSyncTheme && <AppKitThemeSynchronizer themeMode={appKitThemeMode} />}
-      </WalletModalContext>
+      </AppKitContext>
     </WagmiProvider>
   )
 }

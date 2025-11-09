@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
-import { useWalletModal } from '@/hooks/useWalletModal'
 
 export default function HeaderPortfolio() {
-  const { open } = useWalletModal()
+  const { open } = useAppKit()
   const { isLoadingBalance, balance } = useBalance()
 
   if (isLoadingBalance) {

@@ -17,7 +17,7 @@ import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_componen
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
 import EventTradeToast from '@/app/(platform)/event/[slug]/_components/EventTradeToast'
-import { useWalletModal } from '@/hooks/useWalletModal'
+import { useAppKit } from '@/hooks/useAppKit'
 import { CAP_MICRO, EIP712_DOMAIN, EIP712_TYPES, FLOOR_MICRO, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel, formatCurrency, toMicro } from '@/lib/formatters'
 import { cn, triggerConfetti } from '@/lib/utils'
@@ -39,7 +39,7 @@ interface EventOrderPanelFormProps {
 }
 
 export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanelFormProps) {
-  const { open, close } = useWalletModal()
+  const { open, close } = useAppKit()
   const { isConnected, embeddedWalletInfo } = useAppKitAccount()
   const { signTypedDataAsync } = useSignTypedData()
   const user = useUser()

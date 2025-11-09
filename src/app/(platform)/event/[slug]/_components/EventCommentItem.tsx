@@ -3,7 +3,7 @@ import { MoreHorizontalIcon } from 'lucide-react'
 import { useCallback } from 'react'
 import ProfileLink from '@/components/ProfileLink'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { useWalletModal } from '@/hooks/useWalletModal'
+import { useAppKit } from '@/hooks/useAppKit'
 import { truncateAddress } from '@/lib/formatters'
 import EventCommentLikeForm from './EventCommentLikeForm'
 import EventCommentMenu from './EventCommentMenu'
@@ -52,7 +52,7 @@ export default function EventCommentItem({
   loadRepliesError,
   retryLoadReplies,
 }: CommentItemProps) {
-  const { open } = useWalletModal()
+  const { open } = useAppKit()
 
   const handleReplyClick = useCallback(() => {
     if (!user) {

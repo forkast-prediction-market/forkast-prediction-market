@@ -5,9 +5,9 @@ import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
 import { useClientMounted } from '@/hooks/useClientMounted'
-import { useWalletModal } from '@/hooks/useWalletModal'
 
 export default function PortfolioSummaryCard() {
   const dailyChange = 0.00
@@ -16,7 +16,7 @@ export default function PortfolioSummaryCard() {
   const isMounted = useClientMounted()
   const { isLoadingBalance, balance } = useBalance()
   const { status } = useAppKitAccount()
-  const { open } = useWalletModal()
+  const { open } = useAppKit()
 
   if (!isMounted || isLoadingBalance || status === 'connecting') {
     return <Skeleton className="h-56 w-full" />

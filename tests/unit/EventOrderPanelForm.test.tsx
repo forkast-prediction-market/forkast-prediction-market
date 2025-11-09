@@ -68,8 +68,8 @@ vi.mock('@reown/appkit/react', () => ({
   useAppKitAccount: () => ({ isConnected: mockIsConnected, embeddedWalletInfo: mockEmbeddedWalletInfo }),
 }))
 
-vi.mock('@/hooks/useWalletModal', () => ({
-  useWalletModal: () => ({ open: mockOpen, close: mockClose }),
+vi.mock('@/hooks/useAppKit', () => ({
+  useAppKit: () => ({ open: mockOpen, close: mockClose }),
 }))
 
 vi.mock('wagmi', () => ({

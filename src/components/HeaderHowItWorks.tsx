@@ -13,8 +13,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { useAppKit } from '@/hooks/useAppKit'
 import { useClientMounted } from '@/hooks/useClientMounted'
-import { useWalletModal } from '@/hooks/useWalletModal'
 import { cn, triggerConfetti } from '@/lib/utils'
 
 const STEPS = [
@@ -46,7 +46,7 @@ const STEPS = [
 
 export default function HeaderHowItWorks() {
   const isMounted = useClientMounted()
-  const { open } = useWalletModal()
+  const { open } = useAppKit()
   const { isConnected, status } = useAppKitAccount()
   const [isOpen, setIsOpen] = useState(false)
   const [activeStep, setActiveStep] = useState(0)

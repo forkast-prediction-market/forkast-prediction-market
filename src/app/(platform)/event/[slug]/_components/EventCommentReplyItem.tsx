@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback } from 'react'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { useWalletModal } from '@/hooks/useWalletModal'
+import { useAppKit } from '@/hooks/useAppKit'
 import { formatTimeAgo, truncateAddress } from '@/lib/formatters'
 import EventCommentLikeForm from './EventCommentLikeForm'
 import EventCommentMenu from './EventCommentMenu'
@@ -39,7 +39,7 @@ export default function EventCommentReplyItem({
   createReply,
   isCreatingComment,
 }: ReplyItemProps) {
-  const { open } = useWalletModal()
+  const { open } = useAppKit()
 
   const handleReplyClick = useCallback(() => {
     if (!user) {

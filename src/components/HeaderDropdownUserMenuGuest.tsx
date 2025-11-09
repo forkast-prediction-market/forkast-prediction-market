@@ -9,10 +9,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useWalletModal } from '@/hooks/useWalletModal'
+import { useAppKit } from '@/hooks/useAppKit'
 
 export default function HeaderDropdownUserMenuGuest() {
-  const { open } = useWalletModal()
+  const { open } = useAppKit()
 
   return (
     <DropdownMenu>

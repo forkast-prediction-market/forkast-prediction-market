@@ -9,15 +9,15 @@ import HeaderNotifications from '@/components/HeaderNotifications'
 import HeaderPortfolio from '@/components/HeaderPortfolio'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAppKit } from '@/hooks/useAppKit'
 import { useClientMounted } from '@/hooks/useClientMounted'
-import { useWalletModal } from '@/hooks/useWalletModal'
 import { useUser } from '@/stores/useUser'
 
 const { useSession } = createAuthClient()
 
 export default function HeaderMenu() {
   const isMounted = useClientMounted()
-  const { open } = useWalletModal()
+  const { open } = useAppKit()
   const { isConnected, status } = useAppKitAccount()
   const { data: session } = useSession()
 
