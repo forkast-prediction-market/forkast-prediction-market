@@ -1,6 +1,6 @@
 'use client'
 
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { useAppKitAccount } from '@reown/appkit/react'
 import { InfoIcon, XIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import { useAppKit } from '@/hooks/useAppKit'
 import { useClientMounted } from '@/hooks/useClientMounted'
 import { cn, triggerConfetti } from '@/lib/utils'
 

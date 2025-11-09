@@ -1,7 +1,6 @@
 'use client'
 
 import type { Comment, User } from '@/types'
-import { useAppKit } from '@reown/appkit/react'
 import { ShieldIcon } from 'lucide-react'
 import Form from 'next/form'
 import { useActionState, useEffect, useRef } from 'react'
@@ -9,6 +8,7 @@ import { storeCommentAction } from '@/app/(platform)/event/[slug]/_actions/store
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
+import { useAppKit } from '@/hooks/useAppKit'
 
 interface EventCommentFormProps {
   eventId: string

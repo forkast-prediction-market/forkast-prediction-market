@@ -1,9 +1,9 @@
 'use client'
 
 import type { Comment, User } from '@/types'
-import { useAppKit } from '@reown/appkit/react'
 import { HeartIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useAppKit } from '@/hooks/useAppKit'
 import { cn } from '@/lib/utils'
 
 interface EventCommentLikeFormProps {

@@ -1,10 +1,11 @@
 'use client'
 
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { useAppKitAccount } from '@reown/appkit/react'
 import { BookmarkIcon } from 'lucide-react'
 import { useCallback, useState, useTransition } from 'react'
 import { toggleBookmarkAction } from '@/app/(platform)/event/[slug]/_actions/toggle-bookmark'
 import { Button } from '@/components/ui/button'
+import { useAppKit } from '@/hooks/useAppKit'
 import { cn } from '@/lib/utils'
 
 const headerIconButtonClass = 'size-10 rounded-sm border border-transparent bg-transparent text-muted-foreground transition-colors hover:bg-muted/80 hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring md:h-9 md:w-9'

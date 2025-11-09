@@ -1,7 +1,7 @@
-import { useAppKit } from '@reown/appkit/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
 
 export default function HeaderPortfolio() {

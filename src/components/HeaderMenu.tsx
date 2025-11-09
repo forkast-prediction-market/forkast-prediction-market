@@ -1,6 +1,6 @@
 'use client'
 
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { useAppKitAccount } from '@reown/appkit/react'
 import { createAuthClient } from 'better-auth/react'
 import { useEffect } from 'react'
 import HeaderDropdownUserMenuAuth from '@/components/HeaderDropdownUserMenuAuth'
@@ -9,6 +9,7 @@ import HeaderNotifications from '@/components/HeaderNotifications'
 import HeaderPortfolio from '@/components/HeaderPortfolio'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAppKit } from '@/hooks/useAppKit'
 import { useClientMounted } from '@/hooks/useClientMounted'
 import { useUser } from '@/stores/useUser'
 

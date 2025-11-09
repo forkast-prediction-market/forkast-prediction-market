@@ -1,4 +1,3 @@
-import { useAppKit } from '@reown/appkit/react'
 import { MenuIcon } from 'lucide-react'
 import Link from 'next/link'
 import ThemeSelector from '@/components/ThemeSelector'
@@ -10,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useAppKit } from '@/hooks/useAppKit'
 
 export default function HeaderDropdownUserMenuGuest() {
   const { open } = useAppKit()
