@@ -1,6 +1,7 @@
 import type { ActivityOrder, Event, QueryResult, TopHolder } from '@/types'
 import { and, desc, eq, exists, ilike, sql } from 'drizzle-orm'
 import { cacheTag } from 'next/cache'
+import { filterActivitiesByMinAmount } from '@/lib/activity/filter'
 import { cacheTags } from '@/lib/cache-tags'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { users } from '@/lib/db/schema/auth/tables'
@@ -236,7 +237,8 @@ function transformActivityOrder(order: any): ActivityOrder {
 
   const amount = Number(order.amount)
   const price = Number(order.price || 0.5)
-  const totalValue = amount * price
+  const parsedTotalValue = order.total_value != null ? Number(order.total_value) : Number.NaN
+  const totalValue = Number.isFinite(parsedTotalValue) ? parsedTotalValue : amount * price
 
   return {
     id: order.id || '',
@@ -557,13 +559,25 @@ export const EventRepository = {
     cacheTag(cacheTags.activity(args.slug))
 
     return runQuery(async () => {
+      const priceExpression = sql<number>`CASE
+        WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0
+        THEN ${orders.taker_amount}::numeric / (${orders.maker_amount} + ${orders.taker_amount})::numeric
+        ELSE 0.5
+      END`
+
+      const totalValueExpression = sql<number>`CASE
+        WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0
+        THEN (${orders.taker_amount}::numeric * ${orders.taker_amount}::numeric) / (${orders.maker_amount} + ${orders.taker_amount})::numeric
+        ELSE 0.5 * ${orders.taker_amount}::numeric
+      END`
+
       const whereConditions = [
         eq(events.slug, args.slug),
         eq(orders.status, 'matched'),
       ]
 
       if (args.minAmount && args.minAmount > 0) {
-        whereConditions.push(sql`${orders.maker_amount} >= ${args.minAmount}`)
+        whereConditions.push(sql`${totalValueExpression} >= ${args.minAmount}`)
       }
 
       const results = await db
@@ -571,11 +585,7 @@ export const EventRepository = {
           id: orders.id,
           side: orders.side,
           amount: orders.taker_amount,
-          price: sql<number>`CASE
-            WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0
-            THEN ${orders.taker_amount}::numeric / (${orders.maker_amount} + ${orders.taker_amount})::numeric
-            ELSE 0.5
-          END`.as('price'),
+          price: priceExpression,
           created_at: orders.created_at,
           status: orders.status,
           user_id: users.id,
@@ -590,7 +600,7 @@ export const EventRepository = {
           market_slug: markets.slug,
           market_icon_url: markets.icon_url,
           event_slug: events.slug,
-          total_value: sql<number>`${orders.maker_amount}`.as('total_value'),
+          total_value: totalValueExpression,
         })
         .from(orders)
         .innerJoin(users, eq(orders.user_id, users.id))
@@ -611,7 +621,9 @@ export const EventRepository = {
         .filter(order => order.user_id && order.outcome_text && order.event_slug)
         .map(order => transformActivityOrder(order))
 
-      return { data: activities, error: null }
+      const filteredActivities = filterActivitiesByMinAmount(activities, args.minAmount)
+
+      return { data: filteredActivities, error: null }
     })
   },
 
