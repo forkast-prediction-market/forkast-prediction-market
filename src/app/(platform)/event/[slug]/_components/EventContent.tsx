@@ -9,6 +9,7 @@ import EventMarkets from '@/app/(platform)/event/[slug]/_components/EventMarkets
 import EventMetaInformation from '@/app/(platform)/event/[slug]/_components/EventMetaInformation'
 import EventOrderPanelForm from '@/app/(platform)/event/[slug]/_components/EventOrderPanelForm'
 import EventOrderPanelMobile from '@/app/(platform)/event/[slug]/_components/EventOrderPanelMobile'
+import { EventOutcomeChanceProvider } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
 import EventRelated from '@/app/(platform)/event/[slug]/_components/EventRelated'
 import EventRules from '@/app/(platform)/event/[slug]/_components/EventRules'
 import EventTabs from '@/app/(platform)/event/[slug]/_components/EventTabs'
@@ -35,7 +36,7 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
   }, [event, setEvent, setMarket, setOutcome])
 
   return (
-    <>
+    <EventOutcomeChanceProvider eventId={event.id}>
       <div className="grid gap-3">
         <EventHeader event={event} />
         <EventMetaInformation event={event} />
@@ -55,6 +56,6 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
               <EventRelated event={event} />
             </Teleport>
           )}
-    </>
+    </EventOutcomeChanceProvider>
   )
 }

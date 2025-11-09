@@ -368,7 +368,7 @@ function normalizeLevels(levels: OrderbookLevelSummary[] | undefined, side: 'ask
 
 function OrderBookEmptyRow({ label }: { label: string }) {
   return (
-    <div className="grid h-16 grid-cols-[40%_20%_20%_20%] items-center px-4">
+    <div className="grid h-9 grid-cols-[40%_20%_20%_20%] items-center px-4">
       <span className="col-span-4 text-center text-xs font-medium text-muted-foreground">
         {label}
       </span>

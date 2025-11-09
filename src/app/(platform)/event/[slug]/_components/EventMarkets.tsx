@@ -1,8 +1,13 @@
 import type { Event } from '@/types'
+import { useIsFetching, useQueryClient } from '@tanstack/react-query'
 import { RefreshCwIcon, TrendingDownIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
 import EventOrderBook, { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
+import {
+  useEventOutcomeChances,
+  useMarketYesPrices,
+} from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
 import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel } from '@/lib/formatters'
@@ -16,8 +21,18 @@ interface EventMarketsProps {
 export default function EventMarkets({ event }: EventMarketsProps) {
   const state = useOrder()
   const isBinaryMarket = useIsBinaryMarket()
+  const outcomeChances = useEventOutcomeChances()
+  const marketYesPrices = useMarketYesPrices()
+  const queryClient = useQueryClient()
+  const priceHistoryQueryKey = useMemo(
+    () => ['event-price-history', event.id] as const,
+    [event.id],
+  )
   const [expandedMarketId, setExpandedMarketId] = useState<string | null>(null)
   const [orderBookPollingEnabled, setOrderBookPollingEnabled] = useState(false)
+  const [isManualChanceRefreshing, setIsManualChanceRefreshing] = useState(false)
+  const priceHistoryIsFetching = useIsFetching({ queryKey: priceHistoryQueryKey }) > 0
+  const isChanceRefreshDisabled = isManualChanceRefreshing || priceHistoryIsFetching
   const eventTokenIds = useMemo(() => {
     const ids = new Set<string>()
 
@@ -37,6 +52,20 @@ export default function EventMarkets({ event }: EventMarketsProps) {
     isLoading: isOrderBookLoading,
   } = useOrderBookSummaries(eventTokenIds, { enabled: shouldEnableOrderBookPolling })
   const shouldShowOrderBookLoader = !shouldEnableOrderBookPolling || (isOrderBookLoading && !orderBookSummaries)
+  const hasChanceData = useMemo(
+    () => event.markets.every(market => Number.isFinite(outcomeChances[market.condition_id])),
+    [event.markets, outcomeChances],
+  )
+  const sortedMarkets = useMemo(() => {
+    if (!hasChanceData) {
+      return []
+    }
+    return [...event.markets].sort((a, b) => {
+      const aChance = outcomeChances[a.condition_id]
+      const bChance = outcomeChances[b.condition_id]
+      return (bChance ?? 0) - (aChance ?? 0)
+    })
+  }, [event.markets, hasChanceData, outcomeChances])
 
   useEffect(() => {
     if (!state.market) {
@@ -62,7 +91,24 @@ export default function EventMarkets({ event }: EventMarketsProps) {
     setOrderBookPollingEnabled(false)
   }, [event.id])
 
-  if (isBinaryMarket) {
+  async function handleChanceRefresh() {
+    if (isManualChanceRefreshing || priceHistoryIsFetching) {
+      return
+    }
+
+    setIsManualChanceRefreshing(true)
+    try {
+      await queryClient.invalidateQueries({ queryKey: priceHistoryQueryKey, refetchType: 'active' })
+    }
+    catch (error) {
+      console.error('Failed to refresh price history', error)
+    }
+    finally {
+      setIsManualChanceRefreshing(false)
+    }
+  }
+
+  if (isBinaryMarket || !hasChanceData) {
     return <></>
   }
 
@@ -79,22 +125,49 @@ export default function EventMarkets({ event }: EventMarketsProps) {
           <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
             % CHANCE
           </span>
-          <a
-            href="#"
-            className="text-muted-foreground transition-colors hover:text-foreground"
+          <button
+            type="button"
+            className={cn(
+              `
+                inline-flex items-center justify-center rounded-sm border border-transparent text-muted-foreground
+                transition-colors
+                focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none
+              `,
+              'hover:bg-muted/80 hover:text-foreground',
+              'p-0.5',
+            )}
+            aria-label="Refresh chance data"
+            title="Refresh"
+            onClick={handleChanceRefresh}
+            disabled={isChanceRefreshDisabled}
           >
-            <RefreshCwIcon className="size-3" />
-          </a>
+            <RefreshCwIcon
+              className={cn(
+                'size-3',
+                isManualChanceRefreshing && 'animate-spin',
+              )}
+            />
+          </button>
         </div>
       </div>
 
-      {[...event.markets]
-        .sort((a, b) => b.probability - a.probability)
-        .map((market, index, sortedMarkets) => {
+      {sortedMarkets
+        .map((market, index, orderedMarkets) => {
           const isExpanded = expandedMarketId === market.condition_id
           const outcomeForMarket = state.outcome && state.outcome.condition_id === market.condition_id
             ? state.outcome
             : market.outcomes[0]
+          const yesOutcome = market.outcomes[OUTCOME_INDEX.YES]
+          const noOutcome = market.outcomes[OUTCOME_INDEX.NO]
+          const yesPriceOverride = marketYesPrices[market.condition_id]
+          const yesPriceValue = typeof yesPriceOverride === 'number'
+            ? Math.max(0, Math.min(1, yesPriceOverride))
+            : yesOutcome?.buy_price
+          const noPriceValue = typeof yesPriceOverride === 'number'
+            ? Math.max(0, Math.min(1, 1 - yesPriceOverride))
+            : noOutcome?.buy_price
+          const rawChance = outcomeChances[market.condition_id]
+          const marketChance = Math.max(0, Math.min(100, Math.round(rawChance ?? 0)))
 
           function handleToggle() {
             const currentlyExpanded = expandedMarketId === market.condition_id
@@ -162,7 +235,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                       </div>
                     </div>
                     <span className="text-lg font-bold text-foreground">
-                      {Math.round(market.probability)}
+                      {marketChance}
                       %
                     </span>
                   </div>
@@ -189,7 +262,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[0].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {formatCentsLabel(market.outcomes[0].buy_price)}
+                        {formatCentsLabel(yesPriceValue)}
                       </span>
                     </Button>
                     <Button
@@ -212,7 +285,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[1].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {formatCentsLabel(market.outcomes[1].buy_price)}
+                        {formatCentsLabel(noPriceValue)}
                       </span>
                     </Button>
                   </div>
@@ -249,7 +322,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                   <div className="flex w-1/5 justify-center">
                     <div className="flex items-center gap-2">
                       <span className="text-3xl font-bold text-foreground">
-                        {Math.round(market.probability)}
+                        {marketChance}
                         %
                       </span>
                       <div className="flex items-center gap-1 text-no">
@@ -280,7 +353,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[0].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {formatCentsLabel(market.outcomes[0].buy_price)}
+                        {formatCentsLabel(yesPriceValue)}
                       </span>
                     </Button>
 
@@ -304,7 +377,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         {market.outcomes[1].outcome_text}
                       </span>
                       <span className="shrink-0 text-base font-bold">
-                        {formatCentsLabel(market.outcomes[1].buy_price)}
+                        {formatCentsLabel(noPriceValue)}
                       </span>
                     </Button>
                   </div>
@@ -322,7 +395,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                 </div>
               )}
 
-              {index !== sortedMarkets.length - 1 && (
+              {index !== orderedMarkets.length - 1 && (
                 <div className="mx-2 border-b border-border" />
               )}
             </div>
