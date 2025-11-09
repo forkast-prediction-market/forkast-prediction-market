@@ -1,6 +1,6 @@
 'use client'
 
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { useAppKitAccount } from '@reown/appkit/react'
 import { createAuthClient } from 'better-auth/react'
 import { useEffect } from 'react'
 import HeaderDropdownUserMenuAuth from '@/components/HeaderDropdownUserMenuAuth'
@@ -10,13 +10,14 @@ import HeaderPortfolio from '@/components/HeaderPortfolio'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useClientMounted } from '@/hooks/useClientMounted'
+import { useWalletModal } from '@/hooks/useWalletModal'
 import { useUser } from '@/stores/useUser'
 
 const { useSession } = createAuthClient()
 
 export default function HeaderMenu() {
   const isMounted = useClientMounted()
-  const { open } = useAppKit()
+  const { open } = useWalletModal()
   const { isConnected, status } = useAppKitAccount()
   const { data: session } = useSession()
 

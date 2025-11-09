@@ -1,5 +1,5 @@
 import type { BlockchainOrder, Event, OrderSide, UserMarketOutcomePosition } from '@/types'
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { useAppKitAccount } from '@reown/appkit/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Form from 'next/form'
 import { useEffect } from 'react'
@@ -17,6 +17,7 @@ import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_componen
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
 import EventTradeToast from '@/app/(platform)/event/[slug]/_components/EventTradeToast'
+import { useWalletModal } from '@/hooks/useWalletModal'
 import { CAP_MICRO, EIP712_DOMAIN, EIP712_TYPES, FLOOR_MICRO, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel, formatCurrency, toMicro } from '@/lib/formatters'
 import { cn, triggerConfetti } from '@/lib/utils'
@@ -38,7 +39,7 @@ interface EventOrderPanelFormProps {
 }
 
 export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanelFormProps) {
-  const { open, close } = useAppKit()
+  const { open, close } = useWalletModal()
   const { isConnected, embeddedWalletInfo } = useAppKitAccount()
   const { signTypedDataAsync } = useSignTypedData()
   const user = useUser()

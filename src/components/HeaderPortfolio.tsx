@@ -1,11 +1,11 @@
-import { useAppKit } from '@reown/appkit/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBalance } from '@/hooks/useBalance'
+import { useWalletModal } from '@/hooks/useWalletModal'
 
 export default function HeaderPortfolio() {
-  const { open } = useAppKit()
+  const { open } = useWalletModal()
   const { isLoadingBalance, balance } = useBalance()
 
   if (isLoadingBalance) {

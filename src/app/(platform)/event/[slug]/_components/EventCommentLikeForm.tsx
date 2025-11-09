@@ -1,9 +1,9 @@
 'use client'
 
 import type { Comment, User } from '@/types'
-import { useAppKit } from '@reown/appkit/react'
 import { HeartIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useWalletModal } from '@/hooks/useWalletModal'
 import { cn } from '@/lib/utils'
 
 interface EventCommentLikeFormProps {
@@ -17,7 +17,7 @@ export default function EventCommentLikeForm({
   user,
   onLikeToggled,
 }: EventCommentLikeFormProps) {
-  const { open } = useAppKit()
+  const { open } = useWalletModal()
 
   function handleClick() {
     if (!user) {

@@ -1,6 +1,6 @@
 'use client'
 
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { useAppKitAccount } from '@reown/appkit/react'
 import { InfoIcon, XIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
@@ -14,6 +14,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { useClientMounted } from '@/hooks/useClientMounted'
+import { useWalletModal } from '@/hooks/useWalletModal'
 import { cn, triggerConfetti } from '@/lib/utils'
 
 const STEPS = [
@@ -45,7 +46,7 @@ const STEPS = [
 
 export default function HeaderHowItWorks() {
   const isMounted = useClientMounted()
-  const { open } = useAppKit()
+  const { open } = useWalletModal()
   const { isConnected, status } = useAppKitAccount()
   const [isOpen, setIsOpen] = useState(false)
   const [activeStep, setActiveStep] = useState(0)
