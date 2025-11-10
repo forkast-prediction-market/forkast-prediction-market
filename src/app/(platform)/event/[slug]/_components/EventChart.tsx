@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { TrendingDownIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import {
+  useUpdateEventOutcomeChanceChanges,
   useUpdateEventOutcomeChances,
   useUpdateMarketYesPrices,
 } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
@@ -72,6 +73,7 @@ const CURSOR_STEP_MS: Record<TimeRange, number> = {
 const ALL_FIDELITY = 720
 const PRICE_REFRESH_INTERVAL_MS = 60_000
 const MAX_SERIES = 4
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000
 
 function clampPrice(value: number) {
   if (!Number.isFinite(value)) {
@@ -222,6 +224,43 @@ function buildNormalizedHistory(historyByMarket: PriceHistoryByMarket): Normaliz
   return { points, latestSnapshot, latestRawPrices }
 }
 
+function computeChanceChanges(
+  points: Array<Record<string, number | Date> & { date: Date }>,
+) {
+  if (!points.length) {
+    return {}
+  }
+
+  const latestPoint = points[points.length - 1]
+  const targetTime = latestPoint.date.getTime() - TWELVE_HOURS_MS
+  let baselinePoint = points[0]
+
+  for (let index = points.length - 1; index >= 0; index -= 1) {
+    const currentPoint = points[index]
+    if (currentPoint.date.getTime() <= targetTime) {
+      baselinePoint = currentPoint
+      break
+    }
+  }
+
+  const changes: Record<string, number> = {}
+
+  Object.entries(latestPoint).forEach(([key, value]) => {
+    if (key === 'date' || typeof value !== 'number' || !Number.isFinite(value)) {
+      return
+    }
+
+    const baselineValue = baselinePoint[key]
+    const numericBaseline = typeof baselineValue === 'number' && Number.isFinite(baselineValue)
+      ? baselineValue
+      : value
+
+    changes[key] = value - numericBaseline
+  })
+
+  return changes
+}
+
 function filterChartDataForSeries(
   points: Array<Record<string, number | Date> & { date: Date }>,
   seriesKeys: string[],
@@ -269,6 +308,7 @@ export default function EventChart({ event, isMobile }: EventChartProps) {
   const isBinaryMarket = useIsBinaryMarket()
   const updateOutcomeChances = useUpdateEventOutcomeChances()
   const updateMarketYesPrices = useUpdateMarketYesPrices()
+  const updateOutcomeChanceChanges = useUpdateEventOutcomeChanceChanges()
 
   const [activeTimeRange, setActiveTimeRange] = useState<TimeRange>('ALL')
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
@@ -309,6 +349,10 @@ export default function EventChart({ event, isMobile }: EventChartProps) {
     () => buildNormalizedHistory(priceHistoryByMarket ?? {}),
     [priceHistoryByMarket],
   )
+  const chanceChangeByMarket = useMemo(
+    () => computeChanceChanges(normalizedHistory),
+    [normalizedHistory],
+  )
 
   const hasCompleteChanceData = useMemo(
     () => event.markets.every(market => Number.isFinite(latestSnapshot[market.condition_id])),
@@ -326,6 +370,12 @@ export default function EventChart({ event, isMobile }: EventChartProps) {
       updateMarketYesPrices(latestRawPrices)
     }
   }, [latestRawPrices, updateMarketYesPrices])
+
+  useEffect(() => {
+    if (Object.keys(chanceChangeByMarket).length > 0) {
+      updateOutcomeChanceChanges(chanceChangeByMarket)
+    }
+  }, [chanceChangeByMarket, updateOutcomeChanceChanges])
 
   const topMarketIds = useMemo(
     () => getTopMarketIds(latestSnapshot, MAX_SERIES),

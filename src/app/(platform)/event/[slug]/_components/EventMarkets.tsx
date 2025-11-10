@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
 import EventOrderBook, { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
 import {
+  useEventOutcomeChanceChanges,
   useEventOutcomeChances,
   useMarketYesPrices,
 } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
@@ -22,6 +23,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
   const state = useOrder()
   const isBinaryMarket = useIsBinaryMarket()
   const outcomeChances = useEventOutcomeChances()
+  const outcomeChanceChanges = useEventOutcomeChanceChanges()
   const marketYesPrices = useMarketYesPrices()
   const queryClient = useQueryClient()
   const priceHistoryQueryKey = useMemo(
@@ -167,7 +169,21 @@ export default function EventMarkets({ event }: EventMarketsProps) {
             ? Math.max(0, Math.min(1, 1 - yesPriceOverride))
             : noOutcome?.buy_price
           const rawChance = outcomeChances[market.condition_id]
-          const marketChance = Math.max(0, Math.min(100, Math.round(rawChance ?? 0)))
+          const normalizedChance = Math.max(0, Math.min(100, rawChance ?? 0))
+          const roundedChance = Math.round(normalizedChance)
+          const roundedThresholdChance = Math.round(normalizedChance * 10) / 10
+          const isSubOnePercent = roundedThresholdChance > 0 && roundedThresholdChance < 1
+          const chanceDisplay = isSubOnePercent ? '<1%' : `${roundedChance}%`
+          const rawChanceChange = outcomeChanceChanges[market.condition_id]
+          const normalizedChanceChange = typeof rawChanceChange === 'number' && Number.isFinite(rawChanceChange)
+            ? rawChanceChange
+            : 0
+          const absoluteChanceChange = Math.abs(normalizedChanceChange)
+          const roundedChanceChange = Math.round(absoluteChanceChange)
+          const shouldShowChanceChange = roundedChanceChange >= 1
+          const chanceChangeLabel = `${roundedChanceChange}%`
+          const isChanceChangePositive = normalizedChanceChange > 0
+          const chanceChangeColorClass = isChanceChangePositive ? 'text-yes' : 'text-no'
 
           function handleToggle() {
             const currentlyExpanded = expandedMarketId === market.condition_id
@@ -234,10 +250,28 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         </div>
                       </div>
                     </div>
-                    <span className="text-lg font-bold text-foreground">
-                      {marketChance}
-                      %
-                    </span>
+                    <div className="flex flex-col items-end gap-1">
+                      <span
+                        className={cn(
+                          'text-lg font-bold',
+                          isSubOnePercent ? 'text-muted-foreground' : 'text-foreground',
+                        )}
+                      >
+                        {chanceDisplay}
+                      </span>
+                      {shouldShowChanceChange && (
+                        <div className={cn('flex items-center gap-1 text-xs font-semibold', chanceChangeColorClass)}>
+                          <TriangleIcon
+                            className={cn(
+                              'size-3 fill-current',
+                              isChanceChangePositive ? '' : 'rotate-180',
+                            )}
+                            fill="currentColor"
+                          />
+                          <span>{chanceChangeLabel}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   {/* Row 2: Buttons */}
@@ -321,14 +355,23 @@ export default function EventMarkets({ event }: EventMarketsProps) {
 
                   <div className="flex w-1/5 justify-center">
                     <div className="flex items-center gap-2">
-                      <span className="text-3xl font-bold text-foreground">
-                        {marketChance}
-                        %
+                      <span
+                        className={cn(
+                          'text-3xl font-bold',
+                          isSubOnePercent ? 'text-muted-foreground' : 'text-foreground',
+                        )}
+                      >
+                        {chanceDisplay}
                       </span>
-                      <div className="flex items-center gap-1 text-no">
-                        <TriangleIcon className="size-3 rotate-180 fill-current" fill="currentColor" />
-                        <span className="text-xs font-semibold">3%</span>
-                      </div>
+                      {shouldShowChanceChange && (
+                        <div className={cn('flex items-center gap-1 text-xs font-semibold', chanceChangeColorClass)}>
+                          <TriangleIcon
+                            className={cn('size-3 fill-current', isChanceChangePositive ? '' : 'rotate-180')}
+                            fill="currentColor"
+                          />
+                          <span>{chanceChangeLabel}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
 

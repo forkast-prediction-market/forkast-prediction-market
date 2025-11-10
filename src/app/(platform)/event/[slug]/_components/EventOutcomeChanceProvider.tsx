@@ -5,8 +5,10 @@ import { createContext, use, useEffect, useMemo, useState } from 'react'
 interface EventOutcomeChanceContextValue {
   chanceByMarket: Record<string, number>
   yesPriceByMarket: Record<string, number>
+  chanceChangeByMarket: Record<string, number>
   setChanceByMarket: (next: Record<string, number>) => void
   setYesPriceByMarket: (next: Record<string, number>) => void
+  setChanceChangeByMarket: (next: Record<string, number>) => void
 }
 
 const EventOutcomeChanceContext = createContext<EventOutcomeChanceContextValue | null>(null)
@@ -19,18 +21,22 @@ interface EventOutcomeChanceProviderProps {
 export function EventOutcomeChanceProvider({ eventId, children }: EventOutcomeChanceProviderProps) {
   const [chanceByMarket, setChanceByMarket] = useState<Record<string, number>>({})
   const [yesPriceByMarket, setYesPriceByMarket] = useState<Record<string, number>>({})
+  const [chanceChangeByMarket, setChanceChangeByMarket] = useState<Record<string, number>>({})
 
   useEffect(() => {
     setChanceByMarket({})
     setYesPriceByMarket({})
+    setChanceChangeByMarket({})
   }, [eventId])
 
   const value = useMemo<EventOutcomeChanceContextValue>(() => ({
     chanceByMarket,
     yesPriceByMarket,
+    chanceChangeByMarket,
     setChanceByMarket,
     setYesPriceByMarket,
-  }), [chanceByMarket, yesPriceByMarket])
+    setChanceChangeByMarket,
+  }), [chanceByMarket, yesPriceByMarket, chanceChangeByMarket])
 
   return (
     <EventOutcomeChanceContext value={value}>
@@ -69,4 +75,19 @@ export function useUpdateMarketYesPrices() {
     throw new Error('useUpdateMarketYesPrices must be used within an EventOutcomeChanceProvider')
   }
   return context.setYesPriceByMarket
+}
+export function useEventOutcomeChanceChanges() {
+  const context = use(EventOutcomeChanceContext)
+  if (!context) {
+    throw new Error('useEventOutcomeChanceChanges must be used within an EventOutcomeChanceProvider')
+  }
+  return context.chanceChangeByMarket
+}
+
+export function useUpdateEventOutcomeChanceChanges() {
+  const context = use(EventOutcomeChanceContext)
+  if (!context) {
+    throw new Error('useUpdateEventOutcomeChanceChanges must be used within an EventOutcomeChanceProvider')
+  }
+  return context.setChanceChangeByMarket
 }
