@@ -9,11 +9,20 @@ import {
   useEventOutcomeChances,
   useMarketYesPrices,
 } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
+import MarketOutcomeGraph from '@/app/(platform)/event/[slug]/_components/MarketOutcomeGraph'
 import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel, toCents } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
+
+type MarketDetailTab = 'orderBook' | 'graph' | 'resolution'
+
+const MARKET_DETAIL_TABS: Array<{ id: MarketDetailTab, label: string }> = [
+  { id: 'orderBook', label: 'Order Book' },
+  { id: 'graph', label: 'Graph' },
+  { id: 'resolution', label: 'Resolution' },
+]
 
 interface EventMarketsProps {
   event: Event
@@ -33,6 +42,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
   const [expandedMarketId, setExpandedMarketId] = useState<string | null>(null)
   const [orderBookPollingEnabled, setOrderBookPollingEnabled] = useState(false)
   const [isManualChanceRefreshing, setIsManualChanceRefreshing] = useState(false)
+  const [marketDetailTabById, setMarketDetailTabById] = useState<Record<string, MarketDetailTab>>({})
   const priceHistoryIsFetching = useIsFetching({ queryKey: priceHistoryQueryKey }) > 0
   const isChanceRefreshDisabled = isManualChanceRefreshing || priceHistoryIsFetching
   const eventTokenIds = useMemo(() => {
@@ -87,6 +97,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
 
   useEffect(() => {
     setExpandedMarketId(null)
+    setMarketDetailTabById({})
   }, [event.id])
 
   useEffect(() => {
@@ -198,18 +209,37 @@ export default function EventMarkets({ event }: EventMarketsProps) {
               : Math.max(0, Number((100 - yesPriceCentsOverride).toFixed(1)))
           })()
 
+          function ensureMarketExpanded() {
+            if (expandedMarketId !== market.condition_id) {
+              if (!orderBookPollingEnabled) {
+                setOrderBookPollingEnabled(true)
+              }
+              setExpandedMarketId(market.condition_id)
+              if (!marketDetailTabById[market.condition_id]) {
+                setMarketDetailTabById(prev => ({ ...prev, [market.condition_id]: 'orderBook' }))
+              }
+            }
+          }
+
           function handleToggle() {
             const currentlyExpanded = expandedMarketId === market.condition_id
-            const willExpand = !currentlyExpanded
-            if (willExpand && !orderBookPollingEnabled) {
-              setOrderBookPollingEnabled(true)
+            if (currentlyExpanded) {
+              setExpandedMarketId(null)
             }
-            setExpandedMarketId(willExpand ? market.condition_id : null)
+            else {
+              ensureMarketExpanded()
+            }
             state.setMarket(market)
             state.setSide(ORDER_SIDE.BUY)
             if (!state.outcome || state.outcome.condition_id !== market.condition_id) {
               state.setOutcome(market.outcomes[0])
             }
+          }
+
+          const selectedDetailTab = marketDetailTabById[market.condition_id] ?? 'orderBook'
+
+          function handleDetailTabChange(tab: MarketDetailTab) {
+            setMarketDetailTabById(prev => ({ ...prev, [market.condition_id]: tab }))
           }
 
           return (
@@ -297,6 +327,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                       })}
                       onClick={(e) => {
                         e.stopPropagation()
+                        ensureMarketExpanded()
                         state.setMarket(market)
                         state.setOutcome(market.outcomes[0])
                         state.setSide(ORDER_SIDE.BUY)
@@ -320,6 +351,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                       })}
                       onClick={(e) => {
                         e.stopPropagation()
+                        ensureMarketExpanded()
                         state.setMarket(market)
                         state.setOutcome(market.outcomes[1])
                         state.setSide(ORDER_SIDE.BUY)
@@ -397,6 +429,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                       }, 'w-36')}
                       onClick={(e) => {
                         e.stopPropagation()
+                        ensureMarketExpanded()
                         state.setMarket(market)
                         state.setOutcome(market.outcomes[0])
                         state.setSide(ORDER_SIDE.BUY)
@@ -421,6 +454,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                       }, 'w-36')}
                       onClick={(e) => {
                         e.stopPropagation()
+                        ensureMarketExpanded()
                         state.setMarket(market)
                         state.setOutcome(market.outcomes[1])
                         state.setSide(ORDER_SIDE.BUY)
@@ -442,13 +476,68 @@ export default function EventMarkets({ event }: EventMarketsProps) {
 
               {isExpanded && (
                 <div className="pt-2">
-                  <EventOrderBook
-                    market={market}
-                    outcome={outcomeForMarket}
-                    summaries={orderBookSummaries}
-                    isLoadingSummaries={shouldShowOrderBookLoader}
-                    lastPriceOverrideCents={lastPriceOverrideCents}
-                  />
+                  <div className="px-4">
+                    <div className="flex gap-4 border-b border-border/60">
+                      {MARKET_DETAIL_TABS.map((tab) => {
+                        const isActive = selectedDetailTab === tab.id
+                        return (
+                          <button
+                            key={`${market.condition_id}-${tab.id}`}
+                            type="button"
+                            className={cn(
+                              'border-b-2 border-transparent pt-1 pb-2 text-sm font-semibold transition-colors',
+                              isActive
+                                ? 'border-primary text-foreground'
+                                : 'text-muted-foreground hover:text-foreground',
+                            )}
+                            onClick={(event) => {
+                              event.stopPropagation()
+                              handleDetailTabChange(tab.id)
+                            }}
+                          >
+                            {tab.label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="px-4 pt-4">
+                    {selectedDetailTab === 'orderBook' && (
+                      <EventOrderBook
+                        market={market}
+                        outcome={outcomeForMarket}
+                        summaries={orderBookSummaries}
+                        isLoadingSummaries={shouldShowOrderBookLoader}
+                        lastPriceOverrideCents={lastPriceOverrideCents}
+                      />
+                    )}
+
+                    {selectedDetailTab === 'graph' && outcomeForMarket && (
+                      <div className="pb-4">
+                        <MarketOutcomeGraph
+                          market={market}
+                          outcome={outcomeForMarket}
+                          allMarkets={event.markets}
+                          eventCreatedAt={event.created_at}
+                        />
+                      </div>
+                    )}
+
+                    {selectedDetailTab === 'resolution' && (
+                      <div className="pb-4">
+                        <div className="flex justify-start">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={event => event.stopPropagation()}
+                          >
+                            Propose resolution
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

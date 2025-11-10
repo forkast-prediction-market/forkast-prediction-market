@@ -103,7 +103,6 @@ export default function EventCard({ event }: EventCardProps) {
             : Math.round(100 - probability)
         const shares = ((amountNum / price) * 100).toFixed(2)
 
-        // Show success toast in Polymarket style
         toast.success(
           `Buy ${formatCurrency(safeAmount)} on ${
             selectedOutcome.type === 'yes'

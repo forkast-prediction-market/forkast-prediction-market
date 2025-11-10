@@ -78,7 +78,7 @@ export default function EventOrderPanelBuySellTabs({
                 dark:hover:!bg-transparent dark:focus:!bg-transparent dark:focus-visible:!bg-transparent
                 dark:active:!bg-transparent
               `,
-              side === ORDER_SIDE.BUY && 'border-primary text-foreground',
+              side === ORDER_SIDE.BUY && 'border-foreground text-foreground',
             )}
             onClick={() => handleSideChange(ORDER_SIDE.BUY)}
           >
@@ -97,7 +97,7 @@ export default function EventOrderPanelBuySellTabs({
                 dark:hover:!bg-transparent dark:focus:!bg-transparent dark:focus-visible:!bg-transparent
                 dark:active:!bg-transparent
               `,
-              side === ORDER_SIDE.SELL && 'border-primary text-foreground',
+              side === ORDER_SIDE.SELL && 'border-foreground text-foreground',
             )}
             onClick={() => handleSideChange(ORDER_SIDE.SELL)}
           >
