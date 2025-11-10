@@ -143,7 +143,6 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
       triggerToast()
       triggerConfetti(state.outcome!.outcome_index === OUTCOME_INDEX.YES ? 'yes' : 'no', state.lastMouseEvent)
-      state.setAmount('0.00')
       if (user?.id) {
         queryClient.invalidateQueries({
           queryKey: ['user-event-positions', event.slug, user.id],
