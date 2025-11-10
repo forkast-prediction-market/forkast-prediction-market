@@ -629,6 +629,7 @@ export const EventRepository = {
 
   async getEventTopHolders(conditionId: string): Promise<QueryResult<HoldersResult>> {
     'use cache'
+    cacheTag(cacheTags.holders(conditionId))
 
     return runQuery(async () => {
       const holdersData = await db
