@@ -1,34 +1,41 @@
+import type { Event, Market } from '@/types'
 import Image from 'next/image'
-import { useBalance } from '@/hooks/useBalance'
-import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
-export default function EventOrderPanelMobileMarketInfo() {
-  const state = useOrder()
-  const isBinaryMarket = useIsBinaryMarket()
-  const { balance } = useBalance()
+interface EventOrderPanelMobileMarketInfoProps {
+  event: Event
+  market: Market | null
+  isBinaryMarket: boolean
+  balanceText: string
+}
 
-  if (!state.event || !state.market) {
+export default function EventOrderPanelMobileMarketInfo({
+  event,
+  market,
+  isBinaryMarket,
+  balanceText,
+}: EventOrderPanelMobileMarketInfoProps) {
+  if (!market) {
     return <></>
   }
 
   return (
     <div className="mb-4 flex items-center gap-3">
       <Image
-        src={state.market.icon_url}
-        alt={state.market.title}
+        src={market.icon_url}
+        alt={market.title}
         width={32}
         height={32}
         className="shrink-0 rounded"
       />
       <div className="flex-1">
         <div className="line-clamp-2 text-sm font-medium">
-          {state.event.title}
+          {event.title}
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          {!isBinaryMarket && <span>{state.market.short_title || state.market.title}</span>}
+          {!isBinaryMarket && <span>{market.short_title || market.title}</span>}
           <span>
             Bal. $
-            {balance.text}
+            {balanceText}
           </span>
         </div>
       </div>

@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
+import type { OrderValidationResult } from '@/lib/orders/validation'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import EventOrderPanelForm from '@/app/(platform)/event/[slug]/_components/EventOrderPanelForm'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 
@@ -9,45 +10,50 @@ const {
   mockOpen,
   mockClose,
   mockSignTypedDataAsync,
-  mockTriggerConfetti,
-  mockToastError,
-  mockToastSuccess,
-  mockToastInfo,
-  storeOrderActionMock,
-  mockCalculateSellAmount,
-  mockGetAvgSellPrice,
+  mockHandleValidationError,
+  mockHandleSuccess,
+  mockHandleError,
+  mockNotifyWalletApproval,
+  mockBuildOrderPayload,
+  mockSubmitOrder,
 } = vi.hoisted(() => ({
   mockOpen: vi.fn(),
   mockClose: vi.fn(),
   mockSignTypedDataAsync: vi.fn(),
-  mockTriggerConfetti: vi.fn(),
-  mockToastError: vi.fn(),
-  mockToastSuccess: vi.fn(),
-  mockToastInfo: vi.fn(),
-  storeOrderActionMock: vi.fn(),
-  mockCalculateSellAmount: vi.fn(() => 12.34),
-  mockGetAvgSellPrice: vi.fn(() => '42'),
+  mockHandleValidationError: vi.fn(),
+  mockHandleSuccess: vi.fn(),
+  mockHandleError: vi.fn(),
+  mockNotifyWalletApproval: vi.fn(),
+  mockBuildOrderPayload: vi.fn(() => ({
+    salt: 1n,
+    maker: '0xUser',
+    signer: '0xUser',
+    taker: '0xUser',
+    referrer: '0xUser',
+    affiliate: '0xUser',
+    token_id: 1n,
+    maker_amount: 1n,
+    taker_amount: 1n,
+    expiration: 1n,
+    nonce: 1n,
+    fee_rate_bps: 1n,
+    affiliate_percentage: 0n,
+    side: ORDER_SIDE.BUY,
+    signature_type: 0,
+  })),
+  mockSubmitOrder: vi.fn(),
 }))
 
 let mockIsConnected = true
 let mockEmbeddedWalletInfo: any
-let mockUser: { address: string } | null = { address: '0xUser' }
+let mockUser: { id: string, address: string } | null = { id: 'user-1', address: '0xUser' }
 let mockAmountAsNumber = 10
 let mockYesPrice = 60
+let mockNoPrice = 40
 let mockIsBinaryMarket = false
 let mockIsLimitOrder = false
 let orderState: any
 let queryClient: QueryClient
-const fetchMock = vi.fn()
-const originalFetch = globalThis.fetch
-
-beforeAll(() => {
-  globalThis.fetch = fetchMock
-})
-
-afterAll(() => {
-  globalThis.fetch = originalFetch
-})
 
 vi.mock('@/lib/appkit', () => ({
   defaultNetwork: { id: 137 },
@@ -57,44 +63,59 @@ vi.mock('@/stores/useOrder', () => ({
   useOrder: (selector?: any) => (selector ? selector(orderState) : orderState),
   useAmountAsNumber: () => mockAmountAsNumber,
   useYesPrice: () => mockYesPrice,
-  useNoPrice: () => 100 - mockYesPrice,
+  useNoPrice: () => mockNoPrice,
   useIsBinaryMarket: () => mockIsBinaryMarket,
   useIsLimitOrder: () => mockIsLimitOrder,
-  calculateSellAmount: mockCalculateSellAmount,
-  getAvgSellPrice: mockGetAvgSellPrice,
 }))
 
-vi.mock('@reown/appkit/react', () => ({
-  useAppKitAccount: () => ({ isConnected: mockIsConnected, embeddedWalletInfo: mockEmbeddedWalletInfo }),
+vi.mock('@/hooks/useBalance', () => ({
+  useBalance: () => ({
+    balance: { raw: 100, text: '100.00', symbol: 'USDC' },
+  }),
+}))
+
+vi.mock('@/hooks/useUserOutcomePositions', () => ({
+  useUserOutcomePositions: () => ({
+    sharesByCondition: {},
+  }),
 }))
 
 vi.mock('@/hooks/useAppKit', () => ({
   useAppKit: () => ({ open: mockOpen, close: mockClose }),
 }))
 
+vi.mock('@reown/appkit/react', async () => {
+  const actual = await vi.importActual<typeof import('@reown/appkit/react')>('@reown/appkit/react')
+  return {
+    ...actual,
+    useAppKitAccount: () => ({ isConnected: mockIsConnected, embeddedWalletInfo: mockEmbeddedWalletInfo }),
+  }
+})
+
 vi.mock('wagmi', () => ({
   useSignTypedData: () => ({ signTypedDataAsync: mockSignTypedDataAsync }),
 }))
 
-vi.mock('sonner', () => ({
-  toast: {
-    error: mockToastError,
-    success: mockToastSuccess,
-    info: mockToastInfo,
-  },
-}))
-
-vi.mock('@/lib/utils', () => ({
-  cn: (...inputs: any[]) => inputs.filter(Boolean).join(' '),
-  triggerConfetti: mockTriggerConfetti,
-}))
-
-vi.mock('@/app/(platform)/event/[slug]/_actions/store-order', () => ({
-  storeOrderAction: storeOrderActionMock,
-}))
-
 vi.mock('@/stores/useUser', () => ({
   useUser: () => mockUser,
+}))
+
+vi.mock('@/lib/orders', () => ({
+  buildOrderPayload: mockBuildOrderPayload,
+  submitOrder: mockSubmitOrder,
+}))
+
+type ValidateOrderFn = (...args: any[]) => OrderValidationResult
+const mockValidateOrder = vi.fn<ValidateOrderFn>(() => ({ ok: true }))
+vi.mock('@/lib/orders/validation', () => ({
+  validateOrder: (...args: any[]) => mockValidateOrder(...args),
+}))
+
+vi.mock('@/app/(platform)/event/[slug]/_components/helpers/feedback', () => ({
+  handleOrderSuccessFeedback: (...args: any[]) => mockHandleSuccess(...args),
+  handleOrderErrorFeedback: (...args: any[]) => mockHandleError(...args),
+  handleValidationError: (...args: any[]) => mockHandleValidationError(...args),
+  notifyWalletApprovalPrompt: (...args: any[]) => mockNotifyWalletApproval(...args),
 }))
 
 vi.mock('next/form', () => ({
@@ -113,37 +134,34 @@ vi.mock('next/form', () => ({
 }))
 
 vi.mock('@/app/(platform)/event/[slug]/_components/EventOrderPanelBuySellTabs', () => ({
-  default: () => <div data-testid="tabs" />,
+  default: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
 }))
 vi.mock('@/app/(platform)/event/[slug]/_components/EventOrderPanelEarnings', () => ({
-  default: () => <div data-testid="earnings" />,
+  default: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
 }))
 vi.mock('@/app/(platform)/event/[slug]/_components/EventOrderPanelInput', () => ({
-  default: () => <div data-testid="input" />,
+  default: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
 }))
 vi.mock('@/app/(platform)/event/[slug]/_components/EventOrderPanelLimitControls', () => ({
-  default: () => <div data-testid="limit-controls" />,
+  default: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
 }))
 vi.mock('@/app/(platform)/event/[slug]/_components/EventOrderPanelMarketInfo', () => ({
-  default: () => <div data-testid="market-info" />,
+  default: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
 }))
 vi.mock('@/app/(platform)/event/[slug]/_components/EventOrderPanelMobileMarketInfo', () => ({
-  default: () => <div data-testid="mobile-market-info" />,
+  default: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
 }))
 vi.mock('@/app/(platform)/event/[slug]/_components/EventOrderPanelOutcomeButton', () => ({
-  default: () => <button type="button">Outcome</button>,
+  default: ({ children }: { children?: ReactNode }) => <button type="button">{children}</button>,
 }))
 vi.mock('@/app/(platform)/event/[slug]/_components/EventOrderPanelSubmitButton', () => ({
-  default: () => <button type="submit">Submit</button>,
+  default: ({ children }: any) => <button type="submit">{children ?? 'Submit'}</button>,
 }))
 vi.mock('@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer', () => ({
-  default: () => <div data-testid="disclaimer" />,
+  default: () => <div />,
 }))
 vi.mock('@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares', () => ({
-  default: () => <div data-testid="user-shares" />,
-}))
-vi.mock('@/app/(platform)/event/[slug]/_components/EventTradeToast', () => ({
-  default: ({ children }: { children: ReactNode }) => <div>{children}</div>,
+  default: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
 }))
 
 describe('eventOrderPanelForm', () => {
@@ -151,26 +169,21 @@ describe('eventOrderPanelForm', () => {
     mockOpen.mockClear()
     mockClose.mockClear()
     mockSignTypedDataAsync.mockReset()
-    mockTriggerConfetti.mockClear()
-    mockToastError.mockClear()
-    mockToastSuccess.mockClear()
-    storeOrderActionMock.mockReset()
-    mockCalculateSellAmount.mockClear()
-    mockCalculateSellAmount.mockReturnValue(12.34)
-    mockGetAvgSellPrice.mockClear()
-    mockGetAvgSellPrice.mockReturnValue('42')
+    mockHandleValidationError.mockClear()
+    mockHandleSuccess.mockClear()
+    mockHandleError.mockClear()
+    mockNotifyWalletApproval.mockClear()
+    mockBuildOrderPayload.mockClear()
+    mockSubmitOrder.mockClear()
+    mockValidateOrder.mockClear()
 
     queryClient = new QueryClient()
-    fetchMock.mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: [] }),
-    } as any)
-
     mockIsConnected = true
     mockEmbeddedWalletInfo = undefined
-    mockUser = { address: '0xUser' }
+    mockUser = { id: 'user-1', address: '0xUser' }
     mockAmountAsNumber = 10
     mockYesPrice = 60
+    mockNoPrice = 40
     mockIsBinaryMarket = false
     mockIsLimitOrder = false
 
@@ -180,21 +193,39 @@ describe('eventOrderPanelForm', () => {
       limitShares: '0',
       side: ORDER_SIDE.BUY,
       type: 'MARKET',
+      limitExpirationEnabled: false,
+      limitExpirationOption: 'end-of-day',
       isLoading: false,
       market: {
         condition_id: 'cond-123',
         probability: 50,
+        outcomes: [
+          { outcome_index: OUTCOME_INDEX.YES, outcome_text: 'Yes', token_id: '1', buy_price: 50 },
+          { outcome_index: OUTCOME_INDEX.NO, outcome_text: 'No', token_id: '2', buy_price: 50 },
+        ],
       },
       outcome: {
         outcome_index: OUTCOME_INDEX.YES,
-        outcome_text: 'Outcome A',
-        token_id: '42',
+        outcome_text: 'Yes',
+        token_id: '1',
+        buy_price: 50,
       },
       event: null,
       lastMouseEvent: null,
+      userShares: {},
+      inputRef: { current: null },
       setIsLoading: vi.fn(),
       setAmount: vi.fn(),
       setUserShares: vi.fn(),
+      setSide: vi.fn(),
+      setType: vi.fn(),
+      setLimitPrice: vi.fn(),
+      setLimitShares: vi.fn(),
+      setLimitExpirationEnabled: vi.fn(),
+      setLimitExpirationOption: vi.fn(),
+      setIsMobileOrderPanelOpen: vi.fn(),
+      setLastMouseEvent: vi.fn(),
+      setOutcome: vi.fn(),
     }
   })
 
@@ -206,97 +237,58 @@ describe('eventOrderPanelForm', () => {
     )
   }
 
-  it('opens the wallet modal when the user is not connected', async () => {
+  it('invokes validation helper when prerequisites are missing', async () => {
+    mockValidateOrder.mockReturnValueOnce({ ok: false, reason: 'NOT_CONNECTED' })
     mockIsConnected = false
 
     renderComponent()
     fireEvent.submit(screen.getByTestId('event-order-form'))
 
-    await Promise.resolve()
-
-    expect(mockOpen).toHaveBeenCalledTimes(1)
+    await waitFor(() => expect(mockHandleValidationError).toHaveBeenCalledWith('NOT_CONNECTED', expect.anything()))
     expect(mockSignTypedDataAsync).not.toHaveBeenCalled()
-    expect(storeOrderActionMock).not.toHaveBeenCalled()
+    expect(mockSubmitOrder).not.toHaveBeenCalled()
   })
 
-  it('shows a validation error when limit order price is invalid', async () => {
-    mockIsLimitOrder = true
-    orderState.type = 'LIMIT'
-    orderState.limitPrice = 'not-a-number'
-    orderState.limitShares = '0'
-
-    renderComponent()
-    fireEvent.submit(screen.getByTestId('event-order-form'))
-
-    await waitFor(() =>
-      expect(mockToastError).toHaveBeenCalledWith('Invalid limit price', expect.objectContaining({ description: expect.any(String) })),
-    )
-    expect(mockSignTypedDataAsync).not.toHaveBeenCalled()
-  })
-
-  it('submits a valid market buy order and triggers success handlers', async () => {
+  it('submits an order and triggers success feedback', async () => {
     mockSignTypedDataAsync.mockResolvedValue('0xsigned')
-    storeOrderActionMock.mockResolvedValue(null)
+    mockSubmitOrder.mockResolvedValue({})
 
     renderComponent()
     fireEvent.submit(screen.getByTestId('event-order-form'))
 
-    await waitFor(() => expect(storeOrderActionMock).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(mockSubmitOrder).toHaveBeenCalledTimes(1))
 
-    expect(mockSignTypedDataAsync).toHaveBeenCalledTimes(1)
-    expect(mockOpen).toHaveBeenCalledWith(expect.objectContaining({ view: 'ApproveTransaction' }))
-    expect(mockClose).toHaveBeenCalled()
-
-    const payload = storeOrderActionMock.mock.calls[0][0]
-
-    expect(payload).toMatchObject({
-      salt: '333000003',
-      token_id: '42',
-      maker_amount: expect.any(String),
-      taker_amount: expect.any(String),
-      side: orderState.side,
-      type: orderState.type,
-      condition_id: orderState.market.condition_id,
-      slug: 'event-slug',
-      signature: '0xsigned',
-    })
-
+    expect(mockBuildOrderPayload).toHaveBeenCalled()
+    expect(mockSignTypedDataAsync).toHaveBeenCalled()
+    expect(mockNotifyWalletApproval).toHaveBeenCalled()
+    expect(mockHandleSuccess).toHaveBeenCalledWith(expect.objectContaining({
+      eventSlug: 'event-slug',
+      side: ORDER_SIDE.BUY,
+    }))
     expect(orderState.setIsLoading).toHaveBeenNthCalledWith(1, true)
     expect(orderState.setIsLoading).toHaveBeenLastCalledWith(false)
-    expect(mockTriggerConfetti).toHaveBeenCalledWith('yes', null)
-    expect(mockToastSuccess).toHaveBeenCalledWith(
-      'Buy $10.00 on Outcome A',
-      expect.objectContaining({ description: expect.any(Object) }),
-    )
   })
 
-  it('avoids opening the approve transaction modal for embedded wallets', async () => {
-    mockEmbeddedWalletInfo = { user: {}, authProvider: 'email', accountType: 'eoa', isSmartAccountDeployed: false }
+  it('does not show wallet approval prompt for embedded wallets', async () => {
+    mockEmbeddedWalletInfo = { user: {}, authProvider: 'email' }
     mockSignTypedDataAsync.mockResolvedValue('0xsigned')
-    storeOrderActionMock.mockResolvedValue(null)
+    mockSubmitOrder.mockResolvedValue({})
 
     renderComponent()
     fireEvent.submit(screen.getByTestId('event-order-form'))
 
-    await waitFor(() => expect(storeOrderActionMock).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(mockSubmitOrder).toHaveBeenCalledTimes(1))
 
-    expect(mockSignTypedDataAsync).toHaveBeenCalledTimes(1)
-    expect(mockOpen).not.toHaveBeenCalled()
-    expect(mockClose).not.toHaveBeenCalled()
+    expect(mockNotifyWalletApproval).not.toHaveBeenCalled()
   })
 
-  it('shows an error toast when the trade fails to persist', async () => {
+  it('routes submission errors to feedback helper', async () => {
     mockSignTypedDataAsync.mockResolvedValue('0xsigned')
-    storeOrderActionMock.mockResolvedValue({ error: 'No liquidity' })
+    mockSubmitOrder.mockResolvedValue({ error: 'No liquidity' })
 
     renderComponent()
     fireEvent.submit(screen.getByTestId('event-order-form'))
 
-    await waitFor(() => expect(mockToastError).toHaveBeenCalledWith('Trade failed', expect.any(Object)))
-
-    expect(orderState.setAmount).not.toHaveBeenCalledWith('0.00')
-    expect(mockTriggerConfetti).not.toHaveBeenCalled()
-    expect(mockOpen).toHaveBeenCalledWith(expect.objectContaining({ view: 'ApproveTransaction' }))
-    expect(mockClose).toHaveBeenCalled()
+    await waitFor(() => expect(mockHandleError).toHaveBeenCalledWith('Trade failed', 'No liquidity'))
   })
 })

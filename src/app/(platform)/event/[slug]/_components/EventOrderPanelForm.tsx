@@ -1,11 +1,9 @@
-import type { BlockchainOrder, Event, OrderSide, UserMarketOutcomePosition } from '@/types'
+import type { BlockchainOrder, Event } from '@/types'
 import { useAppKitAccount } from '@reown/appkit/react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import Form from 'next/form'
-import { useEffect } from 'react'
-import { toast } from 'sonner'
+import { useEffect, useMemo } from 'react'
 import { useSignTypedData } from 'wagmi'
-import { storeOrderAction } from '@/app/(platform)/event/[slug]/_actions/store-order'
 import EventOrderPanelBuySellTabs from '@/app/(platform)/event/[slug]/_components/EventOrderPanelBuySellTabs'
 import EventOrderPanelEarnings from '@/app/(platform)/event/[slug]/_components/EventOrderPanelEarnings'
 import EventOrderPanelInput from '@/app/(platform)/event/[slug]/_components/EventOrderPanelInput'
@@ -16,21 +14,16 @@ import EventOrderPanelOutcomeButton from '@/app/(platform)/event/[slug]/_compone
 import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_components/EventOrderPanelSubmitButton'
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
-import EventTradeToast from '@/app/(platform)/event/[slug]/_components/EventTradeToast'
+import { handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/helpers/feedback'
 import { useAppKit } from '@/hooks/useAppKit'
-import { CAP_MICRO, EIP712_DOMAIN, EIP712_TYPES, FLOOR_MICRO, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
-import { formatCentsLabel, formatCurrency, toMicro } from '@/lib/formatters'
-import { cn, triggerConfetti } from '@/lib/utils'
-import {
-  calculateSellAmount,
-  getAvgSellPrice,
-  useAmountAsNumber,
-  useIsBinaryMarket,
-  useIsLimitOrder,
-  useNoPrice,
-  useOrder,
-  useYesPrice,
-} from '@/stores/useOrder'
+import { useBalance } from '@/hooks/useBalance'
+import { useUserOutcomePositions } from '@/hooks/useUserOutcomePositions'
+import { EIP712_DOMAIN, EIP712_TYPES, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
+import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
+import { buildOrderPayload, submitOrder } from '@/lib/orders'
+import { validateOrder } from '@/lib/orders/validation'
+import { cn } from '@/lib/utils'
+import { useAmountAsNumber, useIsBinaryMarket, useIsLimitOrder, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
 
 interface EventOrderPanelFormProps {
@@ -49,27 +42,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const yesPrice = useYesPrice()
   const noPrice = useNoPrice()
   const isBinaryMarket = useIsBinaryMarket()
-  const amount = useAmountAsNumber()
+  const amountNumber = useAmountAsNumber()
   const isLimitOrder = useIsLimitOrder()
-
-  const { data: userOutcomePositions } = useQuery<UserMarketOutcomePosition[]>({
-    queryKey: ['user-event-positions', event.slug, user?.id],
-    enabled: Boolean(user?.id),
-    staleTime: 30_000,
-    retry: false,
-    queryFn: async () => {
-      const response = await fetch(`/api/events/${event.slug}/user-positions`, {
-        cache: 'no-store',
-      })
-
-      if (!response.ok) {
-        throw new Error('Failed to load user positions.')
-      }
-
-      const payload = await response.json()
-      return (payload.data ?? []) as UserMarketOutcomePosition[]
-    },
-  })
+  const { balance } = useBalance()
+  const { sharesByCondition } = useUserOutcomePositions({ eventSlug: event.slug, userId: user?.id })
 
   useEffect(() => {
     if (!user?.id) {
@@ -77,96 +53,55 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       return
     }
 
-    if (!userOutcomePositions) {
-      setUserShares({})
-      return
-    }
-
-    const sharesByCondition = userOutcomePositions.reduce<Record<string, { [OUTCOME_INDEX.YES]: number, [OUTCOME_INDEX.NO]: number }>>((acc, position) => {
-      const rawMicro = typeof position.shares_micro === 'string'
-        ? Number(position.shares_micro)
-        : Number(position.shares_micro || 0)
-
-      if (!Number.isFinite(rawMicro)) {
-        return acc
-      }
-
-      const decimalShares = Number((rawMicro / 1_000_000).toFixed(4))
-      if (decimalShares <= 0) {
-        return acc
-      }
-
-      if (!acc[position.condition_id]) {
-        acc[position.condition_id] = {
-          [OUTCOME_INDEX.YES]: 0,
-          [OUTCOME_INDEX.NO]: 0,
-        }
-      }
-
-      const outcomeKey = position.outcome_index === OUTCOME_INDEX.NO
-        ? OUTCOME_INDEX.NO
-        : OUTCOME_INDEX.YES
-
-      acc[position.condition_id][outcomeKey] = decimalShares
-      return acc
-    }, {})
-
     setUserShares(sharesByCondition)
-  }, [user?.id, userOutcomePositions, setUserShares])
+  }, [sharesByCondition, setUserShares, user?.id])
 
-  async function storeOrder(payload: BlockchainOrder & { signature: string }) {
-    state.setIsLoading(true)
+  const conditionShares = state.market ? state.userShares[state.market.condition_id] : undefined
+  const yesShares = conditionShares?.[OUTCOME_INDEX.YES] ?? 0
+  const noShares = conditionShares?.[OUTCOME_INDEX.NO] ?? 0
+  const outcomeIndex = state.outcome?.outcome_index as typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO | undefined
+  const selectedShares = outcomeIndex === undefined ? 0 : conditionShares?.[outcomeIndex] ?? 0
 
-    try {
-      const result = await storeOrderAction({
-        ...payload,
-        salt: payload.salt.toString(),
-        token_id: payload.token_id.toString(),
-        maker_amount: payload.maker_amount.toString(),
-        taker_amount: payload.taker_amount.toString(),
-        expiration: payload.expiration.toString(),
-        nonce: payload.nonce.toString(),
-        fee_rate_bps: payload.fee_rate_bps.toString(),
-        affiliate_percentage: payload.affiliate_percentage.toString(),
-        side: payload.side as OrderSide,
-        type: state.type,
-        condition_id: state.market!.condition_id,
-        slug: event.slug,
-      })
-
-      if (result?.error) {
-        toast.error('Trade failed', {
-          description: result.error,
-        })
-        return
-      }
-
-      triggerToast()
-      triggerConfetti(state.outcome!.outcome_index === OUTCOME_INDEX.YES ? 'yes' : 'no', state.lastMouseEvent)
-      if (user?.id) {
-        queryClient.invalidateQueries({
-          queryKey: ['user-event-positions', event.slug, user.id],
-        })
-      }
+  const sellAmountValue = useMemo(() => {
+    if (!state.market || !state.outcome) {
+      return 0
     }
-    catch {
-      toast.error('Trade failed', {
-        description: 'An unexpected error occurred. Please try again.',
-      })
+
+    const probability = state.market.probability
+    const sellPrice = state.outcome.outcome_index === OUTCOME_INDEX.YES
+      ? (probability / 100) * 0.95
+      : ((100 - probability) / 100) * 0.95
+
+    return Number.parseFloat(state.amount || '0') * sellPrice
+  }, [state.amount, state.market, state.outcome])
+
+  const avgSellPriceValue = useMemo(() => {
+    if (!state.market || !state.outcome) {
+      return 0
     }
-    finally {
-      state.setIsLoading(false)
-    }
+
+    return state.outcome.outcome_index === OUTCOME_INDEX.YES
+      ? Math.round(state.market.probability * 0.95)
+      : Math.round((100 - state.market.probability) * 0.95)
+  }, [state.market, state.outcome])
+
+  const avgSellPriceLabel = formatCentsLabel(avgSellPriceValue, { fallback: '—' })
+  const avgBuyPriceLabel = formatCentsLabel(state.outcome?.buy_price, { fallback: '—' })
+  const sellAmountLabel = formatCurrency(sellAmountValue)
+  const isSellOverPosition = state.side === ORDER_SIDE.SELL && amountNumber > selectedShares
+
+  function focusInput() {
+    state.inputRef?.current?.focus()
   }
 
-  async function sign(payload: BlockchainOrder) {
+  async function signOrder(payload: BlockchainOrder) {
     let shouldCloseModal = false
 
     if (!embeddedWalletInfo) {
       try {
         await open({ view: 'ApproveTransaction' })
         shouldCloseModal = true
-        toast.info('Approve the transaction on your wallet.')
+        notifyWalletApprovalPrompt()
       }
       catch {
         shouldCloseModal = false
@@ -207,173 +142,80 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     }
   }
 
-  function validateOrder(): boolean {
-    if (state.isLoading) {
-      return false
-    }
-
-    if (!isConnected || !user) {
-      queueMicrotask(() => open())
-      return false
-    }
-
-    if (!state.market || !state.outcome) {
-      toast.error('Market not available', {
-        description: 'Please select a valid market and outcome.',
-      })
-
-      return false
-    }
-
-    if (amount <= 0) {
-      toast.error('Invalid amount', {
-        description: 'Please enter an amount greater than 0.',
-      })
-
-      return false
-    }
-
-    if (isLimitOrder) {
-      const limitPriceValue = Number.parseFloat(state.limitPrice)
-      if (!Number.isFinite(limitPriceValue) || limitPriceValue <= 0) {
-        toast.error('Invalid limit price', {
-          description: 'Enter a valid limit price before submitting.',
-        })
-
-        return false
-      }
-
-      const limitSharesValue = Number.parseFloat(state.limitShares)
-      if (!Number.isFinite(limitSharesValue) || limitSharesValue <= 0) {
-        toast.error('Invalid shares', {
-          description: 'Enter the number of shares for your limit order.',
-        })
-
-        return false
-      }
-    }
-
-    return true
-  }
-
-  function buildOrderPayload(): BlockchainOrder | null {
-    if (!state.market || !state.outcome || !user) {
-      return null
-    }
-
-    const { makerAmount, takerAmount } = calculateOrderAmounts()
-
-    return {
-      salt: 333000003n,
-      maker: user.address as `0x${string}`,
-      signer: user.address as `0x${string}`,
-      taker: user.address as `0x${string}`,
-      referrer: user.address as `0x${string}`,
-      affiliate: user.address as `0x${string}`,
-      token_id: BigInt(state.outcome.token_id),
-      maker_amount: makerAmount,
-      taker_amount: takerAmount,
-      expiration: 1764548576n,
-      nonce: 3003n,
-      fee_rate_bps: 200n,
-      affiliate_percentage: 0n,
-      side: state.side,
-      signature_type: 0,
-    }
-  }
-
-  function calculateOrderAmounts(): { makerAmount: bigint, takerAmount: bigint } {
-    let makerAmount: bigint
-    let takerAmount: bigint
-
-    if (isLimitOrder) {
-      const priceMicro = BigInt(toMicro(state.limitPrice))
-      const sharesMicro = BigInt(toMicro(state.limitShares))
-
-      if (state.side === ORDER_SIDE.BUY) {
-        makerAmount = (priceMicro * sharesMicro) / 1_000_000n
-        takerAmount = sharesMicro
-      }
-      else {
-        makerAmount = sharesMicro
-        takerAmount = (priceMicro * sharesMicro) / 1_000_000n
-      }
-    }
-    else {
-      makerAmount = BigInt(toMicro(state.amount))
-
-      if (state.side === ORDER_SIDE.BUY) {
-        takerAmount = makerAmount * 1_000_000n / CAP_MICRO
-      }
-      else {
-        takerAmount = FLOOR_MICRO * makerAmount / 1_000_000n
-      }
-    }
-
-    return { makerAmount, takerAmount }
-  }
-
-  function triggerToast() {
-    if (state.side === ORDER_SIDE.SELL) {
-      const sellValue = calculateSellAmount()
-      const avgPriceLabel = formatCentsLabel(getAvgSellPrice(), { fallback: '—' })
-
-      toast.success(
-        `Sell ${state.amount} shares on ${state.outcome!.outcome_text}`,
-        {
-          description: (
-            <EventTradeToast title={event.title}>
-              Received
-              {' '}
-              {formatCurrency(sellValue)}
-              {' '}
-              @
-              {' '}
-              {avgPriceLabel}
-            </EventTradeToast>
-          ),
-        },
-      )
-    }
-    else {
-      const amountValue = Number.parseFloat(state.amount || '0') || 0
-      const buyAmountLabel = formatCurrency(amountValue)
-      const priceLabel = formatCentsLabel(state.outcome?.buy_price, { fallback: '—' })
-
-      toast.success(
-        `Buy ${buyAmountLabel} on ${state.outcome!.outcome_text}`,
-        {
-          description: (
-            <EventTradeToast title={event.title}>
-              {buyAmountLabel}
-              {' '}
-              @
-              {' '}
-              {priceLabel}
-            </EventTradeToast>
-          ),
-        },
-      )
-    }
-  }
-
   async function onSubmit() {
-    const valid = validateOrder()
-    if (!valid) {
-      return
-    }
-
-    const payload = buildOrderPayload()
-    if (!payload) {
-      return
-    }
-
-    const signature = await sign(payload)
-    await storeOrder({
-      ...payload,
-      signature,
+    const validation = validateOrder({
+      isLoading: state.isLoading,
+      isConnected,
+      user,
+      market: state.market,
+      outcome: state.outcome,
+      amountNumber,
+      isLimitOrder,
+      limitPrice: state.limitPrice,
+      limitShares: state.limitShares,
     })
+
+    if (!validation.ok) {
+      handleValidationError(validation.reason, { openWalletModal: open })
+      return
+    }
+
+    if (!state.market || !state.outcome || !user) {
+      return
+    }
+
+    const payload = buildOrderPayload({
+      userAddress: user.address as `0x${string}`,
+      outcome: state.outcome,
+      side: state.side,
+      orderType: state.type,
+      amount: state.amount,
+      limitPrice: state.limitPrice,
+      limitShares: state.limitShares,
+    })
+
+    const signature = await signOrder(payload)
+
+    state.setIsLoading(true)
+    try {
+      const result = await submitOrder({
+        order: payload,
+        signature,
+        orderType: state.type,
+        conditionId: state.market.condition_id,
+        slug: event.slug,
+      })
+
+      if (result?.error) {
+        handleOrderErrorFeedback('Trade failed', result.error)
+        return
+      }
+
+      handleOrderSuccessFeedback({
+        side: state.side,
+        amountInput: state.amount,
+        outcomeText: state.outcome.outcome_text,
+        eventTitle: event.title,
+        sellAmountValue,
+        avgSellPrice: avgSellPriceLabel,
+        buyPrice: state.outcome.buy_price,
+        queryClient,
+        eventSlug: event.slug,
+        userId: user.id,
+        outcomeIndex: state.outcome.outcome_index,
+        lastMouseEvent: state.lastMouseEvent,
+      })
+    }
+    catch {
+      handleOrderErrorFeedback('Trade failed', 'An unexpected error occurred. Please try again.')
+    }
+    finally {
+      state.setIsLoading(false)
+    }
   }
+
+  const yesOutcome = state.market?.outcomes[OUTCOME_INDEX.YES]
+  const noOutcome = state.market?.outcomes[OUTCOME_INDEX.NO]
 
   return (
     <Form
@@ -382,31 +224,111 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         'rounded-lg border lg:w-[340px]': !isMobile,
       }, 'w-full p-4 shadow-xl/5')}
     >
-      {!isMobile && !isBinaryMarket && <EventOrderPanelMarketInfo />}
-      {isMobile && <EventOrderPanelMobileMarketInfo />}
+      {!isMobile && !isBinaryMarket && <EventOrderPanelMarketInfo market={state.market} />}
+      {isMobile && (
+        <EventOrderPanelMobileMarketInfo
+          event={event}
+          market={state.market}
+          isBinaryMarket={isBinaryMarket}
+          balanceText={balance.text}
+        />
+      )}
 
-      <EventOrderPanelBuySellTabs />
+      <EventOrderPanelBuySellTabs
+        side={state.side}
+        type={state.type}
+        onSideChange={state.setSide}
+        onTypeChange={state.setType}
+        onAmountReset={() => state.setAmount('0.00')}
+        onFocusInput={focusInput}
+      />
 
       <div className="mb-2 flex gap-2">
-        <EventOrderPanelOutcomeButton type="yes" price={yesPrice} />
-        <EventOrderPanelOutcomeButton type="no" price={noPrice} />
+        <EventOrderPanelOutcomeButton
+          variant="yes"
+          price={yesPrice}
+          label={yesOutcome?.outcome_text ?? 'Yes'}
+          isSelected={state.outcome?.outcome_index === OUTCOME_INDEX.YES}
+          onSelect={() => {
+            if (!state.market || !yesOutcome) {
+              return
+            }
+            state.setOutcome(yesOutcome)
+            focusInput()
+          }}
+        />
+        <EventOrderPanelOutcomeButton
+          variant="no"
+          price={noPrice}
+          label={noOutcome?.outcome_text ?? 'No'}
+          isSelected={state.outcome?.outcome_index === OUTCOME_INDEX.NO}
+          onSelect={() => {
+            if (!state.market || !noOutcome) {
+              return
+            }
+            state.setOutcome(noOutcome)
+            focusInput()
+          }}
+        />
       </div>
 
       {isLimitOrder
         ? (
             <div className="mb-4">
-              <EventOrderPanelLimitControls />
+              <EventOrderPanelLimitControls
+                side={state.side}
+                limitPrice={state.limitPrice}
+                limitShares={state.limitShares}
+                limitExpirationEnabled={state.limitExpirationEnabled}
+                limitExpirationOption={state.limitExpirationOption}
+                isLimitOrder={isLimitOrder}
+                availableShares={selectedShares}
+                onLimitPriceChange={state.setLimitPrice}
+                onLimitSharesChange={state.setLimitShares}
+                onLimitExpirationEnabledChange={state.setLimitExpirationEnabled}
+                onLimitExpirationOptionChange={state.setLimitExpirationOption}
+                onAmountUpdateFromLimit={state.setAmount}
+              />
             </div>
           )
         : (
             <>
-              {state.side === ORDER_SIDE.SELL ? <EventOrderPanelUserShares /> : <div className="mb-4"></div>}
-              <EventOrderPanelInput isMobile={isMobile} />
-              {amount > 0 && <EventOrderPanelEarnings isMobile={isMobile} />}
+              {state.side === ORDER_SIDE.SELL
+                ? (
+                    <EventOrderPanelUserShares
+                      yesShares={yesShares}
+                      noShares={noShares}
+                    />
+                  )
+                : <div className="mb-4"></div>}
+              <EventOrderPanelInput
+                isMobile={isMobile}
+                side={state.side}
+                amount={state.amount}
+                amountNumber={amountNumber}
+                availableShares={selectedShares}
+                balance={balance}
+                inputRef={state.inputRef}
+                onAmountChange={state.setAmount}
+              />
+              {amountNumber > 0 && (
+                <EventOrderPanelEarnings
+                  isMobile={isMobile}
+                  side={state.side}
+                  amountNumber={amountNumber}
+                  sellAmountLabel={sellAmountLabel}
+                  avgSellPriceLabel={avgSellPriceLabel}
+                  avgBuyPriceLabel={avgBuyPriceLabel}
+                />
+              )}
             </>
           )}
 
-      <EventOrderPanelSubmitButton />
+      <EventOrderPanelSubmitButton
+        isLoading={state.isLoading}
+        isDisabled={state.isLoading || amountNumber <= 0 || isSellOverPosition}
+        onClick={event => state.setLastMouseEvent(event)}
+      />
       <EventOrderPanelTermsDisclaimer />
     </Form>
   )

@@ -1,42 +1,37 @@
 import { Button } from '@/components/ui/button'
 import { formatCentsLabel } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
-import { useOrder } from '@/stores/useOrder'
 
 interface EventOrderPanelOutcomeButtonProps {
-  type: 'yes' | 'no'
+  variant: 'yes' | 'no'
   price: number
+  label: string
+  isSelected: boolean
+  onSelect: () => void
 }
 
-export default function EventOrderPanelOutcomeButton({ type, price }: EventOrderPanelOutcomeButtonProps) {
-  const state = useOrder()
-  const outcomeIndex = type === 'yes' ? 0 : 1
-  const isSelected = state.outcome!.outcome_index === outcomeIndex
-
-  if (!state.event || !state.market || !state.outcome) {
-    return <></>
-  }
-
+export default function EventOrderPanelOutcomeButton({
+  variant,
+  price,
+  label,
+  isSelected,
+  onSelect,
+}: EventOrderPanelOutcomeButtonProps) {
   return (
     <Button
       type="button"
-      variant={isSelected ? type : 'outline'}
+      variant={isSelected ? variant : 'outline'}
       size="outcome"
       className={cn(
         isSelected
-        && (type === 'yes'
+        && (variant === 'yes'
           ? 'bg-yes text-white hover:bg-yes-foreground'
           : 'bg-no text-white hover:bg-no-foreground'),
       )}
-      onClick={() => {
-        state.setOutcome(state.market!.outcomes[outcomeIndex])
-        state.inputRef?.current?.focus()
-      }}
+      onClick={onSelect}
     >
       <span className="truncate opacity-70">
-        {type === 'yes'
-          ? state.market.outcomes[0].outcome_text
-          : state.market.outcomes[1].outcome_text}
+        {label}
       </span>
       <span className="shrink-0 text-base font-bold">
         {formatCentsLabel(price)}

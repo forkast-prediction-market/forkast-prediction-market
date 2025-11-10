@@ -1,22 +1,23 @@
+import type { MouseEvent } from 'react'
 import { Button } from '@/components/ui/button'
-import { ORDER_SIDE } from '@/lib/constants'
-import { getUserShares, useAmountAsNumber, useOrder } from '@/stores/useOrder'
 
-export default function EventOrderPanelSubmitButton() {
-  const state = useOrder()
-  const amount = useAmountAsNumber()
+interface EventOrderPanelSubmitButtonProps {
+  isLoading: boolean
+  isDisabled: boolean
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void
+}
 
-  const isSellOverPosition = state.side === ORDER_SIDE.SELL && amount > getUserShares()
-
+export default function EventOrderPanelSubmitButton({ isLoading, isDisabled, onClick }: EventOrderPanelSubmitButtonProps) {
   return (
     <Button
       type="submit"
       size="outcome"
-      aria-disabled={state.isLoading || !amount || isSellOverPosition}
-      onClick={e => state.setLastMouseEvent(e)}
+      disabled={isDisabled}
+      aria-disabled={isDisabled}
+      onClick={onClick}
       className="w-full text-base font-bold"
     >
-      {state.isLoading
+      {isLoading
         ? (
             <div className="flex items-center justify-center gap-2">
               <div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
