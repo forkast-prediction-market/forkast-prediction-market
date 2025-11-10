@@ -12,7 +12,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --fix",
-    "test": "npx playwright test",
+    "test:e2e": "npx playwright test",
     "test:unit": "vitest run",
     "prepare": "husky",
     "db:push": "node supabase/migrate.js"
