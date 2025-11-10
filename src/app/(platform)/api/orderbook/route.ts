@@ -20,12 +20,9 @@ interface LastTradePriceEntry {
 interface CombinedOrderBookEntry {
   bids?: OrderbookLevelSummary[]
   asks?: OrderbookLevelSummary[]
-  spread?: string
   last_trade_price?: string
   last_trade_side?: 'BUY' | 'SELL'
 }
-
-type SpreadResponse = Record<string, string>
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -41,12 +38,8 @@ export async function GET(request: Request) {
   const payload = tokenIds.map(tokenId => ({ token_id: tokenId }))
 
   try {
-    const [orderBooks, spreads, lastTrades] = await Promise.all([
+    const [orderBooks, lastTrades] = await Promise.all([
       fetchClobJson<ClobOrderbookSummary[]>('/books', payload),
-      fetchClobJson<SpreadResponse>('/spreads', payload).catch((error) => {
-        console.error('Failed to fetch spreads', error)
-        return null
-      }),
       fetchClobJson<LastTradePriceEntry[]>('/last-trades-prices', payload).catch((error) => {
         console.error('Failed to fetch last trades prices', error)
         return null
@@ -75,13 +68,11 @@ export async function GET(request: Request) {
 
     tokenIds.forEach((tokenId) => {
       const orderbookEntry = orderBookByToken.get(tokenId)
-      const spreadEntry = spreads?.[tokenId]
       const lastTradeEntry = lastTradesByToken.get(tokenId)
 
       combined[tokenId] = {
         bids: orderbookEntry?.bids ?? [],
         asks: orderbookEntry?.asks ?? [],
-        spread: spreadEntry,
         last_trade_price: lastTradeEntry?.price,
         last_trade_side: lastTradeEntry?.side,
       }
