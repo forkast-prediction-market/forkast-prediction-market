@@ -38,7 +38,8 @@ export function calculateOrderAmounts({ orderType, side, amount, limitPrice, lim
   let takerAmount: bigint
 
   if (orderType === ORDER_TYPE.LIMIT) {
-    const priceMicro = BigInt(toMicro(limitPrice))
+    const normalizedLimitPrice = (Number.parseFloat(limitPrice) || 0) / 100
+    const priceMicro = BigInt(toMicro(normalizedLimitPrice))
     const sharesMicro = BigInt(toMicro(limitShares))
 
     if (side === ORDER_SIDE.BUY) {
