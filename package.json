@@ -12,6 +12,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint . --fix",
+    "test": "vitest run",
     "test:e2e": "npx playwright test",
     "test:unit": "vitest run",
     "prepare": "husky",
