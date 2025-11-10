@@ -29,6 +29,7 @@ export const OrderRepository = {
     user_id: string
     affiliate_user_id: string
     condition_id: string
+    status: string
   }) {
     return await runQuery(async () => {
       const result = await db

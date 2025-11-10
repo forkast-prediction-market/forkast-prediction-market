@@ -117,7 +117,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       }
     })()
 
-    if (!clobResponse.ok) {
+    if (clobResponse.status !== 201) {
       const message = data?.error || text || `Status ${clobResponse.status} (${clobResponse.statusText})`
       console.error('Failed to send order to CLOB.', message)
       return { error: DEFAULT_ERROR_MESSAGE }
@@ -135,6 +135,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       user_id: user.id,
       affiliate_user_id: user.referred_by_user_id,
       type: clobOrderType,
+      status: data.status,
     })
 
     if (error) {
