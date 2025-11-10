@@ -1,8 +1,8 @@
 'use client'
 
+import type { TimeRange } from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
 import type { PredictionChartCursorSnapshot, SeriesConfig } from '@/components/PredictionChart'
-import type { Event, Market } from '@/types'
-import { useQuery } from '@tanstack/react-query'
+import type { Event } from '@/types'
 import { TrendingDownIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import {
@@ -10,8 +10,14 @@ import {
   useUpdateEventOutcomeChances,
   useUpdateMarketYesPrices,
 } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
+import {
+  buildMarketTargets,
+  CURSOR_STEP_MS,
+  TIME_RANGES,
+
+  useEventPriceHistory,
+} from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
 import PredictionChart from '@/components/PredictionChart'
-import { OUTCOME_INDEX } from '@/lib/constants'
 import { cn, sanitizeSvg } from '@/lib/utils'
 import { useIsBinaryMarket } from '@/stores/useOrder'
 
@@ -20,209 +26,9 @@ interface EventChartProps {
   isMobile: boolean
 }
 
-type TimeRange = '1H' | '6H' | '1D' | '1W' | '1M' | 'ALL'
-
-interface PriceHistoryPoint {
-  t: number
-  p: number
-}
-
-interface PriceHistoryResponse {
-  history?: PriceHistoryPoint[]
-}
-
-type PriceHistoryByMarket = Record<string, PriceHistoryPoint[]>
-
-interface MarketTokenTarget {
-  market: Market
-  tokenId: string
-}
-
-interface NormalizedHistoryResult {
-  points: Array<Record<string, number | Date> & { date: Date }>
-  latestSnapshot: Record<string, number>
-  latestRawPrices: Record<string, number>
-}
-
-interface RangeFilters {
-  fidelity: string
-  interval?: string
-  startTs?: string
-  endTs?: string
-}
-
 const CHART_COLORS = ['#FF6600', '#2D9CDB', '#4E6377', '#FDC500']
-const TIME_RANGES: TimeRange[] = ['1H', '6H', '1D', '1W', '1M', 'ALL']
-const RANGE_CONFIG: Record<Exclude<TimeRange, 'ALL'>, { interval: string, fidelity: number }> = {
-  '1H': { interval: '1h', fidelity: 1 },
-  '6H': { interval: '6h', fidelity: 1 },
-  '1D': { interval: '1d', fidelity: 5 },
-  '1W': { interval: '1w', fidelity: 30 },
-  '1M': { interval: '1m', fidelity: 180 },
-}
-const MINUTE_MS = 60 * 1000
-const HOUR_MS = 60 * MINUTE_MS
-const CURSOR_STEP_MS: Record<TimeRange, number> = {
-  'ALL': 12 * HOUR_MS,
-  '1M': 3 * HOUR_MS,
-  '1W': 30 * MINUTE_MS,
-  '1D': 5 * MINUTE_MS,
-  '6H': 1 * MINUTE_MS,
-  '1H': 1 * MINUTE_MS,
-}
-const ALL_FIDELITY = 720
-const PRICE_REFRESH_INTERVAL_MS = 60_000
 const MAX_SERIES = 4
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000
-
-function clampPrice(value: number) {
-  if (!Number.isFinite(value)) {
-    return 0
-  }
-  if (value < 0) {
-    return 0
-  }
-  if (value > 1) {
-    return 1
-  }
-  return value
-}
-
-function extractYesOutcome(market: Market) {
-  return market.outcomes.find(outcome => outcome.outcome_index === OUTCOME_INDEX.YES)
-    ?? market.outcomes[OUTCOME_INDEX.YES]
-    ?? market.outcomes[0]
-}
-
-function buildTimeRangeFilters(range: TimeRange, createdAt: string): RangeFilters {
-  if (range === 'ALL') {
-    const created = new Date(createdAt)
-    const createdSeconds = Number.isFinite(created.getTime())
-      ? Math.floor(created.getTime() / 1000)
-      : Math.floor(Date.now() / 1000) - (60 * 60 * 24 * 30)
-    const nowSeconds = Math.max(createdSeconds + 60, Math.floor(Date.now() / 1000))
-
-    return {
-      fidelity: ALL_FIDELITY.toString(),
-      startTs: createdSeconds.toString(),
-      endTs: nowSeconds.toString(),
-    }
-  }
-
-  const config = RANGE_CONFIG[range]
-  return {
-    fidelity: config.fidelity.toString(),
-    interval: config.interval,
-  }
-}
-
-async function fetchTokenPriceHistory(tokenId: string, filters: RangeFilters): Promise<PriceHistoryPoint[]> {
-  const url = new URL(`${process.env.CLOB_URL!}/prices-history`)
-  url.searchParams.set('market', tokenId)
-
-  Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined) {
-      url.searchParams.set(key, value)
-    }
-  })
-
-  const response = await fetch(url.toString(), { cache: 'no-store' })
-  if (!response.ok) {
-    throw new Error('Failed to fetch price history')
-  }
-
-  const payload = await response.json() as PriceHistoryResponse
-  return (payload.history ?? [])
-    .map(point => ({
-      t: Number(point.t),
-      p: Number(point.p),
-    }))
-    .filter(point => Number.isFinite(point.t) && Number.isFinite(point.p))
-}
-
-async function fetchEventPriceHistory(
-  targets: MarketTokenTarget[],
-  range: TimeRange,
-  eventCreatedAt: string,
-): Promise<PriceHistoryByMarket> {
-  if (!targets.length) {
-    return {}
-  }
-
-  const filters = buildTimeRangeFilters(range, eventCreatedAt)
-  const entries = await Promise.all(
-    targets.map(async (target) => {
-      try {
-        const history = await fetchTokenPriceHistory(target.tokenId, filters)
-        return [target.market.condition_id, history] as const
-      }
-      catch (error) {
-        console.error('Failed to load price history for token', target.tokenId, error)
-        return [target.market.condition_id, []] as const
-      }
-    }),
-  )
-
-  return Object.fromEntries(entries)
-}
-
-function buildNormalizedHistory(historyByMarket: PriceHistoryByMarket): NormalizedHistoryResult {
-  const timeline = new Map<number, Map<string, number>>()
-
-  Object.entries(historyByMarket).forEach(([conditionId, history]) => {
-    history.forEach((point) => {
-      const timestampMs = Math.floor(point.t) * 1000
-      if (!timeline.has(timestampMs)) {
-        timeline.set(timestampMs, new Map())
-      }
-      timeline.get(timestampMs)!.set(conditionId, clampPrice(point.p))
-    })
-  })
-
-  const sortedTimestamps = Array.from(timeline.keys()).sort((a, b) => a - b)
-  const lastKnownPrice = new Map<string, number>()
-  const points: NormalizedHistoryResult['points'] = []
-  const latestRawPrices: Record<string, number> = {}
-
-  sortedTimestamps.forEach((timestamp) => {
-    const updates = timeline.get(timestamp)
-    updates?.forEach((price, marketKey) => {
-      lastKnownPrice.set(marketKey, price)
-    })
-
-    if (!lastKnownPrice.size) {
-      return
-    }
-
-    let total = 0
-    lastKnownPrice.forEach((price) => {
-      total += price
-    })
-
-    if (total <= 0) {
-      return
-    }
-
-    const point: Record<string, number | Date> & { date: Date } = { date: new Date(timestamp) }
-    lastKnownPrice.forEach((price, marketKey) => {
-      latestRawPrices[marketKey] = price
-      point[marketKey] = (price / total) * 100
-    })
-    points.push(point)
-  })
-
-  const latestSnapshot: Record<string, number> = {}
-  const latestPoint = points[points.length - 1]
-  if (latestPoint) {
-    Object.entries(latestPoint).forEach(([key, value]) => {
-      if (key !== 'date' && typeof value === 'number' && Number.isFinite(value)) {
-        latestSnapshot[key] = value
-      }
-    })
-  }
-
-  return { points, latestSnapshot, latestRawPrices }
-}
 
 function computeChanceChanges(
   points: Array<Record<string, number | Date> & { date: Date }>,
@@ -317,38 +123,18 @@ export default function EventChart({ event, isMobile }: EventChartProps) {
     setCursorSnapshot(null)
   }, [activeTimeRange, event.slug])
 
-  const marketTargets = useMemo<MarketTokenTarget[]>(() => event.markets
-    .map((market) => {
-      const yesOutcome = extractYesOutcome(market)
-      if (!yesOutcome?.token_id) {
-        return null
-      }
-      return {
-        market,
-        tokenId: yesOutcome.token_id,
-      }
-    })
-    .filter((target): target is MarketTokenTarget => target !== null), [event.markets])
+  const marketTargets = useMemo(() => buildMarketTargets(event.markets), [event.markets])
 
-  const tokenSignature = useMemo(
-    () => marketTargets.map(target => target.tokenId).sort().join(','),
-    [marketTargets],
-  )
-
-  const { data: priceHistoryByMarket } = useQuery({
-    queryKey: ['event-price-history', event.id, activeTimeRange, tokenSignature],
-    queryFn: () => fetchEventPriceHistory(marketTargets, activeTimeRange, event.created_at),
-    enabled: marketTargets.length > 0,
-    staleTime: PRICE_REFRESH_INTERVAL_MS,
-    gcTime: PRICE_REFRESH_INTERVAL_MS,
-    refetchInterval: PRICE_REFRESH_INTERVAL_MS,
-    refetchIntervalInBackground: true,
+  const {
+    normalizedHistory,
+    latestSnapshot,
+    latestRawPrices,
+  } = useEventPriceHistory({
+    eventId: event.id,
+    range: activeTimeRange,
+    targets: marketTargets,
+    eventCreatedAt: event.created_at,
   })
-
-  const { points: normalizedHistory, latestSnapshot, latestRawPrices } = useMemo(
-    () => buildNormalizedHistory(priceHistoryByMarket ?? {}),
-    [priceHistoryByMarket],
-  )
   const chanceChangeByMarket = useMemo(
     () => computeChanceChanges(normalizedHistory),
     [normalizedHistory],
@@ -444,8 +230,8 @@ export default function EventChart({ event, isMobile }: EventChartProps) {
 
   return (
     <div className="grid gap-4">
-      <div className="relative flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           {isBinaryMarket
             ? (
                 <>
@@ -464,7 +250,7 @@ export default function EventChart({ event, isMobile }: EventChartProps) {
                 </>
               )
             : (
-                <div className="flex min-h-[20px] flex-wrap items-center gap-4">
+                <div className="flex min-h-[20px] flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
                   {shouldRenderLegendEntries
                     ? legendEntries.map((entry) => {
                         const resolvedValue = typeof entry.value === 'number' ? entry.value : 0
@@ -520,22 +306,23 @@ export default function EventChart({ event, isMobile }: EventChartProps) {
             />
           </div>
         </div>
-        <ul className="mt-2 flex justify-center gap-4 text-[11px] font-medium">
+        <div className="mt-3 flex flex-wrap justify-center gap-2 text-[11px] font-medium">
           {TIME_RANGES.map(range => (
-            <li
+            <button
               key={range}
+              type="button"
               className={cn(
-                'cursor-pointer transition-colors duration-200',
+                'rounded-md px-3 py-2 transition-colors',
                 activeTimeRange === range
-                  ? 'border-b-2 border-foreground text-foreground'
-                  : 'text-muted-foreground hover:text-foreground',
+                  ? 'bg-muted text-foreground'
+                  : 'bg-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground',
               )}
               onClick={() => setActiveTimeRange(range)}
             >
               {range}
-            </li>
+            </button>
           ))}
-        </ul>
+        </div>
       </div>
     </div>
   )
