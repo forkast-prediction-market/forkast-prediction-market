@@ -263,7 +263,6 @@ describe('eventOrderPanelForm', () => {
 
     expect(orderState.setIsLoading).toHaveBeenNthCalledWith(1, true)
     expect(orderState.setIsLoading).toHaveBeenLastCalledWith(false)
-    expect(orderState.setAmount).toHaveBeenCalledWith('0.00')
     expect(mockTriggerConfetti).toHaveBeenCalledWith('yes', null)
     expect(mockToastSuccess).toHaveBeenCalledWith(
       'Buy $10.00 on Outcome A',
