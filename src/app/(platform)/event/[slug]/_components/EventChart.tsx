@@ -1,6 +1,6 @@
 'use client'
 
-import type { PredictionChartCursorSnapshot } from '@/components/PredictionChart'
+import type { PredictionChartCursorSnapshot, SeriesConfig } from '@/components/PredictionChart'
 import type { Event, Market } from '@/types'
 import { useQuery } from '@tanstack/react-query'
 import { TrendingDownIcon } from 'lucide-react'
@@ -337,6 +337,21 @@ export default function EventChart({ event, isMobile }: EventChartProps) {
     [event, topMarketIds],
   )
 
+  const fallbackMarketIds = useMemo(
+    () => event.markets
+      .map(market => market.condition_id)
+      .filter((conditionId): conditionId is string => Boolean(conditionId))
+      .slice(0, MAX_SERIES),
+    [event.markets],
+  )
+
+  const fallbackChartSeries = useMemo(
+    () => buildChartSeries(event, fallbackMarketIds),
+    [event, fallbackMarketIds],
+  )
+
+  const legendSeries = chartSeries.length > 0 ? chartSeries : fallbackChartSeries
+
   const chartData = useMemo(
     () => filterChartDataForSeries(
       normalizedHistory,
@@ -345,24 +360,37 @@ export default function EventChart({ event, isMobile }: EventChartProps) {
     [normalizedHistory, chartSeries],
   )
 
-  const shouldHide = !hasCompleteChanceData || chartSeries.length === 0 || chartData.length === 0
-  const legendEntries = useMemo(() => chartSeries.map((seriesItem) => {
-    const hoveredValue = cursorSnapshot?.values?.[seriesItem.key]
-    const value = typeof hoveredValue === 'number' && Number.isFinite(hoveredValue)
-      ? hoveredValue
-      : latestSnapshot[seriesItem.key] ?? 0
-    return { ...seriesItem, value }
-  }), [chartSeries, cursorSnapshot, latestSnapshot])
+  const legendEntries = useMemo<Array<SeriesConfig & { value: number | null }>>(
+    () => legendSeries.map((seriesItem) => {
+      const hoveredValue = cursorSnapshot?.values?.[seriesItem.key]
+      const snapshotValue = latestSnapshot[seriesItem.key]
+      const value = typeof hoveredValue === 'number' && Number.isFinite(hoveredValue)
+        ? hoveredValue
+        : (typeof snapshotValue === 'number' && Number.isFinite(snapshotValue)
+            ? snapshotValue
+            : null)
+      return { ...seriesItem, value }
+    }),
+    [legendSeries, cursorSnapshot, latestSnapshot],
+  )
 
-  if (shouldHide) {
+  if (legendSeries.length === 0) {
     return null
   }
 
   const chartWidth = isMobile ? 400 : 900
-  const leadingMarket = chartSeries[0]!
-  const yesChance = latestSnapshot[leadingMarket.key]!
-  const roundedYesChance = Math.round(yesChance)
-  const roundedNoChance = Math.max(0, Math.min(100, 100 - roundedYesChance))
+  const leadingMarket = legendSeries[0]
+  const yesChance = leadingMarket ? latestSnapshot[leadingMarket.key] : undefined
+  const roundedYesChance = typeof yesChance === 'number' && Number.isFinite(yesChance)
+    ? Math.round(yesChance)
+    : null
+  const roundedNoChance = typeof roundedYesChance === 'number'
+    ? Math.max(0, Math.min(100, 100 - roundedYesChance))
+    : null
+  const showLegendValues = hasCompleteChanceData && chartSeries.length > 0
+  const shouldRenderLegendEntries = showLegendValues && legendEntries.length > 0
+  const yesChanceDisplay = typeof roundedYesChance === 'number' ? roundedYesChance : '--'
+  const noChanceDisplay = typeof roundedNoChance === 'number' ? roundedNoChance : '--'
 
   return (
     <div className="grid gap-4">
@@ -372,37 +400,41 @@ export default function EventChart({ event, isMobile }: EventChartProps) {
             ? (
                 <>
                   <span className="inline-flex items-center gap-1 text-xl font-bold text-primary">
-                    {roundedYesChance}
+                    {yesChanceDisplay}
                     % chance
                   </span>
 
                   <div className="flex items-center gap-1 text-no">
                     <TrendingDownIcon className="size-4" />
                     <span className="text-xs font-semibold">
-                      {roundedNoChance}
+                      {noChanceDisplay}
                       %
                     </span>
                   </div>
                 </>
               )
             : (
-                <div className="flex flex-wrap items-center gap-4">
-                  {legendEntries.map(entry => (
-                    <div key={entry.key} className="flex items-center gap-2">
-                      <div
-                        className="size-2 shrink-0 rounded-full"
-                        style={{ backgroundColor: entry.color }}
-                      />
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {entry.name}
-                        {' '}
-                        <span className="font-semibold text-muted-foreground">
-                          {entry.value.toFixed(1)}
-                          %
-                        </span>
-                      </span>
-                    </div>
-                  ))}
+                <div className="flex min-h-[20px] flex-wrap items-center gap-4">
+                  {shouldRenderLegendEntries
+                    ? legendEntries.map((entry) => {
+                        const resolvedValue = typeof entry.value === 'number' ? entry.value : 0
+                        return (
+                          <div key={entry.key} className="flex items-center gap-2">
+                            <div
+                              className="size-2 shrink-0 rounded-full"
+                              style={{ backgroundColor: entry.color }}
+                            />
+                            <span className="text-xs font-medium text-muted-foreground">
+                              {entry.name}
+                              {' '}
+                              <span className="font-semibold text-muted-foreground">
+                                {`${resolvedValue.toFixed(1)}%`}
+                              </span>
+                            </span>
+                          </div>
+                        )
+                      })
+                    : null}
                 </div>
               )}
         </div>

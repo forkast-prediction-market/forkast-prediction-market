@@ -28,7 +28,7 @@ interface DataPoint {
   [key: string]: number | Date
 }
 
-interface SeriesConfig {
+export interface SeriesConfig {
   key: string
   name: string
   color: string
@@ -461,9 +461,6 @@ export function PredictionChart({
         <svg width="100%" height={height}>
           <rect width="100%" height={height} fill="transparent" />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-muted-foreground">Loading chart...</span>
-        </div>
       </div>
     )
   }
