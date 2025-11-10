@@ -28,7 +28,7 @@ interface DataPoint {
   [key: string]: number | Date
 }
 
-interface SeriesConfig {
+export interface SeriesConfig {
   key: string
   name: string
   color: string
@@ -41,6 +41,7 @@ interface PredictionChartProps {
   height?: number
   margin?: { top: number, right: number, bottom: number, left: number }
   onCursorDataChange?: (snapshot: PredictionChartCursorSnapshot | null) => void
+  cursorStepMs?: number
 }
 
 const bisectDate = bisector<DataPoint, Date>(d => d.date).left
@@ -90,6 +91,16 @@ function clamp01(value: number) {
 
 function easeOutCubic(t: number) {
   return 1 - (1 - t) ** 3
+}
+
+function snapTimestampToInterval(valueMs: number, stepMs?: number, offsetMs = 0) {
+  if (!stepMs || !Number.isFinite(stepMs) || stepMs <= 0) {
+    return valueMs
+  }
+
+  const relative = valueMs - offsetMs
+  const snappedRelative = Math.round(relative / stepMs) * stepMs
+  return offsetMs + snappedRelative
 }
 
 interface RevealAnimationOptions {
@@ -229,6 +240,7 @@ export function PredictionChart({
   height = 400,
   margin = defaultMargin,
   onCursorDataChange,
+  cursorStepMs,
 }: PredictionChartProps): React.ReactElement {
   const [data, setData] = useState<DataPoint[]>([])
   const [series, setSeries] = useState<SeriesConfig[]>([])
@@ -322,21 +334,29 @@ export function PredictionChart({
         nice: true,
       })
 
-      const x0 = xScale.invert(x - margin.left)
+      const rawDate = xScale.invert(x - margin.left)
+      const snappedTime = snapTimestampToInterval(
+        rawDate.getTime(),
+        cursorStepMs,
+        domainStart,
+      )
+      const clampedTime = Math.max(domainStart, Math.min(domainEnd, snappedTime))
+      const targetDate = new Date(clampedTime)
       const domainSpan = Math.max(1, domainEnd - domainStart)
-      const hoverProgress = clamp01((Math.max(domainStart, Math.min(domainEnd, x0.getTime())) - domainStart) / domainSpan)
+      const hoverProgress = clamp01((clampedTime - domainStart) / domainSpan)
       lastCursorProgressRef.current = hoverProgress
       hasPointerInteractionRef.current = true
       stopRevealAnimation(revealAnimationFrameRef)
-      const index = bisectDate(data, x0, 1)
+      const index = bisectDate(data, targetDate, 1)
       const d0 = data[index - 1] ?? null
       const d1 = data[index] ?? null
-      const resolvedPoint = interpolateSeriesPoint(x0, d0, d1, series)
+      const resolvedPoint = interpolateSeriesPoint(targetDate, d0, d1, series)
       const tooltipPoint = resolvedPoint ?? d0 ?? d1 ?? data[0]
+      const tooltipLeftPosition = xScale(targetDate)
 
       showTooltip({
         tooltipData: tooltipPoint,
-        tooltipLeft: x - margin.left,
+        tooltipLeft: tooltipLeftPosition,
         tooltipTop: yScale((tooltipPoint[series[0].key] as number) || 0),
       })
 
@@ -349,6 +369,7 @@ export function PredictionChart({
       width,
       height,
       margin,
+      cursorStepMs,
       revealAnimationFrameRef,
       emitCursorDataChange,
       yAxisMax,
@@ -440,9 +461,6 @@ export function PredictionChart({
         <svg width="100%" height={height}>
           <rect width="100%" height={height} fill="transparent" />
         </svg>
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-muted-foreground">Loading chart...</span>
-        </div>
       </div>
     )
   }
@@ -858,9 +876,9 @@ export function PredictionChart({
       </svg>
 
       {tooltipActive && positionedTooltipEntries.length > 0 && tooltipData && (
-        <div className="pointer-events-none absolute inset-0 z-10">
+        <div className="pointer-events-none absolute inset-0 z-0">
           <div
-            className="absolute text-[12px] font-medium text-[#858D92]"
+            className="absolute text-[12px] font-medium text-[var(--muted-foreground)]"
             style={{
               top: Math.max(margin.top - 28, 0),
               left: margin.left + clampedTooltipX,

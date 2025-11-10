@@ -9,8 +9,10 @@ import EventMarkets from '@/app/(platform)/event/[slug]/_components/EventMarkets
 import EventMetaInformation from '@/app/(platform)/event/[slug]/_components/EventMetaInformation'
 import EventOrderPanelForm from '@/app/(platform)/event/[slug]/_components/EventOrderPanelForm'
 import EventOrderPanelMobile from '@/app/(platform)/event/[slug]/_components/EventOrderPanelMobile'
+import { EventOutcomeChanceProvider } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
 import EventRelated from '@/app/(platform)/event/[slug]/_components/EventRelated'
 import EventRules from '@/app/(platform)/event/[slug]/_components/EventRules'
+import EventSingleMarketOrderBook from '@/app/(platform)/event/[slug]/_components/EventSingleMarketOrderBook'
 import EventTabs from '@/app/(platform)/event/[slug]/_components/EventTabs'
 import { Teleport } from '@/components/Teleport'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -27,6 +29,7 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
   const setMarket = useOrder(state => state.setMarket)
   const setOutcome = useOrder(state => state.setOutcome)
   const isMobile = useIsMobile()
+  const shouldShowSingleMarketOrderBook = event.total_markets_count === 1 && event.markets[0]?.outcomes?.length >= 2
 
   useEffect(() => {
     setEvent(event)
@@ -35,12 +38,15 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
   }, [event, setEvent, setMarket, setOutcome])
 
   return (
-    <>
+    <EventOutcomeChanceProvider eventId={event.id}>
       <div className="grid gap-3">
         <EventHeader event={event} />
         <EventMetaInformation event={event} />
         <EventChart event={event} isMobile={isMobile} />
         <EventMarkets event={event} />
+        {shouldShowSingleMarketOrderBook && (
+          <EventSingleMarketOrderBook market={event.markets[0]} />
+        )}
         {marketContextEnabled && <EventMarketContext event={event} />}
         <EventRules event={event} />
         {isMobile && <EventRelated event={event} />}
@@ -55,6 +61,6 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
               <EventRelated event={event} />
             </Teleport>
           )}
-    </>
+    </EventOutcomeChanceProvider>
   )
 }

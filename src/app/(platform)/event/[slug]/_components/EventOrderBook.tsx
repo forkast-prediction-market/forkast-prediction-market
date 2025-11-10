@@ -22,6 +22,7 @@ interface EventOrderBookProps {
   outcome?: Outcome
   summaries?: OrderBookSummariesResponse
   isLoadingSummaries: boolean
+  lastPriceOverrideCents?: number | null
 }
 
 interface OrderbookLevelSummary {
@@ -87,6 +88,7 @@ export default function EventOrderBook({
   outcome,
   summaries,
   isLoadingSummaries,
+  lastPriceOverrideCents,
 }: EventOrderBookProps) {
   const tokenId = outcome?.token_id || market.outcomes[0]?.token_id
 
@@ -105,8 +107,8 @@ export default function EventOrderBook({
     maxTotal,
     outcomeLabel,
   } = useMemo(
-    () => buildOrderBookSnapshot(summary, market, outcome),
-    [summary, market, outcome],
+    () => buildOrderBookSnapshot(summary, market, outcome, lastPriceOverrideCents),
+    [summary, market, outcome, lastPriceOverrideCents],
   )
 
   const renderedAsks = useMemo(
@@ -283,7 +285,8 @@ function OrderBookRow({ level, maxTotal, showBadge, onSelect }: OrderBookRowProp
 function buildOrderBookSnapshot(
   summary: OrderBookSummaryResponse | null,
   market: Market,
-  outcome?: Outcome,
+  outcome: Outcome | undefined,
+  lastPriceOverrideCents?: number | null,
 ): OrderBookSnapshot {
   const outcomeToUse = outcome ?? market.outcomes[0]
   const normalizedAsks = normalizeLevels(summary?.asks, 'ask')
@@ -296,11 +299,12 @@ function buildOrderBookSnapshot(
 
   const bestAsk = normalizedAsks[0]?.priceCents
   const bestBid = normalizedBids[0]?.priceCents
+  const lastPriceHistoryOverride = typeof lastPriceOverrideCents === 'number' && Number.isFinite(lastPriceOverrideCents)
+    ? Math.max(0, Math.min(100, Number(lastPriceOverrideCents.toFixed(1))))
+    : null
+  const lastTradeOverride = toCents(summary?.last_trade_price)
 
-  const spreadOverride = toCents(summary?.spread)
-  const lastPriceOverride = toCents(summary?.last_trade_price)
-
-  let lastPrice: number | null = lastPriceOverride ?? null
+  let lastPrice: number | null = lastPriceHistoryOverride ?? lastTradeOverride ?? null
   if (lastPrice === null) {
     if (typeof bestBid === 'number') {
       lastPrice = bestBid
@@ -310,11 +314,9 @@ function buildOrderBookSnapshot(
     }
   }
 
-  const computedSpread = typeof bestAsk === 'number' && typeof bestBid === 'number'
+  const spread = typeof bestAsk === 'number' && typeof bestBid === 'number'
     ? Math.max(0, Number((bestAsk - bestBid).toFixed(1)))
     : null
-
-  const spread = spreadOverride ?? computedSpread
 
   return {
     asks: normalizedAsks,
@@ -368,7 +370,7 @@ function normalizeLevels(levels: OrderbookLevelSummary[] | undefined, side: 'ask
 
 function OrderBookEmptyRow({ label }: { label: string }) {
   return (
-    <div className="grid h-16 grid-cols-[40%_20%_20%_20%] items-center px-4">
+    <div className="grid h-9 grid-cols-[40%_20%_20%_20%] items-center px-4">
       <span className="col-span-4 text-center text-xs font-medium text-muted-foreground">
         {label}
       </span>
