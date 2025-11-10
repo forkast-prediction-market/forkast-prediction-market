@@ -23,7 +23,7 @@ const STEPS = [
     description:
       'Buy ‘Yes’ or ‘No’ shares based on what you honestly think will happen. Prices move in real time as other traders trade.',
     image: '/images/how-it-works/1.webp',
-    imageAlt: 'Illustration showing how to pick a Polymarket market',
+    imageAlt: 'Illustration showing how to pick a market',
     ctaLabel: 'Next',
   },
   {
