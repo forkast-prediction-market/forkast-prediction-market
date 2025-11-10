@@ -21,7 +21,7 @@ describe('calculateOrderAmounts', () => {
     expect(result.takerAmount).toBeGreaterThan(0n)
   })
 
-  it('computes limit sell amounts', () => {
+  it('computes limit sell amounts using percent-based price input', () => {
     const result = calculateOrderAmounts({
       orderType: ORDER_TYPE.LIMIT,
       side: ORDER_SIDE.SELL,
@@ -31,7 +31,20 @@ describe('calculateOrderAmounts', () => {
     })
 
     expect(result.makerAmount).toBe(10000000n)
-    expect(result.takerAmount).toBe(555000000n)
+    expect(result.takerAmount).toBe(5550000n)
+  })
+
+  it('computes limit buy amounts using percent-based price input', () => {
+    const result = calculateOrderAmounts({
+      orderType: ORDER_TYPE.LIMIT,
+      side: ORDER_SIDE.BUY,
+      amount: '0',
+      limitPrice: '1.3',
+      limitShares: '10',
+    })
+
+    expect(result.makerAmount).toBe(130000n)
+    expect(result.takerAmount).toBe(10000000n)
   })
 })
 
