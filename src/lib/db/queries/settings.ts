@@ -1,6 +1,6 @@
 import type { QueryResult } from '@/types'
 import { sql } from 'drizzle-orm'
-import { cacheTag, revalidateTag } from 'next/cache'
+import { cacheTag, updateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { settings } from '@/lib/db/schema/settings/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
@@ -59,7 +59,7 @@ export const SettingsRepository = {
           updated_at: settings.updated_at,
         })
 
-      revalidateTag(cacheTags.settings, 'max')
+      updateTag(cacheTags.settings)
 
       return { data, error: null }
     })

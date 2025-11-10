@@ -1,6 +1,6 @@
 import type { QueryResult } from '@/types'
 import { and, desc, eq } from 'drizzle-orm'
-import { cacheTag, revalidateTag } from 'next/cache'
+import { cacheTag, updateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { notifications } from '@/lib/db/schema/notifications/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
@@ -33,7 +33,7 @@ export const NotificationRepository = {
           ),
         )
 
-      revalidateTag(cacheTags.notifications(user_id), 'max')
+      updateTag(cacheTags.notifications(user_id))
 
       return { data: null, error: null }
     })

@@ -345,7 +345,8 @@ export const UserRepository = {
         .select({
           id: orders.id,
           side: orders.side,
-          amount: orders.maker_amount,
+          maker_amount: orders.maker_amount,
+          taker_amount: orders.taker_amount,
           price: sql<number>`CASE
             WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0
             THEN ${orders.taker_amount}::numeric / (${orders.maker_amount} + ${orders.taker_amount})::numeric
@@ -389,8 +390,19 @@ export const UserRepository = {
               return null
             }
 
-            const amount = typeof row.amount === 'bigint' ? Number(row.amount) : (typeof row.amount === 'string' ? Number.parseFloat(row.amount) : (row.amount || 0))
+            const makerAmount = typeof row.maker_amount === 'bigint'
+              ? Number(row.maker_amount)
+              : (typeof row.maker_amount === 'string'
+                  ? Number.parseFloat(row.maker_amount)
+                  : (row.maker_amount || 0))
+            const takerAmount = typeof row.taker_amount === 'bigint'
+              ? Number(row.taker_amount)
+              : (typeof row.taker_amount === 'string'
+                  ? Number.parseFloat(row.taker_amount)
+                  : (row.taker_amount || 0))
             const price = typeof row.price === 'string' ? Number.parseFloat(row.price) : (row.price || 0)
+            const side = row.side === 0 ? 'buy' : 'sell'
+            const amount = side === 'buy' ? takerAmount : makerAmount
             const totalValue = amount * price
 
             const userImage = row.user_image
@@ -409,7 +421,7 @@ export const UserRepository = {
                 address: row.user_address,
                 image: userImage,
               },
-              side: row.side === 0 ? 'buy' : 'sell',
+              side,
               amount: amount.toString(),
               price: price.toString(),
               outcome: {

@@ -1,6 +1,6 @@
 import type { QueryResult } from '@/types'
 import { and, eq } from 'drizzle-orm'
-import { revalidateTag } from 'next/cache'
+import { updateTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { bookmarks } from '@/lib/db/schema/bookmarks/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
@@ -36,8 +36,8 @@ export const BookmarkRepository = {
           .values({ user_id, event_id })
       }
 
-      revalidateTag(cacheTags.events(user_id), 'max')
-      revalidateTag(cacheTags.event(`${event_id}:${user_id}`), 'max')
+      updateTag(cacheTags.events(user_id))
+      updateTag(cacheTags.event(`${event_id}:${user_id}`))
 
       return { data: null, error: null }
     })
