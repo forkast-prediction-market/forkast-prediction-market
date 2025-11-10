@@ -23,7 +23,7 @@
     "@reown/appkit": "1.8.13",
     "@reown/appkit-adapter-wagmi": "1.8.13",
     "@reown/appkit-siwe": "1.8.13",
-    "@supabase/supabase-js": "^2.78.0",
+    "@supabase/supabase-js": "^2.81.0",
     "@tanstack/react-query": "^5.87.4",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.12",
