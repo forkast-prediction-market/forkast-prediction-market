@@ -59,6 +59,16 @@ const RANGE_CONFIG: Record<Exclude<TimeRange, 'ALL'>, { interval: string, fideli
   '1W': { interval: '1w', fidelity: 30 },
   '1M': { interval: '1m', fidelity: 180 },
 }
+const MINUTE_MS = 60 * 1000
+const HOUR_MS = 60 * MINUTE_MS
+const CURSOR_STEP_MS: Record<TimeRange, number> = {
+  'ALL': 12 * HOUR_MS,
+  '1M': 3 * HOUR_MS,
+  '1W': 30 * MINUTE_MS,
+  '1D': 5 * MINUTE_MS,
+  '6H': 1 * MINUTE_MS,
+  '1H': 1 * MINUTE_MS,
+}
 const ALL_FIDELITY = 720
 const PRICE_REFRESH_INTERVAL_MS = 60_000
 const MAX_SERIES = 4
@@ -419,6 +429,7 @@ export default function EventChart({ event, isMobile }: EventChartProps) {
               width={chartWidth}
               height={280}
               margin={{ top: 30, right: 40, bottom: 52, left: 0 }}
+              cursorStepMs={CURSOR_STEP_MS[activeTimeRange]}
               onCursorDataChange={setCursorSnapshot}
             />
           </div>
