@@ -230,12 +230,29 @@ function getEventMainTag(tags: any[] | undefined): string {
   return mainTag?.name || tags[0].name
 }
 
+function safeNumber(value: unknown): number {
+  if (typeof value === 'bigint') {
+    return Number(value)
+  }
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0
+  }
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+  return 0
+}
+
 function transformActivityOrder(order: any): ActivityOrder {
   const userImage = order.user_image
     ? getSupabaseImageUrl(order.user_image)
     : `https://avatar.vercel.sh/${order.user_address || 'unknown'}.png`
 
-  const amount = Number(order.amount)
+  const side = order.side === 0 ? 'buy' : 'sell'
+  const makerAmount = safeNumber(order.maker_amount)
+  const takerAmount = safeNumber(order.taker_amount)
+  const amount = side === 'buy' ? takerAmount : makerAmount
   const price = Number(order.price || 0.5)
   const parsedTotalValue = order.total_value != null ? Number(order.total_value) : Number.NaN
   const totalValue = Number.isFinite(parsedTotalValue) ? parsedTotalValue : amount * price
@@ -248,7 +265,7 @@ function transformActivityOrder(order: any): ActivityOrder {
       address: order.user_address || '',
       image: userImage,
     },
-    side: order.side === 0 ? 'buy' : 'sell',
+    side,
     amount: amount.toString(),
     price: price.toString(),
     outcome: {
@@ -584,7 +601,8 @@ export const EventRepository = {
         .select({
           id: orders.id,
           side: orders.side,
-          amount: orders.taker_amount,
+          maker_amount: orders.maker_amount,
+          taker_amount: orders.taker_amount,
           price: priceExpression,
           created_at: orders.created_at,
           status: orders.status,
