@@ -12,6 +12,7 @@ import EventOrderPanelMobile from '@/app/(platform)/event/[slug]/_components/Eve
 import { EventOutcomeChanceProvider } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
 import EventRelated from '@/app/(platform)/event/[slug]/_components/EventRelated'
 import EventRules from '@/app/(platform)/event/[slug]/_components/EventRules'
+import EventSingleMarketOrderBook from '@/app/(platform)/event/[slug]/_components/EventSingleMarketOrderBook'
 import EventTabs from '@/app/(platform)/event/[slug]/_components/EventTabs'
 import { Teleport } from '@/components/Teleport'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -28,6 +29,7 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
   const setMarket = useOrder(state => state.setMarket)
   const setOutcome = useOrder(state => state.setOutcome)
   const isMobile = useIsMobile()
+  const shouldShowSingleMarketOrderBook = event.total_markets_count === 1 && event.markets[0]?.outcomes?.length >= 2
 
   useEffect(() => {
     setEvent(event)
@@ -42,6 +44,9 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
         <EventMetaInformation event={event} />
         <EventChart event={event} isMobile={isMobile} />
         <EventMarkets event={event} />
+        {shouldShowSingleMarketOrderBook && (
+          <EventSingleMarketOrderBook market={event.markets[0]} />
+        )}
         {marketContextEnabled && <EventMarketContext event={event} />}
         <EventRules event={event} />
         {isMobile && <EventRelated event={event} />}
