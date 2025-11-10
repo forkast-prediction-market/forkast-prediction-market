@@ -74,8 +74,6 @@ const FUTURE_LINE_OPACITY_LIGHT = 0.35
 const INITIAL_REVEAL_DURATION = 1400
 const INTERACTION_BASE_REVEAL_DURATION = 1100
 const DEFAULT_Y_AXIS_MAX = 100
-const MIN_Y_AXIS_MAX = 20
-const Y_AXIS_STEP = 20
 
 function clamp01(value: number) {
   if (value < 0) {
@@ -213,24 +211,78 @@ function interpolateSeriesPoint(
   return interpolated
 }
 
-function calculateYAxisMax(data: DataPoint[], series: SeriesConfig[]): number {
-  let maxValue = 0
-
+function collectSeriesValues(data: DataPoint[], series: SeriesConfig[]) {
+  const values: number[] = []
   data.forEach((point) => {
     series.forEach((seriesItem) => {
       const value = point[seriesItem.key]
       if (typeof value === 'number' && Number.isFinite(value)) {
-        maxValue = Math.max(maxValue, value)
+        values.push(value)
       }
     })
   })
+  return values
+}
 
-  if (maxValue <= 0) {
-    return DEFAULT_Y_AXIS_MAX
+function calculateYAxisBounds(
+  data: DataPoint[],
+  series: SeriesConfig[],
+  minTicks = 3,
+) {
+  const values = collectSeriesValues(data, series)
+
+  if (!values.length) {
+    return {
+      min: 0,
+      max: DEFAULT_Y_AXIS_MAX,
+      ticks: [0, 25, 50, 75, 100],
+    }
   }
 
-  const stepped = Math.ceil(maxValue / Y_AXIS_STEP) * Y_AXIS_STEP
-  return Math.min(DEFAULT_Y_AXIS_MAX, Math.max(MIN_Y_AXIS_MAX, stepped))
+  let dataMin = Math.max(0, Math.min(100, Math.min(...values)))
+  let dataMax = Math.max(0, Math.min(100, Math.max(...values)))
+
+  if (dataMax - dataMin < 1) {
+    dataMax = Math.min(100, dataMax + 2.5)
+    dataMin = Math.max(0, dataMin - 2.5)
+  }
+
+  const rawSpan = Math.max(5, dataMax - dataMin)
+  const rawStep = rawSpan / Math.max(1, minTicks - 1)
+  const step = Math.min(
+    50,
+    Math.max(5, Math.ceil(rawStep / 5) * 5),
+  )
+
+  let axisMin = Math.max(0, Math.floor(dataMin / step) * step)
+  let axisMax = Math.min(100, Math.ceil(dataMax / step) * step)
+
+  function tickCount() {
+    return Math.floor((axisMax - axisMin) / step) + 1
+  }
+
+  while (tickCount() < minTicks) {
+    if (axisMin > 0) {
+      axisMin = Math.max(0, axisMin - step)
+    }
+    else if (axisMax < 100) {
+      axisMax = Math.min(100, axisMax + step)
+    }
+    else {
+      break
+    }
+  }
+
+  const ticks: number[] = []
+  for (let value = axisMin; value <= axisMax + 1e-6; value += step) {
+    ticks.push(Number(value.toFixed(2)))
+  }
+
+  return {
+    min: axisMin,
+    max: axisMax,
+    ticks,
+  }
 }
 
 export function PredictionChart({
@@ -288,26 +340,10 @@ export function PredictionChart({
     showTooltip,
     hideTooltip,
   } = useTooltip<DataPoint>()
-  const yAxisMax = useMemo(
-    () => calculateYAxisMax(data, series),
+  const { min: yAxisMin, max: yAxisMax, ticks: yAxisTicks } = useMemo(
+    () => calculateYAxisBounds(data, series),
     [data, series],
   )
-  const yAxisTicks = useMemo(() => {
-    const ticks: number[] = []
-    if (yAxisMax <= 0) {
-      return [0, DEFAULT_Y_AXIS_MAX]
-    }
-
-    for (let value = 0; value <= yAxisMax; value += Y_AXIS_STEP) {
-      ticks.push(value)
-    }
-
-    if (ticks[ticks.length - 1] !== yAxisMax) {
-      ticks.push(yAxisMax)
-    }
-
-    return ticks
-  }, [yAxisMax])
 
   const handleTooltip = useCallback(
     (
@@ -330,7 +366,7 @@ export function PredictionChart({
 
       const yScale = scaleLinear<number>({
         range: [innerHeight, 0],
-        domain: [0, yAxisMax],
+        domain: [yAxisMin, yAxisMax],
         nice: true,
       })
 
@@ -372,6 +408,7 @@ export function PredictionChart({
       cursorStepMs,
       revealAnimationFrameRef,
       emitCursorDataChange,
+      yAxisMin,
       yAxisMax,
     ],
   )
@@ -478,7 +515,7 @@ export function PredictionChart({
 
   const yScale = scaleLinear<number>({
     range: [innerHeight, 0],
-    domain: [0, yAxisMax],
+    domain: [yAxisMin, yAxisMax],
     nice: true,
   })
 
@@ -711,7 +748,7 @@ export function PredictionChart({
             />
           ))}
 
-          {yAxisMax >= 50 && (
+          {yAxisMax >= 50 && yAxisMin <= 50 && (
             <line
               x1={0}
               x2={innerWidth}
