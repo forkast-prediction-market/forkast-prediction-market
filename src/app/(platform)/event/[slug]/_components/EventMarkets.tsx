@@ -1,6 +1,6 @@
 import type { Event } from '@/types'
 import { useIsFetching, useQueryClient } from '@tanstack/react-query'
-import { RefreshCwIcon, TrendingDownIcon } from 'lucide-react'
+import { RefreshCwIcon, TriangleIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
 import EventOrderBook, { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
@@ -326,7 +326,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                         %
                       </span>
                       <div className="flex items-center gap-1 text-no">
-                        <TrendingDownIcon className="size-3" />
+                        <TriangleIcon className="size-3 rotate-180 fill-current" fill="currentColor" />
                         <span className="text-xs font-semibold">3%</span>
                       </div>
                     </div>

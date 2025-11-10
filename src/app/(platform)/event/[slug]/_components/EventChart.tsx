@@ -439,7 +439,11 @@ export default function EventChart({ event, isMobile }: EventChartProps) {
               )}
         </div>
 
-        <div className="absolute top-4 right-4 flex items-center gap-1 text-muted-foreground opacity-50">
+        <div className={`
+          pointer-events-none absolute top-4 right-4 flex items-center gap-1 text-muted-foreground opacity-50
+          select-none
+        `}
+        >
           <div
             className="size-6 [&_*]:fill-current [&_*]:stroke-current"
             dangerouslySetInnerHTML={{
