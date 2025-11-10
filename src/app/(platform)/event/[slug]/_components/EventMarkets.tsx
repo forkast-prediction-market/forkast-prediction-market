@@ -11,7 +11,7 @@ import {
 } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
 import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
-import { formatCentsLabel } from '@/lib/formatters'
+import { formatCentsLabel, toCents } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
 
@@ -162,12 +162,14 @@ export default function EventMarkets({ event }: EventMarketsProps) {
           const yesOutcome = market.outcomes[OUTCOME_INDEX.YES]
           const noOutcome = market.outcomes[OUTCOME_INDEX.NO]
           const yesPriceOverride = marketYesPrices[market.condition_id]
-          const yesPriceValue = typeof yesPriceOverride === 'number'
+          const normalizedYesPrice = typeof yesPriceOverride === 'number'
             ? Math.max(0, Math.min(1, yesPriceOverride))
-            : yesOutcome?.buy_price
-          const noPriceValue = typeof yesPriceOverride === 'number'
-            ? Math.max(0, Math.min(1, 1 - yesPriceOverride))
+            : null
+          const yesPriceValue = normalizedYesPrice ?? yesOutcome?.buy_price
+          const noPriceValue = normalizedYesPrice != null
+            ? Math.max(0, Math.min(1, 1 - normalizedYesPrice))
             : noOutcome?.buy_price
+          const yesPriceCentsOverride = normalizedYesPrice != null ? toCents(normalizedYesPrice) : null
           const rawChance = outcomeChances[market.condition_id]
           const normalizedChance = Math.max(0, Math.min(100, rawChance ?? 0))
           const roundedChance = Math.round(normalizedChance)
@@ -184,6 +186,17 @@ export default function EventMarkets({ event }: EventMarketsProps) {
           const chanceChangeLabel = `${roundedChanceChange}%`
           const isChanceChangePositive = normalizedChanceChange > 0
           const chanceChangeColorClass = isChanceChangePositive ? 'text-yes' : 'text-no'
+          const lastPriceOverrideCents = (() => {
+            if (yesPriceCentsOverride === null) {
+              return null
+            }
+            if (!outcomeForMarket) {
+              return yesPriceCentsOverride
+            }
+            return outcomeForMarket.outcome_index === OUTCOME_INDEX.YES
+              ? yesPriceCentsOverride
+              : Math.max(0, Number((100 - yesPriceCentsOverride).toFixed(1)))
+          })()
 
           function handleToggle() {
             const currentlyExpanded = expandedMarketId === market.condition_id
@@ -434,6 +447,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     outcome={outcomeForMarket}
                     summaries={orderBookSummaries}
                     isLoadingSummaries={shouldShowOrderBookLoader}
+                    lastPriceOverrideCents={lastPriceOverrideCents}
                   />
                 </div>
               )}
