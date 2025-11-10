@@ -1,6 +1,6 @@
 'use server'
 
-import { revalidateTag } from 'next/cache'
+import { updateTag } from 'next/cache'
 import { z } from 'zod'
 import { cacheTags } from '@/lib/cache-tags'
 import { CLOB_ORDER_TYPE, ORDER_TYPE } from '@/lib/constants'
@@ -92,7 +92,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       body,
     )
 
-    const clobResponse = await fetch(`${process.env.CLOB_URL}${path}`, {
+    const clobStoreOrderResponse = await fetch(`${process.env.CLOB_URL}${path}`, {
       method,
       headers: {
         'Content-Type': 'application/json',
@@ -107,43 +107,38 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       signal: AbortSignal.timeout(5000),
     })
 
-    const text = await clobResponse.text()
-    const data = (() => {
-      try {
-        return JSON.parse(text)
-      }
-      catch {
-        return null
-      }
-    })()
-
-    if (clobResponse.status !== 201) {
-      const message = data?.error || text || `Status ${clobResponse.status} (${clobResponse.statusText})`
+    if (clobStoreOrderResponse.status !== 201) {
+      const message = `Status ${clobStoreOrderResponse.status} (${clobStoreOrderResponse.statusText})`
       console.error('Failed to send order to CLOB.', message)
       return { error: DEFAULT_ERROR_MESSAGE }
     }
 
-    const { error } = await OrderRepository.createOrder({
-      ...validated.data,
-      salt: BigInt(validated.data.salt),
-      maker_amount: BigInt(validated.data.maker_amount),
-      taker_amount: BigInt(validated.data.taker_amount),
-      nonce: BigInt(validated.data.nonce),
-      fee_rate_bps: Number(validated.data.fee_rate_bps),
-      affiliate_percentage: Number(validated.data.affiliate_percentage),
-      expiration: BigInt(validated.data.expiration),
-      user_id: user.id,
-      affiliate_user_id: user.referred_by_user_id,
-      type: clobOrderType,
-      status: data.status,
-    })
+    const clobStoreOrderResponseJson = await clobStoreOrderResponse.json()
 
-    if (error) {
-      console.error('Failed to create order.', error)
-      return { error: DEFAULT_ERROR_MESSAGE }
-    }
+    fetch(`${process.env.CLOB_URL}/data/order/${clobStoreOrderResponseJson.orderId}`)
+      .then(res => res.json())
+      .then((res) => {
+        OrderRepository.createOrder({
+          ...validated.data,
+          salt: BigInt(validated.data.salt),
+          maker_amount: BigInt(validated.data.maker_amount),
+          taker_amount: BigInt(validated.data.taker_amount),
+          nonce: BigInt(validated.data.nonce),
+          fee_rate_bps: Number(validated.data.fee_rate_bps),
+          affiliate_percentage: Number(validated.data.affiliate_percentage),
+          expiration: BigInt(validated.data.expiration),
+          user_id: user.id,
+          affiliate_user_id: user.referred_by_user_id,
+          type: clobOrderType,
+          status: res.order.status,
+        })
+      })
+      .catch((err) => {
+        console.error('Failed to get order from CLOB.', err.message)
+      })
 
-    revalidateTag(cacheTags.activity(validated.data.slug), 'max')
+    updateTag(cacheTags.activity(validated.data.slug))
+    updateTag(cacheTags.holders(validated.data.condition_id))
   }
   catch (error) {
     console.error('Failed to create order.', error)

@@ -205,6 +205,11 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         outcomeIndex: state.outcome.outcome_index,
         lastMouseEvent: state.lastMouseEvent,
       })
+
+      setTimeout(() => {
+        void queryClient.refetchQueries({ queryKey: ['event-activity'] })
+        void queryClient.refetchQueries({ queryKey: ['event-holders'] })
+      }, 3000)
     }
     catch {
       handleOrderErrorFeedback('Trade failed', 'An unexpected error occurred. Please try again.')
