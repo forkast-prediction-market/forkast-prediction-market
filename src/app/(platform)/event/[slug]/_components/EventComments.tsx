@@ -75,9 +75,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     loadMoreReplies(commentId)
   }, [loadMoreReplies])
 
-  // Update expanded comments when replies are successfully loaded
   useEffect(() => {
-    // Find comments that have loaded replies (have recent_replies with more than 3 items or replies_count <= recent_replies.length)
     comments.forEach((comment) => {
       if (comment.recent_replies && comment.recent_replies.length > 3) {
         setExpandedComments(prev => new Set([...prev, comment.id]))

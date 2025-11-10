@@ -17,7 +17,7 @@ const { useSession } = createAuthClient()
 
 export default function HeaderMenu() {
   const isMounted = useClientMounted()
-  const { open } = useAppKit()
+  const { open, isReady } = useAppKit()
   const { isConnected, status } = useAppKitAccount()
   const { data: session } = useSession()
 
@@ -30,7 +30,7 @@ export default function HeaderMenu() {
     }
   }, [session?.user])
 
-  if (!isMounted || status === 'connecting') {
+  if (!isMounted || status === 'connecting' || !isReady) {
     return (
       <div className="flex gap-2">
         <Skeleton className="hidden h-9 w-20 lg:block" />

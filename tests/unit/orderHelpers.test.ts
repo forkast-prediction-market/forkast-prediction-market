@@ -1,0 +1,98 @@
+import { describe, expect, it, vi } from 'vitest'
+import { ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
+import { buildOrderPayload, calculateOrderAmounts, submitOrder } from '@/lib/orders'
+
+const storeOrderActionMock = vi.fn()
+vi.mock('@/app/(platform)/event/[slug]/_actions/store-order', () => ({
+  storeOrderAction: (...args: any[]) => storeOrderActionMock(...args),
+}))
+
+describe('calculateOrderAmounts', () => {
+  it('computes market buy amounts', () => {
+    const result = calculateOrderAmounts({
+      orderType: ORDER_TYPE.MARKET,
+      side: ORDER_SIDE.BUY,
+      amount: '12.34',
+      limitPrice: '0',
+      limitShares: '0',
+    })
+
+    expect(result.makerAmount).toBe(12340000n)
+    expect(result.takerAmount).toBeGreaterThan(0n)
+  })
+
+  it('computes limit sell amounts', () => {
+    const result = calculateOrderAmounts({
+      orderType: ORDER_TYPE.LIMIT,
+      side: ORDER_SIDE.SELL,
+      amount: '0',
+      limitPrice: '55.5',
+      limitShares: '10',
+    })
+
+    expect(result.makerAmount).toBe(10000000n)
+    expect(result.takerAmount).toBe(555000000n)
+  })
+})
+
+describe('buildOrderPayload', () => {
+  it('returns payload with bigint fields', () => {
+    const payload = buildOrderPayload({
+      userAddress: '0xUser',
+      outcome: { token_id: '42' } as any,
+      side: ORDER_SIDE.BUY,
+      orderType: ORDER_TYPE.MARKET,
+      amount: '15.00',
+      limitPrice: '0',
+      limitShares: '0',
+    })
+
+    expect(payload.maker_amount).toBe(15000000n)
+    expect(payload.taker_amount).toBeGreaterThan(0n)
+    expect(payload.token_id).toBe(42n)
+  })
+})
+
+describe('submitOrder', () => {
+  it('serializes bigints and forwards to action', async () => {
+    storeOrderActionMock.mockResolvedValueOnce({ ok: true })
+
+    const address = '0x0000000000000000000000000000000000000001' as `0x${string}`
+    const payload = {
+      salt: 1n,
+      maker: address,
+      signer: address,
+      taker: address,
+      referrer: address,
+      affiliate: address,
+      token_id: 1n,
+      maker_amount: 2n,
+      taker_amount: 3n,
+      expiration: 4n,
+      nonce: 5n,
+      fee_rate_bps: 6n,
+      affiliate_percentage: 7n,
+      side: ORDER_SIDE.BUY,
+      signature_type: 0,
+    }
+
+    await submitOrder({
+      order: payload,
+      signature: '0xsigned',
+      orderType: ORDER_TYPE.MARKET,
+      conditionId: 'cond-1',
+      slug: 'event',
+    })
+
+    expect(storeOrderActionMock).toHaveBeenCalledWith(expect.objectContaining({
+      salt: '1',
+      token_id: '1',
+      maker_amount: '2',
+      taker_amount: '3',
+      signature: '0xsigned',
+      type: ORDER_TYPE.MARKET,
+      condition_id: 'cond-1',
+      slug: 'event',
+    }))
+  })
+})

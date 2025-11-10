@@ -1,22 +1,28 @@
+import type { OrderSide } from '@/types'
 import { BanknoteIcon } from 'lucide-react'
 import { ORDER_SIDE } from '@/lib/constants'
-import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
+import { formatCurrency } from '@/lib/formatters'
 import { calculateWinnings, cn } from '@/lib/utils'
-import { calculateSellAmount, getAvgSellPrice, useOrder } from '@/stores/useOrder'
 
 interface EventOrderPanelEarningsProps {
   isMobile: boolean
+  side: OrderSide
+  amountNumber: number
+  sellAmountLabel: string
+  avgSellPriceLabel: string
+  avgBuyPriceLabel: string
 }
 
-export default function EventOrderPanelEarnings({ isMobile }: EventOrderPanelEarningsProps) {
-  const state = useOrder()
-  const sellAmount = calculateSellAmount()
-  const sellAmountLabel = formatCurrency(sellAmount)
-  const amountNumber = Number.parseFloat(state.amount || '0') || 0
+export default function EventOrderPanelEarnings({
+  isMobile,
+  side,
+  amountNumber,
+  sellAmountLabel,
+  avgSellPriceLabel,
+  avgBuyPriceLabel,
+}: EventOrderPanelEarningsProps) {
   const buyWinningsSample = formatCurrency(calculateWinnings(amountNumber, 0.72))
   const buyWinningsDesktop = formatCurrency(calculateWinnings(amountNumber, 0.26))
-  const avgSellPriceLabel = formatCentsLabel(getAvgSellPrice(), { fallback: '—' })
-  const avgBuyPriceLabel = formatCentsLabel(state.outcome?.buy_price, { fallback: '—' })
 
   return (
     <div className={`${isMobile ? 'mb-4 text-center' : 'mb-4'}`}>
@@ -29,12 +35,12 @@ export default function EventOrderPanelEarnings({ isMobile }: EventOrderPanelEar
               isMobile ? 'justify-center text-lg text-foreground' : 'text-sm text-muted-foreground',
             )}
           >
-            {state.side === ORDER_SIDE.SELL ? 'You\'ll receive' : 'To win'}
+            {side === ORDER_SIDE.SELL ? 'You\'ll receive' : 'To win'}
             {!isMobile && <BanknoteIcon className="size-4 text-yes" />}
             {isMobile && <span className="text-xl text-yes">💰</span>}
             {isMobile && (
               <span className="text-2xl font-bold text-yes">
-                {state.side === ORDER_SIDE.SELL
+                {side === ORDER_SIDE.SELL
                   ? sellAmountLabel
                   : buyWinningsSample}
               </span>
@@ -46,14 +52,14 @@ export default function EventOrderPanelEarnings({ isMobile }: EventOrderPanelEar
               isMobile ? 'text-center text-sm' : 'text-xs',
             )}
           >
-            {state.side === ORDER_SIDE.SELL
+            {side === ORDER_SIDE.SELL
               ? `Avg. price ${avgSellPriceLabel}`
               : `Avg. price ${avgBuyPriceLabel}`}
           </div>
         </div>
         {!isMobile && (
           <div className="text-4xl font-bold text-yes">
-            {state.side === ORDER_SIDE.SELL
+            {side === ORDER_SIDE.SELL
               ? sellAmountLabel
               : buyWinningsDesktop}
           </div>

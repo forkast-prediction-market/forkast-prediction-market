@@ -1,35 +1,48 @@
-import type { OrderType } from '@/types'
+import type { OrderSide, OrderType } from '@/types'
 import * as SelectPrimitive from '@radix-ui/react-select'
 import { ChevronDownIcon } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Select, SelectContent, SelectItem, SelectValue } from '@/components/ui/select'
 import { ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 import { cn } from '@/lib/utils'
-import { useOrder } from '@/stores/useOrder'
 
 const ORDER_TYPE_STORAGE_KEY = 'forkast:order-panel-type'
 
-export default function EventOrderPanelBuySellTabs() {
+interface EventOrderPanelBuySellTabsProps {
+  side: OrderSide
+  type: OrderType
+  onSideChange: (side: OrderSide) => void
+  onTypeChange: (type: OrderType) => void
+  onAmountReset: () => void
+  onFocusInput: () => void
+}
+
+export default function EventOrderPanelBuySellTabs({
+  side,
+  type,
+  onSideChange,
+  onTypeChange,
+  onAmountReset,
+  onFocusInput,
+}: EventOrderPanelBuySellTabsProps) {
   const [open, setOpen] = useState(false)
-  const {
-    side,
-    setSide,
-    setAmount,
-    inputRef,
-    type,
-    setType,
-  } = useOrder()
+  const hasHydratedType = useRef(false)
 
   useEffect(() => {
     if (typeof window === 'undefined') {
       return
     }
 
-    const storedType = window.localStorage.getItem(ORDER_TYPE_STORAGE_KEY) as OrderType
-    if (Object.values(ORDER_TYPE).includes(storedType as any)) {
-      setType(storedType)
+    if (hasHydratedType.current) {
+      return
     }
-  }, [setType])
+
+    hasHydratedType.current = true
+    const storedType = window.localStorage.getItem(ORDER_TYPE_STORAGE_KEY) as OrderType
+    if (storedType && Object.values(ORDER_TYPE).includes(storedType as any) && storedType !== type) {
+      onTypeChange(storedType)
+    }
+  }, [onTypeChange, type])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -41,6 +54,12 @@ export default function EventOrderPanelBuySellTabs() {
     }
     catch {}
   }, [type])
+
+  function handleSideChange(nextSide: OrderSide) {
+    onSideChange(nextSide)
+    onAmountReset()
+    onFocusInput()
+  }
 
   return (
     <div className="relative mb-4">
@@ -61,11 +80,7 @@ export default function EventOrderPanelBuySellTabs() {
               `,
               side === ORDER_SIDE.BUY && 'border-primary text-foreground',
             )}
-            onClick={() => {
-              setSide(ORDER_SIDE.BUY)
-              setAmount('')
-              inputRef?.current?.focus()
-            }}
+            onClick={() => handleSideChange(ORDER_SIDE.BUY)}
           >
             Buy
           </button>
@@ -84,11 +99,7 @@ export default function EventOrderPanelBuySellTabs() {
               `,
               side === ORDER_SIDE.SELL && 'border-primary text-foreground',
             )}
-            onClick={() => {
-              setSide(ORDER_SIDE.SELL)
-              setAmount('')
-              inputRef?.current?.focus()
-            }}
+            onClick={() => handleSideChange(ORDER_SIDE.SELL)}
           >
             Sell
           </button>
@@ -99,7 +110,7 @@ export default function EventOrderPanelBuySellTabs() {
           value={type}
           open={open}
           onOpenChange={setOpen}
-          onValueChange={value => setType(value as OrderType)}
+          onValueChange={value => onTypeChange(value as OrderType)}
         >
           <SelectPrimitive.Trigger asChild>
             <button

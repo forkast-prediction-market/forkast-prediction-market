@@ -1,19 +1,16 @@
-import { getNoShares, getYesShares, useOrder } from '@/stores/useOrder'
+interface EventOrderPanelUserSharesProps {
+  yesShares: number
+  noShares: number
+}
 
-export default function EventOrderPanelUserShares() {
-  const state = useOrder()
-
-  if (!state.market) {
-    return <></>
-  }
-
+export default function EventOrderPanelUserShares({ yesShares, noShares }: EventOrderPanelUserSharesProps) {
   return (
     <div className="mb-4 flex gap-2">
       <div className="flex-1 text-center">
-        {getYesShares(state.market.condition_id) > 0
+        {yesShares > 0
           ? (
               <span className="text-xs text-muted-foreground">
-                {getYesShares(state.market.condition_id)}
+                {yesShares}
                 {' '}
                 shares
               </span>
@@ -25,10 +22,10 @@ export default function EventOrderPanelUserShares() {
             )}
       </div>
       <div className="flex-1 text-center">
-        {getNoShares(state.market.condition_id) > 0
+        {noShares > 0
           ? (
               <span className="text-xs text-muted-foreground">
-                {getNoShares(state.market.condition_id)}
+                {noShares}
                 {' '}
                 shares
               </span>

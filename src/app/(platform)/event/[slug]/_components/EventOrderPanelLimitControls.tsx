@@ -1,40 +1,53 @@
 import type { LimitExpirationOption } from '@/stores/useOrder'
+import type { OrderSide } from '@/types'
 import { BanknoteIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
 import {
+  Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-  Select as UiSelect,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { ORDER_SIDE } from '@/lib/constants'
-import { getUserShares, useIsLimitOrder, useOrder } from '@/stores/useOrder'
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
 }
 
-export default function EventOrderPanelLimitControls() {
-  const {
-    side,
-    limitPrice,
-    limitShares,
-    limitExpirationEnabled,
-    limitExpirationOption,
-    setLimitPrice,
-    setLimitShares,
-    setLimitExpirationEnabled,
-    setLimitExpirationOption,
-    setAmount,
-  } = useOrder()
+interface EventOrderPanelLimitControlsProps {
+  side: OrderSide
+  limitPrice: string
+  limitShares: string
+  limitExpirationEnabled: boolean
+  limitExpirationOption: LimitExpirationOption
+  isLimitOrder: boolean
+  availableShares: number
+  onLimitPriceChange: (value: string) => void
+  onLimitSharesChange: (value: string) => void
+  onLimitExpirationEnabledChange: (value: boolean) => void
+  onLimitExpirationOptionChange: (value: LimitExpirationOption) => void
+  onAmountUpdateFromLimit: (value: string) => void
+}
 
-  const isLimitOrder = useIsLimitOrder()
-
+export default function EventOrderPanelLimitControls({
+  side,
+  limitPrice,
+  limitShares,
+  limitExpirationEnabled,
+  limitExpirationOption,
+  isLimitOrder,
+  availableShares,
+  onLimitPriceChange,
+  onLimitSharesChange,
+  onLimitExpirationEnabledChange,
+  onLimitExpirationOptionChange,
+  onAmountUpdateFromLimit,
+}: EventOrderPanelLimitControlsProps) {
   const limitPriceNumber = useMemo(
     () => Number.parseFloat(limitPrice) || 0,
     [limitPrice],
@@ -65,34 +78,29 @@ export default function EventOrderPanelLimitControls() {
     return Number.isFinite(total) ? total : 0
   }, [limitPriceNumber, limitSharesNumber, side])
 
+  function syncAmount(priceValue: number, sharesValue: number) {
+    if (!isLimitOrder) {
+      return
+    }
+
+    const nextAmount = (priceValue * sharesValue) / 100
+    onAmountUpdateFromLimit((sharesValue === 0 || nextAmount === 0)
+      ? '0.00'
+      : nextAmount.toFixed(2))
+  }
+
   function updateLimitPrice(nextValue: number) {
     const clampedValue = clamp(Number.isNaN(nextValue) ? 0 : nextValue, 0, 99.9)
     const nextPrice = clampedValue.toFixed(1)
-    setLimitPrice(nextPrice)
-
-    if (isLimitOrder) {
-      const sharesValue = Number.parseFloat(limitShares) || 0
-      const nextAmount = (clampedValue * sharesValue) / 100
-
-      setAmount((sharesValue === 0 || nextAmount === 0)
-        ? '0.00'
-        : nextAmount.toFixed(2))
-    }
+    onLimitPriceChange(nextPrice)
+    syncAmount(clampedValue, Number.parseFloat(limitShares) || 0)
   }
 
   function updateLimitShares(nextValue: number) {
-    const clampedValue = clamp(Number.isNaN(nextValue) ? 0 : nextValue, 0, 999999)
+    const clampedValue = clamp(Number.isNaN(nextValue) ? 0 : nextValue, 0, 999_999)
     const nextShares = clampedValue.toString()
-    setLimitShares(nextShares)
-
-    if (isLimitOrder) {
-      const priceValue = Number.parseFloat(limitPrice) || 0
-      const nextAmount = (priceValue * clampedValue) / 100
-
-      setAmount((priceValue === 0 || nextAmount === 0)
-        ? '0.00'
-        : nextAmount.toFixed(2))
-    }
+    onLimitSharesChange(nextShares)
+    syncAmount(Number.parseFloat(limitPrice) || 0, clampedValue)
   }
 
   return (
@@ -104,23 +112,11 @@ export default function EventOrderPanelLimitControls() {
 
         <NumberInput
           value={limitPriceNumber}
-          onChange={(val) => {
-            const normalized = val.toFixed(1)
-            setLimitPrice(normalized)
-
-            if (isLimitOrder) {
-              const priceValue = Number.parseFloat(normalized) || 0
-              const sharesValue = Number.parseFloat(limitShares) || 0
-              const nextAmount = (priceValue * sharesValue) / 100
-              setAmount(nextAmount > 0 ? nextAmount.toFixed(2) : '0.00')
-            }
-
-            updateLimitPrice(val)
-          }}
+          onChange={updateLimitPrice}
         />
       </div>
 
-      <div className="my-4 border-b border-border"></div>
+      <div className="my-4 border-b border-border" />
 
       <div>
         <div className="mb-2 flex items-center justify-between gap-3">
@@ -133,7 +129,7 @@ export default function EventOrderPanelLimitControls() {
               inputMode="decimal"
               value={limitShares}
               onChange={(event) => {
-                const value = Number.parseInt(event.target.value || '0', 10)
+                const value = Number.parseFloat(event.target.value || '0')
                 updateLimitShares(value)
               }}
               className="h-10 !bg-transparent text-right !text-lg font-bold"
@@ -152,19 +148,17 @@ export default function EventOrderPanelLimitControls() {
                       hover:bg-muted/80
                     `}
                     onClick={() => {
-                      const userShares = getUserShares()
-
-                      if (userShares <= 0) {
+                      if (availableShares <= 0) {
                         return
                       }
 
                       if (label === 'MAX') {
-                        updateLimitShares(userShares)
+                        updateLimitShares(availableShares)
                         return
                       }
 
                       const percent = Number.parseInt(label.replace('%', ''), 10) / 100
-                      const calculatedShares = Number.parseFloat((userShares * percent).toFixed(2))
+                      const calculatedShares = Number.parseFloat((availableShares * percent).toFixed(2))
                       updateLimitShares(calculatedShares)
                     }}
                   >
@@ -195,7 +189,7 @@ export default function EventOrderPanelLimitControls() {
             )}
       </div>
 
-      <div className="my-4 border-b border-border"></div>
+      <div className="my-4 border-b border-border" />
 
       <div className="mt-4 space-y-4">
         <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
@@ -203,19 +197,19 @@ export default function EventOrderPanelLimitControls() {
           <Switch
             checked={limitExpirationEnabled}
             onCheckedChange={(checked) => {
-              setLimitExpirationEnabled(checked)
+              onLimitExpirationEnabledChange(checked)
               if (!checked) {
-                setLimitExpirationOption('end-of-day')
+                onLimitExpirationOptionChange('end-of-day')
               }
             }}
           />
         </div>
 
         {limitExpirationEnabled && (
-          <UiSelect
+          <Select
             value={limitExpirationOption}
             onValueChange={(value) => {
-              setLimitExpirationOption(value as LimitExpirationOption)
+              onLimitExpirationOptionChange(value as LimitExpirationOption)
             }}
           >
             <SelectTrigger className="w-full justify-between bg-background text-sm font-medium">
@@ -225,7 +219,7 @@ export default function EventOrderPanelLimitControls() {
               <SelectItem value="end-of-day">End of Day</SelectItem>
               <SelectItem value="custom">Custom</SelectItem>
             </SelectContent>
-          </UiSelect>
+          </Select>
         )}
       </div>
 

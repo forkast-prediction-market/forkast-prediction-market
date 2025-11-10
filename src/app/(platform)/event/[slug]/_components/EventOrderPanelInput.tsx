@@ -1,32 +1,105 @@
-import { useBalance } from '@/hooks/useBalance'
+import type { RefObject } from 'react'
+import type { OrderSide } from '@/types'
 import { ORDER_SIDE } from '@/lib/constants'
 import { cn } from '@/lib/utils'
-import { getUserShares, useAmountAsNumber, useOrder, useOrderAmount, useOrderInputRef, useOrderSide } from '@/stores/useOrder'
+
+interface BalanceSummary {
+  raw: number
+  text: string
+  symbol?: string
+}
 
 interface EventOrderPanelInputProps {
   isMobile: boolean
+  side: OrderSide
+  amount: string
+  amountNumber: number
+  availableShares: number
+  balance: BalanceSummary
+  inputRef: RefObject<HTMLInputElement | null>
+  onAmountChange: (value: string) => void
 }
 
-export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputProps) {
-  const state = useOrder()
-  const side = useOrderSide()
-  const amount = useAmountAsNumber()
-  const orderAmount = useOrderAmount()
-  const inputRef = useOrderInputRef()
-  const { balance } = useBalance()
+const BUY_CHIPS_DESKTOP = ['+$5', '+$25', '+$100']
+const BUY_CHIPS_MOBILE = ['+$1', '+$20', '+$100']
 
-  function renderActionButtons(isMobile: boolean) {
-    const baseButtonClasses = 'h-7 px-3 rounded-lg border text-[11px] transition-all duration-200 ease-in-out'
+export default function EventOrderPanelInput({
+  isMobile,
+  side,
+  amount,
+  amountNumber,
+  availableShares,
+  balance,
+  inputRef,
+  onAmountChange,
+}: EventOrderPanelInputProps) {
+  function focusInput() {
+    inputRef?.current?.focus()
+  }
+
+  function sanitizeBuyInput(rawValue: string) {
+    return rawValue.replace(/[^0-9.]/g, '')
+  }
+
+  function handleInputChange(rawValue: string) {
+    if (side === ORDER_SIDE.SELL) {
+      const nextValue = Number.parseFloat(rawValue)
+      if (Number.isNaN(nextValue)) {
+        onAmountChange('')
+        return
+      }
+
+      if (nextValue <= availableShares || rawValue === '') {
+        onAmountChange(nextValue.toFixed(2))
+      }
+      return
+    }
+
+    const cleaned = sanitizeBuyInput(rawValue)
+    const numericValue = Number.parseFloat(cleaned)
+
+    if (numericValue <= 99999 || cleaned === '') {
+      onAmountChange(cleaned)
+    }
+  }
+
+  function handleBlur(value: string) {
+    const cleaned = sanitizeBuyInput(value)
+    if (cleaned && !Number.isNaN(Number.parseFloat(cleaned))) {
+      onAmountChange(Number.parseFloat(cleaned).toFixed(2))
+    }
+  }
+
+  function incrementAmount(delta: number) {
+    const nextValue = amountNumber + delta
 
     if (side === ORDER_SIDE.SELL) {
-      const userShares = getUserShares()
-      const isDisabled = userShares <= 0
+      if (nextValue <= availableShares) {
+        onAmountChange(nextValue.toFixed(2))
+      }
+      return
+    }
 
+    if (nextValue <= 99999) {
+      onAmountChange(nextValue.toFixed(2))
+    }
+  }
+
+  function decrementAmount(delta: number) {
+    const nextValue = Math.max(0, amountNumber - delta)
+    onAmountChange(nextValue.toFixed(2))
+  }
+
+  function renderActionButtons() {
+    const baseClasses = 'h-7 px-3 rounded-lg border text-[11px] transition-all duration-200 ease-in-out'
+
+    if (side === ORDER_SIDE.SELL) {
+      const isDisabled = availableShares <= 0
       return ['25%', '50%', '75%'].map(percentage => (
         <button
           type="button"
           key={percentage}
-          className={`${baseButtonClasses} ${
+          className={`${baseClasses} ${
             isDisabled
               ? 'cursor-not-allowed opacity-50'
               : 'hover:bg-white/10 dark:hover:bg-white/5'
@@ -36,58 +109,48 @@ export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputP
             if (isDisabled) {
               return
             }
-            const percentValue = Number.parseInt(percentage.replace('%', '')) / 100
-            const newValue = (userShares * percentValue).toFixed(2)
-            state.setAmount(newValue)
-            inputRef?.current?.focus()
+
+            const percentValue = Number.parseInt(percentage.replace('%', ''), 10) / 100
+            const newValue = (availableShares * percentValue).toFixed(2)
+            onAmountChange(newValue)
+            focusInput()
           }}
         >
           {percentage}
         </button>
       ))
     }
-    else {
-      const chipValues = isMobile
-        ? ['+$1', '+$20', '+$100']
-        : ['+$5', '+$25', '+$100']
 
-      return chipValues.map(chip => (
-        <button
-          type="button"
-          key={chip}
-          className={`${baseButtonClasses} hover:border-border hover:bg-white/10 dark:hover:bg-white/5`}
-          onClick={() => {
-            const chipValue = Number.parseInt(chip.substring(2))
-            const newValue = amount + chipValue
+    const chipValues = isMobile ? BUY_CHIPS_MOBILE : BUY_CHIPS_DESKTOP
+    return chipValues.map(chip => (
+      <button
+        type="button"
+        key={chip}
+        className={`${baseClasses} hover:border-border hover:bg-white/10 dark:hover:bg-white/5`}
+        onClick={() => {
+          const chipValue = Number.parseInt(chip.substring(2), 10)
+          const newValue = amountNumber + chipValue
 
-            if (newValue <= 999999999) {
-              state.setAmount(newValue.toFixed(2))
-              inputRef?.current?.focus()
-            }
-          }}
-        >
-          {chip}
-        </button>
-      ))
-    }
+          if (newValue <= 999999999) {
+            onAmountChange(newValue.toFixed(2))
+            focusInput()
+          }
+        }}
+      >
+        {chip}
+      </button>
+    ))
   }
 
   return (
     <>
-      {/* Amount/Shares */}
       {isMobile
         ? (
             <div className="mb-4">
               <div className="mb-4 flex items-center justify-center gap-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    const newValue = Math.max(
-                      0,
-                      amount - (side === ORDER_SIDE.SELL ? 0.1 : 1),
-                    )
-                    state.setAmount(newValue.toFixed(2))
-                  }}
+                  onClick={() => decrementAmount(side === ORDER_SIDE.SELL ? 0.1 : 1)}
                   className={`
                     flex size-12 items-center justify-center rounded-lg bg-muted text-2xl font-bold transition-colors
                     hover:bg-muted/80
@@ -107,61 +170,14 @@ export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputP
                       [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
                     `}
                     placeholder={side === ORDER_SIDE.SELL ? '0' : '$1.00'}
-                    value={
-                      side === ORDER_SIDE.SELL
-                        ? orderAmount
-                        : `$${orderAmount}`
-                    }
-                    onChange={(e) => {
-                      const rawValue = side === ORDER_SIDE.SELL
-                        ? e.target.value
-                        : e.target.value.replace(/[^0-9.]/g, '')
-
-                      const value = side === ORDER_SIDE.SELL
-                        ? Number.parseFloat(rawValue).toFixed(2)
-                        : rawValue
-
-                      const numericValue = Number.parseFloat(value)
-
-                      if (side === ORDER_SIDE.SELL) {
-                        // For sell, limit by the amount of shares the user has
-                        const userShares = getUserShares()
-                        if (numericValue <= userShares || value === '') {
-                          state.setAmount(value)
-                        }
-                      }
-                      else {
-                        // For buy, limit as before
-                        if (numericValue <= 99999 || value === '') {
-                          state.setAmount(value)
-                        }
-                      }
-                    }}
-                    onBlur={(e) => {
-                      const value = e.target.value.replace(/[^0-9.]/g, '')
-                      if (value && !Number.isNaN(Number.parseFloat(value))) {
-                        state.setAmount(Number.parseFloat(value).toFixed(2))
-                      }
-                    }}
+                    value={side === ORDER_SIDE.SELL ? amount : `$${amount}`}
+                    onChange={e => handleInputChange(e.target.value)}
+                    onBlur={e => handleBlur(e.target.value)}
                   />
                 </div>
                 <button
                   type="button"
-                  onClick={() => {
-                    const newValue = amount + (side === ORDER_SIDE.SELL ? 0.1 : 1)
-
-                    if (side === ORDER_SIDE.SELL) {
-                      const userShares = getUserShares()
-                      if (newValue <= userShares) {
-                        state.setAmount(newValue.toFixed(2))
-                      }
-                    }
-                    else {
-                      if (newValue <= 99999) {
-                        state.setAmount(newValue.toFixed(2))
-                      }
-                    }
-                  }}
+                  onClick={() => incrementAmount(side === ORDER_SIDE.SELL ? 0.1 : 1)}
                   className={`
                     flex size-12 items-center justify-center rounded-lg bg-muted text-2xl font-bold transition-colors
                     hover:bg-muted/80
@@ -179,9 +195,7 @@ export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputP
                   {side === ORDER_SIDE.SELL ? 'Shares' : 'Amount'}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {side === ORDER_SIDE.SELL
-                    ? ``
-                    : `Balance $${balance.text || '0.00'}`}
+                  {side === ORDER_SIDE.SELL ? '' : `Balance $${balance.text || '0.00'}`}
                 </div>
               </div>
               <div className="relative flex-1">
@@ -197,79 +211,43 @@ export default function EventOrderPanelInput({ isMobile }: EventOrderPanelInputP
                     [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
                   `}
                   placeholder={side === ORDER_SIDE.SELL ? '0' : '$0.00'}
-                  value={
-                    side === ORDER_SIDE.SELL
-                      ? orderAmount
-                      : `$${orderAmount}`
-                  }
-                  onChange={(e) => {
-                    const rawValue = side === ORDER_SIDE.SELL
-                      ? e.target.value
-                      : e.target.value.replace(/[^0-9.]/g, '')
-
-                    const value = side === ORDER_SIDE.SELL
-                      ? Number.parseFloat(rawValue).toFixed(2)
-                      : rawValue
-
-                    const numericValue = Number.parseFloat(value)
-
-                    if (side === ORDER_SIDE.SELL) {
-                      // For sell, limit by the amount of shares the user has
-                      const userShares = getUserShares()
-                      if (numericValue <= userShares || value === '') {
-                        state.setAmount(value)
-                      }
-                    }
-                    else {
-                      // For buy, limit as before
-                      if (numericValue <= 99999 || value === '') {
-                        state.setAmount(value)
-                      }
-                    }
-                  }}
-                  onBlur={(e) => {
-                    const value = e.target.value.replace(/[^0-9.]/g, '')
-                    if (value && !Number.isNaN(Number.parseFloat(value))) {
-                      state.setAmount(value)
-                    }
-                  }}
+                  value={side === ORDER_SIDE.SELL ? amount : `$${amount}`}
+                  onChange={e => handleInputChange(e.target.value)}
+                  onBlur={e => handleBlur(e.target.value)}
                 />
               </div>
             </div>
           )}
 
-      {/* Quick chips */}
       <div
-        className={`mb-3 flex gap-2 ${
-          isMobile ? 'justify-center' : 'justify-end'
-        }`}
+        className={cn(
+          'mb-3 flex gap-2',
+          isMobile ? 'justify-center' : 'justify-end',
+        )}
       >
-        {renderActionButtons(isMobile)}
-        {/* Max button */}
+        {renderActionButtons()}
         <button
           type="button"
           className={cn(
             'h-7 rounded-lg border px-3 text-[11px] font-semibold transition-all duration-200 ease-in-out',
-            side === ORDER_SIDE.SELL && getUserShares() <= 0
+            side === ORDER_SIDE.SELL && availableShares <= 0
               ? 'cursor-not-allowed opacity-50'
               : 'hover:border-border hover:bg-white/10 dark:hover:bg-white/5',
           )}
-          disabled={side === ORDER_SIDE.SELL && getUserShares() <= 0}
+          disabled={side === ORDER_SIDE.SELL && availableShares <= 0}
           onClick={() => {
             if (side === ORDER_SIDE.SELL) {
-              const userShares = getUserShares()
-              if (userShares <= 0) {
+              if (availableShares <= 0) {
                 return
               }
-              state.setAmount(userShares.toFixed(2))
+              onAmountChange(availableShares.toFixed(2))
             }
             else {
               const maxBalance = balance.raw
-              // Limit to 999,999,999
               const limitedBalance = Math.min(maxBalance, 999999999)
-              state.setAmount(limitedBalance.toFixed(2))
+              onAmountChange(limitedBalance.toFixed(2))
             }
-            inputRef?.current?.focus()
+            focusInput()
           }}
         >
           MAX

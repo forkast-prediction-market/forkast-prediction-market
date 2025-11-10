@@ -1,0 +1,136 @@
+import type { QueryClient } from '@tanstack/react-query'
+import type { OrderValidationError } from '@/lib/orders/validation'
+import type { OrderSide } from '@/types'
+import { toast } from 'sonner'
+import EventTradeToast from '@/app/(platform)/event/[slug]/_components/EventTradeToast'
+import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
+import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
+import { triggerConfetti } from '@/lib/utils'
+
+interface HandleValidationErrorArgs {
+  openWalletModal: () => Promise<void> | void
+}
+
+interface OrderSuccessFeedbackArgs {
+  side: OrderSide
+  amountInput: string
+  outcomeText: string
+  eventTitle: string
+  sellAmountValue: number
+  avgSellPrice: string
+  buyPrice?: number
+  queryClient: QueryClient
+  eventSlug: string
+  userId?: string
+  outcomeIndex: number
+  lastMouseEvent: any
+}
+
+export function handleValidationError(reason: OrderValidationError, { openWalletModal }: HandleValidationErrorArgs) {
+  switch (reason) {
+    case 'IS_LOADING':
+      toast.info('Order already processing')
+      break
+    case 'NOT_CONNECTED':
+      toast.error('Connect your wallet to continue.')
+      queueMicrotask(() => openWalletModal())
+      break
+    case 'MISSING_USER':
+      toast.error('Sign in to place orders.')
+      queueMicrotask(() => openWalletModal())
+      break
+    case 'MISSING_MARKET':
+    case 'MISSING_OUTCOME':
+      toast.error('Market not available', {
+        description: 'Please select a valid market and outcome.',
+      })
+      break
+    case 'INVALID_AMOUNT':
+      toast.error('Invalid amount', {
+        description: 'Please enter an amount greater than 0.',
+      })
+      break
+    case 'INVALID_LIMIT_PRICE':
+      toast.error('Invalid limit price', {
+        description: 'Enter a valid limit price before submitting.',
+      })
+      break
+    case 'INVALID_LIMIT_SHARES':
+      toast.error('Invalid shares', {
+        description: 'Enter the number of shares for your limit order.',
+      })
+      break
+    default:
+      toast.error('Unable to submit order. Please review your inputs.')
+  }
+}
+
+export function handleOrderSuccessFeedback({
+  side,
+  amountInput,
+  outcomeText,
+  eventTitle,
+  sellAmountValue,
+  avgSellPrice,
+  buyPrice,
+  queryClient,
+  eventSlug,
+  userId,
+  outcomeIndex,
+  lastMouseEvent,
+}: OrderSuccessFeedbackArgs) {
+  if (side === ORDER_SIDE.SELL) {
+    toast.success(
+      `Sell ${amountInput} shares on ${outcomeText}`,
+      {
+        description: (
+          <EventTradeToast title={eventTitle}>
+            Received
+            {' '}
+            {formatCurrency(sellAmountValue)}
+            {' '}
+            @
+            {' '}
+            {avgSellPrice}
+          </EventTradeToast>
+        ),
+      },
+    )
+  }
+  else {
+    const amountValue = Number.parseFloat(amountInput || '0') || 0
+    const buyAmountLabel = formatCurrency(amountValue)
+    const priceLabel = formatCentsLabel(buyPrice, { fallback: '—' })
+
+    toast.success(
+      `Buy ${buyAmountLabel} on ${outcomeText}`,
+      {
+        description: (
+          <EventTradeToast title={eventTitle}>
+            {buyAmountLabel}
+            {' '}
+            @
+            {' '}
+            {priceLabel}
+          </EventTradeToast>
+        ),
+      },
+    )
+  }
+
+  triggerConfetti(outcomeIndex === OUTCOME_INDEX.YES ? 'yes' : 'no', lastMouseEvent)
+
+  if (userId) {
+    queryClient.invalidateQueries({
+      queryKey: ['user-event-positions', eventSlug, userId],
+    })
+  }
+}
+
+export function handleOrderErrorFeedback(message: string, description?: string) {
+  toast.error(message, description ? { description } : undefined)
+}
+
+export function notifyWalletApprovalPrompt() {
+  toast.info('Approve the transaction on your wallet.')
+}

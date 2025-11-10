@@ -1,10 +1,12 @@
+import type { Market } from '@/types'
 import Image from 'next/image'
-import { useOrder } from '@/stores/useOrder'
 
-export default function EventOrderPanelMarketInfo() {
-  const state = useOrder()
+interface EventOrderPanelMarketInfoProps {
+  market: Market | null
+}
 
-  if (!state.market) {
+export default function EventOrderPanelMarketInfo({ market }: EventOrderPanelMarketInfoProps) {
+  if (!market) {
     return <></>
   }
 
@@ -12,14 +14,14 @@ export default function EventOrderPanelMarketInfo() {
     <div className="mb-4">
       <div className="flex items-center gap-3">
         <Image
-          src={state.market.icon_url}
-          alt={state.market.title}
+          src={market.icon_url}
+          alt={market.title}
           width={42}
           height={42}
           className="shrink-0 rounded-sm"
         />
         <span className="text-sm font-bold">
-          {state.market.short_title || state.market.title}
+          {market.short_title || market.title}
         </span>
       </div>
     </div>
