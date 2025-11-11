@@ -205,10 +205,10 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     ),
     [normalizedHistory, chartSeries],
   )
-  const chartSignature = useMemo(
-    () => `${event.id}:${activeTimeRange}`,
-    [event.id, activeTimeRange],
-  )
+  const chartSignature = useMemo(() => {
+    const seriesKeys = chartSeries.map(series => series.key).join(',')
+    return `${event.id}:${activeTimeRange}:${seriesKeys}`
+  }, [event.id, activeTimeRange, chartSeries])
 
   const legendEntries = useMemo<Array<SeriesConfig & { value: number | null }>>(
     () => legendSeries.map((seriesItem) => {
