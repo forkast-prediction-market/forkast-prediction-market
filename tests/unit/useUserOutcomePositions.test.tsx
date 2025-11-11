@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { renderHook, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { useUserOutcomePositions } from '@/hooks/useUserOutcomePositions'
+import { useUserOutcomePositions } from '@/app/(platform)/event/[slug]/_hooks/useUserOutcomePositions'
 import { OUTCOME_INDEX } from '@/lib/constants'
 
 describe('useUserOutcomePositions', () => {

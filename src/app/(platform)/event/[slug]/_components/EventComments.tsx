@@ -3,10 +3,10 @@
 import type { Event, User } from '@/types'
 import { AlertCircleIcon } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
+import { useInfiniteComments } from '@/app/(platform)/event/[slug]/_hooks/useInfiniteComments'
 import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { useInfiniteComments } from '@/hooks/useInfiniteComments'
 import EventCommentForm from './EventCommentForm'
 import EventCommentItem from './EventCommentItem'
 

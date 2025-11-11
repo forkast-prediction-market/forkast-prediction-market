@@ -1,6 +1,6 @@
 'use client'
 
-import { useAdminUsersTable } from '@/hooks/useAdminUsers'
+import { useAdminUsersTable } from '@/app/admin/_hooks/useAdminUsers'
 import { columns } from './columns'
 import { DataTable } from './DataTable'
 
