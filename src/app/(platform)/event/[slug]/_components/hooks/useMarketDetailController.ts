@@ -39,11 +39,13 @@ export function useMarketDetailController(eventId: string): MarketDetailControll
 
   const collapseMarket = useCallback(() => {
     setExpandedMarketId(null)
+    setOrderBookPollingEnabled(false)
   }, [])
 
   const toggleMarket = useCallback((marketId: string) => {
     setExpandedMarketId((current) => {
       if (current === marketId) {
+        setOrderBookPollingEnabled(false)
         return null
       }
 
