@@ -4,7 +4,7 @@ import type { TimeRange } from '@/app/(platform)/event/[slug]/_components/useEve
 import type { PredictionChartCursorSnapshot, SeriesConfig } from '@/components/PredictionChart'
 import type { Event } from '@/types'
 import { TrendingDownIcon } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import {
   useUpdateEventOutcomeChanceChanges,
   useUpdateEventOutcomeChances,
@@ -14,7 +14,6 @@ import {
   buildMarketTargets,
   CURSOR_STEP_MS,
   TIME_RANGES,
-
   useEventPriceHistory,
 } from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
 import PredictionChart from '@/components/PredictionChart'
@@ -29,6 +28,17 @@ interface EventChartProps {
 const CHART_COLORS = ['#FF6600', '#2D9CDB', '#4E6377', '#FDC500']
 const MAX_SERIES = 4
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000
+
+function buildMarketSignature(event: Event) {
+  return event.markets
+    .map((market) => {
+      const outcomeSignature = market.outcomes
+        .map(outcome => `${outcome.id}:${outcome.updated_at}:${outcome.token_id}`)
+        .join(',')
+      return `${market.condition_id}:${market.updated_at}:${outcomeSignature}`
+    })
+    .join('|')
+}
 
 function computeChanceChanges(
   points: Array<Record<string, number | Date> & { date: Date }>,
@@ -110,7 +120,7 @@ function buildChartSeries(event: Event, marketIds: string[]) {
     .filter((entry): entry is { key: string, name: string, color: string } => entry !== null)
 }
 
-export default function EventChart({ event, isMobile }: EventChartProps) {
+function EventChartComponent({ event, isMobile }: EventChartProps) {
   const isBinaryMarket = useIsBinaryMarket()
   const updateOutcomeChances = useUpdateEventOutcomeChances()
   const updateMarketYesPrices = useUpdateMarketYesPrices()
@@ -327,3 +337,19 @@ export default function EventChart({ event, isMobile }: EventChartProps) {
     </div>
   )
 }
+
+function areChartPropsEqual(prev: EventChartProps, next: EventChartProps) {
+  if (prev.isMobile !== next.isMobile) {
+    return false
+  }
+  if (prev.event.id !== next.event.id) {
+    return false
+  }
+  if (prev.event.updated_at !== next.event.updated_at) {
+    return false
+  }
+
+  return buildMarketSignature(prev.event) === buildMarketSignature(next.event)
+}
+
+export default memo(EventChartComponent, areChartPropsEqual)
