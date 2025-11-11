@@ -2,7 +2,7 @@ import type { Event } from '@/types'
 import { useIsFetching, useQueryClient } from '@tanstack/react-query'
 import { RefreshCwIcon, TriangleIcon } from 'lucide-react'
 import Image from 'next/image'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import EventOrderBook, { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
 import {
   useEventOutcomeChanceChanges,
@@ -23,7 +23,6 @@ const MARKET_DETAIL_TABS: Array<{ id: MarketDetailTab, label: string }> = [
   { id: 'graph', label: 'Graph' },
   { id: 'resolution', label: 'Resolution' },
 ]
-
 interface EventMarketsProps {
   event: Event
 }
@@ -43,7 +42,9 @@ export default function EventMarkets({ event }: EventMarketsProps) {
   const [orderBookPollingEnabled, setOrderBookPollingEnabled] = useState(false)
   const [isManualChanceRefreshing, setIsManualChanceRefreshing] = useState(false)
   const [marketDetailTabById, setMarketDetailTabById] = useState<Record<string, MarketDetailTab>>({})
+  const [chancePulseToken, setChancePulseToken] = useState(0)
   const priceHistoryIsFetching = useIsFetching({ queryKey: priceHistoryQueryKey }) > 0
+  const priceHistoryWasFetchingRef = useRef(priceHistoryIsFetching)
   const isChanceRefreshDisabled = isManualChanceRefreshing || priceHistoryIsFetching
   const eventTokenIds = useMemo(() => {
     const ids = new Set<string>()
@@ -80,6 +81,15 @@ export default function EventMarkets({ event }: EventMarketsProps) {
   }, [event.markets, hasChanceData, outcomeChances])
 
   useEffect(() => {
+    const wasFetching = priceHistoryWasFetchingRef.current
+    priceHistoryWasFetchingRef.current = priceHistoryIsFetching
+
+    if (hasChanceData && wasFetching && !priceHistoryIsFetching) {
+      setChancePulseToken(token => token + 1)
+    }
+  }, [priceHistoryIsFetching, hasChanceData])
+
+  useEffect(() => {
     if (!state.market) {
       if (isBinaryMarket) {
         state.setMarket(event.markets[0])
@@ -102,6 +112,11 @@ export default function EventMarkets({ event }: EventMarketsProps) {
 
   useEffect(() => {
     setOrderBookPollingEnabled(false)
+  }, [event.id])
+
+  useEffect(() => {
+    setChancePulseToken(0)
+    priceHistoryWasFetchingRef.current = true
   }, [event.id])
 
   async function handleChanceRefresh() {
@@ -197,6 +212,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
           const chanceChangeLabel = `${roundedChanceChange}%`
           const isChanceChangePositive = normalizedChanceChange > 0
           const chanceChangeColorClass = isChanceChangePositive ? 'text-yes' : 'text-no'
+          const chanceHighlightKey = `${market.condition_id}-${chancePulseToken}`
           const lastPriceOverrideCents = (() => {
             if (yesPriceCentsOverride === null) {
               return null
@@ -295,8 +311,9 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <span
+                        key={`mobile-chance-${chanceHighlightKey}`}
                         className={cn(
-                          'text-lg font-bold',
+                          'text-lg font-bold motion-safe:animate-[pulse_0.8s_ease-out] motion-reduce:animate-none',
                           isSubOnePercent ? 'text-muted-foreground' : 'text-foreground',
                         )}
                       >
@@ -401,8 +418,9 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                   <div className="flex w-1/5 justify-center">
                     <div className="flex items-center gap-2">
                       <span
+                        key={`desktop-chance-${chanceHighlightKey}`}
                         className={cn(
-                          'text-3xl font-bold',
+                          'text-3xl font-bold motion-safe:animate-[pulse_0.8s_ease-out] motion-reduce:animate-none',
                           isSubOnePercent ? 'text-muted-foreground' : 'text-foreground',
                         )}
                       >

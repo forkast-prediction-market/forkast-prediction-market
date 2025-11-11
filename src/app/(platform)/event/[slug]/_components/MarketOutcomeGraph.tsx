@@ -46,6 +46,10 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
     }],
     [outcome.outcome_text],
   )
+  const chartSignature = useMemo(
+    () => `${market.condition_id}:${outcome.id}:${activeTimeRange}`,
+    [market.condition_id, outcome.id, activeTimeRange],
+  )
 
   if (chartData.length === 0) {
     return (
@@ -65,6 +69,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
             width={900}
             height={260}
             margin={{ top: 20, right: 40, bottom: 48, left: 0 }}
+            dataSignature={chartSignature}
             cursorStepMs={CURSOR_STEP_MS[activeTimeRange]}
           />
         </div>
