@@ -1,13 +1,13 @@
 'use client'
 
-import type { AdminCategoryRow } from '@/hooks/useAdminCategories'
+import type { AdminCategoryRow } from '@/app/admin/categories/_hooks/useAdminCategories'
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { DataTable } from '@/app/admin/_components/DataTable'
 import { updateCategoryAction } from '@/app/admin/categories/_actions/update-category'
 import { createCategoryColumns } from '@/app/admin/categories/_components/columns'
-import { useAdminCategoriesTable } from '@/hooks/useAdminCategories'
+import { useAdminCategoriesTable } from '@/app/admin/categories/_hooks/useAdminCategories'
 
 export default function AdminCategoriesTable() {
   const queryClient = useQueryClient()

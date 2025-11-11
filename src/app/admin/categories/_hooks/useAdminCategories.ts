@@ -1,39 +1,45 @@
 import { useQuery } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
-import { useDebounce } from './useDebounce'
+import { useDebounce } from '@/hooks/useDebounce'
 
-interface AdminUserRow {
-  id: string
-  username?: string | null
-  email: string
-  address: string
-  created_label: string
-  affiliate_code?: string | null
-  referred_by_display?: string | null
-  referred_by_profile_url?: string | null
-  is_admin: boolean
-  avatarUrl: string
-  profileUrl: string
+export interface AdminCategoryRow {
+  id: number
+  name: string
+  slug: string
+  is_main_category: boolean
+  is_hidden: boolean
+  hide_events: boolean
+  display_order: number
+  parent_tag_id: number | null
+  parent_name: string | null
+  parent_slug: string | null
+  active_markets_count: number
   created_at: string
-  search_text: string
+  updated_at: string
 }
 
-interface UseAdminUsersParams {
+interface UseAdminCategoriesParams {
   limit?: number
   search?: string
-  sortBy?: 'username' | 'email' | 'address' | 'created_at'
+  sortBy?: 'name' | 'slug' | 'display_order' | 'created_at' | 'updated_at' | 'active_markets_count'
   sortOrder?: 'asc' | 'desc'
   pageIndex?: number
 }
 
-interface AdminUsersResponse {
-  data: AdminUserRow[]
-  count: number
+interface AdminCategoriesResponse {
+  data: AdminCategoryRow[]
   totalCount: number
 }
 
-async function fetchAdminUsers(params: UseAdminUsersParams): Promise<AdminUsersResponse> {
-  const { limit = 50, search, sortBy = 'created_at', sortOrder = 'desc', pageIndex = 0 } = params
+async function fetchAdminCategories(params: UseAdminCategoriesParams): Promise<AdminCategoriesResponse> {
+  const {
+    limit = 50,
+    search,
+    sortBy = 'display_order',
+    sortOrder = 'asc',
+    pageIndex = 0,
+  } = params
+
   const offset = pageIndex * limit
 
   const searchParams = new URLSearchParams({
@@ -47,29 +53,36 @@ async function fetchAdminUsers(params: UseAdminUsersParams): Promise<AdminUsersR
     searchParams.set('search', search.trim())
   }
 
-  const response = await fetch(`/admin/api/users?${searchParams.toString()}`)
+  const response = await fetch(`/admin/api/categories?${searchParams.toString()}`)
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch users: ${response.statusText}`)
+    const payload = await response.json().catch(() => ({}))
+    const message = typeof payload?.error === 'string' ? payload.error : response.statusText
+    throw new Error(message || 'Failed to fetch categories')
   }
 
   return response.json()
 }
 
-export function useAdminUsers(params: UseAdminUsersParams = {}) {
-  const { limit = 50, search, sortBy = 'created_at', sortOrder = 'desc', pageIndex = 0 } = params
+export function useAdminCategories(params: UseAdminCategoriesParams = {}) {
+  const {
+    limit = 50,
+    search,
+    sortBy = 'display_order',
+    sortOrder = 'asc',
+    pageIndex = 0,
+  } = params
 
-  // Debounce search to avoid excessive API calls
   const debouncedSearch = useDebounce(search, 300)
 
   const queryKey = useMemo(() => [
-    'admin-users',
+    'admin-categories',
     { limit, search: debouncedSearch, sortBy, sortOrder, pageIndex },
   ], [limit, debouncedSearch, sortBy, sortOrder, pageIndex])
 
   const query = useQuery({
     queryKey,
-    queryFn: () => fetchAdminUsers({
+    queryFn: () => fetchAdminCategories({
       limit,
       search: debouncedSearch,
       sortBy,
@@ -90,14 +103,14 @@ export function useAdminUsers(params: UseAdminUsersParams = {}) {
   }
 }
 
-export function useAdminUsersTable() {
+export function useAdminCategoriesTable() {
   const [pageIndex, setPageIndex] = useState(0)
   const [pageSize, setPageSize] = useState(50)
   const [search, setSearch] = useState('')
-  const [sortBy, setSortBy] = useState<'username' | 'email' | 'address' | 'created_at'>('created_at')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
+  const [sortBy, setSortBy] = useState<'name' | 'slug' | 'display_order' | 'created_at' | 'updated_at' | 'active_markets_count'>('display_order')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
-  const { data, isLoading, error, retry } = useAdminUsers({
+  const { data, isLoading, error, retry } = useAdminCategories({
     limit: pageSize,
     search,
     sortBy,
@@ -112,11 +125,11 @@ export function useAdminUsersTable() {
 
   const handleSortChange = useCallback((column: string | null, order: 'asc' | 'desc' | null) => {
     if (column === null || order === null) {
-      setSortBy('created_at')
-      setSortOrder('desc')
+      setSortBy('display_order')
+      setSortOrder('asc')
     }
     else {
-      setSortBy(column as 'username' | 'email' | 'address' | 'created_at')
+      setSortBy(column as typeof sortBy)
       setSortOrder(order)
     }
     setPageIndex(0)
@@ -132,23 +145,16 @@ export function useAdminUsersTable() {
   }, [])
 
   return {
-    // Data
-    users: data?.data || [],
+    categories: data?.data || [],
     totalCount: data?.totalCount || 0,
-
-    // Loading states
     isLoading,
     error: error?.message || null,
     retry,
-
-    // Table state
     pageIndex,
     pageSize,
     search,
     sortBy,
     sortOrder,
-
-    // State setters
     handleSearchChange,
     handleSortChange,
     handlePageChange,

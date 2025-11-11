@@ -1,6 +1,6 @@
 'use client'
 
-import type { EventMarketRow } from '@/app/(platform)/event/[slug]/_components/hooks/useEventMarketRows'
+import type { EventMarketRow } from '@/app/(platform)/event/[slug]/_hooks/useEventMarketRows'
 import { TriangleIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
