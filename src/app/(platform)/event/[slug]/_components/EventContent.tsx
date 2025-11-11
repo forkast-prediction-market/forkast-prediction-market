@@ -28,14 +28,30 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
   const setEvent = useOrder(state => state.setEvent)
   const setMarket = useOrder(state => state.setMarket)
   const setOutcome = useOrder(state => state.setOutcome)
+  const currentEventId = useOrder(state => state.event?.id)
   const isMobile = useIsMobile()
   const shouldShowSingleMarketOrderBook = event.total_markets_count === 1 && event.markets[0]?.outcomes?.length >= 2
 
   useEffect(() => {
     setEvent(event)
-    setMarket(event.markets[0])
-    setOutcome(event.markets[0].outcomes[0])
-  }, [event, setEvent, setMarket, setOutcome])
+  }, [event, setEvent])
+
+  useEffect(() => {
+    if (currentEventId === event.id) {
+      return
+    }
+
+    const defaultMarket = event.markets[0]
+    if (!defaultMarket) {
+      return
+    }
+
+    setMarket(defaultMarket)
+    const defaultOutcome = defaultMarket.outcomes[0]
+    if (defaultOutcome) {
+      setOutcome(defaultOutcome)
+    }
+  }, [currentEventId, event, setMarket, setOutcome])
 
   return (
     <EventOutcomeChanceProvider eventId={event.id}>

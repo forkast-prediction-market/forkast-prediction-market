@@ -88,7 +88,6 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const avgSellPriceLabel = formatCentsLabel(avgSellPriceValue, { fallback: '—' })
   const avgBuyPriceLabel = formatCentsLabel(state.outcome?.buy_price, { fallback: '—' })
   const sellAmountLabel = formatCurrency(sellAmountValue)
-  const isSellOverPosition = state.side === ORDER_SIDE.SELL && amountNumber > selectedShares
 
   function focusInput() {
     state.inputRef?.current?.focus()
@@ -331,7 +330,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
       <EventOrderPanelSubmitButton
         isLoading={state.isLoading}
-        isDisabled={state.isLoading || amountNumber <= 0 || isSellOverPosition}
+        isDisabled={state.isLoading}
         onClick={event => state.setLastMouseEvent(event)}
       />
       <EventOrderPanelTermsDisclaimer />
