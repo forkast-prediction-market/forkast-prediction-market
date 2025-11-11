@@ -57,7 +57,7 @@ export default function EventCard({ event }: EventCardProps) {
   }
 
   const isInTradingMode = isOpen && selectedOutcome
-  const isBinaryMarket = event.markets.length === 1
+  const isSingleMarket = event.markets.length === 1
   const yesOutcome = event.markets[0].outcomes[0]
   const noOutcome = event.markets[0].outcomes[1]
   const hasRecentMarket = event.markets.some(
@@ -107,7 +107,7 @@ export default function EventCard({ event }: EventCardProps) {
           `Buy ${formatCurrency(safeAmount)} on ${
             selectedOutcome.type === 'yes'
               ? selectedOutcome.name
-              : (isBinaryMarket ? selectedOutcome.name : `Against ${selectedOutcome.name}`)
+              : (isSingleMarket ? selectedOutcome.name : `Against ${selectedOutcome.name}`)
           }`,
           {
             description: (
@@ -217,7 +217,7 @@ export default function EventCard({ event }: EventCardProps) {
                 </button>
               )
             : (
-                isBinaryMarket && (
+                isSingleMarket && (
                   <div className="relative -mt-3 flex flex-col items-center">
                     <div className="relative">
                       <svg
@@ -367,7 +367,7 @@ export default function EventCard({ event }: EventCardProps) {
                               {' '}
                               {selectedOutcome.type === 'yes'
                                 ? selectedOutcome.name
-                                : (isBinaryMarket ? selectedOutcome.name : `Against ${selectedOutcome.name}`)}
+                                : (isSingleMarket ? selectedOutcome.name : `Against ${selectedOutcome.name}`)}
                             </div>
                             <div className="text-xs opacity-90">
                               to win $
@@ -381,7 +381,7 @@ export default function EventCard({ event }: EventCardProps) {
             : (
                 <>
                   {/* Show multi-market options only for non-binary markets */}
-                  {!isBinaryMarket && (
+                  {!isSingleMarket && (
                     <div className="mt-auto mb-1 scrollbar-hide max-h-18 space-y-2 overflow-y-auto">
                       {event.markets.map(market => (
                         <div
@@ -447,7 +447,7 @@ export default function EventCard({ event }: EventCardProps) {
                   )}
 
                   {/* Trading Actions - Only for binary markets */}
-                  {isBinaryMarket && yesOutcome && noOutcome && (
+                  {isSingleMarket && yesOutcome && noOutcome && (
                     <div className="mt-auto mb-2 grid grid-cols-2 gap-2">
                       <Button
                         type="button"

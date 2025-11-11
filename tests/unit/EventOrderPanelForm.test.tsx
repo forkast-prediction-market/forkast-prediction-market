@@ -50,7 +50,7 @@ let mockUser: { id: string, address: string } | null = { id: 'user-1', address: 
 let mockAmountAsNumber = 10
 let mockYesPrice = 60
 let mockNoPrice = 40
-let mockIsBinaryMarket = false
+let mockisSingleMarket = false
 let mockIsLimitOrder = false
 let orderState: any
 let queryClient: QueryClient
@@ -64,7 +64,7 @@ vi.mock('@/stores/useOrder', () => ({
   useAmountAsNumber: () => mockAmountAsNumber,
   useYesPrice: () => mockYesPrice,
   useNoPrice: () => mockNoPrice,
-  useIsBinaryMarket: () => mockIsBinaryMarket,
+  useIsSingleMarket: () => mockisSingleMarket,
   useIsLimitOrder: () => mockIsLimitOrder,
 }))
 
@@ -184,7 +184,7 @@ describe('eventOrderPanelForm', () => {
     mockAmountAsNumber = 10
     mockYesPrice = 60
     mockNoPrice = 40
-    mockIsBinaryMarket = false
+    mockisSingleMarket = false
     mockIsLimitOrder = false
 
     orderState = {

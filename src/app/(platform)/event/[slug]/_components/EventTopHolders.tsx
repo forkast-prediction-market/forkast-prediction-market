@@ -10,7 +10,7 @@ import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatPosition } from '@/lib/formatters'
-import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
+import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
 
 interface EventTopHoldersProps {
   event: Event
@@ -52,13 +52,13 @@ function useEventHolders(eventSlug: string, conditionId?: string) {
 }
 
 export default function EventTopHolders({ event }: EventTopHoldersProps) {
-  const isBinaryMarket = useIsBinaryMarket()
+  const isSingleMarket = useIsSingleMarket()
   const orderState = useOrder()
   const [selectedMarket, setSelectedMarket] = useState<string>('')
   const fallbackConditionId = event.markets[0]?.condition_id
 
   useEffect(() => {
-    if (isBinaryMarket) {
+    if (isSingleMarket) {
       queueMicrotask(() => setSelectedMarket(''))
     }
     else if (orderState.market && !selectedMarket) {
@@ -67,13 +67,13 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
     else if (!selectedMarket && event.markets.length > 0) {
       queueMicrotask(() => setSelectedMarket(event.markets[0].condition_id))
     }
-  }, [isBinaryMarket, orderState.market, selectedMarket, event.markets])
+  }, [isSingleMarket, orderState.market, selectedMarket, event.markets])
 
   useEffect(() => {
-    if (!isBinaryMarket && orderState.market && selectedMarket !== orderState.market.condition_id) {
+    if (!isSingleMarket && orderState.market && selectedMarket !== orderState.market.condition_id) {
       queueMicrotask(() => setSelectedMarket(orderState.market!.condition_id))
     }
-  }, [isBinaryMarket, orderState.market, selectedMarket])
+  }, [isSingleMarket, orderState.market, selectedMarket])
 
   const conditionId = selectedMarket || fallbackConditionId
   const { data, isLoading, error } = useEventHolders(event.slug, conditionId)
@@ -144,7 +144,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
 
   return (
     <div className="mt-6">
-      {!isBinaryMarket && event.markets.length > 1 && (
+      {!isSingleMarket && event.markets.length > 1 && (
         <div className="mb-4">
           <Select value={selectedMarket} onValueChange={handleMarketChange}>
             <SelectTrigger className="w-32">

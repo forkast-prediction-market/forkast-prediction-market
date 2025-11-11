@@ -18,7 +18,7 @@ import {
 } from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
 import PredictionChart from '@/components/PredictionChart'
 import { cn, sanitizeSvg } from '@/lib/utils'
-import { useIsBinaryMarket } from '@/stores/useOrder'
+import { useIsSingleMarket } from '@/stores/useOrder'
 
 interface EventChartProps {
   event: Event
@@ -121,7 +121,7 @@ function buildChartSeries(event: Event, marketIds: string[]) {
 }
 
 function EventChartComponent({ event, isMobile }: EventChartProps) {
-  const isBinaryMarket = useIsBinaryMarket()
+  const isSingleMarket = useIsSingleMarket()
   const updateOutcomeChances = useUpdateEventOutcomeChances()
   const updateMarketYesPrices = useUpdateMarketYesPrices()
   const updateOutcomeChanceChanges = useUpdateEventOutcomeChanceChanges()
@@ -242,7 +242,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     <div className="grid gap-4">
       <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          {isBinaryMarket
+          {isSingleMarket
             ? (
                 <>
                   <span className="inline-flex items-center gap-1 text-xl font-bold text-primary">

@@ -5,7 +5,7 @@ import EventOrderPanelForm from '@/app/(platform)/event/[slug]/_components/Event
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
 import { formatCentsLabel } from '@/lib/formatters'
-import { useIsBinaryMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
+import { useIsSingleMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
 
 interface EventMobileOrderPanelProps {
   event: Event
@@ -13,7 +13,7 @@ interface EventMobileOrderPanelProps {
 
 export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelProps) {
   const state = useOrder()
-  const isBinaryMarket = useIsBinaryMarket()
+  const isSingleMarket = useIsSingleMarket()
   const yesPrice = useYesPrice()
   const noPrice = useNoPrice()
 
@@ -24,7 +24,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
       repositionInputs={false}
     >
       <DrawerTrigger asChild>
-        {isBinaryMarket && (
+        {isSingleMarket && (
           <div className="fixed right-0 bottom-0 left-0 border-t bg-background p-4 lg:hidden">
             <div className="flex gap-2">
               <Button

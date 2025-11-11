@@ -11,7 +11,7 @@ import MarketOutcomeGraph from '@/app/(platform)/event/[slug]/_components/Market
 import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { cn } from '@/lib/utils'
-import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
+import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
 
 const MARKET_DETAIL_TABS: Array<{ id: MarketDetailTab, label: string }> = [
   { id: 'orderBook', label: 'Order Book' },
@@ -31,7 +31,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
   const setSide = useOrder(state => state.setSide)
   const setIsMobileOrderPanelOpen = useOrder(state => state.setIsMobileOrderPanelOpen)
   const inputRef = useOrder(state => state.inputRef)
-  const isBinaryMarket = useIsBinaryMarket()
+  const isSingleMarket = useIsSingleMarket()
   const { rows: marketRows, hasChanceData } = useEventMarketRows(event)
   const {
     expandedMarketId,
@@ -63,7 +63,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
 
     return Array.from(ids)
   }, [event.markets])
-  const shouldEnableOrderBookPolling = !isBinaryMarket && orderBookPollingEnabled
+  const shouldEnableOrderBookPolling = !isSingleMarket && orderBookPollingEnabled
   const {
     data: orderBookSummaries,
     isLoading: isOrderBookLoading,
@@ -100,7 +100,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
     }
   }, [expandMarket, inputRef, setIsMobileOrderPanelOpen, setMarket, setOutcome, setSide])
 
-  if (isBinaryMarket || !hasChanceData) {
+  if (isSingleMarket || !hasChanceData) {
     return <></>
   }
 
