@@ -29,9 +29,9 @@ test.describe('desktop and mobile', () => {
     await page.getByTestId('header-menu-button').click()
     await page.getByTestId('header-docs-link').click()
 
-    await page.waitForURL('/docs')
+    await page.waitForURL('/docs/users')
 
-    expect(page.url()).toContain('/docs')
+    expect(page.url()).toContain('/docs/users')
   })
 
   test('redirects to terms from header menu', async ({ page }) => {

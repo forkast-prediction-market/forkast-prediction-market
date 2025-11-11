@@ -36,7 +36,7 @@ export default function HeaderDropdownUserMenuGuest() {
           <Link href="/public">Rewards</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/docs" data-testid="header-docs-link">Documentation</Link>
+          <Link href="/docs/users" data-testid="header-docs-link">Documentation</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/terms-of-use" data-testid="header-terms-link">Terms of Use</Link>
