@@ -40,6 +40,7 @@ interface PredictionChartProps {
   width?: number
   height?: number
   margin?: { top: number, right: number, bottom: number, left: number }
+  dataSignature?: string | number
   onCursorDataChange?: (snapshot: PredictionChartCursorSnapshot | null) => void
   cursorStepMs?: number
 }
@@ -74,6 +75,7 @@ const FUTURE_LINE_OPACITY_LIGHT = 0.35
 const INITIAL_REVEAL_DURATION = 1400
 const INTERACTION_BASE_REVEAL_DURATION = 1100
 const DEFAULT_Y_AXIS_MAX = 100
+const DATA_POINT_EPSILON = 0.0001
 
 function clamp01(value: number) {
   if (value < 0) {
@@ -99,6 +101,31 @@ function snapTimestampToInterval(valueMs: number, stepMs?: number, offsetMs = 0)
   const relative = valueMs - offsetMs
   const snappedRelative = Math.round(relative / stepMs) * stepMs
   return offsetMs + snappedRelative
+}
+
+function arePointsEqual(a: DataPoint, b: DataPoint) {
+  const keys = new Set([...Object.keys(a), ...Object.keys(b)])
+  keys.delete('date')
+
+  for (const key of keys) {
+    const aValue = a[key]
+    const bValue = b[key]
+
+    if (typeof aValue === 'number' || typeof bValue === 'number') {
+      const numericA = typeof aValue === 'number' ? aValue : 0
+      const numericB = typeof bValue === 'number' ? bValue : 0
+      if (Math.abs(numericA - numericB) > DATA_POINT_EPSILON) {
+        return false
+      }
+      continue
+    }
+
+    if (aValue !== bValue) {
+      return false
+    }
+  }
+
+  return true
 }
 
 interface RevealAnimationOptions {
@@ -291,6 +318,7 @@ export function PredictionChart({
   width = 800,
   height = 400,
   margin = defaultMargin,
+  dataSignature,
   onCursorDataChange,
   cursorStepMs,
 }: PredictionChartProps): React.ReactElement {
@@ -303,8 +331,11 @@ export function PredictionChart({
   )
   const [revealProgress, setRevealProgress] = useState(0)
   const revealAnimationFrameRef = useRef<number | null>(null)
+  const dataSignatureRef = useRef<string | number | null>(null)
+  const lastDataUpdateTypeRef = useRef<'reset' | 'append' | 'none'>('reset')
   const hasPointerInteractionRef = useRef(false)
   const lastCursorProgressRef = useRef(0)
+  const normalizedSignature = dataSignature ?? '__default__'
   const emitCursorDataChange = useCallback(
     (point: DataPoint | null) => {
       if (!onCursorDataChange) {
@@ -445,14 +476,143 @@ export function PredictionChart({
   useLayoutEffect(() => {
     queueMicrotask(() => {
       setIsClient(true)
-
-      if (providedData && providedSeries) {
-        setData(providedData)
-        setSeries(providedSeries)
-        setRevealProgress(0)
-      }
     })
-  }, [providedData, providedSeries])
+  }, [])
+
+  useEffect(() => {
+    if (!isClient) {
+      return
+    }
+
+    if (providedSeries) {
+      setSeries(providedSeries)
+    }
+    else {
+      setSeries([])
+    }
+  }, [providedSeries, isClient])
+
+  useEffect(() => {
+    if (!isClient) {
+      return
+    }
+
+    if (!providedData || providedData.length === 0) {
+      dataSignatureRef.current = normalizedSignature
+      setData([])
+      lastDataUpdateTypeRef.current = 'reset'
+      return
+    }
+
+    setData((previousData) => {
+      const signatureChanged = dataSignatureRef.current !== normalizedSignature
+      if (signatureChanged) {
+        dataSignatureRef.current = normalizedSignature
+        lastDataUpdateTypeRef.current = 'reset'
+        return providedData
+      }
+
+      if (previousData.length === 0) {
+        lastDataUpdateTypeRef.current = 'reset'
+        return providedData
+      }
+
+      const previousFirst = previousData[0]?.date?.getTime?.()
+      const previousLast = previousData[previousData.length - 1]?.date?.getTime?.()
+      const incomingFirst = providedData[0]?.date?.getTime?.()
+      const incomingLast = providedData[providedData.length - 1]?.date?.getTime?.()
+
+      const timelineValues = [previousFirst, previousLast, incomingFirst, incomingLast]
+      const hasInvalidTimeline = timelineValues.some(
+        value => typeof value !== 'number' || !Number.isFinite(value),
+      )
+
+      if (hasInvalidTimeline) {
+        lastDataUpdateTypeRef.current = 'reset'
+        return providedData
+      }
+
+      if (
+        typeof incomingLast === 'number'
+        && typeof previousLast === 'number'
+        && incomingLast < previousLast
+      ) {
+        lastDataUpdateTypeRef.current = 'reset'
+        return providedData
+      }
+
+      if (
+        typeof incomingFirst === 'number'
+        && typeof previousFirst === 'number'
+        && incomingFirst < previousFirst
+      ) {
+        lastDataUpdateTypeRef.current = 'reset'
+        return providedData
+      }
+
+      let nextData = previousData
+      let didTrim = false
+
+      if (
+        typeof incomingFirst === 'number'
+        && typeof previousFirst === 'number'
+        && incomingFirst > previousFirst
+      ) {
+        const firstIndexToKeep = previousData.findIndex(point => point.date.getTime() >= incomingFirst)
+        if (firstIndexToKeep === -1) {
+          nextData = []
+          didTrim = previousData.length > 0
+        }
+        else if (firstIndexToKeep > 0) {
+          nextData = previousData.slice(firstIndexToKeep)
+          didTrim = true
+        }
+      }
+
+      const lastTimestamp = nextData.length
+        ? nextData[nextData.length - 1].date.getTime()
+        : null
+
+      const appendedPoints = providedData.filter((point) => {
+        const timestamp = point.date.getTime()
+        if (!Number.isFinite(timestamp)) {
+          return false
+        }
+
+        if (lastTimestamp === null) {
+          return true
+        }
+
+        return timestamp > lastTimestamp
+      })
+
+      if (appendedPoints.length > 0) {
+        lastDataUpdateTypeRef.current = 'append'
+        return [...nextData, ...appendedPoints]
+      }
+
+      if (didTrim) {
+        lastDataUpdateTypeRef.current = 'append'
+        return nextData
+      }
+
+      if (lastTimestamp !== null && nextData.length > 0) {
+        const latestPoint = nextData[nextData.length - 1]
+        const incomingLatestPoint = providedData[providedData.length - 1]
+        if (
+          incomingLatestPoint
+          && incomingLatestPoint.date.getTime() === lastTimestamp
+          && !arePointsEqual(latestPoint, incomingLatestPoint)
+        ) {
+          lastDataUpdateTypeRef.current = 'append'
+          return [...nextData.slice(0, -1), incomingLatestPoint]
+        }
+      }
+
+      lastDataUpdateTypeRef.current = 'none'
+      return previousData
+    })
+  }, [providedData, normalizedSignature, isClient])
 
   useEffect(
     () => () => stopRevealAnimation(revealAnimationFrameRef),
@@ -460,7 +620,16 @@ export function PredictionChart({
   )
 
   useEffect(() => {
-    if (data.length > 0) {
+    if (data.length === 0) {
+      stopRevealAnimation(revealAnimationFrameRef)
+      setRevealProgress(0)
+      lastDataUpdateTypeRef.current = 'reset'
+      return
+    }
+
+    const updateType = lastDataUpdateTypeRef.current
+
+    if (updateType === 'reset') {
       hasPointerInteractionRef.current = false
       lastCursorProgressRef.current = 0
       runRevealAnimation({
@@ -471,6 +640,12 @@ export function PredictionChart({
         setProgress: setRevealProgress,
       })
     }
+    else {
+      stopRevealAnimation(revealAnimationFrameRef)
+      setRevealProgress(1)
+    }
+
+    lastDataUpdateTypeRef.current = 'none'
   }, [data, revealAnimationFrameRef])
 
   useEffect(() => {

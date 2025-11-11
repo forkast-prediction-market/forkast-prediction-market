@@ -1,9 +1,9 @@
 'use client'
 
 import type { EventMarketRow } from '@/app/(platform)/event/[slug]/_components/hooks/useEventMarketRows'
-import { TriangleIcon } from 'lucide-react'
 import Image from 'next/image'
 import { memo } from 'react'
+import EventMarketChance from '@/app/(platform)/event/[slug]/_components/EventMarketChance'
 import { Button } from '@/components/ui/button'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel } from '@/lib/formatters'
@@ -17,6 +17,7 @@ interface EventMarketCardProps {
   activeOutcomeIndex: number | null
   onToggle: () => void
   onBuy: (market: EventMarketRow['market'], outcomeIndex: number, source: 'mobile' | 'desktop') => void
+  chanceHighlightKey: string
 }
 
 function EventMarketCardComponent({
@@ -27,9 +28,9 @@ function EventMarketCardComponent({
   activeOutcomeIndex,
   onToggle,
   onBuy,
+  chanceHighlightKey,
 }: EventMarketCardProps) {
   const { market, yesOutcome, noOutcome, yesPriceValue, noPriceValue, chanceMeta } = row
-  const chanceChangeColorClass = chanceMeta.isChanceChangePositive ? 'text-yes' : 'text-no'
   const yesOutcomeText = yesOutcome?.outcome_text ?? 'Yes'
   const noOutcomeText = noOutcome?.outcome_text ?? 'No'
 
@@ -80,25 +81,11 @@ function EventMarketCardComponent({
               </div>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-1">
-            <span
-              className={cn(
-                'text-lg font-bold',
-                chanceMeta.isSubOnePercent ? 'text-muted-foreground' : 'text-foreground',
-              )}
-            >
-              {chanceMeta.chanceDisplay}
-            </span>
-            {chanceMeta.shouldShowChanceChange && (
-              <div className={cn('flex items-center gap-1 text-xs font-semibold', chanceChangeColorClass)}>
-                <TriangleIcon
-                  className={cn('size-3 fill-current', chanceMeta.isChanceChangePositive ? '' : 'rotate-180')}
-                  fill="currentColor"
-                />
-                <span>{chanceMeta.chanceChangeLabel}</span>
-              </div>
-            )}
-          </div>
+          <EventMarketChance
+            chanceMeta={chanceMeta}
+            layout="mobile"
+            highlightKey={chanceHighlightKey}
+          />
         </div>
 
         <div className="flex gap-2">
@@ -175,25 +162,11 @@ function EventMarketCardComponent({
         </div>
 
         <div className="flex w-1/5 justify-center">
-          <div className="flex items-center gap-2">
-            <span
-              className={cn(
-                'text-3xl font-bold',
-                chanceMeta.isSubOnePercent ? 'text-muted-foreground' : 'text-foreground',
-              )}
-            >
-              {chanceMeta.chanceDisplay}
-            </span>
-            {chanceMeta.shouldShowChanceChange && (
-              <div className={cn('flex items-center gap-1 text-xs font-semibold', chanceChangeColorClass)}>
-                <TriangleIcon
-                  className={cn('size-3 fill-current', chanceMeta.isChanceChangePositive ? '' : 'rotate-180')}
-                  fill="currentColor"
-                />
-                <span>{chanceMeta.chanceChangeLabel}</span>
-              </div>
-            )}
-          </div>
+          <EventMarketChance
+            chanceMeta={chanceMeta}
+            layout="desktop"
+            highlightKey={chanceHighlightKey}
+          />
         </div>
 
         <div className="ms-auto flex items-center gap-2">

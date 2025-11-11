@@ -1,7 +1,7 @@
 import type { MarketDetailTab } from '@/app/(platform)/event/[slug]/_components/hooks/useMarketDetailController'
 import type { Event } from '@/types'
 import { RefreshCwIcon } from 'lucide-react'
-import { useCallback, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import EventMarketCard from '@/app/(platform)/event/[slug]/_components/EventMarketCard'
 import EventOrderBook, { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
 import { useChanceRefresh } from '@/app/(platform)/event/[slug]/_components/hooks/useChanceRefresh'
@@ -45,10 +45,13 @@ export default function EventMarkets({ event }: EventMarketsProps) {
     () => ['event-price-history', event.id] as const,
     [event.id],
   )
+  const [chancePulseToken, setChancePulseToken] = useState(0)
+  const priceHistoryWasFetchingRef = useRef(false)
   const {
     refresh: handleChanceRefresh,
     isDisabled: isChanceRefreshDisabled,
     isRefreshing: isManualChanceRefreshing,
+    isFetching: isPriceHistoryFetching,
   } = useChanceRefresh({ queryKey: priceHistoryQueryKey })
   const eventTokenIds = useMemo(() => {
     const ids = new Set<string>()
@@ -69,6 +72,20 @@ export default function EventMarkets({ event }: EventMarketsProps) {
     isLoading: isOrderBookLoading,
   } = useOrderBookSummaries(eventTokenIds, { enabled: shouldEnableOrderBookPolling })
   const shouldShowOrderBookLoader = !shouldEnableOrderBookPolling || (isOrderBookLoading && !orderBookSummaries)
+
+  useEffect(() => {
+    setChancePulseToken(0)
+    priceHistoryWasFetchingRef.current = true
+  }, [event.id])
+
+  useEffect(() => {
+    const wasFetching = priceHistoryWasFetchingRef.current
+    priceHistoryWasFetchingRef.current = isPriceHistoryFetching
+
+    if (hasChanceData && wasFetching && !isPriceHistoryFetching) {
+      setChancePulseToken(token => token + 1)
+    }
+  }, [hasChanceData, isPriceHistoryFetching])
 
   const handleToggle = useCallback((market: Event['markets'][number]) => {
     toggleMarket(market.condition_id)
@@ -150,6 +167,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
           const activeOutcomeForMarket = selectedOutcome && selectedOutcome.condition_id === market.condition_id
             ? selectedOutcome
             : market.outcomes[0]
+          const chanceHighlightKey = `${market.condition_id}-${chancePulseToken}`
           const lastPriceOverrideCents = (() => {
             if (yesPriceCentsOverride === null) {
               return null
@@ -176,6 +194,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                 activeOutcomeIndex={activeOutcomeIndex}
                 onToggle={() => handleToggle(market)}
                 onBuy={(cardMarket, outcomeIndex, source) => handleBuy(cardMarket, outcomeIndex, source)}
+                chanceHighlightKey={chanceHighlightKey}
               />
 
               {isExpanded && (

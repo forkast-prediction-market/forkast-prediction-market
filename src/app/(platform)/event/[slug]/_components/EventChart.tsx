@@ -205,6 +205,10 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     ),
     [normalizedHistory, chartSeries],
   )
+  const chartSignature = useMemo(() => {
+    const seriesKeys = chartSeries.map(series => series.key).join(',')
+    return `${event.id}:${activeTimeRange}:${seriesKeys}`
+  }, [event.id, activeTimeRange, chartSeries])
 
   const legendEntries = useMemo<Array<SeriesConfig & { value: number | null }>>(
     () => legendSeries.map((seriesItem) => {
@@ -311,6 +315,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
               width={chartWidth}
               height={280}
               margin={{ top: 30, right: 40, bottom: 52, left: 0 }}
+              dataSignature={chartSignature}
               cursorStepMs={CURSOR_STEP_MS[activeTimeRange]}
               onCursorDataChange={setCursorSnapshot}
             />
