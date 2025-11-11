@@ -1,22 +1,17 @@
+import type { MarketDetailTab } from '@/app/(platform)/event/[slug]/_components/hooks/useMarketDetailController'
 import type { Event } from '@/types'
-import { useIsFetching, useQueryClient } from '@tanstack/react-query'
-import { RefreshCwIcon, TriangleIcon } from 'lucide-react'
-import Image from 'next/image'
-import { useEffect, useMemo, useState } from 'react'
+import { RefreshCwIcon } from 'lucide-react'
+import { useCallback, useMemo } from 'react'
+import EventMarketCard from '@/app/(platform)/event/[slug]/_components/EventMarketCard'
 import EventOrderBook, { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
-import {
-  useEventOutcomeChanceChanges,
-  useEventOutcomeChances,
-  useMarketYesPrices,
-} from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
+import { useChanceRefresh } from '@/app/(platform)/event/[slug]/_components/hooks/useChanceRefresh'
+import { useEventMarketRows } from '@/app/(platform)/event/[slug]/_components/hooks/useEventMarketRows'
+import { useMarketDetailController } from '@/app/(platform)/event/[slug]/_components/hooks/useMarketDetailController'
 import MarketOutcomeGraph from '@/app/(platform)/event/[slug]/_components/MarketOutcomeGraph'
 import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
-import { formatCentsLabel, toCents } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useIsBinaryMarket, useOrder } from '@/stores/useOrder'
-
-type MarketDetailTab = 'orderBook' | 'graph' | 'resolution'
 
 const MARKET_DETAIL_TABS: Array<{ id: MarketDetailTab, label: string }> = [
   { id: 'orderBook', label: 'Order Book' },
@@ -29,22 +24,32 @@ interface EventMarketsProps {
 }
 
 export default function EventMarkets({ event }: EventMarketsProps) {
-  const state = useOrder()
+  const selectedMarketId = useOrder(state => state.market?.condition_id)
+  const selectedOutcome = useOrder(state => state.outcome)
+  const setMarket = useOrder(state => state.setMarket)
+  const setOutcome = useOrder(state => state.setOutcome)
+  const setSide = useOrder(state => state.setSide)
+  const setIsMobileOrderPanelOpen = useOrder(state => state.setIsMobileOrderPanelOpen)
+  const inputRef = useOrder(state => state.inputRef)
   const isBinaryMarket = useIsBinaryMarket()
-  const outcomeChances = useEventOutcomeChances()
-  const outcomeChanceChanges = useEventOutcomeChanceChanges()
-  const marketYesPrices = useMarketYesPrices()
-  const queryClient = useQueryClient()
+  const { rows: marketRows, hasChanceData } = useEventMarketRows(event)
+  const {
+    expandedMarketId,
+    orderBookPollingEnabled,
+    toggleMarket,
+    expandMarket,
+    selectDetailTab,
+    getSelectedDetailTab,
+  } = useMarketDetailController(event.id)
   const priceHistoryQueryKey = useMemo(
     () => ['event-price-history', event.id] as const,
     [event.id],
   )
-  const [expandedMarketId, setExpandedMarketId] = useState<string | null>(null)
-  const [orderBookPollingEnabled, setOrderBookPollingEnabled] = useState(false)
-  const [isManualChanceRefreshing, setIsManualChanceRefreshing] = useState(false)
-  const [marketDetailTabById, setMarketDetailTabById] = useState<Record<string, MarketDetailTab>>({})
-  const priceHistoryIsFetching = useIsFetching({ queryKey: priceHistoryQueryKey }) > 0
-  const isChanceRefreshDisabled = isManualChanceRefreshing || priceHistoryIsFetching
+  const {
+    refresh: handleChanceRefresh,
+    isDisabled: isChanceRefreshDisabled,
+    isRefreshing: isManualChanceRefreshing,
+  } = useChanceRefresh({ queryKey: priceHistoryQueryKey })
   const eventTokenIds = useMemo(() => {
     const ids = new Set<string>()
 
@@ -64,62 +69,36 @@ export default function EventMarkets({ event }: EventMarketsProps) {
     isLoading: isOrderBookLoading,
   } = useOrderBookSummaries(eventTokenIds, { enabled: shouldEnableOrderBookPolling })
   const shouldShowOrderBookLoader = !shouldEnableOrderBookPolling || (isOrderBookLoading && !orderBookSummaries)
-  const hasChanceData = useMemo(
-    () => event.markets.every(market => Number.isFinite(outcomeChances[market.condition_id])),
-    [event.markets, outcomeChances],
-  )
-  const sortedMarkets = useMemo(() => {
-    if (!hasChanceData) {
-      return []
-    }
-    return [...event.markets].sort((a, b) => {
-      const aChance = outcomeChances[a.condition_id]
-      const bChance = outcomeChances[b.condition_id]
-      return (bChance ?? 0) - (aChance ?? 0)
-    })
-  }, [event.markets, hasChanceData, outcomeChances])
 
-  useEffect(() => {
-    if (!state.market) {
-      if (isBinaryMarket) {
-        state.setMarket(event.markets[0])
-        state.setOutcome(event.markets[0].outcomes[0])
-      }
-      else {
-        const highestProbabilityMarket = [...event.markets].sort(
-          (a, b) => b.probability - a.probability,
-        )[0]
-        state.setMarket(highestProbabilityMarket)
-        state.setOutcome(highestProbabilityMarket.outcomes[0])
+  const handleToggle = useCallback((market: Event['markets'][number]) => {
+    toggleMarket(market.condition_id)
+    setMarket(market)
+    setSide(ORDER_SIDE.BUY)
+
+    if (!selectedOutcome || selectedOutcome.condition_id !== market.condition_id) {
+      const defaultOutcome = market.outcomes[0]
+      if (defaultOutcome) {
+        setOutcome(defaultOutcome)
       }
     }
-  }, [state, event.markets, isBinaryMarket])
+  }, [toggleMarket, selectedOutcome, setMarket, setOutcome, setSide])
 
-  useEffect(() => {
-    setExpandedMarketId(null)
-    setMarketDetailTabById({})
-  }, [event.id])
+  const handleBuy = useCallback((market: Event['markets'][number], outcomeIndex: number, source: 'mobile' | 'desktop') => {
+    expandMarket(market.condition_id)
+    setMarket(market)
+    const outcome = market.outcomes[outcomeIndex]
+    if (outcome) {
+      setOutcome(outcome)
+    }
+    setSide(ORDER_SIDE.BUY)
 
-  useEffect(() => {
-    setOrderBookPollingEnabled(false)
-  }, [event.id])
-
-  async function handleChanceRefresh() {
-    if (isManualChanceRefreshing || priceHistoryIsFetching) {
-      return
+    if (source === 'mobile') {
+      setIsMobileOrderPanelOpen(true)
     }
-
-    setIsManualChanceRefreshing(true)
-    try {
-      await queryClient.invalidateQueries({ queryKey: priceHistoryQueryKey, refetchType: 'active' })
+    else {
+      inputRef?.current?.focus()
     }
-    catch (error) {
-      console.error('Failed to refresh price history', error)
-    }
-    finally {
-      setIsManualChanceRefreshing(false)
-    }
-  }
+  }, [expandMarket, inputRef, setIsMobileOrderPanelOpen, setMarket, setOutcome, setSide])
 
   if (isBinaryMarket || !hasChanceData) {
     return <></>
@@ -164,315 +143,40 @@ export default function EventMarkets({ event }: EventMarketsProps) {
         </div>
       </div>
 
-      {sortedMarkets
-        .map((market, index, orderedMarkets) => {
+      {marketRows
+        .map((row, index, orderedMarkets) => {
+          const { market, yesPriceCentsOverride } = row
           const isExpanded = expandedMarketId === market.condition_id
-          const outcomeForMarket = state.outcome && state.outcome.condition_id === market.condition_id
-            ? state.outcome
+          const activeOutcomeForMarket = selectedOutcome && selectedOutcome.condition_id === market.condition_id
+            ? selectedOutcome
             : market.outcomes[0]
-          const yesOutcome = market.outcomes[OUTCOME_INDEX.YES]
-          const noOutcome = market.outcomes[OUTCOME_INDEX.NO]
-          const yesPriceOverride = marketYesPrices[market.condition_id]
-          const normalizedYesPrice = typeof yesPriceOverride === 'number'
-            ? Math.max(0, Math.min(1, yesPriceOverride))
-            : null
-          const yesPriceValue = normalizedYesPrice ?? yesOutcome?.buy_price
-          const noPriceValue = normalizedYesPrice != null
-            ? Math.max(0, Math.min(1, 1 - normalizedYesPrice))
-            : noOutcome?.buy_price
-          const yesPriceCentsOverride = normalizedYesPrice != null ? toCents(normalizedYesPrice) : null
-          const rawChance = outcomeChances[market.condition_id]
-          const normalizedChance = Math.max(0, Math.min(100, rawChance ?? 0))
-          const roundedChance = Math.round(normalizedChance)
-          const roundedThresholdChance = Math.round(normalizedChance * 10) / 10
-          const isSubOnePercent = roundedThresholdChance > 0 && roundedThresholdChance < 1
-          const chanceDisplay = isSubOnePercent ? '<1%' : `${roundedChance}%`
-          const rawChanceChange = outcomeChanceChanges[market.condition_id]
-          const normalizedChanceChange = typeof rawChanceChange === 'number' && Number.isFinite(rawChanceChange)
-            ? rawChanceChange
-            : 0
-          const absoluteChanceChange = Math.abs(normalizedChanceChange)
-          const roundedChanceChange = Math.round(absoluteChanceChange)
-          const shouldShowChanceChange = roundedChanceChange >= 1
-          const chanceChangeLabel = `${roundedChanceChange}%`
-          const isChanceChangePositive = normalizedChanceChange > 0
-          const chanceChangeColorClass = isChanceChangePositive ? 'text-yes' : 'text-no'
           const lastPriceOverrideCents = (() => {
             if (yesPriceCentsOverride === null) {
               return null
             }
-            if (!outcomeForMarket) {
+            if (!activeOutcomeForMarket) {
               return yesPriceCentsOverride
             }
-            return outcomeForMarket.outcome_index === OUTCOME_INDEX.YES
+            return activeOutcomeForMarket.outcome_index === OUTCOME_INDEX.YES
               ? yesPriceCentsOverride
               : Math.max(0, Number((100 - yesPriceCentsOverride).toFixed(1)))
           })()
-
-          function ensureMarketExpanded() {
-            if (expandedMarketId !== market.condition_id) {
-              if (!orderBookPollingEnabled) {
-                setOrderBookPollingEnabled(true)
-              }
-              setExpandedMarketId(market.condition_id)
-              if (!marketDetailTabById[market.condition_id]) {
-                setMarketDetailTabById(prev => ({ ...prev, [market.condition_id]: 'orderBook' }))
-              }
-            }
-          }
-
-          function handleToggle() {
-            const currentlyExpanded = expandedMarketId === market.condition_id
-            if (currentlyExpanded) {
-              setExpandedMarketId(null)
-            }
-            else {
-              ensureMarketExpanded()
-            }
-            state.setMarket(market)
-            state.setSide(ORDER_SIDE.BUY)
-            if (!state.outcome || state.outcome.condition_id !== market.condition_id) {
-              state.setOutcome(market.outcomes[0])
-            }
-          }
-
-          const selectedDetailTab = marketDetailTabById[market.condition_id] ?? 'orderBook'
-
-          function handleDetailTabChange(tab: MarketDetailTab) {
-            setMarketDetailTabById(prev => ({ ...prev, [market.condition_id]: tab }))
-          }
+          const activeOutcomeIndex = selectedOutcome && selectedOutcome.condition_id === market.condition_id
+            ? selectedOutcome.outcome_index
+            : null
+          const selectedDetailTab = getSelectedDetailTab(market.condition_id)
 
           return (
             <div key={market.condition_id} className="transition-colors">
-              <div
-                className={cn(
-                  `
-                    flex w-full cursor-pointer flex-col items-start rounded-lg p-4 transition-all duration-200
-                    ease-in-out
-                    lg:flex-row lg:items-center
-                  `,
-                  'hover:bg-black/5 dark:hover:bg-white/5',
-                )}
-                role="button"
-                tabIndex={0}
-                aria-expanded={isExpanded}
-                onClick={handleToggle}
-                onKeyDown={(event) => {
-                  if (event.key === 'Enter' || event.key === ' ') {
-                    event.preventDefault()
-                    handleToggle()
-                  }
-                }}
-              >
-                {/* Mobile: Layout in column */}
-                <div className="w-full lg:hidden">
-                  {/* Row 1: Name and probability */}
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {event.show_market_icons && (
-                        <Image
-                          src={market.icon_url}
-                          alt={market.title}
-                          width={42}
-                          height={42}
-                          className="flex-shrink-0 rounded-md"
-                        />
-                      )}
-                      <div>
-                        <div className="text-sm font-bold">
-                          {market.title}
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          $
-                          {market.total_volume?.toLocaleString('en-US', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }) || '0.00'}
-                          {' '}
-                          Vol.
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      <span
-                        className={cn(
-                          'text-lg font-bold',
-                          isSubOnePercent ? 'text-muted-foreground' : 'text-foreground',
-                        )}
-                      >
-                        {chanceDisplay}
-                      </span>
-                      {shouldShowChanceChange && (
-                        <div className={cn('flex items-center gap-1 text-xs font-semibold', chanceChangeColorClass)}>
-                          <TriangleIcon
-                            className={cn(
-                              'size-3 fill-current',
-                              isChanceChangePositive ? '' : 'rotate-180',
-                            )}
-                            fill="currentColor"
-                          />
-                          <span>{chanceChangeLabel}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Row 2: Buttons */}
-                  <div className="flex gap-2">
-                    <Button
-                      size="outcome"
-                      variant="yes"
-                      className={cn({
-                        'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === OUTCOME_INDEX.YES,
-                      })}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        ensureMarketExpanded()
-                        state.setMarket(market)
-                        state.setOutcome(market.outcomes[0])
-                        state.setSide(ORDER_SIDE.BUY)
-                        state.setIsMobileOrderPanelOpen(true)
-                      }}
-                    >
-                      <span className="truncate opacity-70">
-                        Buy
-                        {' '}
-                        {market.outcomes[0].outcome_text}
-                      </span>
-                      <span className="shrink-0 text-base font-bold">
-                        {formatCentsLabel(yesPriceValue)}
-                      </span>
-                    </Button>
-                    <Button
-                      size="outcome"
-                      variant="no"
-                      className={cn({
-                        'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === OUTCOME_INDEX.NO,
-                      })}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        ensureMarketExpanded()
-                        state.setMarket(market)
-                        state.setOutcome(market.outcomes[1])
-                        state.setSide(ORDER_SIDE.BUY)
-                        state.setIsMobileOrderPanelOpen(true)
-                      }}
-                    >
-                      <span className="truncate opacity-70">
-                        Buy
-                        {' '}
-                        {market.outcomes[1].outcome_text}
-                      </span>
-                      <span className="shrink-0 text-base font-bold">
-                        {formatCentsLabel(noPriceValue)}
-                      </span>
-                    </Button>
-                  </div>
-                </div>
-
-                {/* Desktop: Original line layout */}
-                <div className="hidden w-full items-center lg:flex">
-                  <div className="flex w-2/5 items-center gap-3">
-                    {event.show_market_icons && (
-                      <Image
-                        src={market.icon_url}
-                        alt={market.title}
-                        width={42}
-                        height={42}
-                        className="flex-shrink-0 rounded-md"
-                      />
-                    )}
-                    <div>
-                      <div className="font-bold">
-                        {market.title}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        $
-                        {market.total_volume?.toLocaleString('en-US', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }) || '0.00'}
-                        {' '}
-                        Vol.
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex w-1/5 justify-center">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={cn(
-                          'text-3xl font-bold',
-                          isSubOnePercent ? 'text-muted-foreground' : 'text-foreground',
-                        )}
-                      >
-                        {chanceDisplay}
-                      </span>
-                      {shouldShowChanceChange && (
-                        <div className={cn('flex items-center gap-1 text-xs font-semibold', chanceChangeColorClass)}>
-                          <TriangleIcon
-                            className={cn('size-3 fill-current', isChanceChangePositive ? '' : 'rotate-180')}
-                            fill="currentColor"
-                          />
-                          <span>{chanceChangeLabel}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="ms-auto flex items-center gap-2">
-                    <Button
-                      size="outcome"
-                      variant="yes"
-                      className={cn({
-                        'bg-yes text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === OUTCOME_INDEX.YES,
-                      }, 'w-36')}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        ensureMarketExpanded()
-                        state.setMarket(market)
-                        state.setOutcome(market.outcomes[0])
-                        state.setSide(ORDER_SIDE.BUY)
-                        state.inputRef?.current?.focus()
-                      }}
-                    >
-                      <span className="truncate opacity-70">
-                        Buy
-                        {' '}
-                        {market.outcomes[0].outcome_text}
-                      </span>
-                      <span className="shrink-0 text-base font-bold">
-                        {formatCentsLabel(yesPriceValue)}
-                      </span>
-                    </Button>
-
-                    <Button
-                      size="outcome"
-                      variant="no"
-                      className={cn({
-                        'bg-no text-white': state.market?.condition_id === market.condition_id && state.outcome?.outcome_index === OUTCOME_INDEX.NO,
-                      }, 'w-36')}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        ensureMarketExpanded()
-                        state.setMarket(market)
-                        state.setOutcome(market.outcomes[1])
-                        state.setSide(ORDER_SIDE.BUY)
-                        state.inputRef?.current?.focus()
-                      }}
-                    >
-                      <span className="truncate opacity-70">
-                        Buy
-                        {' '}
-                        {market.outcomes[1].outcome_text}
-                      </span>
-                      <span className="shrink-0 text-base font-bold">
-                        {formatCentsLabel(noPriceValue)}
-                      </span>
-                    </Button>
-                  </div>
-                </div>
-              </div>
+              <EventMarketCard
+                row={row}
+                showMarketIcon={Boolean(event.show_market_icons)}
+                isExpanded={isExpanded}
+                isActiveMarket={selectedMarketId === market.condition_id}
+                activeOutcomeIndex={activeOutcomeIndex}
+                onToggle={() => handleToggle(market)}
+                onBuy={(cardMarket, outcomeIndex, source) => handleBuy(cardMarket, outcomeIndex, source)}
+              />
 
               {isExpanded && (
                 <div className="pt-2">
@@ -492,7 +196,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                             )}
                             onClick={(event) => {
                               event.stopPropagation()
-                              handleDetailTabChange(tab.id)
+                              selectDetailTab(market.condition_id, tab.id)
                             }}
                           >
                             {tab.label}
@@ -506,18 +210,18 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                     {selectedDetailTab === 'orderBook' && (
                       <EventOrderBook
                         market={market}
-                        outcome={outcomeForMarket}
+                        outcome={activeOutcomeForMarket}
                         summaries={orderBookSummaries}
                         isLoadingSummaries={shouldShowOrderBookLoader}
                         lastPriceOverrideCents={lastPriceOverrideCents}
                       />
                     )}
 
-                    {selectedDetailTab === 'graph' && outcomeForMarket && (
+                    {selectedDetailTab === 'graph' && activeOutcomeForMarket && (
                       <div className="pb-4">
                         <MarketOutcomeGraph
                           market={market}
-                          outcome={outcomeForMarket}
+                          outcome={activeOutcomeForMarket}
                           allMarkets={event.markets}
                           eventCreatedAt={event.created_at}
                         />
