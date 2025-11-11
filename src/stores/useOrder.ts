@@ -117,7 +117,7 @@ export function useNoPrice() {
   }) ?? 50
 }
 
-export function useIsBinaryMarket() {
+export function useIsSingleMarket() {
   return useOrder(state => state.event?.total_markets_count === 1)
 }
 
@@ -125,77 +125,6 @@ export function useIsLimitOrder() {
   return useOrder(state => state.type === ORDER_TYPE.LIMIT)
 }
 
-export function getAvgSellPrice() {
-  const state = useOrder.getState()
-
-  if (!state.market || !state.outcome) {
-    return 0
-  }
-
-  const sellPrice
-    = state.outcome.outcome_index === OUTCOME_INDEX.YES
-      ? Math.round(state.market.probability * 0.95)
-      : Math.round((100 - state.market.probability) * 0.95)
-
-  return sellPrice.toString()
-}
-
-export function calculateSellAmount() {
-  const state = useOrder.getState()
-
-  if (!state.market || !state.outcome) {
-    return 0
-  }
-
-  const sellPrice
-    = state.outcome.outcome_index === OUTCOME_INDEX.YES
-      ? (state.market.probability / 100) * 0.95
-      : ((100 - state.market.probability) / 100) * 0.95
-
-  return Number.parseFloat(state.amount || '0') * sellPrice
-}
-
-export function getUserShares() {
-  const state = useOrder.getState()
-
-  if (!state.market || !state.outcome) {
-    return 0
-  }
-
-  return getSharesForOutcome(state.market.condition_id, state.outcome.outcome_index)
-}
-
-export function getYesShares(conditionId: string) {
-  return getSharesForOutcome(conditionId, OUTCOME_INDEX.YES)
-}
-
-export function getNoShares(conditionId: string) {
-  return getSharesForOutcome(conditionId, OUTCOME_INDEX.NO)
-}
-
 export function useAmountAsNumber() {
   return useOrder(state => Number.parseFloat(state.amount) || 0)
-}
-
-export function useOrderSide() {
-  return useOrder(state => state.side)
-}
-
-export function useOrderAmount() {
-  return useOrder(state => state.amount)
-}
-
-export function useOrderInputRef() {
-  return useOrder(state => state.inputRef)
-}
-
-function getSharesForOutcome(conditionId: string, outcomeIndex: number) {
-  const { userShares } = useOrder.getState()
-  const conditionShares = userShares[conditionId]
-
-  if (!conditionShares) {
-    return 0
-  }
-
-  return conditionShares[outcomeIndex as keyof ConditionShares] ?? 0
 }

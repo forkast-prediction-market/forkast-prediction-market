@@ -4,14 +4,14 @@ import Image from 'next/image'
 interface EventOrderPanelMobileMarketInfoProps {
   event: Event
   market: Market | null
-  isBinaryMarket: boolean
+  isSingleMarket: boolean
   balanceText: string
 }
 
 export default function EventOrderPanelMobileMarketInfo({
   event,
   market,
-  isBinaryMarket,
+  isSingleMarket,
   balanceText,
 }: EventOrderPanelMobileMarketInfoProps) {
   if (!market) {
@@ -32,7 +32,7 @@ export default function EventOrderPanelMobileMarketInfo({
           {event.title}
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
-          {!isBinaryMarket && <span>{market.short_title || market.title}</span>}
+          {!isSingleMarket && <span>{market.short_title || market.title}</span>}
           <span>
             Bal. $
             {balanceText}

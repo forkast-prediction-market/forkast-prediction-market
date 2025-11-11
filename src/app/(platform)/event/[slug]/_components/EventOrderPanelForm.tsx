@@ -23,7 +23,7 @@ import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
 import { validateOrder } from '@/lib/orders/validation'
 import { cn } from '@/lib/utils'
-import { useAmountAsNumber, useIsBinaryMarket, useIsLimitOrder, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
+import { useAmountAsNumber, useIsLimitOrder, useIsSingleMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
 
 interface EventOrderPanelFormProps {
@@ -41,7 +41,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const queryClient = useQueryClient()
   const yesPrice = useYesPrice()
   const noPrice = useNoPrice()
-  const isBinaryMarket = useIsBinaryMarket()
+  const isSingleMarket = useIsSingleMarket()
   const amountNumber = useAmountAsNumber()
   const isLimitOrder = useIsLimitOrder()
   const { balance } = useBalance()
@@ -228,12 +228,12 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         'rounded-lg border lg:w-[340px]': !isMobile,
       }, 'w-full p-4 shadow-xl/5')}
     >
-      {!isMobile && !isBinaryMarket && <EventOrderPanelMarketInfo market={state.market} />}
+      {!isMobile && !isSingleMarket && <EventOrderPanelMarketInfo market={state.market} />}
       {isMobile && (
         <EventOrderPanelMobileMarketInfo
           event={event}
           market={state.market}
-          isBinaryMarket={isBinaryMarket}
+          isSingleMarket={isSingleMarket}
           balanceText={balance.text}
         />
       )}
