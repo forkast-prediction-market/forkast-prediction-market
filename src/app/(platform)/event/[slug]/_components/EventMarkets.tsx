@@ -21,9 +21,10 @@ const MARKET_DETAIL_TABS: Array<{ id: MarketDetailTab, label: string }> = [
 
 interface EventMarketsProps {
   event: Event
+  isMobile: boolean
 }
 
-export default function EventMarkets({ event }: EventMarketsProps) {
+export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   const selectedMarketId = useOrder(state => state.market?.condition_id)
   const selectedOutcome = useOrder(state => state.outcome)
   const setMarket = useOrder(state => state.setMarket)
@@ -243,6 +244,7 @@ export default function EventMarkets({ event }: EventMarketsProps) {
                           outcome={activeOutcomeForMarket}
                           allMarkets={event.markets}
                           eventCreatedAt={event.created_at}
+                          isMobile={isMobile}
                         />
                       </div>
                     )}

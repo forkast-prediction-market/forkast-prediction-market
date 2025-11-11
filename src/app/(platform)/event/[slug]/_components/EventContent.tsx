@@ -30,7 +30,6 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
   const setOutcome = useOrder(state => state.setOutcome)
   const currentEventId = useOrder(state => state.event?.id)
   const isMobile = useIsMobile()
-  const shouldShowSingleMarketOrderBook = event.total_markets_count === 1 && event.markets[0]?.outcomes?.length >= 2
 
   useEffect(() => {
     setEvent(event)
@@ -59,10 +58,8 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
         <EventHeader event={event} />
         <EventMetaInformation event={event} />
         <EventChart event={event} isMobile={isMobile} />
-        <EventMarkets event={event} />
-        {shouldShowSingleMarketOrderBook && (
-          <EventSingleMarketOrderBook market={event.markets[0]} />
-        )}
+        <EventMarkets event={event} isMobile={isMobile} />
+        {event.total_markets_count === 1 && <EventSingleMarketOrderBook market={event.markets[0]} />}
         {marketContextEnabled && <EventMarketContext event={event} />}
         <EventRules event={event} />
         {isMobile && <EventRelated event={event} />}

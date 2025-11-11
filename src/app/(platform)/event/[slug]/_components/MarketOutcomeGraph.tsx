@@ -18,11 +18,13 @@ interface MarketOutcomeGraphProps {
   outcome: Outcome
   allMarkets: Market[]
   eventCreatedAt: string
+  isMobile: boolean
 }
 
-export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventCreatedAt }: MarketOutcomeGraphProps) {
+export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventCreatedAt, isMobile }: MarketOutcomeGraphProps) {
   const [activeTimeRange, setActiveTimeRange] = useState<TimeRange>('ALL')
   const marketTargets = useMemo(() => buildMarketTargets(allMarkets), [allMarkets])
+  const chartWidth = isMobile ? 400 : 900
 
   const {
     normalizedHistory,
@@ -66,7 +68,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
           <PredictionChart
             data={chartData}
             series={series}
-            width={900}
+            width={chartWidth}
             height={260}
             margin={{ top: 20, right: 40, bottom: 48, left: 0 }}
             dataSignature={chartSignature}
