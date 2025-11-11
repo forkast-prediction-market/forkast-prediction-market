@@ -6,7 +6,7 @@ import type {
   SetStateAction,
 } from 'react'
 import { AxisBottom, AxisRight } from '@visx/axis'
-import { curveMonotoneX } from '@visx/curve'
+import { curveLinear } from '@visx/curve'
 import { localPoint } from '@visx/event'
 import { Group } from '@visx/group'
 import { scaleLinear, scaleTime } from '@visx/scale'
@@ -777,7 +777,7 @@ export function PredictionChart({
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeOpacity={futureLineOpacity}
-                    curve={curveMonotoneX}
+                    curve={curveLinear}
                     fill="transparent"
                   />
                 )}
@@ -793,7 +793,7 @@ export function PredictionChart({
                     strokeDasharray="1 1"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    curve={curveMonotoneX}
+                    curve={curveLinear}
                     fill="transparent"
                   />
                 )}
