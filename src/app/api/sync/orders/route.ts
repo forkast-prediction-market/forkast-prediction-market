@@ -4,11 +4,11 @@ import {
   DEFAULT_ORDER_SYNC_LIMIT,
   evaluateOrderSyncDecision,
   hasReachedTimeLimit,
-  isCronAuthorized,
   MAX_ORDER_SYNC_LIMIT,
   parseLimitParam,
   SYNC_TIME_LIMIT_MS,
 } from '@/app/api/sync/orders/helpers'
+import { isCronAuthorized } from '@/lib/auth-cron'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const maxDuration = 300

@@ -36,13 +36,6 @@ export function parseLimitParam(
   return Math.min(parsed, maxLimit)
 }
 
-export function isCronAuthorized(header: string | null, cronSecret: string | undefined): boolean {
-  if (!cronSecret) {
-    return false
-  }
-  return header === `Bearer ${cronSecret}`
-}
-
 export function hasReachedTimeLimit(startedAtMs: number, nowMs: number, limitMs: number = SYNC_TIME_LIMIT_MS): boolean {
   return nowMs - startedAtMs >= limitMs
 }

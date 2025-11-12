@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
+import { isCronAuthorized } from '@/lib/auth-cron'
 import { supabaseAdmin } from '@/lib/supabase'
 
-export const maxDuration = 300 // This function can run for a maximum of 300 seconds
+export const maxDuration = 300
 
 const PNL_SUBGRAPH_URL = process.env.PNL_SUBGRAPH_URL!
 const MARKET_CREATORS_ADDRESS = process.env.MARKET_CREATORS_ADDRESS
@@ -54,7 +55,7 @@ function getAllowedCreators(): string[] {
  */
 export async function GET(request: Request) {
   const auth = request.headers.get('authorization')
-  if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isCronAuthorized(auth, process.env.CRON_SECRET)) {
     return NextResponse.json({ error: 'Unauthenticated.' }, { status: 401 })
   }
 

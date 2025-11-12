@@ -4,10 +4,10 @@ import {
   DEFAULT_ORDER_SYNC_LIMIT,
   evaluateOrderSyncDecision,
   hasReachedTimeLimit,
-  isCronAuthorized,
   MAX_ORDER_SYNC_LIMIT,
   parseLimitParam,
 } from '@/app/api/sync/orders/helpers'
+import { isCronAuthorized } from '@/lib/auth-cron'
 
 describe('orders sync helpers', () => {
   it('parses limit with defaults and clamps to max', () => {
