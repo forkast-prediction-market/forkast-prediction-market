@@ -4,7 +4,7 @@
 
 CREATE TABLE orders
 (
-  id                   TEXT PRIMARY KEY         DEFAULT generate_ulid() NOT NULL,
+  id                   CHAR(26) PRIMARY KEY     DEFAULT generate_ulid() NOT NULL,
   -- begin blockchain data
   salt                 BIGINT,
   maker                TEXT                                             NOT NULL,
@@ -28,6 +28,8 @@ CREATE TABLE orders
   type                 TEXT                                             NOT NULL,
   status               TEXT                     DEFAULT 'live'          NOT NULL,
   affiliate_user_id    TEXT,
+  clob_order_id        TEXT                                             NOT NULL,
+  size_matched         BIGINT                   DEFAULT 0               NOT NULL,
   created_at           TIMESTAMP WITH TIME ZONE DEFAULT NOW()           NOT NULL,
   updated_at           TIMESTAMP WITH TIME ZONE DEFAULT NOW()           NOT NULL,
   CONSTRAINT orders_type_check CHECK (orders.type IN ('FAK', 'FOK', 'GTC', 'GTD')),

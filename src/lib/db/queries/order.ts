@@ -30,6 +30,8 @@ export const OrderRepository = {
     affiliate_user_id: string
     condition_id: string
     status: string
+    clob_order_id: string
+    size_matched: bigint
   }) {
     return await runQuery(async () => {
       const result = await db
