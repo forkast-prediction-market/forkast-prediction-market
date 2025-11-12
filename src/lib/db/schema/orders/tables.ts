@@ -37,6 +37,8 @@ export const orders = pgTable('orders', {
   condition_id: text().notNull().references(() => conditions.id),
   type: text().notNull(),
   status: text().notNull().default('live'),
+  clob_order_id: text().notNull(),
+  size_matched: bigint({ mode: 'bigint' }).notNull(),
   affiliate_user_id: text().references(() => users.id),
   created_at: timestamp({ withTimezone: true }).defaultNow().notNull(),
   updated_at: timestamp({ withTimezone: true }).defaultNow().notNull(),

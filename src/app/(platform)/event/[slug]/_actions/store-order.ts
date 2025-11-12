@@ -6,6 +6,7 @@ import { cacheTags } from '@/lib/cache-tags'
 import { CLOB_ORDER_TYPE, ORDER_TYPE } from '@/lib/constants'
 import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
+import { toMicro } from '@/lib/formatters'
 import { buildClobHmacSignature } from '@/lib/hmac'
 
 const StoreOrderSchema = z.object({
@@ -131,6 +132,8 @@ export async function storeOrderAction(payload: StoreOrderInput) {
           affiliate_user_id: user.referred_by_user_id,
           type: clobOrderType,
           status: res.order.status,
+          clob_order_id: res.order.id,
+          size_matched: BigInt(toMicro(res.order.sizeMatched)),
         })
       })
       .catch((err) => {
