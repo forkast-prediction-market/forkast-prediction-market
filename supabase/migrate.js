@@ -63,6 +63,34 @@ async function applyMigrations(sql) {
   console.log('✅ All migrations applied successfully')
 }
 
+async function createCleanCronDetailsCron(sql) {
+  console.log('Creating clean cron details job...')
+  const sqlQuery = `
+  DO $$
+  DECLARE
+    job_id int;
+    cmd text := $c$
+      DELETE FROM cron.job_run_details
+      WHERE start_time < now() - interval '1 day';
+    $c$;
+  BEGIN
+    SELECT jobid INTO job_id FROM cron.job WHERE jobname = 'clean-cron-details';
+
+    IF job_id IS NOT NULL THEN
+      PERFORM cron.unschedule(job_id);
+    END IF;
+
+    PERFORM cron.schedule('clean-cron-details', '0 0 * * *', cmd);
+  END $$;`
+
+  const updatedSQL = sqlQuery
+    .replace('<<VERCEL_URL>>', process.env.VERCEL_PROJECT_PRODUCTION_URL)
+    .replace('<<CRON_SECRET>>', process.env.CRON_SECRET)
+
+  await sql.unsafe(updatedSQL, [], { simple: true })
+  console.log('✅ Cron clean-cron-details created successfully')
+}
+
 async function createSyncEventsCron(sql) {
   console.log('Creating sync-events cron job...')
   const sqlQuery = `
@@ -70,9 +98,6 @@ async function createSyncEventsCron(sql) {
   DECLARE
     job_id int;
     cmd text := $c$
-      DELETE FROM cron.job_run_details
-      WHERE start_time < now() - interval '3 days';
-
       SELECT net.http_get(
         url := 'https://<<VERCEL_URL>>/api/sync/events',
         headers := '{"Content-Type": "application/json", "Authorization": "Bearer <<CRON_SECRET>>"}'
@@ -103,9 +128,6 @@ async function createSyncOrdersCron(sql) {
   DECLARE
     job_id int;
     cmd text := $c$
-      DELETE FROM cron.job_run_details
-      WHERE start_time < now() - interval '3 days';
-
       SELECT net.http_get(
         url := 'https://<<VERCEL_URL>>/api/sync/orders',
         headers := '{"Content-Type": "application/json", "Authorization": "Bearer <<CRON_SECRET>>"}'
@@ -147,6 +169,7 @@ async function run() {
     console.log('Connected to database successfully')
 
     await applyMigrations(sql)
+    await createCleanCronDetailsCron(sql)
     await createSyncEventsCron(sql)
     await createSyncOrdersCron(sql)
   }
