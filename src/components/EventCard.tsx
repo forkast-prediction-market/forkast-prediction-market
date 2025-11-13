@@ -501,7 +501,7 @@ export default function EventCard({ event }: EventCardProps) {
                 ? <NewBadge />
                 : (
                     <span>
-                      {formatVolume(event.markets[0].total_volume)}
+                      {formatVolume(event.markets[0].volume)}
                       {' '}
                       Vol.
                     </span>

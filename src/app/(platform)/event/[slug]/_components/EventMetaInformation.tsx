@@ -15,7 +15,7 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
   )
   const expiryTooltip = 'This is estimated end date.<br>See rules below for specific resolution details.'
   const primaryMarket = event.markets[0]
-  const totalVolume = Math.max(0, primaryMarket?.total_volume ?? 0)
+  const totalVolume = Math.max(0, primaryMarket?.volume ?? 0)
   const formattedVolume = totalVolume.toLocaleString('en-US')
   const volumeLabel = `$${formattedVolume} Vol.`
 

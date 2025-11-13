@@ -9,7 +9,7 @@ interface AffiliateRow {
   image: string
   affiliate_code?: string | null
   total_referrals: number
-  total_volume: number
+  volume: number
   total_affiliate_fees: number
 }
 
@@ -80,7 +80,7 @@ export default function AdminAffiliateOverview({ rows }: AdminAffiliateOverviewP
                   {row.total_referrals}
                 </td>
                 <td className="px-6 py-4 text-right text-sm font-medium">
-                  {formatCurrency(row.total_volume, { includeSymbol: false })}
+                  {formatCurrency(row.volume, { includeSymbol: false })}
                 </td>
                 <td className="px-6 py-4 text-right text-sm font-medium">
                   {formatCurrency(row.total_affiliate_fees, { includeSymbol: false })}
@@ -126,7 +126,7 @@ export default function AdminAffiliateOverview({ rows }: AdminAffiliateOverviewP
               </div>
               <div className="text-center">
                 <p className="text-xs font-medium text-muted-foreground uppercase">Volume</p>
-                <p className="font-medium">{formatCurrency(row.total_volume, { includeSymbol: false })}</p>
+                <p className="font-medium">{formatCurrency(row.volume, { includeSymbol: false })}</p>
               </div>
               <div className="text-center">
                 <p className="text-xs font-medium text-muted-foreground uppercase">Fees</p>

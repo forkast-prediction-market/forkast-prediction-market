@@ -10,7 +10,7 @@ import { getSupabaseImageUrl } from '@/lib/supabase'
 interface AffiliateOverviewRow {
   affiliate_user_id: string
   total_referrals: number | null
-  total_volume: number | null
+  volume: number | null
   total_affiliate_fees: number | null
 }
 
@@ -29,7 +29,7 @@ interface RowSummary {
   image: string
   affiliate_code: string | null
   total_referrals: number
-  total_volume: number
+  volume: number
   total_affiliate_fees: number
 }
 
@@ -75,13 +75,13 @@ export default async function AdminSettingsPage() {
       image: profile?.image ? getSupabaseImageUrl(profile.image) : `https://avatar.vercel.sh/${profile?.address || item.affiliate_user_id}.png`,
       affiliate_code: profile?.affiliate_code ?? null,
       total_referrals: Number(item.total_referrals ?? 0),
-      total_volume: Number(item.total_volume ?? 0),
+      volume: Number(item.volume ?? 0),
       total_affiliate_fees: Number(item.total_affiliate_fees ?? 0),
     }
   })
 
   const aggregate = rows.reduce<{ totalVolume: number, totalAffiliateFees: number, totalReferrals: number }>((acc, row) => {
-    acc.totalVolume += row.total_volume
+    acc.totalVolume += row.volume
     acc.totalAffiliateFees += row.total_affiliate_fees
     acc.totalReferrals += row.total_referrals
     return acc

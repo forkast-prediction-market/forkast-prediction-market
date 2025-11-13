@@ -37,7 +37,7 @@ CREATE OR REPLACE FUNCTION get_affiliate_stats(target_user_id CHAR(26))
           (
             total_referrals      BIGINT,
             active_referrals     BIGINT,
-            total_volume         NUMERIC,
+            volume               NUMERIC,
             total_affiliate_fees NUMERIC,
             total_fork_fees      NUMERIC
           )
@@ -47,7 +47,7 @@ CREATE OR REPLACE FUNCTION get_affiliate_stats(target_user_id CHAR(26))
 AS
 $$
 SELECT COALESCE((SELECT COUNT(*) FROM affiliate_referrals ar WHERE ar.affiliate_user_id = target_user_id),
-                0)                                  AS total_referrals,
+                0)                               AS total_referrals,
        COALESCE((SELECT COUNT(DISTINCT o.user_id)
                  FROM orders o
                  WHERE o.affiliate_user_id = target_user_id
@@ -55,7 +55,7 @@ SELECT COALESCE((SELECT COUNT(*) FROM affiliate_referrals ar WHERE ar.affiliate_
        COALESCE((SELECT SUM(o.maker_amount)
                  FROM orders o
                  WHERE o.affiliate_user_id = target_user_id
-                   AND o.status = 'matched'), 0) AS total_volume,
+                   AND o.status = 'matched'), 0) AS volume,
        COALESCE((SELECT SUM(o.affiliate_percentage)
                  FROM orders o
                  WHERE o.affiliate_user_id = target_user_id
@@ -71,7 +71,7 @@ CREATE OR REPLACE FUNCTION get_affiliate_overview()
           (
             affiliate_user_id    CHAR(26),
             total_referrals      BIGINT,
-            total_volume         NUMERIC,
+            volume               NUMERIC,
             total_affiliate_fees NUMERIC
           )
   LANGUAGE SQL
@@ -81,20 +81,20 @@ AS
 $$
 SELECT u.id                                  AS affiliate_user_id,
        COALESCE(ar.count_referrals, 0)       AS total_referrals,
-       COALESCE(ord.total_volume, 0)         AS total_volume,
+       COALESCE(ord.volume, 0)               AS volume,
        COALESCE(ord.total_affiliate_fees, 0) AS total_affiliate_fees
 FROM users u
        LEFT JOIN (SELECT affiliate_user_id, COUNT(*) AS count_referrals
                   FROM affiliate_referrals
                   GROUP BY affiliate_user_id) ar ON ar.affiliate_user_id = u.id
        LEFT JOIN (SELECT affiliate_user_id,
-                         SUM(CASE WHEN status = 'matched' THEN maker_amount ELSE 0 END)               AS total_volume,
+                         SUM(CASE WHEN status = 'matched' THEN maker_amount ELSE 0 END)         AS volume,
                          SUM(CASE WHEN status = 'matched' THEN affiliate_percentage ELSE 0 END) AS total_affiliate_fees
                   FROM orders
                   WHERE affiliate_user_id IS NOT NULL
                   GROUP BY affiliate_user_id) ord ON ord.affiliate_user_id = u.id
 WHERE ar.count_referrals IS NOT NULL
-   OR ord.total_volume IS NOT NULL
-ORDER BY COALESCE(ord.total_volume, 0) DESC
+   OR ord.volume IS NOT NULL
+ORDER BY COALESCE(ord.volume, 0) DESC
 LIMIT 100;
 $$;

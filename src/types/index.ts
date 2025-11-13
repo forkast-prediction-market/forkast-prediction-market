@@ -37,8 +37,8 @@ export interface Market {
   block_number: number
   block_timestamp: string
   metadata?: any // JSONB
-  current_volume_24h: number
-  total_volume: number
+  volume_24h: number
+  volume: number
   created_at: string
   updated_at: string
   price: number
@@ -57,8 +57,6 @@ export interface Outcome {
   payout_value?: number
   buy_price?: number
   sell_price?: number
-  volume_24h: number
-  total_volume: number
   created_at: string
   updated_at: string
 }
@@ -73,7 +71,7 @@ interface Condition {
   payout_denominator?: number
   arweave_hash?: string
   creator?: string
-  total_volume: number
+  volume: number
   open_interest: number
   active_positions_count: number
   created_at: string
@@ -184,7 +182,7 @@ export interface AffiliateData {
   stats: {
     total_referrals: number
     active_referrals: number
-    total_volume: number
+    volume: number
     total_affiliate_fees: number
   }
   recentReferrals: {

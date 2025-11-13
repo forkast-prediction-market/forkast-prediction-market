@@ -30,8 +30,8 @@ interface VolumeSyncStats {
 
 interface MarketRow {
   condition_id: string
-  current_volume_24h: string | null
-  total_volume: string | null
+  volume_24h: string | null
+  volume: string | null
 }
 
 interface OutcomeRow {
@@ -152,7 +152,7 @@ async function buildVolumeWorklist(limit: number): Promise<{
 }> {
   const { data: markets, error: marketsError } = await supabaseAdmin
     .from('markets')
-    .select('condition_id, current_volume_24h, total_volume')
+    .select('condition_id, volume_24h, volume')
     .eq('is_active', true)
     .eq('is_resolved', false)
     .order('updated_at', { ascending: true })
@@ -198,8 +198,8 @@ async function buildVolumeWorklist(limit: number): Promise<{
     items.push({
       conditionId: market.condition_id,
       tokenIds: [uniqueTokens[0], uniqueTokens[1]],
-      previousTotalVolume: market.total_volume ?? '0',
-      previousVolume24h: market.current_volume_24h ?? '0',
+      previousTotalVolume: market.volume ?? '0',
+      previousVolume24h: market.volume_24h ?? '0',
     })
   }
 
@@ -257,8 +257,8 @@ async function updateMarketVolume(conditionId: string, totalVolume: string, volu
   const { error } = await supabaseAdmin
     .from('markets')
     .update({
-      total_volume: totalVolume,
-      current_volume_24h: volume24h,
+      volume: totalVolume,
+      volume_24h: volume24h,
       updated_at: new Date().toISOString(),
     })
     .eq('condition_id', conditionId)

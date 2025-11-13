@@ -65,7 +65,7 @@ export default function SettingsAffiliateContent({ affiliateData }: SettingsAffi
         </div>
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground uppercase">Referred volume</p>
-          <p className="mt-2 text-2xl font-semibold">{formatCurrency(Number(affiliateData.stats.total_volume ?? 0))}</p>
+          <p className="mt-2 text-2xl font-semibold">{formatCurrency(Number(affiliateData.stats.volume ?? 0))}</p>
         </div>
         <div className="rounded-lg border p-4">
           <p className="text-xs text-muted-foreground uppercase">Earned fees</p>

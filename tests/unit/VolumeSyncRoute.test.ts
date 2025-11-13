@@ -63,7 +63,7 @@ describe('volume sync route', () => {
   it('returns stats payload on successful sync and clamps limit', async () => {
     __mocks.marketsLimitMock.mockResolvedValue({
       data: [
-        { condition_id: 'cond-1', current_volume_24h: '0', total_volume: '0' },
+        { condition_id: 'cond-1', volume_24h: '0', volume: '0' },
       ],
       error: null,
     })
@@ -116,7 +116,7 @@ describe('volume sync route', () => {
   it('surfaces CLOB errors without updating markets', async () => {
     __mocks.marketsLimitMock.mockResolvedValue({
       data: [
-        { condition_id: 'cond-err', current_volume_24h: '0', total_volume: '0' },
+        { condition_id: 'cond-err', volume_24h: '0', volume: '0' },
       ],
       error: null,
     })
@@ -154,7 +154,7 @@ describe('volume sync route', () => {
   it('stops when time limit is reached before processing batches', async () => {
     __mocks.marketsLimitMock.mockResolvedValue({
       data: [
-        { condition_id: 'cond-1', current_volume_24h: '0', total_volume: '0' },
+        { condition_id: 'cond-1', volume_24h: '0', volume: '0' },
       ],
       error: null,
     })

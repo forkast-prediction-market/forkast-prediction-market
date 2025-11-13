@@ -50,10 +50,9 @@ function MentionsListItem({ event }: MentionsListItemProps) {
   const marketBadges = event.markets
     .map((market) => {
       const metadata = (market.metadata ?? {}) as Record<string, any>
-      const shortTitle = typeof metadata.short_title === 'string' && metadata.short_title.trim()
+      return typeof metadata.short_title === 'string' && metadata.short_title.trim()
         ? metadata.short_title.trim()
         : (market.short_title ?? market.title)
-      return shortTitle
     })
     .filter((label): label is string => Boolean(label && label.trim()))
 
@@ -61,7 +60,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
   const hiddenBadges = marketBadges.slice(2)
 
   const hasRecentMarket = event.markets.some(market => isMarketNew(market.created_at))
-  const totalVolume = event.markets.reduce((acc, market) => acc + (market.total_volume ?? 0), 0)
+  const totalVolume = event.markets.reduce((acc, market) => acc + (market.volume ?? 0), 0)
 
   const statusBadge = hasRecentMarket
     ? (
