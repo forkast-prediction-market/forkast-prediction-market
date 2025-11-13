@@ -1,5 +1,5 @@
 import type { ActivityOrder, Event, QueryResult, TopHolder } from '@/types'
-import { and, desc, eq, exists, ilike, sql } from 'drizzle-orm'
+import { and, desc, eq, exists, ilike, inArray, sql } from 'drizzle-orm'
 import { cacheTag } from 'next/cache'
 import { filterActivitiesByMinAmount } from '@/lib/activity/filter'
 import { cacheTags } from '@/lib/cache-tags'
@@ -205,6 +205,10 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
     created_at: event.created_at?.toISOString() || new Date().toISOString(),
     updated_at: event.updated_at?.toISOString() || new Date().toISOString(),
     end_date: event.end_date?.toISOString() ?? null,
+    volume: marketsWithDerivedValues.reduce(
+      (sum: number, market: { volume: number }) => sum + (market.volume ?? 0),
+      0,
+    ),
     markets: marketsWithDerivedValues,
     tags: tagRecords.map(tag => ({
       id: tag.id,
@@ -354,35 +358,95 @@ export const EventRepository = {
         )`,
       )
 
-      const orderByClause = tag === 'new' || tag === 'trending'
-        ? desc(events.created_at)
-        : desc(events.id)
+      const baseWhere = and(...whereConditions)
 
-      const eventsData = await db.query.events.findMany({
-        where: and(...whereConditions),
-        with: {
-          markets: {
-            with: {
-              condition: {
-                with: { outcomes: true },
+      let eventsData: DrizzleEventResult[] = []
+
+      if (tag === 'trending') {
+        const trendingVolumeOrder = sql<number>`COALESCE((
+          SELECT SUM(${markets.volume_24h})
+          FROM ${markets}
+          WHERE ${markets.event_id} = ${events.id}
+        ), 0)`
+
+        const trendingEventIds = await db
+          .select({ id: events.id })
+          .from(events)
+          .where(baseWhere)
+          .orderBy(desc(trendingVolumeOrder), desc(events.created_at))
+          .limit(limit)
+          .offset(validOffset)
+
+        if (trendingEventIds.length === 0) {
+          return { data: [], error: null }
+        }
+
+        const orderedIds = trendingEventIds.map(event => event.id)
+        const orderIndex = new Map(orderedIds.map((id, index) => [id, index]))
+
+        const trendingData = await db.query.events.findMany({
+          where: and(
+            baseWhere,
+            inArray(events.id, orderedIds),
+          ),
+          with: {
+            markets: {
+              with: {
+                condition: {
+                  with: { outcomes: true },
+                },
               },
             },
-          },
 
-          eventTags: {
-            with: { tag: true },
-          },
-
-          ...(userId && {
-            bookmarks: {
-              where: eq(bookmarks.user_id, userId),
+            eventTags: {
+              with: { tag: true },
             },
-          }),
-        },
-        limit,
-        offset: validOffset,
-        orderBy: orderByClause,
-      }) as DrizzleEventResult[]
+
+            ...(userId && {
+              bookmarks: {
+                where: eq(bookmarks.user_id, userId),
+              },
+            }),
+          },
+        }) as DrizzleEventResult[]
+
+        eventsData = trendingData.sort((a, b) => {
+          const aIndex = orderIndex.get(a.id) ?? Number.MAX_SAFE_INTEGER
+          const bIndex = orderIndex.get(b.id) ?? Number.MAX_SAFE_INTEGER
+          return aIndex - bIndex
+        })
+      }
+      else {
+        const orderByClause = tag === 'new'
+          ? [desc(events.created_at)]
+          : [desc(events.id)]
+
+        eventsData = await db.query.events.findMany({
+          where: baseWhere,
+          with: {
+            markets: {
+              with: {
+                condition: {
+                  with: { outcomes: true },
+                },
+              },
+            },
+
+            eventTags: {
+              with: { tag: true },
+            },
+
+            ...(userId && {
+              bookmarks: {
+                where: eq(bookmarks.user_id, userId),
+              },
+            }),
+          },
+          limit,
+          offset: validOffset,
+          orderBy: orderByClause,
+        }) as DrizzleEventResult[]
+      }
 
       const tokensForPricing = eventsData.flatMap(event =>
         (event.markets ?? []).flatMap(market =>
