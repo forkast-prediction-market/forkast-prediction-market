@@ -10,6 +10,10 @@ export async function GET(request: Request) {
   const bookmarked = searchParams.get('bookmarked') === 'true'
   const offset = Number.parseInt(searchParams.get('offset') || '0', 10)
   const clampedOffset = Number.isNaN(offset) ? 0 : Math.max(0, offset)
+  const sortParam = searchParams.get('sort')
+  const statusParam = searchParams.get('status')
+  const sort = sortParam === 'total-volume' ? 'total-volume' : '24h-volume'
+  const status = statusParam === 'resolved' ? 'resolved' : 'active'
 
   const user = await UserRepository.getCurrentUser()
   const userId = user?.id
@@ -21,6 +25,8 @@ export async function GET(request: Request) {
       userId,
       bookmarked,
       offset: clampedOffset,
+      sortBy: sort,
+      status,
     })
 
     if (error) {

@@ -14,6 +14,9 @@ import { getSupabaseImageUrl } from '@/lib/supabase'
 
 const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
 
+type EventListSort = '24h-volume' | 'total-volume'
+type EventStatusFilter = 'active' | 'resolved'
+
 type PriceApiResponse = Record<string, { BUY?: string, SELL?: string } | undefined>
 interface OutcomePrices { buy: number, sell: number }
 
@@ -82,6 +85,8 @@ interface ListEventsProps {
   userId?: string | undefined
   bookmarked?: boolean
   offset?: number
+  sortBy?: EventListSort
+  status?: EventStatusFilter
 }
 
 interface ActivityArgs {
@@ -291,6 +296,8 @@ export const EventRepository = {
     userId = '',
     bookmarked = false,
     offset = 0,
+    sortBy = '24h-volume',
+    status = 'active',
   }: ListEventsProps): Promise<QueryResult<Event[]>> {
     'use cache'
     cacheTag(cacheTags.events(userId))
@@ -298,10 +305,38 @@ export const EventRepository = {
     return await runQuery(async () => {
       const limit = 40
       const validOffset = Number.isNaN(offset) || offset < 0 ? 0 : offset
+      const statusFilter: EventStatusFilter = status === 'resolved' ? 'resolved' : 'active'
+      const hiddenTagsCondition = sql`NOT EXISTS (
+        SELECT 1
+        FROM ${event_tags} et
+        JOIN ${tags} t ON t.id = et.tag_id
+        WHERE et.event_id = ${events.id} AND t.hide_events = TRUE
+      )`
+      const baseEventStatusCondition = eq(events.status, statusFilter)
+      const hasActiveMarketCondition = exists(
+        db.select({ value: sql`1` })
+          .from(markets)
+          .where(and(
+            eq(markets.event_id, events.id),
+            eq(markets.is_active, true),
+            eq(markets.is_resolved, false),
+          )),
+      )
+      const hasResolvedMarketCondition = exists(
+        db.select({ value: sql`1` })
+          .from(markets)
+          .where(and(
+            eq(markets.event_id, events.id),
+            eq(markets.is_resolved, true),
+          )),
+      )
+      const statusCondition = statusFilter === 'resolved' ? hasResolvedMarketCondition : hasActiveMarketCondition
 
-      const whereConditions = []
-
-      whereConditions.push(eq(events.status, 'active'))
+      const whereConditions: any[] = [
+        baseEventStatusCondition,
+        hiddenTagsCondition,
+        statusCondition,
+      ]
 
       if (search) {
         whereConditions.push(ilike(events.title, `%${search.toLowerCase()}%`))
@@ -348,32 +383,27 @@ export const EventRepository = {
         )
       }
 
-      whereConditions[0] = and(
-        eq(events.status, 'active'),
-        sql`NOT EXISTS (
-          SELECT 1
-          FROM ${event_tags} et
-          JOIN ${tags} t ON t.id = et.tag_id
-          WHERE et.event_id = ${events.id} AND t.hide_events = TRUE
-        )`,
-      )
-
       const baseWhere = and(...whereConditions)
+      const volume24hOrder = sql<number>`COALESCE((
+        SELECT SUM(${markets.volume_24h})
+        FROM ${markets}
+        WHERE ${markets.event_id} = ${events.id}
+      ), 0)`
+      const totalVolumeOrder = sql<number>`COALESCE((
+        SELECT SUM(${markets.volume})
+        FROM ${markets}
+        WHERE ${markets.event_id} = ${events.id}
+      ), 0)`
+      const primarySortExpression = sortBy === 'total-volume' ? totalVolumeOrder : volume24hOrder
 
       let eventsData: DrizzleEventResult[] = []
 
       if (tag === 'trending') {
-        const trendingVolumeOrder = sql<number>`COALESCE((
-          SELECT SUM(${markets.volume_24h})
-          FROM ${markets}
-          WHERE ${markets.event_id} = ${events.id}
-        ), 0)`
-
         const trendingEventIds = await db
           .select({ id: events.id })
           .from(events)
           .where(baseWhere)
-          .orderBy(desc(trendingVolumeOrder), desc(events.created_at))
+          .orderBy(desc(primarySortExpression), desc(events.created_at))
           .limit(limit)
           .offset(validOffset)
 
@@ -418,8 +448,8 @@ export const EventRepository = {
       }
       else {
         const orderByClause = tag === 'new'
-          ? [desc(events.created_at)]
-          : [desc(events.id)]
+          ? [desc(primarySortExpression), desc(events.created_at)]
+          : [desc(primarySortExpression), desc(events.id)]
 
         eventsData = await db.query.events.findMany({
           where: baseWhere,
