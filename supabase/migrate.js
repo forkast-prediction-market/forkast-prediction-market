@@ -83,11 +83,7 @@ async function createCleanCronDetailsCron(sql) {
     PERFORM cron.schedule('clean-cron-details', '0 0 * * *', cmd);
   END $$;`
 
-  const updatedSQL = sqlQuery
-    .replace('<<VERCEL_URL>>', process.env.VERCEL_PROJECT_PRODUCTION_URL)
-    .replace('<<CRON_SECRET>>', process.env.CRON_SECRET)
-
-  await sql.unsafe(updatedSQL, [], { simple: true })
+  await sql.unsafe(sqlQuery, [], { simple: true })
   console.log('✅ Cron clean-cron-details created successfully')
 }
 
@@ -178,7 +174,7 @@ async function createSyncVolumeCron(sql) {
     .replace('<<CRON_SECRET>>', process.env.CRON_SECRET)
 
   await sql.unsafe(updatedSQL, [], { simple: true })
-  console.log('✅ Cron sync-orders created successfully')
+  console.log('✅ Cron sync-volume created successfully')
 }
 
 async function run() {
@@ -198,12 +194,12 @@ async function run() {
     await sql`SELECT 1`
     console.log('Connected to database successfully')
 
-    Promise.all([
-      await applyMigrations(sql),
-      await createCleanCronDetailsCron(sql),
-      await createSyncEventsCron(sql),
-      await createSyncOrdersCron(sql),
-      await createSyncVolumeCron(sql),
+    await Promise.all([
+      applyMigrations(sql),
+      createCleanCronDetailsCron(sql),
+      createSyncEventsCron(sql),
+      createSyncOrdersCron(sql),
+      createSyncVolumeCron(sql),
     ])
   }
   catch (error) {
