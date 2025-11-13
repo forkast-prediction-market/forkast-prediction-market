@@ -194,8 +194,9 @@ async function run() {
     await sql`SELECT 1`
     console.log('Connected to database successfully')
 
+    await applyMigrations(sql)
+
     await Promise.all([
-      applyMigrations(sql),
       createCleanCronDetailsCron(sql),
       createSyncEventsCron(sql),
       createSyncOrdersCron(sql),
