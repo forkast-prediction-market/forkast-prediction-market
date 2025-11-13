@@ -1,7 +1,7 @@
 'use client'
 
 import type { LucideIcon } from 'lucide-react'
-import type { FilterSortOption, FilterState, FilterStatusOption } from '@/providers/FilterProvider'
+import type { FilterState } from '@/providers/FilterProvider'
 import { useAppKitAccount } from '@reown/appkit/react'
 import { BookmarkIcon, ClockIcon, DropletIcon, FlameIcon, HandFistIcon, Settings2Icon, SparklesIcon, TrendingUpIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -37,9 +37,9 @@ interface SettingsToggleProps {
   onToggle: () => void
 }
 
-type SortOption = FilterSortOption
+type SortOption = '24h-volume' | 'total-volume' | 'liquidity' | 'newest' | 'ending-soon' | 'competitive'
 type FrequencyOption = 'all' | 'daily' | 'weekly' | 'monthly'
-type StatusOption = FilterStatusOption
+type StatusOption = 'active' | 'resolved'
 
 type FilterCheckboxKey = 'hideSports' | 'hideCrypto' | 'hideEarnings'
 
@@ -80,9 +80,9 @@ const FILTER_CHECKBOXES: ReadonlyArray<{ key: FilterCheckboxKey, label: string }
 ]
 
 const BASE_FILTER_SETTINGS = {
-  sortBy: '24h-volume' as FilterSortOption,
+  sortBy: '24h-volume',
   frequency: 'all',
-  status: 'active' as FilterStatusOption,
+  status: 'active',
   hideSports: false,
   hideCrypto: false,
   hideEarnings: false,
@@ -103,8 +103,6 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
     hideSports: filters.hideSports,
     hideCrypto: filters.hideCrypto,
     hideEarnings: filters.hideEarnings,
-    sortBy: filters.sortBy,
-    status: filters.status,
   }))
 
   const hasActiveFilters = useMemo(() => (
@@ -123,8 +121,6 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
         prev.hideSports === filters.hideSports
         && prev.hideCrypto === filters.hideCrypto
         && prev.hideEarnings === filters.hideEarnings
-        && prev.sortBy === filters.sortBy
-        && prev.status === filters.status
       ) {
         return prev
       }
@@ -134,11 +130,9 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
         hideSports: filters.hideSports,
         hideCrypto: filters.hideCrypto,
         hideEarnings: filters.hideEarnings,
-        sortBy: filters.sortBy,
-        status: filters.status,
       }
     })
-  }, [filters.hideSports, filters.hideCrypto, filters.hideEarnings, filters.sortBy, filters.status])
+  }, [filters.hideSports, filters.hideCrypto, filters.hideEarnings])
 
   const handleBookmarkToggle = useCallback(() => {
     onFiltersChange({ bookmarked: !filters.bookmarked })
@@ -156,14 +150,12 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
     setFilterSettings((prev) => {
       const next = { ...prev, ...updates }
 
-      // Update parent component's filter state when global filters change
+      // Update parent component's filter state for hide options
       const hideSportsChanged = 'hideSports' in updates && updates.hideSports !== undefined && updates.hideSports !== prev.hideSports
       const hideCryptoChanged = 'hideCrypto' in updates && updates.hideCrypto !== undefined && updates.hideCrypto !== prev.hideCrypto
       const hideEarningsChanged = 'hideEarnings' in updates && updates.hideEarnings !== undefined && updates.hideEarnings !== prev.hideEarnings
-      const sortChanged = 'sortBy' in updates && updates.sortBy !== undefined && updates.sortBy !== prev.sortBy
-      const statusChanged = 'status' in updates && updates.status !== undefined && updates.status !== prev.status
 
-      if (hideSportsChanged || hideCryptoChanged || hideEarningsChanged || sortChanged || statusChanged) {
+      if (hideSportsChanged || hideCryptoChanged || hideEarningsChanged) {
         const filterUpdates: Partial<FilterState> = {}
         if (hideSportsChanged) {
           filterUpdates.hideSports = updates.hideSports
@@ -173,12 +165,6 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
         }
         if (hideEarningsChanged) {
           filterUpdates.hideEarnings = updates.hideEarnings
-        }
-        if (sortChanged) {
-          filterUpdates.sortBy = updates.sortBy as FilterSortOption
-        }
-        if (statusChanged) {
-          filterUpdates.status = updates.status as FilterStatusOption
         }
         onFiltersChange(filterUpdates)
       }
@@ -197,8 +183,6 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
       hideSports: defaultFilters.hideSports,
       hideCrypto: defaultFilters.hideCrypto,
       hideEarnings: defaultFilters.hideEarnings,
-      sortBy: defaultFilters.sortBy,
-      status: defaultFilters.status,
     })
   }, [onFiltersChange])
 
