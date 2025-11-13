@@ -312,7 +312,7 @@ export const EventRepository = {
         JOIN ${tags} t ON t.id = et.tag_id
         WHERE et.event_id = ${events.id} AND t.hide_events = TRUE
       )`
-      const baseEventStatusCondition = eq(events.status, 'active')
+      const baseEventStatusCondition = eq(events.status, statusFilter)
       const hasActiveMarketCondition = exists(
         db.select({ value: sql`1` })
           .from(markets)
