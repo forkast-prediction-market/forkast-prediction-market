@@ -33,11 +33,7 @@ function formatOutcome(outcome: Outcome) {
   const buyPrice = formatSharePrice(outcome.buy_price)
   const sellPrice = formatSharePrice(outcome.sell_price)
 
-  const totalVolume = typeof outcome.total_volume === 'number'
-    ? formatCurrencyValue(outcome.total_volume, 2)
-    : 'volume unknown'
-
-  return `- ${sanitizeForPrompt(outcome.outcome_text)}: buy ${buyPrice}, sell ${sellPrice}, lifetime volume ${totalVolume}`
+  return `- ${sanitizeForPrompt(outcome.outcome_text)}: buy ${buyPrice}, sell ${sellPrice}`
 }
 
 function resolveEstimatedEndDate(market: Market) {
@@ -86,8 +82,8 @@ function buildMarketContextVariables(event: Event, market: Market) {
     'market-title': sanitizeForPrompt(market.title),
     'market-probability': formatPercent(market.probability),
     'market-price': formatSharePrice(market.price),
-    'market-volume-24h': formatCurrencyValue(market.current_volume_24h, 2),
-    'market-volume-total': formatCurrencyValue(market.total_volume, 2),
+    'market-volume-24h': formatCurrencyValue(market.volume_24h, 2),
+    'market-volume-total': formatCurrencyValue(market.volume, 2),
     'market-outcomes': outcomes,
   }
 }

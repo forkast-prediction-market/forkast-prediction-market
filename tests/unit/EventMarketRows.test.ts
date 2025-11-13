@@ -12,7 +12,7 @@ describe('buildEventMarketRows', () => {
       condition_id: overrides.condition_id ?? `market-${marketCounter}`,
       title: overrides.title ?? 'Market',
       icon_url: overrides.icon_url ?? null,
-      total_volume: overrides.total_volume ?? 0,
+      volume: overrides.volume ?? 0,
       probability: overrides.probability ?? 50,
       outcomes: overrides.outcomes ?? [
         {

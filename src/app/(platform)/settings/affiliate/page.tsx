@@ -36,7 +36,7 @@ export default async function AffiliateSettingsPage() {
         stats: {
           total_referrals: Number(statsData?.total_referrals ?? 0),
           active_referrals: Number(statsData?.active_referrals ?? 0),
-          total_volume: Number(statsData?.total_volume ?? 0),
+          volume: Number(statsData?.volume ?? 0),
           total_affiliate_fees: Number(statsData?.total_affiliate_fees ?? 0),
         },
         recentReferrals: (referralsData ?? []).map((referral: any) => {

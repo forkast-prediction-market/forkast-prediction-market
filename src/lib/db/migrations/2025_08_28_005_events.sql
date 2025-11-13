@@ -65,30 +65,30 @@ CREATE TABLE event_tags
 CREATE TABLE markets
 (
   -- IDs and Identifiers
-  condition_id       TEXT PRIMARY KEY REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  condition_id TEXT PRIMARY KEY REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
   -- Relationships
-  event_id           CHAR(26)    NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  event_id     CHAR(26)    NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
   -- Market Information
-  title              TEXT        NOT NULL,
-  slug               TEXT        NOT NULL,
-  short_title        TEXT,
+  title        TEXT        NOT NULL,
+  slug         TEXT        NOT NULL,
+  short_title  TEXT,
   -- Images
-  icon_url           TEXT,  -- markets/icons/market-slug.jpg
+  icon_url     TEXT,  -- markets/icons/market-slug.jpg
   -- Status and Data
-  is_active          BOOLEAN              DEFAULT TRUE,
-  is_resolved        BOOLEAN              DEFAULT FALSE,
+  is_active    BOOLEAN              DEFAULT TRUE,
+  is_resolved  BOOLEAN              DEFAULT FALSE,
   -- Metadata
-  metadata           JSONB, -- Metadata from Arweave
+  metadata     JSONB, -- Metadata from Arweave
   -- Cached Trading Metrics (from subgraphs)
-  current_volume_24h DECIMAL(20, 6)       DEFAULT 0,
-  total_volume       DECIMAL(20, 6)       DEFAULT 0,
+  volume_24h   DECIMAL(20, 6)       DEFAULT 0,
+  volume       DECIMAL(20, 6)       DEFAULT 0,
   -- Timestamps
-  created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   -- Constraints
   UNIQUE (event_id, slug),
-  CHECK (current_volume_24h >= 0),
-  CHECK (total_volume >= 0)
+  CHECK (volume_24h >= 0),
+  CHECK (volume >= 0)
 );
 
 -- Outcomes table - Individual market outcomes (belongs to markets via condition_id)
@@ -104,8 +104,6 @@ CREATE TABLE outcomes
   payout_value       DECIMAL(20, 6),                     -- Final payout value
   -- Trading metrics (cached from subgraphs)
   current_price      DECIMAL(8, 4),                      -- Current market price (0.0001 to 0.9999)
-  volume_24h         DECIMAL(20, 6)       DEFAULT 0,
-  total_volume       DECIMAL(20, 6)       DEFAULT 0,
   -- Timestamps
   created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -114,8 +112,6 @@ CREATE TABLE outcomes
   UNIQUE (token_id),
   CHECK (outcome_index >= 0),
   CHECK (current_price IS NULL OR (current_price >= 0.0001 AND current_price <= 0.9999)),
-  CHECK (volume_24h >= 0),
-  CHECK (total_volume >= 0),
   CHECK (payout_value IS NULL OR payout_value >= 0)
 );
 

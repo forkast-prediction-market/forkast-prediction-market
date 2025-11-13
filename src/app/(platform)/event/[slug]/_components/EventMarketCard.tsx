@@ -72,7 +72,7 @@ function EventMarketCardComponent({
               </div>
               <div className="text-xs text-muted-foreground">
                 $
-                {market.total_volume?.toLocaleString('en-US', {
+                {market.volume?.toLocaleString('en-US', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 }) || '0.00'}
@@ -151,7 +151,7 @@ function EventMarketCardComponent({
             </div>
             <div className="text-xs text-muted-foreground">
               $
-              {market.total_volume?.toLocaleString('en-US', {
+              {market.volume?.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               }) || '0.00'}

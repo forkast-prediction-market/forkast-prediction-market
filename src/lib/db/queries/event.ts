@@ -148,8 +148,6 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
         payout_value: outcome.payout_value != null ? Number(outcome.payout_value) : undefined,
         buy_price: buyPrice,
         sell_price: sellPrice,
-        volume_24h: Number(outcome.volume_24h || 0),
-        total_volume: Number(outcome.total_volume || 0),
       }
     })
 
@@ -158,8 +156,8 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
     const yesSellPrice = primaryOutcome?.sell_price ?? yesBuyPrice
     const yesMidPrice = (yesBuyPrice + yesSellPrice) / 2
     const probability = yesMidPrice * 100
-    const normalizedCurrentVolume24h = Number(market.current_volume_24h || 0)
-    const normalizedTotalVolume = Number(market.total_volume || 0)
+    const normalizedCurrentVolume24h = Number(market.volume_24h || 0)
+    const normalizedTotalVolume = Number(market.volume || 0)
 
     return {
       ...market,
@@ -168,8 +166,7 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
       probability,
       price: yesMidPrice,
       volume: normalizedTotalVolume,
-      current_volume_24h: normalizedCurrentVolume24h,
-      total_volume: normalizedTotalVolume,
+      volume_24h: normalizedCurrentVolume24h,
       outcomes: normalizedOutcomes,
       icon_url: getSupabaseImageUrl(market.icon_url),
       condition: market.condition
@@ -177,7 +174,7 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
             ...market.condition,
             outcome_slot_count: Number(market.condition.outcome_slot_count || 0),
             payout_denominator: market.condition.payout_denominator ? Number(market.condition.payout_denominator) : undefined,
-            total_volume: Number(market.condition.total_volume || 0),
+            volume: Number(market.condition.volume || 0),
             open_interest: Number(market.condition.open_interest || 0),
             active_positions_count: Number(market.condition.active_positions_count || 0),
           }
@@ -186,7 +183,7 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
   })
 
   const totalRecentVolume = marketsWithDerivedValues.reduce(
-    (sum: number, market: any) => sum + (typeof market.current_volume_24h === 'number' ? market.current_volume_24h : 0),
+    (sum: number, market: any) => sum + (typeof market.volume_24h === 'number' ? market.volume_24h : 0),
     0,
   )
   const isRecentlyUpdated = event.updated_at instanceof Date

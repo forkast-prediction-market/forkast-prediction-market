@@ -83,11 +83,7 @@ async function createCleanCronDetailsCron(sql) {
     PERFORM cron.schedule('clean-cron-details', '0 0 * * *', cmd);
   END $$;`
 
-  const updatedSQL = sqlQuery
-    .replace('<<VERCEL_URL>>', process.env.VERCEL_PROJECT_PRODUCTION_URL)
-    .replace('<<CRON_SECRET>>', process.env.CRON_SECRET)
-
-  await sql.unsafe(updatedSQL, [], { simple: true })
+  await sql.unsafe(sqlQuery, [], { simple: true })
   console.log('✅ Cron clean-cron-details created successfully')
 }
 
@@ -151,6 +147,36 @@ async function createSyncOrdersCron(sql) {
   console.log('✅ Cron sync-orders created successfully')
 }
 
+async function createSyncVolumeCron(sql) {
+  console.log('Creating sync-volume cron job...')
+  const sqlQuery = `
+  DO $$
+  DECLARE
+    job_id int;
+    cmd text := $c$
+      SELECT net.http_get(
+        url := 'https://<<VERCEL_URL>>/api/sync/volume',
+        headers := '{"Content-Type": "application/json", "Authorization": "Bearer <<CRON_SECRET>>"}'
+      );
+    $c$;
+  BEGIN
+    SELECT jobid INTO job_id FROM cron.job WHERE jobname = 'sync-volume';
+
+    IF job_id IS NOT NULL THEN
+      PERFORM cron.unschedule(job_id);
+    END IF;
+
+    PERFORM cron.schedule('sync-volume', '*/30 * * * *', cmd);
+  END $$;`
+
+  const updatedSQL = sqlQuery
+    .replace('<<VERCEL_URL>>', process.env.VERCEL_PROJECT_PRODUCTION_URL)
+    .replace('<<CRON_SECRET>>', process.env.CRON_SECRET)
+
+  await sql.unsafe(updatedSQL, [], { simple: true })
+  console.log('✅ Cron sync-volume created successfully')
+}
+
 async function run() {
   const requiredEnvVars = ['POSTGRES_URL', 'VERCEL_PROJECT_PRODUCTION_URL', 'CRON_SECRET']
   for (const envVar of requiredEnvVars) {
@@ -169,9 +195,13 @@ async function run() {
     console.log('Connected to database successfully')
 
     await applyMigrations(sql)
-    await createCleanCronDetailsCron(sql)
-    await createSyncEventsCron(sql)
-    await createSyncOrdersCron(sql)
+
+    await Promise.all([
+      createCleanCronDetailsCron(sql),
+      createSyncEventsCron(sql),
+      createSyncOrdersCron(sql),
+      createSyncVolumeCron(sql),
+    ])
   }
   catch (error) {
     console.error('An error occurred:', error)
