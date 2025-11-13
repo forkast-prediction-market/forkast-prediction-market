@@ -3,6 +3,15 @@
 import type { ReactNode } from 'react'
 import { createContext, use, useCallback, useMemo, useState } from 'react'
 
+export type FilterSortOption
+  = | '24h-volume'
+    | 'total-volume'
+    | 'liquidity'
+    | 'newest'
+    | 'ending-soon'
+    | 'competitive'
+export type FilterStatusOption = 'active' | 'resolved'
+
 export interface FilterState {
   search: string
   tag: string
@@ -10,6 +19,8 @@ export interface FilterState {
   hideSports: boolean
   hideCrypto: boolean
   hideEarnings: boolean
+  sortBy: FilterSortOption
+  status: FilterStatusOption
 }
 
 interface FilterContextType {
@@ -31,6 +42,8 @@ const DEFAULT_FILTERS: FilterState = {
   hideSports: false,
   hideCrypto: false,
   hideEarnings: false,
+  sortBy: '24h-volume',
+  status: 'active',
 }
 
 export function FilterProvider({ children, initialTag }: FilterProviderProps) {

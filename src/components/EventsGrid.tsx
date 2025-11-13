@@ -32,6 +32,14 @@ async function fetchEvents({
     bookmarked: filters.bookmarked.toString(),
     offset: pageParam.toString(),
   })
+
+  if (filters.status) {
+    params.set('status', filters.status)
+  }
+
+  const sortParam = filters.sortBy === 'total-volume' ? 'total-volume' : '24h-volume'
+  params.set('sort', sortParam)
+
   if (filters.hideSports) {
     params.set('hideSports', 'true')
   }
@@ -56,7 +64,16 @@ export default function EventsGrid({
   const [hasInitialized, setHasInitialized] = useState(false)
   const [scrollMargin, setScrollMargin] = useState(0)
   const PAGE_SIZE = 40
-  const isDefaultState = filters.tag === 'trending' && filters.search === '' && filters.bookmarked === false
+  const isDefaultState = (
+    filters.tag === 'trending'
+    && filters.search === ''
+    && filters.bookmarked === false
+    && filters.hideSports === false
+    && filters.hideCrypto === false
+    && filters.hideEarnings === false
+    && filters.sortBy === '24h-volume'
+    && filters.status === 'active'
+  )
   const shouldUseInitialData = isDefaultState && initialEvents.length > 0
 
   const {
@@ -68,7 +85,17 @@ export default function EventsGrid({
     hasNextPage,
     isPending,
   } = useInfiniteQuery({
-    queryKey: ['events', filters.tag, filters.search, filters.bookmarked, filters.hideSports, filters.hideCrypto, filters.hideEarnings],
+    queryKey: [
+      'events',
+      filters.tag,
+      filters.search,
+      filters.bookmarked,
+      filters.hideSports,
+      filters.hideCrypto,
+      filters.hideEarnings,
+      filters.sortBy,
+      filters.status,
+    ],
     queryFn: ({ pageParam }) => fetchEvents({
       pageParam,
       filters,
