@@ -9,6 +9,7 @@ vi.mock('@/lib/supabase', () => {
   const marketsChain: any = {}
   marketsChain.select = vi.fn(() => marketsChain)
   marketsChain.order = vi.fn(() => marketsChain)
+  marketsChain.eq = vi.fn(() => marketsChain)
   marketsChain.limit = marketsLimitMock
   marketsChain.update = marketsUpdateMock
 
