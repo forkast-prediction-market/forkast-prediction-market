@@ -24,7 +24,7 @@ Follow these simple steps to launch your own prediction market:
 
 ### 1. Fork the Repository
 
-Click the **Fork** button in the top right corner
+Click the **Fork** button in the top right corner (and feel free to leave a **⭐ star**!)
 
 ### 2. Create a New Project on Vercel
 
@@ -102,6 +102,7 @@ Forkast is provided "as is" and should be used at your own risk. Review the [Mod
 **💬 [Discussions](https://github.com/orgs/forkast-prediction-market/discussions)**
 
 **📱 [Discord](https://discord.gg/vSSnkJvypS)** •
+**🐦 [X (Follow us)](https://x.com/forka_st)** •
 **🐛 [Issues](https://github.com/forkast-prediction-market/forkast-prediction-market/issues)** •
 **⭐ [Contribute](https://github.com/forkast-prediction-market/forkast-prediction-market/blob/main/CONTRIBUTING.md)**
 
