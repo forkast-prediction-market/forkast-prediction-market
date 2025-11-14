@@ -282,6 +282,9 @@ export interface UserPosition {
     icon_url: string
     is_active: boolean
     is_resolved: boolean
+    event?: {
+      slug: string
+    }
   }
   average_position: number
   total_position_value: number

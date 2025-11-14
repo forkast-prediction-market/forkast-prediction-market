@@ -505,6 +505,7 @@ export const UserRepository = {
           icon_url: markets.icon_url,
           is_active: markets.is_active,
           is_resolved: markets.is_resolved,
+          event_slug: events.slug,
           average_position: sql<number>`AVG(${orders.maker_amount}::numeric)`.as('average_position'),
           total_position_value: sql<number>`SUM(${orders.maker_amount}::numeric)`.as('total_position_value'),
           order_count: count(orders.id).as('order_count'),
@@ -522,6 +523,7 @@ export const UserRepository = {
           markets.icon_url,
           markets.is_active,
           markets.is_resolved,
+          events.slug,
         )
 
       const result = params.minAmount && params.minAmount > 0
@@ -546,6 +548,9 @@ export const UserRepository = {
             icon_url: iconUrl,
             is_active: row.is_active,
             is_resolved: row.is_resolved,
+            event: {
+              slug: row.event_slug || '',
+            },
           },
           average_position: typeof row.average_position === 'string'
             ? Number.parseFloat(row.average_position)

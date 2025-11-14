@@ -154,7 +154,7 @@ function ActivityItem({ item }: { item: ActivityOrder }) {
       {/* Market */}
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         <Link
-          href={`/event/${item.market.slug}`}
+          href={`/event/${item.market.event?.slug}`}
           className="size-10 flex-shrink-0 overflow-hidden rounded bg-muted sm:size-12"
         >
           <Image
@@ -168,7 +168,7 @@ function ActivityItem({ item }: { item: ActivityOrder }) {
 
         <div className="min-w-0 flex-1">
           <h4 className="mb-1 line-clamp-2 text-xs font-medium sm:text-sm">
-            <Link href={`/event/${item.market.slug}`}>{item.market.title}</Link>
+            <Link href={`/event/${item.market.event?.slug}`}>{item.market.title}</Link>
           </h4>
 
           <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:gap-2">

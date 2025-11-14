@@ -35,6 +35,8 @@ function formatRelativeTime(date: Date): string {
 }
 
 export default function PositionItem({ item }: PositionItemProps) {
+  const eventSlug = item.market.event?.slug || item.market.slug
+
   return (
     <div className={`
       flex items-center gap-3 border-b border-border px-3 py-4 transition-colors
@@ -46,7 +48,7 @@ export default function PositionItem({ item }: PositionItemProps) {
       {/* Market */}
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         <Link
-          href={`/event/${item.market.slug}`}
+          href={`/event/${eventSlug}`}
           className="size-10 flex-shrink-0 overflow-hidden rounded bg-muted sm:size-12"
         >
           <Image
@@ -60,7 +62,7 @@ export default function PositionItem({ item }: PositionItemProps) {
 
         <div className="min-w-0 flex-1">
           <h4 className="mb-1 line-clamp-2 text-xs font-medium sm:text-sm">
-            <Link href={`/event/${item.market.slug}`}>{item.market.title}</Link>
+            <Link href={`/event/${eventSlug}`}>{item.market.title}</Link>
           </h4>
 
           <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:gap-2">
