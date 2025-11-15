@@ -38,8 +38,6 @@ const config: NextConfig = {
           ? `https://${process.env.VERCEL_URL}`
           : 'http://localhost:3000',
     CLOB_URL: 'https://clob.forka.st',
-    FEE_RECIPIENT_WALLET: process.env.FEE_RECIPIENT_WALLET,
-    NEXT_PUBLIC_FEE_RECIPIENT_WALLET: process.env.FEE_RECIPIENT_WALLET,
   },
 }
 
