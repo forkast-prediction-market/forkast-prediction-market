@@ -51,7 +51,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   outcome: null,
   side: ORDER_SIDE.BUY,
   type: ORDER_TYPE.MARKET,
-  amount: '0.00',
+  amount: '',
   limitPrice: '0.0',
   limitShares: '0',
   limitExpirationEnabled: false,
@@ -69,7 +69,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   setSide: (side: OrderSide) => set({ side }),
   setType: (type: OrderType) => set(state => ({
     type,
-    amount: '0.00',
+    amount: '',
     limitPrice: '0.0',
     limitShares: '0',
     limitExpirationEnabled: false,

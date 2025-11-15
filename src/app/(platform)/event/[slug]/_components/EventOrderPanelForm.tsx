@@ -243,7 +243,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         type={state.type}
         onSideChange={state.setSide}
         onTypeChange={state.setType}
-        onAmountReset={() => state.setAmount('0.00')}
+        onAmountReset={() => state.setAmount('')}
         onFocusInput={focusInput}
       />
 
