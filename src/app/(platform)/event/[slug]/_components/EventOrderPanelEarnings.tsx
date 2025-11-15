@@ -43,7 +43,7 @@ export default function EventOrderPanelEarnings({
   )
   const desktopEarningsClass = cn(
     'font-bold text-yes',
-    desktopDigitCount >= 9 ? 'text-2xl' : desktopDigitCount >= 7 ? 'text-3xl' : 'text-4xl',
+    desktopDigitCount >= 9 ? 'text-xl' : desktopDigitCount >= 7 ? 'text-2xl' : 'text-3xl',
   )
 
   return (
