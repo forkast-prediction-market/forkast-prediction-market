@@ -24,6 +24,7 @@ interface EventOrderPanelInputProps {
 const BUY_CHIPS_DESKTOP = ['+$5', '+$25', '+$100']
 const BUY_CHIPS_MOBILE = ['+$1', '+$20', '+$100']
 const INTEGER_FORMATTER = new Intl.NumberFormat('en-US')
+const MAX_BUY_AMOUNT = 999_999_999
 
 export default function EventOrderPanelInput({
   isMobile,
@@ -96,7 +97,7 @@ export default function EventOrderPanelInput({
 
     const numericValue = Number.parseFloat(cleaned)
 
-    if (cleaned === '' || numericValue <= 99999) {
+    if (cleaned === '' || numericValue <= MAX_BUY_AMOUNT) {
       onAmountChange(cleaned)
     }
   }
@@ -112,7 +113,7 @@ export default function EventOrderPanelInput({
 
     const clampedValue = side === ORDER_SIDE.SELL
       ? Math.min(numeric, availableShares)
-      : numeric
+      : Math.min(numeric, MAX_BUY_AMOUNT)
 
     onAmountChange(formatAmountInputValue(clampedValue))
   }
@@ -127,9 +128,8 @@ export default function EventOrderPanelInput({
       return
     }
 
-    if (nextValue <= 99999) {
-      onAmountChange(formatAmountInputValue(nextValue))
-    }
+    const limitedValue = Math.min(nextValue, MAX_BUY_AMOUNT)
+    onAmountChange(formatAmountInputValue(limitedValue))
   }
 
   function decrementAmount(delta: number) {
@@ -178,16 +178,24 @@ export default function EventOrderPanelInput({
           const chipValue = Number.parseInt(chip.substring(2), 10)
           const newValue = amountNumber + chipValue
 
-          if (newValue <= 999999999) {
-            onAmountChange(formatAmountInputValue(newValue))
-            focusInput()
-          }
+          const limitedValue = Math.min(newValue, MAX_BUY_AMOUNT)
+          onAmountChange(formatAmountInputValue(limitedValue))
+          focusInput()
         }}
       >
         {chip}
       </button>
     ))
   }
+
+  const [rawWholePart = ''] = amount.split('.')
+  const normalizedWholePart = rawWholePart.replace(/^0+/, '')
+  const wholeDigits = normalizedWholePart.length
+  const amountSizeClass = wholeDigits >= 9
+    ? 'text-2xl'
+    : wholeDigits >= 7
+      ? 'text-3xl'
+      : 'text-4xl'
 
   const formattedAmount = formatDisplayAmount(amount)
   const inputValue = side === ORDER_SIDE.SELL
@@ -214,13 +222,16 @@ export default function EventOrderPanelInput({
                   <input
                     ref={inputRef}
                     type="text"
-                    className={`
-                      w-full
-                      [appearance:textfield]
-                      border-0 bg-transparent text-center text-4xl font-bold text-foreground
-                      placeholder-muted-foreground outline-hidden
-                      [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
-                    `}
+                    className={cn(
+                      `
+                        w-full
+                        [appearance:textfield]
+                        border-0 bg-transparent text-center font-bold text-foreground placeholder-muted-foreground
+                        outline-hidden
+                        [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
+                      `,
+                      amountSizeClass,
+                    )}
                     placeholder={side === ORDER_SIDE.SELL ? '0' : '$0.00'}
                     value={inputValue}
                     onChange={e => handleInputChange(e.target.value)}
@@ -254,14 +265,16 @@ export default function EventOrderPanelInput({
                 <input
                   ref={inputRef}
                   type="text"
-                  className={`
-                    h-14 w-full
-                    [appearance:textfield]
-                    border-0 bg-transparent text-right text-4xl font-bold text-slate-700 placeholder-slate-400
-                    outline-hidden
-                    dark:text-slate-300 dark:placeholder-slate-500
-                    [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
-                  `}
+                  className={cn(
+                    `
+                      h-14 w-full
+                      [appearance:textfield]
+                      border-0 bg-transparent text-right font-bold text-slate-700 placeholder-slate-400 outline-hidden
+                      dark:text-slate-300 dark:placeholder-slate-500
+                      [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
+                    `,
+                    amountSizeClass,
+                  )}
                   placeholder={side === ORDER_SIDE.SELL ? '0' : '$0.00'}
                   value={inputValue}
                   onChange={e => handleInputChange(e.target.value)}
@@ -296,7 +309,7 @@ export default function EventOrderPanelInput({
             }
             else {
               const maxBalance = balance.raw
-              const limitedBalance = Math.min(maxBalance, 999999999)
+              const limitedBalance = Math.min(maxBalance, MAX_BUY_AMOUNT)
               onAmountChange(formatAmountInputValue(limitedBalance))
             }
             focusInput()
