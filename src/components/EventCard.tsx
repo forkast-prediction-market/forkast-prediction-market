@@ -4,9 +4,13 @@ import type { Event } from '@/types'
 import { ChevronsDownIcon, ChevronsUpIcon, DollarSignIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { use, useState } from 'react'
+import { use, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import EventBookmark from '@/app/(platform)/event/[slug]/_components/EventBookmark'
+import {
+  buildMarketTargets,
+  useEventPriceHistory,
+} from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
 import { OpenCardContext } from '@/components/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -64,6 +68,62 @@ export default function EventCard({ event }: EventCardProps) {
     market => isMarketNew(market.created_at),
   )
 
+  const marketTargets = useMemo(() => buildMarketTargets(event.markets), [event.markets])
+  const { latestSnapshot } = useEventPriceHistory({
+    eventId: event.id,
+    range: 'ALL',
+    targets: marketTargets,
+    eventCreatedAt: event.created_at,
+  })
+
+  const fallbackChanceByMarket = useMemo(() => {
+    function clampPrice(value: number | undefined | null) {
+      if (!Number.isFinite(value)) {
+        return 0
+      }
+      return Math.max(0, Math.min(1, Number(value)))
+    }
+
+    const baseMap = event.markets.reduce<Record<string, number>>((acc, market) => {
+      acc[market.condition_id] = clampPrice(market.price) * 100
+      return acc
+    }, {})
+
+    const activeMarkets = event.markets.filter(market => market.is_active && !market.is_resolved)
+    if (activeMarkets.length <= 1) {
+      return baseMap
+    }
+
+    const total = activeMarkets.reduce((sum, market) => sum + clampPrice(market.price), 0)
+    if (total <= 0) {
+      return baseMap
+    }
+
+    activeMarkets.forEach((market) => {
+      baseMap[market.condition_id] = (clampPrice(market.price) / total) * 100
+    })
+
+    return baseMap
+  }, [event.markets])
+
+  const displayChanceByMarket = useMemo(() => event.markets.reduce<Record<string, number>>((acc, market) => {
+    const snapshotValue = latestSnapshot[market.condition_id]
+    if (typeof snapshotValue === 'number' && Number.isFinite(snapshotValue)) {
+      acc[market.condition_id] = snapshotValue
+    }
+    else {
+      acc[market.condition_id] = fallbackChanceByMarket[market.condition_id] ?? 0
+    }
+    return acc
+  }, {}), [event.markets, latestSnapshot, fallbackChanceByMarket])
+
+  function getDisplayChance(marketId: string) {
+    return displayChanceByMarket[marketId] ?? 0
+  }
+  const primaryMarket = event.markets[0]
+  const primaryDisplayChance = primaryMarket ? getDisplayChance(primaryMarket.condition_id) : 0
+  const roundedPrimaryDisplayChance = Math.round(primaryDisplayChance)
+
   async function handleTrade(outcomeId: string, type: 'yes' | 'no') {
     const outcomes = event.markets.flatMap(market => market.outcomes)
     const outcome = outcomes.find(o => o.id === outcomeId)
@@ -73,7 +133,7 @@ export default function EventCard({ event }: EventCardProps) {
         type,
         name: outcome.outcome_text,
       })
-      // Keep current value or set to "1" if empty
+
       if (!tradeAmount) {
         setTradeAmount('1')
       }
@@ -87,11 +147,9 @@ export default function EventCard({ event }: EventCardProps) {
 
     setIsLoading(true)
 
-    // Simulate API call
     setTimeout(() => {
       setIsLoading(false)
 
-      // Calculate shares and price
       const amountNum = Number.parseFloat(tradeAmount)
       const safeAmount = Number.isFinite(amountNum) ? amountNum : 0
       const outcome = event.markets[0].outcomes.find(o => o.id === selectedOutcome.id)
@@ -242,22 +300,20 @@ export default function EventCard({ event }: EventCardProps) {
                           strokeWidth="5"
                           strokeLinecap="round"
                           className={`transition-all duration-300 ${
-                            Math.round(event.markets[0].probability) < 40
+                            roundedPrimaryDisplayChance < 40
                               ? 'text-no'
-                              : Math.round(event.markets[0].probability) === 50
+                              : roundedPrimaryDisplayChance === 50
                                 ? 'text-slate-400'
                                 : 'text-yes'
                           }`}
-                          strokeDasharray={`${
-                            (Math.round(event.markets[0].probability) / 100) * 94.25
-                          } 94.25`}
+                          strokeDasharray={`${(roundedPrimaryDisplayChance / 100) * 94.25} 94.25`}
                           strokeDashoffset="0"
                         />
                       </svg>
                       {/* Percentage number centered in arc */}
                       <div className="absolute inset-0 flex items-center justify-center pt-4">
                         <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                          {Math.round(event.markets[0].probability)}
+                          {roundedPrimaryDisplayChance}
                           %
                         </span>
                       </div>
@@ -395,51 +451,59 @@ export default function EventCard({ event }: EventCardProps) {
                             {market.short_title || market.title}
                           </span>
                           <div className="ml-2 flex items-center gap-2">
-                            <span className="text-[11px] font-bold text-slate-900 dark:text-white">
-                              {Math.round(market.probability)}
-                              %
-                            </span>
-                            <div className="flex gap-1">
-                              <Button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleTrade(market.outcomes[0].id, 'yes')
-                                  onToggle()
-                                }}
-                                title={`${market.outcomes[0].outcome_text}: ${Math.round(market.probability)}%`}
-                                variant="yes"
-                                className="group h-auto w-[40px] px-2 py-1 text-[10px]"
-                              >
-                                <span className="truncate group-hover:hidden">
-                                  {market.outcomes[0].outcome_text}
-                                </span>
-                                <span className="hidden font-mono group-hover:inline">
-                                  {Math.round(market.probability)}
-                                  %
-                                </span>
-                              </Button>
-                              <Button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleTrade(market.outcomes[1].id, 'no')
-                                  onToggle()
-                                }}
-                                title={`${market.outcomes[1].outcome_text}: ${Math.round(market.probability)}%`}
-                                variant="no"
-                                size="sm"
-                                className="group h-auto w-[40px] px-2 py-1 text-[10px]"
-                              >
-                                <span className="truncate group-hover:hidden">
-                                  {market.outcomes[1].outcome_text}
-                                </span>
-                                <span className="hidden font-mono group-hover:inline">
-                                  {100 - Math.round(market.probability)}
-                                  %
-                                </span>
-                              </Button>
-                            </div>
+                            {(() => {
+                              const displayChance = Math.round(getDisplayChance(market.condition_id))
+                              const oppositeChance = Math.max(0, Math.min(100, 100 - displayChance))
+                              return (
+                                <>
+                                  <span className="text-[11px] font-bold text-slate-900 dark:text-white">
+                                    {displayChance}
+                                    %
+                                  </span>
+                                  <div className="flex gap-1">
+                                    <Button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleTrade(market.outcomes[0].id, 'yes')
+                                        onToggle()
+                                      }}
+                                      title={`${market.outcomes[0].outcome_text}: ${displayChance}%`}
+                                      variant="yes"
+                                      className="group h-auto w-[40px] px-2 py-1 text-[10px]"
+                                    >
+                                      <span className="truncate group-hover:hidden">
+                                        {market.outcomes[0].outcome_text}
+                                      </span>
+                                      <span className="hidden font-mono group-hover:inline">
+                                        {displayChance}
+                                        %
+                                      </span>
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation()
+                                        handleTrade(market.outcomes[1].id, 'no')
+                                        onToggle()
+                                      }}
+                                      title={`${market.outcomes[1].outcome_text}: ${oppositeChance}%`}
+                                      variant="no"
+                                      size="sm"
+                                      className="group h-auto w-[40px] px-2 py-1 text-[10px]"
+                                    >
+                                      <span className="truncate group-hover:hidden">
+                                        {market.outcomes[1].outcome_text}
+                                      </span>
+                                      <span className="hidden font-mono group-hover:inline">
+                                        {oppositeChance}
+                                        %
+                                      </span>
+                                    </Button>
+                                  </div>
+                                </>
+                              )
+                            })()}
                           </div>
                         </div>
                       ))}

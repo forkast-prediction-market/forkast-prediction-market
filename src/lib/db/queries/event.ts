@@ -363,11 +363,19 @@ export const EventRepository = {
       let eventsData: DrizzleEventResult[] = []
 
       if (tag === 'trending') {
-        const trendingVolumeOrder = sql<number>`COALESCE((
-          SELECT SUM(${markets.volume_24h})
-          FROM ${markets}
-          WHERE ${markets.event_id} = ${events.id}
-        ), 0)`
+        const trendingVolumeOrder = sql<number>`COALESCE(
+          NULLIF((
+            SELECT SUM(${markets.volume_24h})
+            FROM ${markets}
+            WHERE ${markets.event_id} = ${events.id}
+          ), 0),
+          (
+            SELECT SUM(${markets.volume})
+            FROM ${markets}
+            WHERE ${markets.event_id} = ${events.id}
+          ),
+          0
+        )`
 
         const trendingEventIds = await db
           .select({ id: events.id })
