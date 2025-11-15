@@ -228,3 +228,20 @@ export function fromMicro(amount: string | number, precision: number = 1): strin
   }
   return (numeric / 1e6).toFixed(precision)
 }
+
+export function formatAmountInputValue(value: number): string {
+  if (!Number.isFinite(value)) {
+    return ''
+  }
+
+  const normalized = Math.max(0, Math.round(value * 100) / 100)
+  if (normalized === 0) {
+    return ''
+  }
+
+  if (Number.isInteger(normalized)) {
+    return Math.trunc(normalized).toString()
+  }
+
+  return normalized.toFixed(2)
+}

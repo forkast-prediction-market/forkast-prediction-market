@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { ORDER_SIDE } from '@/lib/constants'
+import { formatAmountInputValue } from '@/lib/formatters'
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
@@ -84,9 +85,7 @@ export default function EventOrderPanelLimitControls({
     }
 
     const nextAmount = (priceValue * sharesValue) / 100
-    onAmountUpdateFromLimit((sharesValue === 0 || nextAmount === 0)
-      ? '0.00'
-      : nextAmount.toFixed(2))
+    onAmountUpdateFromLimit(formatAmountInputValue(nextAmount))
   }
 
   function updateLimitPrice(nextValue: number) {

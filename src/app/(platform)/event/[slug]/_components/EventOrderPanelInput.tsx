@@ -1,6 +1,7 @@
 import type { RefObject } from 'react'
 import type { OrderSide } from '@/types'
 import { ORDER_SIDE } from '@/lib/constants'
+import { formatAmountInputValue } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
 interface BalanceSummary {
@@ -22,6 +23,7 @@ interface EventOrderPanelInputProps {
 
 const BUY_CHIPS_DESKTOP = ['+$5', '+$25', '+$100']
 const BUY_CHIPS_MOBILE = ['+$1', '+$20', '+$100']
+const INTEGER_FORMATTER = new Intl.NumberFormat('en-US')
 
 export default function EventOrderPanelInput({
   isMobile,
@@ -37,37 +39,82 @@ export default function EventOrderPanelInput({
     inputRef?.current?.focus()
   }
 
-  function sanitizeBuyInput(rawValue: string) {
-    return rawValue.replace(/[^0-9.]/g, '')
+  function sanitizeNumericInput(rawValue: string) {
+    const digitsAndDots = rawValue.replace(/[^0-9.]/g, '')
+    const [wholePart, ...decimalSegments] = digitsAndDots.split('.')
+    if (decimalSegments.length === 0) {
+      return wholePart
+    }
+
+    const decimals = decimalSegments.join('')
+    return `${wholePart}.${decimals}`
+  }
+
+  function formatDisplayAmount(rawAmount: string) {
+    if (!rawAmount) {
+      return ''
+    }
+
+    const hasDecimalPoint = rawAmount.includes('.')
+    const [wholePart = '', fractionPart = ''] = rawAmount.split('.')
+    const normalizedWhole = Number.parseInt(wholePart || '0', 10)
+    const formattedWhole = Number.isNaN(normalizedWhole)
+      ? '0'
+      : INTEGER_FORMATTER.format(normalizedWhole)
+
+    if (!hasDecimalPoint) {
+      return formattedWhole
+    }
+
+    if (rawAmount.endsWith('.') && fractionPart === '') {
+      return `${formattedWhole}.`
+    }
+
+    return `${formattedWhole}.${fractionPart}`
   }
 
   function handleInputChange(rawValue: string) {
+    const cleaned = sanitizeNumericInput(rawValue)
+
     if (side === ORDER_SIDE.SELL) {
-      const nextValue = Number.parseFloat(rawValue)
+      if (cleaned === '') {
+        onAmountChange('')
+        return
+      }
+
+      const nextValue = Number.parseFloat(cleaned)
       if (Number.isNaN(nextValue)) {
         onAmountChange('')
         return
       }
 
-      if (nextValue <= availableShares || rawValue === '') {
-        onAmountChange(nextValue.toFixed(2))
+      if (nextValue <= availableShares) {
+        onAmountChange(cleaned)
       }
       return
     }
 
-    const cleaned = sanitizeBuyInput(rawValue)
     const numericValue = Number.parseFloat(cleaned)
 
-    if (numericValue <= 99999 || cleaned === '') {
+    if (cleaned === '' || numericValue <= 99999) {
       onAmountChange(cleaned)
     }
   }
 
   function handleBlur(value: string) {
-    const cleaned = sanitizeBuyInput(value)
-    if (cleaned && !Number.isNaN(Number.parseFloat(cleaned))) {
-      onAmountChange(Number.parseFloat(cleaned).toFixed(2))
+    const cleaned = sanitizeNumericInput(value)
+    const numeric = Number.parseFloat(cleaned)
+
+    if (!cleaned || Number.isNaN(numeric)) {
+      onAmountChange('')
+      return
     }
+
+    const clampedValue = side === ORDER_SIDE.SELL
+      ? Math.min(numeric, availableShares)
+      : numeric
+
+    onAmountChange(formatAmountInputValue(clampedValue))
   }
 
   function incrementAmount(delta: number) {
@@ -75,19 +122,19 @@ export default function EventOrderPanelInput({
 
     if (side === ORDER_SIDE.SELL) {
       if (nextValue <= availableShares) {
-        onAmountChange(nextValue.toFixed(2))
+        onAmountChange(formatAmountInputValue(nextValue))
       }
       return
     }
 
     if (nextValue <= 99999) {
-      onAmountChange(nextValue.toFixed(2))
+      onAmountChange(formatAmountInputValue(nextValue))
     }
   }
 
   function decrementAmount(delta: number) {
     const nextValue = Math.max(0, amountNumber - delta)
-    onAmountChange(nextValue.toFixed(2))
+    onAmountChange(formatAmountInputValue(nextValue))
   }
 
   function renderActionButtons() {
@@ -111,8 +158,8 @@ export default function EventOrderPanelInput({
             }
 
             const percentValue = Number.parseInt(percentage.replace('%', ''), 10) / 100
-            const newValue = (availableShares * percentValue).toFixed(2)
-            onAmountChange(newValue)
+            const newValue = availableShares * percentValue
+            onAmountChange(formatAmountInputValue(newValue))
             focusInput()
           }}
         >
@@ -132,7 +179,7 @@ export default function EventOrderPanelInput({
           const newValue = amountNumber + chipValue
 
           if (newValue <= 999999999) {
-            onAmountChange(newValue.toFixed(2))
+            onAmountChange(formatAmountInputValue(newValue))
             focusInput()
           }
         }}
@@ -141,6 +188,11 @@ export default function EventOrderPanelInput({
       </button>
     ))
   }
+
+  const formattedAmount = formatDisplayAmount(amount)
+  const inputValue = side === ORDER_SIDE.SELL
+    ? formattedAmount
+    : formattedAmount ? `$${formattedAmount}` : ''
 
   return (
     <>
@@ -169,8 +221,8 @@ export default function EventOrderPanelInput({
                       placeholder-muted-foreground outline-hidden
                       [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
                     `}
-                    placeholder={side === ORDER_SIDE.SELL ? '0' : '$1.00'}
-                    value={side === ORDER_SIDE.SELL ? amount : `$${amount}`}
+                    placeholder={side === ORDER_SIDE.SELL ? '0' : '$0.00'}
+                    value={inputValue}
                     onChange={e => handleInputChange(e.target.value)}
                     onBlur={e => handleBlur(e.target.value)}
                   />
@@ -211,7 +263,7 @@ export default function EventOrderPanelInput({
                     [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
                   `}
                   placeholder={side === ORDER_SIDE.SELL ? '0' : '$0.00'}
-                  value={side === ORDER_SIDE.SELL ? amount : `$${amount}`}
+                  value={inputValue}
                   onChange={e => handleInputChange(e.target.value)}
                   onBlur={e => handleBlur(e.target.value)}
                 />
@@ -240,12 +292,12 @@ export default function EventOrderPanelInput({
               if (availableShares <= 0) {
                 return
               }
-              onAmountChange(availableShares.toFixed(2))
+              onAmountChange(formatAmountInputValue(availableShares))
             }
             else {
               const maxBalance = balance.raw
               const limitedBalance = Math.min(maxBalance, 999999999)
-              onAmountChange(limitedBalance.toFixed(2))
+              onAmountChange(formatAmountInputValue(limitedBalance))
             }
             focusInput()
           }}
