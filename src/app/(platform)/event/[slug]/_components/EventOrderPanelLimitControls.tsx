@@ -15,7 +15,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { ORDER_SIDE } from '@/lib/constants'
-import { formatAmountInputValue } from '@/lib/formatters'
+import { formatAmountInputValue, formatCurrency } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
 function clamp(value: number, min: number, max: number) {
@@ -84,6 +84,9 @@ export default function EventOrderPanelLimitControls({
   const maxSharesForSide = side === ORDER_SIDE.SELL
     ? Math.min(availableShares, MAX_AMOUNT_INPUT)
     : MAX_AMOUNT_INPUT
+
+  const totalValueLabel = formatCurrency(totalValue)
+  const potentialWinLabel = formatCurrency(potentialWin)
 
   function syncAmount(priceValue: number, sharesValue: number) {
     if (!isLimitOrder) {
@@ -263,8 +266,7 @@ export default function EventOrderPanelLimitControls({
         <div className="flex items-center justify-between text-lg font-bold text-foreground">
           <span>Total</span>
           <span className="font-semibold text-primary">
-            $
-            {totalValue.toFixed(2)}
+            {totalValueLabel}
           </span>
         </div>
         <div className="flex items-center justify-between text-lg font-bold">
@@ -273,8 +275,7 @@ export default function EventOrderPanelLimitControls({
             <BanknoteIcon className="size-4 text-yes" />
           </span>
           <span className="text-xl font-bold text-yes">
-            $
-            {potentialWin.toFixed(2)}
+            {potentialWinLabel}
           </span>
         </div>
       </div>
