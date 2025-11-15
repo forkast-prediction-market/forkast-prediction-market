@@ -28,7 +28,7 @@ export const CAP_MICRO = 990_000n
 export const FLOOR_MICRO = 10_000n
 
 export const EIP712_DOMAIN = {
-  name: 'Forkast CLOB',
+  name: 'Forkast CTF Exchange',
   version: '1',
   chainId: defaultNetwork.id,
 }

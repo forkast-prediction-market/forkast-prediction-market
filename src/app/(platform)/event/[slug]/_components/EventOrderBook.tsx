@@ -4,7 +4,7 @@ import type { Market, Outcome } from '@/types'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2Icon } from 'lucide-react'
 import { useCallback, useMemo } from 'react'
-import { ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
+import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel, sharesFormatter, toCents, usdFormatter } from '@/lib/formatters'
 import { useOrder } from '@/stores/useOrder'
 
@@ -96,8 +96,10 @@ export default function EventOrderBook({
   const setType = useOrder(state => state.setType)
   const setLimitPrice = useOrder(state => state.setLimitPrice)
   const setLimitShares = useOrder(state => state.setLimitShares)
+  const setAmount = useOrder(state => state.setAmount)
   const inputRef = useOrder(state => state.inputRef)
   const currentOrderType = useOrder(state => state.type)
+  const currentOrderSide = useOrder(state => state.side)
 
   const {
     asks,
@@ -120,14 +122,24 @@ export default function EventOrderBook({
     if (currentOrderType !== ORDER_TYPE.LIMIT) {
       setType(ORDER_TYPE.LIMIT)
     }
-    setLimitPrice(level.priceCents.toFixed(1))
+    const executablePrice = getExecutableLimitPrice(level)
+    setLimitPrice(executablePrice)
 
-    if (level.side === 'ask') {
-      setLimitShares(formatSharesInput(level.cumulativeShares))
+    const shouldPrefillShares = (currentOrderSide === ORDER_SIDE.BUY && level.side === 'ask')
+      || (currentOrderSide === ORDER_SIDE.SELL && level.side === 'bid')
+
+    if (shouldPrefillShares) {
+      const limitShares = formatSharesInput(level.cumulativeShares)
+      setLimitShares(limitShares)
+
+      const limitAmount = calculateLimitAmount(executablePrice, limitShares)
+      if (limitAmount !== null) {
+        setAmount(limitAmount)
+      }
     }
 
     queueMicrotask(() => inputRef?.current?.focus())
-  }, [currentOrderType, setType, setLimitPrice, setLimitShares, inputRef])
+  }, [currentOrderType, currentOrderSide, setType, setLimitPrice, setLimitShares, setAmount, inputRef])
 
   if (!tokenId) {
     return (
@@ -194,11 +206,11 @@ export default function EventOrderBook({
         >
           <div className="flex h-full cursor-pointer items-center">
             Last:&nbsp;
-            {formatCentsLabel(lastPrice)}
+            {formatOrderBookPrice(lastPrice)}
           </div>
           <div className="flex h-full cursor-pointer items-center justify-center">
             Spread:&nbsp;
-            {formatCentsLabel(spread)}
+            {formatOrderBookPrice(spread)}
           </div>
           <div className="flex h-full items-center justify-center" />
           <div className="flex h-full items-center justify-center" />
@@ -255,7 +267,7 @@ function OrderBookRow({ level, maxTotal, showBadge, onSelect }: OrderBookRowProp
       </div>
       <div className="flex h-full items-center justify-center px-4">
         <span className={`text-sm font-medium ${priceClass}`}>
-          {formatCentsLabel(level.priceCents)}
+          {formatOrderBookPrice(level.priceCents)}
         </span>
       </div>
       <div className="flex h-full items-center justify-center px-4">
@@ -328,6 +340,28 @@ function buildOrderBookSnapshot(
   }
 }
 
+const MAX_LIMIT_PRICE = 99.9
+const PRICE_EPSILON = 1e-8
+
+function getExecutableLimitPrice(level: OrderBookLevel) {
+  return getRoundedCents(level.rawPrice, level.side).toFixed(1)
+}
+
+function getRoundedCents(rawPrice: number, side: 'ask' | 'bid') {
+  const cents = rawPrice * 100
+  if (!Number.isFinite(cents)) {
+    return 0
+  }
+
+  const scaled = cents * 10
+  const roundedScaled = side === 'bid'
+    ? Math.floor(scaled + PRICE_EPSILON)
+    : Math.ceil(scaled - PRICE_EPSILON)
+
+  const normalized = Math.max(0, Math.min(roundedScaled / 10, MAX_LIMIT_PRICE))
+  return Number(normalized.toFixed(1))
+}
+
 function normalizeLevels(levels: OrderbookLevelSummary[] | undefined, side: 'ask' | 'bid'): OrderBookLevel[] {
   if (!levels?.length) {
     return []
@@ -353,7 +387,7 @@ function normalizeLevels(levels: OrderbookLevelSummary[] | undefined, side: 'ask
   let runningShares = 0
 
   return sorted.map((entry) => {
-    const displayCents = Number((entry.price * 100).toFixed(1))
+    const displayCents = getRoundedCents(entry.price, side)
     runningTotal += entry.price * entry.size
     runningShares += entry.size
 
@@ -384,4 +418,29 @@ function formatSharesInput(value: number) {
   }
 
   return Number(value.toFixed(2)).toString()
+}
+
+function calculateLimitAmount(priceCents: string, shares: string) {
+  const priceValue = Number.parseFloat(priceCents)
+  const sharesValue = Number.parseFloat(shares)
+
+  if (!Number.isFinite(priceValue) || !Number.isFinite(sharesValue)) {
+    return null
+  }
+
+  const total = (priceValue * sharesValue) / 100
+  if (!Number.isFinite(total) || total <= 0) {
+    return null
+  }
+
+  return total.toFixed(2)
+}
+
+function formatOrderBookPrice(value: number | null | undefined) {
+  if (value === null || value === undefined || Number.isNaN(value)) {
+    return formatCentsLabel(null)
+  }
+
+  const normalized = value < 1 ? value / 100 : value
+  return formatCentsLabel(normalized)
 }

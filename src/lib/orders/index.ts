@@ -25,13 +25,34 @@ export interface SubmitOrderArgs {
 }
 
 const DEFAULT_ORDER_FIELDS = {
-  salt: 333000003n,
+  salt: 0n,
   expiration: 1764548576n,
-  nonce: 3003n,
+  nonce: 0n,
   fee_rate_bps: 200n,
   affiliate_percentage: 0n,
   signature_type: 0,
 } as const
+
+function generateOrderSalt() {
+  const cryptoObj = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined
+
+  if (cryptoObj?.getRandomValues) {
+    const buffer = new Uint32Array(4)
+    cryptoObj.getRandomValues(buffer)
+
+    let value = 0n
+    buffer.forEach((segment) => {
+      value = (value << 32n) + BigInt(segment)
+    })
+
+    if (value > 0n) {
+      return value
+    }
+  }
+
+  const fallback = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
+  return BigInt(fallback || Date.now())
+}
 
 export function calculateOrderAmounts({ orderType, side, amount, limitPrice, limitShares }: CalculateOrderAmountsArgs) {
   let makerAmount: bigint
@@ -66,9 +87,11 @@ export function calculateOrderAmounts({ orderType, side, amount, limitPrice, lim
 
 export function buildOrderPayload({ userAddress, outcome, ...rest }: BuildOrderPayloadArgs): BlockchainOrder {
   const { makerAmount, takerAmount } = calculateOrderAmounts(rest)
+  const salt = generateOrderSalt()
 
   return {
     ...DEFAULT_ORDER_FIELDS,
+    salt,
     maker: userAddress,
     signer: userAddress,
     taker: userAddress,
