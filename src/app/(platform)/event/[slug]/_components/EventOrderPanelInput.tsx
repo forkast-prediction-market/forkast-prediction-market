@@ -46,7 +46,7 @@ export default function EventOrderPanelInput({
       return wholePart
     }
 
-    const decimals = decimalSegments.join('')
+    const decimals = decimalSegments.join('').slice(0, 2)
     return `${wholePart}.${decimals}`
   }
 
