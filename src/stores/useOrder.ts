@@ -106,6 +106,7 @@ function clampNormalizedPrice(value: unknown) {
 export function useYesPrice() {
   const yesPriceByMarket = useMarketYesPrices()
   const market = useOrder(state => state.market)
+  const side = useOrder(state => state.side)
 
   return useMemo(() => {
     if (!market) {
@@ -117,14 +118,16 @@ export function useYesPrice() {
       return override
     }
 
-    const fallback = market.outcomes?.[OUTCOME_INDEX.YES]?.buy_price
+    const yesOutcome = market.outcomes?.[OUTCOME_INDEX.YES]
+    const fallback = side === ORDER_SIDE.SELL ? yesOutcome?.sell_price : yesOutcome?.buy_price
     return typeof fallback === 'number' ? fallback : 0.5
-  }, [market, yesPriceByMarket])
+  }, [market, side, yesPriceByMarket])
 }
 
 export function useNoPrice() {
   const yesPriceByMarket = useMarketYesPrices()
   const market = useOrder(state => state.market)
+  const side = useOrder(state => state.side)
 
   return useMemo(() => {
     if (!market) {
@@ -136,9 +139,10 @@ export function useNoPrice() {
       return Math.max(0, Math.min(1, 1 - override))
     }
 
-    const fallback = market.outcomes?.[OUTCOME_INDEX.NO]?.buy_price
+    const noOutcome = market.outcomes?.[OUTCOME_INDEX.NO]
+    const fallback = side === ORDER_SIDE.SELL ? noOutcome?.sell_price : noOutcome?.buy_price
     return typeof fallback === 'number' ? fallback : 0.5
-  }, [market, yesPriceByMarket])
+  }, [market, side, yesPriceByMarket])
 }
 
 export function useIsSingleMarket() {
