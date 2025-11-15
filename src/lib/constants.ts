@@ -2,6 +2,8 @@ import { defaultNetwork } from '@/lib/appkit'
 
 export const DEFAULT_ERROR_MESSAGE = 'Internal server error. Try again in a few moments.'
 
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as `0x${string}`
+
 export const ORDER_SIDE = {
   BUY: 0,
   SELL: 1,
@@ -28,9 +30,10 @@ export const CAP_MICRO = 990_000n
 export const FLOOR_MICRO = 10_000n
 
 export const EIP712_DOMAIN = {
-  name: 'Forkast CLOB',
+  name: 'Forkast CTF Exchange',
   version: '1',
   chainId: defaultNetwork.id,
+  verifyingContract: '0x006ce6484eA6114fB0D4F26660de0F37d35001Ba' as `0x${string}`,
 }
 
 export const EIP712_TYPES = {

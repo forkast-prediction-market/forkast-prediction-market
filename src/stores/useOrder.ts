@@ -1,8 +1,11 @@
+'use client'
+
 import type { RefObject } from 'react'
 import type { Event, Market, OrderSide, OrderType, Outcome } from '@/types'
+import { useMemo } from 'react'
 import { create } from 'zustand'
+import { useMarketYesPrices } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
 import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
-import { toCents } from '@/lib/formatters'
 
 type ConditionShares = Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>
 
@@ -87,34 +90,59 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   setUserShares: (shares: Record<string, ConditionShares>) => set({ userShares: shares }),
 }))
 
+function clampNormalizedPrice(value: unknown) {
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    return null
+  }
+  if (value < 0) {
+    return 0
+  }
+  if (value > 1) {
+    return 1
+  }
+  return value
+}
+
 export function useYesPrice() {
-  return useOrder((state) => {
-    const yesOutcome = state.market?.outcomes?.[OUTCOME_INDEX.YES]
-    if (!yesOutcome) {
-      return undefined
+  const yesPriceByMarket = useMarketYesPrices()
+  const market = useOrder(state => state.market)
+  const side = useOrder(state => state.side)
+
+  return useMemo(() => {
+    if (!market) {
+      return 0.5
     }
 
-    const rawPrice = state.side === ORDER_SIDE.BUY
-      ? yesOutcome.buy_price
-      : yesOutcome.sell_price
+    const override = clampNormalizedPrice(yesPriceByMarket[market.condition_id])
+    if (override !== null) {
+      return override
+    }
 
-    return toCents(rawPrice)
-  }) ?? 50
+    const yesOutcome = market.outcomes?.[OUTCOME_INDEX.YES]
+    const fallback = side === ORDER_SIDE.SELL ? yesOutcome?.sell_price : yesOutcome?.buy_price
+    return typeof fallback === 'number' ? fallback : 0.5
+  }, [market, side, yesPriceByMarket])
 }
 
 export function useNoPrice() {
-  return useOrder((state) => {
-    const noOutcome = state.market?.outcomes?.[OUTCOME_INDEX.NO]
-    if (!noOutcome) {
-      return undefined
+  const yesPriceByMarket = useMarketYesPrices()
+  const market = useOrder(state => state.market)
+  const side = useOrder(state => state.side)
+
+  return useMemo(() => {
+    if (!market) {
+      return 0.5
     }
 
-    const rawPrice = state.side === ORDER_SIDE.BUY
-      ? noOutcome.buy_price
-      : noOutcome.sell_price
+    const override = clampNormalizedPrice(yesPriceByMarket[market.condition_id])
+    if (override !== null) {
+      return Math.max(0, Math.min(1, 1 - override))
+    }
 
-    return toCents(rawPrice)
-  }) ?? 50
+    const noOutcome = market.outcomes?.[OUTCOME_INDEX.NO]
+    const fallback = side === ORDER_SIDE.SELL ? noOutcome?.sell_price : noOutcome?.buy_price
+    return typeof fallback === 'number' ? fallback : 0.5
+  }, [market, side, yesPriceByMarket])
 }
 
 export function useIsSingleMarket() {

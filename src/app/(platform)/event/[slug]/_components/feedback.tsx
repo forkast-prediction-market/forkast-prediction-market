@@ -134,3 +134,9 @@ export function handleOrderErrorFeedback(message: string, description?: string) 
 export function notifyWalletApprovalPrompt() {
   toast.info('Approve the transaction on your wallet.')
 }
+
+export function handleOrderCancelledFeedback() {
+  toast.info('Trade cancelled', {
+    description: 'You rejected the request in your wallet.',
+  })
+}

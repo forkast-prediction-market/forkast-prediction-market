@@ -1,6 +1,6 @@
 import type { BlockchainOrder, OrderSide, OrderType, Outcome } from '@/types'
 import { storeOrderAction } from '@/app/(platform)/event/[slug]/_actions/store-order'
-import { CAP_MICRO, FLOOR_MICRO, ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
+import { CAP_MICRO, FLOOR_MICRO, ORDER_SIDE, ORDER_TYPE, ZERO_ADDRESS } from '@/lib/constants'
 import { toMicro } from '@/lib/formatters'
 
 export interface CalculateOrderAmountsArgs {
@@ -14,6 +14,9 @@ export interface CalculateOrderAmountsArgs {
 export interface BuildOrderPayloadArgs extends CalculateOrderAmountsArgs {
   userAddress: `0x${string}`
   outcome: Outcome
+  referrerAddress?: `0x${string}`
+  affiliateAddress?: `0x${string}`
+  affiliateSharePercent?: number
 }
 
 export interface SubmitOrderArgs {
@@ -25,13 +28,34 @@ export interface SubmitOrderArgs {
 }
 
 const DEFAULT_ORDER_FIELDS = {
-  salt: 333000003n,
+  salt: 0n,
   expiration: 1764548576n,
-  nonce: 3003n,
+  nonce: 0n,
   fee_rate_bps: 200n,
   affiliate_percentage: 0n,
   signature_type: 0,
 } as const
+
+function generateOrderSalt() {
+  const cryptoObj = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined
+
+  if (cryptoObj?.getRandomValues) {
+    const buffer = new Uint32Array(4)
+    cryptoObj.getRandomValues(buffer)
+
+    let value = 0n
+    buffer.forEach((segment) => {
+      value = (value << 32n) + BigInt(segment)
+    })
+
+    if (value > 0n) {
+      return value
+    }
+  }
+
+  const fallback = Math.floor(Math.random() * Number.MAX_SAFE_INTEGER)
+  return BigInt(fallback || Date.now())
+}
 
 export function calculateOrderAmounts({ orderType, side, amount, limitPrice, limitShares }: CalculateOrderAmountsArgs) {
   let makerAmount: bigint
@@ -64,21 +88,50 @@ export function calculateOrderAmounts({ orderType, side, amount, limitPrice, lim
   return { makerAmount, takerAmount }
 }
 
-export function buildOrderPayload({ userAddress, outcome, ...rest }: BuildOrderPayloadArgs): BlockchainOrder {
+export function buildOrderPayload({
+  userAddress,
+  outcome,
+  referrerAddress,
+  affiliateAddress,
+  affiliateSharePercent,
+  ...rest
+}: BuildOrderPayloadArgs): BlockchainOrder {
   const { makerAmount, takerAmount } = calculateOrderAmounts(rest)
+  const salt = generateOrderSalt()
+  const normalizedReferrer = normalizeAddress(referrerAddress)
+  const normalizedAffiliate = normalizeAddress(affiliateAddress)
+  const fallbackReferrer = normalizeAddress(process.env.NEXT_PUBLIC_FEE_RECIPIENT_WALLET) ?? ZERO_ADDRESS
+  const affiliatePercentageValue = normalizedAffiliate && normalizedAffiliate !== ZERO_ADDRESS
+    ? BigInt(Math.max(0, Math.trunc(affiliateSharePercent ?? 0)))
+    : 0n
 
   return {
     ...DEFAULT_ORDER_FIELDS,
+    salt,
     maker: userAddress,
     signer: userAddress,
-    taker: userAddress,
-    referrer: userAddress,
-    affiliate: userAddress,
+    taker: ZERO_ADDRESS,
+    referrer: normalizedReferrer ?? fallbackReferrer,
+    affiliate: normalizedAffiliate ?? ZERO_ADDRESS,
     token_id: BigInt(outcome.token_id),
     maker_amount: makerAmount,
     taker_amount: takerAmount,
     side: rest.side,
+    affiliate_percentage: affiliatePercentageValue,
   }
+}
+
+function normalizeAddress(address?: string | null): `0x${string}` | null {
+  if (typeof address !== 'string') {
+    return null
+  }
+
+  const trimmed = address.trim()
+  if (!/^0x[0-9a-fA-F]{40}$/.test(trimmed)) {
+    return null
+  }
+
+  return trimmed as `0x${string}`
 }
 
 function serializeOrder(order: BlockchainOrder) {

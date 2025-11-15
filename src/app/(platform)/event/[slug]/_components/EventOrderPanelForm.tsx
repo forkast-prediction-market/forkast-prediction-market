@@ -3,6 +3,7 @@ import { useAppKitAccount } from '@reown/appkit/react'
 import { useQueryClient } from '@tanstack/react-query'
 import Form from 'next/form'
 import { useEffect, useMemo } from 'react'
+import { UserRejectedRequestError } from 'viem'
 import { useSignTypedData } from 'wagmi'
 import EventOrderPanelBuySellTabs from '@/app/(platform)/event/[slug]/_components/EventOrderPanelBuySellTabs'
 import EventOrderPanelEarnings from '@/app/(platform)/event/[slug]/_components/EventOrderPanelEarnings'
@@ -14,8 +15,9 @@ import EventOrderPanelOutcomeButton from '@/app/(platform)/event/[slug]/_compone
 import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_components/EventOrderPanelSubmitButton'
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
-import { handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
+import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
 import { useUserOutcomePositions } from '@/app/(platform)/event/[slug]/_hooks/useUserOutcomePositions'
+import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
 import { EIP712_DOMAIN, EIP712_TYPES, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
@@ -45,6 +47,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const amountNumber = useAmountAsNumber()
   const isLimitOrder = useIsLimitOrder()
   const { balance } = useBalance()
+  const affiliateMetadata = useAffiliateOrderMetadata()
   const { sharesByCondition } = useUserOutcomePositions({ eventSlug: event.slug, userId: user?.id })
 
   useEffect(() => {
@@ -171,9 +174,24 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       amount: state.amount,
       limitPrice: state.limitPrice,
       limitShares: state.limitShares,
+      referrerAddress: affiliateMetadata.referrerAddress,
+      affiliateAddress: affiliateMetadata.affiliateAddress,
+      affiliateSharePercent: affiliateMetadata.affiliateSharePercent,
     })
 
-    const signature = await signOrder(payload)
+    let signature: string
+    try {
+      signature = await signOrder(payload)
+    }
+    catch (error) {
+      if (isUserRejectedRequestError(error)) {
+        handleOrderCancelledFeedback()
+        return
+      }
+
+      handleOrderErrorFeedback('Trade failed', 'We could not sign your order. Please try again.')
+      return
+    }
 
     state.setIsLoading(true)
     try {
@@ -336,4 +354,24 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       <EventOrderPanelTermsDisclaimer />
     </Form>
   )
+}
+
+function isUserRejectedRequestError(error: unknown): boolean {
+  if (error instanceof UserRejectedRequestError) {
+    return true
+  }
+
+  if (typeof error === 'object' && error !== null) {
+    const name = 'name' in error ? (error as { name?: string }).name : undefined
+    if (name === 'UserRejectedRequestError') {
+      return true
+    }
+
+    const message = 'message' in error ? (error as { message?: string }).message : undefined
+    if (typeof message === 'string' && message.toLowerCase().includes('user rejected')) {
+      return true
+    }
+  }
+
+  return false
 }
