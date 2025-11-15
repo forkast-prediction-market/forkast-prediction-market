@@ -17,6 +17,7 @@ import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_compo
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
 import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
 import { useUserOutcomePositions } from '@/app/(platform)/event/[slug]/_hooks/useUserOutcomePositions'
+import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
 import { EIP712_DOMAIN, EIP712_TYPES, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
@@ -46,6 +47,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const amountNumber = useAmountAsNumber()
   const isLimitOrder = useIsLimitOrder()
   const { balance } = useBalance()
+  const affiliateMetadata = useAffiliateOrderMetadata()
   const { sharesByCondition } = useUserOutcomePositions({ eventSlug: event.slug, userId: user?.id })
 
   useEffect(() => {
@@ -172,6 +174,9 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       amount: state.amount,
       limitPrice: state.limitPrice,
       limitShares: state.limitShares,
+      referrerAddress: affiliateMetadata.referrerAddress,
+      affiliateAddress: affiliateMetadata.affiliateAddress,
+      affiliateSharePercent: affiliateMetadata.affiliateSharePercent,
     })
 
     let signature: string

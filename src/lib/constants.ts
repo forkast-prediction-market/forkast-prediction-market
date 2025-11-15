@@ -2,6 +2,8 @@ import { defaultNetwork } from '@/lib/appkit'
 
 export const DEFAULT_ERROR_MESSAGE = 'Internal server error. Try again in a few moments.'
 
+export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as `0x${string}`
+
 export const ORDER_SIDE = {
   BUY: 0,
   SELL: 1,
