@@ -33,6 +33,7 @@ export const EIP712_DOMAIN = {
   name: 'Forkast CTF Exchange',
   version: '1',
   chainId: defaultNetwork.id,
+  verifyingContract: '0x006ce6484eA6114fB0D4F26660de0F37d35001Ba',
 }
 
 export const EIP712_TYPES = {
