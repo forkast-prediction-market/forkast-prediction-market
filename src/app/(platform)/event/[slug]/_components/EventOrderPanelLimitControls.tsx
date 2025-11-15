@@ -110,16 +110,12 @@ export default function EventOrderPanelLimitControls({
       return
     }
 
-    const clampedValue = Math.min(numericValue, maxSharesForSide)
-
-    if (clampedValue !== numericValue) {
-      onLimitSharesChange(formatAmountInputValue(clampedValue))
-    }
-    else {
-      onLimitSharesChange(cleaned)
+    if (numericValue > maxSharesForSide) {
+      return
     }
 
-    syncAmount(limitPriceNumber, clampedValue)
+    onLimitSharesChange(cleaned)
+    syncAmount(limitPriceNumber, numericValue)
   }
 
   function updateLimitPrice(nextValue: number) {
