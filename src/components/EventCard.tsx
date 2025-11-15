@@ -133,7 +133,7 @@ export default function EventCard({ event }: EventCardProps) {
         type,
         name: outcome.outcome_text,
       })
-      // Keep current value or set to "1" if empty
+
       if (!tradeAmount) {
         setTradeAmount('1')
       }
@@ -147,11 +147,9 @@ export default function EventCard({ event }: EventCardProps) {
 
     setIsLoading(true)
 
-    // Simulate API call
     setTimeout(() => {
       setIsLoading(false)
 
-      // Calculate shares and price
       const amountNum = Number.parseFloat(tradeAmount)
       const safeAmount = Number.isFinite(amountNum) ? amountNum : 0
       const outcome = event.markets[0].outcomes.find(o => o.id === selectedOutcome.id)
