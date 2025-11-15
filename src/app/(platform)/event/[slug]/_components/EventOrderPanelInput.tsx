@@ -1,5 +1,6 @@
 import type { RefObject } from 'react'
 import type { OrderSide } from '@/types'
+import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { ORDER_SIDE } from '@/lib/constants'
 import { formatAmountInputValue } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -23,8 +24,6 @@ interface EventOrderPanelInputProps {
 
 const BUY_CHIPS_DESKTOP = ['+$5', '+$25', '+$100']
 const BUY_CHIPS_MOBILE = ['+$1', '+$20', '+$100']
-const INTEGER_FORMATTER = new Intl.NumberFormat('en-US')
-const MAX_BUY_AMOUNT = 999_999_999
 
 export default function EventOrderPanelInput({
   isMobile,
@@ -38,40 +37,6 @@ export default function EventOrderPanelInput({
 }: EventOrderPanelInputProps) {
   function focusInput() {
     inputRef?.current?.focus()
-  }
-
-  function sanitizeNumericInput(rawValue: string) {
-    const digitsAndDots = rawValue.replace(/[^0-9.]/g, '')
-    const [wholePart, ...decimalSegments] = digitsAndDots.split('.')
-    if (decimalSegments.length === 0) {
-      return wholePart
-    }
-
-    const decimals = decimalSegments.join('').slice(0, 2)
-    return `${wholePart}.${decimals}`
-  }
-
-  function formatDisplayAmount(rawAmount: string) {
-    if (!rawAmount) {
-      return ''
-    }
-
-    const hasDecimalPoint = rawAmount.includes('.')
-    const [wholePart = '', fractionPart = ''] = rawAmount.split('.')
-    const normalizedWhole = Number.parseInt(wholePart || '0', 10)
-    const formattedWhole = Number.isNaN(normalizedWhole)
-      ? '0'
-      : INTEGER_FORMATTER.format(normalizedWhole)
-
-    if (!hasDecimalPoint) {
-      return formattedWhole
-    }
-
-    if (rawAmount.endsWith('.') && fractionPart === '') {
-      return `${formattedWhole}.`
-    }
-
-    return `${formattedWhole}.${fractionPart}`
   }
 
   function handleInputChange(rawValue: string) {
@@ -97,7 +62,7 @@ export default function EventOrderPanelInput({
 
     const numericValue = Number.parseFloat(cleaned)
 
-    if (cleaned === '' || numericValue <= MAX_BUY_AMOUNT) {
+    if (cleaned === '' || numericValue <= MAX_AMOUNT_INPUT) {
       onAmountChange(cleaned)
     }
   }
@@ -113,7 +78,7 @@ export default function EventOrderPanelInput({
 
     const clampedValue = side === ORDER_SIDE.SELL
       ? Math.min(numeric, availableShares)
-      : Math.min(numeric, MAX_BUY_AMOUNT)
+      : Math.min(numeric, MAX_AMOUNT_INPUT)
 
     onAmountChange(formatAmountInputValue(clampedValue))
   }
@@ -128,7 +93,7 @@ export default function EventOrderPanelInput({
       return
     }
 
-    const limitedValue = Math.min(nextValue, MAX_BUY_AMOUNT)
+    const limitedValue = Math.min(nextValue, MAX_AMOUNT_INPUT)
     onAmountChange(formatAmountInputValue(limitedValue))
   }
 
@@ -178,7 +143,7 @@ export default function EventOrderPanelInput({
           const chipValue = Number.parseInt(chip.substring(2), 10)
           const newValue = amountNumber + chipValue
 
-          const limitedValue = Math.min(newValue, MAX_BUY_AMOUNT)
+          const limitedValue = Math.min(newValue, MAX_AMOUNT_INPUT)
           onAmountChange(formatAmountInputValue(limitedValue))
           focusInput()
         }}
@@ -188,14 +153,7 @@ export default function EventOrderPanelInput({
     ))
   }
 
-  const [rawWholePart = ''] = amount.split('.')
-  const normalizedWholePart = rawWholePart.replace(/^0+/, '')
-  const wholeDigits = normalizedWholePart.length
-  const amountSizeClass = wholeDigits >= 9
-    ? 'text-2xl'
-    : wholeDigits >= 7
-      ? 'text-3xl'
-      : 'text-4xl'
+  const amountSizeClass = getAmountSizeClass(amount)
 
   const formattedAmount = formatDisplayAmount(amount)
   const inputValue = side === ORDER_SIDE.SELL
@@ -309,7 +267,7 @@ export default function EventOrderPanelInput({
             }
             else {
               const maxBalance = balance.raw
-              const limitedBalance = Math.min(maxBalance, MAX_BUY_AMOUNT)
+              const limitedBalance = Math.min(maxBalance, MAX_AMOUNT_INPUT)
               onAmountChange(formatAmountInputValue(limitedBalance))
             }
             focusInput()

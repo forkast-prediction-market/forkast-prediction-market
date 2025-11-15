@@ -13,8 +13,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { ORDER_SIDE } from '@/lib/constants'
 import { formatAmountInputValue } from '@/lib/formatters'
+import { cn } from '@/lib/utils'
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
@@ -79,6 +81,10 @@ export default function EventOrderPanelLimitControls({
     return Number.isFinite(total) ? total : 0
   }, [limitPriceNumber, limitSharesNumber, side])
 
+  const maxSharesForSide = side === ORDER_SIDE.SELL
+    ? Math.min(availableShares, MAX_AMOUNT_INPUT)
+    : MAX_AMOUNT_INPUT
+
   function syncAmount(priceValue: number, sharesValue: number) {
     if (!isLimitOrder) {
       return
@@ -86,6 +92,34 @@ export default function EventOrderPanelLimitControls({
 
     const nextAmount = (priceValue * sharesValue) / 100
     onAmountUpdateFromLimit(formatAmountInputValue(nextAmount))
+  }
+
+  function handleLimitSharesInputChange(rawValue: string) {
+    const cleaned = sanitizeNumericInput(rawValue)
+
+    if (cleaned === '') {
+      onLimitSharesChange('')
+      syncAmount(limitPriceNumber, 0)
+      return
+    }
+
+    const numericValue = Number.parseFloat(cleaned)
+    if (Number.isNaN(numericValue)) {
+      onLimitSharesChange('')
+      syncAmount(limitPriceNumber, 0)
+      return
+    }
+
+    const clampedValue = Math.min(numericValue, maxSharesForSide)
+
+    if (clampedValue !== numericValue) {
+      onLimitSharesChange(formatAmountInputValue(clampedValue))
+    }
+    else {
+      onLimitSharesChange(cleaned)
+    }
+
+    syncAmount(limitPriceNumber, clampedValue)
   }
 
   function updateLimitPrice(nextValue: number) {
@@ -96,11 +130,18 @@ export default function EventOrderPanelLimitControls({
   }
 
   function updateLimitShares(nextValue: number) {
-    const clampedValue = clamp(Number.isNaN(nextValue) ? 0 : nextValue, 0, 999_999)
-    const nextShares = clampedValue.toString()
-    onLimitSharesChange(nextShares)
+    const numericValue = Number.isNaN(nextValue) ? 0 : nextValue
+    const clampedValue = clamp(numericValue, 0, maxSharesForSide)
+    onLimitSharesChange(formatAmountInputValue(clampedValue))
     syncAmount(Number.parseFloat(limitPrice) || 0, clampedValue)
   }
+
+  const formattedLimitShares = formatDisplayAmount(limitShares)
+  const limitSharesSizeClass = getAmountSizeClass(limitShares, {
+    large: 'text-lg',
+    medium: 'text-base',
+    small: 'text-sm',
+  })
 
   return (
     <div className="mt-4 space-y-5">
@@ -126,12 +167,12 @@ export default function EventOrderPanelLimitControls({
             <Input
               placeholder="0"
               inputMode="decimal"
-              value={limitShares}
-              onChange={(event) => {
-                const value = Number.parseFloat(event.target.value || '0')
-                updateLimitShares(value)
-              }}
-              className="h-10 !bg-transparent text-right !text-lg font-bold"
+              value={formattedLimitShares}
+              onChange={event => handleLimitSharesInputChange(event.target.value)}
+              className={cn(
+                'h-10 !bg-transparent text-right font-bold',
+                limitSharesSizeClass,
+              )}
             />
           </div>
         </div>
