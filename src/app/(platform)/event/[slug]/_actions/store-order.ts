@@ -108,13 +108,17 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       signal: AbortSignal.timeout(5000),
     })
 
+    const clobStoreOrderResponseJson = await clobStoreOrderResponse.json()
+
     if (clobStoreOrderResponse.status !== 201) {
+      if (clobStoreOrderResponse.status === 200) {
+        return { error: clobStoreOrderResponseJson.errorMsg }
+      }
+
       const message = `Status ${clobStoreOrderResponse.status} (${clobStoreOrderResponse.statusText})`
       console.error('Failed to send order to CLOB.', message)
       return { error: DEFAULT_ERROR_MESSAGE }
     }
-
-    const clobStoreOrderResponseJson = await clobStoreOrderResponse.json()
 
     fetch(`${process.env.CLOB_URL}/data/order/${clobStoreOrderResponseJson.orderId}`)
       .then(res => res.json())
