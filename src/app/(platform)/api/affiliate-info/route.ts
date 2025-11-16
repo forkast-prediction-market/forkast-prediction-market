@@ -6,7 +6,7 @@ import { SettingsRepository } from '@/lib/db/queries/settings'
 import { UserRepository } from '@/lib/db/queries/user'
 
 function getFeeRecipientAddress() {
-  const address = process.env.FEE_RECIPIENT_WALLET
+  const address = process.env.NEXT_PUBLIC_FEE_RECIPIENT_WALLET ?? process.env.FEE_RECIPIENT_WALLET
   return typeof address === 'string' && /^0x[0-9a-fA-F]{40}$/.test(address)
     ? address
     : ZERO_ADDRESS
