@@ -83,17 +83,19 @@ export async function storeOrderAction(payload: StoreOrderInput) {
 
     const method = 'POST'
     const path = '/order'
+    const endpoint = new URL(path, process.env.CLOB_URL!)
+    const resolvedPath = `${endpoint.pathname}${endpoint.search}`
     const body = JSON.stringify(clobPayload)
     const timestamp = Math.floor(Date.now() / 1000)
     const signature = buildClobHmacSignature(
       process.env.FORKAST_API_SECRET!,
       timestamp,
       method,
-      path,
+      resolvedPath,
       body,
     )
 
-    const clobStoreOrderResponse = await fetch(`${process.env.CLOB_URL}${path}`, {
+    const clobStoreOrderResponse = await fetch(endpoint.toString(), {
       method,
       headers: {
         'Content-Type': 'application/json',
@@ -116,7 +118,12 @@ export async function storeOrderAction(payload: StoreOrderInput) {
 
     const clobStoreOrderResponseJson = await clobStoreOrderResponse.json()
 
-    fetch(`${process.env.CLOB_URL}/data/order/${clobStoreOrderResponseJson.orderId}`)
+    const orderDataUrl = new URL(
+      `/data/order/${clobStoreOrderResponseJson.orderId}`,
+      process.env.CLOB_URL!,
+    )
+
+    fetch(orderDataUrl.toString())
       .then(res => res.json())
       .then((res) => {
         OrderRepository.createOrder({
