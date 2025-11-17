@@ -1,11 +1,12 @@
 'use client'
 
 import type { RefObject } from 'react'
+import type { OUTCOME_INDEX } from '@/lib/constants'
 import type { Event, Market, OrderSide, OrderType, Outcome } from '@/types'
 import { useMemo } from 'react'
 import { create } from 'zustand'
 import { useMarketYesPrices } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
-import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
+import { ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 
 type ConditionShares = Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>
 
@@ -54,7 +55,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   outcome: null,
   side: ORDER_SIDE.BUY,
   type: ORDER_TYPE.MARKET,
-  amount: '0.00',
+  amount: '',
   limitPrice: '0.0',
   limitShares: '0',
   limitExpirationEnabled: false,
@@ -72,7 +73,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   setSide: (side: OrderSide) => set({ side }),
   setType: (type: OrderType) => set(state => ({
     type,
-    amount: '0.00',
+    amount: '',
     limitPrice: '0.0',
     limitShares: '0',
     limitExpirationEnabled: false,
@@ -109,7 +110,7 @@ export function useYesPrice() {
 
   return useMemo(() => {
     if (!market) {
-      return 0.5
+      return null
     }
 
     const override = clampNormalizedPrice(yesPriceByMarket[market.condition_id])
@@ -117,8 +118,7 @@ export function useYesPrice() {
       return override
     }
 
-    const fallback = market.outcomes?.[OUTCOME_INDEX.YES]?.buy_price
-    return typeof fallback === 'number' ? fallback : 0.5
+    return null
   }, [market, yesPriceByMarket])
 }
 
@@ -128,7 +128,7 @@ export function useNoPrice() {
 
   return useMemo(() => {
     if (!market) {
-      return 0.5
+      return null
     }
 
     const override = clampNormalizedPrice(yesPriceByMarket[market.condition_id])
@@ -136,8 +136,7 @@ export function useNoPrice() {
       return Math.max(0, Math.min(1, 1 - override))
     }
 
-    const fallback = market.outcomes?.[OUTCOME_INDEX.NO]?.buy_price
-    return typeof fallback === 'number' ? fallback : 0.5
+    return null
   }, [market, yesPriceByMarket])
 }
 

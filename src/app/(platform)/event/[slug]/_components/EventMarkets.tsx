@@ -118,7 +118,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
     }
   }, [expandMarket, inputRef, setIsMobileOrderPanelOpen, setMarket, setOutcome, setSide])
 
-  if (isSingleMarket || !hasChanceData) {
+  if (isSingleMarket) {
     return <></>
   }
 

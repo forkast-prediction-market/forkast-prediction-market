@@ -13,7 +13,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { ORDER_SIDE } from '@/lib/constants'
+import { formatAmountInputValue, formatCurrency } from '@/lib/formatters'
+import { cn } from '@/lib/utils'
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
@@ -78,15 +81,44 @@ export default function EventOrderPanelLimitControls({
     return Number.isFinite(total) ? total : 0
   }, [limitPriceNumber, limitSharesNumber, side])
 
+  const maxSharesForSide = side === ORDER_SIDE.SELL
+    ? Math.min(availableShares, MAX_AMOUNT_INPUT)
+    : MAX_AMOUNT_INPUT
+
+  const totalValueLabel = formatCurrency(totalValue)
+  const potentialWinLabel = formatCurrency(potentialWin)
+
   function syncAmount(priceValue: number, sharesValue: number) {
     if (!isLimitOrder) {
       return
     }
 
     const nextAmount = (priceValue * sharesValue) / 100
-    onAmountUpdateFromLimit((sharesValue === 0 || nextAmount === 0)
-      ? '0.00'
-      : nextAmount.toFixed(2))
+    onAmountUpdateFromLimit(formatAmountInputValue(nextAmount))
+  }
+
+  function handleLimitSharesInputChange(rawValue: string) {
+    const cleaned = sanitizeNumericInput(rawValue)
+
+    if (cleaned === '') {
+      onLimitSharesChange('')
+      syncAmount(limitPriceNumber, 0)
+      return
+    }
+
+    const numericValue = Number.parseFloat(cleaned)
+    if (Number.isNaN(numericValue)) {
+      onLimitSharesChange('')
+      syncAmount(limitPriceNumber, 0)
+      return
+    }
+
+    if (numericValue > maxSharesForSide) {
+      return
+    }
+
+    onLimitSharesChange(cleaned)
+    syncAmount(limitPriceNumber, numericValue)
   }
 
   function updateLimitPrice(nextValue: number) {
@@ -97,11 +129,18 @@ export default function EventOrderPanelLimitControls({
   }
 
   function updateLimitShares(nextValue: number) {
-    const clampedValue = clamp(Number.isNaN(nextValue) ? 0 : nextValue, 0, 999_999)
-    const nextShares = clampedValue.toString()
-    onLimitSharesChange(nextShares)
+    const numericValue = Number.isNaN(nextValue) ? 0 : nextValue
+    const clampedValue = clamp(numericValue, 0, maxSharesForSide)
+    onLimitSharesChange(formatAmountInputValue(clampedValue))
     syncAmount(Number.parseFloat(limitPrice) || 0, clampedValue)
   }
+
+  const formattedLimitShares = formatDisplayAmount(limitShares)
+  const limitSharesSizeClass = getAmountSizeClass(limitShares, {
+    large: 'text-lg',
+    medium: 'text-base',
+    small: 'text-sm',
+  })
 
   return (
     <div className="mt-4 space-y-5">
@@ -127,12 +166,12 @@ export default function EventOrderPanelLimitControls({
             <Input
               placeholder="0"
               inputMode="decimal"
-              value={limitShares}
-              onChange={(event) => {
-                const value = Number.parseFloat(event.target.value || '0')
-                updateLimitShares(value)
-              }}
-              className="h-10 !bg-transparent text-right !text-lg font-bold"
+              value={formattedLimitShares}
+              onChange={event => handleLimitSharesInputChange(event.target.value)}
+              className={cn(
+                'h-10 !bg-transparent text-right font-bold',
+                limitSharesSizeClass,
+              )}
             />
           </div>
         </div>
@@ -227,8 +266,7 @@ export default function EventOrderPanelLimitControls({
         <div className="flex items-center justify-between text-lg font-bold text-foreground">
           <span>Total</span>
           <span className="font-semibold text-primary">
-            $
-            {totalValue.toFixed(2)}
+            {totalValueLabel}
           </span>
         </div>
         <div className="flex items-center justify-between text-lg font-bold">
@@ -237,8 +275,7 @@ export default function EventOrderPanelLimitControls({
             <BanknoteIcon className="size-4 text-yes" />
           </span>
           <span className="text-xl font-bold text-yes">
-            $
-            {potentialWin.toFixed(2)}
+            {potentialWinLabel}
           </span>
         </div>
       </div>

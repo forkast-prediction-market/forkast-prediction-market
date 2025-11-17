@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils'
 
 interface EventOrderPanelOutcomeButtonProps {
   variant: 'yes' | 'no'
-  price: number
+  price: number | null
   label: string
   isSelected: boolean
   onSelect: () => void

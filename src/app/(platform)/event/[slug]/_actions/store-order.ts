@@ -83,19 +83,17 @@ export async function storeOrderAction(payload: StoreOrderInput) {
 
     const method = 'POST'
     const path = '/order'
-    const endpoint = new URL(path, process.env.CLOB_URL!)
-    const resolvedPath = `${endpoint.pathname}${endpoint.search}`
     const body = JSON.stringify(clobPayload)
     const timestamp = Math.floor(Date.now() / 1000)
     const signature = buildClobHmacSignature(
       process.env.FORKAST_API_SECRET!,
       timestamp,
       method,
-      resolvedPath,
+      path,
       body,
     )
 
-    const clobStoreOrderResponse = await fetch(endpoint.toString(), {
+    const clobStoreOrderResponse = await fetch(`${process.env.CLOB_URL}${path}`, {
       method,
       headers: {
         'Content-Type': 'application/json',
@@ -110,20 +108,19 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       signal: AbortSignal.timeout(5000),
     })
 
+    const clobStoreOrderResponseJson = await clobStoreOrderResponse.json()
+
     if (clobStoreOrderResponse.status !== 201) {
+      if (clobStoreOrderResponse.status === 200) {
+        return { error: clobStoreOrderResponseJson.errorMsg }
+      }
+
       const message = `Status ${clobStoreOrderResponse.status} (${clobStoreOrderResponse.statusText})`
       console.error('Failed to send order to CLOB.', message)
       return { error: DEFAULT_ERROR_MESSAGE }
     }
 
-    const clobStoreOrderResponseJson = await clobStoreOrderResponse.json()
-
-    const orderDataUrl = new URL(
-      `/data/order/${clobStoreOrderResponseJson.orderId}`,
-      process.env.CLOB_URL!,
-    )
-
-    fetch(orderDataUrl.toString())
+    fetch(`${process.env.CLOB_URL}/data/order/${clobStoreOrderResponseJson.orderId}`)
       .then(res => res.json())
       .then((res) => {
         OrderRepository.createOrder({

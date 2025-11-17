@@ -1,5 +1,5 @@
 import type { Event, Outcome } from '@/types'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useEventOutcomeChanceChanges, useEventOutcomeChances, useMarketYesPrices } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { toCents } from '@/lib/formatters'
@@ -47,10 +47,6 @@ export function buildEventMarketRows(
 ): EventMarketRowsResult {
   const hasChanceData = event.markets.every(market => Number.isFinite(outcomeChances[market.condition_id]))
 
-  if (!hasChanceData) {
-    return { hasChanceData: false, rows: [] }
-  }
-
   const sortedMarkets = [...event.markets].sort((a, b) => {
     const aChance = outcomeChances[a.condition_id]
     const bChance = outcomeChances[b.condition_id]
@@ -64,18 +60,24 @@ export function buildEventMarketRows(
     const normalizedYesPrice = typeof yesPriceOverride === 'number'
       ? clamp(yesPriceOverride, 0, 1)
       : null
-    const yesPriceValue = normalizedYesPrice ?? yesOutcome?.buy_price ?? null
+    const yesPriceValue = normalizedYesPrice ?? null
     const noPriceValue = normalizedYesPrice != null
       ? clamp(1 - normalizedYesPrice, 0, 1)
-      : noOutcome?.buy_price ?? null
+      : null
     const yesPriceCentsOverride = normalizedYesPrice != null ? toCents(normalizedYesPrice) : null
 
     const rawChance = outcomeChances[market.condition_id]
-    const normalizedChance = clamp(rawChance ?? 0, MIN_PERCENT, MAX_PERCENT)
-    const roundedChance = Math.round(normalizedChance)
-    const roundedThresholdChance = Math.round(normalizedChance * 10) / 10
-    const isSubOnePercent = roundedThresholdChance > 0 && roundedThresholdChance < 1
-    const chanceDisplay = isSubOnePercent ? '<1%' : `${roundedChance}%`
+    const hasMarketChance = Number.isFinite(rawChance)
+    const normalizedChance = hasMarketChance
+      ? clamp(rawChance ?? 0, MIN_PERCENT, MAX_PERCENT)
+      : null
+    const normalizedChanceValue = normalizedChance ?? 0
+    const roundedChance = Math.round(normalizedChanceValue)
+    const roundedThresholdChance = Math.round(normalizedChanceValue * 10) / 10
+    const isSubOnePercent = normalizedChance != null && roundedThresholdChance > 0 && roundedThresholdChance < 1
+    const chanceDisplay = normalizedChance != null
+      ? (isSubOnePercent ? '<1%' : `${roundedChance}%`)
+      : '—'
 
     const rawChanceChange = outcomeChanceChanges[market.condition_id]
     const normalizedChanceChange = typeof rawChanceChange === 'number' && Number.isFinite(rawChanceChange)
@@ -83,8 +85,8 @@ export function buildEventMarketRows(
       : 0
     const absoluteChanceChange = Math.abs(normalizedChanceChange)
     const roundedChanceChange = Math.round(absoluteChanceChange)
-    const shouldShowChanceChange = roundedChanceChange >= 1
-    const chanceChangeLabel = `${roundedChanceChange}%`
+    const shouldShowChanceChange = hasMarketChance && roundedChanceChange >= 1
+    const chanceChangeLabel = shouldShowChanceChange ? `${roundedChanceChange}%` : ''
     const isChanceChangePositive = normalizedChanceChange > 0
 
     return {
@@ -96,7 +98,7 @@ export function buildEventMarketRows(
       yesPriceCentsOverride,
       chanceMeta: {
         chanceDisplay,
-        normalizedChance,
+        normalizedChance: normalizedChance ?? 0,
         isSubOnePercent,
         shouldShowChanceChange,
         chanceChangeLabel,
@@ -105,7 +107,7 @@ export function buildEventMarketRows(
     }
   })
 
-  return { hasChanceData: true, rows }
+  return { hasChanceData, rows }
 }
 
 export function useEventMarketRows(event: Event): EventMarketRowsResult {
@@ -113,8 +115,16 @@ export function useEventMarketRows(event: Event): EventMarketRowsResult {
   const outcomeChanceChanges = useEventOutcomeChanceChanges()
   const marketYesPrices = useMarketYesPrices()
 
-  return useMemo(
+  const result = useMemo(
     () => buildEventMarketRows(event, { outcomeChances, outcomeChanceChanges, marketYesPrices }),
     [event, outcomeChances, outcomeChanceChanges, marketYesPrices],
   )
+
+  useEffect(() => {
+    if (!result.hasChanceData) {
+      console.info('[MarketRows] Chance data unavailable, rendering placeholders for event', event.id)
+    }
+  }, [event.id, result.hasChanceData])
+
+  return result
 }
