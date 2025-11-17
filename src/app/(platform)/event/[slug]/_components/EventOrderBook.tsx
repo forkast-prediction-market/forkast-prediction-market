@@ -381,6 +381,11 @@ function normalizeLevels(levels: OrderbookLevelSummary[] | undefined, side: 'ask
 
   const sorted = parsed
     .sort((a, b) => (side === 'ask' ? a.price - b.price : b.price - a.price))
+    .map(entry => ({
+      price: entry.price,
+      size: Number(entry.size.toFixed(2)),
+    }))
+    .filter(entry => entry.size > 0)
     .slice(0, DEFAULT_MAX_LEVELS)
 
   let runningTotal = 0
@@ -389,7 +394,7 @@ function normalizeLevels(levels: OrderbookLevelSummary[] | undefined, side: 'ask
   return sorted.map((entry) => {
     const displayCents = getRoundedCents(entry.price, side)
     runningTotal += entry.price * entry.size
-    runningShares += entry.size
+    runningShares = Number((runningShares + entry.size).toFixed(2))
 
     return {
       side,
