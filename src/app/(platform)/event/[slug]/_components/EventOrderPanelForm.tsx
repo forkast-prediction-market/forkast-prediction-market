@@ -20,11 +20,12 @@ import { useUserOutcomePositions } from '@/app/(platform)/event/[slug]/_hooks/us
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
-import { EIP712_DOMAIN, EIP712_TYPES, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
+import { CTF_EXCHANGE_ADDRESS, EIP712_TYPES, getExchangeEip712Domain, NEGRISK_CTF_EXCHANGE_ADDRESS, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
 import { validateOrder } from '@/lib/orders/validation'
 import { cn } from '@/lib/utils'
+import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useAmountAsNumber, useIsLimitOrder, useIsSingleMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
 
@@ -49,6 +50,20 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const { balance } = useBalance()
   const affiliateMetadata = useAffiliateOrderMetadata()
   const { sharesByCondition } = useUserOutcomePositions({ eventSlug: event.slug, userId: user?.id })
+  const { ensureTradingReady } = useTradingOnboarding()
+  const proxyWalletAddress = normalizeAddress(user?.proxy_wallet_address)
+  const userAddress = normalizeAddress(user?.address)
+  const makerAddress = proxyWalletAddress ?? userAddress ?? null
+  const signatureType = proxyWalletAddress ? 1 : 0
+  const negRiskEvent = useMemo(() => {
+    const hasMultipleMarkets = (event.total_markets_count ?? event.markets.length) > 1 || event.markets.length > 1
+    const hasMultiOutcomeMarket = event.markets.some(market => (market.outcomes?.length ?? 0) > 2 || (market.condition?.outcome_slot_count ?? 0) > 2)
+    return hasMultipleMarkets || hasMultiOutcomeMarket
+  }, [event.markets, event.total_markets_count])
+  const activeMarketMultiOutcome = (state.market?.condition?.outcome_slot_count ?? state.market?.outcomes?.length ?? 0) > 2
+  const isNegRiskMarket = negRiskEvent || activeMarketMultiOutcome
+  const verifyingContract = isNegRiskMarket ? NEGRISK_CTF_EXCHANGE_ADDRESS : CTF_EXCHANGE_ADDRESS
+  const orderDomain = useMemo(() => getExchangeEip712Domain(verifyingContract), [verifyingContract])
 
   useEffect(() => {
     if (!user?.id) {
@@ -112,7 +127,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
     try {
       return await signTypedDataAsync({
-        domain: EIP712_DOMAIN,
+        domain: orderDomain,
         types: EIP712_TYPES,
         primaryType: 'Order',
         message: {
@@ -145,6 +160,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   }
 
   async function onSubmit() {
+    if (!ensureTradingReady()) {
+      return
+    }
+
     const validation = validateOrder({
       isLoading: state.isLoading,
       isConnected,
@@ -162,12 +181,14 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       return
     }
 
-    if (!state.market || !state.outcome || !user) {
+    if (!state.market || !state.outcome || !user || !userAddress || !makerAddress) {
       return
     }
 
     const payload = buildOrderPayload({
-      userAddress: user.address as `0x${string}`,
+      userAddress,
+      makerAddress,
+      signatureType,
       outcome: state.outcome,
       side: state.side,
       orderType: state.type,
@@ -374,4 +395,13 @@ function isUserRejectedRequestError(error: unknown): boolean {
   }
 
   return false
+}
+
+function normalizeAddress(value?: string | null): `0x${string}` | null {
+  if (typeof value !== 'string') {
+    return null
+  }
+
+  const trimmed = value.trim()
+  return /^0x[0-9a-fA-F]{40}$/.test(trimmed) ? trimmed as `0x${string}` : null
 }

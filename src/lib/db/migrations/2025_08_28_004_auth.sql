@@ -13,6 +13,10 @@ CREATE TABLE users
   two_factor_enabled  BOOLEAN     NOT NULL DEFAULT FALSE,
   image               TEXT,
   settings            JSONB       NOT NULL DEFAULT '{}'::JSONB,
+  proxy_wallet_address TEXT,
+  proxy_wallet_signature TEXT,
+  proxy_wallet_signed_at TIMESTAMPTZ,
+  proxy_wallet_status  TEXT        NOT NULL DEFAULT 'not_started',
   affiliate_code      TEXT,
   referred_by_user_id CHAR(26)    REFERENCES users (id) ON DELETE SET NULL,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -100,16 +104,28 @@ CREATE INDEX idx_two_factors_user_id ON two_factors (user_id);
 
 ALTER TABLE users
   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users
+  FORCE ROW LEVEL SECURITY;
 ALTER TABLE sessions
   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sessions
+  FORCE ROW LEVEL SECURITY;
 ALTER TABLE accounts
   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE accounts
+  FORCE ROW LEVEL SECURITY;
 ALTER TABLE verifications
   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE verifications
+  FORCE ROW LEVEL SECURITY;
 ALTER TABLE wallets
   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE wallets
+  FORCE ROW LEVEL SECURITY;
 ALTER TABLE two_factors
   ENABLE ROW LEVEL SECURITY;
+ALTER TABLE two_factors
+  FORCE ROW LEVEL SECURITY;
 
 -- ===========================================
 -- 4. POLICIES

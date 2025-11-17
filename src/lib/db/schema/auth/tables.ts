@@ -28,6 +28,10 @@ export const users = pgTable('users', {
         market_order_type: CLOB_ORDER_TYPE.FAK,
       },
     }),
+  proxy_wallet_address: text('proxy_wallet_address'),
+  proxy_wallet_signature: text('proxy_wallet_signature'),
+  proxy_wallet_signed_at: timestamp('proxy_wallet_signed_at'),
+  proxy_wallet_status: text('proxy_wallet_status').default('not_started').notNull(),
   affiliate_code: text(),
   referred_by_user_id: text().references((): any => users.id, { onDelete: 'set null' }),
 })

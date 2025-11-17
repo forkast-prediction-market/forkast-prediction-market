@@ -109,6 +109,18 @@ export const auth = betterAuth({
       settings: {
         type: 'json',
       },
+      proxy_wallet_address: {
+        type: 'string',
+      },
+      proxy_wallet_signature: {
+        type: 'string',
+      },
+      proxy_wallet_status: {
+        type: 'string',
+      },
+      proxy_wallet_signed_at: {
+        type: 'date',
+      },
       affiliate_code: {
         type: 'string',
       },

@@ -8,6 +8,7 @@ import GoogleAnalytics from '@/components/GoogleAnalytics'
 import { Toaster } from '@/components/ui/sonner'
 import AppKitProvider from '@/providers/AppKitProvider'
 import ProgressIndicatorProvider from '@/providers/ProgressIndicatorProvider'
+import { TradingOnboardingProvider } from '@/providers/TradingOnboardingProvider'
 
 const queryClient = new QueryClient()
 
@@ -17,12 +18,14 @@ export function Providers({ children }: { children: ReactNode }) {
       <ThemeProvider attribute="class">
         <QueryClientProvider client={queryClient}>
           <AppKitProvider>
-            <div className="min-h-screen bg-background">
-              {children}
-            </div>
-            <Toaster position="top-center" />
-            {process.env.NODE_ENV === 'production' && <SpeedInsights />}
-            {process.env.NODE_ENV === 'production' && <GoogleAnalytics />}
+            <TradingOnboardingProvider>
+              <div className="min-h-screen bg-background">
+                {children}
+              </div>
+              <Toaster position="top-center" />
+              {process.env.NODE_ENV === 'production' && <SpeedInsights />}
+              {process.env.NODE_ENV === 'production' && <GoogleAnalytics />}
+            </TradingOnboardingProvider>
           </AppKitProvider>
         </QueryClientProvider>
       </ThemeProvider>

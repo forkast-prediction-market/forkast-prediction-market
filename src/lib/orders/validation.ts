@@ -57,10 +57,6 @@ export function validateOrder({
     return { ok: false, reason: 'MISSING_OUTCOME' }
   }
 
-  if (amountNumber <= 0) {
-    return { ok: false, reason: 'INVALID_AMOUNT' }
-  }
-
   if (isLimitOrder) {
     const limitPriceValue = Number.parseFloat(limitPrice)
     if (!Number.isFinite(limitPriceValue) || limitPriceValue <= 0) {
@@ -71,6 +67,12 @@ export function validateOrder({
     if (!Number.isFinite(limitSharesValue) || limitSharesValue <= 0) {
       return { ok: false, reason: 'INVALID_LIMIT_SHARES' }
     }
+
+    return { ok: true }
+  }
+
+  if (amountNumber <= 0) {
+    return { ok: false, reason: 'INVALID_AMOUNT' }
   }
 
   return { ok: true }

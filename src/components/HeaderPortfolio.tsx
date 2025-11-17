@@ -1,11 +1,11 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
+import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 
 export default function HeaderPortfolio() {
-  const { open } = useAppKit()
+  const { startDepositFlow } = useTradingOnboarding()
   const { isLoadingBalance, balance } = useBalance()
 
   if (isLoadingBalance) {
@@ -37,7 +37,7 @@ export default function HeaderPortfolio() {
         type="button"
         variant="ghost"
         className="flex flex-col gap-0"
-        onClick={() => open()}
+        onClick={startDepositFlow}
       >
         <div className="text-xs font-medium text-muted-foreground">Cash</div>
         <div className="text-sm font-semibold text-primary">

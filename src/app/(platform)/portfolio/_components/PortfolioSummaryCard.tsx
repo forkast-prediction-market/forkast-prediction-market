@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
 import { useClientMounted } from '@/hooks/useClientMounted'
+import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 
 export default function PortfolioSummaryCard() {
   const dailyChange = 0.00
@@ -17,6 +18,7 @@ export default function PortfolioSummaryCard() {
   const { isLoadingBalance, balance } = useBalance()
   const { status } = useAppKitAccount()
   const { open } = useAppKit()
+  const { startDepositFlow } = useTradingOnboarding()
 
   if (!isMounted || isLoadingBalance || status === 'connecting') {
     return <Skeleton className="h-56 w-full" />
@@ -84,7 +86,7 @@ export default function PortfolioSummaryCard() {
 
         {/* Action buttons */}
         <div className="mt-auto flex gap-3">
-          <Button className="h-11 flex-1" onClick={() => open()}>
+          <Button className="h-11 flex-1" onClick={startDepositFlow}>
             <ArrowDownToLine className="size-4" />
             Deposit
           </Button>
