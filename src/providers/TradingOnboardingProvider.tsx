@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import type { ProxyWalletStatus } from '@/types'
 import { Check, CircleDollarSign, Loader2, Wallet, X } from 'lucide-react'
 import { createContext, use, useCallback, useEffect, useMemo, useState } from 'react'
 import { UserRejectedRequestError } from 'viem'
@@ -82,7 +83,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
             proxy_wallet_address: data.proxy_wallet_address ?? previous.proxy_wallet_address,
             proxy_wallet_signature: data.proxy_wallet_signature ?? previous.proxy_wallet_signature,
             proxy_wallet_signed_at: data.proxy_wallet_signed_at ?? previous.proxy_wallet_signed_at,
-            proxy_wallet_status: data.proxy_wallet_status ?? previous.proxy_wallet_status,
+            proxy_wallet_status: (data.proxy_wallet_status as ProxyWalletStatus | null | undefined) ?? previous.proxy_wallet_status,
           }
         })
       })
