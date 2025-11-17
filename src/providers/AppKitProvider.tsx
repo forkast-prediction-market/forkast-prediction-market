@@ -32,6 +32,7 @@ function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
       projectId: projectId!,
       adapters: [wagmiAdapter],
       themeMode,
+      defaultAccountTypes: { eip155: 'eoa' },
       metadata: {
         name: process.env.NEXT_PUBLIC_SITE_NAME!,
         description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION!,
