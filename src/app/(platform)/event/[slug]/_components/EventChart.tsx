@@ -17,7 +17,7 @@ import {
   useEventPriceHistory,
 } from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
 import PredictionChart from '@/components/PredictionChart'
-import { cn, sanitizeSvg } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
 
 interface EventChartProps {
@@ -241,86 +241,68 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   const shouldRenderLegendEntries = showLegendValues && legendEntries.length > 0
   const yesChanceDisplay = typeof roundedYesChance === 'number' ? roundedYesChance : '--'
   const noChanceDisplay = typeof roundedNoChance === 'number' ? roundedNoChance : '--'
+  const legendContent = shouldRenderLegendEntries
+    ? (
+        <div className="flex min-h-[20px] flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
+          {legendEntries.map((entry) => {
+            const resolvedValue = typeof entry.value === 'number' ? entry.value : 0
+            return (
+              <div key={entry.key} className="flex items-center gap-2">
+                <div
+                  className="size-2 shrink-0 rounded-full"
+                  style={{ backgroundColor: entry.color }}
+                />
+                <span className="text-xs font-medium text-muted-foreground">
+                  {entry.name}
+                  {' '}
+                  <span className="font-semibold text-muted-foreground">
+                    {`${resolvedValue.toFixed(1)}%`}
+                  </span>
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )
+    : null
 
   return (
     <div className="grid gap-4">
-      <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      {isSingleMarket && (
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          {isSingleMarket
-            ? (
-                <>
-                  <span className="inline-flex items-center gap-1 text-xl font-bold text-primary">
-                    {yesChanceDisplay}
-                    % chance
-                  </span>
-
-                  <div className="flex items-center gap-1 text-no">
-                    <TrendingDownIcon className="size-4" />
-                    <span className="text-xs font-semibold">
-                      {noChanceDisplay}
-                      %
-                    </span>
-                  </div>
-                </>
-              )
-            : (
-                <div className="flex min-h-[20px] flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-                  {shouldRenderLegendEntries
-                    ? legendEntries.map((entry) => {
-                        const resolvedValue = typeof entry.value === 'number' ? entry.value : 0
-                        return (
-                          <div key={entry.key} className="flex items-center gap-2">
-                            <div
-                              className="size-2 shrink-0 rounded-full"
-                              style={{ backgroundColor: entry.color }}
-                            />
-                            <span className="text-xs font-medium text-muted-foreground">
-                              {entry.name}
-                              {' '}
-                              <span className="font-semibold text-muted-foreground">
-                                {`${resolvedValue.toFixed(1)}%`}
-                              </span>
-                            </span>
-                          </div>
-                        )
-                      })
-                    : null}
-                </div>
-              )}
-        </div>
-
-        <div className={`
-          pointer-events-none absolute top-4 right-4 flex items-center gap-1 text-muted-foreground opacity-50
-          select-none
-        `}
-        >
-          <div
-            className="size-6 [&_*]:fill-current [&_*]:stroke-current"
-            dangerouslySetInnerHTML={{
-              __html: sanitizeSvg(process.env.NEXT_PUBLIC_SITE_LOGO_SVG!),
-            }}
-          />
-          <span className="text-xl font-medium">
-            {process.env.NEXT_PUBLIC_SITE_NAME}
+          <span className="inline-flex items-center gap-1 text-xl font-bold text-primary">
+            {yesChanceDisplay}
+            % chance
           </span>
-        </div>
-      </div>
 
-      <div>
-        <div className="relative h-72 w-full">
-          <div className="absolute inset-0">
-            <PredictionChart
-              data={chartData}
-              series={chartSeries}
-              width={chartWidth}
-              height={280}
-              margin={{ top: 30, right: 40, bottom: 52, left: 0 }}
-              dataSignature={chartSignature}
-              cursorStepMs={CURSOR_STEP_MS[activeTimeRange]}
-              onCursorDataChange={setCursorSnapshot}
-            />
+          <div className="flex items-center gap-1 text-no">
+            <TrendingDownIcon className="size-4" />
+            <span className="text-xs font-semibold">
+              {noChanceDisplay}
+              %
+            </span>
           </div>
         </div>
+      )}
+
+      <div>
+        <PredictionChart
+          data={chartData}
+          series={chartSeries}
+          width={chartWidth}
+          height={280}
+          margin={{ top: 30, right: 40, bottom: 52, left: 0 }}
+          dataSignature={chartSignature}
+          cursorStepMs={CURSOR_STEP_MS[activeTimeRange]}
+          onCursorDataChange={setCursorSnapshot}
+          xAxisTickCount={isMobile ? 3 : 6}
+          legendContent={legendContent}
+          showLegend={!isSingleMarket}
+          watermark={{
+            iconSvg: process.env.NEXT_PUBLIC_SITE_LOGO_SVG,
+            label: process.env.NEXT_PUBLIC_SITE_NAME,
+          }}
+        />
         <div className="mt-3 flex flex-wrap justify-center gap-2 text-[11px] font-medium">
           {TIME_RANGES.map(range => (
             <button

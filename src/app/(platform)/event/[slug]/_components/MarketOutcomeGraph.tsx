@@ -63,19 +63,22 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="relative h-64 w-full">
-        <div className="absolute inset-0">
-          <PredictionChart
-            data={chartData}
-            series={series}
-            width={chartWidth}
-            height={260}
-            margin={{ top: 20, right: 40, bottom: 48, left: 0 }}
-            dataSignature={chartSignature}
-            cursorStepMs={CURSOR_STEP_MS[activeTimeRange]}
-          />
-        </div>
-      </div>
+      <PredictionChart
+        data={chartData}
+        series={series}
+        width={chartWidth}
+        height={260}
+        margin={{ top: 20, right: 40, bottom: 48, left: 0 }}
+        dataSignature={chartSignature}
+        cursorStepMs={CURSOR_STEP_MS[activeTimeRange]}
+        xAxisTickCount={isMobile ? 3 : 6}
+        legendContent={null}
+        showLegend={false}
+        watermark={{
+          iconSvg: process.env.NEXT_PUBLIC_SITE_LOGO_SVG,
+          label: process.env.NEXT_PUBLIC_SITE_NAME,
+        }}
+      />
 
       <div className="flex flex-wrap justify-center gap-2 text-[11px] font-semibold">
         {TIME_RANGES.map(range => (
