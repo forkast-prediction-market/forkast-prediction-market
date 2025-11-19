@@ -15,6 +15,7 @@ import { OpenCardContext } from '@/components/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { NewBadge } from '@/components/ui/new-badge'
+import { formatDisplayAmount, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { formatCentsLabel, formatCurrency, formatVolume } from '@/lib/formatters'
 import { isMarketNew, triggerConfetti } from '@/lib/utils'
 
@@ -37,36 +38,11 @@ export default function EventCard({ event }: EventCardProps) {
     setOpenCardId(isOpen ? null : `${event.id}`)
   }
 
-  function formatValue(value: number): string {
-    return value.toFixed(2)
-  }
-
-  // Function to limit decimal places during typing
-  function limitDecimalPlaces(value: string, maxDecimals: number = 2): string {
-    // Remove non-numeric characters except dot
-    const cleaned = value.replace(/[^0-9.]/g, '')
-
-    // Allow only one decimal point
-    const parts = cleaned.split('.')
-    if (parts.length > 2) {
-      return `${parts[0]}.${parts[1]}`
-    }
-
-    // Limit decimal places
-    if (parts.length === 2 && parts[1].length > maxDecimals) {
-      return `${parts[0]}.${parts[1].substring(0, maxDecimals)}`
-    }
-
-    return cleaned
-  }
-
   const isInTradingMode = isOpen && selectedOutcome
   const isSingleMarket = event.markets.length === 1
   const yesOutcome = event.markets[0].outcomes[0]
   const noOutcome = event.markets[0].outcomes[1]
-  const hasRecentMarket = event.markets.some(
-    market => isMarketNew(market.created_at),
-  )
+  const hasRecentMarket = event.markets.some(market => isMarketNew(market.created_at))
 
   const marketTargets = useMemo(() => buildMarketTargets(event.markets), [event.markets])
   const { latestSnapshot } = useEventPriceHistory({
@@ -198,6 +174,29 @@ export default function EventCard({ event }: EventCardProps) {
     setTradeAmount('1')
     onToggle()
   }
+
+  function handleTradeAmountInputChange(rawValue: string) {
+    const cleaned = sanitizeNumericInput(rawValue)
+
+    if (cleaned === '') {
+      setTradeAmount('')
+      return
+    }
+
+    const numericValue = Number.parseFloat(cleaned)
+    if (Number.isNaN(numericValue)) {
+      setTradeAmount('')
+      return
+    }
+
+    if (numericValue > MAX_AMOUNT_INPUT) {
+      return
+    }
+
+    setTradeAmount(cleaned)
+  }
+
+  const formattedTradeAmount = formatDisplayAmount(tradeAmount)
 
   function calculateWinnings(amount: string) {
     if (!amount || !selectedOutcome) {
@@ -337,25 +336,11 @@ export default function EventCard({ event }: EventCardProps) {
                       className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-green-600 dark:text-green-400"
                     />
                     <input
-                      type="number"
+                      type="text"
+                      inputMode="decimal"
                       placeholder="0.00"
-                      value={tradeAmount}
-                      onChange={(e) => {
-                        const rawValue = e.target.value.replace(/[^0-9.]/g, '')
-                        const value = limitDecimalPlaces(rawValue, 2)
-                        const numericValue = Number.parseFloat(value)
-
-                        // Limit to 99999 like in EventDetail
-                        if (numericValue <= 99999 || value === '') {
-                          setTradeAmount(value)
-                        }
-                      }}
-                      onBlur={(e) => {
-                        const value = e.target.value.replace(/[^0-9.]/g, '')
-                        if (value && !Number.isNaN(Number.parseFloat(value))) {
-                          setTradeAmount(formatValue(Number.parseFloat(value)))
-                        }
-                      }}
+                      value={formattedTradeAmount}
+                      onChange={event => handleTradeAmountInputChange(event.target.value)}
                       onKeyDown={(e) => {
                         if (
                           e.key === 'Enter'
