@@ -20,7 +20,7 @@ import { useUserOutcomePositions } from '@/app/(platform)/event/[slug]/_hooks/us
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
-import { CTF_EXCHANGE_ADDRESS, EIP712_TYPES, getExchangeEip712Domain, NEGRISK_CTF_EXCHANGE_ADDRESS, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
+import { EIP712_TYPES, getExchangeEip712Domain, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
 import { validateOrder } from '@/lib/orders/validation'
@@ -55,15 +55,12 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const userAddress = normalizeAddress(user?.address)
   const makerAddress = proxyWalletAddress ?? userAddress ?? null
   const signatureType = proxyWalletAddress ? 1 : 0
-  const negRiskEvent = useMemo(() => {
-    const hasMultipleMarkets = (event.total_markets_count ?? event.markets.length) > 1 || event.markets.length > 1
-    const hasMultiOutcomeMarket = event.markets.some(market => (market.outcomes?.length ?? 0) > 2 || (market.condition?.outcome_slot_count ?? 0) > 2)
-    return hasMultipleMarkets || hasMultiOutcomeMarket
-  }, [event.markets, event.total_markets_count])
-  const activeMarketMultiOutcome = (state.market?.condition?.outcome_slot_count ?? state.market?.outcomes?.length ?? 0) > 2
-  const isNegRiskMarket = negRiskEvent || activeMarketMultiOutcome
-  const verifyingContract = isNegRiskMarket ? NEGRISK_CTF_EXCHANGE_ADDRESS : CTF_EXCHANGE_ADDRESS
-  const orderDomain = useMemo(() => getExchangeEip712Domain(verifyingContract), [verifyingContract])
+  const eventHasNegRiskMarket = useMemo(
+    () => event.markets.some(market => Boolean(market.neg_risk)),
+    [event.markets],
+  )
+  const isNegRiskMarket = Boolean(state.market?.neg_risk ?? eventHasNegRiskMarket)
+  const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskMarket), [isNegRiskMarket])
 
   useEffect(() => {
     if (!user?.id) {

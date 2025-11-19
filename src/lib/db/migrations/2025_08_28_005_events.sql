@@ -72,6 +72,16 @@ CREATE TABLE markets
   title        TEXT        NOT NULL,
   slug         TEXT        NOT NULL,
   short_title  TEXT,
+  question     TEXT,
+  market_rules TEXT,
+  resolution_source TEXT,
+  resolution_source_url TEXT,
+  resolver     CHAR(42),
+  neg_risk     BOOLEAN              DEFAULT FALSE NOT NULL,
+  neg_risk_market_id CHAR(66),
+  neg_risk_request_id CHAR(66),
+  metadata_version TEXT,
+  metadata_schema  TEXT,
   -- Images
   icon_url     TEXT,  -- markets/icons/market-slug.jpg
   -- Status and Data

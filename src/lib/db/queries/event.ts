@@ -161,6 +161,7 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
 
     return {
       ...market,
+      neg_risk: Boolean(market.neg_risk),
       question_id: market.condition?.id || '',
       title: market.short_title || market.title,
       probability,

@@ -32,6 +32,16 @@ export interface Market {
   title: string
   slug: string
   short_title?: string
+  question?: string
+  market_rules?: string
+  resolution_source?: string
+  resolution_source_url?: string
+  resolver?: string
+  neg_risk?: boolean
+  neg_risk_market_id?: string
+  neg_risk_request_id?: string
+  metadata_version?: string
+  metadata_schema?: string
   icon_url: string
   is_active: boolean
   is_resolved: boolean
