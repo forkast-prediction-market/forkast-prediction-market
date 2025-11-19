@@ -572,6 +572,17 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
     throw new Error(`Market ${market.id} missing required oracle field`)
   }
 
+  const question = normalizeStringField(metadata.question)
+  const marketRules = normalizeStringField(metadata.market_rules)
+  const resolutionSource = normalizeStringField(metadata.resolution_source)
+  const resolutionSourceUrl = normalizeStringField(metadata.resolution_source_url)
+  const resolverAddress = normalizeAddressField(metadata.resolver)
+  const negRiskFlag = normalizeBooleanField(metadata.neg_risk)
+  const negRiskMarketId = normalizeHexField(metadata.neg_risk_market_id)
+  const negRiskRequestId = normalizeHexField(metadata.neg_risk_request_id)
+  const metadataVersion = normalizeStringField(metadata.version)
+  const metadataSchema = normalizeStringField(metadata.schema)
+
   const marketData = {
     condition_id: market.id,
     event_id: eventId,
@@ -582,6 +593,16 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
     short_title: metadata.short_title,
     icon_url: iconUrl,
     metadata,
+    question: question ?? null,
+    market_rules: marketRules ?? null,
+    resolution_source: resolutionSource ?? null,
+    resolution_source_url: resolutionSourceUrl ?? null,
+    resolver: resolverAddress ?? null,
+    neg_risk: negRiskFlag,
+    neg_risk_market_id: negRiskMarketId ?? null,
+    neg_risk_request_id: negRiskRequestId ?? null,
+    metadata_version: metadataVersion ?? null,
+    metadata_schema: metadataSchema ?? null,
     created_at: createdAtIso,
   }
 
@@ -730,6 +751,53 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
     console.error(`Failed to process image ${arweaveHash}:`, error)
     return null
   }
+}
+
+function normalizeStringField(value: unknown): string | null {
+  if (typeof value !== 'string') {
+    return null
+  }
+  const trimmed = value.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+function normalizeAddressField(value: unknown): string | null {
+  const normalized = normalizeStringField(value)
+  if (!normalized) {
+    return null
+  }
+  return /^0x[a-fA-F0-9]{40}$/.test(normalized)
+    ? normalized.toLowerCase()
+    : normalized
+}
+
+function normalizeHexField(value: unknown): string | null {
+  const normalized = normalizeStringField(value)
+  if (!normalized) {
+    return null
+  }
+  return normalized.startsWith('0x')
+    ? normalized.toLowerCase()
+    : normalized
+}
+
+function normalizeBooleanField(value: unknown): boolean {
+  if (typeof value === 'boolean') {
+    return value
+  }
+  if (typeof value === 'string') {
+    const normalized = value.trim().toLowerCase()
+    if (normalized === 'true') {
+      return true
+    }
+    if (normalized === 'false') {
+      return false
+    }
+  }
+  if (typeof value === 'number') {
+    return value !== 0
+  }
+  return Boolean(value)
 }
 
 async function checkSyncRunning(): Promise<boolean> {

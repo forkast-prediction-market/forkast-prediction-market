@@ -65,26 +65,36 @@ CREATE TABLE event_tags
 CREATE TABLE markets
 (
   -- IDs and Identifiers
-  condition_id TEXT PRIMARY KEY REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  condition_id          TEXT PRIMARY KEY REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
   -- Relationships
-  event_id     CHAR(26)    NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
+  event_id              CHAR(26)    NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
   -- Market Information
-  title        TEXT        NOT NULL,
-  slug         TEXT        NOT NULL,
-  short_title  TEXT,
+  title                 TEXT        NOT NULL,
+  slug                  TEXT        NOT NULL,
+  short_title           TEXT,
+  question              TEXT,
+  market_rules          TEXT,
+  resolution_source     TEXT,
+  resolution_source_url TEXT,
+  resolver              CHAR(42),
+  neg_risk              BOOLEAN              DEFAULT FALSE NOT NULL,
+  neg_risk_market_id    CHAR(66),
+  neg_risk_request_id   CHAR(66),
+  metadata_version      TEXT,
+  metadata_schema       TEXT,
   -- Images
-  icon_url     TEXT,  -- markets/icons/market-slug.jpg
+  icon_url              TEXT,  -- markets/icons/market-slug.jpg
   -- Status and Data
-  is_active    BOOLEAN              DEFAULT TRUE,
-  is_resolved  BOOLEAN              DEFAULT FALSE,
+  is_active             BOOLEAN              DEFAULT TRUE,
+  is_resolved           BOOLEAN              DEFAULT FALSE,
   -- Metadata
-  metadata     JSONB, -- Metadata from Arweave
+  metadata              JSONB, -- Metadata from Arweave
   -- Cached Trading Metrics (from subgraphs)
-  volume_24h   DECIMAL(20, 6)       DEFAULT 0,
-  volume       DECIMAL(20, 6)       DEFAULT 0,
+  volume_24h            DECIMAL(20, 6)       DEFAULT 0,
+  volume                DECIMAL(20, 6)       DEFAULT 0,
   -- Timestamps
-  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   -- Constraints
   UNIQUE (event_id, slug),
   CHECK (volume_24h >= 0),
