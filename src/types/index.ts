@@ -93,6 +93,8 @@ interface UserSettings {
   [key: string]: any
 }
 
+export type ProxyWalletStatus = 'not_started' | 'signed'
+
 export interface User {
   id: string
   address: string
@@ -104,6 +106,10 @@ export interface User {
   affiliate_code?: string | null
   referred_by_user_id?: string | null
   is_admin: boolean
+  proxy_wallet_address?: string | null
+  proxy_wallet_signature?: string | null
+  proxy_wallet_signed_at?: string | null
+  proxy_wallet_status?: ProxyWalletStatus | null
 }
 
 export interface PublicProfileStats {

@@ -17,6 +17,8 @@ export interface BuildOrderPayloadArgs extends CalculateOrderAmountsArgs {
   referrerAddress?: `0x${string}`
   affiliateAddress?: `0x${string}`
   affiliateSharePercent?: number
+  makerAddress?: `0x${string}`
+  signatureType?: number
 }
 
 export interface SubmitOrderArgs {
@@ -94,6 +96,8 @@ export function buildOrderPayload({
   referrerAddress,
   affiliateAddress,
   affiliateSharePercent,
+  makerAddress,
+  signatureType,
   ...rest
 }: BuildOrderPayloadArgs): BlockchainOrder {
   const { makerAmount, takerAmount } = calculateOrderAmounts(rest)
@@ -104,11 +108,13 @@ export function buildOrderPayload({
   const affiliatePercentageValue = normalizedAffiliate && normalizedAffiliate !== ZERO_ADDRESS
     ? BigInt(Math.max(0, Math.trunc(affiliateSharePercent ?? 0)))
     : 0n
+  const maker = makerAddress ?? userAddress
+  const signatureTypeValue = typeof signatureType === 'number' ? signatureType : DEFAULT_ORDER_FIELDS.signature_type
 
   return {
     ...DEFAULT_ORDER_FIELDS,
     salt,
-    maker: userAddress,
+    maker,
     signer: userAddress,
     taker: ZERO_ADDRESS,
     referrer: normalizedReferrer ?? fallbackReferrer,
@@ -118,6 +124,7 @@ export function buildOrderPayload({
     taker_amount: takerAmount,
     side: rest.side,
     affiliate_percentage: affiliatePercentageValue,
+    signature_type: signatureTypeValue,
   }
 }
 

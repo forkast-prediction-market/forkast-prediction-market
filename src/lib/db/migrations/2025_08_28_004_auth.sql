@@ -5,18 +5,22 @@
 -- Users table - Core user identity with affiliate functionality
 CREATE TABLE users
 (
-  id                  CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
-  address             TEXT        NOT NULL UNIQUE,
-  username            TEXT,
-  email               TEXT        NOT NULL,
-  email_verified      BOOLEAN     NOT NULL DEFAULT FALSE,
-  two_factor_enabled  BOOLEAN     NOT NULL DEFAULT FALSE,
-  image               TEXT,
-  settings            JSONB       NOT NULL DEFAULT '{}'::JSONB,
-  affiliate_code      TEXT,
-  referred_by_user_id CHAR(26)    REFERENCES users (id) ON DELETE SET NULL,
-  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id                     CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
+  address                TEXT        NOT NULL UNIQUE,
+  username               TEXT,
+  email                  TEXT        NOT NULL,
+  email_verified         BOOLEAN     NOT NULL DEFAULT FALSE,
+  two_factor_enabled     BOOLEAN     NOT NULL DEFAULT FALSE,
+  image                  TEXT,
+  settings               JSONB       NOT NULL DEFAULT '{}'::JSONB,
+  proxy_wallet_address   TEXT,
+  proxy_wallet_signature TEXT,
+  proxy_wallet_signed_at TIMESTAMPTZ,
+  proxy_wallet_status    TEXT        NOT NULL DEFAULT 'not_started',
+  affiliate_code         TEXT,
+  referred_by_user_id    CHAR(26)    REFERENCES users (id) ON DELETE SET NULL,
+  created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at             TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Sessions table - Better Auth session management
@@ -156,7 +160,9 @@ EXECUTE FUNCTION set_updated_at();
 
 UPDATE users
 SET settings = '{
-  "trading": { "market_order_type": "FAK" },
+  "trading": {
+    "market_order_type": "FAK"
+  },
   "notifications": {
     "email_resolutions": true,
     "inapp_order_fills": true,
