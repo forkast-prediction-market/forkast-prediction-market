@@ -55,12 +55,8 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const userAddress = normalizeAddress(user?.address)
   const makerAddress = proxyWalletAddress ?? userAddress ?? null
   const signatureType = proxyWalletAddress ? 1 : 0
-  const eventHasNegRiskMarket = useMemo(
-    () => event.markets.some(market => Boolean(market.neg_risk)),
-    [event.markets],
-  )
-  const isNegRiskMarket = Boolean(state.market?.neg_risk ?? eventHasNegRiskMarket)
-  const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskMarket), [isNegRiskMarket])
+  const isNegRiskEvent = Boolean(event.neg_risk)
+  const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskEvent), [isNegRiskEvent])
 
   useEffect(() => {
     if (!user?.id) {
