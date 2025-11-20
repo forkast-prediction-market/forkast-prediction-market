@@ -543,12 +543,11 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
     .eq('condition_id', market.id)
     .maybeSingle()
 
-  if (existingMarket) {
-    console.log(`Market ${market.id} already exists, skipping...`)
-    if (existingMarket.event_id) {
-      await updateEventStatusFromMarkets(existingMarket.event_id)
-    }
-    return
+  const marketAlreadyExists = Boolean(existingMarket)
+  const eventIdForStatusUpdate = existingMarket?.event_id ?? eventId
+
+  if (marketAlreadyExists) {
+    console.log(`Market ${market.id} already exists, updating cached data...`)
   }
 
   let iconUrl: string | null = null
@@ -566,7 +565,7 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
   }
   const createdAtIso = new Date(creationTimestamp * 1000).toISOString()
 
-  console.log(`Creating market with eventId: ${eventId}`)
+  console.log(`${marketAlreadyExists ? 'Updating' : 'Creating'} market ${market.id} with eventId: ${eventId}`)
 
   if (!market.oracle) {
     throw new Error(`Market ${market.id} missing required oracle field`)
@@ -612,11 +611,11 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
     throw new Error(`Failed to create market: ${error.message}`)
   }
 
-  if (metadata.outcomes?.length > 0) {
+  if (!marketAlreadyExists && metadata.outcomes?.length > 0) {
     await processOutcomes(market.id, metadata.outcomes)
   }
 
-  await updateEventStatusFromMarkets(eventId)
+  await updateEventStatusFromMarkets(eventIdForStatusUpdate)
 }
 
 async function updateEventStatusFromMarkets(eventId: string) {
