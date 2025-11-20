@@ -29,21 +29,21 @@ export const OUTCOME_INDEX = {
 export const CAP_MICRO = 990_000n
 export const FLOOR_MICRO = 10_000n
 
-const DEFAULT_CTF_EXCHANGE_ADDRESS = '0x006ce6484eA6114fB0D4F26660de0F37d35001Ba'
-const DEFAULT_NEG_RISK_CTF_EXCHANGE_ADDRESS = '0x68dDb555b640De7f0D7eFFd31ee5CCB841DD86AD'
+export const CTF_EXCHANGE_ADDRESS = '0x006ce6484eA6114fB0D4F26660de0F37d35001Ba' as `0x${string}`
+export const NEG_RISK_CTF_EXCHANGE_ADDRESS = '0x68dDb555b640De7f0D7eFFd31ee5CCB841DD86AD' as `0x${string}`
 
 export const EIP712_DOMAIN = {
   name: 'Forkast CTF Exchange',
   version: '1',
   chainId: defaultNetwork.id,
-  verifyingContract: DEFAULT_CTF_EXCHANGE_ADDRESS,
+  verifyingContract: CTF_EXCHANGE_ADDRESS,
 } as const
 
 export const NEG_RISK_EIP712_DOMAIN = {
   name: 'Forkast NegRisk CTF Exchange',
   version: '1',
   chainId: defaultNetwork.id,
-  verifyingContract: DEFAULT_NEG_RISK_CTF_EXCHANGE_ADDRESS,
+  verifyingContract: NEG_RISK_CTF_EXCHANGE_ADDRESS,
 } as const
 
 export const EIP712_TYPES = {
