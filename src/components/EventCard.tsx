@@ -77,7 +77,7 @@ export default function EventCard({ event }: EventCardProps) {
   )
   const isNegRiskMarket = useMemo(() => (
     selectedOutcome?.market ? Boolean(selectedOutcome.market.neg_risk) : eventHasNegRiskMarket
-  ), [eventHasNegRiskMarket, selectedOutcome?.market?.neg_risk])
+  ), [eventHasNegRiskMarket, selectedOutcome?.market])
   const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskMarket), [isNegRiskMarket])
 
   const marketTargets = useMemo(() => buildMarketTargets(event.markets), [event.markets])
@@ -120,7 +120,7 @@ export default function EventCard({ event }: EventCardProps) {
 
   const displayChanceByMarket = useMemo(() => event.markets.reduce<Record<string, number>>((acc, market) => {
     const snapshotValue = latestSnapshot[market.condition_id]
-    if (typeof snapshotValue === 'number' && Number.isFinite(snapshotValue)) {
+    if (Number.isFinite(snapshotValue)) {
       acc[market.condition_id] = snapshotValue
     }
     else {
