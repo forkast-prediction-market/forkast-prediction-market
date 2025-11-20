@@ -3,7 +3,6 @@ import { useAppKitAccount } from '@reown/appkit/react'
 import { useQueryClient } from '@tanstack/react-query'
 import Form from 'next/form'
 import { useEffect, useMemo } from 'react'
-import { UserRejectedRequestError } from 'viem'
 import { useSignTypedData } from 'wagmi'
 import EventOrderPanelBuySellTabs from '@/app/(platform)/event/[slug]/_components/EventOrderPanelBuySellTabs'
 import EventOrderPanelEarnings from '@/app/(platform)/event/[slug]/_components/EventOrderPanelEarnings'
@@ -25,6 +24,7 @@ import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
 import { validateOrder } from '@/lib/orders/validation'
 import { cn } from '@/lib/utils'
+import { isUserRejectedRequestError, normalizeAddress } from '@/lib/wallet'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useAmountAsNumber, useIsLimitOrder, useIsSingleMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
@@ -372,33 +372,4 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       <EventOrderPanelTermsDisclaimer />
     </Form>
   )
-}
-
-function isUserRejectedRequestError(error: unknown): boolean {
-  if (error instanceof UserRejectedRequestError) {
-    return true
-  }
-
-  if (typeof error === 'object' && error !== null) {
-    const name = 'name' in error ? (error as { name?: string }).name : undefined
-    if (name === 'UserRejectedRequestError') {
-      return true
-    }
-
-    const message = 'message' in error ? (error as { message?: string }).message : undefined
-    if (typeof message === 'string' && message.toLowerCase().includes('user rejected')) {
-      return true
-    }
-  }
-
-  return false
-}
-
-function normalizeAddress(value?: string | null): `0x${string}` | null {
-  if (typeof value !== 'string') {
-    return null
-  }
-
-  const trimmed = value.trim()
-  return /^0x[0-9a-fA-F]{40}$/.test(trimmed) ? trimmed as `0x${string}` : null
 }
