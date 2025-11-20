@@ -205,6 +205,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     ),
     [normalizedHistory, chartSeries],
   )
+  const hasChartData = chartData.length > 0
   const chartSignature = useMemo(() => {
     const seriesKeys = chartSeries.map(series => series.key).join(',')
     return `${event.id}:${activeTimeRange}:${seriesKeys}`
@@ -303,23 +304,25 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
             label: process.env.NEXT_PUBLIC_SITE_NAME,
           }}
         />
-        <div className="mt-3 flex flex-wrap justify-center gap-2 text-[11px] font-medium">
-          {TIME_RANGES.map(range => (
-            <button
-              key={range}
-              type="button"
-              className={cn(
-                'rounded-md px-3 py-2 transition-colors',
-                activeTimeRange === range
-                  ? 'bg-muted text-foreground'
-                  : 'bg-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground',
-              )}
-              onClick={() => setActiveTimeRange(range)}
-            >
-              {range}
-            </button>
-          ))}
-        </div>
+        {hasChartData && (
+          <div className="relative z-10 mt-3 flex flex-wrap justify-center gap-2 text-[11px] font-medium">
+            {TIME_RANGES.map(range => (
+              <button
+                key={range}
+                type="button"
+                className={cn(
+                  'rounded-md px-3 py-2 transition-colors',
+                  activeTimeRange === range
+                    ? 'bg-muted text-foreground'
+                    : 'bg-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground',
+                )}
+                onClick={() => setActiveTimeRange(range)}
+              >
+                {range}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
