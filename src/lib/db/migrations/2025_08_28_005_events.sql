@@ -43,6 +43,10 @@ CREATE TABLE events
   creator              CHAR(42), -- Ethereum address of creator
   icon_url             TEXT,
   show_market_icons    BOOLEAN              DEFAULT TRUE,
+  enable_neg_risk      BOOLEAN              DEFAULT FALSE,
+  neg_risk_augmented   BOOLEAN              DEFAULT FALSE,
+  neg_risk             BOOLEAN              DEFAULT FALSE,
+  neg_risk_market_id   CHAR(66),
   status               TEXT        NOT NULL DEFAULT 'active',
   rules                TEXT,     -- Event-specific rules
   active_markets_count INTEGER              DEFAULT 0,
@@ -78,6 +82,7 @@ CREATE TABLE markets
   resolution_source_url TEXT,
   resolver              CHAR(42),
   neg_risk              BOOLEAN              DEFAULT FALSE NOT NULL,
+  neg_risk_other        BOOLEAN              DEFAULT FALSE NOT NULL,
   neg_risk_market_id    CHAR(66),
   neg_risk_request_id   CHAR(66),
   metadata_version      TEXT,

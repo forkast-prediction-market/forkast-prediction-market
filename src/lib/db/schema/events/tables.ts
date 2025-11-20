@@ -41,6 +41,13 @@ export const events = pgTable(
     icon_url: text(),
     show_market_icons: boolean()
       .default(true),
+    enable_neg_risk: boolean()
+      .default(false),
+    neg_risk_augmented: boolean()
+      .default(false),
+    neg_risk: boolean()
+      .default(false),
+    neg_risk_market_id: char({ length: 66 }),
     status: text()
       .notNull()
       .default('active'),
@@ -78,6 +85,7 @@ export const markets = pgTable(
     resolution_source_url: text(),
     resolver: char({ length: 42 }),
     neg_risk: boolean().default(false).notNull(),
+    neg_risk_other: boolean().default(false).notNull(),
     neg_risk_market_id: char({ length: 66 }),
     neg_risk_request_id: char({ length: 66 }),
     metadata_version: text(),

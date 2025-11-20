@@ -5,6 +5,10 @@ export interface Event {
   creator: string
   icon_url: string
   show_market_icons: boolean
+  enable_neg_risk?: boolean
+  neg_risk_augmented?: boolean
+  neg_risk?: boolean
+  neg_risk_market_id?: string
   status: 'draft' | 'active' | 'archived'
   rules?: string
   active_markets_count: number
@@ -38,6 +42,7 @@ export interface Market {
   resolution_source_url?: string
   resolver?: string
   neg_risk?: boolean
+  neg_risk_other?: boolean
   neg_risk_market_id?: string
   neg_risk_request_id?: string
   metadata_version?: string

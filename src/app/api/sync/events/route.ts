@@ -471,6 +471,10 @@ async function processEvent(eventData: any, creatorAddress: string) {
   }
 
   const normalizedEndDate = normalizeEventEndDate(eventData.end_date ?? eventData.endDate)
+  const enableNegRiskFlag = normalizeBooleanField(eventData.enable_neg_risk)
+  const negRiskAugmentedFlag = normalizeBooleanField(eventData.neg_risk_augmented)
+  const eventNegRiskFlag = normalizeBooleanField(eventData.neg_risk)
+  const eventNegRiskMarketId = normalizeHexField(eventData.neg_risk_market_id)
 
   const { data: existingEvent } = await supabaseAdmin
     .from('events')
@@ -479,15 +483,24 @@ async function processEvent(eventData: any, creatorAddress: string) {
     .maybeSingle()
 
   if (existingEvent) {
-    if (normalizedEndDate && normalizedEndDate !== existingEvent.end_date) {
-      const { error: updateError } = await supabaseAdmin
-        .from('events')
-        .update({ end_date: normalizedEndDate })
-        .eq('id', existingEvent.id)
+    const updatePayload: Record<string, any> = {
+      enable_neg_risk: enableNegRiskFlag,
+      neg_risk_augmented: negRiskAugmentedFlag,
+      neg_risk: eventNegRiskFlag,
+      neg_risk_market_id: eventNegRiskMarketId ?? null,
+    }
 
-      if (updateError) {
-        console.error(`Failed to update end_date for event ${existingEvent.id}:`, updateError)
-      }
+    if (normalizedEndDate && normalizedEndDate !== existingEvent.end_date) {
+      updatePayload.end_date = normalizedEndDate
+    }
+
+    const { error: updateError } = await supabaseAdmin
+      .from('events')
+      .update(updatePayload)
+      .eq('id', existingEvent.id)
+
+    if (updateError) {
+      console.error(`Failed to update event ${existingEvent.id}:`, updateError)
     }
 
     console.log(`Event ${eventData.slug} already exists, using existing ID: ${existingEvent.id}`)
@@ -509,6 +522,10 @@ async function processEvent(eventData: any, creatorAddress: string) {
       creator: creatorAddress,
       icon_url: iconUrl,
       show_market_icons: eventData.show_market_icons !== false,
+      enable_neg_risk: enableNegRiskFlag,
+      neg_risk_augmented: negRiskAugmentedFlag,
+      neg_risk: eventNegRiskFlag,
+      neg_risk_market_id: eventNegRiskMarketId ?? null,
       rules: eventData.rules || null,
       end_date: normalizedEndDate,
     })
@@ -577,6 +594,7 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
   const resolutionSourceUrl = normalizeStringField(metadata.resolution_source_url)
   const resolverAddress = normalizeAddressField(metadata.resolver)
   const negRiskFlag = normalizeBooleanField(metadata.neg_risk)
+  const negRiskOtherFlag = normalizeBooleanField(metadata.neg_risk_other)
   const negRiskMarketId = normalizeHexField(metadata.neg_risk_market_id)
   const negRiskRequestId = normalizeHexField(metadata.neg_risk_request_id)
   const metadataVersion = normalizeStringField(metadata.version)
@@ -598,6 +616,7 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
     resolution_source_url: resolutionSourceUrl ?? null,
     resolver: resolverAddress ?? null,
     neg_risk: negRiskFlag,
+    neg_risk_other: negRiskOtherFlag,
     neg_risk_market_id: negRiskMarketId ?? null,
     neg_risk_request_id: negRiskRequestId ?? null,
     metadata_version: metadataVersion ?? null,

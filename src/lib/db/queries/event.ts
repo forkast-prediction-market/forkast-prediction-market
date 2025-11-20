@@ -162,6 +162,7 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
     return {
       ...market,
       neg_risk: Boolean(market.neg_risk),
+      neg_risk_other: Boolean(market.neg_risk_other),
       question_id: market.condition?.id || '',
       title: market.short_title || market.title,
       probability,
@@ -199,6 +200,10 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
     creator: event.creator || '',
     icon_url: getSupabaseImageUrl(event.icon_url),
     show_market_icons: event.show_market_icons ?? true,
+    enable_neg_risk: Boolean(event.enable_neg_risk),
+    neg_risk_augmented: Boolean(event.neg_risk_augmented),
+    neg_risk: Boolean(event.neg_risk),
+    neg_risk_market_id: event.neg_risk_market_id || undefined,
     status: (event.status ?? 'draft') as Event['status'],
     rules: event.rules || undefined,
     active_markets_count: Number(event.active_markets_count || 0),
