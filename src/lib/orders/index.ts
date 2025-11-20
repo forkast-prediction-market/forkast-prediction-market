@@ -42,7 +42,7 @@ function generateOrderSalt() {
   const cryptoObj = typeof globalThis !== 'undefined' ? globalThis.crypto : undefined
 
   if (cryptoObj?.getRandomValues) {
-    const buffer = new Uint32Array(4)
+    const buffer = new Uint32Array(2)
     cryptoObj.getRandomValues(buffer)
 
     let value = 0n
