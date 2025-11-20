@@ -1,4 +1,4 @@
-import type { BlockchainOrder, Event } from '@/types'
+import type { Event } from '@/types'
 import { useAppKitAccount } from '@reown/appkit/react'
 import { useQueryClient } from '@tanstack/react-query'
 import Form from 'next/form'
@@ -19,9 +19,10 @@ import { useUserOutcomePositions } from '@/app/(platform)/event/[slug]/_hooks/us
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
-import { EIP712_TYPES, getExchangeEip712Domain, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
+import { getExchangeEip712Domain, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
+import { signOrderPayload } from '@/lib/orders/signing'
 import { validateOrder } from '@/lib/orders/validation'
 import { cn } from '@/lib/utils'
 import { isUserRejectedRequestError, normalizeAddress } from '@/lib/wallet'
@@ -108,54 +109,6 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     state.inputRef?.current?.focus()
   }
 
-  async function signOrder(payload: BlockchainOrder) {
-    let shouldCloseModal = false
-
-    if (!embeddedWalletInfo) {
-      try {
-        await open({ view: 'ApproveTransaction' })
-        shouldCloseModal = true
-        notifyWalletApprovalPrompt()
-      }
-      catch {
-        shouldCloseModal = false
-      }
-    }
-
-    try {
-      return await signTypedDataAsync({
-        domain: orderDomain,
-        types: EIP712_TYPES,
-        primaryType: 'Order',
-        message: {
-          salt: payload.salt,
-          maker: payload.maker,
-          signer: payload.signer,
-          taker: payload.taker,
-          referrer: payload.referrer,
-          affiliate: payload.affiliate,
-          tokenId: payload.token_id,
-          makerAmount: payload.maker_amount,
-          takerAmount: payload.taker_amount,
-          expiration: payload.expiration,
-          nonce: payload.nonce,
-          feeRateBps: payload.fee_rate_bps,
-          affiliatePercentage: payload.affiliate_percentage,
-          side: payload.side,
-          signatureType: payload.signature_type,
-        },
-      })
-    }
-    finally {
-      if (shouldCloseModal) {
-        try {
-          await close()
-        }
-        catch {}
-      }
-    }
-  }
-
   async function onSubmit() {
     if (!ensureTradingReady()) {
       return
@@ -199,7 +152,15 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
     let signature: string
     try {
-      signature = await signOrder(payload)
+      signature = await signOrderPayload({
+        payload,
+        domain: orderDomain,
+        signTypedDataAsync,
+        openAppKit: open,
+        closeAppKit: close,
+        embeddedWalletInfo,
+        onWalletApprovalPrompt: notifyWalletApprovalPrompt,
+      })
     }
     catch (error) {
       if (isUserRejectedRequestError(error)) {
