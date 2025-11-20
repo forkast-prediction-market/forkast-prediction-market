@@ -1,12 +1,15 @@
 'use client'
 
-import type { Event } from '@/types'
+import type { Event, Market, Outcome } from '@/types'
+import { useAppKitAccount } from '@reown/appkit/react'
+import { useQueryClient } from '@tanstack/react-query'
 import { ChevronsDownIcon, ChevronsUpIcon, DollarSignIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { use, useMemo, useState } from 'react'
-import { toast } from 'sonner'
+import { useSignTypedData } from 'wagmi'
 import EventBookmark from '@/app/(platform)/event/[slug]/_components/EventBookmark'
+import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
 import {
   buildMarketTargets,
   useEventPriceHistory,
@@ -15,34 +18,67 @@ import { OpenCardContext } from '@/components/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { NewBadge } from '@/components/ui/new-badge'
+import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
+import { useAppKit } from '@/hooks/useAppKit'
 import { formatDisplayAmount, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
-import { formatCentsLabel, formatCurrency, formatVolume } from '@/lib/formatters'
-import { isMarketNew, triggerConfetti } from '@/lib/utils'
+import { getExchangeEip712Domain, ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
+import { formatVolume } from '@/lib/formatters'
+import { buildOrderPayload, submitOrder } from '@/lib/orders'
+import { signOrderPayload } from '@/lib/orders/signing'
+import { validateOrder } from '@/lib/orders/validation'
+import { isMarketNew } from '@/lib/utils'
+import { isUserRejectedRequestError, normalizeAddress } from '@/lib/wallet'
+import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
+import { useUser } from '@/stores/useUser'
 
 interface EventCardProps {
   event: Event
 }
 
+interface SelectedOutcome {
+  market: Market
+  outcome: Outcome
+  variant: 'yes' | 'no'
+}
+
 export default function EventCard({ event }: EventCardProps) {
   const { openCardId, setOpenCardId } = use(OpenCardContext)
   const [isLoading, setIsLoading] = useState(false)
-  const [selectedOutcome, setSelectedOutcome] = useState<{
-    id: string
-    type: 'yes' | 'no'
-    name: string
-  } | null>(null)
+  const [selectedOutcome, setSelectedOutcome] = useState<SelectedOutcome | null>(null)
   const [tradeAmount, setTradeAmount] = useState('1')
+  const [lastMouseEvent, setLastMouseEvent] = useState<MouseEvent | null>(null)
+  const { open, close } = useAppKit()
+  const { isConnected, embeddedWalletInfo } = useAppKitAccount()
+  const { signTypedDataAsync } = useSignTypedData()
+  const user = useUser()
+  const affiliateMetadata = useAffiliateOrderMetadata()
+  const { ensureTradingReady } = useTradingOnboarding()
+  const queryClient = useQueryClient()
+  const proxyWalletAddress = normalizeAddress(user?.proxy_wallet_address)
+  const userAddress = normalizeAddress(user?.address)
+  const makerAddress = proxyWalletAddress ?? userAddress ?? null
+  const signatureType = proxyWalletAddress ? 1 : 0
   const isOpen = openCardId === `${event.id}`
+  const amountNumber = Number.parseFloat(tradeAmount) || 0
 
   function onToggle() {
     setOpenCardId(isOpen ? null : `${event.id}`)
   }
 
-  const isInTradingMode = isOpen && selectedOutcome
+  const activeOutcome = isOpen ? selectedOutcome : null
+  const isInTradingMode = Boolean(activeOutcome)
   const isSingleMarket = event.markets.length === 1
   const yesOutcome = event.markets[0].outcomes[0]
   const noOutcome = event.markets[0].outcomes[1]
   const hasRecentMarket = event.markets.some(market => isMarketNew(market.created_at))
+  const eventHasNegRiskMarket = useMemo(
+    () => event.markets.some(market => Boolean(market.neg_risk)),
+    [event.markets],
+  )
+  const isNegRiskMarket = useMemo(() => (
+    selectedOutcome?.market ? Boolean(selectedOutcome.market.neg_risk) : eventHasNegRiskMarket
+  ), [eventHasNegRiskMarket, selectedOutcome?.market])
+  const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskMarket), [isNegRiskMarket])
 
   const marketTargets = useMemo(() => buildMarketTargets(event.markets), [event.markets])
   const { latestSnapshot } = useEventPriceHistory({
@@ -84,7 +120,7 @@ export default function EventCard({ event }: EventCardProps) {
 
   const displayChanceByMarket = useMemo(() => event.markets.reduce<Record<string, number>>((acc, market) => {
     const snapshotValue = latestSnapshot[market.condition_id]
-    if (typeof snapshotValue === 'number' && Number.isFinite(snapshotValue)) {
+    if (Number.isFinite(snapshotValue)) {
       acc[market.condition_id] = snapshotValue
     }
     else {
@@ -100,78 +136,136 @@ export default function EventCard({ event }: EventCardProps) {
   const primaryDisplayChance = primaryMarket ? getDisplayChance(primaryMarket.condition_id) : 0
   const roundedPrimaryDisplayChance = Math.round(primaryDisplayChance)
 
-  async function handleTrade(outcomeId: string, type: 'yes' | 'no') {
-    const outcomes = event.markets.flatMap(market => market.outcomes)
-    const outcome = outcomes.find(o => o.id === outcomeId)
-    if (outcome) {
-      setSelectedOutcome({
-        id: outcomeId,
-        type,
-        name: outcome.outcome_text,
-      })
+  function handleTrade(outcome: Outcome, market: Market, variant: 'yes' | 'no') {
+    setSelectedOutcome({
+      market,
+      outcome,
+      variant,
+    })
 
-      if (!tradeAmount) {
-        setTradeAmount('1')
-      }
+    if (!tradeAmount) {
+      setTradeAmount('1')
     }
   }
 
   async function handleConfirmTrade() {
-    if (!selectedOutcome || !tradeAmount) {
+    if (!selectedOutcome) {
+      return
+    }
+
+    if (!ensureTradingReady()) {
+      return
+    }
+
+    const validation = validateOrder({
+      isLoading,
+      isConnected,
+      user,
+      market: selectedOutcome.market,
+      outcome: selectedOutcome.outcome,
+      amountNumber,
+      isLimitOrder: false,
+      limitPrice: '0',
+      limitShares: '0',
+    })
+
+    if (!validation.ok) {
+      handleValidationError(validation.reason, { openWalletModal: open })
+      return
+    }
+
+    if (!user || !userAddress || !makerAddress) {
+      return
+    }
+
+    const payload = buildOrderPayload({
+      userAddress,
+      makerAddress,
+      signatureType,
+      outcome: selectedOutcome.outcome,
+      side: ORDER_SIDE.BUY,
+      orderType: ORDER_TYPE.MARKET,
+      amount: tradeAmount,
+      limitPrice: '0',
+      limitShares: '0',
+      referrerAddress: affiliateMetadata.referrerAddress,
+      affiliateAddress: affiliateMetadata.affiliateAddress,
+      affiliateSharePercent: affiliateMetadata.affiliateSharePercent,
+    })
+
+    let signature: string
+    try {
+      signature = await signOrderPayload({
+        payload,
+        domain: orderDomain,
+        signTypedDataAsync,
+        openAppKit: open,
+        closeAppKit: close,
+        embeddedWalletInfo,
+        onWalletApprovalPrompt: notifyWalletApprovalPrompt,
+      })
+    }
+    catch (error) {
+      if (isUserRejectedRequestError(error)) {
+        handleOrderCancelledFeedback()
+        return
+      }
+
+      handleOrderErrorFeedback('Trade failed', 'We could not sign your order. Please try again.')
       return
     }
 
     setIsLoading(true)
+    try {
+      const result = await submitOrder({
+        order: payload,
+        signature,
+        orderType: ORDER_TYPE.MARKET,
+        conditionId: selectedOutcome.market.condition_id,
+        slug: event.slug,
+      })
 
-    setTimeout(() => {
-      setIsLoading(false)
-
-      const amountNum = Number.parseFloat(tradeAmount)
-      const safeAmount = Number.isFinite(amountNum) ? amountNum : 0
-      const outcome = event.markets[0].outcomes.find(o => o.id === selectedOutcome.id)
-      if (outcome) {
-        const probability = event.markets[0].probability
-        const price
-          = selectedOutcome.type === 'yes'
-            ? Math.round(probability)
-            : Math.round(100 - probability)
-        const shares = ((amountNum / price) * 100).toFixed(2)
-
-        toast.success(
-          `Buy ${formatCurrency(safeAmount)} on ${
-            selectedOutcome.type === 'yes'
-              ? selectedOutcome.name
-              : (isSingleMarket ? selectedOutcome.name : `Against ${selectedOutcome.name}`)
-          }`,
-          {
-            description: (
-              <div>
-                <div className="font-medium">{event.title}</div>
-                <div className="mt-1 text-xs opacity-80">
-                  {shares}
-                  {' '}
-                  shares @
-                  {' '}
-                  {formatCentsLabel(price)}
-                </div>
-              </div>
-            ),
-          },
-        )
+      if (result?.error) {
+        handleOrderErrorFeedback('Trade failed', result.error)
+        return
       }
+
+      handleOrderSuccessFeedback({
+        side: ORDER_SIDE.BUY,
+        amountInput: tradeAmount,
+        outcomeText: selectedOutcome.outcome.outcome_text,
+        eventTitle: event.title,
+        sellAmountValue: 0,
+        avgSellPrice: '—',
+        buyPrice: selectedOutcome.outcome.buy_price,
+        queryClient,
+        eventSlug: event.slug,
+        userId: user.id,
+        outcomeIndex: selectedOutcome.outcome.outcome_index,
+        lastMouseEvent,
+      })
 
       setSelectedOutcome(null)
       setTradeAmount('1')
-      // Here would be the actual trade execution
-      console.log(
-        `Trade executed: ${formatCurrency(safeAmount)} on ${selectedOutcome.name} (${selectedOutcome.type})`,
-      )
-    }, 1000)
+      setLastMouseEvent(null)
+
+      setTimeout(() => {
+        void queryClient.refetchQueries({ queryKey: ['event-activity'] })
+        void queryClient.refetchQueries({ queryKey: ['event-holders'] })
+      }, 3000)
+    }
+    catch {
+      handleOrderErrorFeedback('Trade failed', 'An unexpected error occurred. Please try again.')
+    }
+    finally {
+      setIsLoading(false)
+    }
   }
 
   function handleCancelTrade() {
     setSelectedOutcome(null)
     setTradeAmount('1')
+    setLastMouseEvent(null)
     onToggle()
   }
 
@@ -203,14 +297,8 @@ export default function EventCard({ event }: EventCardProps) {
       return '0.00'
     }
     const amountNum = Number.parseFloat(amount)
-    const outcome = event.markets.find(market => market.condition_id === selectedOutcome.id)
-    if (!outcome) {
-      return '0.00'
-    }
-
-    // Calculate potential winnings based on probability
-    const probability = outcome.probability / 100
-    const odds = selectedOutcome.type === 'yes' ? 1 / probability : 1 / (1 - probability)
+    const probability = selectedOutcome.market.probability / 100
+    const odds = selectedOutcome.variant === 'yes' ? 1 / probability : 1 / (1 - probability)
     const winnings = amountNum * odds
     return winnings.toFixed(2)
   }
@@ -328,7 +416,7 @@ export default function EventCard({ event }: EventCardProps) {
 
         {/* Dynamic Content Area */}
         <div className="flex flex-1 flex-col">
-          {isInTradingMode
+          {activeOutcome
             ? (
                 <div className="flex-1 space-y-3">
                   <div className="relative">
@@ -342,13 +430,9 @@ export default function EventCard({ event }: EventCardProps) {
                       value={formattedTradeAmount}
                       onChange={event => handleTradeAmountInputChange(event.target.value)}
                       onKeyDown={(e) => {
-                        if (
-                          e.key === 'Enter'
-                          && tradeAmount
-                          && Number.parseFloat(tradeAmount) > 0
-                        ) {
+                        if (e.key === 'Enter' && activeOutcome && amountNumber > 0) {
                           e.preventDefault()
-                          handleConfirmTrade()
+                          void handleConfirmTrade()
                         }
                         else if (e.key === 'Escape') {
                           e.preventDefault()
@@ -374,21 +458,16 @@ export default function EventCard({ event }: EventCardProps) {
                     type="button"
                     onClick={(e) => {
                       e.stopPropagation()
-                      if (selectedOutcome.type === 'yes') {
-                        triggerConfetti('yes', e)
-                      }
-                      else {
-                        triggerConfetti('no', e)
-                      }
-                      handleConfirmTrade()
+                      setLastMouseEvent(e.nativeEvent)
+                      void handleConfirmTrade()
                     }}
                     disabled={
                       isLoading
-                      || !tradeAmount
-                      || Number.parseFloat(tradeAmount) <= 0
+                      || !activeOutcome
+                      || amountNumber <= 0
                     }
                     size="outcome"
-                    variant={selectedOutcome.type}
+                    variant={activeOutcome.variant}
                     className="w-full"
                   >
                     {isLoading
@@ -406,9 +485,9 @@ export default function EventCard({ event }: EventCardProps) {
                             <div>
                               Buy
                               {' '}
-                              {selectedOutcome.type === 'yes'
-                                ? selectedOutcome.name
-                                : (isSingleMarket ? selectedOutcome.name : `Against ${selectedOutcome.name}`)}
+                              {activeOutcome.variant === 'yes'
+                                ? activeOutcome.outcome.outcome_text
+                                : (isSingleMarket ? activeOutcome.outcome.outcome_text : `Against ${activeOutcome.outcome.outcome_text}`)}
                             </div>
                             <div className="text-xs opacity-90">
                               to win $
@@ -450,7 +529,7 @@ export default function EventCard({ event }: EventCardProps) {
                                       type="button"
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        handleTrade(market.outcomes[0].id, 'yes')
+                                        handleTrade(market.outcomes[0], market, 'yes')
                                         onToggle()
                                       }}
                                       title={`${market.outcomes[0].outcome_text}: ${displayChance}%`}
@@ -469,7 +548,7 @@ export default function EventCard({ event }: EventCardProps) {
                                       type="button"
                                       onClick={(e) => {
                                         e.stopPropagation()
-                                        handleTrade(market.outcomes[1].id, 'no')
+                                        handleTrade(market.outcomes[1], market, 'no')
                                         onToggle()
                                       }}
                                       title={`${market.outcomes[1].outcome_text}: ${oppositeChance}%`}
@@ -502,7 +581,10 @@ export default function EventCard({ event }: EventCardProps) {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleTrade(yesOutcome.id, 'yes')
+                          if (!primaryMarket) {
+                            return
+                          }
+                          handleTrade(yesOutcome, primaryMarket, 'yes')
                           onToggle()
                         }}
                         disabled={isLoading}
@@ -521,7 +603,10 @@ export default function EventCard({ event }: EventCardProps) {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation()
-                          handleTrade(noOutcome.id, 'no')
+                          if (!primaryMarket) {
+                            return
+                          }
+                          handleTrade(noOutcome, primaryMarket, 'no')
                           onToggle()
                         }}
                         disabled={isLoading}
