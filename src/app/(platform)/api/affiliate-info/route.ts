@@ -15,6 +15,18 @@ function getFeeRecipientAddress() {
 export async function GET() {
   try {
     const referrerAddress = getFeeRecipientAddress()
+    const { data: settings } = await SettingsRepository.getSettings()
+    const affiliateSettings = settings?.affiliate
+
+    const tradeFeeBps = (() => {
+      const raw = affiliateSettings?.trade_fee_bps?.value
+      const parsed = raw ? Number.parseInt(raw, 10) : Number.NaN
+      if (Number.isFinite(parsed) && parsed >= 0) {
+        return parsed
+      }
+      return 100
+    })()
+
     const user = await UserRepository.getCurrentUser()
 
     if (!user) {
@@ -22,6 +34,7 @@ export async function GET() {
         referrerAddress,
         affiliateAddress: ZERO_ADDRESS,
         affiliateSharePercent: 0,
+        tradeFeeBps,
       })
     }
 
@@ -34,8 +47,7 @@ export async function GET() {
 
       if (affiliateUser?.address && /^0x[0-9a-fA-F]{40}$/.test(affiliateUser.address)) {
         affiliateAddress = affiliateUser.address as `0x${string}`
-        const { data: settings } = await SettingsRepository.getSettings()
-        const shareBps = settings?.affiliate?.affiliate_share_bps?.value
+        const shareBps = affiliateSettings?.affiliate_share_bps?.value
 
         if (shareBps) {
           const parsed = Number.parseInt(shareBps, 10)
@@ -50,6 +62,7 @@ export async function GET() {
       referrerAddress,
       affiliateAddress,
       affiliateSharePercent,
+      tradeFeeBps,
     })
   }
   catch (error) {

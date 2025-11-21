@@ -47,52 +47,106 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
   const [isSigningProxyWallet, setIsSigningProxyWallet] = useState(false)
   const [proxyWalletError, setProxyWalletError] = useState<string | null>(null)
 
-  const hasProxyWallet = useMemo(() => (
-    Boolean(user?.proxy_wallet_address)
-  ), [user?.proxy_wallet_address])
+  const hasProxyWallet = Boolean(user?.proxy_wallet_address)
+  const hasDeployedProxyWallet = useMemo(() => (
+    Boolean(user?.proxy_wallet_address && user?.proxy_wallet_status === 'deployed')
+  ), [user?.proxy_wallet_address, user?.proxy_wallet_status])
 
   useEffect(() => {
-    if (!user?.id || user.proxy_wallet_address) {
+    if (!user?.id) {
+      return
+    }
+
+    const needsSync = !hasProxyWallet || !hasDeployedProxyWallet
+    if (!needsSync) {
       return
     }
 
     let cancelled = false
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
 
-    fetch('/api/user/proxy')
-      .then(async (response) => {
-        if (!response.ok) {
-          return null
-        }
-        return await response.json() as {
-          proxy_wallet_address?: string | null
-          proxy_wallet_signature?: string | null
-          proxy_wallet_signed_at?: string | null
-          proxy_wallet_status?: string | null
-        }
-      })
-      .then((data) => {
-        if (cancelled || !data?.proxy_wallet_address) {
-          return
-        }
-        useUser.setState((previous) => {
-          if (!previous) {
-            return previous
+    function shouldContinuePolling() {
+      const current = useUser.getState()
+      return Boolean(current && (!current.proxy_wallet_address || current.proxy_wallet_status !== 'deployed'))
+    }
+
+    function scheduleRetry(delay: number) {
+      if (!cancelled && shouldContinuePolling()) {
+        timeoutId = setTimeout(fetchProxyDetails, delay)
+      }
+    }
+
+    function fetchProxyDetails() {
+      fetch('/api/user/proxy')
+        .then(async (response) => {
+          if (!response.ok) {
+            return null
           }
-          return {
-            ...previous,
-            proxy_wallet_address: data.proxy_wallet_address ?? previous.proxy_wallet_address,
-            proxy_wallet_signature: data.proxy_wallet_signature ?? previous.proxy_wallet_signature,
-            proxy_wallet_signed_at: data.proxy_wallet_signed_at ?? previous.proxy_wallet_signed_at,
-            proxy_wallet_status: (data.proxy_wallet_status as ProxyWalletStatus | null | undefined) ?? previous.proxy_wallet_status,
+          return await response.json() as {
+            proxy_wallet_address?: string | null
+            proxy_wallet_signature?: string | null
+            proxy_wallet_signed_at?: string | null
+            proxy_wallet_status?: string | null
           }
         })
-      })
-      .catch(() => {})
+        .then((data) => {
+          if (cancelled) {
+            return
+          }
+
+          if (!data) {
+            scheduleRetry(10000)
+            return
+          }
+
+          useUser.setState((previous) => {
+            if (!previous) {
+              return previous
+            }
+
+            const nextAddress = data.proxy_wallet_address ?? previous.proxy_wallet_address
+            const nextSignature = data.proxy_wallet_signature ?? previous.proxy_wallet_signature
+            const nextSignedAt = data.proxy_wallet_signed_at ?? previous.proxy_wallet_signed_at
+            const nextStatus = (data.proxy_wallet_status as ProxyWalletStatus | null | undefined) ?? previous.proxy_wallet_status
+
+            const nothingChanged = (
+              nextAddress === previous.proxy_wallet_address
+              && nextSignature === previous.proxy_wallet_signature
+              && nextSignedAt === previous.proxy_wallet_signed_at
+              && nextStatus === previous.proxy_wallet_status
+            )
+
+            if (nothingChanged) {
+              return previous
+            }
+
+            return {
+              ...previous,
+              proxy_wallet_address: nextAddress,
+              proxy_wallet_signature: nextSignature,
+              proxy_wallet_signed_at: nextSignedAt,
+              proxy_wallet_status: nextStatus,
+            }
+          })
+
+          if (!cancelled && data.proxy_wallet_address && data.proxy_wallet_status === 'signed') {
+            timeoutId = setTimeout(fetchProxyDetails, 6000)
+          }
+        })
+        .catch(() => {
+          scheduleRetry(10000)
+        })
+    }
+
+    fetchProxyDetails()
 
     return () => {
       cancelled = true
+      if (timeoutId) {
+        clearTimeout(timeoutId)
+      }
     }
-  }, [user?.id, user?.proxy_wallet_address])
+  }, [hasDeployedProxyWallet, hasProxyWallet, user?.id, user?.proxy_wallet_address, user?.proxy_wallet_status])
 
   const resetPendingFundState = useCallback(() => {
     setShouldShowFundAfterProxy(false)
@@ -294,7 +348,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       </Dialog>
 
       <Dialog open={tradeModalOpen} onOpenChange={setTradeModalOpen}>
-        <DialogContent className="max-w-xl border border-border/70 bg-background p-6">
+        <DialogContent showCloseButton={false} className="max-w-xl border border-border/70 bg-background p-6">
           <DialogHeader className="pb-2 text-center">
             <DialogTitle className="text-lg font-semibold">
               Trade on
@@ -379,7 +433,7 @@ function TradingRequirementStep({
 
         {isComplete
           ? (
-              <div className="flex items-center gap-1 text-sm font-semibold text-primary">
+              <div className="flex min-w-[110px] items-center justify-center gap-1 text-sm font-semibold text-primary">
                 <Check className="size-4" />
                 Complete
               </div>

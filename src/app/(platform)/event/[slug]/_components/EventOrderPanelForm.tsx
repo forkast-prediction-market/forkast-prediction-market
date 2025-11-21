@@ -52,7 +52,8 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const affiliateMetadata = useAffiliateOrderMetadata()
   const { sharesByCondition } = useUserOutcomePositions({ eventSlug: event.slug, userId: user?.id })
   const { ensureTradingReady } = useTradingOnboarding()
-  const proxyWalletAddress = normalizeAddress(user?.proxy_wallet_address)
+  const hasDeployedProxyWallet = Boolean(user?.proxy_wallet_address && user?.proxy_wallet_status === 'deployed')
+  const proxyWalletAddress = hasDeployedProxyWallet ? normalizeAddress(user?.proxy_wallet_address) : null
   const userAddress = normalizeAddress(user?.address)
   const makerAddress = proxyWalletAddress ?? userAddress ?? null
   const signatureType = proxyWalletAddress ? 1 : 0
@@ -144,6 +145,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       referrerAddress: affiliateMetadata.referrerAddress,
       affiliateAddress: affiliateMetadata.affiliateAddress,
       affiliateSharePercent: affiliateMetadata.affiliateSharePercent,
+      feeRateBps: affiliateMetadata.tradeFeeBps,
     })
 
     let signature: string

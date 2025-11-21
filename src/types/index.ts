@@ -108,7 +108,7 @@ interface UserSettings {
   [key: string]: any
 }
 
-export type ProxyWalletStatus = 'not_started' | 'signed'
+export type ProxyWalletStatus = 'not_started' | 'signed' | 'deployed'
 
 export interface User {
   id: string

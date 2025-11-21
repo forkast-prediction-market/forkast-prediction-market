@@ -3,7 +3,7 @@
 import type { ProxyWalletStatus } from '@/types'
 import { eq } from 'drizzle-orm'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
-import { getSafeProxyWalletAddress } from '@/lib/contracts/safeProxy'
+import { getSafeProxyWalletAddress, isProxyWalletDeployed } from '@/lib/contracts/safeProxy'
 import { UserRepository } from '@/lib/db/queries/user'
 import { users } from '@/lib/db/schema/auth/tables'
 import { db } from '@/lib/drizzle'
@@ -36,6 +36,7 @@ export async function saveProxyWalletSignature({ signature }: SaveProxyWalletSig
 
   try {
     const proxyAddress = await getSafeProxyWalletAddress(currentUser.address as `0x${string}`)
+    const proxyIsDeployed = await isProxyWalletDeployed(proxyAddress)
 
     const [updated] = await db
       .update(users)
@@ -43,7 +44,7 @@ export async function saveProxyWalletSignature({ signature }: SaveProxyWalletSig
         proxy_wallet_signature: trimmedSignature,
         proxy_wallet_address: proxyAddress,
         proxy_wallet_signed_at: new Date(),
-        proxy_wallet_status: 'signed',
+        proxy_wallet_status: proxyIsDeployed ? 'deployed' : 'signed',
       })
       .where(eq(users.id, currentUser.id))
       .returning({

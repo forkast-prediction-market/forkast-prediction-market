@@ -54,7 +54,8 @@ export default function EventCard({ event }: EventCardProps) {
   const affiliateMetadata = useAffiliateOrderMetadata()
   const { ensureTradingReady } = useTradingOnboarding()
   const queryClient = useQueryClient()
-  const proxyWalletAddress = normalizeAddress(user?.proxy_wallet_address)
+  const hasDeployedProxyWallet = Boolean(user?.proxy_wallet_address && user?.proxy_wallet_status === 'deployed')
+  const proxyWalletAddress = hasDeployedProxyWallet ? normalizeAddress(user?.proxy_wallet_address) : null
   const userAddress = normalizeAddress(user?.address)
   const makerAddress = proxyWalletAddress ?? userAddress ?? null
   const signatureType = proxyWalletAddress ? 1 : 0
@@ -191,6 +192,7 @@ export default function EventCard({ event }: EventCardProps) {
       referrerAddress: affiliateMetadata.referrerAddress,
       affiliateAddress: affiliateMetadata.affiliateAddress,
       affiliateSharePercent: affiliateMetadata.affiliateSharePercent,
+      feeRateBps: affiliateMetadata.tradeFeeBps,
     })
 
     let signature: string
