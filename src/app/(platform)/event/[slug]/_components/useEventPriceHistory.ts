@@ -51,8 +51,8 @@ export const CURSOR_STEP_MS: Record<TimeRange, number> = {
   '1M': 3 * HOUR_MS,
   '1W': 30 * MINUTE_MS,
   '1D': 5 * MINUTE_MS,
-  '6H': 1 * MINUTE_MS,
-  '1H': 1 * MINUTE_MS,
+  '6H': MINUTE_MS,
+  '1H': MINUTE_MS,
 }
 const PRICE_REFRESH_INTERVAL_MS = 60_000
 

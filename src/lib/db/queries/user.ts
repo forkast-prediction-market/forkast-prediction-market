@@ -323,6 +323,7 @@ export const UserRepository = {
     offset: number
     minAmount?: number
     search?: string
+    conditionId?: string
   }): Promise<QueryResult<ActivityOrder[]>> {
     const { data: userData, error: userError } = await this.getProfileByUsername(args.address)
 
@@ -334,6 +335,10 @@ export const UserRepository = {
       const queryLimit = args.minAmount && args.minAmount > 0 ? args.limit * 2 : args.limit
 
       const filters = [eq(orders.user_id, userData.id), eq(orders.status, 'matched')]
+
+      if (args.conditionId) {
+        filters.push(eq(orders.condition_id, args.conditionId))
+      }
 
       if (args.search && args.search.trim()) {
         filters.push(ilike(markets.title, `%${args.search.trim()}%`))

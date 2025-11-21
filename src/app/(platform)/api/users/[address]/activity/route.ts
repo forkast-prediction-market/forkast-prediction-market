@@ -15,6 +15,7 @@ export async function GET(
     const offset = Number.parseInt(searchParams.get('offset') || '0', 10)
     const minAmountParam = searchParams.get('minAmount')
     const searchQuery = searchParams.get('search')
+    const conditionId = searchParams.get('conditionId')
     const validatedLimit = Number.isNaN(limit) ? 50 : Math.min(Math.max(1, limit), 100)
     const validatedOffset = Number.isNaN(offset) ? 0 : Math.max(0, offset)
 
@@ -53,6 +54,7 @@ export async function GET(
       offset: validatedOffset,
       minAmount: validatedMinAmount,
       search: validatedSearchQuery,
+      conditionId: conditionId?.trim() || undefined,
     })
 
     if (error) {
