@@ -4,6 +4,7 @@ import { RefreshCwIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import EventMarketCard from '@/app/(platform)/event/[slug]/_components/EventMarketCard'
 import EventMarketHistory from '@/app/(platform)/event/[slug]/_components/EventMarketHistory'
+import EventMarketPositions from '@/app/(platform)/event/[slug]/_components/EventMarketPositions'
 import EventOrderBook, { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
 import MarketOutcomeGraph from '@/app/(platform)/event/[slug]/_components/MarketOutcomeGraph'
 import { useChanceRefresh } from '@/app/(platform)/event/[slug]/_hooks/useChanceRefresh'
@@ -13,10 +14,12 @@ import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
+import { useUser } from '@/stores/useUser'
 
 const MARKET_DETAIL_TABS: Array<{ id: MarketDetailTab, label: string }> = [
   { id: 'orderBook', label: 'Order Book' },
   { id: 'graph', label: 'Graph' },
+  { id: 'positions', label: 'Positions' },
   { id: 'resolution', label: 'Resolution' },
   { id: 'history', label: 'History' },
 ]
@@ -34,6 +37,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   const setSide = useOrder(state => state.setSide)
   const setIsMobileOrderPanelOpen = useOrder(state => state.setIsMobileOrderPanelOpen)
   const inputRef = useOrder(state => state.inputRef)
+  const user = useUser()
   const isSingleMarket = useIsSingleMarket()
   const { rows: marketRows, hasChanceData } = useEventMarketRows(event)
   const {
@@ -89,6 +93,13 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
       setChancePulseToken(token => token + 1)
     }
   }, [hasChanceData, isPriceHistoryFetching])
+
+  const visibleDetailTabs = useMemo(
+    () => (user?.address
+      ? MARKET_DETAIL_TABS
+      : MARKET_DETAIL_TABS.filter(tab => tab.id !== 'positions')),
+    [user?.address],
+  )
 
   const handleToggle = useCallback((market: Event['markets'][number]) => {
     toggleMarket(market.condition_id)
@@ -186,6 +197,9 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
             ? selectedOutcome.outcome_index
             : null
           const selectedDetailTab = getSelectedDetailTab(market.condition_id)
+          const tabToRender = visibleDetailTabs.some(tab => tab.id === selectedDetailTab)
+            ? selectedDetailTab
+            : visibleDetailTabs[0]?.id ?? 'orderBook'
 
           return (
             <div key={market.condition_id} className="transition-colors">
@@ -204,8 +218,8 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                 <div className="pt-2">
                   <div className="px-4">
                     <div className="flex gap-4 border-b border-border/60">
-                      {MARKET_DETAIL_TABS.map((tab) => {
-                        const isActive = selectedDetailTab === tab.id
+                      {visibleDetailTabs.map((tab) => {
+                        const isActive = tabToRender === tab.id
                         return (
                           <button
                             key={`${market.condition_id}-${tab.id}`}
@@ -229,7 +243,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                   </div>
 
                   <div className="px-4 pt-4">
-                    {selectedDetailTab === 'orderBook' && (
+                    {tabToRender === 'orderBook' && (
                       <EventOrderBook
                         market={market}
                         outcome={activeOutcomeForMarket}
@@ -239,7 +253,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                       />
                     )}
 
-                    {selectedDetailTab === 'graph' && activeOutcomeForMarket && (
+                    {tabToRender === 'graph' && activeOutcomeForMarket && (
                       <div className="pb-4">
                         <MarketOutcomeGraph
                           market={market}
@@ -251,13 +265,19 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                       </div>
                     )}
 
-                    {selectedDetailTab === 'history' && (
+                    {tabToRender === 'positions' && (
+                      <div className="pb-4">
+                        <EventMarketPositions market={market} />
+                      </div>
+                    )}
+
+                    {tabToRender === 'history' && (
                       <div className="pb-4">
                         <EventMarketHistory market={market} eventSlug={event.slug} collapsible={false} />
                       </div>
                     )}
 
-                    {selectedDetailTab === 'resolution' && (
+                    {tabToRender === 'resolution' && (
                       <div className="pb-4">
                         <div className="flex justify-start">
                           <Button

@@ -16,6 +16,10 @@ export async function GET(
     const status = searchParams.get('status') as 'active' | 'closed' | null
     const minAmountParam = searchParams.get('minAmount')
     const searchQuery = searchParams.get('search')
+    const conditionIdParam = searchParams.get('conditionId')
+    const conditionId = conditionIdParam && conditionIdParam.trim().length > 0
+      ? conditionIdParam.trim()
+      : undefined
     const validatedLimit = Number.isNaN(limit) ? 50 : Math.min(Math.max(1, limit), 100)
     const validatedOffset = Number.isNaN(offset) ? 0 : Math.max(0, offset)
 
@@ -75,6 +79,7 @@ export async function GET(
         status: validatedStatus,
         minAmount: validatedMinAmount,
         search: validatedSearchQuery,
+        conditionId: conditionId || undefined,
       })
 
     if (error) {

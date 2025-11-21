@@ -494,6 +494,10 @@ export const UserRepository = {
         }
       }
 
+      if (params.conditionId && params.conditionId.trim()) {
+        whereConditions.push(eq(markets.condition_id, params.conditionId.trim()))
+      }
+
       if (params.search && params.search.trim()) {
         whereConditions.push(ilike(markets.title, `%${params.search.trim()}%`))
       }
