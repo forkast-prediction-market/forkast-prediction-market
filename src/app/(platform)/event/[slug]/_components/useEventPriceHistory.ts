@@ -118,8 +118,7 @@ async function fetchEventPriceHistory(
         const history = await fetchTokenPriceHistory(target.tokenId, filters)
         return [target.conditionId, history] as const
       }
-      catch (error) {
-        console.error('Failed to load price history for token', target.tokenId, error)
+      catch {
         return [target.conditionId, []] as const
       }
     }),
