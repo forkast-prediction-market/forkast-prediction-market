@@ -330,10 +330,5 @@ export interface PositionsQueryParams {
   status?: 'active' | 'closed'
   minAmount?: number
   search?: string
-}
-
-export interface PositionsResponse {
-  data: UserPosition[]
-  hasMore: boolean
-  total: number
+  conditionId?: string
 }

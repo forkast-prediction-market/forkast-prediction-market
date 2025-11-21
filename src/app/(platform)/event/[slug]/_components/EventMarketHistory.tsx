@@ -59,6 +59,7 @@ export default function EventMarketHistory({ market, collapsible = true }: Event
   const [scrollMargin, setScrollMargin] = useState(0)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const user = useUser()
+  const emptyHeightClass = 'min-h-16'
 
   useEffect(() => {
     queueMicrotask(() => setInfiniteScrollError(null))
@@ -178,14 +179,21 @@ export default function EventMarketHistory({ market, collapsible = true }: Event
           : (
               <div ref={parentRef} className="grid gap-4 pt-0">
                 {loading && (
-                  <div className="flex items-center justify-center gap-2 px-4 py-6 text-sm text-muted-foreground">
-                    <Loader2Icon className="size-4 animate-spin" />
+                  <div className={`flex ${emptyHeightClass}
+                    items-center justify-center rounded-lg border border-dashed border-border px-4 text-sm
+                    text-muted-foreground
+                  `}
+                  >
                     Loading history...
                   </div>
                 )}
 
                 {!loading && activities.length === 0 && (
-                  <div className="text-center text-sm text-muted-foreground">
+                  <div className={`flex ${emptyHeightClass}
+                    items-center justify-center rounded-lg border border-dashed border-border px-4 text-center text-sm
+                    text-muted-foreground
+                  `}
+                  >
                     No trading activity yet for this market.
                   </div>
                 )}

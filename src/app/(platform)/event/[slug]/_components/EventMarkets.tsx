@@ -4,6 +4,7 @@ import { RefreshCwIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import EventMarketCard from '@/app/(platform)/event/[slug]/_components/EventMarketCard'
 import EventMarketHistory from '@/app/(platform)/event/[slug]/_components/EventMarketHistory'
+import EventMarketPositions from '@/app/(platform)/event/[slug]/_components/EventMarketPositions'
 import EventOrderBook, { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
 import MarketOutcomeGraph from '@/app/(platform)/event/[slug]/_components/MarketOutcomeGraph'
 import { useChanceRefresh } from '@/app/(platform)/event/[slug]/_hooks/useChanceRefresh'
@@ -13,13 +14,16 @@ import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
+import { useUser } from '@/stores/useUser'
 
 const MARKET_DETAIL_TABS: Array<{ id: MarketDetailTab, label: string }> = [
   { id: 'orderBook', label: 'Order Book' },
   { id: 'graph', label: 'Graph' },
+  { id: 'positions', label: 'Positions' },
   { id: 'resolution', label: 'Resolution' },
   { id: 'history', label: 'History' },
 ]
+const MARKET_DETAIL_PANEL_CLASS = 'rounded-lg border border-border bg-muted/20 p-4 min-h-20 mb-4'
 
 interface EventMarketsProps {
   event: Event
@@ -34,6 +38,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   const setSide = useOrder(state => state.setSide)
   const setIsMobileOrderPanelOpen = useOrder(state => state.setIsMobileOrderPanelOpen)
   const inputRef = useOrder(state => state.inputRef)
+  const user = useUser()
   const isSingleMarket = useIsSingleMarket()
   const { rows: marketRows, hasChanceData } = useEventMarketRows(event)
   const {
@@ -89,6 +94,13 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
       setChancePulseToken(token => token + 1)
     }
   }, [hasChanceData, isPriceHistoryFetching])
+
+  const visibleDetailTabs = useMemo(
+    () => (user?.address
+      ? MARKET_DETAIL_TABS
+      : MARKET_DETAIL_TABS.filter(tab => tab.id !== 'positions')),
+    [user?.address],
+  )
 
   const handleToggle = useCallback((market: Event['markets'][number]) => {
     toggleMarket(market.condition_id)
@@ -186,6 +198,9 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
             ? selectedOutcome.outcome_index
             : null
           const selectedDetailTab = getSelectedDetailTab(market.condition_id)
+          const tabToRender = visibleDetailTabs.some(tab => tab.id === selectedDetailTab)
+            ? selectedDetailTab
+            : visibleDetailTabs[0]?.id ?? 'orderBook'
 
           return (
             <div key={market.condition_id} className="transition-colors">
@@ -204,8 +219,8 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                 <div className="pt-2">
                   <div className="px-4">
                     <div className="flex gap-4 border-b border-border/60">
-                      {MARKET_DETAIL_TABS.map((tab) => {
-                        const isActive = selectedDetailTab === tab.id
+                      {visibleDetailTabs.map((tab) => {
+                        const isActive = tabToRender === tab.id
                         return (
                           <button
                             key={`${market.condition_id}-${tab.id}`}
@@ -229,18 +244,20 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                   </div>
 
                   <div className="px-4 pt-4">
-                    {selectedDetailTab === 'orderBook' && (
-                      <EventOrderBook
-                        market={market}
-                        outcome={activeOutcomeForMarket}
-                        summaries={orderBookSummaries}
-                        isLoadingSummaries={shouldShowOrderBookLoader}
-                        lastPriceOverrideCents={lastPriceOverrideCents}
-                      />
+                    {tabToRender === 'orderBook' && (
+                      <div className={MARKET_DETAIL_PANEL_CLASS}>
+                        <EventOrderBook
+                          market={market}
+                          outcome={activeOutcomeForMarket}
+                          summaries={orderBookSummaries}
+                          isLoadingSummaries={shouldShowOrderBookLoader}
+                          lastPriceOverrideCents={lastPriceOverrideCents}
+                        />
+                      </div>
                     )}
 
-                    {selectedDetailTab === 'graph' && activeOutcomeForMarket && (
-                      <div className="pb-4">
+                    {tabToRender === 'graph' && activeOutcomeForMarket && (
+                      <div className={MARKET_DETAIL_PANEL_CLASS}>
                         <MarketOutcomeGraph
                           market={market}
                           outcome={activeOutcomeForMarket}
@@ -251,15 +268,24 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                       </div>
                     )}
 
-                    {selectedDetailTab === 'history' && (
-                      <div className="pb-4">
+                    {tabToRender === 'positions' && (
+                      <div className={MARKET_DETAIL_PANEL_CLASS}>
+                        <EventMarketPositions market={market} collapsible={false} />
+                      </div>
+                    )}
+
+                    {tabToRender === 'history' && (
+                      <div className={MARKET_DETAIL_PANEL_CLASS}>
                         <EventMarketHistory market={market} eventSlug={event.slug} collapsible={false} />
                       </div>
                     )}
 
-                    {selectedDetailTab === 'resolution' && (
-                      <div className="pb-4">
-                        <div className="flex justify-start">
+                    {tabToRender === 'resolution' && (
+                      <div className={MARKET_DETAIL_PANEL_CLASS}>
+                        <div className={`
+                          flex min-h-16 items-center justify-center rounded border border-dashed border-border
+                        `}
+                        >
                           <Button
                             variant="outline"
                             size="sm"
