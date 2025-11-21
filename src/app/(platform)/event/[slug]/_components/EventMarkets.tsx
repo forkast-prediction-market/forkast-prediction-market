@@ -218,7 +218,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
               {isExpanded && (
                 <div className="pt-2">
                   <div className="px-4">
-                    <div className="flex gap-4 border-b border-border/60">
+                    <div className="scrollbar-hide flex gap-4 overflow-x-auto border-b border-border/60">
                       {visibleDetailTabs.map((tab) => {
                         const isActive = tabToRender === tab.id
                         return (
@@ -226,7 +226,10 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                             key={`${market.condition_id}-${tab.id}`}
                             type="button"
                             className={cn(
-                              'border-b-2 border-transparent pt-1 pb-2 text-sm font-semibold transition-colors',
+                              `
+                                border-b-2 border-transparent pt-1 pb-2 text-sm font-semibold whitespace-nowrap
+                                transition-colors
+                              `,
                               isActive
                                 ? 'border-primary text-foreground'
                                 : 'text-muted-foreground hover:text-foreground',
@@ -245,15 +248,13 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
 
                   <div className="px-4 pt-4">
                     {tabToRender === 'orderBook' && (
-                      <div className={MARKET_DETAIL_PANEL_CLASS}>
-                        <EventOrderBook
-                          market={market}
-                          outcome={activeOutcomeForMarket}
-                          summaries={orderBookSummaries}
-                          isLoadingSummaries={shouldShowOrderBookLoader}
-                          lastPriceOverrideCents={lastPriceOverrideCents}
-                        />
-                      </div>
+                      <EventOrderBook
+                        market={market}
+                        outcome={activeOutcomeForMarket}
+                        summaries={orderBookSummaries}
+                        isLoadingSummaries={shouldShowOrderBookLoader}
+                        lastPriceOverrideCents={lastPriceOverrideCents}
+                      />
                     )}
 
                     {tabToRender === 'graph' && activeOutcomeForMarket && (

@@ -160,7 +160,7 @@ export default function EventOrderBook({
 
   return (
     <div className="relative scrollbar-hide max-h-[360px] overflow-y-auto">
-      <div className="px-2">
+      <div>
         <div
           className={`
             sticky top-0 z-[1] grid h-9 grid-cols-[40%_20%_20%_20%] items-center border-b border-border/60 bg-background
