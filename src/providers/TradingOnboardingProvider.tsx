@@ -65,6 +65,17 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     let cancelled = false
     let timeoutId: ReturnType<typeof setTimeout> | null = null
 
+    function shouldContinuePolling() {
+      const current = useUser.getState()
+      return Boolean(current && (!current.proxy_wallet_address || current.proxy_wallet_status !== 'deployed'))
+    }
+
+    function scheduleRetry(delay: number) {
+      if (!cancelled && shouldContinuePolling()) {
+        timeoutId = setTimeout(fetchProxyDetails, delay)
+      }
+    }
+
     function fetchProxyDetails() {
       fetch('/api/user/proxy')
         .then(async (response) => {
@@ -79,7 +90,12 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
           }
         })
         .then((data) => {
-          if (cancelled || !data) {
+          if (cancelled) {
+            return
+          }
+
+          if (!data) {
+            scheduleRetry(10000)
             return
           }
 
@@ -118,9 +134,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
           }
         })
         .catch(() => {
-          if (!cancelled && user?.proxy_wallet_address && user?.proxy_wallet_status === 'signed') {
-            timeoutId = setTimeout(fetchProxyDetails, 10000)
-          }
+          scheduleRetry(10000)
         })
     }
 
