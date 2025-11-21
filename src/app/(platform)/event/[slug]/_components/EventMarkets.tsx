@@ -23,6 +23,7 @@ const MARKET_DETAIL_TABS: Array<{ id: MarketDetailTab, label: string }> = [
   { id: 'resolution', label: 'Resolution' },
   { id: 'history', label: 'History' },
 ]
+const MARKET_DETAIL_PANEL_CLASS = 'rounded-lg border border-border bg-muted/20 p-4 min-h-20 mb-4'
 
 interface EventMarketsProps {
   event: Event
@@ -244,17 +245,19 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
 
                   <div className="px-4 pt-4">
                     {tabToRender === 'orderBook' && (
-                      <EventOrderBook
-                        market={market}
-                        outcome={activeOutcomeForMarket}
-                        summaries={orderBookSummaries}
-                        isLoadingSummaries={shouldShowOrderBookLoader}
-                        lastPriceOverrideCents={lastPriceOverrideCents}
-                      />
+                      <div className={MARKET_DETAIL_PANEL_CLASS}>
+                        <EventOrderBook
+                          market={market}
+                          outcome={activeOutcomeForMarket}
+                          summaries={orderBookSummaries}
+                          isLoadingSummaries={shouldShowOrderBookLoader}
+                          lastPriceOverrideCents={lastPriceOverrideCents}
+                        />
+                      </div>
                     )}
 
                     {tabToRender === 'graph' && activeOutcomeForMarket && (
-                      <div className="pb-4">
+                      <div className={MARKET_DETAIL_PANEL_CLASS}>
                         <MarketOutcomeGraph
                           market={market}
                           outcome={activeOutcomeForMarket}
@@ -266,20 +269,23 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                     )}
 
                     {tabToRender === 'positions' && (
-                      <div className="pb-4">
-                        <EventMarketPositions market={market} />
+                      <div className={MARKET_DETAIL_PANEL_CLASS}>
+                        <EventMarketPositions market={market} collapsible={false} />
                       </div>
                     )}
 
                     {tabToRender === 'history' && (
-                      <div className="pb-4">
+                      <div className={MARKET_DETAIL_PANEL_CLASS}>
                         <EventMarketHistory market={market} eventSlug={event.slug} collapsible={false} />
                       </div>
                     )}
 
                     {tabToRender === 'resolution' && (
-                      <div className="pb-4">
-                        <div className="flex justify-start">
+                      <div className={MARKET_DETAIL_PANEL_CLASS}>
+                        <div className={`
+                          flex min-h-16 items-center justify-center rounded border border-dashed border-border
+                        `}
+                        >
                           <Button
                             variant="outline"
                             size="sm"

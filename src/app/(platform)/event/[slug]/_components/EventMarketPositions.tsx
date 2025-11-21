@@ -3,7 +3,7 @@
 import type { Event, UserPosition } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
-import { AlertCircleIcon, Loader2Icon } from 'lucide-react'
+import { AlertCircleIcon } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -140,28 +140,8 @@ function MarketPositionRow({ position }: { position: UserPosition }) {
   )
 }
 
-function PositionsSkeleton() {
-  return (
-    <div className="overflow-hidden rounded-lg border border-border">
-      {Array.from({ length: 3 }).map((_, index) => (
-        <div key={`skeleton-${index}`} className="border-b border-border px-4 py-3 last:border-b-0">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex-1 space-y-2">
-              <div className="h-4 w-3/5 animate-pulse rounded bg-muted/80" />
-              <div className="h-3 w-2/5 animate-pulse rounded bg-muted/60" />
-            </div>
-            <div className="flex items-center gap-6">
-              <div className="h-5 w-16 animate-pulse rounded bg-muted/70" />
-              <div className="h-5 w-16 animate-pulse rounded bg-muted/70" />
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
 export default function EventMarketPositions({ market, collapsible = false }: EventMarketPositionsProps) {
+  const emptyHeightClass = 'min-h-16'
   const parentRef = useRef<HTMLDivElement | null>(null)
   const user = useUser()
   const [scrollMargin, setScrollMargin] = useState(0)
@@ -286,11 +266,19 @@ export default function EventMarketPositions({ market, collapsible = false }: Ev
 
   const content = (
     <div ref={parentRef} className="grid gap-4">
-      {loading && <PositionsSkeleton />}
+      {loading && (
+        <div className={`flex ${emptyHeightClass}
+          items-center justify-center rounded-lg border border-dashed border-border px-4 text-sm text-muted-foreground
+        `}
+        >
+          Loading positions...
+        </div>
+      )}
 
       {!loading && positions.length === 0 && (
-        <div className={`
-          rounded-lg border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground
+        <div className={`flex ${emptyHeightClass}
+          items-center justify-center rounded-lg border border-dashed border-border px-4 text-center text-sm
+          text-muted-foreground
         `}
         >
           You don&apos;t have any positions in this market yet.
@@ -335,8 +323,7 @@ export default function EventMarketPositions({ market, collapsible = false }: Ev
           </div>
 
           {isFetchingNextPage && (
-            <div className="flex items-center justify-center gap-2 px-4 py-4 text-sm text-muted-foreground">
-              <Loader2Icon className="size-4 animate-spin" />
+            <div className="flex items-center justify-center px-4 py-4 text-sm text-muted-foreground">
               Loading more positions...
             </div>
           )}

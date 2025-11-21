@@ -55,7 +55,11 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
 
   if (chartData.length === 0) {
     return (
-      <div className="rounded border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+      <div className={`
+        flex min-h-16 items-center justify-center rounded border border-dashed border-border px-4 text-center text-sm
+        text-muted-foreground
+      `}
+      >
         Price history is unavailable for this outcome.
       </div>
     )
