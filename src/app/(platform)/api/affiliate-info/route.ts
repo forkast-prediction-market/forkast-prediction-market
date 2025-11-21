@@ -24,7 +24,7 @@ export async function GET() {
       if (Number.isFinite(parsed) && parsed >= 0) {
         return parsed
       }
-      return 200
+      return 100
     })()
 
     const user = await UserRepository.getCurrentUser()
