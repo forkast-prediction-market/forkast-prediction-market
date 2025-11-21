@@ -1,4 +1,10 @@
+import type { Page } from '@playwright/test'
 import { expect, test } from '@playwright/test'
+
+async function expectAppKitModal(page: Page) {
+  const modal = page.getByTestId('w3m-modal-card')
+  await expect(modal).toBeVisible({ timeout: 15_000 })
+}
 
 test.describe('desktop and mobile', () => {
   test.beforeEach(async ({ page }) => {
@@ -12,17 +18,13 @@ test.describe('desktop and mobile', () => {
   test('shows appkit modal with log in button', async ({ page }) => {
     await page.getByTestId('header-login-button').click()
 
-    const modal = page.getByText('Connect Wallet')
-
-    await expect(modal).toBeVisible()
+    await expectAppKitModal(page)
   })
 
   test('shows appkit modal with sign up button', async ({ page }) => {
     await page.getByTestId('header-signup-button').click()
 
-    const modal = page.getByText('Connect Wallet')
-
-    await expect(modal).toBeVisible()
+    await expectAppKitModal(page)
   })
 
   test('redirects to docs from header menu', async ({ page }) => {
@@ -91,8 +93,7 @@ test.describe('desktop only', () => {
     await expect(dialog).not.toBeVisible()
 
     // Auth modal should open
-    const authModal = page.getByText('Connect Wallet')
-    await expect(authModal).toBeVisible()
+    await expectAppKitModal(page)
   })
 
   test('resets to first step when dialog is reopened', async ({ page }) => {

@@ -3,6 +3,7 @@ import type { Event } from '@/types'
 import { RefreshCwIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import EventMarketCard from '@/app/(platform)/event/[slug]/_components/EventMarketCard'
+import EventMarketHistory from '@/app/(platform)/event/[slug]/_components/EventMarketHistory'
 import EventOrderBook, { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
 import MarketOutcomeGraph from '@/app/(platform)/event/[slug]/_components/MarketOutcomeGraph'
 import { useChanceRefresh } from '@/app/(platform)/event/[slug]/_hooks/useChanceRefresh'
@@ -17,6 +18,7 @@ const MARKET_DETAIL_TABS: Array<{ id: MarketDetailTab, label: string }> = [
   { id: 'orderBook', label: 'Order Book' },
   { id: 'graph', label: 'Graph' },
   { id: 'resolution', label: 'Resolution' },
+  { id: 'history', label: 'History' },
 ]
 
 interface EventMarketsProps {
@@ -246,6 +248,12 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                           eventCreatedAt={event.created_at}
                           isMobile={isMobile}
                         />
+                      </div>
+                    )}
+
+                    {selectedDetailTab === 'history' && (
+                      <div className="pb-4">
+                        <EventMarketHistory market={market} eventSlug={event.slug} collapsible={false} />
                       </div>
                     )}
 

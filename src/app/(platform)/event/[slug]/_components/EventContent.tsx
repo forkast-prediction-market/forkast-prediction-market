@@ -5,6 +5,7 @@ import { useEffect } from 'react'
 import EventChart from '@/app/(platform)/event/[slug]/_components/EventChart'
 import EventHeader from '@/app/(platform)/event/[slug]/_components/EventHeader'
 import EventMarketContext from '@/app/(platform)/event/[slug]/_components/EventMarketContext'
+import EventMarketHistory from '@/app/(platform)/event/[slug]/_components/EventMarketHistory'
 import EventMarkets from '@/app/(platform)/event/[slug]/_components/EventMarkets'
 import EventMetaInformation from '@/app/(platform)/event/[slug]/_components/EventMetaInformation'
 import EventOrderPanelForm from '@/app/(platform)/event/[slug]/_components/EventOrderPanelForm'
@@ -60,6 +61,7 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
         <EventChart event={event} isMobile={isMobile} />
         <EventMarkets event={event} isMobile={isMobile} />
         {event.total_markets_count === 1 && <EventSingleMarketOrderBook market={event.markets[0]} />}
+        {event.total_markets_count === 1 && user && <EventMarketHistory market={event.markets[0]} />}
         {marketContextEnabled && <EventMarketContext event={event} />}
         <EventRules event={event} />
         {isMobile && <EventRelated event={event} />}
