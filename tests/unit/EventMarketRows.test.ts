@@ -41,7 +41,7 @@ describe('buildEventMarketRows', () => {
     } as unknown as Event
   }
 
-  it('returns no rows when chance data is incomplete', () => {
+  it('flags missing chance data but still builds placeholder rows', () => {
     const event = createEvent([
       createMarket({ condition_id: 'm1' }),
       createMarket({ condition_id: 'm2' }),
@@ -54,7 +54,11 @@ describe('buildEventMarketRows', () => {
     })
 
     expect(result.hasChanceData).toBe(false)
-    expect(result.rows).toHaveLength(0)
+    expect(result.rows).toHaveLength(2)
+    expect(result.rows[0]?.market.condition_id).toBe('m1')
+    expect(result.rows[0]?.chanceMeta.chanceDisplay).toBe('60%')
+    expect(result.rows[1]?.market.condition_id).toBe('m2')
+    expect(result.rows[1]?.chanceMeta.chanceDisplay).toBe('—')
   })
 
   it('clamps yes/no price overrides within bounds', () => {

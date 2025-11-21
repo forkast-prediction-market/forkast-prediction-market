@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/lib/supabase', () => {
   const updateEqMock = vi.fn()
@@ -36,6 +36,8 @@ const { __mocks } = await import('@/lib/supabase') as any
 const { GET } = await import('@/app/api/sync/orders/route')
 
 describe('orders sync route (mocked)', () => {
+  const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
+
   beforeEach(() => {
     __mocks.from.mockClear()
     __mocks.chain.select.mockClear()
@@ -46,6 +48,10 @@ describe('orders sync route (mocked)', () => {
     __mocks.updateEqMock.mockClear()
     globalThis.fetch = vi.fn() as any
     process.env.CRON_SECRET = 'secret'
+  })
+
+  afterAll(() => {
+    consoleErrorSpy.mockRestore()
   })
 
   it('returns stats payload on successful sync', async () => {
