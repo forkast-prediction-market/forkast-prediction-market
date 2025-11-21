@@ -13,6 +13,7 @@ import { useUser } from '@/stores/useUser'
 
 interface EventMarketPositionsProps {
   market: Event['markets'][number]
+  collapsible?: boolean
 }
 
 interface FetchMarketPositionsParams {
@@ -160,23 +161,28 @@ function PositionsSkeleton() {
   )
 }
 
-export default function EventMarketPositions({ market }: EventMarketPositionsProps) {
+export default function EventMarketPositions({ market, collapsible = false }: EventMarketPositionsProps) {
   const parentRef = useRef<HTMLDivElement | null>(null)
   const user = useUser()
   const [scrollMargin, setScrollMargin] = useState(0)
   const [hasInitialized, setHasInitialized] = useState(false)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
+  const isCollapsible = collapsible !== false
+  const [positionsExpanded, setPositionsExpanded] = useState(!isCollapsible)
 
   useEffect(() => {
-    setHasInitialized(false)
-    setInfiniteScrollError(null)
-  }, [market.condition_id])
+    queueMicrotask(() => {
+      setHasInitialized(false)
+      setInfiniteScrollError(null)
+      setPositionsExpanded(!isCollapsible)
+    })
+  }, [isCollapsible, market.condition_id])
 
   useEffect(() => {
-    if (parentRef.current) {
+    if (parentRef.current && (positionsExpanded || !isCollapsible)) {
       setScrollMargin(parentRef.current.offsetTop)
     }
-  }, [market.condition_id])
+  }, [isCollapsible, market.condition_id, positionsExpanded])
 
   const {
     status,
@@ -200,7 +206,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
       }
       return undefined
     },
-    enabled: Boolean(user?.address && market.condition_id),
+    enabled: Boolean(user?.address && market.condition_id && (positionsExpanded || !isCollapsible)),
     initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
@@ -226,7 +232,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
         return
       }
 
-      if (!positions.length) {
+      if (!positions.length || (isCollapsible && !positionsExpanded)) {
         return
       }
 
@@ -278,7 +284,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
     )
   }
 
-  return (
+  const content = (
     <div ref={parentRef} className="grid gap-4">
       {loading && <PositionsSkeleton />}
 
@@ -368,6 +374,68 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
               </Alert>
             </div>
           )}
+        </div>
+      )}
+    </div>
+  )
+
+  if (!isCollapsible) {
+    return content
+  }
+
+  return (
+    <div className="rounded-lg border transition-all duration-200 ease-in-out">
+      <button
+        type="button"
+        onClick={() => {
+          setPositionsExpanded((current) => {
+            const next = !current
+            if (next) {
+              setHasInitialized(false)
+              setInfiniteScrollError(null)
+            }
+            return next
+          })
+        }}
+        className={`
+          flex w-full items-center justify-between p-4 text-left transition-colors
+          hover:bg-muted/50
+          focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
+          focus-visible:outline-none
+        `}
+        aria-expanded={positionsExpanded}
+      >
+        <span className="text-lg font-medium">Positions</span>
+        <span
+          aria-hidden="true"
+          className={`
+            pointer-events-none flex size-8 items-center justify-center rounded-md border border-border/60 bg-background
+            text-muted-foreground transition
+            ${positionsExpanded ? 'bg-muted/50' : ''}
+          `}
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 16 16"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={`transition-transform ${positionsExpanded ? 'rotate-180' : ''}`}
+          >
+            <path
+              d="M4 6L8 10L12 6"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      </button>
+
+      {positionsExpanded && (
+        <div className="border-t border-border/30 px-3 pt-3 pb-3">
+          {content}
         </div>
       )}
     </div>
