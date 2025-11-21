@@ -39,7 +39,7 @@ Complete Step 3 (Supabase) and Step 4 (environment) first, then redeploy from yo
 ### 3. Create Database (Supabase)
 
    1. Go to your project dashboard
-   2. Navitage to the **Storage** tab
+   2. Navigate to the **Storage** tab
    3. Find **Supabase** in the database list and click **Create**
    4. Keep all default settings and click **Create** in the final step
    5. Once ready, click the **Connect Project** button to link to your project
