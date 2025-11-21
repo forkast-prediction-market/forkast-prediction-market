@@ -145,6 +145,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       referrerAddress: affiliateMetadata.referrerAddress,
       affiliateAddress: affiliateMetadata.affiliateAddress,
       affiliateSharePercent: affiliateMetadata.affiliateSharePercent,
+      feeRateBps: affiliateMetadata.tradeFeeBps,
     })
 
     let signature: string

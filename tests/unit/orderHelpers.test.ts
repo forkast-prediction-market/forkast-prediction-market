@@ -58,11 +58,27 @@ describe('buildOrderPayload', () => {
       amount: '15.00',
       limitPrice: '0',
       limitShares: '0',
+      feeRateBps: 150,
     })
 
     expect(payload.maker_amount).toBe(15000000n)
     expect(payload.taker_amount).toBeGreaterThan(0n)
     expect(payload.token_id).toBe(42n)
+    expect(payload.fee_rate_bps).toBe(150n)
+  })
+
+  it('falls back to default fee rate when not provided', () => {
+    const payload = buildOrderPayload({
+      userAddress: '0xUser',
+      outcome: { token_id: '1' } as any,
+      side: ORDER_SIDE.SELL,
+      orderType: ORDER_TYPE.MARKET,
+      amount: '1',
+      limitPrice: '0',
+      limitShares: '0',
+    })
+
+    expect(payload.fee_rate_bps).toBe(200n)
   })
 })
 

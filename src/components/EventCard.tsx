@@ -192,6 +192,7 @@ export default function EventCard({ event }: EventCardProps) {
       referrerAddress: affiliateMetadata.referrerAddress,
       affiliateAddress: affiliateMetadata.affiliateAddress,
       affiliateSharePercent: affiliateMetadata.affiliateSharePercent,
+      feeRateBps: affiliateMetadata.tradeFeeBps,
     })
 
     let signature: string
