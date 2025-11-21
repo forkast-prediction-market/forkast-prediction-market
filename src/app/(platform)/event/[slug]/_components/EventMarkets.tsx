@@ -253,7 +253,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
 
                     {selectedDetailTab === 'history' && (
                       <div className="pb-4">
-                        <EventMarketHistory market={market} eventSlug={event.slug} />
+                        <EventMarketHistory market={market} eventSlug={event.slug} collapsible={false} />
                       </div>
                     )}
 
