@@ -29,8 +29,8 @@ export const OUTCOME_INDEX = {
 export const CAP_MICRO = 990_000n
 export const FLOOR_MICRO = 10_000n
 
-export const CTF_EXCHANGE_ADDRESS = '0x006ce6484eA6114fB0D4F26660de0F37d35001Ba' as `0x${string}`
-export const NEG_RISK_CTF_EXCHANGE_ADDRESS = '0x68dDb555b640De7f0D7eFFd31ee5CCB841DD86AD' as `0x${string}`
+export const CTF_EXCHANGE_ADDRESS = '0x8e7C334F111e45DF9C160DE56958E37c473081CB' as `0x${string}`
+export const NEG_RISK_CTF_EXCHANGE_ADDRESS = '0x0B31dD379DF27A0ede14336F696412DF7b702e50' as `0x${string}`
 
 export const EIP712_DOMAIN = {
   name: 'Forkast CTF Exchange',

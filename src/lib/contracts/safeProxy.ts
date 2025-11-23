@@ -6,7 +6,7 @@ import { CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS, ZERO_ADDRESS } fro
 export const SAFE_PROXY_DOMAIN_NAME = 'Forkast Contract Proxy Factory'
 export const SAFE_PROXY_PRIMARY_TYPE = 'CreateProxy'
 
-export const SAFE_PROXY_FACTORY_ADDRESS = '0x8Dad701CC901e59dC321D7301D015F9Fc3466548' as Address
+export const SAFE_PROXY_FACTORY_ADDRESS = '0xeAaBa3185fA1B8C2eC1E2124E010b47260e03bE5' as Address
 
 export const SAFE_PROXY_TYPES = {
   CreateProxy: [

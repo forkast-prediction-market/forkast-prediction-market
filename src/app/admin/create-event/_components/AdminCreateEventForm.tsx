@@ -501,7 +501,7 @@ export default function AdminCreateEventForm() {
           ...market,
           outcomes: market.outcomes.filter(outcome => outcome.outcome.trim()),
           oracle_type: 'native',
-          resolved_by: process.env.NEXT_PUBLIC_UMA_ADAPTER_ADDRESS || '0xDde785fc1311ab3D4C71aa216dDe6Aa27b6bcC4b',
+          resolved_by: process.env.NEXT_PUBLIC_UMA_ADAPTER_ADDRESS || '0x9dd64c7DffB5A106F2aa976784E9770aC4c1435d',
         })),
       }
 
