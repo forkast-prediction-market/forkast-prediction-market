@@ -40,7 +40,7 @@ export const EIP712_DOMAIN = {
 } as const
 
 export const NEG_RISK_EIP712_DOMAIN = {
-  name: 'Forkast NegRisk CTF Exchange',
+  name: 'Forkast CTF Exchange',
   version: '1',
   chainId: defaultNetwork.id,
   verifyingContract: NEG_RISK_CTF_EXCHANGE_ADDRESS,
