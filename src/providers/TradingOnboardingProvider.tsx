@@ -94,6 +94,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
             proxy_wallet_signature?: string | null
             proxy_wallet_signed_at?: string | null
             proxy_wallet_status?: string | null
+            proxy_wallet_tx_hash?: string | null
           }
         })
         .then((data) => {
