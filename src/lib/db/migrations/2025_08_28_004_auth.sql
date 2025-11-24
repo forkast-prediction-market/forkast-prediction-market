@@ -17,6 +17,7 @@ CREATE TABLE users
   proxy_wallet_signature TEXT,
   proxy_wallet_signed_at TIMESTAMPTZ,
   proxy_wallet_status    TEXT        NOT NULL DEFAULT 'not_started',
+  proxy_wallet_tx_hash   TEXT,
   affiliate_code         TEXT,
   referred_by_user_id    CHAR(26)    REFERENCES users (id) ON DELETE SET NULL,
   created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),

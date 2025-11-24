@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useAppKit } from '@/hooks/useAppKit'
+import { defaultNetwork } from '@/lib/appkit'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import {
   getSafeProxyDomain,
@@ -47,17 +48,23 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
   const [isSigningProxyWallet, setIsSigningProxyWallet] = useState(false)
   const [proxyWalletError, setProxyWalletError] = useState<string | null>(null)
 
-  const hasProxyWallet = Boolean(user?.proxy_wallet_address)
+  const proxyWalletStatus = user?.proxy_wallet_status ?? null
+  const hasProxyWalletAddress = Boolean(user?.proxy_wallet_address)
   const hasDeployedProxyWallet = useMemo(() => (
-    Boolean(user?.proxy_wallet_address && user?.proxy_wallet_status === 'deployed')
-  ), [user?.proxy_wallet_address, user?.proxy_wallet_status])
+    Boolean(user?.proxy_wallet_address && proxyWalletStatus === 'deployed')
+  ), [proxyWalletStatus, user?.proxy_wallet_address])
+  const isProxyWalletDeploying = useMemo(() => (
+    Boolean(user?.proxy_wallet_address && proxyWalletStatus === 'signed')
+  ), [proxyWalletStatus, user?.proxy_wallet_address])
+  const hasProxyWallet = hasDeployedProxyWallet
+  const proxyWalletTxHash = user?.proxy_wallet_tx_hash ?? null
 
   useEffect(() => {
     if (!user?.id) {
       return
     }
 
-    const needsSync = !hasProxyWallet || !hasDeployedProxyWallet
+    const needsSync = !hasProxyWalletAddress || !hasDeployedProxyWallet
     if (!needsSync) {
       return
     }
@@ -108,12 +115,14 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
             const nextSignature = data.proxy_wallet_signature ?? previous.proxy_wallet_signature
             const nextSignedAt = data.proxy_wallet_signed_at ?? previous.proxy_wallet_signed_at
             const nextStatus = (data.proxy_wallet_status as ProxyWalletStatus | null | undefined) ?? previous.proxy_wallet_status
+            const nextTxHash = data.proxy_wallet_tx_hash ?? previous.proxy_wallet_tx_hash
 
             const nothingChanged = (
               nextAddress === previous.proxy_wallet_address
               && nextSignature === previous.proxy_wallet_signature
               && nextSignedAt === previous.proxy_wallet_signed_at
               && nextStatus === previous.proxy_wallet_status
+              && nextTxHash === previous.proxy_wallet_tx_hash
             )
 
             if (nothingChanged) {
@@ -126,6 +135,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
               proxy_wallet_signature: nextSignature,
               proxy_wallet_signed_at: nextSignedAt,
               proxy_wallet_status: nextStatus,
+              proxy_wallet_tx_hash: nextTxHash,
             }
           })
 
@@ -146,7 +156,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
         clearTimeout(timeoutId)
       }
     }
-  }, [hasDeployedProxyWallet, hasProxyWallet, user?.id, user?.proxy_wallet_address, user?.proxy_wallet_status])
+  }, [hasDeployedProxyWallet, hasProxyWalletAddress, user?.id, user?.proxy_wallet_address, user?.proxy_wallet_status])
 
   const resetPendingFundState = useCallback(() => {
     setShouldShowFundAfterProxy(false)
@@ -222,7 +232,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       return
     }
 
-    if (hasProxyWallet) {
+    if (hasDeployedProxyWallet) {
       handleDepositModalOpen()
       return
     }
@@ -230,7 +240,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     setProxyWalletError(null)
     setShouldShowFundAfterProxy(true)
     setEnableModalOpen(true)
-  }, [handleDepositModalOpen, hasProxyWallet, open, user])
+  }, [handleDepositModalOpen, hasDeployedProxyWallet, open, user])
 
   const ensureTradingReady = useCallback(() => {
     if (!user) {
@@ -240,14 +250,14 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       return false
     }
 
-    if (hasProxyWallet) {
+    if (hasDeployedProxyWallet) {
       return true
     }
 
     setProxyWalletError(null)
     setTradeModalOpen(true)
     return false
-  }, [hasProxyWallet, open, user])
+  }, [hasDeployedProxyWallet, open, user])
 
   const openTradeRequirements = useCallback(() => {
     if (!user) {
@@ -306,10 +316,13 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
           <Button
             className="mt-6 h-12 w-full text-base"
             onClick={handleProxyWalletSignature}
-            disabled={isSigningProxyWallet}
+            disabled={isSigningProxyWallet || isProxyWalletDeploying}
           >
-            {isSigningProxyWallet ? <Loader2 className="size-5 animate-spin" /> : 'Enable Trading'}
+            {isSigningProxyWallet || isProxyWalletDeploying ? <Loader2 className="size-5 animate-spin" /> : 'Enable Trading'}
           </Button>
+          {isProxyWalletDeploying && proxyWalletTxHash && (
+            <ProxyDeploymentStatus txHash={proxyWalletTxHash} className="mt-3" />
+          )}
         </DialogContent>
       </Dialog>
 
@@ -372,12 +385,17 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
           <div className="space-y-4">
             <TradingRequirementStep
               title="Deploy Proxy Wallet"
-              description="Deploy your proxy wallet to trade on Polymarket."
-              actionLabel="Deploy"
-              isLoading={isSigningProxyWallet}
-              disabled={false}
+              description={`Deploy your proxy wallet to trade on ${process.env.NEXT_PUBLIC_SITE_NAME}.`}
+              actionLabel={isProxyWalletDeploying ? 'Deploying' : 'Deploy'}
+              isLoading={isSigningProxyWallet || isProxyWalletDeploying}
+              disabled={isProxyWalletDeploying}
               isComplete={hasProxyWallet}
               error={proxyWalletError}
+              helperText={isProxyWalletDeploying && proxyWalletTxHash
+                ? (
+                    <ProxyDeploymentStatus txHash={proxyWalletTxHash} />
+                  )
+                : null}
               onAction={handleProxyWalletSignature}
             />
 
@@ -408,6 +426,7 @@ interface TradingRequirementStepProps {
   isComplete: boolean
   error?: string | null
   onAction: () => void
+  helperText?: ReactNode | null
 }
 
 function TradingRequirementStep({
@@ -419,6 +438,7 @@ function TradingRequirementStep({
   isComplete,
   error,
   onAction,
+  helperText,
 }: TradingRequirementStepProps) {
   return (
     <div className="flex flex-col gap-2">
@@ -428,6 +448,9 @@ function TradingRequirementStep({
           <p className="text-sm text-muted-foreground">{description}</p>
           {!isComplete && error && (
             <p className="mt-2 text-sm text-destructive">{error}</p>
+          )}
+          {!isComplete && helperText && (
+            <div className="mt-2">{helperText}</div>
           )}
         </div>
 
@@ -450,6 +473,35 @@ function TradingRequirementStep({
             )}
       </div>
     </div>
+  )
+}
+
+function ProxyDeploymentStatus({ txHash, className }: { txHash: string, className?: string }) {
+  if (!txHash) {
+    return null
+  }
+
+  const explorerBase = defaultNetwork?.blockExplorers?.default?.url
+  const shortHash = txHash.length > 12 ? `${txHash.slice(0, 10)}...${txHash.slice(-6)}` : txHash
+  const content = explorerBase
+    ? (
+        <a
+          href={`${explorerBase}/tx/${txHash}`}
+          target="_blank"
+          rel="noreferrer"
+          className="font-medium text-primary hover:underline"
+        >
+          {shortHash}
+        </a>
+      )
+    : <span className="font-mono">{shortHash}</span>
+
+  return (
+    <p className={cn('text-sm text-muted-foreground', className)}>
+      Deployment pending:
+      {' '}
+      {content}
+    </p>
   )
 }
 

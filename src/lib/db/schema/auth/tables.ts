@@ -32,6 +32,7 @@ export const users = pgTable('users', {
   proxy_wallet_signature: text('proxy_wallet_signature'),
   proxy_wallet_signed_at: timestamp('proxy_wallet_signed_at'),
   proxy_wallet_status: text('proxy_wallet_status').default('not_started').notNull(),
+  proxy_wallet_tx_hash: text('proxy_wallet_tx_hash'),
   affiliate_code: text(),
   referred_by_user_id: text().references((): any => users.id, { onDelete: 'set null' }),
 })

@@ -27,9 +27,9 @@ interface GetProxyWalletAddressOptions {
   isNegRisk?: boolean
 }
 
-const POLY_PROXY_EXCHANGE_ABI = [
+const CTF_EXCHANGE_SAFE_ABI = [
   {
-    name: 'getPolyProxyWalletAddress',
+    name: 'getSafeAddress',
     type: 'function',
     stateMutability: 'view',
     inputs: [{ name: '_addr', type: 'address' }],
@@ -71,8 +71,8 @@ export async function getSafeProxyWalletAddress(owner: Address, options?: GetPro
   const exchangeAddress = resolveExchangeAddress(options)
   const proxyAddress = await getSafeProxyClient().readContract({
     address: exchangeAddress,
-    abi: POLY_PROXY_EXCHANGE_ABI,
-    functionName: 'getPolyProxyWalletAddress',
+    abi: CTF_EXCHANGE_SAFE_ABI,
+    functionName: 'getSafeAddress',
     args: [owner],
   })
 

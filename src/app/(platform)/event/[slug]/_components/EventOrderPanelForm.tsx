@@ -56,7 +56,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const proxyWalletAddress = hasDeployedProxyWallet ? normalizeAddress(user?.proxy_wallet_address) : null
   const userAddress = normalizeAddress(user?.address)
   const makerAddress = proxyWalletAddress ?? userAddress ?? null
-  const signatureType = proxyWalletAddress ? 1 : 0
+  const signatureType = proxyWalletAddress ? 2 : 0
   const isNegRiskEnabled = Boolean(event.enable_neg_risk)
   const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskEnabled), [isNegRiskEnabled])
 

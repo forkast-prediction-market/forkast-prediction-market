@@ -121,6 +121,9 @@ export const auth = betterAuth({
       proxy_wallet_signed_at: {
         type: 'date',
       },
+      proxy_wallet_tx_hash: {
+        type: 'string',
+      },
       affiliate_code: {
         type: 'string',
       },

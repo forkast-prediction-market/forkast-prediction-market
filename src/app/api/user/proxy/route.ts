@@ -31,5 +31,6 @@ export async function GET() {
     proxy_wallet_signature: user.proxy_wallet_signature ?? null,
     proxy_wallet_signed_at: user.proxy_wallet_signed_at ?? null,
     proxy_wallet_status: proxyWalletStatus,
+    proxy_wallet_tx_hash: user.proxy_wallet_tx_hash ?? null,
   })
 }
