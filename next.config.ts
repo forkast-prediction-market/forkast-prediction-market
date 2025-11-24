@@ -5,6 +5,7 @@ const config: NextConfig = {
   cacheComponents: true,
   typedRoutes: true,
   reactStrictMode: false,
+  serverExternalPackages: ['pino', 'pino-pretty', 'thread-stream'],
   images: {
     unoptimized: true,
     remotePatterns: [
