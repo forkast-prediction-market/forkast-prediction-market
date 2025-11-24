@@ -7,65 +7,35 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
+      - run: npm install
+      - run: npm run lint
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run lint
-        run: npm run lint
-
-  test:
+  unit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
-
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
-
-      - name: Create .env.test
-        run: |
-          cat <<'EOF' > .env.test
-          ${{ secrets.ENV_TEST }}
-          EOF
-
-      - name: Run Playwright tests
-        run: NODE_ENV=test npx playwright test
+      - run: npm install
+      - run: npm test
 
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-
-      - uses: actions/setup-node@v5
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
-
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build application
-        run: npm run build
+      - run: npm install
+      - run: npm run build
         env:
           SUPABASE_URL: https://dummy
           SUPABASE_SERVICE_ROLE_KEY: dummy
@@ -73,3 +43,27 @@ jobs:
           BETTER_AUTH_SECRET: 00000000000000000000000000000000
           NEXT_PUBLIC_REOWN_APPKIT_PROJECT_ID: dummy
           NEXT_PUBLIC_SITE_LOGO_SVG: <svg>dummy</svg>
+
+  e2e:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/main')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm install
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+
+      - run: npx playwright install --with-deps
+      - run: |
+          cat <<'EOF' > .env.test
+          ${{ secrets.ENV_TEST }}
+          EOF
+      - run: CI=1 NODE_ENV=test npx playwright test --retries=2
