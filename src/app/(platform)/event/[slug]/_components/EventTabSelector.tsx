@@ -4,16 +4,26 @@ import { cn } from '@/lib/utils'
 interface EventTabSelectorProps {
   activeTab: string
   setActiveTab: (activeTab: string) => void
+  commentsCount: number
 }
 
-export default function EventTabSelector({ activeTab, setActiveTab }: EventTabSelectorProps) {
-  const eventTabs = useMemo(() => ['comments', 'holders', 'activity'], [])
+export default function EventTabSelector({ activeTab, setActiveTab, commentsCount }: EventTabSelectorProps) {
+  const formattedCommentsCount = useMemo(
+    () => Number(commentsCount ?? 0).toLocaleString('en-US'),
+    [commentsCount],
+  )
+
+  const eventTabs = useMemo(() => ([
+    { key: 'comments', label: `Comments (${formattedCommentsCount})` },
+    { key: 'holders', label: 'Holders' },
+    { key: 'activity', label: 'Activity' },
+  ]), [formattedCommentsCount])
   const tabRefs = useRef<(HTMLLIElement | null)[]>([])
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })
   const [isInitialized, setIsInitialized] = useState(false)
 
   useLayoutEffect(() => {
-    const activeTabIndex = eventTabs.indexOf(activeTab)
+    const activeTabIndex = eventTabs.findIndex(tab => tab.key === activeTab)
     const activeTabElement = tabRefs.current[activeTabIndex]
 
     if (activeTabElement) {
@@ -35,19 +45,19 @@ export default function EventTabSelector({ activeTab, setActiveTab }: EventTabSe
     <ul className="relative mt-3 flex h-8 gap-8 border-b text-sm font-semibold">
       {eventTabs.map((tab, index) => (
         <li
-          key={tab}
+          key={tab.key}
           ref={(el) => {
             tabRefs.current[index] = el
           }}
           className={cn(
             'cursor-pointer transition-colors duration-200',
-            activeTab === tab
+            activeTab === tab.key
               ? 'text-foreground'
               : 'text-muted-foreground hover:text-foreground',
           )}
-          onClick={() => setActiveTab(tab)}
+          onClick={() => setActiveTab(tab.key)}
         >
-          {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          {tab.label}
         </li>
       ))}
 

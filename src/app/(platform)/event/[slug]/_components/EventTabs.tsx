@@ -15,7 +15,11 @@ export default function EventTabs({ event, user }: EventTabsProps) {
 
   return (
     <>
-      <EventTabSelector activeTab={activeTab} setActiveTab={setActiveTab} />
+      <EventTabSelector
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        commentsCount={event.comments_count}
+      />
       {activeTab === 'comments' && <EventComments event={event} user={user} />}
       {activeTab === 'holders' && <EventTopHolders event={event} />}
       {activeTab === 'activity' && <EventActivity event={event} />}
