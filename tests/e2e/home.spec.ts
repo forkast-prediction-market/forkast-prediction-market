@@ -29,18 +29,26 @@ test.describe('desktop and mobile', () => {
 
   test('redirects to docs from header menu', async ({ page }) => {
     await page.getByTestId('header-menu-button').click()
-    await page.getByTestId('header-docs-link').click()
+    const docsLink = page.getByTestId('header-docs-link')
+    await docsLink.waitFor({ state: 'visible' })
 
-    await page.waitForURL('/docs/users')
+    await Promise.all([
+      page.waitForURL('**/docs/users', { waitUntil: 'domcontentloaded' }),
+      docsLink.click(),
+    ])
 
     expect(page.url()).toContain('/docs/users')
   })
 
   test('redirects to terms from header menu', async ({ page }) => {
     await page.getByTestId('header-menu-button').click()
-    await page.getByTestId('header-terms-link').click()
+    const termsLink = page.getByTestId('header-terms-link')
+    await termsLink.waitFor({ state: 'visible' })
 
-    await page.waitForURL('/terms-of-use')
+    await Promise.all([
+      page.waitForURL('**/terms-of-use', { waitUntil: 'domcontentloaded' }),
+      termsLink.click(),
+    ])
 
     expect(page.url()).toContain('/terms-of-use')
   })
