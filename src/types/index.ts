@@ -13,6 +13,7 @@ export interface Event {
   rules?: string
   active_markets_count: number
   total_markets_count: number
+  comments_count: number
   volume: number
   end_date: string | null
   created_at: string

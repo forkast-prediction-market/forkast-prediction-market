@@ -6,6 +6,7 @@ import { cacheTags } from '@/lib/cache-tags'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { users } from '@/lib/db/schema/auth/tables'
 import { bookmarks } from '@/lib/db/schema/bookmarks/tables'
+import { comments } from '@/lib/db/schema/comments/tables'
 import { conditions, event_tags, events, markets, outcomes, tags } from '@/lib/db/schema/events/tables'
 import { orders, v_condition_top_holders } from '@/lib/db/schema/orders/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
@@ -120,6 +121,7 @@ type DrizzleEventResult = typeof events.$inferSelect & {
     tag: typeof tags.$inferSelect
   })[]
   bookmarks?: typeof bookmarks.$inferSelect[]
+  comments_count?: number | null
 }
 
 interface RelatedEvent {
@@ -208,6 +210,7 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
     rules: event.rules || undefined,
     active_markets_count: Number(event.active_markets_count || 0),
     total_markets_count: Number(event.total_markets_count || 0),
+    comments_count: Number(event.comments_count ?? 0),
     created_at: event.created_at?.toISOString() || new Date().toISOString(),
     updated_at: event.updated_at?.toISOString() || new Date().toISOString(),
     end_date: event.end_date?.toISOString() ?? null,
@@ -543,12 +546,26 @@ export const EventRepository = {
         throw new Error('Event not found')
       }
 
+      const commentsCountResult = await db
+        .select({ count: sql<number>`cast(count(*) as int)` })
+        .from(comments)
+        .where(and(
+          eq(comments.event_id, eventResult.id),
+          eq(comments.is_deleted, false),
+        ))
+
+      const commentsCount = safeNumber(commentsCountResult[0]?.count)
+
       const outcomeTokenIds = (eventResult.markets ?? []).flatMap((market: any) =>
         (market.condition?.outcomes ?? []).map((outcome: any) => outcome.token_id).filter(Boolean),
       )
 
       const priceMap = await fetchOutcomePrices(outcomeTokenIds)
-      const transformedEvent = eventResource(eventResult as DrizzleEventResult, userId, priceMap)
+      const transformedEvent = eventResource(
+        { ...(eventResult as DrizzleEventResult), comments_count: commentsCount },
+        userId,
+        priceMap,
+      )
 
       cacheTag(cacheTags.event(`${transformedEvent.id}:${userId}`))
 

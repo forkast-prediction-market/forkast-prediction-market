@@ -81,6 +81,8 @@ export const CommentRepository = {
         })
 
       updateTag(cacheTags.eventComments(eventId))
+      updateTag(cacheTags.event(`${eventId}:${userId}`))
+      updateTag(cacheTags.event(`${eventId}:`))
 
       return { data: result[0], error: null }
     })
@@ -100,6 +102,8 @@ export const CommentRepository = {
         ))
 
       updateTag(cacheTags.eventComments(args.eventId))
+      updateTag(cacheTags.event(`${args.eventId}:${args.userId}`))
+      updateTag(cacheTags.event(`${args.eventId}:`))
 
       return { data: result, error: null }
     })

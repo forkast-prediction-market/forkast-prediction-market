@@ -89,7 +89,7 @@ export async function saveProxyWalletSignature({ signature }: SaveProxyWalletSig
 }
 
 async function triggerSafeProxyDeployment({ owner, signature }: { owner: string, signature: string }) {
-  const clobUrl = process.env.CLOB_URL || 'https://clob.forka.st'
+  const clobUrl = process.env.CLOB_URL!
   const method = 'POST'
   const path = '/wallet/safe'
 

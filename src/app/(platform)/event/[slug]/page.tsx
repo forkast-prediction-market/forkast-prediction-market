@@ -20,22 +20,17 @@ export default async function EventPage({ params }: PageProps<'/event/[slug]'>) 
   const marketContextSettings = await loadMarketContextSettings()
   const marketContextEnabled = marketContextSettings.enabled && Boolean(marketContextSettings.apiKey)
 
-  try {
-    const { data: event, error } = await EventRepository.getEventBySlug(slug, user?.id ?? '')
-    if (error || !event) {
-      notFound()
-    }
-
-    return (
-      <EventContent
-        event={event}
-        user={user}
-        marketContextEnabled={marketContextEnabled}
-        key={`is-bookmarked-${event.is_bookmarked}`}
-      />
-    )
-  }
-  catch {
+  const { data: event, error } = await EventRepository.getEventBySlug(slug, user?.id ?? '')
+  if (error || !event) {
     notFound()
   }
+
+  return (
+    <EventContent
+      event={event}
+      user={user}
+      marketContextEnabled={marketContextEnabled}
+      key={`is-bookmarked-${event.is_bookmarked}`}
+    />
+  )
 }

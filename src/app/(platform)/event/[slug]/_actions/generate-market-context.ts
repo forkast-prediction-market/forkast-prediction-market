@@ -26,7 +26,7 @@ export async function generateMarketContextAction(input: GenerateMarketContextIn
 
   try {
     const { slug, marketConditionId } = parsed.data
-    const { data: event, error } = await EventRepository.getEventBySlug(slug, '')
+    const { data: event, error } = await EventRepository.getEventBySlug(slug)
 
     if (error || !event) {
       console.error('Failed to fetch event for market context.', error)
