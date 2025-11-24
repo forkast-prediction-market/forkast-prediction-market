@@ -74,7 +74,7 @@
     "@types/canvas-confetti": "^1.9.0",
     "@types/mdx": "^2.0.13",
     "@types/node": "^24.5.2",
-    "@types/react": "^19.2.2",
+    "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.2",
     "eslint": "^9.39.0",
     "eslint-plugin-better-tailwindcss": "^3.7.8",
