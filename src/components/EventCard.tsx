@@ -72,14 +72,8 @@ export default function EventCard({ event }: EventCardProps) {
   const yesOutcome = event.markets[0].outcomes[0]
   const noOutcome = event.markets[0].outcomes[1]
   const hasRecentMarket = event.markets.some(market => isMarketNew(market.created_at))
-  const eventHasNegRiskMarket = useMemo(
-    () => event.markets.some(market => Boolean(market.neg_risk)),
-    [event.markets],
-  )
-  const isNegRiskMarket = useMemo(() => (
-    selectedOutcome?.market ? Boolean(selectedOutcome.market.neg_risk) : eventHasNegRiskMarket
-  ), [eventHasNegRiskMarket, selectedOutcome?.market])
-  const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskMarket), [isNegRiskMarket])
+  const isNegRiskEvent = Boolean(event.neg_risk)
+  const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskEvent), [isNegRiskEvent])
 
   const marketTargets = useMemo(() => buildMarketTargets(event.markets), [event.markets])
   const { latestSnapshot } = useEventPriceHistory({
