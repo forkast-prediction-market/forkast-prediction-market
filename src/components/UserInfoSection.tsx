@@ -15,11 +15,9 @@ export default function UserInfoSection() {
   }
 
   const fallbackAddress = user.proxy_wallet_address ?? user.address
-  const displayUsername = user?.username
-    ? user.username.length > 12
-      ? `${user.username.slice(0, 12)}...`
-      : user.username
-    : truncateAddress(fallbackAddress)
+  const displayUsername = user.username.length > 12
+    ? `${user.username.slice(0, 12)}...`
+    : user.username
 
   const polygonscanUrl = `https://polygonscan.com/address/${fallbackAddress}`
 
@@ -40,7 +38,7 @@ export default function UserInfoSection() {
       </div>
       <div className="min-w-0 flex-1 space-y-1.5">
         <Link
-          href={`/@${user.username || fallbackAddress}`}
+          href={`/@${user.username}`}
           className={`
             truncate text-base leading-tight font-semibold text-foreground transition-colors duration-200
             hover:text-primary

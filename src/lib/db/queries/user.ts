@@ -44,7 +44,7 @@ export const UserRepository = {
         id: rawData.id,
         address: rawData.address,
         proxy_wallet_address: rawData.proxy_wallet_address,
-        username: rawData.username || undefined,
+        username: rawData.username,
         image: rawData.image ? getSupabaseImageUrl(rawData.image) : `https://avatar.vercel.sh/${rawData.address}.png`,
         created_at: rawData.created_at,
       }
@@ -457,7 +457,7 @@ export const UserRepository = {
               id: row.id,
               user: {
                 id: row.user_id,
-                username: row.user_username,
+                username: row.user_username!,
                 address: row.user_address,
                 image: userImage,
               },

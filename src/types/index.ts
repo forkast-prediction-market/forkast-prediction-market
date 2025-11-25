@@ -116,7 +116,7 @@ export interface User {
   address: string
   email: string
   twoFactorEnabled: boolean | null | undefined
-  username?: string
+  username: string
   image: string
   settings: UserSettings
   affiliate_code?: string | null
@@ -139,7 +139,7 @@ export interface PublicProfileStats {
 export interface PublicProfile {
   address: string
   proxy_wallet_address?: string | null
-  username?: string
+  username: string
   image: string
   created_at: Date
   stats?: PublicProfileStats
@@ -213,7 +213,7 @@ export interface AffiliateData {
   }
   recentReferrals: {
     user_id: string
-    username?: string | null
+    username: string
     address: string
     proxy_wallet_address?: string | null
     created_at: string
@@ -224,7 +224,7 @@ export interface ActivityOrder {
   id: string
   user: {
     id: string
-    username: string | null
+    username: string
     address: string
     image: string
   }
@@ -252,7 +252,7 @@ export interface ActivityOrder {
 export interface TopHolder {
   user: {
     id: string
-    username: string | null
+    username: string
     address: string
     proxy_wallet_address?: string | null
     image: string

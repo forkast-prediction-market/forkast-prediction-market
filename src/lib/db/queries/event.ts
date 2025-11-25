@@ -271,7 +271,7 @@ function transformActivityOrder(order: any): ActivityOrder {
     id: order.id || '',
     user: {
       id: order.user_id || '',
-      username: order.user_username || null,
+      username: order.user_username as string,
       address: order.user_address || '',
       image: userImage,
     },
@@ -773,7 +773,7 @@ export const EventRepository = {
         const topHolder: TopHolder = {
           user: {
             id: String(holderData.user_id),
-            username: holderData.username || null,
+            username: holderData.username as string,
             address: String(holderData.address),
             proxy_wallet_address: holderData.proxy_wallet_address || null,
             image: holderData.image

@@ -29,7 +29,7 @@ export async function GET(request: Request) {
       return {
         address: user.address,
         proxy_wallet_address: user.proxy_wallet_address ?? null,
-        username: user.username || undefined,
+        username: user.username!,
         image: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${fallbackAddress}.png`,
         created_at: new Date(user.created_at),
       }

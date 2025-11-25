@@ -1,10 +1,10 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { formatCurrency, truncateAddress } from '@/lib/formatters'
+import { formatCurrency } from '@/lib/formatters'
 
 interface AffiliateRow {
   id: string
-  username?: string | null
+  username: string
   address: string
   proxy_wallet_address?: string | null
   image: string
@@ -50,7 +50,6 @@ export default function AdminAffiliateOverview({ rows }: AdminAffiliateOverviewP
           </thead>
           <tbody>
             {rows.map((row) => {
-              const fallbackAddress = row.proxy_wallet_address ?? row.address
               return (
                 <tr key={row.id} className="border-b last:border-b-0">
                   <td className="px-6 py-4">
@@ -64,10 +63,10 @@ export default function AdminAffiliateOverview({ rows }: AdminAffiliateOverviewP
                       />
                       <div className="space-y-0.5">
                         <Link
-                          href={`/@${row.username || fallbackAddress}`}
+                          href={`/@${row.username}`}
                           className="text-sm font-medium hover:text-primary"
                         >
-                          {row.username || truncateAddress(fallbackAddress)}
+                          {row.username}
                         </Link>
                         {row.affiliate_code && (
                           <p className="text-xs text-muted-foreground">
@@ -98,7 +97,6 @@ export default function AdminAffiliateOverview({ rows }: AdminAffiliateOverviewP
       {/* Mobile Card View */}
       <div className="divide-y md:hidden">
         {rows.map((row) => {
-          const fallbackAddress = row.proxy_wallet_address ?? row.address
           return (
             <div key={row.id} className="space-y-3 p-4">
               <div className="flex items-center gap-3">
@@ -111,10 +109,10 @@ export default function AdminAffiliateOverview({ rows }: AdminAffiliateOverviewP
                 />
                 <div className="flex-1 space-y-0.5">
                   <Link
-                    href={`/@${row.username || fallbackAddress}`}
+                    href={`/@${row.username}`}
                     className="block text-sm font-medium hover:text-primary"
                   >
-                    {row.username || truncateAddress(fallbackAddress)}
+                    {row.username}
                   </Link>
                   {row.affiliate_code && (
                     <p className="text-xs text-muted-foreground">

@@ -30,7 +30,7 @@ export default function PublicProfileHeader({ profile }: PublicProfileHeaderProp
       <div className="size-28 overflow-hidden rounded-full border border-border shadow-sm">
         <Image
           src={profile.image}
-          alt={`${profile.username || 'User'} avatar`}
+          alt={`${profile.username} avatar`}
           width={112}
           height={112}
           className="size-full object-cover"
@@ -39,7 +39,7 @@ export default function PublicProfileHeader({ profile }: PublicProfileHeaderProp
 
       <div className="flex-1 space-y-3">
         <h1 className="text-3xl font-bold tracking-tight">
-          {profile.username || address}
+          {profile.username}
         </h1>
 
         <div className="flex items-center gap-4">

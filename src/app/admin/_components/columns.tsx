@@ -6,11 +6,10 @@ import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { truncateAddress } from '@/lib/formatters'
 
 interface AdminUserRow {
   id: string
-  username?: string | null
+  username: string
   email: string
   address: string
   proxy_wallet_address?: string | null
@@ -65,12 +64,11 @@ export const columns: ColumnDef<AdminUserRow>[] = [
     },
     cell: ({ row }) => {
       const user = row.original
-      const fallbackAddress = user.proxy_wallet_address ?? user.address
       return (
         <div className="flex min-w-44 items-center gap-2">
           <Image
             src={user.avatarUrl}
-            alt={user.username ?? fallbackAddress}
+            alt={user.username}
             width={28}
             height={28}
             className="flex-shrink-0 rounded-full sm:size-8"
@@ -82,7 +80,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
               className="flex items-center gap-1 font-medium text-foreground hover:text-primary"
             >
               <span>
-                {user.username ?? truncateAddress(fallbackAddress)}
+                {user.username}
               </span>
               {user.is_admin && <Badge variant="outline" className="mt-1 text-xs">Admin</Badge>}
             </a>

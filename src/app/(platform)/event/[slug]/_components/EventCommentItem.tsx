@@ -4,7 +4,6 @@ import { useCallback } from 'react'
 import ProfileLink from '@/components/ProfileLink'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useAppKit } from '@/hooks/useAppKit'
-import { truncateAddress } from '@/lib/formatters'
 import EventCommentLikeForm from './EventCommentLikeForm'
 import EventCommentMenu from './EventCommentMenu'
 import EventCommentReplyForm from './EventCommentReplyForm'
@@ -53,17 +52,16 @@ export default function EventCommentItem({
   retryLoadReplies,
 }: CommentItemProps) {
   const { open } = useAppKit()
-  const fallbackAddress = comment.user_proxy_wallet_address ?? comment.user_address
 
   const handleReplyClick = useCallback(() => {
     if (!user) {
       queueMicrotask(() => open())
       return
     }
-    const username = comment.username || (fallbackAddress ? truncateAddress(fallbackAddress) : 'Unknown')
+    const username = comment.username
     onSetReplyingTo(replyingTo === comment.id ? null : comment.id)
     onSetReplyText(`@${username} `)
-  }, [user, comment, replyingTo, onSetReplyingTo, onSetReplyText, open, fallbackAddress])
+  }, [user, comment, replyingTo, onSetReplyingTo, onSetReplyText, open])
 
   const handleLikeToggle = useCallback(() => {
     onLikeToggle(comment.id)
@@ -142,7 +140,7 @@ export default function EventCommentItem({
             user={user}
             eventId={eventId}
             parentCommentId={comment.id}
-            placeholder={`Reply to ${comment.username || (fallbackAddress ? truncateAddress(fallbackAddress) : 'Unknown')}`}
+            placeholder={`Reply to ${comment.username}`}
             initialValue={replyText}
             onCancel={handleReplyCancel}
             onReplyAddedAction={handleReplyAdded}

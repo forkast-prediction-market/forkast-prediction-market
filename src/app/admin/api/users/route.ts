@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server'
 import { isAdminWallet } from '@/lib/admin'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
-import { truncateAddress } from '@/lib/formatters'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
@@ -46,7 +45,7 @@ export async function GET(request: NextRequest) {
       .filter((id): id is string => Boolean(id))))
 
     const { data: referredUsers } = await UserRepository.getUsersByIds(referredIds)
-    const referredMap = new Map<string, { username?: string | null, address: string, proxy_wallet_address?: string | null, image?: string | null }>(
+    const referredMap = new Map<string, { username: string, address: string, proxy_wallet_address?: string | null, image?: string | null }>(
       (referredUsers ?? []).map(referred => [referred.id, referred]),
     )
 
@@ -66,7 +65,7 @@ export async function GET(request: NextRequest) {
           })
 
       const fallbackAddress = user.proxy_wallet_address ?? user.address
-      const profilePath = user.username ?? fallbackAddress
+      const profilePath = user.username
 
       const referredSource = user.referred_by_user_id
         ? referredMap.get(user.referred_by_user_id)
@@ -74,10 +73,9 @@ export async function GET(request: NextRequest) {
       let referredDisplay: string | null = null
       let referredProfile: string | null = null
 
-      if (user.referred_by_user_id) {
-        const referredFallbackAddress = referredSource?.proxy_wallet_address ?? referredSource?.address
-        const referredPath = referredSource?.username ?? referredFallbackAddress ?? user.referred_by_user_id
-        referredDisplay = referredSource?.username ?? truncateAddress(referredFallbackAddress ?? user.referred_by_user_id)
+      if (user.referred_by_user_id && referredSource) {
+        const referredPath = referredSource.username
+        referredDisplay = referredSource.username
         referredProfile = `${baseProfileUrl}/@${referredPath}`
       }
 

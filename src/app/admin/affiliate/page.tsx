@@ -16,7 +16,7 @@ interface AffiliateOverviewRow {
 
 interface AffiliateProfile {
   id: string
-  username?: string | null
+  username: string
   address: string
   proxy_wallet_address?: string | null
   image?: string | null
@@ -25,7 +25,7 @@ interface AffiliateProfile {
 
 interface RowSummary {
   id: string
-  username?: string | null
+  username: string
   address: string
   proxy_wallet_address?: string | null
   image: string
@@ -74,7 +74,7 @@ export default async function AdminSettingsPage() {
 
     return {
       id: item.affiliate_user_id,
-      username: profile?.username ?? undefined,
+      username: profile?.username as string,
       address: profile?.address ?? defaultAddress,
       proxy_wallet_address: profile?.proxy_wallet_address ?? null,
       image: profile?.image ? getSupabaseImageUrl(profile.image) : `https://avatar.vercel.sh/${profileAddress || item.affiliate_user_id}.png`,

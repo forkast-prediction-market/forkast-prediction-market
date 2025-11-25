@@ -11,7 +11,7 @@ const AFFILIATE_CODE_BYTES = 4
 interface AffiliateUser {
   id: string
   affiliate_code: string | null
-  username: string | null
+  username: string
   address: string
   image: string | null
 }
@@ -53,7 +53,7 @@ interface AffiliateOverview {
 
 interface AffiliateProfile {
   id: string
-  username: string | null
+  username: string
   address: string
   proxy_wallet_address: string | null
   image: string | null
@@ -64,7 +64,7 @@ interface ReferralList {
   user_id: string
   created_at: Date
   users: {
-    username: string | null
+    username: string
     address: string
     proxy_wallet_address: string | null
     image: string | null
