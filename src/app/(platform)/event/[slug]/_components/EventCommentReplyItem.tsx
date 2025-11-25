@@ -40,16 +40,17 @@ export default function EventCommentReplyItem({
   isCreatingComment,
 }: ReplyItemProps) {
   const { open } = useAppKit()
+  const fallbackAddress = reply.user_proxy_wallet_address ?? reply.user_address
 
   const handleReplyClick = useCallback(() => {
     if (!user) {
       queueMicrotask(() => open())
       return
     }
-    const username = reply.username || (reply.user_address ? truncateAddress(reply.user_address) : 'Unknown')
+    const username = reply.username || (fallbackAddress ? truncateAddress(fallbackAddress) : 'Unknown')
     onSetReplyingTo(replyingTo === reply.id ? null : reply.id)
     onSetReplyText(`@${username} `)
-  }, [user, reply, replyingTo, onSetReplyingTo, onSetReplyText, open])
+  }, [user, reply, replyingTo, onSetReplyingTo, onSetReplyText, open, fallbackAddress])
 
   const handleLikeToggle = useCallback(() => {
     onLikeToggle(commentId, reply.id)
@@ -73,12 +74,12 @@ export default function EventCommentReplyItem({
     <div className="grid gap-3">
       <div className="flex gap-3">
         <Link
-          href={reply.username ? `/@${reply.username}` : `/@${reply.user_address}`}
+          href={reply.username ? `/@${reply.username}` : `/@${fallbackAddress}`}
           className="text-sm font-medium transition-colors hover:text-foreground"
         >
           <Image
             src={reply.user_avatar}
-            alt={reply.username || reply.user_address || 'Anonymous User'}
+            alt={reply.username || fallbackAddress || 'Anonymous User'}
             width={24}
             height={24}
             className="size-6 rounded-full object-cover transition-opacity hover:opacity-80"
@@ -87,11 +88,11 @@ export default function EventCommentReplyItem({
         <div className="flex-1">
           <div className="mb-1 flex items-center gap-2">
             <Link
-              href={reply.username ? `/@${reply.username}` : `/@${reply.user_address || 'unknown'}`}
+              href={reply.username ? `/@${reply.username}` : `/@${fallbackAddress || 'unknown'}`}
               className="text-sm font-medium transition-colors hover:text-foreground"
             >
               @
-              {reply.username || (reply.user_address ? truncateAddress(reply.user_address) : 'Unknown')}
+              {reply.username || (fallbackAddress ? truncateAddress(fallbackAddress) : 'Unknown')}
             </Link>
             <span className="text-xs text-muted-foreground">
               {formatTimeAgo(reply.created_at)}
@@ -142,7 +143,7 @@ export default function EventCommentReplyItem({
             user={user}
             eventId={eventId}
             parentCommentId={commentId}
-            placeholder={`Reply to ${reply.username || (reply.user_address ? truncateAddress(reply.user_address) : 'Unknown')}`}
+            placeholder={`Reply to ${reply.username || (fallbackAddress ? truncateAddress(fallbackAddress) : 'Unknown')}`}
             initialValue={replyText}
             onCancel={handleReplyCancel}
             onReplyAddedAction={handleReplyAdded}

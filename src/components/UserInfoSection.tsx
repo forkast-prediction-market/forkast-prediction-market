@@ -14,16 +14,17 @@ export default function UserInfoSection() {
     return <></>
   }
 
+  const fallbackAddress = user.proxy_wallet_address ?? user.address
   const displayUsername = user?.username
     ? user.username.length > 12
       ? `${user.username.slice(0, 12)}...`
       : user.username
-    : truncateAddress(user?.address)
+    : truncateAddress(fallbackAddress)
 
-  const polygonscanUrl = `https://polygonscan.com/address/${user.address}`
+  const polygonscanUrl = `https://polygonscan.com/address/${fallbackAddress}`
 
   function handleCopyWallet() {
-    copy(user!.address)
+    copy(fallbackAddress)
   }
 
   return (
@@ -39,7 +40,7 @@ export default function UserInfoSection() {
       </div>
       <div className="min-w-0 flex-1 space-y-1.5">
         <Link
-          href={`/@${user.username || user.address}`}
+          href={`/@${user.username || fallbackAddress}`}
           className={`
             truncate text-base leading-tight font-semibold text-foreground transition-colors duration-200
             hover:text-primary
@@ -57,7 +58,7 @@ export default function UserInfoSection() {
             title={copied ? 'Copied!' : 'Copy address'}
           >
             <span className="font-mono">
-              {truncateAddress(user.address)}
+              {truncateAddress(fallbackAddress)}
             </span>
             {copied
               ? (

@@ -39,7 +39,9 @@ export async function saveProxyWalletSignature({ signature }: SaveProxyWalletSig
   }
 
   try {
-    const proxyAddress = await getSafeProxyWalletAddress(currentUser.address as `0x${string}`)
+    const proxyAddress = currentUser.proxy_wallet_address
+      ? currentUser.proxy_wallet_address as `0x${string}`
+      : await getSafeProxyWalletAddress(currentUser.address as `0x${string}`)
     let proxyIsDeployed = await isProxyWalletDeployed(proxyAddress)
     let txHash: string | null = currentUser.proxy_wallet_tx_hash ?? null
     if (!proxyIsDeployed) {

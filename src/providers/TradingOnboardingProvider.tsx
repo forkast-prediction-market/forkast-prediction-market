@@ -389,18 +389,6 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
               error={proxyWalletError}
               onAction={handleProxyWalletSignature}
             />
-
-            <div className="border-t border-border/60" />
-
-            <TradingRequirementStep
-              title="Approve Tokens"
-              description="Start trading securely with your USDC."
-              actionLabel="Sign"
-              isLoading={false}
-              disabled
-              isComplete={false}
-              onAction={() => {}}
-            />
           </div>
         </DialogContent>
       </Dialog>

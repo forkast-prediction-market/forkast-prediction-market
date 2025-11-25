@@ -157,7 +157,7 @@ export default function SettingsProfileContent({ user }: { user: User }) {
 
         <div className="flex items-center justify-between gap-3">
           <Link
-            href={user.username ? `/@${user.username}` : `/@${user.address}`}
+            href={user.username ? `/@${user.username}` : `/@${user.proxy_wallet_address ?? user.address}`}
             className="text-sm font-medium text-primary transition-colors hover:text-primary/80 hover:underline"
           >
             View Public Profile

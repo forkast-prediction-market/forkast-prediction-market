@@ -53,16 +53,17 @@ export default function EventCommentItem({
   retryLoadReplies,
 }: CommentItemProps) {
   const { open } = useAppKit()
+  const fallbackAddress = comment.user_proxy_wallet_address ?? comment.user_address
 
   const handleReplyClick = useCallback(() => {
     if (!user) {
       queueMicrotask(() => open())
       return
     }
-    const username = comment.username || (comment.user_address ? truncateAddress(comment.user_address) : 'Unknown')
+    const username = comment.username || (fallbackAddress ? truncateAddress(fallbackAddress) : 'Unknown')
     onSetReplyingTo(replyingTo === comment.id ? null : comment.id)
     onSetReplyText(`@${username} `)
-  }, [user, comment, replyingTo, onSetReplyingTo, onSetReplyText, open])
+  }, [user, comment, replyingTo, onSetReplyingTo, onSetReplyText, open, fallbackAddress])
 
   const handleLikeToggle = useCallback(() => {
     onLikeToggle(comment.id)
@@ -89,6 +90,7 @@ export default function EventCommentItem({
           image: comment.user_avatar,
           username: comment.username,
           address: comment.user_address,
+          proxy_wallet_address: comment.user_proxy_wallet_address ?? null,
         }}
         date={comment.created_at}
       >
@@ -140,7 +142,7 @@ export default function EventCommentItem({
             user={user}
             eventId={eventId}
             parentCommentId={comment.id}
-            placeholder={`Reply to ${comment.username || (comment.user_address ? truncateAddress(comment.user_address) : 'Unknown')}`}
+            placeholder={`Reply to ${comment.username || (fallbackAddress ? truncateAddress(fallbackAddress) : 'Unknown')}`}
             initialValue={replyText}
             onCancel={handleReplyCancel}
             onReplyAddedAction={handleReplyAdded}

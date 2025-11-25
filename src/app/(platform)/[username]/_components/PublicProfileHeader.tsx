@@ -17,11 +17,12 @@ export default function PublicProfileHeader({ profile }: PublicProfileHeaderProp
   const user = useUser()
   const { copied, copy } = useClipboard()
 
+  const fallbackAddress = profile.proxy_wallet_address ?? profile.address
   function handleCopyAddress() {
-    copy(profile.address)
+    copy(fallbackAddress)
   }
 
-  const address = truncateAddress(profile.address)
+  const address = truncateAddress(fallbackAddress)
   const joinDate = new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (

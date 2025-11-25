@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 interface ProfileLinkProps {
   user: {
     address: string
+    proxy_wallet_address?: string | null
     image: string
     username?: string | null
   }
@@ -24,14 +25,16 @@ export default function ProfileLink({ user, position, date, children }: ProfileL
   }[position ?? 0] ?? '#000000'
 
   const medalTextColor = medalColor === '#000000' ? '#ffffff' : '#1a1a1a'
-  const href = `/@${user.username || user.address}` as any
+  const fallbackAddress = user.proxy_wallet_address ?? user.address
+  const profileHref = `/@${user.username || fallbackAddress}` as any
+  const displayAddress = truncateAddress(fallbackAddress)
 
   return (
     <div className={cn('flex gap-3 py-2', children ? 'items-start' : 'items-center')}>
-      <Link href={href} className="relative shrink-0">
+      <Link href={profileHref} className="relative shrink-0">
         <Image
           src={user.image}
-          alt={user.username || user.address}
+          alt={user.username || fallbackAddress}
           width={32}
           height={32}
           className="rounded-full"
@@ -48,8 +51,8 @@ export default function ProfileLink({ user, position, date, children }: ProfileL
       </Link>
       <div className="w-full">
         <div className="flex max-w-32 items-center gap-1 lg:max-w-64">
-          <Link href={href} className="truncate text-sm font-medium">
-            {user.username || truncateAddress(user.address)}
+          <Link href={profileHref} className="truncate text-sm font-medium">
+            {user.username || displayAddress}
           </Link>
           {date && (
             <span className="text-xs whitespace-nowrap text-muted-foreground">

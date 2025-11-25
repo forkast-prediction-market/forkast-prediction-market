@@ -194,13 +194,14 @@ function ProfileResults({ profiles, isLoading, query, onResultClick }: ProfileRe
     <div className="max-h-96 overflow-y-auto">
       {profiles.map(profile => (
         <div
-          key={profile.address}
+          key={profile.proxy_wallet_address ?? profile.address}
           onClick={onResultClick}
           className="cursor-pointer px-3 transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-accent"
         >
           <ProfileLink
             user={{
               address: profile.address,
+              proxy_wallet_address: profile.proxy_wallet_address,
               username: profile.username,
               image: profile.image,
             }}

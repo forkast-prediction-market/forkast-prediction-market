@@ -84,20 +84,23 @@ export default function SettingsAffiliateContent({ affiliateData }: SettingsAffi
               No referrals yet. Share your link to get started.
             </div>
           )}
-          {affiliateData.recentReferrals.map(referral => (
-            <div key={referral.user_id} className="flex items-center justify-between px-4 py-4 sm:px-6">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">
-                  {referral.username || truncateAddress(referral.address)}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Joined
-                  {' '}
-                  {new Date(referral.created_at).toLocaleDateString()}
-                </p>
+          {affiliateData.recentReferrals.map((referral) => {
+            const fallbackAddress = referral.proxy_wallet_address ?? referral.address
+            return (
+              <div key={referral.user_id} className="flex items-center justify-between px-4 py-4 sm:px-6">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">
+                    {referral.username || truncateAddress(fallbackAddress)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Joined
+                    {' '}
+                    {new Date(referral.created_at).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>

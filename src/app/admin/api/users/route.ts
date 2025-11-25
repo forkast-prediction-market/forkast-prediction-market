@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       .filter((id): id is string => Boolean(id))))
 
     const { data: referredUsers } = await UserRepository.getUsersByIds(referredIds)
-    const referredMap = new Map<string, { username?: string | null, address: string, image?: string | null }>(
+    const referredMap = new Map<string, { username?: string | null, address: string, proxy_wallet_address?: string | null, image?: string | null }>(
       (referredUsers ?? []).map(referred => [referred.id, referred]),
     )
 
@@ -65,7 +65,8 @@ export async function GET(request: NextRequest) {
             year: 'numeric',
           })
 
-      const profilePath = user.username ?? user.address
+      const fallbackAddress = user.proxy_wallet_address ?? user.address
+      const profilePath = user.username ?? fallbackAddress
 
       const referredSource = user.referred_by_user_id
         ? referredMap.get(user.referred_by_user_id)
@@ -74,8 +75,9 @@ export async function GET(request: NextRequest) {
       let referredProfile: string | null = null
 
       if (user.referred_by_user_id) {
-        const referredPath = referredSource?.username ?? referredSource?.address ?? user.referred_by_user_id
-        referredDisplay = referredSource?.username ?? truncateAddress(referredSource?.address ?? user.referred_by_user_id)
+        const referredFallbackAddress = referredSource?.proxy_wallet_address ?? referredSource?.address
+        const referredPath = referredSource?.username ?? referredFallbackAddress ?? user.referred_by_user_id
+        referredDisplay = referredSource?.username ?? truncateAddress(referredFallbackAddress ?? user.referred_by_user_id)
         referredProfile = `${baseProfileUrl}/@${referredPath}`
       }
 
@@ -83,13 +85,14 @@ export async function GET(request: NextRequest) {
         user.username,
         user.email,
         user.address,
+        fallbackAddress,
         referredDisplay,
       ].filter(Boolean).join(' ').toLowerCase()
 
       return {
         ...user,
         is_admin: isAdminWallet(user.address),
-        avatarUrl: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${user.address}.png`,
+        avatarUrl: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${fallbackAddress}.png`,
         referred_by_display: referredDisplay,
         referred_by_profile_url: referredProfile,
         created_label: createdLabel,

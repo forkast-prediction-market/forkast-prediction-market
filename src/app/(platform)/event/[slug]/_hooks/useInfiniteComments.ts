@@ -110,6 +110,7 @@ export function useInfiniteComments(eventSlug: string) {
         username: user?.username || 'You',
         user_avatar: user?.image || null,
         user_address: user?.address || '0x0000...0000',
+        user_proxy_wallet_address: user?.proxy_wallet_address || null,
         likes_count: 0,
         replies_count: 0,
         created_at: new Date().toISOString(),

@@ -25,6 +25,20 @@ export async function GET(
       user_has_liked: false,
     }))
 
+    if (normalizedReplies.length) {
+      const replyUserIds = Array.from(new Set(normalizedReplies.map(reply => String(reply.user_id))))
+      if (replyUserIds.length) {
+        const { data: replyUsers } = await UserRepository.getUsersByIds(replyUserIds)
+        const proxyLookup = new Map<string, string | null>(
+          (replyUsers ?? []).map(profile => [profile.id, profile.proxy_wallet_address ?? null]),
+        )
+        normalizedReplies = normalizedReplies.map(reply => ({
+          ...reply,
+          user_proxy_wallet_address: proxyLookup.get(String(reply.user_id)) ?? null,
+        }))
+      }
+    }
+
     if (currentUserId && normalizedReplies.length) {
       const replyIds = normalizedReplies.map(reply => reply.id)
       const { data: userLikes, error: userLikesError } = await CommentRepository.getCommentsIdsLikedByUser(currentUserId, replyIds)

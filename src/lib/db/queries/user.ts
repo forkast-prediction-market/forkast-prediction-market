@@ -1,8 +1,9 @@
-import type { ActivityOrder, MarketOrderType, PositionsQueryParams, QueryResult, User, UserMarketOutcomePosition, UserPosition } from '@/types'
+import type { ActivityOrder, MarketOrderType, PositionsQueryParams, ProxyWalletStatus, QueryResult, User, UserMarketOutcomePosition, UserPosition } from '@/types'
 import { and, asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
+import { getSafeProxyWalletAddress, isProxyWalletDeployed } from '@/lib/contracts/safeProxy'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
 import { users } from '@/lib/db/schema/auth/tables'
 import { conditions, events, markets, outcomes } from '@/lib/db/schema/events/tables'
@@ -20,6 +21,7 @@ export const UserRepository = {
         .select({
           id: users.id,
           address: users.address,
+          proxy_wallet_address: users.proxy_wallet_address,
           username: users.username,
           image: users.image,
           created_at: users.created_at,
@@ -28,6 +30,7 @@ export const UserRepository = {
         .where(or(
           eq(users.username, username),
           eq(users.address, username),
+          eq(users.proxy_wallet_address, username),
         ))
         .limit(1)
 
@@ -40,6 +43,7 @@ export const UserRepository = {
       const data = {
         id: rawData.id,
         address: rawData.address,
+        proxy_wallet_address: rawData.proxy_wallet_address,
         username: rawData.username || undefined,
         image: rawData.image ? getSupabaseImageUrl(rawData.image) : `https://avatar.vercel.sh/${rawData.address}.png`,
         created_at: rawData.created_at,
@@ -192,6 +196,8 @@ export const UserRepository = {
         }
       }
 
+      await ensureUserProxyWallet(user)
+
       return user
     }
     catch {
@@ -233,6 +239,7 @@ export const UserRepository = {
             ilike(users.username, `%${sanitizedSearchTerm}%`),
             ilike(users.email, `%${sanitizedSearchTerm}%`),
             ilike(users.address, `%${sanitizedSearchTerm}%`),
+            ilike(users.proxy_wallet_address, `%${sanitizedSearchTerm}%`),
           )
         }
       }
@@ -267,6 +274,7 @@ export const UserRepository = {
           username: users.username,
           email: users.email,
           address: users.address,
+          proxy_wallet_address: users.proxy_wallet_address,
           created_at: users.created_at,
           image: users.image,
           affiliate_code: users.affiliate_code,
@@ -308,6 +316,7 @@ export const UserRepository = {
           id: users.id,
           username: users.username,
           address: users.address,
+          proxy_wallet_address: users.proxy_wallet_address,
           image: users.image,
         })
         .from(users)
@@ -632,4 +641,66 @@ export const UserRepository = {
       return { data, error: null }
     })
   },
+}
+
+async function ensureUserProxyWallet(user: any) {
+  const owner = typeof user?.address === 'string' ? user.address : ''
+  if (!owner || !owner.startsWith('0x')) {
+    return
+  }
+
+  const hasProxyAddress = typeof user?.proxy_wallet_address === 'string' && user.proxy_wallet_address.startsWith('0x')
+  const isAlreadyDeployed = hasProxyAddress && user.proxy_wallet_status === 'deployed'
+
+  if (isAlreadyDeployed) {
+    return
+  }
+
+  try {
+    const proxyAddress = hasProxyAddress
+      ? user.proxy_wallet_address as `0x${string}`
+      : await getSafeProxyWalletAddress(owner as `0x${string}`)
+
+    if (!proxyAddress) {
+      return
+    }
+
+    let nextStatus: ProxyWalletStatus = (user.proxy_wallet_status as ProxyWalletStatus | null) ?? 'not_started'
+    const updates: Record<string, any> = {}
+
+    if (!hasProxyAddress) {
+      updates.proxy_wallet_address = proxyAddress
+    }
+
+    const shouldCheckDeployment = !hasProxyAddress || user.proxy_wallet_status === 'signed'
+    if (shouldCheckDeployment) {
+      const deployed = await isProxyWalletDeployed(proxyAddress as `0x${string}`)
+      if (deployed) {
+        nextStatus = 'deployed'
+      }
+    }
+
+    if (nextStatus !== user.proxy_wallet_status) {
+      updates.proxy_wallet_status = nextStatus
+      if (nextStatus === 'deployed') {
+        updates.proxy_wallet_tx_hash = null
+      }
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await db
+        .update(users)
+        .set(updates)
+        .where(eq(users.id, user.id))
+    }
+
+    user.proxy_wallet_address = proxyAddress
+    user.proxy_wallet_status = nextStatus
+    if (nextStatus === 'deployed') {
+      user.proxy_wallet_tx_hash = null
+    }
+  }
+  catch (error) {
+    console.error('Failed to ensure proxy wallet metadata', error)
+  }
 }

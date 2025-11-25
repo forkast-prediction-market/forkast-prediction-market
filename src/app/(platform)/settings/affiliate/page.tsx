@@ -41,11 +41,11 @@ export default async function AffiliateSettingsPage() {
         },
         recentReferrals: (referralsData ?? []).map((referral: any) => {
           const userInfo = Array.isArray(referral.users) ? referral.users[0] : referral.users
-
           return {
             user_id: referral.user_id as string,
             username: userInfo?.username as string | undefined,
             address: (userInfo?.address as string | undefined) ?? referral.user_id as string,
+            proxy_wallet_address: userInfo?.proxy_wallet_address as string | undefined,
             created_at: referral.created_at as string,
           }
         }),

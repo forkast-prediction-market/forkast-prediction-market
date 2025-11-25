@@ -138,6 +138,7 @@ export interface PublicProfileStats {
 
 export interface PublicProfile {
   address: string
+  proxy_wallet_address?: string | null
   username?: string
   image: string
   created_at: Date
@@ -164,6 +165,7 @@ export interface Comment {
   username: string
   user_avatar: string
   user_address: string
+  user_proxy_wallet_address?: string | null
   likes_count: number
   replies_count: number
   created_at: string
@@ -213,6 +215,7 @@ export interface AffiliateData {
     user_id: string
     username?: string | null
     address: string
+    proxy_wallet_address?: string | null
     created_at: string
   }[]
 }
@@ -251,6 +254,7 @@ export interface TopHolder {
     id: string
     username: string | null
     address: string
+    proxy_wallet_address?: string | null
     image: string
   }
   net_position: string
