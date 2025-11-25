@@ -9,6 +9,8 @@ import { users } from '@/lib/db/schema/auth/tables'
 import { db } from '@/lib/drizzle'
 import { buildClobHmacSignature } from '@/lib/hmac'
 
+const ZERO_TX_HASH = '0x0000000000000000000000000000000000000000000000000000000000000000'
+
 interface SaveProxyWalletSignatureArgs {
   signature: string
 }
@@ -45,10 +47,16 @@ export async function saveProxyWalletSignature({ signature }: SaveProxyWalletSig
         owner: currentUser.address,
         signature: trimmedSignature,
       })
-      const deployedAfterTrigger = await waitForProxyDeployment(proxyAddress)
-      if (deployedAfterTrigger) {
+      if (txHash === ZERO_TX_HASH) {
         proxyIsDeployed = true
         txHash = null
+      }
+      else {
+        const deployedAfterTrigger = await waitForProxyDeployment(proxyAddress)
+        if (deployedAfterTrigger) {
+          proxyIsDeployed = true
+          txHash = null
+        }
       }
     }
 
