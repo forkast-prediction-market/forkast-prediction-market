@@ -9,8 +9,6 @@ import { users } from '@/lib/db/schema/auth/tables'
 import { db } from '@/lib/drizzle'
 import { buildClobHmacSignature } from '@/lib/hmac'
 
-const ZERO_TX_HASH = '0x0000000000000000000000000000000000000000000000000000000000000000'
-
 interface SaveProxyWalletSignatureArgs {
   signature: string
 }
@@ -49,17 +47,8 @@ export async function saveProxyWalletSignature({ signature }: SaveProxyWalletSig
         owner: currentUser.address,
         signature: trimmedSignature,
       })
-      if (txHash === ZERO_TX_HASH) {
-        proxyIsDeployed = true
-        txHash = null
-      }
-      else {
-        const deployedAfterTrigger = await waitForProxyDeployment(proxyAddress)
-        if (deployedAfterTrigger) {
-          proxyIsDeployed = true
-          txHash = null
-        }
-      }
+      proxyIsDeployed = true
+      txHash = null
     }
 
     const [updated] = await db
@@ -159,22 +148,4 @@ async function triggerSafeProxyDeployment({ owner, signature }: { owner: string,
 
   const txHash = typeof json?.txHash === 'string' ? json.txHash : null
   return txHash
-}
-
-async function waitForProxyDeployment(proxyAddress: `0x${string}`, options?: { maxAttempts?: number, delayMs?: number }) {
-  const maxAttempts = Math.max(1, options?.maxAttempts ?? 10)
-  const delayMs = Math.max(250, options?.delayMs ?? 3000)
-
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const deployed = await isProxyWalletDeployed(proxyAddress)
-    if (deployed) {
-      return true
-    }
-
-    if (attempt < maxAttempts - 1) {
-      await new Promise(resolve => setTimeout(resolve, delayMs))
-    }
-  }
-
-  return false
 }
