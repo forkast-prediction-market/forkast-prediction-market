@@ -63,7 +63,7 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
         <EventMarkets event={event} isMobile={isMobile} />
         {event.total_markets_count === 1 && <EventSingleMarketOrderBook market={event.markets[0]} />}
         {event.total_markets_count === 1 && user && (
-          <div className="grid gap-2">
+          <div className="grid gap-3">
             <EventMarketPositions market={event.markets[0]} collapsible />
             <EventMarketHistory market={event.markets[0]} />
           </div>
