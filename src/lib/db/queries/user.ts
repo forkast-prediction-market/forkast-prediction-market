@@ -196,7 +196,33 @@ export const UserRepository = {
         }
       }
 
-      await ensureUserProxyWallet(user)
+      const proxyAddress = await ensureUserProxyWallet(user)
+
+      if (!user.username) {
+        const addressForUsername = proxyAddress
+          || (typeof user.proxy_wallet_address === 'string' ? user.proxy_wallet_address : '')
+          || (typeof user.address === 'string' ? user.address : '')
+
+        const generatedUsername = addressForUsername ? generateUsernameFromAddress(addressForUsername) : null
+
+        if (generatedUsername) {
+          try {
+            const result = await db
+              .update(users)
+              .set({ username: generatedUsername })
+              .where(eq(users.id, user.id))
+              .returning({ username: users.username })
+
+            const updatedUsername = result[0]?.username
+            if (updatedUsername) {
+              user.username = updatedUsername
+            }
+          }
+          catch (error) {
+            console.error('Failed to set deterministic username', error)
+          }
+        }
+      }
 
       return user
     }
@@ -643,17 +669,32 @@ export const UserRepository = {
   },
 }
 
-async function ensureUserProxyWallet(user: any) {
+function generateUsernameFromAddress(address: string) {
+  const normalized = address.toLowerCase()
+
+  if (!/^0x[a-f0-9]{40}$/.test(normalized)) {
+    return null
+  }
+
+  const seed = normalized.slice(2)
+  const suffixHex = seed.slice(-8) || seed
+  const suffixNumber = Number.parseInt(suffixHex, 16)
+  const deterministicSuffix = Number.isNaN(suffixNumber) ? 0 : suffixNumber
+
+  return `${normalized}-${deterministicSuffix}`
+}
+
+async function ensureUserProxyWallet(user: any): Promise<string | null> {
   const owner = typeof user?.address === 'string' ? user.address : ''
   if (!owner || !owner.startsWith('0x')) {
-    return
+    return null
   }
 
   const hasProxyAddress = typeof user?.proxy_wallet_address === 'string' && user.proxy_wallet_address.startsWith('0x')
   const isAlreadyDeployed = hasProxyAddress && user.proxy_wallet_status === 'deployed'
 
   if (isAlreadyDeployed) {
-    return
+    return user.proxy_wallet_address
   }
 
   try {
@@ -662,7 +703,7 @@ async function ensureUserProxyWallet(user: any) {
       : await getSafeProxyWalletAddress(owner as `0x${string}`)
 
     if (!proxyAddress) {
-      return
+      return null
     }
 
     let nextStatus: ProxyWalletStatus = (user.proxy_wallet_status as ProxyWalletStatus | null) ?? 'not_started'
@@ -699,8 +740,12 @@ async function ensureUserProxyWallet(user: any) {
     if (nextStatus === 'deployed') {
       user.proxy_wallet_tx_hash = null
     }
+
+    return proxyAddress
   }
   catch (error) {
     console.error('Failed to ensure proxy wallet metadata', error)
   }
+
+  return null
 }

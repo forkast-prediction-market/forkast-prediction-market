@@ -69,14 +69,12 @@ export function getSafeProxyDomain(): TypedDataDomain {
 
 export async function getSafeProxyWalletAddress(owner: Address, options?: GetProxyWalletAddressOptions) {
   const exchangeAddress = resolveExchangeAddress(options)
-  const proxyAddress = await getSafeProxyClient().readContract({
+  return await getSafeProxyClient().readContract({
     address: exchangeAddress,
     abi: CTF_EXCHANGE_SAFE_ABI,
     functionName: 'getSafeAddress',
     args: [owner],
   })
-
-  return proxyAddress
 }
 
 export async function isProxyWalletDeployed(address?: Address | string | null) {
