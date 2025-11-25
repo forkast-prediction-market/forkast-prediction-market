@@ -17,7 +17,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { useAppKit } from '@/hooks/useAppKit'
-import { defaultNetwork } from '@/lib/appkit'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import {
   getSafeProxyDomain,
@@ -57,7 +56,6 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     Boolean(user?.proxy_wallet_address && proxyWalletStatus === 'signed')
   ), [proxyWalletStatus, user?.proxy_wallet_address])
   const hasProxyWallet = hasDeployedProxyWallet
-  const proxyWalletTxHash = user?.proxy_wallet_tx_hash ?? null
 
   useEffect(() => {
     if (!user?.id) {
@@ -321,9 +319,6 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
           >
             {isSigningProxyWallet || isProxyWalletDeploying ? <Loader2 className="size-5 animate-spin" /> : 'Enable Trading'}
           </Button>
-          {isProxyWalletDeploying && proxyWalletTxHash && (
-            <ProxyDeploymentStatus txHash={proxyWalletTxHash} className="mt-3" />
-          )}
         </DialogContent>
       </Dialog>
 
@@ -392,11 +387,6 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
               disabled={isProxyWalletDeploying}
               isComplete={hasProxyWallet}
               error={proxyWalletError}
-              helperText={isProxyWalletDeploying && proxyWalletTxHash
-                ? (
-                    <ProxyDeploymentStatus txHash={proxyWalletTxHash} />
-                  )
-                : null}
               onAction={handleProxyWalletSignature}
             />
 
@@ -427,7 +417,6 @@ interface TradingRequirementStepProps {
   isComplete: boolean
   error?: string | null
   onAction: () => void
-  helperText?: ReactNode | null
 }
 
 function TradingRequirementStep({
@@ -439,7 +428,6 @@ function TradingRequirementStep({
   isComplete,
   error,
   onAction,
-  helperText,
 }: TradingRequirementStepProps) {
   return (
     <div className="flex flex-col gap-2">
@@ -449,9 +437,6 @@ function TradingRequirementStep({
           <p className="text-sm text-muted-foreground">{description}</p>
           {!isComplete && error && (
             <p className="mt-2 text-sm text-destructive">{error}</p>
-          )}
-          {!isComplete && helperText && (
-            <div className="mt-2">{helperText}</div>
           )}
         </div>
 
@@ -474,35 +459,6 @@ function TradingRequirementStep({
             )}
       </div>
     </div>
-  )
-}
-
-function ProxyDeploymentStatus({ txHash, className }: { txHash: string, className?: string }) {
-  if (!txHash) {
-    return null
-  }
-
-  const explorerBase = defaultNetwork?.blockExplorers?.default?.url
-  const shortHash = txHash.length > 12 ? `${txHash.slice(0, 10)}...${txHash.slice(-6)}` : txHash
-  const content = explorerBase
-    ? (
-        <a
-          href={`${explorerBase}/tx/${txHash}`}
-          target="_blank"
-          rel="noreferrer"
-          className="font-medium text-primary hover:underline"
-        >
-          {shortHash}
-        </a>
-      )
-    : <span className="font-mono">{shortHash}</span>
-
-  return (
-    <p className={cn('text-sm text-muted-foreground', className)}>
-      Deployment pending:
-      {' '}
-      {content}
-    </p>
   )
 }
 
