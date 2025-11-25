@@ -20,7 +20,7 @@ export default async function TwoFactorSettingsPage() {
         </p>
       </div>
 
-      <div className="mx-auto max-w-2xl lg:mx-0">
+      <div className="mx-auto w-full max-w-2xl lg:mx-0">
         <SettingsTwoFactorAuthContent user={user} />
       </div>
     </section>
