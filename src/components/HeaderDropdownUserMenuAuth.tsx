@@ -5,6 +5,7 @@ import { ChevronDownIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { redirect, usePathname } from 'next/navigation'
+import HeaderPortfolio from '@/components/HeaderPortfolio'
 import ThemeSelector from '@/components/ThemeSelector'
 import { Button } from '@/components/ui/button'
 import {
@@ -15,6 +16,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import UserInfoSection from '@/components/UserInfoSection'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { useFilters } from '@/providers/FilterProvider'
 import { useUser } from '@/stores/useUser'
 
@@ -24,6 +26,7 @@ export default function HeaderDropdownUserMenuAuth() {
   const user = useUser()
   const pathname = usePathname()
   const isAdmin = pathname.startsWith('/admin')
+  const isMobile = useIsMobile()
 
   function handleWatchlistClick() {
     updateFilters({ bookmarked: !filters.bookmarked })
@@ -95,6 +98,18 @@ export default function HeaderDropdownUserMenuAuth() {
         <DropdownMenuItem asChild>
           <Link href="/terms-of-use" data-testid="header-terms-link">Terms of Use</Link>
         </DropdownMenuItem>
+
+        {isMobile && (
+          <>
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem asChild>
+              <div className="flex justify-center">
+                <HeaderPortfolio />
+              </div>
+            </DropdownMenuItem>
+          </>
+        )}
 
         <DropdownMenuSeparator />
 

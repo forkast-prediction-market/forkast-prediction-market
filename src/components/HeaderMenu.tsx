@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useAppKit } from '@/hooks/useAppKit'
 import { useClientMounted } from '@/hooks/useClientMounted'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { useUser } from '@/stores/useUser'
 
 const { useSession } = createAuthClient()
@@ -20,6 +21,7 @@ export default function HeaderMenu() {
   const { open, isReady } = useAppKit()
   const { isConnected, status } = useAppKitAccount()
   const { data: session } = useSession()
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     if (session?.user) {
@@ -45,7 +47,7 @@ export default function HeaderMenu() {
     <>
       {isConnected && (
         <>
-          <HeaderPortfolio />
+          {!isMobile && <HeaderPortfolio />}
           <HeaderNotifications />
           <HeaderDropdownUserMenuAuth />
         </>
