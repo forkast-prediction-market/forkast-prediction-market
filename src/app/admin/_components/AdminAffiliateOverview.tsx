@@ -6,6 +6,7 @@ interface AffiliateRow {
   id: string
   username?: string | null
   address: string
+  proxy_wallet_address?: string | null
   image: string
   affiliate_code?: string | null
   total_referrals: number
