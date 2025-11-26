@@ -4,6 +4,7 @@ import { RefreshCwIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import EventMarketCard from '@/app/(platform)/event/[slug]/_components/EventMarketCard'
 import EventMarketHistory from '@/app/(platform)/event/[slug]/_components/EventMarketHistory'
+import EventMarketOpenOrders from '@/app/(platform)/event/[slug]/_components/EventMarketOpenOrders'
 import EventMarketPositions from '@/app/(platform)/event/[slug]/_components/EventMarketPositions'
 import EventOrderBook, { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
 import MarketOutcomeGraph from '@/app/(platform)/event/[slug]/_components/MarketOutcomeGraph'
@@ -17,9 +18,10 @@ import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
 
 const MARKET_DETAIL_TABS: Array<{ id: MarketDetailTab, label: string }> = [
-  { id: 'orderBook', label: 'Order Book' },
-  { id: 'graph', label: 'Graph' },
   { id: 'positions', label: 'Positions' },
+  { id: 'orderBook', label: 'Order Book' },
+  { id: 'openOrders', label: 'Open Orders' },
+  { id: 'graph', label: 'Graph' },
   { id: 'resolution', label: 'Resolution' },
   { id: 'history', label: 'History' },
 ]
@@ -98,7 +100,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   const visibleDetailTabs = useMemo(
     () => (user?.address
       ? MARKET_DETAIL_TABS
-      : MARKET_DETAIL_TABS.filter(tab => tab.id !== 'positions')),
+      : MARKET_DETAIL_TABS.filter(tab => tab.id !== 'positions' && tab.id !== 'openOrders')),
     [user?.address],
   )
 
@@ -272,6 +274,16 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                     {tabToRender === 'positions' && (
                       <div className={MARKET_DETAIL_PANEL_CLASS}>
                         <EventMarketPositions market={market} collapsible={false} />
+                      </div>
+                    )}
+
+                    {tabToRender === 'openOrders' && (
+                      <div className={MARKET_DETAIL_PANEL_CLASS}>
+                        <EventMarketOpenOrders
+                          market={market}
+                          eventSlug={event.slug}
+                          collapsible={false}
+                        />
                       </div>
                     )}
 

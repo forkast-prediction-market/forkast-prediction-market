@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 
-export type MarketDetailTab = 'orderBook' | 'graph' | 'resolution' | 'history' | 'positions'
+export type MarketDetailTab = 'orderBook' | 'graph' | 'resolution' | 'history' | 'positions' | 'openOrders'
 
 const DEFAULT_TAB: MarketDetailTab = 'orderBook'
 
