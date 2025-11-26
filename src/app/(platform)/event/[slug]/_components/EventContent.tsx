@@ -6,6 +6,7 @@ import EventChart from '@/app/(platform)/event/[slug]/_components/EventChart'
 import EventHeader from '@/app/(platform)/event/[slug]/_components/EventHeader'
 import EventMarketContext from '@/app/(platform)/event/[slug]/_components/EventMarketContext'
 import EventMarketHistory from '@/app/(platform)/event/[slug]/_components/EventMarketHistory'
+import EventMarketOpenOrders from '@/app/(platform)/event/[slug]/_components/EventMarketOpenOrders'
 import EventMarketPositions from '@/app/(platform)/event/[slug]/_components/EventMarketPositions'
 import EventMarkets from '@/app/(platform)/event/[slug]/_components/EventMarkets'
 import EventMetaInformation from '@/app/(platform)/event/[slug]/_components/EventMetaInformation'
@@ -61,11 +62,12 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
         <EventMetaInformation event={event} />
         <EventChart event={event} isMobile={isMobile} />
         <EventMarkets event={event} isMobile={isMobile} />
-        {event.total_markets_count === 1 && <EventSingleMarketOrderBook market={event.markets[0]} />}
-        {event.total_markets_count === 1 && user && (
+        {event.total_markets_count === 1 && (
           <>
-            <EventMarketPositions market={event.markets[0]} collapsible />
-            <EventMarketHistory market={event.markets[0]} />
+            { user && <EventMarketPositions market={event.markets[0]} collapsible /> }
+            <EventSingleMarketOrderBook market={event.markets[0]} />
+            { user && <EventMarketOpenOrders market={event.markets[0]} eventSlug={event.slug} collapsible />}
+            { user && <EventMarketHistory market={event.markets[0]} /> }
           </>
         )}
         {marketContextEnabled && <EventMarketContext event={event} />}

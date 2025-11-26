@@ -267,6 +267,28 @@ export type OrderType = 'MARKET' | 'LIMIT'
 export type ClobOrderType = 'FOK' | 'FAK' | 'GTC' | 'GTD'
 export type MarketOrderType = 'FAK' | 'FOK'
 
+export interface UserOpenOrder {
+  id: string
+  side: 'buy' | 'sell'
+  type: ClobOrderType
+  status: string
+  price: number
+  maker_amount: number
+  taker_amount: number
+  created_at: string
+  outcome: {
+    index: number
+    text: string
+  }
+  market: {
+    condition_id: string
+    title: string
+    slug: string
+    is_active: boolean
+    is_resolved: boolean
+  }
+}
+
 export type QueryResult<T>
   = | { data: T, error: null }
     | { data: null, error: string }
