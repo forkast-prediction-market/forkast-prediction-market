@@ -1,6 +1,6 @@
 import type { LimitExpirationOption } from '@/stores/useOrder'
 import type { OrderSide } from '@/types'
-import { BanknoteIcon } from 'lucide-react'
+import { BanknoteIcon, TriangleAlertIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -16,6 +16,7 @@ import { Switch } from '@/components/ui/switch'
 import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { ORDER_SIDE } from '@/lib/constants'
 import { formatAmountInputValue, formatCurrency } from '@/lib/formatters'
+import { MIN_LIMIT_ORDER_SHARES } from '@/lib/orders/validation'
 import { cn } from '@/lib/utils'
 
 function clamp(value: number, min: number, max: number) {
@@ -30,6 +31,7 @@ interface EventOrderPanelLimitControlsProps {
   limitExpirationOption: LimitExpirationOption
   isLimitOrder: boolean
   availableShares: number
+  showLimitMinimumWarning: boolean
   onLimitPriceChange: (value: string) => void
   onLimitSharesChange: (value: string) => void
   onLimitExpirationEnabledChange: (value: boolean) => void
@@ -45,6 +47,7 @@ export default function EventOrderPanelLimitControls({
   limitExpirationOption,
   isLimitOrder,
   availableShares,
+  showLimitMinimumWarning,
   onLimitPriceChange,
   onLimitSharesChange,
   onLimitExpirationEnabledChange,
@@ -87,6 +90,7 @@ export default function EventOrderPanelLimitControls({
 
   const totalValueLabel = formatCurrency(totalValue)
   const potentialWinLabel = formatCurrency(potentialWin)
+  const showMinimumSharesWarning = showLimitMinimumWarning && isLimitOrder && limitSharesNumber < MIN_LIMIT_ORDER_SHARES
 
   function syncAmount(priceValue: number, sharesValue: number) {
     if (!isLimitOrder) {
@@ -279,6 +283,12 @@ export default function EventOrderPanelLimitControls({
           </span>
         </div>
       </div>
+      {showMinimumSharesWarning && (
+        <div className="flex items-center justify-center gap-2 pt-2 text-sm font-semibold text-orange-500">
+          <TriangleAlertIcon className="size-4" />
+          Minimum {MIN_LIMIT_ORDER_SHARES} shares for limit orders
+        </div>
+      )}
     </div>
   )
 }
