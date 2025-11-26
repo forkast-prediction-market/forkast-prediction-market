@@ -4,7 +4,7 @@ import type { AffiliateData } from '@/types'
 import { CheckIcon, CopyIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useClipboard } from '@/hooks/useClipboard'
-import { formatCurrency, formatPercent, truncateAddress } from '@/lib/formatters'
+import { formatCurrency, formatPercent } from '@/lib/formatters'
 
 interface SettingsAffiliateContentProps {
   affiliateData?: AffiliateData
@@ -88,7 +88,7 @@ export default function SettingsAffiliateContent({ affiliateData }: SettingsAffi
             <div key={referral.user_id} className="flex items-center justify-between px-4 py-4 sm:px-6">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium">
-                  {referral.username || truncateAddress(referral.address)}
+                  {referral.username}
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Joined

@@ -99,6 +99,18 @@ export function useInfiniteComments(eventSlug: string) {
       return result.comment
     },
     onMutate: async ({ content, parentCommentId, user }) => {
+      if (!user) {
+        throw new Error('User is required to post a comment')
+      }
+
+      const currentUser = user as {
+        id: string
+        username: string
+        image?: string | null
+        address?: string
+        proxy_wallet_address?: string | null
+      }
+
       await queryClient.cancelQueries({ queryKey: ['event-comments', eventSlug] })
 
       const previousComments = queryClient.getQueryData(['event-comments', eventSlug])
@@ -106,10 +118,11 @@ export function useInfiniteComments(eventSlug: string) {
       const optimisticComment: Comment = {
         id: `temp-${Date.now()}`,
         content,
-        user_id: user?.id || 'current-user',
-        username: user?.username || 'You',
-        user_avatar: user?.image || null,
-        user_address: user?.address || '0x0000...0000',
+        user_id: currentUser.id,
+        username: currentUser.username,
+        user_avatar: currentUser.image as string,
+        user_address: currentUser.address || '0x0000...0000',
+        user_proxy_wallet_address: currentUser.proxy_wallet_address || null,
         likes_count: 0,
         replies_count: 0,
         created_at: new Date().toISOString(),

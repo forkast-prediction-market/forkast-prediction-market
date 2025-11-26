@@ -34,8 +34,37 @@ export async function GET(
       recent_replies: Array.isArray(comment.recent_replies) ? comment.recent_replies : [],
     }))
 
-    if (!currentUserId || normalizedComments.length === 0) {
-      const commentsWithoutLikes = normalizedComments.map((comment: any) => ({
+    const userIds = new Set<string>()
+    normalizedComments.forEach((comment: any) => {
+      if (comment.user_id) {
+        userIds.add(String(comment.user_id))
+      }
+      for (const reply of comment.recent_replies || []) {
+        if (reply.user_id) {
+          userIds.add(String(reply.user_id))
+        }
+      }
+    })
+
+    const proxyLookup = new Map<string, string | null>()
+    if (userIds.size > 0) {
+      const { data: commentUsers } = await UserRepository.getUsersByIds(Array.from(userIds))
+      for (const profile of commentUsers ?? []) {
+        proxyLookup.set(profile.id, profile.proxy_wallet_address ?? null)
+      }
+    }
+
+    const commentsWithProfiles = normalizedComments.map((comment: any) => ({
+      ...comment,
+      user_proxy_wallet_address: proxyLookup.get(String(comment.user_id)) ?? null,
+      recent_replies: (comment.recent_replies || []).map((reply: any) => ({
+        ...reply,
+        user_proxy_wallet_address: proxyLookup.get(String(reply.user_id)) ?? null,
+      })),
+    }))
+
+    if (!currentUserId || commentsWithProfiles.length === 0) {
+      const commentsWithoutLikes = commentsWithProfiles.map((comment: any) => ({
         ...comment,
         is_owner: false,
         user_has_liked: false,
@@ -52,12 +81,12 @@ export async function GET(
       return NextResponse.json(commentsWithoutLikes)
     }
 
-    const commentIds = normalizedComments.map(comment => comment.id)
-    const replyIds = normalizedComments.flatMap(comment => comment.recent_replies.map((reply: any) => reply.id))
+    const commentIds = commentsWithProfiles.map(comment => comment.id)
+    const replyIds = commentsWithProfiles.flatMap(comment => comment.recent_replies.map((reply: any) => reply.id))
     const allIds = [...commentIds, ...replyIds]
 
     if (allIds.length === 0) {
-      const commentsWithoutLikes = normalizedComments.map((comment: any) => ({
+      const commentsWithoutLikes = commentsWithProfiles.map((comment: any) => ({
         ...comment,
         is_owner: currentUserId === comment.user_id,
         user_has_liked: false,
@@ -81,7 +110,7 @@ export async function GET(
 
     const likedIds = new Set((userLikes as unknown as any[])?.map((like: any) => like.comment_id) || [])
 
-    const commentsWithLikeStatus = normalizedComments.map((comment: any) => {
+    const commentsWithLikeStatus = commentsWithProfiles.map((comment: any) => {
       const baseReplies = comment.recent_replies || []
       const limitedReplies = comment.replies_count > 3
         ? baseReplies.slice(0, 3)

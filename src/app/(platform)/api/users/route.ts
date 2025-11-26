@@ -24,12 +24,16 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }
 
-    const profiles: PublicProfile[] = (data || []).map(user => ({
-      address: user.address,
-      username: user.username || undefined,
-      image: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${user.address}.png`,
-      created_at: new Date(user.created_at),
-    }))
+    const profiles: PublicProfile[] = (data || []).map((user) => {
+      const fallbackAddress = user.proxy_wallet_address ?? user.address
+      return {
+        address: user.address,
+        proxy_wallet_address: user.proxy_wallet_address ?? null,
+        username: user.username!,
+        image: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${fallbackAddress}.png`,
+        created_at: new Date(user.created_at),
+      }
+    })
 
     return NextResponse.json(profiles)
   }

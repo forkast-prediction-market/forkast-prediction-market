@@ -3,7 +3,6 @@ import { NextResponse } from 'next/server'
 import { isAdminWallet } from '@/lib/admin'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
-import { truncateAddress } from '@/lib/formatters'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 export async function GET(request: NextRequest) {
@@ -46,8 +45,15 @@ export async function GET(request: NextRequest) {
       .filter((id): id is string => Boolean(id))))
 
     const { data: referredUsers } = await UserRepository.getUsersByIds(referredIds)
-    const referredMap = new Map<string, { username?: string | null, address: string, image?: string | null }>(
-      (referredUsers ?? []).map(referred => [referred.id, referred]),
+    const referredEntries = (referredUsers ?? []).filter((ref): ref is typeof ref & { username: string } => Boolean(ref.username))
+
+    const referredMap = new Map<string, { username: string, address: string, proxy_wallet_address?: string | null, image?: string | null }>(
+      referredEntries.map(referred => [referred.id, {
+        username: referred.username,
+        address: referred.address,
+        proxy_wallet_address: referred.proxy_wallet_address,
+        image: referred.image,
+      }]),
     )
 
     const baseProfileUrl = (() => {
@@ -65,7 +71,8 @@ export async function GET(request: NextRequest) {
             year: 'numeric',
           })
 
-      const profilePath = user.username ?? user.address
+      const fallbackAddress = user.proxy_wallet_address ?? user.address
+      const profilePath = user.username
 
       const referredSource = user.referred_by_user_id
         ? referredMap.get(user.referred_by_user_id)
@@ -73,9 +80,9 @@ export async function GET(request: NextRequest) {
       let referredDisplay: string | null = null
       let referredProfile: string | null = null
 
-      if (user.referred_by_user_id) {
-        const referredPath = referredSource?.username ?? referredSource?.address ?? user.referred_by_user_id
-        referredDisplay = referredSource?.username ?? truncateAddress(referredSource?.address ?? user.referred_by_user_id)
+      if (user.referred_by_user_id && referredSource) {
+        const referredPath = referredSource.username
+        referredDisplay = referredSource.username
         referredProfile = `${baseProfileUrl}/@${referredPath}`
       }
 
@@ -83,13 +90,14 @@ export async function GET(request: NextRequest) {
         user.username,
         user.email,
         user.address,
+        fallbackAddress,
         referredDisplay,
       ].filter(Boolean).join(' ').toLowerCase()
 
       return {
         ...user,
         is_admin: isAdminWallet(user.address),
-        avatarUrl: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${user.address}.png`,
+        avatarUrl: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${fallbackAddress}.png`,
         referred_by_display: referredDisplay,
         referred_by_profile_url: referredProfile,
         created_label: createdLabel,

@@ -4,7 +4,6 @@ import { useCallback } from 'react'
 import ProfileLink from '@/components/ProfileLink'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useAppKit } from '@/hooks/useAppKit'
-import { truncateAddress } from '@/lib/formatters'
 import EventCommentLikeForm from './EventCommentLikeForm'
 import EventCommentMenu from './EventCommentMenu'
 import EventCommentReplyForm from './EventCommentReplyForm'
@@ -59,7 +58,7 @@ export default function EventCommentItem({
       queueMicrotask(() => open())
       return
     }
-    const username = comment.username || (comment.user_address ? truncateAddress(comment.user_address) : 'Unknown')
+    const username = comment.username
     onSetReplyingTo(replyingTo === comment.id ? null : comment.id)
     onSetReplyText(`@${username} `)
   }, [user, comment, replyingTo, onSetReplyingTo, onSetReplyText, open])
@@ -89,6 +88,7 @@ export default function EventCommentItem({
           image: comment.user_avatar,
           username: comment.username,
           address: comment.user_address,
+          proxy_wallet_address: comment.user_proxy_wallet_address ?? null,
         }}
         date={comment.created_at}
       >
@@ -140,7 +140,7 @@ export default function EventCommentItem({
             user={user}
             eventId={eventId}
             parentCommentId={comment.id}
-            placeholder={`Reply to ${comment.username || (comment.user_address ? truncateAddress(comment.user_address) : 'Unknown')}`}
+            placeholder={`Reply to ${comment.username}`}
             initialValue={replyText}
             onCancel={handleReplyCancel}
             onReplyAddedAction={handleReplyAdded}

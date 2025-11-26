@@ -170,7 +170,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
               : (
                   data.yesHolders.map((holder, index) => (
                     <ProfileLink
-                      key={holder.user.address}
+                      key={holder.user.proxy_wallet_address ?? holder.user.address}
                       user={holder.user}
                       position={index + 1}
                     >
@@ -193,7 +193,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
               : (
                   data.noHolders.map((holder, index) => (
                     <ProfileLink
-                      key={holder.user.address}
+                      key={holder.user.proxy_wallet_address ?? holder.user.address}
                       user={holder.user}
                       position={index + 1}
                     >

@@ -19,11 +19,11 @@ const UpdateUserSchema = z.object({
   email: z.email({ pattern: z.regexes.html5Email, error: 'Invalid email address.' }),
   username: z
     .string()
-    .min(1, 'Username must be at least 1 character long')
-    .max(30, 'Username must be at most 30 characters long')
-    .regex(/^[\w.]+$/, 'Only letters, numbers, dots and underscores are allowed')
-    .regex(/^(?!\.)/, 'Cannot start with a dot')
-    .regex(/(?<!\.)$/, 'Cannot end with a dot'),
+    .min(3, 'Username must be at least 3 character long')
+    .max(42, 'Username must be at most 42 characters long')
+    .regex(/^[A-Z0-9.-]+$/i, 'Only letters, numbers, dots and hyphens are allowed')
+    .regex(/^(?![.-])/, 'Cannot start with a dot or hyphen')
+    .regex(/(?<![.-])$/, 'Cannot end with a dot or hyphen'),
   image: z
     .instanceof(File)
     .optional()

@@ -1,11 +1,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { formatCurrency, truncateAddress } from '@/lib/formatters'
+import { formatCurrency } from '@/lib/formatters'
 
 interface AffiliateRow {
   id: string
-  username?: string | null
+  username: string
   address: string
+  proxy_wallet_address?: string | null
   image: string
   affiliate_code?: string | null
   total_referrals: number
@@ -48,93 +49,97 @@ export default function AdminAffiliateOverview({ rows }: AdminAffiliateOverviewP
             </tr>
           </thead>
           <tbody>
-            {rows.map(row => (
-              <tr key={row.id} className="border-b last:border-b-0">
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <Image
-                      src={row.image}
-                      alt="Affiliate avatar"
-                      width={32}
-                      height={32}
-                      className="rounded-full"
-                    />
-                    <div className="space-y-0.5">
-                      <Link
-                        href={`/@${row.username || row.address}`}
-                        className="text-sm font-medium hover:text-primary"
-                      >
-                        {row.username || truncateAddress(row.address)}
-                      </Link>
-                      {row.affiliate_code && (
-                        <p className="text-xs text-muted-foreground">
-                          Code:
-                          {' '}
-                          {row.affiliate_code}
-                        </p>
-                      )}
+            {rows.map((row) => {
+              return (
+                <tr key={row.id} className="border-b last:border-b-0">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-3">
+                      <Image
+                        src={row.image}
+                        alt="Affiliate avatar"
+                        width={32}
+                        height={32}
+                        className="rounded-full"
+                      />
+                      <div className="space-y-0.5">
+                        <Link
+                          href={`/@${row.username}`}
+                          className="text-sm font-medium hover:text-primary"
+                        >
+                          {row.username}
+                        </Link>
+                        {row.affiliate_code && (
+                          <p className="text-xs text-muted-foreground">
+                            Code:
+                            {' '}
+                            {row.affiliate_code}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-right text-sm font-medium">
-                  {row.total_referrals}
-                </td>
-                <td className="px-6 py-4 text-right text-sm font-medium">
-                  {formatCurrency(row.volume, { includeSymbol: false })}
-                </td>
-                <td className="px-6 py-4 text-right text-sm font-medium">
-                  {formatCurrency(row.total_affiliate_fees, { includeSymbol: false })}
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-6 py-4 text-right text-sm font-medium">
+                    {row.total_referrals}
+                  </td>
+                  <td className="px-6 py-4 text-right text-sm font-medium">
+                    {formatCurrency(row.volume, { includeSymbol: false })}
+                  </td>
+                  <td className="px-6 py-4 text-right text-sm font-medium">
+                    {formatCurrency(row.total_affiliate_fees, { includeSymbol: false })}
+                  </td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
 
       {/* Mobile Card View */}
       <div className="divide-y md:hidden">
-        {rows.map(row => (
-          <div key={row.id} className="space-y-3 p-4">
-            <div className="flex items-center gap-3">
-              <Image
-                src={row.image}
-                alt="Affiliate avatar"
-                width={32}
-                height={32}
-                className="rounded-full"
-              />
-              <div className="flex-1 space-y-0.5">
-                <Link
-                  href={`/@${row.username || row.address}`}
-                  className="block text-sm font-medium hover:text-primary"
-                >
-                  {row.username || truncateAddress(row.address)}
-                </Link>
-                {row.affiliate_code && (
-                  <p className="text-xs text-muted-foreground">
-                    Code:
-                    {' '}
-                    {row.affiliate_code}
-                  </p>
-                )}
+        {rows.map((row) => {
+          return (
+            <div key={row.id} className="space-y-3 p-4">
+              <div className="flex items-center gap-3">
+                <Image
+                  src={row.image}
+                  alt="Affiliate avatar"
+                  width={32}
+                  height={32}
+                  className="rounded-full"
+                />
+                <div className="flex-1 space-y-0.5">
+                  <Link
+                    href={`/@${row.username}`}
+                    className="block text-sm font-medium hover:text-primary"
+                  >
+                    {row.username}
+                  </Link>
+                  {row.affiliate_code && (
+                    <p className="text-xs text-muted-foreground">
+                      Code:
+                      {' '}
+                      {row.affiliate_code}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <div className="grid grid-cols-3 gap-4 text-sm">
+                <div className="text-center">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">Referrals</p>
+                  <p className="font-medium">{row.total_referrals}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">Volume</p>
+                  <p className="font-medium">{formatCurrency(row.volume, { includeSymbol: false })}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-medium text-muted-foreground uppercase">Fees</p>
+                  <p className="font-medium">{formatCurrency(row.total_affiliate_fees, { includeSymbol: false })}</p>
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-4 text-sm">
-              <div className="text-center">
-                <p className="text-xs font-medium text-muted-foreground uppercase">Referrals</p>
-                <p className="font-medium">{row.total_referrals}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs font-medium text-muted-foreground uppercase">Volume</p>
-                <p className="font-medium">{formatCurrency(row.volume, { includeSymbol: false })}</p>
-              </div>
-              <div className="text-center">
-                <p className="text-xs font-medium text-muted-foreground uppercase">Fees</p>
-                <p className="font-medium">{formatCurrency(row.total_affiliate_fees, { includeSymbol: false })}</p>
-              </div>
-            </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

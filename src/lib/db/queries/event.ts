@@ -271,7 +271,7 @@ function transformActivityOrder(order: any): ActivityOrder {
     id: order.id || '',
     user: {
       id: order.user_id || '',
-      username: order.user_username || null,
+      username: order.user_username as string,
       address: order.user_address || '',
       image: userImage,
     },
@@ -747,12 +747,14 @@ export const EventRepository = {
           user_id: v_condition_top_holders.user_id,
           username: v_condition_top_holders.username,
           address: v_condition_top_holders.address,
+          proxy_wallet_address: users.proxy_wallet_address,
           image: v_condition_top_holders.image,
           outcome_index: v_condition_top_holders.outcome_index,
           outcome_text: v_condition_top_holders.outcome_text,
           net_position: v_condition_top_holders.net_position,
         })
         .from(v_condition_top_holders)
+        .innerJoin(users, eq(users.id, v_condition_top_holders.user_id))
         .where(eq(v_condition_top_holders.condition_id, conditionId))
         .orderBy(
           v_condition_top_holders.outcome_index,
@@ -771,11 +773,12 @@ export const EventRepository = {
         const topHolder: TopHolder = {
           user: {
             id: String(holderData.user_id),
-            username: holderData.username || null,
+            username: holderData.username as string,
             address: String(holderData.address),
+            proxy_wallet_address: holderData.proxy_wallet_address || null,
             image: holderData.image
               ? getSupabaseImageUrl(String(holderData.image))
-              : `https://avatar.vercel.sh/${String(holderData.address)}.png`,
+              : `https://avatar.vercel.sh/${String(holderData.proxy_wallet_address ?? holderData.address)}.png`,
           },
           net_position: String(holderData.net_position),
           outcome_index: Number(holderData.outcome_index),

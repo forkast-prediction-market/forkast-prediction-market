@@ -33,6 +33,7 @@ export async function storeCommentAction(eventId: string, formData: FormData) {
       username: user.username,
       user_avatar: user.image,
       user_address: user.address,
+      user_proxy_wallet_address: user.proxy_wallet_address ?? null,
       likes_count: newComment.likes_count,
       replies_count: newComment.replies_count,
       created_at: newComment.created_at,

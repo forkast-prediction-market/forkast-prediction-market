@@ -4,7 +4,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 
 interface AdminUserRow {
   id: string
-  username?: string | null
+  username: string
   email: string
   address: string
   created_label: string

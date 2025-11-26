@@ -1,8 +1,9 @@
-import type { ActivityOrder, MarketOrderType, PositionsQueryParams, QueryResult, User, UserMarketOutcomePosition, UserPosition } from '@/types'
+import type { ActivityOrder, MarketOrderType, PositionsQueryParams, ProxyWalletStatus, QueryResult, User, UserMarketOutcomePosition, UserPosition } from '@/types'
 import { and, asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
+import { getSafeProxyWalletAddress, isProxyWalletDeployed } from '@/lib/contracts/safeProxy'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
 import { users } from '@/lib/db/schema/auth/tables'
 import { conditions, events, markets, outcomes } from '@/lib/db/schema/events/tables'
@@ -20,6 +21,7 @@ export const UserRepository = {
         .select({
           id: users.id,
           address: users.address,
+          proxy_wallet_address: users.proxy_wallet_address,
           username: users.username,
           image: users.image,
           created_at: users.created_at,
@@ -28,6 +30,7 @@ export const UserRepository = {
         .where(or(
           eq(users.username, username),
           eq(users.address, username),
+          eq(users.proxy_wallet_address, username),
         ))
         .limit(1)
 
@@ -40,7 +43,8 @@ export const UserRepository = {
       const data = {
         id: rawData.id,
         address: rawData.address,
-        username: rawData.username || undefined,
+        proxy_wallet_address: rawData.proxy_wallet_address,
+        username: rawData.username!,
         image: rawData.image ? getSupabaseImageUrl(rawData.image) : `https://avatar.vercel.sh/${rawData.address}.png`,
         created_at: rawData.created_at,
       }
@@ -192,6 +196,34 @@ export const UserRepository = {
         }
       }
 
+      const proxyAddress = await ensureUserProxyWallet(user)
+
+      if (!user.username) {
+        const addressForUsername = proxyAddress
+          || (typeof user.proxy_wallet_address === 'string' ? user.proxy_wallet_address : '')
+          || (typeof user.address === 'string' ? user.address : '')
+
+        const generatedUsername = addressForUsername ? generateUsernameFromAddress(addressForUsername) : null
+
+        if (generatedUsername) {
+          try {
+            const result = await db
+              .update(users)
+              .set({ username: generatedUsername })
+              .where(eq(users.id, user.id))
+              .returning({ username: users.username })
+
+            const updatedUsername = result[0]?.username
+            if (updatedUsername) {
+              user.username = updatedUsername
+            }
+          }
+          catch (error) {
+            console.error('Failed to set deterministic username', error)
+          }
+        }
+      }
+
       return user
     }
     catch {
@@ -233,6 +265,7 @@ export const UserRepository = {
             ilike(users.username, `%${sanitizedSearchTerm}%`),
             ilike(users.email, `%${sanitizedSearchTerm}%`),
             ilike(users.address, `%${sanitizedSearchTerm}%`),
+            ilike(users.proxy_wallet_address, `%${sanitizedSearchTerm}%`),
           )
         }
       }
@@ -267,6 +300,7 @@ export const UserRepository = {
           username: users.username,
           email: users.email,
           address: users.address,
+          proxy_wallet_address: users.proxy_wallet_address,
           created_at: users.created_at,
           image: users.image,
           affiliate_code: users.affiliate_code,
@@ -308,6 +342,7 @@ export const UserRepository = {
           id: users.id,
           username: users.username,
           address: users.address,
+          proxy_wallet_address: users.proxy_wallet_address,
           image: users.image,
         })
         .from(users)
@@ -422,7 +457,7 @@ export const UserRepository = {
               id: row.id,
               user: {
                 id: row.user_id,
-                username: row.user_username,
+                username: row.user_username!,
                 address: row.user_address,
                 image: userImage,
               },
@@ -632,4 +667,85 @@ export const UserRepository = {
       return { data, error: null }
     })
   },
+}
+
+function generateUsernameFromAddress(address: string) {
+  const normalized = address.toLowerCase()
+
+  if (!/^0x[a-f0-9]{40}$/.test(normalized)) {
+    return null
+  }
+
+  const seed = normalized.slice(2)
+  const suffixHex = seed.slice(-8) || seed
+  const suffixNumber = Number.parseInt(suffixHex, 16)
+  const deterministicSuffix = Number.isNaN(suffixNumber) ? 0 : suffixNumber
+
+  return `${normalized}-${deterministicSuffix}`
+}
+
+async function ensureUserProxyWallet(user: any): Promise<string | null> {
+  const owner = typeof user?.address === 'string' ? user.address : ''
+  if (!owner || !owner.startsWith('0x')) {
+    return null
+  }
+
+  const hasProxyAddress = typeof user?.proxy_wallet_address === 'string' && user.proxy_wallet_address.startsWith('0x')
+  const isAlreadyDeployed = hasProxyAddress && user.proxy_wallet_status === 'deployed'
+
+  if (isAlreadyDeployed) {
+    return user.proxy_wallet_address
+  }
+
+  try {
+    const proxyAddress = hasProxyAddress
+      ? user.proxy_wallet_address as `0x${string}`
+      : await getSafeProxyWalletAddress(owner as `0x${string}`)
+
+    if (!proxyAddress) {
+      return null
+    }
+
+    let nextStatus: ProxyWalletStatus = (user.proxy_wallet_status as ProxyWalletStatus | null) ?? 'not_started'
+    const updates: Record<string, any> = {}
+
+    if (!hasProxyAddress) {
+      updates.proxy_wallet_address = proxyAddress
+    }
+
+    const shouldCheckDeployment = !hasProxyAddress || user.proxy_wallet_status === 'signed'
+    if (shouldCheckDeployment) {
+      const deployed = await isProxyWalletDeployed(proxyAddress as `0x${string}`)
+      if (deployed) {
+        nextStatus = 'deployed'
+      }
+    }
+
+    if (nextStatus !== user.proxy_wallet_status) {
+      updates.proxy_wallet_status = nextStatus
+      if (nextStatus === 'deployed') {
+        updates.proxy_wallet_tx_hash = null
+      }
+    }
+
+    if (Object.keys(updates).length > 0) {
+      await db
+        .update(users)
+        .set(updates)
+        .where(eq(users.id, user.id))
+    }
+
+    user.proxy_wallet_address = proxyAddress
+    user.proxy_wallet_status = nextStatus
+    if (nextStatus === 'deployed') {
+      user.proxy_wallet_tx_hash = null
+    }
+
+    return proxyAddress
+  }
+  catch (error) {
+    console.error('Failed to ensure proxy wallet metadata', error)
+  }
+
+  return null
 }

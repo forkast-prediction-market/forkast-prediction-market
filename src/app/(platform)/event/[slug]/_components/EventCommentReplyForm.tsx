@@ -51,7 +51,7 @@ export default function EventCommentReplyForm({
     <form onSubmit={handleSubmit} className="flex gap-3">
       <Image
         src={user.image}
-        alt={user.username || user.address || 'User'}
+        alt={user.username!}
         width={24}
         height={24}
         className="size-6 shrink-0 rounded-full object-cover"

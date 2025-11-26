@@ -16,16 +16,18 @@ interface AffiliateOverviewRow {
 
 interface AffiliateProfile {
   id: string
-  username?: string | null
+  username: string
   address: string
+  proxy_wallet_address?: string | null
   image?: string | null
   affiliate_code?: string | null
 }
 
 interface RowSummary {
   id: string
-  username?: string | null
+  username: string
   address: string
+  proxy_wallet_address?: string | null
   image: string
   affiliate_code: string | null
   total_referrals: number
@@ -63,16 +65,19 @@ export default async function AdminSettingsPage() {
 
   const profileMap = new Map<string, AffiliateProfile>(profiles.map(profile => [profile.id, profile]))
 
-  const fallbackAddress = '0x0000000000000000000000000000000000000000'
+  const defaultAddress = '0x0000000000000000000000000000000000000000'
 
   const rows: RowSummary[] = overview.map((item) => {
     const profile = profileMap.get(item.affiliate_user_id)
 
+    const profileAddress = profile?.proxy_wallet_address ?? profile?.address ?? defaultAddress
+
     return {
       id: item.affiliate_user_id,
-      username: profile?.username ?? undefined,
-      address: profile?.address ?? fallbackAddress,
-      image: profile?.image ? getSupabaseImageUrl(profile.image) : `https://avatar.vercel.sh/${profile?.address || item.affiliate_user_id}.png`,
+      username: profile?.username as string,
+      address: profile?.address ?? defaultAddress,
+      proxy_wallet_address: profile?.proxy_wallet_address ?? null,
+      image: profile?.image ? getSupabaseImageUrl(profile.image) : `https://avatar.vercel.sh/${profileAddress || item.affiliate_user_id}.png`,
       affiliate_code: profile?.affiliate_code ?? null,
       total_referrals: Number(item.total_referrals ?? 0),
       volume: Number(item.volume ?? 0),

@@ -40,12 +40,16 @@ export default async function AffiliateSettingsPage() {
           total_affiliate_fees: Number(statsData?.total_affiliate_fees ?? 0),
         },
         recentReferrals: (referralsData ?? []).map((referral: any) => {
-          const userInfo = Array.isArray(referral.users) ? referral.users[0] : referral.users
-
+          const userInfo = (Array.isArray(referral.users) ? referral.users[0] : referral.users) as {
+            username: string
+            address?: string
+            proxy_wallet_address?: string
+          }
           return {
             user_id: referral.user_id as string,
-            username: userInfo?.username as string | undefined,
+            username: userInfo.username,
             address: (userInfo?.address as string | undefined) ?? referral.user_id as string,
+            proxy_wallet_address: userInfo?.proxy_wallet_address as string | undefined,
             created_at: referral.created_at as string,
           }
         }),

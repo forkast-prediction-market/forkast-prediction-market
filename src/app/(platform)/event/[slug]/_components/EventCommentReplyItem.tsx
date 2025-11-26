@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useCallback } from 'react'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useAppKit } from '@/hooks/useAppKit'
-import { formatTimeAgo, truncateAddress } from '@/lib/formatters'
+import { formatTimeAgo } from '@/lib/formatters'
 import EventCommentLikeForm from './EventCommentLikeForm'
 import EventCommentMenu from './EventCommentMenu'
 import EventCommentReplyForm from './EventCommentReplyForm'
@@ -46,7 +46,7 @@ export default function EventCommentReplyItem({
       queueMicrotask(() => open())
       return
     }
-    const username = reply.username || (reply.user_address ? truncateAddress(reply.user_address) : 'Unknown')
+    const username = reply.username
     onSetReplyingTo(replyingTo === reply.id ? null : reply.id)
     onSetReplyText(`@${username} `)
   }, [user, reply, replyingTo, onSetReplyingTo, onSetReplyText, open])
@@ -73,12 +73,12 @@ export default function EventCommentReplyItem({
     <div className="grid gap-3">
       <div className="flex gap-3">
         <Link
-          href={reply.username ? `/@${reply.username}` : `/@${reply.user_address}`}
+          href={`/@${reply.username}`}
           className="text-sm font-medium transition-colors hover:text-foreground"
         >
           <Image
             src={reply.user_avatar}
-            alt={reply.username || reply.user_address || 'Anonymous User'}
+            alt={reply.username}
             width={24}
             height={24}
             className="size-6 rounded-full object-cover transition-opacity hover:opacity-80"
@@ -87,11 +87,11 @@ export default function EventCommentReplyItem({
         <div className="flex-1">
           <div className="mb-1 flex items-center gap-2">
             <Link
-              href={reply.username ? `/@${reply.username}` : `/@${reply.user_address || 'unknown'}`}
+              href={`/@${reply.username}`}
               className="text-sm font-medium transition-colors hover:text-foreground"
             >
               @
-              {reply.username || (reply.user_address ? truncateAddress(reply.user_address) : 'Unknown')}
+              {reply.username}
             </Link>
             <span className="text-xs text-muted-foreground">
               {formatTimeAgo(reply.created_at)}
@@ -142,7 +142,7 @@ export default function EventCommentReplyItem({
             user={user}
             eventId={eventId}
             parentCommentId={commentId}
-            placeholder={`Reply to ${reply.username || (reply.user_address ? truncateAddress(reply.user_address) : 'Unknown')}`}
+            placeholder={`Reply to ${reply.username}`}
             initialValue={replyText}
             onCancel={handleReplyCancel}
             onReplyAddedAction={handleReplyAdded}

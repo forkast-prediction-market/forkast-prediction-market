@@ -11,7 +11,7 @@ const AFFILIATE_CODE_BYTES = 4
 interface AffiliateUser {
   id: string
   affiliate_code: string | null
-  username: string | null
+  username: string
   address: string
   image: string | null
 }
@@ -53,8 +53,9 @@ interface AffiliateOverview {
 
 interface AffiliateProfile {
   id: string
-  username: string | null
+  username: string
   address: string
+  proxy_wallet_address: string | null
   image: string | null
   affiliate_code: string | null
 }
@@ -63,8 +64,9 @@ interface ReferralList {
   user_id: string
   created_at: Date
   users: {
-    username: string | null
+    username: string
     address: string
+    proxy_wallet_address: string | null
     image: string | null
   }
 }
@@ -177,7 +179,15 @@ export const AffiliateRepository = {
         .limit(1)
 
       return {
-        data: result.length > 0 ? result[0] : null,
+        data: result.length > 0
+          ? {
+              id: result[0].id,
+              affiliate_code: result[0].affiliate_code,
+              username: result[0].username!,
+              address: result[0].address,
+              image: result[0].image,
+            }
+          : null,
         error: null,
       }
     })
@@ -335,6 +345,7 @@ export const AffiliateRepository = {
           id: users.id,
           username: users.username,
           address: users.address,
+          proxy_wallet_address: users.proxy_wallet_address,
           image: users.image,
           affiliate_code: users.affiliate_code,
         })
@@ -343,8 +354,9 @@ export const AffiliateRepository = {
 
       const data = result.map(user => ({
         id: user.id,
-        username: user.username,
+        username: user.username!,
         address: user.address,
+        proxy_wallet_address: user.proxy_wallet_address,
         image: user.image,
         affiliate_code: user.affiliate_code,
       }))
@@ -363,6 +375,7 @@ export const AffiliateRepository = {
           created_at: affiliate_referrals.created_at,
           username: users.username,
           address: users.address,
+          proxy_wallet_address: users.proxy_wallet_address,
           image: users.image,
         })
         .from(affiliate_referrals)
@@ -375,8 +388,9 @@ export const AffiliateRepository = {
         user_id: row.user_id,
         created_at: row.created_at,
         users: {
-          username: row.username,
+          username: row.username!,
           address: row.address,
+          proxy_wallet_address: row.proxy_wallet_address,
           image: row.image,
         },
       }))
