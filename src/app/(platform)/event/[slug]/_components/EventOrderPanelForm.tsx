@@ -2,7 +2,7 @@ import type { Event } from '@/types'
 import { useAppKitAccount } from '@reown/appkit/react'
 import { useQueryClient } from '@tanstack/react-query'
 import Form from 'next/form'
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSignTypedData } from 'wagmi'
 import EventOrderPanelBuySellTabs from '@/app/(platform)/event/[slug]/_components/EventOrderPanelBuySellTabs'
 import EventOrderPanelEarnings from '@/app/(platform)/event/[slug]/_components/EventOrderPanelEarnings'
@@ -23,7 +23,7 @@ import { getExchangeEip712Domain, ORDER_SIDE, OUTCOME_INDEX } from '@/lib/consta
 import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
 import { signOrderPayload } from '@/lib/orders/signing'
-import { validateOrder } from '@/lib/orders/validation'
+import { MIN_LIMIT_ORDER_SHARES, validateOrder } from '@/lib/orders/validation'
 import { cn } from '@/lib/utils'
 import { isUserRejectedRequestError, normalizeAddress } from '@/lib/wallet'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
@@ -48,6 +48,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const isSingleMarket = useIsSingleMarket()
   const amountNumber = useAmountAsNumber()
   const isLimitOrder = useIsLimitOrder()
+  const limitSharesNumber = Number.parseFloat(state.limitShares) || 0
   const { balance } = useBalance()
   const affiliateMetadata = useAffiliateOrderMetadata()
   const { sharesByCondition } = useUserOutcomePositions({ eventSlug: event.slug, userId: user?.id })
@@ -59,6 +60,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const signatureType = proxyWalletAddress ? 2 : 0
   const isNegRiskEnabled = Boolean(event.enable_neg_risk)
   const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskEnabled), [isNegRiskEnabled])
+  const [showLimitMinimumWarning, setShowLimitMinimumWarning] = useState(false)
 
   useEffect(() => {
     if (!user?.id) {
@@ -101,6 +103,11 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const avgSellPriceLabel = formatCentsLabel(avgSellPriceValue, { fallback: '—' })
   const avgBuyPriceLabel = formatCentsLabel(state.outcome?.buy_price, { fallback: '—' })
   const sellAmountLabel = formatCurrency(sellAmountValue)
+  useEffect(() => {
+    if (!isLimitOrder || limitSharesNumber >= MIN_LIMIT_ORDER_SHARES) {
+      setShowLimitMinimumWarning(false)
+    }
+  }, [isLimitOrder, limitSharesNumber])
 
   function focusInput() {
     state.inputRef?.current?.focus()
@@ -124,9 +131,16 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     })
 
     if (!validation.ok) {
+      if (validation.reason === 'LIMIT_SHARES_TOO_LOW') {
+        setShowLimitMinimumWarning(true)
+      }
+      else {
+        setShowLimitMinimumWarning(false)
+      }
       handleValidationError(validation.reason, { openWalletModal: open })
       return
     }
+    setShowLimitMinimumWarning(false)
 
     if (!state.market || !state.outcome || !user || !userAddress || !makerAddress) {
       return
@@ -282,6 +296,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 limitExpirationOption={state.limitExpirationOption}
                 isLimitOrder={isLimitOrder}
                 availableShares={selectedShares}
+                showLimitMinimumWarning={showLimitMinimumWarning}
                 onLimitPriceChange={state.setLimitPrice}
                 onLimitSharesChange={state.setLimitShares}
                 onLimitExpirationEnabledChange={state.setLimitExpirationEnabled}

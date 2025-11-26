@@ -9,6 +9,9 @@ export type OrderValidationError
     | 'INVALID_AMOUNT'
     | 'INVALID_LIMIT_PRICE'
     | 'INVALID_LIMIT_SHARES'
+    | 'LIMIT_SHARES_TOO_LOW'
+
+export const MIN_LIMIT_ORDER_SHARES = 5
 
 interface ValidateOrderArgs {
   isLoading: boolean
@@ -66,6 +69,10 @@ export function validateOrder({
     const limitSharesValue = Number.parseFloat(limitShares)
     if (!Number.isFinite(limitSharesValue) || limitSharesValue <= 0) {
       return { ok: false, reason: 'INVALID_LIMIT_SHARES' }
+    }
+
+    if (limitSharesValue < MIN_LIMIT_ORDER_SHARES) {
+      return { ok: false, reason: 'LIMIT_SHARES_TOO_LOW' }
     }
 
     return { ok: true }
