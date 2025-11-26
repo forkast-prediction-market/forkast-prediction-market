@@ -179,7 +179,15 @@ export const AffiliateRepository = {
         .limit(1)
 
       return {
-        data: result.length > 0 ? result[0] : null,
+        data: result.length > 0
+          ? {
+              id: result[0].id,
+              affiliate_code: result[0].affiliate_code,
+              username: result[0].username!,
+              address: result[0].address,
+              image: result[0].image,
+            }
+          : null,
         error: null,
       }
     })
@@ -346,7 +354,7 @@ export const AffiliateRepository = {
 
       const data = result.map(user => ({
         id: user.id,
-        username: user.username,
+        username: user.username!,
         address: user.address,
         proxy_wallet_address: user.proxy_wallet_address,
         image: user.image,
@@ -380,7 +388,7 @@ export const AffiliateRepository = {
         user_id: row.user_id,
         created_at: row.created_at,
         users: {
-          username: row.username,
+          username: row.username!,
           address: row.address,
           proxy_wallet_address: row.proxy_wallet_address,
           image: row.image,
