@@ -45,8 +45,15 @@ export async function GET(request: NextRequest) {
       .filter((id): id is string => Boolean(id))))
 
     const { data: referredUsers } = await UserRepository.getUsersByIds(referredIds)
+    const referredEntries = (referredUsers ?? []).filter((ref): ref is typeof ref & { username: string } => Boolean(ref.username))
+
     const referredMap = new Map<string, { username: string, address: string, proxy_wallet_address?: string | null, image?: string | null }>(
-      (referredUsers ?? []).map(referred => [referred.id, referred]),
+      referredEntries.map(referred => [referred.id, {
+        username: referred.username,
+        address: referred.address,
+        proxy_wallet_address: referred.proxy_wallet_address,
+        image: referred.image,
+      }]),
     )
 
     const baseProfileUrl = (() => {

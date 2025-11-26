@@ -15,7 +15,7 @@ export default function UserInfoSection() {
   }
 
   const fallbackAddress = user.proxy_wallet_address ?? user.address
-  const displayUsername = user.username.length > 12
+  const displayUsername = user.username?.length > 12
     ? `${user.username.slice(0, 12)}...`
     : user.username
 
