@@ -1,10 +1,33 @@
 import type { ClobOrderType, OrderSide } from '@/types'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { orders } from '@/lib/db/schema/orders/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 
 export const OrderRepository = {
+  async findUserOrderById(orderId: string, userId: string) {
+    return await runQuery(async () => {
+      const [order] = await db
+        .select({
+          id: orders.id,
+          clob_order_id: orders.clob_order_id,
+          status: orders.status,
+        })
+        .from(orders)
+        .where(and(
+          eq(orders.id, orderId),
+          eq(orders.user_id, userId),
+        ))
+        .limit(1)
+
+      if (!order) {
+        return { data: null, error: 'Order not found' }
+      }
+
+      return { data: order, error: null }
+    })
+  },
+
   async createOrder(args: {
     // begin blockchain data
     salt: bigint
@@ -53,7 +76,7 @@ export const OrderRepository = {
         .where(and(
           eq(orders.id, orderId),
           eq(orders.user_id, userId),
-          eq(orders.status, 'pending'),
+          inArray(orders.status, ['delayed', 'live']),
         ))
         .returning()
 

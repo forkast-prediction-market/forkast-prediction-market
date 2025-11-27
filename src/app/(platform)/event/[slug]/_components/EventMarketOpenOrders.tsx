@@ -1,10 +1,12 @@
 'use client'
 
 import type { Event, UserOpenOrder } from '@/types'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { AlertCircleIcon } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { toast } from 'sonner'
+import { cancelOrderAction } from '@/app/(platform)/event/[slug]/_actions/cancel-order'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { formatSharePriceLabel, fromMicro } from '@/lib/formatters'
@@ -22,6 +24,12 @@ interface FetchOpenOrdersParams {
   eventSlug: string
   conditionId: string
   signal?: AbortSignal
+}
+
+interface OpenOrderRowProps {
+  order: UserOpenOrder
+  onCancel: (order: UserOpenOrder) => void
+  isCancelling: boolean
 }
 
 async function fetchOpenOrders({
@@ -78,7 +86,7 @@ function formatRelativeTime(date: Date): string {
   return date.toLocaleDateString()
 }
 
-function OpenOrderRow({ order }: { order: UserOpenOrder }) {
+function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
   const amountMicro = order.side === 'buy' ? order.taker_amount : order.maker_amount
   const sideLabel = order.side === 'buy' ? 'Buy' : 'Sell'
   const placedLabel = order.created_at ? formatRelativeTime(new Date(order.created_at)) : '—'
@@ -144,11 +152,10 @@ function OpenOrderRow({ order }: { order: UserOpenOrder }) {
           type="button"
           size="sm"
           variant="outline"
-          onClick={() => {
-            // UI-only placeholder until cancel wiring is added.
-          }}
+          disabled={isCancelling}
+          onClick={() => onCancel(order)}
         >
-          Cancel
+          {isCancelling ? 'Cancelling...' : 'Cancel'}
         </Button>
       </div>
     </div>
@@ -159,11 +166,13 @@ export default function EventMarketOpenOrders({ market, eventSlug, collapsible =
   const emptyHeightClass = 'min-h-16'
   const parentRef = useRef<HTMLDivElement | null>(null)
   const user = useUser()
+  const queryClient = useQueryClient()
   const [scrollMargin, setScrollMargin] = useState(0)
   const [hasInitialized, setHasInitialized] = useState(false)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const isCollapsible = collapsible !== false
   const [ordersExpanded, setOrdersExpanded] = useState(!isCollapsible)
+  const [pendingCancelIds, setPendingCancelIds] = useState<Set<string>>(() => new Set())
 
   useEffect(() => {
     queueMicrotask(() => {
@@ -211,6 +220,44 @@ export default function EventMarketOpenOrders({ market, eventSlug, collapsible =
   const isExpanded = ordersExpanded || !isCollapsible
   const loading = isExpanded && status === 'pending'
   const hasInitialError = isExpanded && status === 'error'
+
+  const handleCancelOrder = useCallback(async (order: UserOpenOrder) => {
+    if (pendingCancelIds.has(order.id)) {
+      return
+    }
+
+    setPendingCancelIds((current) => {
+      const next = new Set(current)
+      next.add(order.id)
+      return next
+    })
+
+    try {
+      const response = await cancelOrderAction(order.id)
+      if (response?.error) {
+        throw new Error(response.error)
+      }
+
+      toast.success('Order cancelled')
+
+      await queryClient.invalidateQueries({
+        queryKey: ['user-open-orders', user?.id, eventSlug, market.condition_id],
+      })
+    }
+    catch (error: any) {
+      const message = typeof error?.message === 'string'
+        ? error.message
+        : 'Failed to cancel order.'
+      toast.error(message)
+    }
+    finally {
+      setPendingCancelIds((current) => {
+        const next = new Set(current)
+        next.delete(order.id)
+        return next
+      })
+    }
+  }, [eventSlug, market.condition_id, pendingCancelIds, queryClient, user?.id])
 
   const virtualizer = useWindowVirtualizer({
     count: orders.length,
@@ -332,7 +379,11 @@ export default function EventMarketOpenOrders({ market, eventSlug, collapsible =
                     }px)`,
                   }}
                 >
-                  <OpenOrderRow order={order} />
+                  <OpenOrderRow
+                    order={order}
+                    onCancel={handleCancelOrder}
+                    isCancelling={pendingCancelIds.has(order.id)}
+                  />
                 </div>
               )
             })}
