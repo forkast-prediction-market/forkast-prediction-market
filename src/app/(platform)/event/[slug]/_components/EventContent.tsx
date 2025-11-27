@@ -20,6 +20,7 @@ import EventTabs from '@/app/(platform)/event/[slug]/_components/EventTabs'
 import { Teleport } from '@/components/Teleport'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useOrder } from '@/stores/useOrder'
+import { useUser } from '@/stores/useUser'
 
 interface EventContentProps {
   event: Event
@@ -33,6 +34,14 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
   const setOutcome = useOrder(state => state.setOutcome)
   const currentEventId = useOrder(state => state.event?.id)
   const isMobile = useIsMobile()
+  const clientUser = useUser()
+  const currentUser = clientUser ?? user
+
+  useEffect(() => {
+    if (user && !clientUser) {
+      useUser.setState(user)
+    }
+  }, [clientUser, user])
 
   useEffect(() => {
     setEvent(event)
@@ -64,16 +73,16 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
         <EventMarkets event={event} isMobile={isMobile} />
         {event.total_markets_count === 1 && (
           <>
-            { user && <EventMarketPositions market={event.markets[0]} collapsible /> }
+            { currentUser && <EventMarketPositions market={event.markets[0]} collapsible /> }
             <EventSingleMarketOrderBook market={event.markets[0]} />
-            { user && <EventMarketOpenOrders market={event.markets[0]} eventSlug={event.slug} collapsible />}
-            { user && <EventMarketHistory market={event.markets[0]} /> }
+            { currentUser && <EventMarketOpenOrders market={event.markets[0]} eventSlug={event.slug} collapsible />}
+            { currentUser && <EventMarketHistory market={event.markets[0]} /> }
           </>
         )}
         {marketContextEnabled && <EventMarketContext event={event} />}
         <EventRules event={event} />
         {isMobile && <EventRelated event={event} />}
-        <EventTabs event={event} user={user} />
+        <EventTabs event={event} user={currentUser} />
       </div>
 
       {isMobile
