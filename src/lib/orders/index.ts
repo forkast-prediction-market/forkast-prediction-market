@@ -1,3 +1,4 @@
+import type { CLOB_ORDER_TYPE } from '@/lib/constants'
 import type { BlockchainOrder, OrderSide, OrderType, Outcome } from '@/types'
 import { storeOrderAction } from '@/app/(platform)/event/[slug]/_actions/store-order'
 import { CAP_MICRO, FLOOR_MICRO, ORDER_SIDE, ORDER_TYPE, ZERO_ADDRESS } from '@/lib/constants'
@@ -27,6 +28,7 @@ export interface SubmitOrderArgs {
   order: BlockchainOrder
   signature: string
   orderType: OrderType
+  clobOrderType?: keyof typeof CLOB_ORDER_TYPE
   conditionId: string
   slug: string
 }
@@ -167,12 +169,20 @@ function serializeOrder(order: BlockchainOrder) {
   }
 }
 
-export async function submitOrder({ order, signature, orderType, conditionId, slug }: SubmitOrderArgs) {
+export async function submitOrder({
+  order,
+  signature,
+  orderType,
+  clobOrderType,
+  conditionId,
+  slug,
+}: SubmitOrderArgs) {
   return storeOrderAction({
     ...serializeOrder(order),
     side: order.side as OrderSide,
     signature,
     type: orderType,
+    clob_type: clobOrderType,
     condition_id: conditionId,
     slug,
   })

@@ -30,6 +30,7 @@ const StoreOrderSchema = z.object({
   // end blockchain data
 
   type: z.union([z.literal(ORDER_TYPE.MARKET), z.literal(ORDER_TYPE.LIMIT)]),
+  clob_type: z.nativeEnum(CLOB_ORDER_TYPE).optional(),
   condition_id: z.string(),
   slug: z.string(),
 })
@@ -52,9 +53,10 @@ export async function storeOrderAction(payload: StoreOrderInput) {
     }
   }
 
-  const clobOrderType = validated.data.type === ORDER_TYPE.MARKET
-    ? user.settings.trading.market_order_type
-    : CLOB_ORDER_TYPE.GTC
+  const clobOrderType = validated.data.clob_type
+    ?? (validated.data.type === ORDER_TYPE.MARKET
+      ? user.settings.trading.market_order_type
+      : CLOB_ORDER_TYPE.GTC)
 
   try {
     const clobPayload = {
