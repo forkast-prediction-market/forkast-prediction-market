@@ -128,6 +128,9 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       isLimitOrder,
       limitPrice: state.limitPrice,
       limitShares: state.limitShares,
+      limitExpirationEnabled: state.limitExpirationEnabled,
+      limitExpirationOption: state.limitExpirationOption,
+      limitExpirationTimestamp: state.limitExpirationTimestamp,
     })
 
     if (!validation.ok) {
@@ -156,6 +159,9 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       amount: state.amount,
       limitPrice: state.limitPrice,
       limitShares: state.limitShares,
+      expirationTimestamp: state.limitExpirationOption === 'custom' && state.limitExpirationTimestamp
+        ? state.limitExpirationTimestamp
+        : undefined,
       referrerAddress: affiliateMetadata.referrerAddress,
       affiliateAddress: affiliateMetadata.affiliateAddress,
       affiliateSharePercent: affiliateMetadata.affiliateSharePercent,
@@ -294,6 +300,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 limitShares={state.limitShares}
                 limitExpirationEnabled={state.limitExpirationEnabled}
                 limitExpirationOption={state.limitExpirationOption}
+                limitExpirationTimestamp={state.limitExpirationTimestamp}
                 isLimitOrder={isLimitOrder}
                 availableShares={selectedShares}
                 showLimitMinimumWarning={showLimitMinimumWarning}
@@ -301,6 +308,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 onLimitSharesChange={state.setLimitShares}
                 onLimitExpirationEnabledChange={state.setLimitExpirationEnabled}
                 onLimitExpirationOptionChange={state.setLimitExpirationOption}
+                onLimitExpirationTimestampChange={state.setLimitExpirationTimestamp}
                 onAmountUpdateFromLimit={state.setAmount}
               />
             </div>

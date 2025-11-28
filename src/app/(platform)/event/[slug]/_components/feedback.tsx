@@ -60,6 +60,11 @@ export function handleValidationError(reason: OrderValidationError, { openWallet
         description: 'Enter the number of shares for your limit order.',
       })
       break
+    case 'INVALID_LIMIT_EXPIRATION':
+      toast.error('Invalid expiration', {
+        description: 'Pick a future date and time for your custom expiration.',
+      })
+      break
     case 'LIMIT_SHARES_TOO_LOW':
       toast.error('Minimum shares not met', {
         description: 'Minimum 5 shares for limit orders.',

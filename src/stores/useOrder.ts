@@ -24,6 +24,7 @@ interface OrderState {
   limitShares: string
   limitExpirationEnabled: boolean
   limitExpirationOption: LimitExpirationOption
+  limitExpirationTimestamp: number | null
   isLoading: boolean
   isMobileOrderPanelOpen: boolean
   inputRef: RefObject<HTMLInputElement | null>
@@ -43,6 +44,7 @@ interface OrderState {
   setLimitShares: (shares: string) => void
   setLimitExpirationEnabled: (enabled: boolean) => void
   setLimitExpirationOption: (option: LimitExpirationOption) => void
+  setLimitExpirationTimestamp: (timestamp: number | null) => void
   setIsLoading: (loading: boolean) => void
   setIsMobileOrderPanelOpen: (loading: boolean) => void
   setLastMouseEvent: (lastMouseEvent: any) => void
@@ -60,6 +62,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   limitShares: '0',
   limitExpirationEnabled: false,
   limitExpirationOption: 'end-of-day',
+  limitExpirationTimestamp: null,
   isLoading: false,
   isMobileOrderPanelOpen: false,
   inputRef: { current: null as HTMLInputElement | null },
@@ -78,6 +81,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
     limitShares: '0',
     limitExpirationEnabled: false,
     limitExpirationOption: 'end-of-day',
+    limitExpirationTimestamp: null,
     side: state.side,
   })),
   setAmount: (amount: string) => set({ amount }),
@@ -85,6 +89,7 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   setLimitShares: (shares: string) => set({ limitShares: shares }),
   setLimitExpirationEnabled: (enabled: boolean) => set({ limitExpirationEnabled: enabled }),
   setLimitExpirationOption: (option: LimitExpirationOption) => set({ limitExpirationOption: option }),
+  setLimitExpirationTimestamp: (timestamp: number | null) => set({ limitExpirationTimestamp: timestamp }),
   setIsLoading: (loading: boolean) => set({ isLoading: loading }),
   setIsMobileOrderPanelOpen: (open: boolean) => set({ isMobileOrderPanelOpen: open }),
   setLastMouseEvent: (lastMouseEvent: any) => set({ lastMouseEvent }),

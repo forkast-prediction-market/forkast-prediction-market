@@ -10,8 +10,11 @@ export type OrderValidationError
     | 'INVALID_LIMIT_PRICE'
     | 'INVALID_LIMIT_SHARES'
     | 'LIMIT_SHARES_TOO_LOW'
+    | 'INVALID_LIMIT_EXPIRATION'
 
 export const MIN_LIMIT_ORDER_SHARES = 5
+
+type LimitExpirationOption = 'end-of-day' | 'custom'
 
 interface ValidateOrderArgs {
   isLoading: boolean
@@ -23,6 +26,9 @@ interface ValidateOrderArgs {
   isLimitOrder: boolean
   limitPrice: string
   limitShares: string
+  limitExpirationEnabled?: boolean
+  limitExpirationOption?: LimitExpirationOption
+  limitExpirationTimestamp?: number | null
 }
 
 export type OrderValidationResult
@@ -39,6 +45,9 @@ export function validateOrder({
   isLimitOrder,
   limitPrice,
   limitShares,
+  limitExpirationEnabled = false,
+  limitExpirationOption = 'end-of-day',
+  limitExpirationTimestamp = null,
 }: ValidateOrderArgs): OrderValidationResult {
   if (isLoading) {
     return { ok: false, reason: 'IS_LOADING' }
@@ -73,6 +82,17 @@ export function validateOrder({
 
     if (limitSharesValue < MIN_LIMIT_ORDER_SHARES) {
       return { ok: false, reason: 'LIMIT_SHARES_TOO_LOW' }
+    }
+
+    if (limitExpirationEnabled && limitExpirationOption === 'custom') {
+      if (!limitExpirationTimestamp || !Number.isFinite(limitExpirationTimestamp)) {
+        return { ok: false, reason: 'INVALID_LIMIT_EXPIRATION' }
+      }
+
+      const nowSeconds = Math.floor(Date.now() / 1000)
+      if (limitExpirationTimestamp <= nowSeconds) {
+        return { ok: false, reason: 'INVALID_LIMIT_EXPIRATION' }
+      }
     }
 
     return { ok: true }

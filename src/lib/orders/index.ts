@@ -20,6 +20,7 @@ export interface BuildOrderPayloadArgs extends CalculateOrderAmountsArgs {
   makerAddress?: `0x${string}`
   signatureType?: number
   feeRateBps?: number
+  expirationTimestamp?: number
 }
 
 export interface SubmitOrderArgs {
@@ -100,6 +101,7 @@ export function buildOrderPayload({
   makerAddress,
   signatureType,
   feeRateBps,
+  expirationTimestamp,
   ...rest
 }: BuildOrderPayloadArgs): BlockchainOrder {
   const { makerAmount, takerAmount } = calculateOrderAmounts(rest)
@@ -115,6 +117,9 @@ export function buildOrderPayload({
   const feeRateBpsValue = typeof feeRateBps === 'number' && Number.isFinite(feeRateBps)
     ? BigInt(Math.max(0, Math.trunc(feeRateBps)))
     : DEFAULT_ORDER_FIELDS.fee_rate_bps
+  const expirationValue = typeof expirationTimestamp === 'number' && Number.isFinite(expirationTimestamp)
+    ? BigInt(Math.max(0, Math.trunc(expirationTimestamp)))
+    : DEFAULT_ORDER_FIELDS.expiration
 
   return {
     ...DEFAULT_ORDER_FIELDS,
@@ -127,6 +132,7 @@ export function buildOrderPayload({
     token_id: BigInt(outcome.token_id),
     maker_amount: makerAmount,
     taker_amount: takerAmount,
+    expiration: expirationValue,
     side: rest.side,
     fee_rate_bps: feeRateBpsValue,
     affiliate_percentage: affiliatePercentageValue,
