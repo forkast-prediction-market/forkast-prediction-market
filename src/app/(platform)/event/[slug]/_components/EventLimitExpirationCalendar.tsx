@@ -7,7 +7,7 @@ import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
-interface Calendar16Props {
+interface EventLimitExpirationCalendarProps {
   value?: Date
   onChange?: (value: Date) => void
 }
@@ -29,7 +29,7 @@ function mergeDateAndTime(date: Date, time: string) {
   return nextDate
 }
 
-export default function Calendar16({ value, onChange }: Calendar16Props) {
+export default function EventLimitExpirationCalendar({ value, onChange }: EventLimitExpirationCalendarProps) {
   const initialDate = React.useMemo(() => value ?? new Date(), [value])
   const [selectedDate, setSelectedDate] = React.useState<Date>(() => initialDate)
   const [timeValue, setTimeValue] = React.useState<string>(() => formatTimeInput(initialDate))

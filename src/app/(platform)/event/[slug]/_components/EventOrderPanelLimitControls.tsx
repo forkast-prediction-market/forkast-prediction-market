@@ -2,7 +2,7 @@ import type { LimitExpirationOption } from '@/stores/useOrder'
 import type { OrderSide } from '@/types'
 import { BanknoteIcon, TriangleAlertIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import Calendar16 from '@/components/calendar-16'
+import EventLimitExpirationCalendar from '@/app/(platform)/event/[slug]/_components/EventLimitExpirationCalendar'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -388,12 +388,12 @@ export default function EventOrderPanelLimitControls({
       )}
 
       <Dialog open={isExpirationModalOpen} onOpenChange={handleExpirationModalChange}>
-        <DialogContent className="max-w-lg space-y-4">
+        <DialogContent className="w-fit max-w-md min-w-[320px] space-y-4">
           <DialogHeader>
             <DialogTitle>Select expiration</DialogTitle>
           </DialogHeader>
           <div className="flex justify-center">
-            <Calendar16
+            <EventLimitExpirationCalendar
               value={draftExpiration}
               onChange={(nextDate) => {
                 if (nextDate) {

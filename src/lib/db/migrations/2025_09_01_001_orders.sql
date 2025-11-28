@@ -6,7 +6,7 @@ CREATE TABLE orders
 (
   id                   CHAR(26) PRIMARY KEY     DEFAULT generate_ulid() NOT NULL,
   -- begin blockchain data
-  salt                 BIGINT,
+  salt                 NUMERIC(78, 0),
   maker                TEXT                                             NOT NULL,
   signer               TEXT                                             NOT NULL,
   taker                TEXT                                             NOT NULL,

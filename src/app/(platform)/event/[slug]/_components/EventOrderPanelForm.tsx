@@ -159,7 +159,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       amount: state.amount,
       limitPrice: state.limitPrice,
       limitShares: state.limitShares,
-      expirationTimestamp: state.limitExpirationOption === 'custom' && state.limitExpirationTimestamp
+      expirationTimestamp: state.limitExpirationEnabled && state.limitExpirationTimestamp
         ? state.limitExpirationTimestamp
         : undefined,
       referrerAddress: affiliateMetadata.referrerAddress,

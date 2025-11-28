@@ -15,7 +15,7 @@ export const orders = pgTable('orders', {
   id: text().primaryKey().default(sql`generate_ulid()`),
 
   // begin blockchain data
-  salt: bigint({ mode: 'bigint' }),
+  salt: numeric({ mode: 'bigint', precision: 78, scale: 0 }),
   maker: text().notNull(),
   signer: text().notNull(),
   taker: text().notNull(),
