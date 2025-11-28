@@ -43,8 +43,14 @@ export default function EventLimitExpirationCalendar({ value, onChange }: EventL
 
   function handleChange(nextDate: Date, nextTime = timeValue) {
     const mergedDate = mergeDateAndTime(nextDate, nextTime)
-    setSelectedDate(mergedDate)
-    onChange?.(mergedDate)
+    const clampedDate = mergedDate < minDate ? minDate : mergedDate
+
+    if (clampedDate !== mergedDate) {
+      setTimeValue(formatTimeInput(clampedDate))
+    }
+
+    setSelectedDate(clampedDate)
+    onChange?.(clampedDate)
   }
 
   return (

@@ -194,9 +194,6 @@ export default function EventOrderPanelLimitControls({
 
   function handleExpirationModalChange(open: boolean) {
     setIsExpirationModalOpen(open)
-    if (!open && limitExpirationOption === 'custom' && !limitExpirationTimestamp) {
-      onLimitExpirationOptionChange('end-of-day')
-    }
   }
 
   function handleApplyExpiration() {
@@ -412,11 +409,7 @@ export default function EventOrderPanelLimitControls({
             <Button
               variant="outline"
               type="button"
-              onClick={() => {
-                onLimitExpirationOptionChange('end-of-day')
-                onLimitExpirationTimestampChange(null)
-                setIsExpirationModalOpen(false)
-              }}
+              onClick={() => setIsExpirationModalOpen(false)}
             >
               Cancel
             </Button>
