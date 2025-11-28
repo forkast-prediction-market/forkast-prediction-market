@@ -2,6 +2,7 @@ import type { LimitExpirationOption } from '@/stores/useOrder'
 import type { OrderSide } from '@/types'
 import { BanknoteIcon, TriangleAlertIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import EventLimitExpirationCalendar from '@/app/(platform)/event/[slug]/_components/EventLimitExpirationCalendar'
 import { Button } from '@/components/ui/button'
 import {
@@ -200,6 +201,11 @@ export default function EventOrderPanelLimitControls({
 
   function handleApplyExpiration() {
     if (!draftExpiration) {
+      return
+    }
+
+    if (draftExpiration.getTime() <= Date.now()) {
+      toast.error('Expiration must be in future. Try again')
       return
     }
 

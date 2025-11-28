@@ -1,7 +1,7 @@
 'use client'
 
 import { Clock2Icon } from 'lucide-react'
-import * as React from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Calendar } from '@/components/ui/calendar'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -30,11 +30,12 @@ function mergeDateAndTime(date: Date, time: string) {
 }
 
 export default function EventLimitExpirationCalendar({ value, onChange }: EventLimitExpirationCalendarProps) {
-  const initialDate = React.useMemo(() => value ?? new Date(), [value])
-  const [selectedDate, setSelectedDate] = React.useState<Date>(() => initialDate)
-  const [timeValue, setTimeValue] = React.useState<string>(() => formatTimeInput(initialDate))
+  const initialDate = useMemo(() => value ?? new Date(), [value])
+  const minDate = useMemo(() => new Date(), [])
+  const [selectedDate, setSelectedDate] = useState<Date>(() => initialDate)
+  const [timeValue, setTimeValue] = useState<string>(() => formatTimeInput(initialDate))
 
-  React.useEffect(() => {
+  useEffect(() => {
     const nextDate = value ?? new Date()
     setSelectedDate(nextDate)
     setTimeValue(formatTimeInput(nextDate))
@@ -52,6 +53,8 @@ export default function EventLimitExpirationCalendar({ value, onChange }: EventL
         <Calendar
           mode="single"
           selected={selectedDate}
+          fromDate={minDate}
+          disabled={{ before: minDate }}
           onSelect={(nextDate) => {
             if (!nextDate) {
               return

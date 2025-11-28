@@ -61,7 +61,7 @@ export function handleValidationError(reason: OrderValidationError, { openWallet
       })
       break
     case 'INVALID_LIMIT_EXPIRATION':
-      toast.error('Invalid expiration', {
+      toast.error('Expiration must be in future. Try again', {
         description: 'Pick a future date and time for your custom expiration.',
       })
       break
