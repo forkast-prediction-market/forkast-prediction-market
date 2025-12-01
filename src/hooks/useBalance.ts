@@ -1,8 +1,11 @@
+import type { Address } from 'viem'
 import { useAppKitAccount } from '@reown/appkit/react'
-import { useEffect, useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { createPublicClient, getContract, http } from 'viem'
 import { defaultNetwork } from '@/lib/appkit'
 import { COLLATERAL_TOKEN_ADDRESS } from '@/lib/constants'
+import { normalizeAddress } from '@/lib/wallet'
 import { useUser } from '@/stores/useUser'
 
 interface Balance {
@@ -10,6 +13,8 @@ interface Balance {
   text: string
   symbol: string
 }
+
+export const SAFE_BALANCE_QUERY_KEY = 'safe-usdc-balance'
 
 const USDC_DECIMALS = 6
 const ERC20_ABI = [
@@ -25,11 +30,8 @@ const INITIAL_STATE: Balance = {
 }
 
 export function useBalance() {
-  const { address, isConnected } = useAppKitAccount()
+  const { isConnected } = useAppKitAccount()
   const user = useUser()
-  const [balance, setBalance] = useState<Balance>(INITIAL_STATE)
-  const [isLoadingBalance, setIsLoadingBalance] = useState(false)
-  const [isInitialLoad, setIsInitialLoad] = useState(true)
 
   const rpcUrl = useMemo(
     () => defaultNetwork.rpcUrls.default.http[0],
@@ -55,60 +57,47 @@ export function useBalance() {
     [client],
   )
 
-  const walletAddress = isConnected ? address : user?.address
+  const proxyWalletAddress: Address | null = user?.proxy_wallet_status === 'deployed' && user?.proxy_wallet_address
+    ? normalizeAddress(user.proxy_wallet_address) as Address | null
+    : null
 
-  useEffect(() => {
-    if (!walletAddress || !isConnected) {
-      queueMicrotask(() => {
-        setBalance(INITIAL_STATE)
-        setIsLoadingBalance(false)
-        setIsInitialLoad(true)
-      })
-      return
-    }
+  const isQueryEnabled = Boolean(isConnected && proxyWalletAddress)
 
-    let active = true
-
-    async function fetchUSDCBalance() {
-      if (!active) {
-        return
-      }
-
-      if (isInitialLoad) {
-        setIsLoadingBalance(true)
+  const {
+    data,
+    isFetching,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: [SAFE_BALANCE_QUERY_KEY, proxyWalletAddress],
+    enabled: isQueryEnabled,
+    staleTime: 10_000,
+    gcTime: 5 * 60 * 1000,
+    refetchInterval: 10_000,
+    refetchIntervalInBackground: true,
+    queryFn: async (): Promise<Balance> => {
+      if (!proxyWalletAddress) {
+        return INITIAL_STATE
       }
 
       try {
-        const balanceRaw = await contract.read.balanceOf([walletAddress])
+        const balanceRaw = await contract.read.balanceOf([proxyWalletAddress])
         const balanceNumber = Number(balanceRaw) / 10 ** USDC_DECIMALS
 
-        if (active) {
-          setBalance({
-            raw: balanceNumber,
-            text: balanceNumber.toFixed(2),
-            symbol: 'USDC',
-          })
-          setIsLoadingBalance(false)
-          setIsInitialLoad(false)
+        return {
+          raw: balanceNumber,
+          text: balanceNumber.toFixed(2),
+          symbol: 'USDC',
         }
       }
       catch {
-        if (active) {
-          setBalance(INITIAL_STATE)
-          setIsLoadingBalance(false)
-          setIsInitialLoad(false)
-        }
+        return INITIAL_STATE
       }
-    }
+    },
+  })
 
-    queueMicrotask(fetchUSDCBalance)
-    const interval = setInterval(fetchUSDCBalance, 30000)
+  const balance = isQueryEnabled && data ? data : INITIAL_STATE
+  const isLoadingBalance = isQueryEnabled ? (isLoading || (!data && isFetching)) : false
 
-    return () => {
-      active = false
-      clearInterval(interval)
-    }
-  }, [isConnected, walletAddress, contract, isInitialLoad])
-
-  return { balance, isLoadingBalance }
+  return { balance, isLoadingBalance, refetchBalance: refetch }
 }

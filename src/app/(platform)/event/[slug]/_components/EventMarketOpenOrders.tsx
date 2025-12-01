@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { cancelOrderAction } from '@/app/(platform)/event/[slug]/_actions/cancel-order'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { formatSharePriceLabel, fromMicro } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
@@ -243,6 +244,10 @@ export default function EventMarketOpenOrders({ market, eventSlug, collapsible =
       await queryClient.invalidateQueries({
         queryKey: ['user-open-orders', user?.id, eventSlug, market.condition_id],
       })
+      void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
+      setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
+      }, 3000)
     }
     catch (error: any) {
       const message = typeof error?.message === 'string'

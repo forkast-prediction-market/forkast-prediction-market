@@ -1,3 +1,4 @@
+import { useQueryClient } from '@tanstack/react-query'
 import { CheckIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
@@ -11,6 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { formatAmountInputValue } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
@@ -29,6 +31,7 @@ export default function EventSplitSharesDialog({
   marketTitle,
   onOpenChange,
 }: EventSplitSharesDialogProps) {
+  const queryClient = useQueryClient()
   const [amount, setAmount] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -108,6 +111,10 @@ export default function EventSplitSharesDialog({
         description: marketTitle ?? 'Request submitted.',
         icon: <SuccessIcon />,
       })
+      void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
+      setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
+      }, 3000)
       setAmount('')
       onOpenChange(false)
     }

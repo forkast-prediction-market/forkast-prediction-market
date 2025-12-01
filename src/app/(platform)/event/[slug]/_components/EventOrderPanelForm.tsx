@@ -18,7 +18,7 @@ import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSucc
 import { useUserOutcomePositions } from '@/app/(platform)/event/[slug]/_hooks/useUserOutcomePositions'
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
-import { useBalance } from '@/hooks/useBalance'
+import { SAFE_BALANCE_QUERY_KEY, useBalance } from '@/hooks/useBalance'
 import { CLOB_ORDER_TYPE, getExchangeEip712Domain, ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
@@ -234,7 +234,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         lastMouseEvent: state.lastMouseEvent,
       })
 
+      void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
+
       setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
         void queryClient.refetchQueries({ queryKey: ['event-activity'] })
         void queryClient.refetchQueries({ queryKey: ['event-holders'] })
       }, 3000)
