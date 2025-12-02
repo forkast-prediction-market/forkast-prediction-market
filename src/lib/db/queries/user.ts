@@ -1,4 +1,5 @@
 import type { ActivityOrder, MarketOrderType, PositionsQueryParams, ProxyWalletStatus, QueryResult, User, UserMarketOutcomePosition, UserPosition } from '@/types'
+import { randomBytes } from 'node:crypto'
 import { and, asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
@@ -197,18 +198,14 @@ export const UserRepository = {
         }
       }
 
-      const proxyAddress = await ensureUserProxyWallet(user)
+      await ensureUserProxyWallet(user)
 
       if (user.settings) {
         user.settings = sanitizeTradingAuthSettings(user.settings)
       }
 
       if (!user.username) {
-        const addressForUsername = proxyAddress
-          || (typeof user.proxy_wallet_address === 'string' ? user.proxy_wallet_address : '')
-          || (typeof user.address === 'string' ? user.address : '')
-
-        const generatedUsername = addressForUsername ? generateUsernameFromAddress(addressForUsername) : null
+        const generatedUsername = generateUsername()
 
         if (generatedUsername) {
           try {
@@ -242,6 +239,7 @@ export const UserRepository = {
     search?: string
     sortBy?: 'username' | 'email' | 'address' | 'created_at'
     sortOrder?: 'asc' | 'desc'
+    searchByUsernameOnly?: boolean
   } = {}) {
     'use cache'
 
@@ -252,6 +250,7 @@ export const UserRepository = {
         search,
         sortBy = 'created_at',
         sortOrder = 'desc',
+        searchByUsernameOnly = false,
       } = params
 
       const limit = Math.min(Math.max(rawLimit, 1), 1000)
@@ -266,12 +265,15 @@ export const UserRepository = {
           .trim()
 
         if (sanitizedSearchTerm) {
-          whereCondition = or(
-            ilike(users.username, `%${sanitizedSearchTerm}%`),
-            ilike(users.email, `%${sanitizedSearchTerm}%`),
-            ilike(users.address, `%${sanitizedSearchTerm}%`),
-            ilike(users.proxy_wallet_address, `%${sanitizedSearchTerm}%`),
-          )
+          const usernameCondition = ilike(users.username, `%${sanitizedSearchTerm}%`)
+          whereCondition = searchByUsernameOnly
+            ? usernameCondition
+            : or(
+                usernameCondition,
+                ilike(users.email, `%${sanitizedSearchTerm}%`),
+                ilike(users.address, `%${sanitizedSearchTerm}%`),
+                ilike(users.proxy_wallet_address, `%${sanitizedSearchTerm}%`),
+              )
         }
       }
 
@@ -674,19 +676,11 @@ export const UserRepository = {
   },
 }
 
-function generateUsernameFromAddress(address: string) {
-  const normalized = address.toLowerCase()
+function generateUsername() {
+  const randomAddress = `0x${randomBytes(20).toString('hex')}`
+  const timestamp = Date.now()
 
-  if (!/^0x[a-f0-9]{40}$/.test(normalized)) {
-    return null
-  }
-
-  const seed = normalized.slice(2)
-  const suffixHex = seed.slice(-8) || seed
-  const suffixNumber = Number.parseInt(suffixHex, 16)
-  const deterministicSuffix = Number.isNaN(suffixNumber) ? 0 : suffixNumber
-
-  return `${normalized}-${deterministicSuffix}`
+  return `${randomAddress}-${timestamp}`
 }
 
 async function ensureUserProxyWallet(user: any): Promise<string | null> {

@@ -18,6 +18,7 @@ export async function GET(request: Request) {
       limit: 10,
       sortBy: 'username',
       sortOrder: 'asc',
+      searchByUsernameOnly: true,
     })
 
     if (error) {

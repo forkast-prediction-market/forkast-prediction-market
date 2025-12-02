@@ -12,7 +12,17 @@ CREATE TABLE users
   email_verified         BOOLEAN     NOT NULL DEFAULT FALSE,
   two_factor_enabled     BOOLEAN     NOT NULL DEFAULT FALSE,
   image                  TEXT,
-  settings               JSONB       NOT NULL DEFAULT '{}'::JSONB,
+  settings               JSONB       NOT NULL DEFAULT '{
+    "trading": {
+      "market_order_type": "FAK"
+    },
+    "notifications": {
+      "email_resolutions": true,
+      "inapp_order_fills": true,
+      "inapp_resolutions": true,
+      "inapp_hide_small_fills": true
+    }
+  }'::jsonb,
   proxy_wallet_address   TEXT,
   proxy_wallet_signature TEXT,
   proxy_wallet_signed_at TIMESTAMPTZ,
@@ -154,21 +164,3 @@ CREATE TRIGGER set_verifications_updated_at
   ON verifications
   FOR EACH ROW
 EXECUTE FUNCTION set_updated_at();
-
--- ===========================================
--- 6. DEFAULT USER SETTINGS
--- ===========================================
-
-UPDATE users
-SET settings = '{
-  "trading": {
-    "market_order_type": "FAK"
-  },
-  "notifications": {
-    "email_resolutions": true,
-    "inapp_order_fills": true,
-    "inapp_resolutions": true,
-    "inapp_hide_small_fills": true
-  }
-}'::jsonb
-WHERE TRUE;

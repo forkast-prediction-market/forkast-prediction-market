@@ -1173,8 +1173,8 @@ export function PredictionChart({
                 <div
                   key={`${entry.key}-label`}
                   className={`
-                    absolute flex h-5 min-w-[112px] items-center justify-between gap-2 rounded px-2 text-[11px]
-                    leading-5 font-semibold text-white
+                    absolute flex h-5 min-w-[112px] items-center justify-between gap-2 rounded px-2 text-2xs leading-5
+                    font-semibold text-white
                   `}
                   style={{
                     top: entry.top,

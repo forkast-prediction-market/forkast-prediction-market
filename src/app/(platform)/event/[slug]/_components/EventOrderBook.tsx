@@ -164,7 +164,7 @@ export default function EventOrderBook({
         <div
           className={`
             sticky top-0 z-[1] grid h-9 grid-cols-[40%_20%_20%_20%] items-center border-b border-border/60 bg-background
-            px-4 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase
+            px-4 text-2xs font-semibold tracking-wide text-muted-foreground uppercase
           `}
         >
           <div className="flex h-full items-center">
@@ -283,7 +283,7 @@ function OrderBookRow({ level, maxTotal, showBadge, onSelect }: OrderBookRowProp
       {showBadge && (
         <span
           className={`
-            absolute top-1/2 left-4 -translate-y-1/2 rounded-sm px-1.5 py-0.5 text-[10px] font-semibold uppercase
+            absolute top-1/2 left-4 -translate-y-1/2 rounded-sm px-1.5 py-0.5 text-2xs font-semibold uppercase
             ${showBadge === 'ask' ? 'bg-no text-white' : 'bg-yes text-white'}
           `}
         >

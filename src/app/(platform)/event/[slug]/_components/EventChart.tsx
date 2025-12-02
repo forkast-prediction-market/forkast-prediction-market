@@ -305,7 +305,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
           }}
         />
         {hasChartData && (
-          <div className="relative z-10 mt-3 flex flex-wrap justify-center gap-2 text-[11px] font-medium">
+          <div className="relative z-10 mt-3 flex flex-wrap justify-center gap-2 text-2xs font-medium">
             {TIME_RANGES.map(range => (
               <button
                 key={range}

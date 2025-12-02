@@ -154,6 +154,10 @@
   @apply max-w-7xl mx-auto px-4 2xl:px-0;
 }
 
+@utility text-2xs {
+  @apply text-[10px];
+}
+
 @utility scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;

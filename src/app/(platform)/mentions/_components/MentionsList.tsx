@@ -66,7 +66,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
     ? (
         <NewBadge
           variant="soft"
-          className="rounded-md px-2 py-1 text-[11px] font-semibold text-yellow-700 dark:text-yellow-200"
+          className="rounded-md px-2 py-1 text-2xs font-semibold text-yellow-700 dark:text-yellow-200"
         />
       )
     : (
@@ -207,7 +207,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
                         variant="outline"
                         className={cn(
                           `
-                            cursor-pointer rounded-md border border-border/60 bg-background/80 px-2.5 py-1 text-[11px]
+                            cursor-pointer rounded-md border border-border/60 bg-background/80 px-2.5 py-1 text-2xs
                             font-medium text-muted-foreground transition-colors
                             hover:bg-card/70
                           `,

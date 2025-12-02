@@ -35,7 +35,7 @@ export interface SubmitOrderArgs {
 
 const DEFAULT_ORDER_FIELDS = {
   salt: 0n,
-  expiration: 1764548576n,
+  expiration: 1767195000n,
   nonce: 0n,
   fee_rate_bps: 200n,
   affiliate_percentage: 0n,
