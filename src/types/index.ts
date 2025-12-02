@@ -96,6 +96,11 @@ interface Condition {
   updated_at: string
 }
 
+interface TradingAuthStatus {
+  enabled: boolean
+  updatedAt?: string
+}
+
 interface UserSettings {
   notifications?: {
     email_resolutions?: boolean
@@ -106,10 +111,15 @@ interface UserSettings {
   trading?: {
     market_order_type?: ClobOrderType
   }
+  tradingAuth?: {
+    relayer?: TradingAuthStatus
+    clob?: TradingAuthStatus
+    approvals?: TradingAuthStatus
+  }
   [key: string]: any
 }
 
-export type ProxyWalletStatus = 'not_started' | 'signed' | 'deployed'
+export type ProxyWalletStatus = 'not_started' | 'signed' | 'deploying' | 'deployed'
 
 export interface User {
   id: string

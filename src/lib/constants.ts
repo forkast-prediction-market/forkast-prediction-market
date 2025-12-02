@@ -47,7 +47,12 @@ export const CAP_MICRO = 990_000n
 export const FLOOR_MICRO = 10_000n
 
 export const CTF_EXCHANGE_ADDRESS = '0x8e7C334F111e45DF9C160DE56958E37c473081CB' as `0x${string}`
-export const NEG_RISK_CTF_EXCHANGE_ADDRESS = '0x0B31dD379DF27A0ede14336F696412DF7b702e50' as `0x${string}`
+const negRiskExchangeAddress = (
+  process.env.NEGRISK_CTFEXCHANGE_ADDRESS
+  ?? process.env.NEXT_PUBLIC_NEGRISK_CTFEXCHANGE_ADDRESS
+  ?? '0x0B31dD379DF27A0ede14336F696412DF7b702e50'
+) as `0x${string}`
+export const NEG_RISK_CTF_EXCHANGE_ADDRESS = negRiskExchangeAddress
 
 export const EIP712_DOMAIN = {
   name: 'Forkast CTF Exchange',

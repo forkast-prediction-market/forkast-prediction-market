@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
 import { buildClobHmacSignature } from '@/lib/hmac'
+import { getUserTradingAuthSecrets } from '@/lib/trading-auth/server'
 
 const CancelOrderSchema = z.object({
   orderId: z.string().min(1, 'Order id is required.'),
@@ -15,6 +16,11 @@ export async function cancelOrderAction(rawOrderId: string) {
   const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
   if (!user) {
     return { error: 'Unauthenticated.' }
+  }
+
+  const auth = await getUserTradingAuthSecrets(user.id)
+  if (!auth?.clob) {
+    return { error: 'Please enable trading first.' }
   }
 
   const parsed = CancelOrderSchema.safeParse({ orderId: rawOrderId })
@@ -36,7 +42,7 @@ export async function cancelOrderAction(rawOrderId: string) {
   const body = JSON.stringify({ orderId: lookup.data.clob_order_id })
   const timestamp = Math.floor(Date.now() / 1000)
   const signature = buildClobHmacSignature(
-    process.env.FORKAST_API_SECRET!,
+    auth.clob.secret,
     timestamp,
     method,
     path,
@@ -49,9 +55,9 @@ export async function cancelOrderAction(rawOrderId: string) {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
-        'FORKAST_ADDRESS': process.env.FORKAST_ADDRESS!,
-        'FORKAST_API_KEY': process.env.FORKAST_API_KEY!,
-        'FORKAST_PASSPHRASE': process.env.FORKAST_PASSPHRASE!,
+        'FORKAST_ADDRESS': user.proxy_wallet_address ?? user.address,
+        'FORKAST_API_KEY': auth.clob.key,
+        'FORKAST_PASSPHRASE': auth.clob.passphrase,
         'FORKAST_TIMESTAMP': timestamp.toString(),
         'FORKAST_SIGNATURE': signature,
       },

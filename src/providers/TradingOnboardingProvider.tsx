@@ -1,12 +1,15 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
 import type { ProxyWalletStatus } from '@/types'
 import { Check, CircleDollarSign, Loader2, Wallet, X } from 'lucide-react'
 import { createContext, use, useCallback, useEffect, useMemo, useState } from 'react'
-import { UserRejectedRequestError } from 'viem'
-import { useSignTypedData } from 'wagmi'
+import { hashTypedData, UserRejectedRequestError } from 'viem'
+import { useSignMessage, useSignTypedData } from 'wagmi'
+import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
 import { saveProxyWalletSignature } from '@/app/(platform)/_actions/proxy-wallet'
+import { generateTradingAuthAction } from '@/app/(platform)/_actions/trading-auth'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -16,14 +19,30 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Separator } from '@/components/ui/separator'
 import { useAppKit } from '@/hooks/useAppKit'
-import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
+import { defaultNetwork } from '@/lib/appkit'
+import { authClient } from '@/lib/auth-client'
+import { CONDITIONAL_TOKENS_CONTRACT, CTF_EXCHANGE_ADDRESS, DEFAULT_ERROR_MESSAGE, NEG_RISK_CTF_EXCHANGE_ADDRESS } from '@/lib/constants'
 import {
   getSafeProxyDomain,
   SAFE_PROXY_CREATE_PROXY_MESSAGE,
   SAFE_PROXY_PRIMARY_TYPE,
   SAFE_PROXY_TYPES,
 } from '@/lib/contracts/safeProxy'
+import {
+  aggregateSafeTransactions,
+  buildApproveTokenTransactions,
+  getSafeTxTypedData,
+  packSafeSignature,
+
+} from '@/lib/safe/transactions'
+import {
+  buildTradingAuthMessage,
+  getTradingAuthDomain,
+  TRADING_AUTH_PRIMARY_TYPE,
+  TRADING_AUTH_TYPES,
+} from '@/lib/trading-auth/client'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 
@@ -40,12 +59,17 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
   const user = useUser()
   const { open } = useAppKit()
   const { signTypedDataAsync } = useSignTypedData()
+  const { signMessageAsync } = useSignMessage()
   const [enableModalOpen, setEnableModalOpen] = useState(false)
   const [fundModalOpen, setFundModalOpen] = useState(false)
   const [tradeModalOpen, setTradeModalOpen] = useState(false)
   const [shouldShowFundAfterProxy, setShouldShowFundAfterProxy] = useState(false)
-  const [isSigningProxyWallet, setIsSigningProxyWallet] = useState(false)
   const [proxyWalletError, setProxyWalletError] = useState<string | null>(null)
+  const [tradingAuthError, setTradingAuthError] = useState<string | null>(null)
+  const [tokenApprovalError, setTokenApprovalError] = useState<string | null>(null)
+  const [proxyStep, setProxyStep] = useState<'idle' | 'signing' | 'deploying' | 'completed'>('idle')
+  const [tradingAuthStep, setTradingAuthStep] = useState<'idle' | 'signing' | 'completed'>('idle')
+  const [approvalsStep, setApprovalsStep] = useState<'idle' | 'signing' | 'completed'>('idle')
 
   const proxyWalletStatus = user?.proxy_wallet_status ?? null
   const hasProxyWalletAddress = Boolean(user?.proxy_wallet_address)
@@ -53,9 +77,59 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     Boolean(user?.proxy_wallet_address && proxyWalletStatus === 'deployed')
   ), [proxyWalletStatus, user?.proxy_wallet_address])
   const isProxyWalletDeploying = useMemo(() => (
-    Boolean(user?.proxy_wallet_address && proxyWalletStatus === 'signed')
+    Boolean(user?.proxy_wallet_address && proxyWalletStatus === 'deploying')
   ), [proxyWalletStatus, user?.proxy_wallet_address])
-  const hasProxyWallet = hasDeployedProxyWallet
+  const tradingAuthSettings = user?.settings?.tradingAuth ?? null
+  const hasTradingAuth = Boolean(
+    tradingAuthSettings?.relayer?.enabled
+    && tradingAuthSettings?.clob?.enabled,
+  )
+  const approvalsSettings = tradingAuthSettings?.approvals ?? null
+  const hasTokenApprovals = Boolean(approvalsSettings?.enabled)
+  const localStepsComplete
+    = proxyStep === 'completed'
+      && tradingAuthStep === 'completed'
+      && approvalsStep === 'completed'
+  const tradingReady
+    = (hasTradingAuth && hasDeployedProxyWallet && hasTokenApprovals)
+      || localStepsComplete
+
+  useEffect(() => {
+    if (hasDeployedProxyWallet) {
+      setProxyStep('completed')
+    }
+    else if (isProxyWalletDeploying) {
+      setProxyStep(prev => (prev === 'completed' ? 'completed' : 'deploying'))
+    }
+  }, [hasDeployedProxyWallet, isProxyWalletDeploying])
+
+  useEffect(() => {
+    if (hasTradingAuth) {
+      setTradingAuthStep('completed')
+    }
+  }, [hasTradingAuth])
+
+  useEffect(() => {
+    if (hasTokenApprovals) {
+      setApprovalsStep('completed')
+    }
+  }, [hasTokenApprovals])
+
+  const refreshSessionUserState = useCallback(async () => {
+    try {
+      const session = await authClient.getSession()
+      const sessionUser = session?.data?.user
+      if (sessionUser) {
+        useUser.setState({
+          ...sessionUser,
+          image: sessionUser.image ?? '',
+        })
+      }
+    }
+    catch (error) {
+      console.error('Failed to refresh user session', error)
+    }
+  }, [])
 
   useEffect(() => {
     if (!user?.id) {
@@ -138,7 +212,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
             }
           })
 
-          if (!cancelled && data.proxy_wallet_address && data.proxy_wallet_status === 'signed') {
+          if (!cancelled && data.proxy_wallet_address && data.proxy_wallet_status !== 'deployed') {
             timeoutId = setTimeout(fetchProxyDetails, 6000)
           }
         })
@@ -161,6 +235,16 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     setShouldShowFundAfterProxy(false)
   }, [])
 
+  const resetEnableFlowState = useCallback(() => {
+    setProxyWalletError(null)
+    setTradingAuthError(null)
+    setTokenApprovalError(null)
+    setShouldShowFundAfterProxy(false)
+    if (proxyStep !== 'completed') {
+      setProxyStep('idle')
+    }
+  }, [proxyStep])
+
   const handleDepositModalOpen = useCallback(() => {
     queueMicrotask(() => {
       void open()
@@ -171,8 +255,8 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     setProxyWalletError(null)
 
     try {
+      setProxyStep('signing')
       const domain = getSafeProxyDomain()
-      setIsSigningProxyWallet(true)
 
       const signature = await signTypedDataAsync({
         domain,
@@ -184,6 +268,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       const result = await saveProxyWalletSignature({ signature })
 
       if (result.error || !result.data) {
+        setProxyStep('idle')
         setProxyWalletError(result.error ?? DEFAULT_ERROR_MESSAGE)
         return
       }
@@ -199,6 +284,19 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
         }
       })
 
+      const nextStatus = result.data.proxy_wallet_status
+      if (nextStatus === 'deployed') {
+        setProxyStep('completed')
+      }
+      else if (nextStatus === 'deploying') {
+        setProxyStep('deploying')
+      }
+      else {
+        setProxyStep('idle')
+      }
+
+      void refreshSessionUserState()
+
       setEnableModalOpen(false)
 
       if (shouldShowFundAfterProxy) {
@@ -210,18 +308,190 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     catch (error) {
       if (error instanceof UserRejectedRequestError) {
         setProxyWalletError('You rejected the signature request.')
+        setProxyStep('idle')
       }
       else if (error instanceof Error) {
         setProxyWalletError(error.message || DEFAULT_ERROR_MESSAGE)
+        setProxyStep('idle')
       }
       else {
         setProxyWalletError(DEFAULT_ERROR_MESSAGE)
+        setProxyStep('idle')
       }
     }
-    finally {
-      setIsSigningProxyWallet(false)
+  }, [refreshSessionUserState, resetPendingFundState, shouldShowFundAfterProxy, signTypedDataAsync])
+
+  const handleTradingAuthSignature = useCallback(async () => {
+    if (!user?.address) {
+      setTradingAuthError('Please sign in to continue.')
+      return
     }
-  }, [resetPendingFundState, shouldShowFundAfterProxy, signTypedDataAsync])
+
+    setTradingAuthError(null)
+
+    try {
+      setTradingAuthStep('signing')
+      const timestamp = Math.floor(Date.now() / 1000).toString()
+      const message = buildTradingAuthMessage({
+        address: user.address as `0x${string}`,
+        timestamp,
+      })
+
+      const signature = await signTypedDataAsync({
+        domain: getTradingAuthDomain(),
+        types: TRADING_AUTH_TYPES,
+        primaryType: TRADING_AUTH_PRIMARY_TYPE,
+        message,
+      })
+
+      const result = await generateTradingAuthAction({
+        signature,
+        timestamp,
+        nonce: message.nonce.toString(),
+      })
+
+      if (result.error || !result.data) {
+        setTradingAuthError(result.error ?? DEFAULT_ERROR_MESSAGE)
+        setTradingAuthStep('idle')
+        return
+      }
+
+      useUser.setState((previous) => {
+        if (!previous) {
+          return previous
+        }
+
+        const nextSettings = { ...(previous.settings ?? {}) }
+        nextSettings.tradingAuth = {
+          ...(nextSettings.tradingAuth ?? {}),
+          relayer: result.data?.relayer,
+          clob: result.data?.clob,
+        }
+
+        return {
+          ...previous,
+          settings: nextSettings,
+        }
+      })
+
+      void refreshSessionUserState()
+      setTradingAuthStep('completed')
+    }
+    catch (error) {
+      if (error instanceof UserRejectedRequestError) {
+        setTradingAuthError('You rejected the signature request.')
+        setTradingAuthStep('idle')
+      }
+      else if (error instanceof Error) {
+        setTradingAuthError(error.message || DEFAULT_ERROR_MESSAGE)
+        setTradingAuthStep('idle')
+      }
+      else {
+        setTradingAuthError(DEFAULT_ERROR_MESSAGE)
+        setTradingAuthStep('idle')
+      }
+    }
+  }, [refreshSessionUserState, signTypedDataAsync, user])
+
+  const handleApproveTokens = useCallback(async () => {
+    if (!user?.address || !user?.proxy_wallet_address) {
+      setTokenApprovalError('Deploy your proxy wallet first.')
+      return
+    }
+
+    if (!hasTradingAuth) {
+      setTokenApprovalError('Enable trading before approving tokens.')
+      return
+    }
+
+    setTokenApprovalError(null)
+
+    try {
+      setApprovalsStep('signing')
+      const nonceResult = await getSafeNonceAction()
+      if (nonceResult.error || !nonceResult.nonce) {
+        setTokenApprovalError(nonceResult.error ?? DEFAULT_ERROR_MESSAGE)
+        setApprovalsStep('idle')
+        return
+      }
+
+      const transactions = buildApproveTokenTransactions({
+        spender: CONDITIONAL_TOKENS_CONTRACT as `0x${string}`,
+        operators: [
+          CTF_EXCHANGE_ADDRESS as `0x${string}`,
+          NEG_RISK_CTF_EXCHANGE_ADDRESS as `0x${string}`,
+        ],
+      })
+      const aggregated = aggregateSafeTransactions(transactions)
+      const typedData = getSafeTxTypedData({
+        chainId: defaultNetwork.id,
+        safeAddress: user.proxy_wallet_address as `0x${string}`,
+        transaction: aggregated,
+        nonce: nonceResult.nonce,
+      })
+
+      const structHash = hashTypedData({
+        domain: typedData.domain,
+        types: typedData.types,
+        primaryType: typedData.primaryType,
+        message: typedData.message,
+      }) as `0x${string}`
+
+      const signature = await signMessageAsync({
+        message: { raw: structHash },
+      })
+
+      const requestPayload: SafeTransactionRequestPayload = {
+        type: 'SAFE',
+        from: user.address,
+        to: aggregated.to,
+        proxyWallet: user.proxy_wallet_address,
+        data: aggregated.data,
+        nonce: nonceResult.nonce,
+        signature: packSafeSignature(signature as `0x${string}`),
+        signatureParams: typedData.signatureParams,
+        metadata: 'approve_tokens',
+      }
+
+      const submitResult = await submitSafeTransactionAction(requestPayload)
+      if (submitResult.error) {
+        setTokenApprovalError(submitResult.error)
+        setApprovalsStep('idle')
+        return
+      }
+
+      if (submitResult.approvals) {
+        useUser.setState((previous) => {
+          if (!previous) {
+            return previous
+          }
+          const nextSettings = { ...(previous.settings ?? {}) }
+          nextSettings.tradingAuth = {
+            ...(nextSettings.tradingAuth ?? {}),
+            approvals: submitResult.approvals,
+          }
+          return {
+            ...previous,
+            settings: nextSettings,
+          }
+        })
+
+        void refreshSessionUserState()
+      }
+
+      setApprovalsStep('completed')
+    }
+    catch (error) {
+      console.error('Failed to approve tokens', error)
+      if (error instanceof Error) {
+        setTokenApprovalError(error.message || DEFAULT_ERROR_MESSAGE)
+      }
+      else {
+        setTokenApprovalError(DEFAULT_ERROR_MESSAGE)
+      }
+      setApprovalsStep('idle')
+    }
+  }, [hasTradingAuth, refreshSessionUserState, signMessageAsync, user])
 
   const startDepositFlow = useCallback(() => {
     if (!user) {
@@ -236,10 +506,10 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       return
     }
 
-    setProxyWalletError(null)
+    resetEnableFlowState()
     setShouldShowFundAfterProxy(true)
     setEnableModalOpen(true)
-  }, [handleDepositModalOpen, hasDeployedProxyWallet, open, user])
+  }, [handleDepositModalOpen, hasDeployedProxyWallet, open, resetEnableFlowState, user])
 
   const ensureTradingReady = useCallback(() => {
     if (!user) {
@@ -249,14 +519,14 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       return false
     }
 
-    if (hasDeployedProxyWallet) {
+    if (tradingReady) {
       return true
     }
 
-    setProxyWalletError(null)
+    resetEnableFlowState()
     setTradeModalOpen(true)
     return false
-  }, [hasDeployedProxyWallet, open, user])
+  }, [open, resetEnableFlowState, tradingReady, user])
 
   const openTradeRequirements = useCallback(() => {
     if (!user) {
@@ -266,9 +536,9 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       return
     }
 
-    setProxyWalletError(null)
+    resetEnableFlowState()
     setTradeModalOpen(true)
-  }, [open, user])
+  }, [open, resetEnableFlowState, user])
 
   const closeFundModal = useCallback((nextOpen: boolean) => {
     setFundModalOpen(nextOpen)
@@ -281,8 +551,8 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     startDepositFlow,
     ensureTradingReady,
     openTradeRequirements,
-    hasProxyWallet,
-  }), [ensureTradingReady, hasProxyWallet, openTradeRequirements, startDepositFlow])
+    hasProxyWallet: hasDeployedProxyWallet,
+  }), [ensureTradingReady, hasDeployedProxyWallet, openTradeRequirements, startDepositFlow])
 
   return (
     <TradingOnboardingContext value={contextValue}>
@@ -308,17 +578,49 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
             </DialogDescription>
           </DialogHeader>
 
-          {proxyWalletError && (
-            <p className="mt-2 text-sm text-destructive">{proxyWalletError}</p>
-          )}
+          <div className="mt-6 space-y-6 text-left">
+            <TradingRequirementStep
+              title="Deploy Proxy Wallet"
+              description="Deploy your proxy wallet to trade on Polymarket."
+              actionLabel={proxyStep === 'signing' ? 'Signing…' : proxyStep === 'deploying' ? 'Deploying' : 'Deploy'}
+              isLoading={proxyStep === 'signing'}
+              disabled={proxyStep === 'signing' || proxyStep === 'deploying'}
+              isComplete={proxyStep === 'completed'}
+              error={proxyWalletError}
+              onAction={handleProxyWalletSignature}
+            />
 
-          <Button
-            className="mt-6 h-12 w-full text-base"
-            onClick={handleProxyWalletSignature}
-            disabled={isSigningProxyWallet || isProxyWalletDeploying}
-          >
-            {isSigningProxyWallet || isProxyWalletDeploying ? <Loader2 className="size-5 animate-spin" /> : 'Enable Trading'}
-          </Button>
+            <Separator className="bg-border/70" />
+
+            <TradingRequirementStep
+              title="Enable Trading"
+              description="You need to sign this each time you trade on a new browser."
+              actionLabel={tradingAuthStep === 'signing' ? 'Signing…' : 'Sign'}
+              isLoading={tradingAuthStep === 'signing'}
+              disabled={!hasDeployedProxyWallet || tradingAuthStep === 'completed' || tradingAuthStep === 'signing'}
+              isComplete={tradingAuthStep === 'completed'}
+              error={tradingAuthError}
+              onAction={handleTradingAuthSignature}
+            />
+
+            <Separator className="bg-border/70" />
+
+            <TradingRequirementStep
+              title="Approve Tokens"
+              description="Start trading securely with your USDC."
+              actionLabel={approvalsStep === 'signing' ? 'Signing…' : 'Sign'}
+              isLoading={approvalsStep === 'signing'}
+              disabled={
+                !hasTradingAuth
+                || !hasDeployedProxyWallet
+                || approvalsStep === 'completed'
+                || approvalsStep === 'signing'
+              }
+              isComplete={approvalsStep === 'completed'}
+              error={tokenApprovalError}
+              onAction={handleApproveTokens}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 
@@ -359,7 +661,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       <Dialog open={tradeModalOpen} onOpenChange={setTradeModalOpen}>
         <DialogContent showCloseButton={false} className="max-w-xl border border-border/70 bg-background p-6">
           <DialogHeader className="pb-2 text-center">
-            <DialogTitle className="text-lg font-semibold">
+            <DialogTitle className="text-center text-lg font-semibold">
               Trade on
               {' '}
               {process.env.NEXT_PUBLIC_SITE_NAME}
@@ -381,13 +683,40 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
           <div className="space-y-4">
             <TradingRequirementStep
               title="Deploy Proxy Wallet"
-              description={`Deploy your proxy wallet to trade on ${process.env.NEXT_PUBLIC_SITE_NAME}.`}
-              actionLabel={isProxyWalletDeploying ? 'Deploying' : 'Deploy'}
-              isLoading={isSigningProxyWallet || isProxyWalletDeploying}
-              disabled={isProxyWalletDeploying}
-              isComplete={hasProxyWallet}
+              description="Deploy your proxy wallet to trade on Polymarket."
+              actionLabel={proxyStep === 'signing' ? 'Signing…' : proxyStep === 'deploying' ? 'Deploying' : 'Deploy'}
+              isLoading={proxyStep === 'signing'}
+              disabled={proxyStep === 'signing' || proxyStep === 'deploying'}
+              isComplete={proxyStep === 'completed'}
               error={proxyWalletError}
               onAction={handleProxyWalletSignature}
+            />
+            <Separator className="bg-border/70" />
+            <TradingRequirementStep
+              title="Enable Trading"
+              description="You need to sign this each time you trade on a new browser."
+              actionLabel={tradingAuthStep === 'signing' ? 'Signing…' : 'Sign'}
+              isLoading={tradingAuthStep === 'signing'}
+              disabled={!hasDeployedProxyWallet || tradingAuthStep === 'completed' || tradingAuthStep === 'signing'}
+              isComplete={tradingAuthStep === 'completed'}
+              error={tradingAuthError}
+              onAction={handleTradingAuthSignature}
+            />
+            <Separator className="bg-border/70" />
+            <TradingRequirementStep
+              title="Approve Tokens"
+              description="Start trading securely with your USDC."
+              actionLabel={approvalsStep === 'signing' ? 'Signing…' : 'Sign'}
+              isLoading={approvalsStep === 'signing'}
+              disabled={
+                !hasTradingAuth
+                || !hasDeployedProxyWallet
+                || approvalsStep === 'completed'
+                || approvalsStep === 'signing'
+              }
+              isComplete={approvalsStep === 'completed'}
+              error={tokenApprovalError}
+              onAction={handleApproveTokens}
             />
           </div>
         </DialogContent>

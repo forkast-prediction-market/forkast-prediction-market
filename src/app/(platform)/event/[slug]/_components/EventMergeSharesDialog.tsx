@@ -1,8 +1,11 @@
+import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
 import { useQueryClient } from '@tanstack/react-query'
 import { CheckIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { mergePositionAction } from '@/app/(platform)/event/[slug]/_actions/position-operations'
+import { hashTypedData } from 'viem'
+import { useSignMessage } from 'wagmi'
+import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,7 +16,19 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
+import { defaultNetwork } from '@/lib/appkit'
+import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE, ZERO_COLLECTION_ID } from '@/lib/constants'
+import { toMicro } from '@/lib/formatters'
+import {
+  aggregateSafeTransactions,
+  buildMergePositionTransaction,
+  getSafeTxTypedData,
+  packSafeSignature,
+
+} from '@/lib/safe/transactions'
 import { cn } from '@/lib/utils'
+import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
+import { useUser } from '@/stores/useUser'
 
 interface EventMergeSharesDialogProps {
   open: boolean
@@ -31,6 +46,9 @@ export default function EventMergeSharesDialog({
   onOpenChange,
 }: EventMergeSharesDialogProps) {
   const queryClient = useQueryClient()
+  const { ensureTradingReady } = useTradingOnboarding()
+  const user = useUser()
+  const { signMessageAsync } = useSignMessage()
   const [amount, setAmount] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -82,6 +100,10 @@ export default function EventMergeSharesDialog({
       return
     }
 
+    if (!ensureTradingReady()) {
+      return
+    }
+
     const numericAmount = Number.parseFloat(amount)
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
       setError('Enter a valid amount.')
@@ -93,14 +115,63 @@ export default function EventMergeSharesDialog({
       return
     }
 
+    if (!user?.proxy_wallet_address || !user?.address) {
+      toast.error('Deploy your proxy wallet before merging shares.')
+      return
+    }
+
     setError(null)
     setIsSubmitting(true)
 
     try {
-      const response = await mergePositionAction({
-        conditionId,
-        amount: numericAmount.toString(),
+      const nonceResult = await getSafeNonceAction()
+      if (nonceResult.error || !nonceResult.nonce) {
+        toast.error(nonceResult.error ?? DEFAULT_ERROR_MESSAGE)
+        return
+      }
+
+      const transactions = [
+        buildMergePositionTransaction({
+          conditionId: conditionId as `0x${string}`,
+          partition: DEFAULT_CONDITION_PARTITION,
+          amount: toMicro(numericAmount),
+          parentCollectionId: ZERO_COLLECTION_ID,
+        }),
+      ]
+
+      const aggregated = aggregateSafeTransactions(transactions)
+      const typedData = getSafeTxTypedData({
+        chainId: defaultNetwork.id,
+        safeAddress: user.proxy_wallet_address as `0x${string}`,
+        transaction: aggregated,
+        nonce: nonceResult.nonce,
       })
+
+      const { signatureParams, ...safeTypedData } = typedData
+      const structHash = hashTypedData({
+        domain: safeTypedData.domain,
+        types: safeTypedData.types,
+        primaryType: safeTypedData.primaryType,
+        message: safeTypedData.message,
+      }) as `0x${string}`
+
+      const signature = await signMessageAsync({
+        message: { raw: structHash },
+      })
+
+      const payload: SafeTransactionRequestPayload = {
+        type: 'SAFE',
+        from: user.address,
+        to: aggregated.to,
+        proxyWallet: user.proxy_wallet_address,
+        data: aggregated.data,
+        nonce: nonceResult.nonce,
+        signature: packSafeSignature(signature as `0x${string}`),
+        signatureParams,
+        metadata: 'merge_position',
+      }
+
+      const response = await submitSafeTransactionAction(payload)
 
       if (response?.error) {
         toast.error(response.error)

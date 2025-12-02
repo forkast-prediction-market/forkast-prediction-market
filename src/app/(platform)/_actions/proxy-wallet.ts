@@ -8,6 +8,7 @@ import { UserRepository } from '@/lib/db/queries/user'
 import { users } from '@/lib/db/schema/auth/tables'
 import { db } from '@/lib/drizzle'
 import { buildClobHmacSignature } from '@/lib/hmac'
+import { getUserTradingAuthSecrets } from '@/lib/trading-auth/server'
 
 interface SaveProxyWalletSignatureArgs {
   signature: string
@@ -37,6 +38,25 @@ export async function saveProxyWalletSignature({ signature }: SaveProxyWalletSig
   }
 
   try {
+    const tradingAuth = await getUserTradingAuthSecrets(currentUser.id)
+    const relayerAuth = tradingAuth?.relayer
+      ? {
+          key: tradingAuth.relayer.key,
+          secret: tradingAuth.relayer.secret,
+          passphrase: tradingAuth.relayer.passphrase,
+          address: currentUser.address,
+        }
+      : {
+          key: process.env.FORKAST_API_KEY ?? '',
+          secret: process.env.FORKAST_API_SECRET ?? '',
+          passphrase: process.env.FORKAST_PASSPHRASE ?? '',
+          address: process.env.FORKAST_ADDRESS ?? '',
+        }
+
+    if (!relayerAuth.key || !relayerAuth.secret || !relayerAuth.passphrase || !relayerAuth.address) {
+      return { data: null, error: 'Relayer credentials not configured.' }
+    }
+
     const proxyAddress = currentUser.proxy_wallet_address
       ? currentUser.proxy_wallet_address as `0x${string}`
       : await getSafeProxyWalletAddress(currentUser.address as `0x${string}`)
@@ -46,9 +66,18 @@ export async function saveProxyWalletSignature({ signature }: SaveProxyWalletSig
       txHash = await triggerSafeProxyDeployment({
         owner: currentUser.address,
         signature: trimmedSignature,
+        auth: relayerAuth,
       })
-      proxyIsDeployed = true
+      proxyIsDeployed = await isProxyWalletDeployed(proxyAddress)
+    }
+
+    let nextStatus: ProxyWalletStatus = 'signed'
+    if (proxyIsDeployed) {
+      nextStatus = 'deployed'
       txHash = null
+    }
+    else if (txHash) {
+      nextStatus = 'deploying'
     }
 
     const [updated] = await db
@@ -57,8 +86,8 @@ export async function saveProxyWalletSignature({ signature }: SaveProxyWalletSig
         proxy_wallet_signature: trimmedSignature,
         proxy_wallet_address: proxyAddress,
         proxy_wallet_signed_at: new Date(),
-        proxy_wallet_status: proxyIsDeployed ? 'deployed' : 'signed',
-        proxy_wallet_tx_hash: proxyIsDeployed ? null : txHash,
+        proxy_wallet_status: nextStatus,
+        proxy_wallet_tx_hash: txHash,
       })
       .where(eq(users.id, currentUser.id))
       .returning({
@@ -91,7 +120,15 @@ export async function saveProxyWalletSignature({ signature }: SaveProxyWalletSig
   }
 }
 
-async function triggerSafeProxyDeployment({ owner, signature }: { owner: string, signature: string }) {
+async function triggerSafeProxyDeployment({
+  owner,
+  signature,
+  auth,
+}: {
+  owner: string
+  signature: string
+  auth: { key: string, secret: string, passphrase: string, address: string }
+}) {
   const relayerUrl = process.env.RELAYER_URL!
   const method = 'POST'
   const path = '/wallet/safe'
@@ -107,7 +144,7 @@ async function triggerSafeProxyDeployment({ owner, signature }: { owner: string,
   const body = JSON.stringify(payload)
   const timestamp = Math.floor(Date.now() / 1000)
   const hmacSignature = buildClobHmacSignature(
-    process.env.FORKAST_API_SECRET!,
+    auth.secret,
     timestamp,
     method,
     path,
@@ -119,9 +156,9 @@ async function triggerSafeProxyDeployment({ owner, signature }: { owner: string,
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'FORKAST_ADDRESS': process.env.FORKAST_ADDRESS!,
-      'FORKAST_API_KEY': process.env.FORKAST_API_KEY!,
-      'FORKAST_PASSPHRASE': process.env.FORKAST_PASSPHRASE!,
+      'FORKAST_ADDRESS': auth.address,
+      'FORKAST_API_KEY': auth.key,
+      'FORKAST_PASSPHRASE': auth.passphrase,
       'FORKAST_TIMESTAMP': timestamp.toString(),
       'FORKAST_SIGNATURE': hmacSignature,
     },

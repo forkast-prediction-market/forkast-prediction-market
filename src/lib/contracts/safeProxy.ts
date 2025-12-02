@@ -1,7 +1,7 @@
 import type { Address, TypedDataDomain } from 'viem'
 import { createPublicClient, http } from 'viem'
 import { defaultNetwork } from '@/lib/appkit'
-import { CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS, ZERO_ADDRESS } from '@/lib/constants'
+import { ZERO_ADDRESS } from '@/lib/constants'
 
 export const SAFE_PROXY_DOMAIN_NAME = 'Forkast Contract Proxy Factory'
 export const SAFE_PROXY_PRIMARY_TYPE = 'CreateProxy'
@@ -22,18 +22,13 @@ export const SAFE_PROXY_CREATE_PROXY_MESSAGE = {
   paymentReceiver: ZERO_ADDRESS,
 } as const
 
-interface GetProxyWalletAddressOptions {
-  exchangeAddress?: Address
-  isNegRisk?: boolean
-}
-
-const CTF_EXCHANGE_SAFE_ABI = [
+const SAFE_FACTORY_ABI = [
   {
-    name: 'getSafeAddress',
+    name: 'computeProxyAddress',
     type: 'function',
     stateMutability: 'view',
-    inputs: [{ name: '_addr', type: 'address' }],
-    outputs: [{ name: '', type: 'address' }],
+    inputs: [{ name: 'user', type: 'address' }],
+    outputs: [{ type: 'address' }],
   },
 ] as const
 
@@ -52,13 +47,6 @@ function getSafeProxyClient() {
   return client
 }
 
-function resolveExchangeAddress(options?: GetProxyWalletAddressOptions) {
-  if (options?.exchangeAddress) {
-    return options.exchangeAddress
-  }
-  return options?.isNegRisk ? NEG_RISK_CTF_EXCHANGE_ADDRESS : CTF_EXCHANGE_ADDRESS
-}
-
 export function getSafeProxyDomain(): TypedDataDomain {
   return {
     name: SAFE_PROXY_DOMAIN_NAME,
@@ -67,14 +55,13 @@ export function getSafeProxyDomain(): TypedDataDomain {
   }
 }
 
-export async function getSafeProxyWalletAddress(owner: Address, options?: GetProxyWalletAddressOptions) {
-  const exchangeAddress = resolveExchangeAddress(options)
+export async function getSafeProxyWalletAddress(owner: Address) {
   return await getSafeProxyClient().readContract({
-    address: exchangeAddress,
-    abi: CTF_EXCHANGE_SAFE_ABI,
-    functionName: 'getSafeAddress',
+    address: SAFE_PROXY_FACTORY_ADDRESS,
+    abi: SAFE_FACTORY_ABI,
+    functionName: 'computeProxyAddress',
     args: [owner],
-  })
+  }) as Address
 }
 
 export async function isProxyWalletDeployed(address?: Address | string | null) {

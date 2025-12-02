@@ -20,9 +20,16 @@ export async function GET() {
     if (deployed && proxyWalletStatus !== 'deployed') {
       await db
         .update(users)
-        .set({ proxy_wallet_status: 'deployed' })
+        .set({ proxy_wallet_status: 'deployed', proxy_wallet_tx_hash: null })
         .where(eq(users.id, user.id))
       proxyWalletStatus = 'deployed'
+    }
+    else if (!deployed && proxyWalletStatus === 'deployed') {
+      await db
+        .update(users)
+        .set({ proxy_wallet_status: 'deploying' })
+        .where(eq(users.id, user.id))
+      proxyWalletStatus = 'deploying'
     }
   }
 

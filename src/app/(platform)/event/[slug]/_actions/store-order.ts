@@ -8,6 +8,7 @@ import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
 import { toMicro } from '@/lib/formatters'
 import { buildClobHmacSignature } from '@/lib/hmac'
+import { getUserTradingAuthSecrets } from '@/lib/trading-auth/server'
 
 const StoreOrderSchema = z.object({
   // begin blockchain data
@@ -45,6 +46,11 @@ export async function storeOrderAction(payload: StoreOrderInput) {
     return { error: 'Unauthenticated.' }
   }
 
+  const auth = await getUserTradingAuthSecrets(user.id)
+  if (!auth?.clob) {
+    return { error: 'Please enable trading to continue.' }
+  }
+
   const validated = StoreOrderSchema.safeParse(payload)
 
   if (!validated.success) {
@@ -80,7 +86,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
         signature: validated.data.signature,
       },
       orderType: clobOrderType,
-      owner: process.env.FORKAST_ADDRESS!,
+      owner: user.proxy_wallet_address ?? user.address,
     }
 
     const method = 'POST'
@@ -88,7 +94,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
     const body = JSON.stringify(clobPayload)
     const timestamp = Math.floor(Date.now() / 1000)
     const signature = buildClobHmacSignature(
-      process.env.FORKAST_API_SECRET!,
+      auth.clob.secret,
       timestamp,
       method,
       path,
@@ -100,9 +106,9 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'FORKAST_ADDRESS': process.env.FORKAST_ADDRESS!,
-        'FORKAST_API_KEY': process.env.FORKAST_API_KEY!,
-        'FORKAST_PASSPHRASE': process.env.FORKAST_PASSPHRASE!,
+        'FORKAST_ADDRESS': clobPayload.owner,
+        'FORKAST_API_KEY': auth.clob.key,
+        'FORKAST_PASSPHRASE': auth.clob.passphrase,
         'FORKAST_TIMESTAMP': timestamp.toString(),
         'FORKAST_SIGNATURE': signature,
       },

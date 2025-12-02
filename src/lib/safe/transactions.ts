@@ -1,0 +1,301 @@
+import type { Hex, TypedDataDomain } from 'viem'
+import {
+  concatHex,
+  encodeFunctionData,
+  encodePacked,
+  erc20Abi,
+  erc1155Abi,
+  size,
+  zeroAddress,
+} from 'viem'
+import { COLLATERAL_TOKEN_ADDRESS, CONDITIONAL_TOKENS_CONTRACT, CTF_EXCHANGE_ADDRESS, ZERO_COLLECTION_ID } from '@/lib/constants'
+
+export enum SafeOperationType {
+  Call = 0,
+  DelegateCall = 1,
+}
+
+export interface SafeTransaction {
+  to: `0x${string}`
+  value: string
+  data: `0x${string}`
+  operation: SafeOperationType
+}
+
+const SAFE_TX_TYPES = {
+  SafeTx: [
+    { name: 'to', type: 'address' },
+    { name: 'value', type: 'uint256' },
+    { name: 'data', type: 'bytes' },
+    { name: 'operation', type: 'uint8' },
+    { name: 'safeTxGas', type: 'uint256' },
+    { name: 'baseGas', type: 'uint256' },
+    { name: 'gasPrice', type: 'uint256' },
+    { name: 'gasToken', type: 'address' },
+    { name: 'refundReceiver', type: 'address' },
+    { name: 'nonce', type: 'uint256' },
+  ],
+} as const
+
+const SAFE_MULTISEND_ADDRESS = '0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761'
+const MAX_ALLOWANCE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
+
+const multisendAbi = [
+  {
+    name: 'multiSend',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [{ name: 'transactions', type: 'bytes' }],
+    outputs: [],
+  },
+] as const
+
+const conditionalTokensAbi = [
+  {
+    name: 'splitPosition',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'collateralToken', type: 'address' },
+      { name: 'parentCollectionId', type: 'bytes32' },
+      { name: 'conditionId', type: 'bytes32' },
+      { name: 'partition', type: 'uint256[]' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [],
+  },
+  {
+    name: 'mergePositions',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'collateralToken', type: 'address' },
+      { name: 'parentCollectionId', type: 'bytes32' },
+      { name: 'conditionId', type: 'bytes32' },
+      { name: 'partition', type: 'uint256[]' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [],
+  },
+] as const
+
+interface SafeTypedDataPayload {
+  domain: TypedDataDomain
+  types: typeof SAFE_TX_TYPES
+  primaryType: 'SafeTx'
+  message: Record<string, string | number>
+  signatureParams: {
+    gasPrice: string
+    operation: string
+    safeTxnGas: string
+    baseGas: string
+    gasToken: string
+    refundReceiver: string
+  }
+}
+
+export interface SafeTransactionRequestPayload {
+  type: 'SAFE'
+  from: string
+  to: string
+  proxyWallet: string
+  data: string
+  nonce: string
+  signature: string
+  signatureParams: SafeTypedDataPayload['signatureParams']
+  metadata?: string
+}
+
+interface ApproveOptions {
+  spender?: `0x${string}`
+  operators?: `0x${string}`[]
+}
+
+export function buildApproveTokenTransactions(options?: ApproveOptions): SafeTransaction[] {
+  const spender = (options?.spender ?? CONDITIONAL_TOKENS_CONTRACT) as `0x${string}`
+  const operators = options?.operators?.length
+    ? options.operators
+    : [CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS]
+
+  const transactions: SafeTransaction[] = [
+    {
+      to: COLLATERAL_TOKEN_ADDRESS as `0x${string}`,
+      value: '0',
+      data: encodeFunctionData({
+        abi: erc20Abi,
+        functionName: 'approve',
+        args: [spender, MAX_ALLOWANCE],
+      }),
+      operation: SafeOperationType.Call,
+    },
+  ]
+
+  for (const operator of operators) {
+    transactions.push({
+      to: CONDITIONAL_TOKENS_CONTRACT as `0x${string}`,
+      value: '0',
+      data: encodeFunctionData({
+        abi: erc1155Abi,
+        functionName: 'setApprovalForAll',
+        args: [operator, true],
+      }),
+      operation: SafeOperationType.Call,
+    })
+  }
+
+  return transactions
+}
+
+interface ConditionalPositionArgs {
+  contract?: `0x${string}`
+  collateralToken?: `0x${string}`
+  parentCollectionId?: `0x${string}`
+  conditionId: `0x${string}`
+  partition: Array<string | number | bigint>
+  amount: string
+}
+
+function normalizePartition(values: Array<string | number | bigint>): bigint[] {
+  return values.map(value => BigInt(value))
+}
+
+export function buildSplitPositionTransaction(args: ConditionalPositionArgs): SafeTransaction {
+  const data = encodeFunctionData({
+    abi: conditionalTokensAbi,
+    functionName: 'splitPosition',
+    args: [
+      (args.collateralToken ?? COLLATERAL_TOKEN_ADDRESS) as `0x${string}`,
+      (args.parentCollectionId ?? ZERO_COLLECTION_ID) as `0x${string}`,
+      args.conditionId,
+      normalizePartition(args.partition),
+      BigInt(args.amount),
+    ],
+  })
+
+  return {
+    to: (args.contract ?? CONDITIONAL_TOKENS_CONTRACT) as `0x${string}`,
+    value: '0',
+    data,
+    operation: SafeOperationType.Call,
+  }
+}
+
+export function buildMergePositionTransaction(args: ConditionalPositionArgs): SafeTransaction {
+  const data = encodeFunctionData({
+    abi: conditionalTokensAbi,
+    functionName: 'mergePositions',
+    args: [
+      (args.collateralToken ?? COLLATERAL_TOKEN_ADDRESS) as `0x${string}`,
+      (args.parentCollectionId ?? ZERO_COLLECTION_ID) as `0x${string}`,
+      args.conditionId,
+      normalizePartition(args.partition),
+      BigInt(args.amount),
+    ],
+  })
+
+  return {
+    to: (args.contract ?? CONDITIONAL_TOKENS_CONTRACT) as `0x${string}`,
+    value: '0',
+    data,
+    operation: SafeOperationType.Call,
+  }
+}
+
+export function aggregateSafeTransactions(transactions: SafeTransaction[]): SafeTransaction {
+  if (transactions.length === 1) {
+    return transactions[0]
+  }
+
+  const encoded = concatHex(
+    transactions.map(tx =>
+      encodePacked(
+        ['uint8', 'address', 'uint256', 'uint256', 'bytes'],
+        [
+          tx.operation,
+          tx.to,
+          BigInt(tx.value),
+          BigInt(size(tx.data as Hex)),
+          tx.data,
+        ],
+      ),
+    ),
+  )
+
+  const data = encodeFunctionData({
+    abi: multisendAbi,
+    functionName: 'multiSend',
+    args: [encoded],
+  })
+
+  return {
+    to: SAFE_MULTISEND_ADDRESS as `0x${string}`,
+    value: '0',
+    data,
+    operation: SafeOperationType.DelegateCall,
+  }
+}
+
+export function getSafeTxTypedData(params: {
+  chainId: number
+  safeAddress: `0x${string}`
+  transaction: SafeTransaction
+  nonce: string
+}): SafeTypedDataPayload {
+  const signatureParams = {
+    gasPrice: '0',
+    operation: `${params.transaction.operation}`,
+    safeTxnGas: '0',
+    baseGas: '0',
+    gasToken: zeroAddress,
+    refundReceiver: zeroAddress,
+  }
+
+  const message = {
+    to: params.transaction.to,
+    value: params.transaction.value,
+    data: params.transaction.data,
+    operation: params.transaction.operation,
+    safeTxGas: signatureParams.safeTxnGas,
+    baseGas: signatureParams.baseGas,
+    gasPrice: signatureParams.gasPrice,
+    gasToken: signatureParams.gasToken,
+    refundReceiver: signatureParams.refundReceiver,
+    nonce: params.nonce,
+  }
+
+  const domain: TypedDataDomain = {
+    chainId: params.chainId,
+    verifyingContract: params.safeAddress,
+  }
+
+  return {
+    domain,
+    types: SAFE_TX_TYPES,
+    primaryType: 'SafeTx',
+    message,
+    signatureParams,
+  }
+}
+
+export function packSafeSignature(signature: `0x${string}`): string {
+  let sigV = Number.parseInt(signature.slice(-2), 16)
+  switch (sigV) {
+    case 0:
+    case 1:
+      sigV += 31
+      break
+    case 27:
+    case 28:
+      sigV += 4
+      break
+    default:
+      throw new Error('Invalid signature')
+  }
+
+  const adjusted = signature.slice(0, -2) + sigV.toString(16).padStart(2, '0')
+  const r = BigInt(`0x${adjusted.slice(2, 66)}`)
+  const s = BigInt(`0x${adjusted.slice(66, 130)}`)
+  const v = BigInt(`0x${adjusted.slice(130, 132)}`)
+
+  return encodePacked(['uint256', 'uint256', 'uint8'], [r, s, Number(v)])
+}
