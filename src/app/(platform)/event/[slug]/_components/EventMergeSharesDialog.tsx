@@ -133,7 +133,7 @@ export default function EventMergeSharesDialog({
       const transactions = [
         buildMergePositionTransaction({
           conditionId: conditionId as `0x${string}`,
-          partition: DEFAULT_CONDITION_PARTITION,
+          partition: [...DEFAULT_CONDITION_PARTITION],
           amount: toMicro(numericAmount),
           parentCollectionId: ZERO_COLLECTION_ID,
         }),
