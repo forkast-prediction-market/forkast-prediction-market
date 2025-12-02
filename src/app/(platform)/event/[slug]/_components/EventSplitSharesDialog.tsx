@@ -126,6 +126,7 @@ export default function EventSplitSharesDialog({
       const nonceResult = await getSafeNonceAction()
       if (nonceResult.error || !nonceResult.nonce) {
         toast.error(nonceResult.error ?? DEFAULT_ERROR_MESSAGE)
+        setIsSubmitting(false)
         return
       }
 
@@ -174,6 +175,7 @@ export default function EventSplitSharesDialog({
 
       if (response?.error) {
         toast.error(response.error)
+        setIsSubmitting(false)
         return
       }
 
