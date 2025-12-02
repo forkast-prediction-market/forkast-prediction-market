@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { normalizeAddress } from '@/lib/wallet'
 import { useUser } from '@/stores/useUser'
 
-const DATA_API_URL = process.env.DATA_URL || 'https://data-api.forka.st'
+const DATA_API_URL = process.env.DATA_URL!
 
 interface PortfolioValueResult {
   value: number
