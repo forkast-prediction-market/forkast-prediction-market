@@ -26,9 +26,10 @@ export const auth = betterAuth({
   },
   plugins: [
     customSession(async ({ user, session }) => {
-      const settings = user.settings
-        ? sanitizeTradingAuthSettings(user.settings as Record<string, any>)
-        : user.settings
+      const rawSettings = (user as any).settings as Record<string, any> | undefined
+      const settings = rawSettings
+        ? sanitizeTradingAuthSettings(rawSettings)
+        : rawSettings
 
       return {
         user: {
