@@ -502,7 +502,7 @@ export default function EventCard({ event }: EventCardProps) {
                 <>
                   {/* Show multi-market options only for non-binary markets */}
                   {!isSingleMarket && (
-                    <div className="mt-auto mb-1 scrollbar-hide max-h-18 space-y-2 overflow-y-auto">
+                    <div className="mt-auto mb-1 scrollbar-hide max-h-14 space-y-2 overflow-y-auto">
                       {event.markets.map(market => (
                         <div
                           key={market.condition_id}
@@ -520,7 +520,7 @@ export default function EventCard({ event }: EventCardProps) {
                               const oppositeChance = Math.max(0, Math.min(100, 100 - displayChance))
                               return (
                                 <>
-                                  <span className="text-[11px] font-bold text-slate-900 dark:text-white">
+                                  <span className="text-2xs font-bold text-slate-900 dark:text-white">
                                     {displayChance}
                                     %
                                   </span>
@@ -534,7 +534,7 @@ export default function EventCard({ event }: EventCardProps) {
                                       }}
                                       title={`${market.outcomes[0].outcome_text}: ${displayChance}%`}
                                       variant="yes"
-                                      className="group h-auto w-[40px] px-2 py-1 text-[10px]"
+                                      className="group h-auto w-[40px] px-2 py-1 text-2xs"
                                     >
                                       <span className="truncate group-hover:hidden">
                                         {market.outcomes[0].outcome_text}
@@ -554,7 +554,7 @@ export default function EventCard({ event }: EventCardProps) {
                                       title={`${market.outcomes[1].outcome_text}: ${oppositeChance}%`}
                                       variant="no"
                                       size="sm"
-                                      className="group h-auto w-[40px] px-2 py-1 text-[10px]"
+                                      className="group h-auto w-[40px] px-2 py-1 text-2xs"
                                     >
                                       <span className="truncate group-hover:hidden">
                                         {market.outcomes[1].outcome_text}

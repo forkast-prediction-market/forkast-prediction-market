@@ -103,7 +103,7 @@ export default function EventOrderPanelInput({
   }
 
   function renderActionButtons() {
-    const baseClasses = 'h-7 px-3 rounded-lg border text-[11px] transition-all duration-200 ease-in-out'
+    const baseClasses = 'h-7 px-3 rounded-lg border text-2xs transition-all duration-200 ease-in-out'
 
     if (side === ORDER_SIDE.SELL) {
       const isDisabled = availableShares <= 0
@@ -252,7 +252,7 @@ export default function EventOrderPanelInput({
         <button
           type="button"
           className={cn(
-            'h-7 rounded-lg border px-3 text-[11px] font-semibold transition-all duration-200 ease-in-out',
+            'h-7 rounded-lg border px-3 text-2xs font-semibold transition-all duration-200 ease-in-out',
             side === ORDER_SIDE.SELL && availableShares <= 0
               ? 'cursor-not-allowed opacity-50'
               : 'hover:border-border hover:bg-white/10 dark:hover:bg-white/5',

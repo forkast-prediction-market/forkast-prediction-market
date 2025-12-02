@@ -104,7 +104,7 @@ function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2 text-xs font-medium sm:text-sm">
           <span className={cn(
-            'inline-flex min-w-[56px] justify-center rounded-md px-2 py-0.5 text-[11px] font-semibold uppercase',
+            'inline-flex min-w-[56px] justify-center rounded-md px-2 py-0.5 text-2xs font-semibold uppercase',
             order.side === 'buy'
               ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
               : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-200',
@@ -114,7 +114,7 @@ function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
           </span>
           <span className="line-clamp-2 text-foreground">{order.outcome.text || 'Outcome'}</span>
           <span className={`
-            inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground
+            inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-2xs font-semibold text-muted-foreground
             uppercase
           `}
           >
@@ -139,11 +139,11 @@ function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
 
       <div className="flex flex-1 items-center justify-end gap-4 sm:flex-none">
         <div className="text-right">
-          <div className="text-[11px] tracking-wide text-muted-foreground uppercase">Price</div>
+          <div className="text-2xs tracking-wide text-muted-foreground uppercase">Price</div>
           <div className="text-sm font-semibold">{priceLabel}</div>
         </div>
         <div className="text-right">
-          <div className="text-[11px] tracking-wide text-muted-foreground uppercase">Size</div>
+          <div className="text-2xs tracking-wide text-muted-foreground uppercase">Size</div>
           <div className="text-sm font-semibold">
             $
             {sizeLabel}

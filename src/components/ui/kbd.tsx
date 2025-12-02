@@ -9,7 +9,7 @@ function Kbd({ ref, className, ...props }: React.HTMLAttributes<HTMLElement> & {
       className={cn(
         `
           pointer-events-none inline-flex h-5 items-center gap-1 rounded border border-muted-foreground/40 bg-muted
-          px-1.5 font-mono text-[10px] font-medium text-muted-foreground shadow-xs select-none
+          px-1.5 font-mono text-2xs font-medium text-muted-foreground shadow-xs select-none
         `,
         className,
       )}

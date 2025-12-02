@@ -155,7 +155,7 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
 
             {!error && context && (
               <div className="flex justify-end">
-                <span className="font-mono text-[10px] tracking-wide text-muted-foreground/80 uppercase">
+                <span className="font-mono text-2xs tracking-wide text-muted-foreground/80 uppercase">
                   Results are experimental
                 </span>
               </div>

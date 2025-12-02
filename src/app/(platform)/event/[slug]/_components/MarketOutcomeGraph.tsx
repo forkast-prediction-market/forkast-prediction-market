@@ -84,7 +84,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
         }}
       />
 
-      <div className="flex flex-wrap justify-center gap-2 text-[11px] font-semibold">
+      <div className="flex flex-wrap justify-center gap-2 text-2xs font-semibold">
         {TIME_RANGES.map(range => (
           <button
             key={range}

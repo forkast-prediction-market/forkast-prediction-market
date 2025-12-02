@@ -94,7 +94,7 @@ function MarketPositionRow({ position }: { position: UserPosition }) {
         <div className="flex items-center gap-2 text-xs font-medium sm:text-sm">
           <span className="line-clamp-2 text-foreground">{position.market.title}</span>
           <span className={cn(
-            'inline-flex min-w-[68px] justify-center rounded-md px-2 py-0.5 text-[11px] font-semibold',
+            'inline-flex min-w-[68px] justify-center rounded-md px-2 py-0.5 text-2xs font-semibold',
             isActive
               ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
               : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200',
@@ -122,14 +122,14 @@ function MarketPositionRow({ position }: { position: UserPosition }) {
 
       <div className="flex flex-1 items-center justify-end gap-6 sm:flex-none">
         <div className="text-right">
-          <div className="text-[11px] tracking-wide text-muted-foreground uppercase">Avg</div>
+          <div className="text-2xs tracking-wide text-muted-foreground uppercase">Avg</div>
           <div className="text-sm font-semibold">
             $
             {fromMicro(String(position.average_position), 2)}
           </div>
         </div>
         <div className="text-right">
-          <div className="text-[11px] tracking-wide text-muted-foreground uppercase">Value</div>
+          <div className="text-2xs tracking-wide text-muted-foreground uppercase">Value</div>
           <div className="text-sm font-semibold">
             $
             {fromMicro(String(position.total_position_value), 2)}
