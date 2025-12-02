@@ -1,4 +1,4 @@
-import type { Hex, TypedDataDomain } from 'viem'
+import type { Address, Hex, TypedDataDomain } from 'viem'
 import {
   concatHex,
   encodeFunctionData,
@@ -79,11 +79,24 @@ const conditionalTokensAbi = [
   },
 ] as const
 
+interface SafeTxMessage {
+  to: `0x${string}`
+  value: string
+  data: `0x${string}`
+  operation: number
+  safeTxGas: string
+  baseGas: string
+  gasPrice: string
+  gasToken: `0x${string}`
+  refundReceiver: `0x${string}`
+  nonce: string
+}
+
 interface SafeTypedDataPayload {
   domain: TypedDataDomain
   types: typeof SAFE_TX_TYPES
   primaryType: 'SafeTx'
-  message: Record<string, string | number>
+  message: SafeTxMessage
   signatureParams: {
     gasPrice: string
     operation: string
@@ -250,16 +263,16 @@ export function getSafeTxTypedData(params: {
     refundReceiver: zeroAddress,
   }
 
-  const message = {
-    to: params.transaction.to,
+  const message: SafeTxMessage = {
+    to: params.transaction.to as Address,
     value: params.transaction.value,
-    data: params.transaction.data,
+    data: params.transaction.data as Hex,
     operation: params.transaction.operation,
     safeTxGas: signatureParams.safeTxnGas,
     baseGas: signatureParams.baseGas,
     gasPrice: signatureParams.gasPrice,
-    gasToken: signatureParams.gasToken,
-    refundReceiver: signatureParams.refundReceiver,
+    gasToken: signatureParams.gasToken as Address,
+    refundReceiver: signatureParams.refundReceiver as Address,
     nonce: params.nonce,
   }
 
