@@ -237,6 +237,7 @@ export const UserRepository = {
     search?: string
     sortBy?: 'username' | 'email' | 'address' | 'created_at'
     sortOrder?: 'asc' | 'desc'
+    searchByUsernameOnly?: boolean
   } = {}) {
     'use cache'
 
@@ -247,6 +248,7 @@ export const UserRepository = {
         search,
         sortBy = 'created_at',
         sortOrder = 'desc',
+        searchByUsernameOnly = false,
       } = params
 
       const limit = Math.min(Math.max(rawLimit, 1), 1000)
@@ -261,12 +263,15 @@ export const UserRepository = {
           .trim()
 
         if (sanitizedSearchTerm) {
-          whereCondition = or(
-            ilike(users.username, `%${sanitizedSearchTerm}%`),
-            ilike(users.email, `%${sanitizedSearchTerm}%`),
-            ilike(users.address, `%${sanitizedSearchTerm}%`),
-            ilike(users.proxy_wallet_address, `%${sanitizedSearchTerm}%`),
-          )
+          const usernameCondition = ilike(users.username, `%${sanitizedSearchTerm}%`)
+          whereCondition = searchByUsernameOnly
+            ? usernameCondition
+            : or(
+                usernameCondition,
+                ilike(users.email, `%${sanitizedSearchTerm}%`),
+                ilike(users.address, `%${sanitizedSearchTerm}%`),
+                ilike(users.proxy_wallet_address, `%${sanitizedSearchTerm}%`),
+              )
         }
       }
 
