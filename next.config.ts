@@ -40,6 +40,7 @@ const config: NextConfig = {
           : 'http://localhost:3000',
     CLOB_URL: 'https://clob.forka.st',
     RELAYER_URL: 'https://relayer.forka.st',
+    DATA_URL: 'https://data-api.forka.st',
   },
 }
 

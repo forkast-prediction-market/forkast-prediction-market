@@ -1,6 +1,6 @@
 'use client'
 
-import type { UserPosition } from '@/types'
+import type { PublicPosition } from './PositionItem'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { SearchIcon, XIcon } from 'lucide-react'
@@ -99,6 +99,63 @@ interface FetchUserPositionsParams {
   status: 'active' | 'closed'
   minAmountFilter: string
   searchQuery?: string
+  signal?: AbortSignal
+}
+
+interface DataApiPosition {
+  proxyWallet?: string
+  asset?: string
+  conditionId?: string
+  size?: number
+  avgPrice?: number
+  initialValue?: number
+  currentValue?: number
+  cashPnl?: number
+  totalBought?: number
+  realizedPnl?: number
+  percentPnl?: number
+  percentRealizedPnl?: number
+  curPrice?: number
+  redeemable?: boolean
+  mergeable?: boolean
+  title?: string
+  slug?: string
+  icon?: string
+  eventSlug?: string
+  outcome?: string
+  outcomeIndex?: number
+  oppositeOutcome?: string
+  oppositeAsset?: string
+  timestamp?: number
+}
+
+const DATA_API_URL = process.env.DATA_URL!
+
+function mapDataApiPosition(position: DataApiPosition, status: 'active' | 'closed'): PublicPosition {
+  const slug = position.slug || position.conditionId || 'unknown-market'
+  const eventSlug = position.eventSlug || slug
+  const timestampMs = typeof position.timestamp === 'number'
+    ? position.timestamp * 1000
+    : Date.now()
+  const currentValue = Number.isFinite(position.currentValue) ? Number(position.currentValue) : 0
+  const realizedValue = Number.isFinite(position.realizedPnl)
+    ? Number(position.realizedPnl)
+    : currentValue
+  const normalizedValue = status === 'closed' ? realizedValue : currentValue
+
+  return {
+    id: `${position.conditionId || slug}-${position.outcomeIndex ?? 0}-${status}`,
+    title: position.title || 'Untitled market',
+    slug,
+    eventSlug,
+    icon: position.icon,
+    avgPrice: Number.isFinite(position.avgPrice) ? Number(position.avgPrice) : 0,
+    currentValue: normalizedValue,
+    timestamp: timestampMs,
+    status,
+    outcome: position.outcome,
+    size: typeof position.size === 'number' ? position.size : undefined,
+  }
 }
 
 async function fetchUserPositions({
@@ -107,33 +164,49 @@ async function fetchUserPositions({
   status,
   minAmountFilter,
   searchQuery,
-}: FetchUserPositionsParams): Promise<UserPosition[]> {
+  signal,
+}: FetchUserPositionsParams): Promise<PublicPosition[]> {
+  const endpoint = status === 'active' ? '/positions' : '/closed-positions'
   const params = new URLSearchParams({
+    user: userAddress,
     limit: '50',
     offset: pageParam.toString(),
-    status,
+    sortDirection: 'DESC',
   })
 
-  if (minAmountFilter && minAmountFilter !== 'All') {
-    params.set('minAmount', minAmountFilter)
+  if (status === 'active') {
+    if (minAmountFilter && minAmountFilter !== 'All') {
+      params.set('sizeThreshold', minAmountFilter)
+    }
+    else {
+      params.set('sizeThreshold', '0')
+    }
   }
 
   if (searchQuery && searchQuery.trim()) {
-    params.set('search', searchQuery.trim())
+    params.set('title', searchQuery.trim())
   }
 
-  const controller = new AbortController()
+  if (status === 'closed') {
+    params.set('sortBy', 'TIMESTAMP')
+  }
 
-  const response = await fetch(`/api/users/${encodeURIComponent(userAddress)}/positions?${params}`, {
-    signal: controller.signal,
+  const response = await fetch(`${DATA_API_URL}${endpoint}?${params.toString()}`, {
+    signal,
   })
 
   if (!response.ok) {
-    throw new Error('Server error occurred. Please try again later.')
+    const errorBody = await response.json().catch(() => null)
+    const errorMessage = errorBody?.error || 'Server error occurred. Please try again later.'
+    throw new Error(errorMessage)
   }
 
   const result = await response.json()
-  return result.data || []
+  if (!Array.isArray(result)) {
+    throw new TypeError('Unexpected response from data service.')
+  }
+
+  return result.map((item: DataApiPosition) => mapDataApiPosition(item, status))
 }
 
 interface PublicPositionsListProps {
@@ -143,7 +216,6 @@ interface PublicPositionsListProps {
 export default function PublicPositionsList({ userAddress }: PublicPositionsListProps) {
   const queryClient = useQueryClient()
   const parentRef = useRef<HTMLDivElement | null>(null)
-  const abortControllerRef = useRef<AbortController | null>(null)
 
   const [hasInitialized, setHasInitialized] = useState(false)
   const [marketStatusFilter, setMarketStatusFilter] = useState<'active' | 'closed'>('active')
@@ -156,10 +228,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
   const [scrollMargin, setScrollMargin] = useState(0)
 
   const handleStatusFilterChange = useCallback((newStatus: 'active' | 'closed') => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-
     setInfiniteScrollError(null)
     setHasInitialized(false)
     setIsLoadingMore(false)
@@ -173,10 +241,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
   }, [queryClient, userAddress])
 
   const handleSearchChange = useCallback((query: string) => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-
     setInfiniteScrollError(null)
     setHasInitialized(false)
     setIsLoadingMore(false)
@@ -185,10 +249,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
   }, [])
 
   const handleAmountFilterChange = useCallback((newFilter: string) => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-
     setInfiniteScrollError(null)
     setHasInitialized(false)
     setIsLoadingMore(false)
@@ -213,14 +273,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     })
   }, [userAddress])
 
-  useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
-    }
-  }, [])
-
   const {
     status,
     data,
@@ -228,15 +280,16 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     fetchNextPage,
     hasNextPage,
     refetch,
-  } = useInfiniteQuery({
+  } = useInfiniteQuery<PublicPosition[]>({
     queryKey: ['user-positions', userAddress, marketStatusFilter, minAmountFilter, debouncedSearchQuery],
-    queryFn: ({ pageParam = 0 }) =>
+    queryFn: ({ pageParam = 0, signal }) =>
       fetchUserPositions({
-        pageParam,
+        pageParam: pageParam as unknown as number,
         userAddress,
         status: marketStatusFilter,
         minAmountFilter,
         searchQuery: debouncedSearchQuery,
+        signal,
       }),
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length === 50) {
@@ -306,8 +359,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         setIsLoadingMore(true)
         setInfiniteScrollError(null)
 
-        abortControllerRef.current = new AbortController()
-
         fetchNextPage()
           .then(() => {
             setIsLoadingMore(false)
@@ -332,8 +383,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     setRetryCount(currentRetryCount)
 
     const delay = Math.min(1000 * 2 ** (currentRetryCount - 1), 8000)
-
-    abortControllerRef.current = new AbortController()
 
     setTimeout(() => {
       fetchNextPage()
@@ -410,7 +459,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       `}
       >
         <div className="flex-1">Market</div>
-        <div className="text-right">Avg</div>
+        <div className="text-right">Avg Price</div>
         <div className="text-right">Value</div>
       </div>
 

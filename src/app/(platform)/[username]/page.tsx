@@ -37,7 +37,7 @@ export default async function ProfilePage({ params }: PageProps<'/[username]'>) 
     <>
       <PublicProfileHeader profile={profile} />
       <PublicProfileStatsCards stats={stats} />
-      <PublicProfileTabs userAddress={profile.address} />
+      <PublicProfileTabs userAddress={profile.proxy_wallet_address!} />
     </>
   )
 }

@@ -9,5 +9,5 @@ export const metadata: Metadata = {
 export default async function PortfolioPage() {
   const user = await UserRepository.getCurrentUser()
 
-  return <PublicProfileTabs userAddress={user.address} />
+  return <PublicProfileTabs userAddress={user.proxy_wallet_address!} />
 }
