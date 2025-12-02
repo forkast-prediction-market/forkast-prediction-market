@@ -59,9 +59,10 @@ export async function storeOrderAction(payload: StoreOrderInput) {
     }
   }
 
+  const defaultMarketOrderType = user.settings?.trading?.market_order_type ?? CLOB_ORDER_TYPE.FAK
   const clobOrderType = validated.data.clob_type
     ?? (validated.data.type === ORDER_TYPE.MARKET
-      ? user.settings.trading.market_order_type
+      ? defaultMarketOrderType
       : CLOB_ORDER_TYPE.GTC)
 
   try {
