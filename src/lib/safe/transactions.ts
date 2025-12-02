@@ -81,15 +81,15 @@ const conditionalTokensAbi = [
 
 interface SafeTxMessage {
   to: `0x${string}`
-  value: string
+  value: bigint
   data: `0x${string}`
   operation: number
-  safeTxGas: string
-  baseGas: string
-  gasPrice: string
+  safeTxGas: bigint
+  baseGas: bigint
+  gasPrice: bigint
   gasToken: `0x${string}`
   refundReceiver: `0x${string}`
-  nonce: string
+  nonce: bigint
 }
 
 interface SafeTypedDataPayload {
@@ -265,15 +265,15 @@ export function getSafeTxTypedData(params: {
 
   const message: SafeTxMessage = {
     to: params.transaction.to as Address,
-    value: params.transaction.value,
+    value: BigInt(params.transaction.value),
     data: params.transaction.data as Hex,
     operation: params.transaction.operation,
-    safeTxGas: signatureParams.safeTxnGas,
-    baseGas: signatureParams.baseGas,
-    gasPrice: signatureParams.gasPrice,
+    safeTxGas: BigInt(signatureParams.safeTxnGas),
+    baseGas: BigInt(signatureParams.baseGas),
+    gasPrice: BigInt(signatureParams.gasPrice),
     gasToken: signatureParams.gasToken as Address,
     refundReceiver: signatureParams.refundReceiver as Address,
-    nonce: params.nonce,
+    nonce: BigInt(params.nonce),
   }
 
   const domain: TypedDataDomain = {
