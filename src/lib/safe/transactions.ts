@@ -8,7 +8,7 @@ import {
   size,
   zeroAddress,
 } from 'viem'
-import { COLLATERAL_TOKEN_ADDRESS, CONDITIONAL_TOKENS_CONTRACT, CTF_EXCHANGE_ADDRESS, ZERO_COLLECTION_ID } from '@/lib/constants'
+import { COLLATERAL_TOKEN_ADDRESS, CONDITIONAL_TOKENS_CONTRACT, CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS, ZERO_COLLECTION_ID } from '@/lib/constants'
 
 export enum SafeOperationType {
   Call = 0,
