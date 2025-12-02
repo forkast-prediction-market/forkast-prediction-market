@@ -8,6 +8,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
 import { useClientMounted } from '@/hooks/useClientMounted'
+import { usePortfolioValue } from '@/hooks/usePortfolioValue'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 
 export default function PortfolioSummaryCard() {
@@ -15,12 +16,14 @@ export default function PortfolioSummaryCard() {
   const dailyChangePercent = 0.00
   const isPositive = dailyChange >= 0
   const isMounted = useClientMounted()
-  const { isLoadingBalance, balance } = useBalance()
   const { status } = useAppKitAccount()
   const { open } = useAppKit()
   const { startDepositFlow } = useTradingOnboarding()
+  const { text: formattedValue, isLoading, isFetching } = usePortfolioValue()
+  const isLoadingState = !isMounted || status === 'connecting' || (isLoading && !isFetching)
+  const { balance } = useBalance()
 
-  if (!isMounted || isLoadingBalance || status === 'connecting') {
+  if (isLoadingState) {
     return <Skeleton className="h-56 w-full" />
   }
 
@@ -64,7 +67,7 @@ export default function PortfolioSummaryCard() {
         <div className="mb-2">
           <div className="text-3xl font-bold text-foreground">
             $
-            {balance.text}
+            {formattedValue}
           </div>
         </div>
 

@@ -2,13 +2,17 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBalance } from '@/hooks/useBalance'
+import { usePortfolioValue } from '@/hooks/usePortfolioValue'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 
 export default function HeaderPortfolio() {
   const { startDepositFlow } = useTradingOnboarding()
   const { isLoadingBalance, balance } = useBalance()
+  const { isLoading, isFetching, text: portfolioValue } = usePortfolioValue()
+  const isInitialLoading = isLoading && !isFetching
+  const isLoadingValue = isInitialLoading || isLoadingBalance
 
-  if (isLoadingBalance) {
+  if (isLoadingValue) {
     return (
       <div className="flex gap-2">
         <Skeleton className="h-9 w-20 lg:block" />
@@ -28,7 +32,7 @@ export default function HeaderPortfolio() {
           <div className="text-xs font-medium text-muted-foreground">Portfolio</div>
           <div className="text-sm font-semibold text-primary">
             $
-            {balance.text}
+            {portfolioValue}
           </div>
         </Button>
       </Link>
