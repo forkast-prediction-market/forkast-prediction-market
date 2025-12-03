@@ -360,3 +360,18 @@ export interface PositionsQueryParams {
   search?: string
   conditionId?: string
 }
+
+export interface PublicActivity {
+  id: string
+  title: string
+  slug: string
+  eventSlug: string
+  icon?: string
+  side: string
+  outcomeText?: string
+  price?: number
+  shares?: number
+  usdcValue: number
+  timestamp: number
+  txHash?: string
+}

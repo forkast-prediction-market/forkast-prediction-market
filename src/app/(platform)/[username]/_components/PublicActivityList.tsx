@@ -1,5 +1,6 @@
 'use client'
 
+import type { PublicActivity } from '@/types'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { AlertCircleIcon, RefreshCwIcon, SquareArrowOutUpRightIcon } from 'lucide-react'
@@ -8,9 +9,11 @@ import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
 import { formatCurrency, formatSharePriceLabel, formatTimeAgo } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
+import PublicActivityEmpty from './PublicActivityEmpty'
+import PublicActivityError from './PublicActivityError'
+import { ActivitySkeletonRows } from './PublicActivitySkeleton'
 
 interface FetchUserActivityParams {
   pageParam: number
@@ -35,21 +38,6 @@ interface DataApiActivity {
   icon?: string
   eventSlug?: string
   outcome?: string
-}
-
-export interface PublicActivity {
-  id: string
-  title: string
-  slug: string
-  eventSlug: string
-  icon?: string
-  side: string
-  outcomeText?: string
-  price?: number
-  shares?: number
-  usdcValue: number
-  timestamp: number
-  txHash?: string
 }
 
 const DATA_API_URL = process.env.DATA_URL!
@@ -333,44 +321,11 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
   if (hasInitialError) {
     return (
       <div className="grid gap-6">
-        <div className="overflow-hidden rounded-lg border border-border">
-          <div className="p-8">
-            <Alert variant="destructive">
-              <AlertCircleIcon className="size-4" />
-              <AlertTitle>Failed to load activity</AlertTitle>
-              <AlertDescription className="mt-2 space-y-3">
-                <p>
-                  {retryCount > 0
-                    ? `Unable to load activity data after ${retryCount} attempt${retryCount > 1 ? 's' : ''}. Please check your connection and try again.`
-                    : 'There was a problem loading the activity data. This could be due to a network issue or server error.'}
-                </p>
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    onClick={retryInitialLoad}
-                    size="sm"
-                    variant="outline"
-                    className="flex items-center gap-2"
-                    disabled={loading}
-                  >
-                    <RefreshCwIcon className={cn('size-3', loading && 'animate-spin')} />
-                    {loading ? 'Retrying...' : 'Try again'}
-                  </Button>
-                  {retryCount > 2 && (
-                    <Button
-                      type="button"
-                      onClick={() => window.location.reload()}
-                      size="sm"
-                      variant="ghost"
-                    >
-                      Refresh page
-                    </Button>
-                  )}
-                </div>
-              </AlertDescription>
-            </Alert>
-          </div>
-        </div>
+        <PublicActivityError
+          retryCount={retryCount}
+          isLoading={loading}
+          onRetry={retryInitialLoad}
+        />
       </div>
     )
   }
@@ -390,47 +345,7 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
 
       {loading && (
         <div className="overflow-hidden rounded-lg border border-border">
-          <div className="space-y-0">
-            {Array.from({ length: 8 }).map((_, index) => (
-              <div
-                key={index}
-                className="flex items-center gap-3 border-b border-border px-3 py-4 last:border-b-0 sm:gap-4 sm:px-5"
-              >
-                {/* Type skeleton */}
-                <div className="w-12 flex-shrink-0 sm:w-16">
-                  <Skeleton className="h-4 w-8" />
-                </div>
-
-                {/* Market skeleton */}
-                <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-                  {/* Market icon skeleton */}
-                  <Skeleton className="size-10 flex-shrink-0 rounded-lg sm:size-12" />
-
-                  <div className="min-w-0 flex-1 space-y-2">
-                    {/* Market title skeleton */}
-                    <Skeleton className="h-4" style={{ width: '80%' }} />
-
-                    <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                      {/* Outcome chip skeleton */}
-                      <Skeleton className="h-6 w-16 rounded-md" />
-                      {/* Shares skeleton */}
-                      <Skeleton className="h-3 w-20" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Amount & Time skeleton */}
-                <div className="flex-shrink-0 space-y-1 text-right">
-                  <Skeleton className="h-4 w-16" />
-                  <div className="flex items-center justify-end gap-1 sm:gap-2">
-                    <Skeleton className="hidden h-3 w-12 sm:block" />
-                    <Skeleton className="size-3" />
-                  </div>
-                  <Skeleton className="h-3 w-12 sm:hidden" />
-                </div>
-              </div>
-            ))}
-          </div>
+          <ActivitySkeletonRows />
           <div className="p-4 text-center">
             <div className="space-y-2">
               <div className="text-sm text-muted-foreground">
@@ -443,46 +358,7 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
       )}
 
       {!loading && activities.length === 0 && (
-        <div className="overflow-hidden rounded-lg border border-border">
-          <div className="px-8 py-16 text-center">
-            <div className="mx-auto max-w-md space-y-4">
-              <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted">
-                <svg
-                  className="size-6 text-muted-foreground"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={1.5}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  />
-                </svg>
-              </div>
-
-              <div className="space-y-3">
-                <h3 className="text-base font-semibold text-foreground">
-                  No trading activity yet
-                </h3>
-
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  This user hasn't made any trades yet. Activity will appear here once they start trading on markets.
-                </p>
-
-                <div className="mt-6 rounded-lg bg-muted/50 p-4">
-                  <p className="text-sm text-muted-foreground">
-                    Trading activity includes buying and selling shares in prediction markets.
-                    When this user makes trades, they'll appear here with details about the markets,
-                    amounts, and outcomes.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <PublicActivityEmpty />
       )}
 
       {!loading && activities.length > 0 && (
@@ -523,52 +399,7 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
 
           {(isFetchingNextPage || isLoadingMore) && (
             <div className="border-t">
-              <div className="space-y-0">
-                {/* Enhanced infinite scroll loading skeletons */}
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <div
-                    key={index}
-                    className={`
-                      flex items-center gap-3 border-b border-border px-3 py-4
-                      last:border-b-0
-                      sm:gap-4 sm:px-5
-                    `}
-                  >
-                    {/* Type skeleton */}
-                    <div className="w-12 flex-shrink-0 sm:w-16">
-                      <Skeleton className="h-4 w-8" />
-                    </div>
-
-                    {/* Market skeleton */}
-                    <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-                      {/* Market icon skeleton */}
-                      <Skeleton className="size-10 flex-shrink-0 rounded-lg sm:size-12" />
-
-                      <div className="min-w-0 flex-1 space-y-2">
-                        {/* Market title skeleton */}
-                        <Skeleton className="h-4" style={{ width: '75%' }} />
-
-                        <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-2">
-                          {/* Outcome chip skeleton */}
-                          <Skeleton className="h-6 w-16 rounded-md" />
-                          {/* Shares skeleton */}
-                          <Skeleton className="h-3 w-20" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Amount & Time skeleton */}
-                    <div className="flex-shrink-0 space-y-1 text-right">
-                      <Skeleton className="h-4 w-16" />
-                      <div className="flex items-center justify-end gap-1 sm:gap-2">
-                        <Skeleton className="hidden h-3 w-12 sm:block" />
-                        <Skeleton className="size-3" />
-                      </div>
-                      <Skeleton className="h-3 w-12 sm:hidden" />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <ActivitySkeletonRows count={3} />
             </div>
           )}
 
