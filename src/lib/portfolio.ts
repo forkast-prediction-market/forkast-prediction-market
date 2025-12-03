@@ -45,6 +45,18 @@ function parsePortfolioValue(body: any): number {
   return toNumber(body)
 }
 
+function parseTradedCount(body: any): number {
+  if (!body) {
+    return 0
+  }
+
+  if (typeof body === 'object' && 'traded' in body) {
+    return toNumber((body as { traded: unknown }).traded)
+  }
+
+  return toNumber(body)
+}
+
 async function fetchJson(url: string) {
   const response = await fetch(url, { cache: 'no-store' })
 
@@ -82,10 +94,13 @@ export async function fetchPortfolioSnapshot(userAddress?: string | null): Promi
       sortDirection: 'DESC',
     })
 
-    const [valueResult, activePositionsResult, closedPositionsResult] = await Promise.allSettled([
+    const tradedUrl = `${DATA_API_URL}/traded?user=${encodeURIComponent(address)}`
+
+    const [valueResult, activePositionsResult, closedPositionsResult, tradedResult] = await Promise.allSettled([
       fetchJson(valueUrl),
       fetchJson(`${DATA_API_URL}/positions?${activeParams.toString()}`),
       fetchJson(`${DATA_API_URL}/closed-positions?${closedParams.toString()}`),
+      fetchJson(tradedUrl),
     ])
 
     const positionsValue = valueResult.status === 'fulfilled'
@@ -100,7 +115,11 @@ export async function fetchPortfolioSnapshot(userAddress?: string | null): Promi
       ? closedPositionsResult.value
       : []
 
-    const predictions = activePositions.length + closedPositions.length
+    const tradedCount = tradedResult.status === 'fulfilled'
+      ? parseTradedCount(tradedResult.value)
+      : 0
+
+    const predictions = tradedCount || (activePositions.length + closedPositions.length)
 
     const profitLossActive = activePositions.reduce(
       (total, position) => total + toNumber((position as any).cashPnl),

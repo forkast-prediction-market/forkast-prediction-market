@@ -1,13 +1,14 @@
 'use client'
 
 import type { PortfolioSnapshot } from '@/lib/portfolio'
-import { CheckIcon, CircleHelpIcon, CopyIcon, EyeIcon, FocusIcon, MinusIcon, TriangleIcon } from 'lucide-react'
+import { CheckIcon, CircleHelpIcon, EyeIcon, FocusIcon, MinusIcon, TriangleIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useId, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { useClipboard } from '@/hooks/useClipboard'
-import { truncateAddress, usdFormatter } from '@/lib/formatters'
+import { usePortfolioValue } from '@/hooks/usePortfolioValue'
+import { usdFormatter } from '@/lib/formatters'
 import { cn, sanitizeSvg } from '@/lib/utils'
 
 interface ProfileForCards {
@@ -31,6 +32,9 @@ function formatCurrency(value: number) {
 
 function ProfileOverviewCard({ profile, snapshot }: { profile: ProfileForCards, snapshot: PortfolioSnapshot }) {
   const { copied, copy } = useClipboard()
+  const { value: livePositionsValue, isLoading, isFetching } = usePortfolioValue(profile.address)
+  const hasLiveValue = Boolean(profile.address) && !isLoading && !isFetching
+  const positionsValue = hasLiveValue ? livePositionsValue : snapshot.positionsValue
   const joinedText = useMemo(() => {
     if (!profile.joinedAt) {
       return null
@@ -43,12 +47,10 @@ function ProfileOverviewCard({ profile, snapshot }: { profile: ProfileForCards, 
   }, [profile.joinedAt])
 
   const stats = [
-    { label: 'Positions Value', value: formatCurrency(snapshot.positionsValue) },
+    { label: 'Positions Value', value: formatCurrency(positionsValue) },
     { label: 'Biggest Win', value: formatCurrency(snapshot.biggestWin) },
     { label: 'Predictions', value: snapshot.predictions ? snapshot.predictions.toLocaleString('en-US') : '0' },
   ]
-
-  const addressLabel = profile.address ? truncateAddress(profile.address) : null
 
   return (
     <Card className="relative h-full overflow-hidden border border-border/60 bg-card/70">
@@ -106,21 +108,6 @@ function ProfileOverviewCard({ profile, snapshot }: { profile: ProfileForCards, 
                   </>
                 )}
               </div>
-              {addressLabel && (
-                <button
-                  type="button"
-                  onClick={() => copy(profile.address!)}
-                  className={cn(
-                    'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium transition-colors',
-                    copied
-                      ? 'border-yes/40 bg-yes/10 text-yes'
-                      : `border-border/60 text-muted-foreground hover:bg-muted/60`,
-                  )}
-                >
-                  <span className="font-mono">{addressLabel}</span>
-                  {copied ? <CheckIcon className="size-3" /> : <CopyIcon className="size-3" />}
-                </button>
-              )}
             </div>
           </div>
 
@@ -198,7 +185,7 @@ const defaultTimeframes: Record<string, number[]> = {
 
 function ProfitLossCard({
   snapshot,
-  platformName = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Polymarket',
+  platformName = process.env.NEXT_PUBLIC_SITE_NAME!,
   platformLogoSvg = process.env.NEXT_PUBLIC_SITE_LOGO_SVG,
 }: {
   snapshot: PortfolioSnapshot

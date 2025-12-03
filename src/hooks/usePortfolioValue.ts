@@ -11,25 +11,26 @@ interface PortfolioValueResult {
   isFetching: boolean
 }
 
-export function usePortfolioValue(): PortfolioValueResult {
+export function usePortfolioValue(walletAddress?: string | null): PortfolioValueResult {
   const user = useUser()
-  const proxyWalletAddress = user?.proxy_wallet_status === 'deployed' && user?.proxy_wallet_address
+  const userProxyWallet = user?.proxy_wallet_status === 'deployed' && user?.proxy_wallet_address
     ? normalizeAddress(user.proxy_wallet_address)
     : null
+  const targetWallet = walletAddress ? normalizeAddress(walletAddress) : userProxyWallet
 
   const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['portfolio-value', proxyWalletAddress],
-    enabled: Boolean(proxyWalletAddress),
+    queryKey: ['portfolio-value', targetWallet],
+    enabled: Boolean(targetWallet),
     staleTime: 10_000,
     gcTime: 5 * 60 * 1000,
     refetchInterval: 10_000,
     refetchIntervalInBackground: true,
     queryFn: async (): Promise<number> => {
-      if (!proxyWalletAddress) {
+      if (!targetWallet) {
         return 0
       }
 
-      const response = await fetch(`${DATA_API_URL}/value?user=${proxyWalletAddress}`)
+      const response = await fetch(`${DATA_API_URL}/value?user=${targetWallet}`)
       if (!response.ok) {
         throw new Error('Failed to fetch portfolio value')
       }
