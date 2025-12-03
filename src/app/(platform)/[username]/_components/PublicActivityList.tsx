@@ -161,7 +161,7 @@ function ActivityItem({ item }: { item: PublicActivity }) {
         </div>
         <div className="flex items-center justify-end gap-1 sm:gap-2">
           <span className="hidden text-xs text-muted-foreground sm:inline">
-            {formatTimeAgo(item.timestamp.toString())}
+            {formatTimeAgo(new Date(item.timestamp).toISOString())}
           </span>
           <a
             href={`https://polygonscan.com/tx/${item.txHash ?? item.id}`}
