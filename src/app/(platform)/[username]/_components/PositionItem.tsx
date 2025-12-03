@@ -82,7 +82,7 @@ export default function PositionItem({ item }: PositionItemProps) {
             )}
 
             <span className="hidden text-xs text-muted-foreground sm:inline">
-              {formatTimeAgo(item.timestamp.toString())}
+              {formatTimeAgo(new Date(item.timestamp).toISOString())}
             </span>
           </div>
         </div>
