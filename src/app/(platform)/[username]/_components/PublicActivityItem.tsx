@@ -13,6 +13,7 @@ export default function PublicActivityItem({ item }: { item: PublicActivity }) {
     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
     : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
   const totalValueUsd = item.usdcValue
+  const timestampLabel = formatTimeAgo(new Date(item.timestamp).toISOString())
 
   return (
     <div className={`
@@ -75,7 +76,7 @@ export default function PublicActivityItem({ item }: { item: PublicActivity }) {
         </div>
         <div className="flex items-center justify-end gap-1 sm:gap-2">
           <span className="hidden text-xs text-muted-foreground sm:inline">
-            {formatTimeAgo(item.timestamp.toString())}
+            {timestampLabel}
           </span>
           <a
             href={`https://polygonscan.com/tx/${item.txHash ?? item.id}`}
@@ -90,7 +91,7 @@ export default function PublicActivityItem({ item }: { item: PublicActivity }) {
         </div>
         {/* Show timestamp on mobile below the amount */}
         <div className="text-xs text-muted-foreground sm:hidden">
-          {formatTimeAgo(item.timestamp.toString())}
+          {timestampLabel}
         </div>
       </div>
     </div>
