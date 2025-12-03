@@ -7,7 +7,7 @@ import { AlertCircleIcon } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { fromMicro } from '@/lib/formatters'
+import { formatTimeAgo, fromMicro } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 
@@ -50,37 +50,10 @@ async function fetchMarketPositions({
   return payload.data ?? []
 }
 
-function formatRelativeTime(date: Date): string {
-  const now = new Date()
-  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
-
-  if (diffInMinutes < 1) {
-    return 'Just now'
-  }
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes}m ago`
-  }
-
-  const diffInHours = Math.floor(diffInMinutes / 60)
-  if (diffInHours < 24) {
-    return `${diffInHours}h ago`
-  }
-
-  const diffInDays = Math.floor(diffInHours / 24)
-  if (diffInDays === 1) {
-    return 'Yesterday'
-  }
-  if (diffInDays < 30) {
-    return `${diffInDays}d ago`
-  }
-
-  return date.toLocaleDateString()
-}
-
 function MarketPositionRow({ position }: { position: UserPosition }) {
   const isActive = position.market.is_active && !position.market.is_resolved
   const lastActiveLabel = position.last_activity_at
-    ? formatRelativeTime(new Date(position.last_activity_at))
+    ? formatTimeAgo(position.last_activity_at)
     : '—'
 
   return (

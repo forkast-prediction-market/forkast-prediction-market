@@ -10,7 +10,7 @@ import { cancelOrderAction } from '@/app/(platform)/event/[slug]/_actions/cancel
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
-import { formatSharePriceLabel, fromMicro } from '@/lib/formatters'
+import { formatSharePriceLabel, formatTimeAgo, fromMicro } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 
@@ -60,37 +60,10 @@ async function fetchOpenOrders({
   return payload.data ?? []
 }
 
-function formatRelativeTime(date: Date): string {
-  const now = new Date()
-  const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60))
-
-  if (diffInMinutes < 1) {
-    return 'Just now'
-  }
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes}m ago`
-  }
-
-  const diffInHours = Math.floor(diffInMinutes / 60)
-  if (diffInHours < 24) {
-    return `${diffInHours}h ago`
-  }
-
-  const diffInDays = Math.floor(diffInHours / 24)
-  if (diffInDays === 1) {
-    return 'Yesterday'
-  }
-  if (diffInDays < 30) {
-    return `${diffInDays}d ago`
-  }
-
-  return date.toLocaleDateString()
-}
-
 function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
   const amountMicro = order.side === 'buy' ? order.taker_amount : order.maker_amount
   const sideLabel = order.side === 'buy' ? 'Buy' : 'Sell'
-  const placedLabel = order.created_at ? formatRelativeTime(new Date(order.created_at)) : '—'
+  const placedLabel = order.created_at ? formatTimeAgo(order.created_at) : '—'
   const priceLabel = formatSharePriceLabel(order.price, { fallback: '—' })
   const sizeLabel = fromMicro(String(amountMicro ?? 0), 2)
 

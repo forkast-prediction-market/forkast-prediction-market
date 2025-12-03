@@ -1,142 +1,116 @@
 'use client'
 
-import type { ActivityOrder } from '@/types'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
-import { AlertCircleIcon, RefreshCwIcon, SearchIcon, SquareArrowOutUpRightIcon, XIcon } from 'lucide-react'
+import { AlertCircleIcon, RefreshCwIcon, SquareArrowOutUpRightIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useDebounce } from '@/hooks/useDebounce'
-import { formatCurrency, formatSharePriceLabel, fromMicro } from '@/lib/formatters'
+import { formatCurrency, formatSharePriceLabel, formatTimeAgo } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
-
-interface ControlsProps {
-  searchQuery: string
-  minAmountFilter: string
-  handleSearchChange: (query: string) => void
-  handleFilterChange: (query: string) => void
-}
-
-function FilterControls({ searchQuery, handleSearchChange, minAmountFilter, handleFilterChange }: ControlsProps) {
-  return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-        <div className="relative">
-          <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search markets..."
-            value={searchQuery}
-            onChange={e => handleSearchChange(e.target.value)}
-            className="w-full pr-9 pl-9 sm:w-64"
-          />
-          {searchQuery && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => handleSearchChange('')}
-              className="absolute top-1/2 right-1 size-7 -translate-y-1/2 p-0 hover:bg-muted"
-            >
-              <XIcon className="size-3" />
-              <span className="sr-only">Clear search</span>
-            </Button>
-          )}
-        </div>
-        <Select value={minAmountFilter} onValueChange={handleFilterChange}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">Min amount: None</SelectItem>
-            <SelectItem value="10">$10</SelectItem>
-            <SelectItem value="100">$100</SelectItem>
-            <SelectItem value="1000">$1,000</SelectItem>
-            <SelectItem value="10000">$10,000</SelectItem>
-            <SelectItem value="100000">$100,000</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  )
-}
 
 interface FetchUserActivityParams {
   pageParam: number
   userAddress: string
-  minAmountFilter: string
-  searchQuery?: string
+  signal?: AbortSignal
+}
+
+interface DataApiActivity {
+  proxyWallet?: string
+  timestamp?: number
+  conditionId?: string
+  type?: string
+  size?: number
+  usdcSize?: number
+  transactionHash?: string
+  price?: number
+  asset?: string
+  side?: string
+  outcomeIndex?: number
+  title?: string
+  slug?: string
+  icon?: string
+  eventSlug?: string
+  outcome?: string
+}
+
+export interface PublicActivity {
+  id: string
+  title: string
+  slug: string
+  eventSlug: string
+  icon?: string
+  side: string
+  outcomeText?: string
+  price?: number
+  shares?: number
+  usdcValue: number
+  timestamp: number
+  txHash?: string
+}
+
+const DATA_API_URL = process.env.DATA_URL!
+
+function mapDataApiActivity(activity: DataApiActivity): PublicActivity {
+  const slug = activity.slug || activity.conditionId || 'unknown-market'
+  const eventSlug = activity.eventSlug || slug
+  const timestampMs = typeof activity.timestamp === 'number'
+    ? activity.timestamp * 1000
+    : Date.now()
+  const usdcValue = Number.isFinite(activity.usdcSize) ? Number(activity.usdcSize) : 0
+
+  return {
+    id: activity.transactionHash || `${slug}-${timestampMs}`,
+    title: activity.title || 'Untitled market',
+    slug,
+    eventSlug,
+    icon: activity.icon,
+    side: activity.side?.toLowerCase() || 'trade',
+    outcomeText: activity.outcome || undefined,
+    price: Number.isFinite(activity.price) ? Number(activity.price) : undefined,
+    shares: Number.isFinite(activity.size) ? Number(activity.size) : undefined,
+    usdcValue,
+    timestamp: timestampMs,
+    txHash: activity.transactionHash,
+  }
 }
 
 async function fetchUserActivity({
   pageParam,
   userAddress,
-  minAmountFilter,
-  searchQuery,
-}: FetchUserActivityParams): Promise<ActivityOrder[]> {
+  signal,
+}: FetchUserActivityParams): Promise<PublicActivity[]> {
   const params = new URLSearchParams({
     limit: '50',
     offset: pageParam.toString(),
+    user: userAddress,
   })
 
-  if (minAmountFilter && minAmountFilter !== 'All') {
-    params.set('minAmount', minAmountFilter)
-  }
-
-  if (searchQuery && searchQuery.trim()) {
-    params.set('search', searchQuery.trim())
-  }
-
-  const controller = new AbortController()
-
-  const response = await fetch(`/api/users/${encodeURIComponent(userAddress)}/activity?${params}`, {
-    signal: controller.signal,
-  })
+  const response = await fetch(`${DATA_API_URL}/activity?${params.toString()}`, { signal })
 
   if (!response.ok) {
-    throw new Error('Server error occurred. Please try again later.')
+    const errorBody = await response.json().catch(() => null)
+    const errorMessage = errorBody?.error || 'Server error occurred. Please try again later.'
+    throw new Error(errorMessage)
   }
 
-  return await response.json()
+  const result = await response.json()
+  if (!Array.isArray(result)) {
+    throw new TypeError('Unexpected response from data service.')
+  }
+
+  return result.map((item: DataApiActivity) => mapDataApiActivity(item))
 }
 
-function formatRelativeTime(date: Date): string {
-  const now = new Date()
-  const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
-
-  if (diffInDays === 0) {
-    return 'Today'
-  }
-  if (diffInDays === 1) {
-    return 'Yesterday'
-  }
-  if (diffInDays < 30) {
-    return `${diffInDays} days ago`
-  }
-
-  const diffInMonths = Math.floor(diffInDays / 30)
-  if (diffInMonths === 1) {
-    return '1 month ago'
-  }
-  if (diffInMonths < 12) {
-    return `${diffInMonths} months ago`
-  }
-
-  return date.toLocaleDateString()
-}
-
-function ActivityItem({ item }: { item: ActivityOrder }) {
-  const outcomeText = item.outcome.text
-  const outcomeChipColor = outcomeText === 'Yes'
+function ActivityItem({ item }: { item: PublicActivity }) {
+  const outcomeText = item.outcomeText || 'Outcome'
+  const outcomeChipColor = outcomeText.toLowerCase() === 'yes'
     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
     : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-  const totalValueUsd = Number(fromMicro(String(item.total_value), 2)) || 0
+  const totalValueUsd = item.usdcValue
 
   return (
     <div className={`
@@ -154,12 +128,12 @@ function ActivityItem({ item }: { item: ActivityOrder }) {
       {/* Market */}
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         <Link
-          href={`/event/${item.market.event?.slug}`}
+          href={`/event/${item.eventSlug}`}
           className="size-10 flex-shrink-0 overflow-hidden rounded bg-muted sm:size-12"
         >
           <Image
-            src={item.market.icon_url}
-            alt={item.market.title}
+            src={`https://gateway.irys.xyz/${item.icon}`}
+            alt={item.title}
             width={48}
             height={48}
             className="size-full object-cover"
@@ -168,7 +142,7 @@ function ActivityItem({ item }: { item: ActivityOrder }) {
 
         <div className="min-w-0 flex-1">
           <h4 className="mb-1 line-clamp-2 text-xs font-medium sm:text-sm">
-            <Link href={`/event/${item.market.event?.slug}`}>{item.market.title}</Link>
+            <Link href={`/event/${item.eventSlug}`}>{item.title}</Link>
           </h4>
 
           <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:gap-2">
@@ -181,11 +155,13 @@ function ActivityItem({ item }: { item: ActivityOrder }) {
               {' '}
               {formatSharePriceLabel(item.price == null ? null : Number(item.price))}
             </span>
-            <span className="text-xs font-semibold text-muted-foreground">
-              {fromMicro(item.amount)}
-              {' '}
-              shares
-            </span>
+            {typeof item.shares === 'number' && (
+              <span className="text-xs font-semibold text-muted-foreground">
+                {item.shares.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                {' '}
+                shares
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -197,22 +173,22 @@ function ActivityItem({ item }: { item: ActivityOrder }) {
         </div>
         <div className="flex items-center justify-end gap-1 sm:gap-2">
           <span className="hidden text-xs text-muted-foreground sm:inline">
-            {formatRelativeTime(new Date(item.created_at))}
+            {formatTimeAgo(item.timestamp.toString())}
           </span>
           <a
-            href={`https://polygonscan.com/tx/${item.id}`}
+            href={`https://polygonscan.com/tx/${item.txHash ?? item.id}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground transition-colors hover:text-foreground"
             title="View on Polygonscan"
-            aria-label={`View transaction ${item.id} on Polygonscan`}
+            aria-label={`View transaction ${item.txHash ?? item.id} on Polygonscan`}
           >
             <SquareArrowOutUpRightIcon className="size-3" />
           </a>
         </div>
         {/* Show timestamp on mobile below the amount */}
         <div className="text-xs text-muted-foreground sm:hidden">
-          {formatRelativeTime(new Date(item.created_at))}
+          {formatTimeAgo(item.timestamp.toString())}
         </div>
       </div>
     </div>
@@ -226,63 +202,20 @@ interface PublicActivityListProps {
 export default function PublicActivityList({ userAddress }: PublicActivityListProps) {
   const queryClient = useQueryClient()
   const parentRef = useRef<HTMLDivElement | null>(null)
-  const abortControllerRef = useRef<AbortController | null>(null)
   const [hasInitialized, setHasInitialized] = useState(false)
-  const [minAmountFilter, setMinAmountFilter] = useState('All')
-  const [searchQuery, setSearchQuery] = useState('')
-  const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
   const [scrollMargin, setScrollMargin] = useState(0)
-
-  const handleFilterChange = useCallback((newFilter: string) => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-
-    setInfiniteScrollError(null)
-    setHasInitialized(false)
-    setIsLoadingMore(false)
-    setRetryCount(0)
-
-    setMinAmountFilter(newFilter)
-
-    queryClient.invalidateQueries({
-      queryKey: ['user-activity', userAddress],
-    })
-  }, [queryClient, userAddress])
-
-  const handleSearchChange = useCallback((query: string) => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort()
-    }
-
-    setInfiniteScrollError(null)
-    setHasInitialized(false)
-    setIsLoadingMore(false)
-    setRetryCount(0)
-    setSearchQuery(query)
-  }, [])
 
   useEffect(() => {
     queueMicrotask(() => {
       setHasInitialized(false)
       setInfiniteScrollError(null)
       setIsLoadingMore(false)
-      setMinAmountFilter('All')
-      setSearchQuery('')
       setRetryCount(0)
     })
   }, [userAddress])
-
-  useEffect(() => {
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort()
-      }
-    }
-  }, [])
 
   const {
     status,
@@ -291,14 +224,13 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
     fetchNextPage,
     hasNextPage,
     refetch,
-  } = useInfiniteQuery({
-    queryKey: ['user-activity', userAddress, minAmountFilter, debouncedSearchQuery],
-    queryFn: ({ pageParam = 0 }) =>
+  } = useInfiniteQuery<PublicActivity[]>({
+    queryKey: ['user-activity', userAddress],
+    queryFn: ({ pageParam = 0, signal }) =>
       fetchUserActivity({
-        pageParam,
+        pageParam: pageParam as unknown as number,
         userAddress,
-        minAmountFilter,
-        searchQuery: debouncedSearchQuery,
+        signal,
       }),
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length === 50) {
@@ -315,23 +247,11 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
   const loading = status === 'pending'
   const hasInitialError = status === 'error'
 
-  const isSearchActive = debouncedSearchQuery.trim().length > 0
-
   useEffect(() => {
     if (parentRef.current) {
       setScrollMargin(parentRef.current.offsetTop)
     }
   }, [])
-
-  useEffect(() => {
-    setHasInitialized(false)
-    setInfiniteScrollError(null)
-    setIsLoadingMore(false)
-
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-    }
-  }, [debouncedSearchQuery, minAmountFilter])
 
   const virtualizer = useWindowVirtualizer({
     count: activities.length,
@@ -368,8 +288,6 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
         setIsLoadingMore(true)
         setInfiniteScrollError(null)
 
-        abortControllerRef.current = new AbortController()
-
         fetchNextPage()
           .then(() => {
             setIsLoadingMore(false)
@@ -391,8 +309,6 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
     setIsLoadingMore(true)
     setRetryCount(prev => prev + 1)
 
-    abortControllerRef.current = new AbortController()
-
     fetchNextPage()
       .then(() => {
         setIsLoadingMore(false)
@@ -401,13 +317,10 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
       .catch((error) => {
         setIsLoadingMore(false)
         if (error.name !== 'AbortError') {
-          const errorMessage = debouncedSearchQuery.trim()
-            ? `Failed to load more search results for "${debouncedSearchQuery}"`
-            : 'Failed to load more activity'
-          setInfiniteScrollError(errorMessage)
+          setInfiniteScrollError('Failed to load more activity')
         }
       })
-  }, [fetchNextPage, debouncedSearchQuery])
+  }, [fetchNextPage])
 
   const retryInitialLoad = useCallback(() => {
     setRetryCount(prev => prev + 1)
@@ -420,13 +333,6 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
   if (hasInitialError) {
     return (
       <div className="grid gap-6">
-        <FilterControls
-          searchQuery={searchQuery}
-          minAmountFilter={minAmountFilter}
-          handleSearchChange={handleSearchChange}
-          handleFilterChange={handleFilterChange}
-        />
-
         <div className="overflow-hidden rounded-lg border border-border">
           <div className="p-8">
             <Alert variant="destructive">
@@ -435,8 +341,8 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
               <AlertDescription className="mt-2 space-y-3">
                 <p>
                   {retryCount > 0
-                    ? `Unable to load ${isSearchActive ? 'search results' : 'activity data'} after ${retryCount} attempt${retryCount > 1 ? 's' : ''}. Please check your connection and try again.`
-                    : `There was a problem loading the ${isSearchActive ? 'search results' : 'activity data'}. This could be due to a network issue or server error.`}
+                    ? `Unable to load activity data after ${retryCount} attempt${retryCount > 1 ? 's' : ''}. Please check your connection and try again.`
+                    : 'There was a problem loading the activity data. This could be due to a network issue or server error.'}
                 </p>
                 <div className="flex gap-2">
                   <Button
@@ -471,14 +377,6 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
 
   return (
     <div ref={parentRef} className="space-y-6">
-      {/* Filter Controls */}
-      <FilterControls
-        searchQuery={searchQuery}
-        minAmountFilter={minAmountFilter}
-        handleSearchChange={handleSearchChange}
-        handleFilterChange={handleFilterChange}
-      />
-
       {/* Column Headers */}
       <div className={`
         mb-2 flex items-center gap-3 px-3 py-2 text-xs font-medium tracking-wide text-muted-foreground uppercase
@@ -536,24 +434,9 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
           <div className="p-4 text-center">
             <div className="space-y-2">
               <div className="text-sm text-muted-foreground">
-                {retryCount > 0
-                  ? 'Retrying...'
-                  : debouncedSearchQuery.trim()
-                    ? `Searching for "${debouncedSearchQuery}"...`
-                    : 'Loading activity...'}
+                {retryCount > 0 ? 'Retrying...' : 'Loading activity...'}
               </div>
 
-              {debouncedSearchQuery.trim() && retryCount === 0 && (
-                <div className={`
-                  inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-medium
-                  text-orange-800
-                  dark:bg-orange-900/30 dark:text-orange-300
-                `}
-                >
-                  <SearchIcon className="size-3" />
-                  Active search
-                </div>
-              )}
             </div>
           </div>
         </div>
@@ -563,131 +446,39 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
         <div className="overflow-hidden rounded-lg border border-border">
           <div className="px-8 py-16 text-center">
             <div className="mx-auto max-w-md space-y-4">
-              <div className={cn(
-                'mx-auto flex size-12 items-center justify-center rounded-full',
-                debouncedSearchQuery.trim()
-                  ? 'bg-orange-100 dark:bg-orange-900/30'
-                  : 'bg-muted',
-              )}
-              >
-                {debouncedSearchQuery.trim()
-                  ? (
-                      <SearchIcon className="size-6 text-orange-600 dark:text-orange-400" />
-                    )
-                  : (
-                      <svg
-                        className="size-6 text-muted-foreground"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                        />
-                      </svg>
-                    )}
+              <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-muted">
+                <svg
+                  className="size-6 text-muted-foreground"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={1.5}
+                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                  />
+                </svg>
               </div>
 
               <div className="space-y-3">
-                {debouncedSearchQuery.trim() && (
-                  <div className={`
-                    inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-medium
-                    text-orange-800
-                    dark:bg-orange-900/30 dark:text-orange-300
-                  `}
-                  >
-                    <SearchIcon className="size-3" />
-                    Searching for "
-                    {debouncedSearchQuery}
-                    "
-                  </div>
-                )}
-
                 <h3 className="text-base font-semibold text-foreground">
-                  {debouncedSearchQuery.trim()
-                    ? `No results found`
-                    : minAmountFilter && minAmountFilter !== 'All'
-                      ? 'No activity matches your filter'
-                      : 'No trading activity yet'}
+                  No trading activity yet
                 </h3>
 
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  {debouncedSearchQuery.trim()
-                    ? `No trading activity found matching "${debouncedSearchQuery}". The search looks through market titles to find relevant trades.`
-                    : minAmountFilter && minAmountFilter !== 'All'
-                      ? `No orders found with a minimum amount of ${minAmountFilter}. This user may have smaller trades or no activity in this range.`
-                      : 'This user hasn\'t made any trades yet. Activity will appear here once they start trading on markets.'}
+                  This user hasn't made any trades yet. Activity will appear here once they start trading on markets.
                 </p>
 
-                {debouncedSearchQuery.trim() && (
-                  <div className="mt-6 space-y-3">
-                    <div className={`
-                      rounded-lg border border-orange-200 bg-orange-50 p-4
-                      dark:border-orange-800 dark:bg-orange-900/20
-                    `}
-                    >
-                      <div className="space-y-3">
-                        <p className="text-sm text-orange-800 dark:text-orange-200">
-                          <strong>Search suggestions:</strong>
-                        </p>
-                        <ul className="space-y-1 text-xs text-orange-700 dark:text-orange-300">
-                          <li>• Try different keywords (e.g., "election", "sports", "crypto")</li>
-                          <li>• Use shorter, more general terms</li>
-                          <li>• Check spelling and try alternative words</li>
-                        </ul>
-                        <Button
-                          type="button"
-                          onClick={() => handleSearchChange('')}
-                          size="sm"
-                          variant="outline"
-                          className={`
-                            mt-3 w-full border-orange-300 text-orange-800
-                            hover:bg-orange-100
-                            dark:border-orange-700 dark:text-orange-200 dark:hover:bg-orange-900/40
-                          `}
-                        >
-                          <XIcon className="mr-2 size-3" />
-                          Clear search and show all activity
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {!debouncedSearchQuery.trim() && minAmountFilter && minAmountFilter !== 'All' && (
-                  <div className="mt-6 rounded-lg bg-muted/50 p-4">
-                    <p className="text-sm text-muted-foreground">
-                      <strong>Filter active:</strong>
-                      {' '}
-                      Showing only trades with minimum amount of $
-                      {minAmountFilter}
-                      .
-                    </p>
-                    <Button
-                      type="button"
-                      onClick={() => handleFilterChange('All')}
-                      size="sm"
-                      variant="outline"
-                      className="mt-3 w-full"
-                    >
-                      Show all amounts
-                    </Button>
-                  </div>
-                )}
-
-                {!debouncedSearchQuery.trim() && (!minAmountFilter || minAmountFilter === 'All') && (
-                  <div className="mt-6 rounded-lg bg-muted/50 p-4">
-                    <p className="text-sm text-muted-foreground">
-                      Trading activity includes buying and selling shares in prediction markets.
-                      When this user makes trades, they'll appear here with details about the markets,
-                      amounts, and outcomes.
-                    </p>
-                  </div>
-                )}
+                <div className="mt-6 rounded-lg bg-muted/50 p-4">
+                  <p className="text-sm text-muted-foreground">
+                    Trading activity includes buying and selling shares in prediction markets.
+                    When this user makes trades, they'll appear here with details about the markets,
+                    amounts, and outcomes.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
@@ -788,26 +579,8 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
                   You've reached the end
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {debouncedSearchQuery.trim()
-                    ? `All ${activities.length} result${activities.length === 1 ? '' : 's'} for "${debouncedSearchQuery}" loaded`
-                    : minAmountFilter && minAmountFilter !== 'All'
-                      ? `Showing all activity with minimum amount of ${minAmountFilter}`
-                      : `All ${activities.length} trading activit${activities.length === 1 ? 'y' : 'ies'} loaded`}
+                  {`All ${activities.length} trading activit${activities.length === 1 ? 'y' : 'ies'} loaded`}
                 </div>
-
-                {debouncedSearchQuery.trim() && (
-                  <div className={`
-                    mt-3 inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-medium
-                    text-orange-800
-                    dark:bg-orange-900/30 dark:text-orange-300
-                  `}
-                  >
-                    <SearchIcon className="size-3" />
-                    Search: "
-                    {debouncedSearchQuery}
-                    "
-                  </div>
-                )}
               </div>
             </div>
           )}
@@ -820,8 +593,8 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
                 <AlertDescription className="mt-2 space-y-3">
                   <p className="text-sm">
                     {retryCount > 0
-                      ? `Unable to load more ${debouncedSearchQuery.trim() ? 'search results' : 'data'} after ${retryCount} attempt${retryCount > 1 ? 's' : ''}. Please check your connection.`
-                      : `There was a problem loading more ${debouncedSearchQuery.trim() ? 'search results' : 'activity data'}.`}
+                      ? `Unable to load more data after ${retryCount} attempt${retryCount > 1 ? 's' : ''}. Please check your connection.`
+                      : 'There was a problem loading more activity data.'}
                   </p>
                   <div className="flex gap-2">
                     <Button
@@ -842,7 +615,7 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
                           setInfiniteScrollError(null)
                           setRetryCount(0)
                           queryClient.invalidateQueries({
-                            queryKey: ['user-activity', userAddress, minAmountFilter, debouncedSearchQuery],
+                            queryKey: ['user-activity', userAddress],
                           })
                         }}
                         size="sm"

@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { formatCurrency } from '@/lib/formatters'
+import { formatCurrency, formatTimeAgo } from '@/lib/formatters'
 
 export interface PublicPosition {
   id: string
@@ -20,31 +20,6 @@ export interface PublicPosition {
 
 interface PositionItemProps {
   item: PublicPosition
-}
-
-function formatRelativeTime(date: Date): string {
-  const now = new Date()
-  const diffInDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24))
-
-  if (diffInDays === 0) {
-    return 'Today'
-  }
-  if (diffInDays === 1) {
-    return 'Yesterday'
-  }
-  if (diffInDays < 30) {
-    return `${diffInDays} days ago`
-  }
-
-  const diffInMonths = Math.floor(diffInDays / 30)
-  if (diffInMonths === 1) {
-    return '1 month ago'
-  }
-  if (diffInMonths < 12) {
-    return `${diffInMonths} months ago`
-  }
-
-  return date.toLocaleDateString()
 }
 
 export default function PositionItem({ item }: PositionItemProps) {
@@ -107,7 +82,7 @@ export default function PositionItem({ item }: PositionItemProps) {
             )}
 
             <span className="hidden text-xs text-muted-foreground sm:inline">
-              {formatRelativeTime(new Date(item.timestamp))}
+              {formatTimeAgo(item.timestamp.toString())}
             </span>
           </div>
         </div>
@@ -131,7 +106,7 @@ export default function PositionItem({ item }: PositionItemProps) {
         </div>
         {/* Show timestamp on mobile below the amount */}
         <div className="text-xs text-muted-foreground sm:hidden">
-          {formatRelativeTime(new Date(item.timestamp))}
+          {formatTimeAgo(item.timestamp.toString())}
         </div>
       </div>
     </div>
