@@ -4,7 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 export const maxDuration = 300
 
-const PNL_SUBGRAPH_URL = 'https://api.studio.thegraph.com/query/113376/forkast-pnl/version/latest'
+const PNL_SUBGRAPH_URL = 'https://api.goldsky.com/api/public/project_cmfbr456t4gud01w483uu2d9d/subgraphs/pnl-subgraph/1.0.0/gn'
 const MARKET_CREATORS_ADDRESS = process.env.MARKET_CREATORS_ADDRESS
 const IRYS_GATEWAY = process.env.IRYS_GATEWAY || 'https://gateway.irys.xyz'
 const SYNC_TIME_LIMIT_MS = 250_000
@@ -48,7 +48,7 @@ function getAllowedCreators(): string[] {
 /**
  * 🔄 Market Synchronization Script for Vercel Functions
  *
- * This function syncs prediction markets from The Graph subgraph to Supabase:
+ * This function syncs prediction markets from the Goldsky PnL subgraph to Supabase:
  * - Fetches new markets from blockchain via subgraph (INCREMENTAL)
  * - Downloads metadata and images from Irys/Arweave
  * - Stores everything in Supabase database and storage
