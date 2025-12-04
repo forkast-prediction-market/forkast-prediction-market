@@ -6,6 +6,7 @@ import { formatCurrency, formatSharePriceLabel, formatTimeAgo } from '@/lib/form
 import { cn } from '@/lib/utils'
 
 export function PublicActivityItem({ item }: { item: PublicActivity }) {
+  const isSplit = item.type === 'split'
   const outcomeText = item.outcomeText || 'Outcome'
   const outcomeChipColor = outcomeText.toLowerCase() === 'yes'
     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
@@ -22,7 +23,7 @@ export function PublicActivityItem({ item }: { item: PublicActivity }) {
     >
       {/* Type */}
       <div className="w-12 flex-shrink-0 sm:w-16">
-        <span className="text-xs font-medium capitalize sm:text-sm">{item.side}</span>
+        <span className="text-xs font-medium capitalize sm:text-sm">{item.type}</span>
       </div>
 
       {/* Market */}
@@ -46,15 +47,41 @@ export function PublicActivityItem({ item }: { item: PublicActivity }) {
           </h4>
 
           <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:gap-2">
-            <span className={cn(
-              'inline-flex w-fit rounded-md px-2 py-1 text-xs font-medium',
-              outcomeChipColor,
-            )}
-            >
-              {outcomeText}
-              {' '}
-              {formatSharePriceLabel(item.price == null ? null : Number(item.price))}
-            </span>
+            {isSplit
+              ? (
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className={`
+                      inline-flex w-fit items-center rounded-md bg-green-100 px-2 py-1 text-xs font-medium
+                      text-green-800
+                      dark:bg-green-900/30 dark:text-green-300
+                    `}
+                    >
+                      Yes
+                      {' '}
+                      {formatSharePriceLabel(0.5)}
+                    </span>
+                    <span className={`
+                      inline-flex w-fit items-center rounded-md bg-red-100 px-2 py-1 text-xs font-medium text-red-800
+                      dark:bg-red-900/30 dark:text-red-300
+                    `}
+                    >
+                      No
+                      {' '}
+                      {formatSharePriceLabel(0.5)}
+                    </span>
+                  </div>
+                )
+              : (
+                  <span className={cn(
+                    'inline-flex w-fit rounded-md px-2 py-1 text-xs font-medium',
+                    outcomeChipColor,
+                  )}
+                  >
+                    {outcomeText}
+                    {' '}
+                    {formatSharePriceLabel(item.price == null ? null : Number(item.price))}
+                  </span>
+                )}
             {typeof item.shares === 'number' && (
               <span className="text-xs font-semibold text-muted-foreground">
                 {item.shares.toLocaleString(undefined, { maximumFractionDigits: 2 })}

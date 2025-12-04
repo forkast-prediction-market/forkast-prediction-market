@@ -1,6 +1,6 @@
 'use client'
 
-import type { ActivityOrder, Event } from '@/types'
+import type { Event } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { AlertCircleIcon, Loader2Icon } from 'lucide-react'
@@ -8,42 +8,15 @@ import { useEffect, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { OUTCOME_INDEX } from '@/lib/constants'
-import { formatSharePriceLabel, fromMicro } from '@/lib/formatters'
+import { fetchUserActivityData, mapDataApiActivityToActivityOrder } from '@/lib/data-api/user'
+import { formatSharePriceLabel, formatTimeAgo, fromMicro } from '@/lib/formatters'
+import { getUserPrimaryAddress } from '@/lib/user-address'
 import { useUser } from '@/stores/useUser'
 
 interface EventMarketHistoryProps {
   market: Event['markets'][number]
   collapsible?: boolean
   eventSlug?: string
-}
-
-interface FetchMarketHistoryParams {
-  pageParam: number
-  userAddress: string
-  conditionId: string
-}
-
-async function fetchMarketHistory({
-  pageParam,
-  userAddress,
-  conditionId,
-}: FetchMarketHistoryParams): Promise<ActivityOrder[]> {
-  const params = new URLSearchParams({
-    limit: '50',
-    offset: pageParam.toString(),
-  })
-
-  if (conditionId) {
-    params.set('conditionId', conditionId)
-  }
-
-  const response = await fetch(`/api/users/${encodeURIComponent(userAddress)}/activity?${params}`)
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch activity data')
-  }
-
-  return await response.json()
 }
 
 function formatTotalValue(totalValueMicro: number) {
@@ -59,6 +32,7 @@ export default function EventMarketHistory({ market, collapsible = true }: Event
   const [scrollMargin, setScrollMargin] = useState(0)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const user = useUser()
+  const userAddress = getUserPrimaryAddress(user)
   const emptyHeightClass = 'min-h-16'
 
   useEffect(() => {
@@ -82,13 +56,14 @@ export default function EventMarketHistory({ market, collapsible = true }: Event
     hasNextPage,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ['user-market-activity', user?.address, market.condition_id],
-    queryFn: ({ pageParam = 0 }) =>
-      fetchMarketHistory({
+    queryKey: ['user-market-activity', userAddress, market.condition_id],
+    queryFn: ({ pageParam = 0, signal }) =>
+      fetchUserActivityData({
         pageParam,
-        userAddress: user?.address ?? '',
+        userAddress,
         conditionId: market.condition_id,
-      }),
+        signal,
+      }).then(activities => activities.map(mapDataApiActivityToActivityOrder)),
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length === 50) {
         return allPages.reduce((total, page) => total + page.length, 0)
@@ -96,7 +71,7 @@ export default function EventMarketHistory({ market, collapsible = true }: Event
 
       return undefined
     },
-    enabled: Boolean(user?.address && market.condition_id && (historyExpanded || !isCollapsible)),
+    enabled: Boolean(userAddress && market.condition_id && (historyExpanded || !isCollapsible)),
     initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
@@ -232,36 +207,62 @@ export default function EventMarketHistory({ market, collapsible = true }: Event
                             <div className="flex items-start gap-2 rounded-lg px-1 py-3">
                               <div className="flex-1">
                                 <div className="text-xs text-muted-foreground">
-                                  {new Date(activity.created_at).toLocaleDateString()}
+                                  {formatTimeAgo(activity.created_at)}
                                 </div>
-                                <div className="mt-1 text-sm text-muted-foreground">
-                                  {activity.side === 'buy' ? 'bought' : 'sold'}
-                                  {' '}
-                                  <span className="font-semibold text-foreground">{fromMicro(activity.amount)}</span>
-                                  {' '}
-                                  <span className={`font-semibold ${
-                                    activity.outcome.index === OUTCOME_INDEX.YES
-                                      ? 'text-yes'
-                                      : 'text-no'
-                                  }`}
-                                  >
-                                    {activity.outcome.text}
-                                  </span>
-                                  {' '}
-                                  for
-                                  {' '}
-                                  <span className="font-semibold text-foreground">{activity.market.title || market.title}</span>
-                                  {' '}
-                                  at
-                                  {' '}
-                                  <span className="font-semibold text-foreground">
-                                    {formatSharePriceLabel(Number(activity.price))}
-                                  </span>
-                                  {' '}
-                                  (
-                                  {formatTotalValue(activity.total_value)}
-                                  )
-                                </div>
+                                {activity.type === 'split'
+                                  ? (
+                                      <div className="mt-1 text-sm text-muted-foreground">
+                                        split
+                                        {' '}
+                                        <span className="font-semibold text-foreground">
+                                          {fromMicro(activity.amount)}
+                                        </span>
+                                        {' '}
+                                        shares into:
+                                        {' '}
+                                        <span className="font-semibold text-yes">Yes 50¢</span>
+                                        {' '}
+                                        /
+                                        {' '}
+                                        <span className="font-semibold text-no">No 50¢</span>
+                                        {' '}
+                                        for
+                                        {' '}
+                                        <span className="font-semibold text-foreground">
+                                          {activity.market.title || market.title}
+                                        </span>
+                                      </div>
+                                    )
+                                  : (
+                                      <div className="mt-1 text-sm text-muted-foreground">
+                                        {activity.side === 'buy' ? 'bought' : 'sold'}
+                                        {' '}
+                                        <span className="font-semibold text-foreground">{fromMicro(activity.amount)}</span>
+                                        {' '}
+                                        <span className={`font-semibold ${
+                                          activity.outcome.index === OUTCOME_INDEX.YES
+                                            ? 'text-yes'
+                                            : 'text-no'
+                                        }`}
+                                        >
+                                          {activity.outcome.text}
+                                        </span>
+                                        {' '}
+                                        for
+                                        {' '}
+                                        <span className="font-semibold text-foreground">{activity.market.title || market.title}</span>
+                                        {' '}
+                                        at
+                                        {' '}
+                                        <span className="font-semibold text-foreground">
+                                          {formatSharePriceLabel(Number(activity.price))}
+                                        </span>
+                                        {' '}
+                                        (
+                                        {formatTotalValue(activity.total_value)}
+                                        )
+                                      </div>
+                                    )}
                               </div>
                             </div>
                           </div>

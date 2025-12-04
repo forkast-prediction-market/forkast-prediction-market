@@ -232,6 +232,7 @@ export interface AffiliateData {
 
 export interface ActivityOrder {
   id: string
+  type?: string
   user: {
     id: string
     username: string
@@ -345,6 +346,8 @@ export interface UserPosition {
       slug: string
     }
   }
+  outcome_index?: number
+  outcome_text?: string
   average_position: number
   total_position_value: number
   order_count: number
@@ -377,7 +380,7 @@ export interface PublicActivity {
   slug: string
   eventSlug: string
   icon?: string
-  side: string
+  type: string
   outcomeText?: string
   price?: number
   shares?: number

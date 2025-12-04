@@ -8,88 +8,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { PublicActivityItem } from '@/app/(platform)/[username]/_components/PublicActivityItem'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { fetchUserActivityData, mapDataApiActivityToPublicActivity } from '@/lib/data-api/user'
 import { cn } from '@/lib/utils'
 import PublicActivityEmpty from './PublicActivityEmpty'
 import PublicActivityError from './PublicActivityError'
 import { ActivitySkeletonRows } from './PublicActivitySkeleton'
-
-interface FetchUserActivityParams {
-  pageParam: number
-  userAddress: string
-  signal?: AbortSignal
-}
-
-interface DataApiActivity {
-  proxyWallet?: string
-  timestamp?: number
-  conditionId?: string
-  type?: string
-  size?: number
-  usdcSize?: number
-  transactionHash?: string
-  price?: number
-  asset?: string
-  side?: string
-  outcomeIndex?: number
-  title?: string
-  slug?: string
-  icon?: string
-  eventSlug?: string
-  outcome?: string
-}
-
-const DATA_API_URL = process.env.DATA_URL!
-
-function mapDataApiActivity(activity: DataApiActivity): PublicActivity {
-  const slug = activity.slug || activity.conditionId || 'unknown-market'
-  const eventSlug = activity.eventSlug || slug
-  const timestampMs = typeof activity.timestamp === 'number'
-    ? activity.timestamp * 1000
-    : Date.now()
-  const usdcValue = Number.isFinite(activity.usdcSize) ? Number(activity.usdcSize) : 0
-
-  return {
-    id: activity.transactionHash || `${slug}-${timestampMs}`,
-    title: activity.title || 'Untitled market',
-    slug,
-    eventSlug,
-    icon: activity.icon,
-    side: activity.side?.toLowerCase() || 'trade',
-    outcomeText: activity.outcome || undefined,
-    price: Number.isFinite(activity.price) ? Number(activity.price) : undefined,
-    shares: Number.isFinite(activity.size) ? Number(activity.size) : undefined,
-    usdcValue,
-    timestamp: timestampMs,
-    txHash: activity.transactionHash,
-  }
-}
-
-async function fetchUserActivity({
-  pageParam,
-  userAddress,
-  signal,
-}: FetchUserActivityParams): Promise<PublicActivity[]> {
-  const params = new URLSearchParams({
-    limit: '50',
-    offset: pageParam.toString(),
-    user: userAddress,
-  })
-
-  const response = await fetch(`${DATA_API_URL}/activity?${params.toString()}`, { signal })
-
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => null)
-    const errorMessage = errorBody?.error || 'Server error occurred. Please try again later.'
-    throw new Error(errorMessage)
-  }
-
-  const result = await response.json()
-  if (!Array.isArray(result)) {
-    throw new TypeError('Unexpected response from data service.')
-  }
-
-  return result.map((item: DataApiActivity) => mapDataApiActivity(item))
-}
 
 interface PublicActivityListProps {
   userAddress: string
@@ -123,11 +46,11 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
   } = useInfiniteQuery<PublicActivity[]>({
     queryKey: ['user-activity', userAddress],
     queryFn: ({ pageParam = 0, signal }) =>
-      fetchUserActivity({
+      fetchUserActivityData({
         pageParam: pageParam as unknown as number,
         userAddress,
         signal,
-      }),
+      }).then(activities => activities.map(mapDataApiActivityToPublicActivity)),
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length === 50) {
         return allPages.reduce((total, page) => total + page.length, 0)

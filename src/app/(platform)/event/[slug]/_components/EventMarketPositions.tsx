@@ -7,7 +7,9 @@ import { AlertCircleIcon } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { fetchUserPositionsForMarket } from '@/lib/data-api/user'
 import { formatTimeAgo, fromMicro } from '@/lib/formatters'
+import { getUserPrimaryAddress } from '@/lib/user-address'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 
@@ -16,45 +18,14 @@ interface EventMarketPositionsProps {
   collapsible?: boolean
 }
 
-interface FetchMarketPositionsParams {
-  pageParam: number
-  userAddress: string
-  conditionId: string
-  signal?: AbortSignal
-}
-
-async function fetchMarketPositions({
-  pageParam,
-  userAddress,
-  conditionId,
-  signal,
-}: FetchMarketPositionsParams): Promise<UserPosition[]> {
-  const params = new URLSearchParams({
-    limit: '50',
-    offset: pageParam.toString(),
-  })
-
-  if (conditionId) {
-    params.set('conditionId', conditionId)
-  }
-
-  const response = await fetch(`/api/users/${encodeURIComponent(userAddress)}/positions?${params}`, {
-    signal,
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch positions')
-  }
-
-  const payload = await response.json()
-  return payload.data ?? []
-}
-
 function MarketPositionRow({ position }: { position: UserPosition }) {
   const isActive = position.market.is_active && !position.market.is_resolved
   const lastActiveLabel = position.last_activity_at
     ? formatTimeAgo(position.last_activity_at)
     : '—'
+  const outcomeChipClass = position.outcome_text?.toLowerCase() === 'yes'
+    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
+    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
 
   return (
     <div className={`
@@ -78,6 +49,15 @@ function MarketPositionRow({ position }: { position: UserPosition }) {
         </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+          {position.outcome_text && (
+            <span className={cn(
+              'inline-flex items-center rounded-md px-2 py-1 text-2xs font-semibold',
+              outcomeChipClass,
+            )}
+            >
+              {position.outcome_text}
+            </span>
+          )}
           <span>
             {position.order_count}
             {' '}
@@ -117,6 +97,7 @@ export default function EventMarketPositions({ market, collapsible = false }: Ev
   const emptyHeightClass = 'min-h-16'
   const parentRef = useRef<HTMLDivElement | null>(null)
   const user = useUser()
+  const userAddress = getUserPrimaryAddress(user)
   const [scrollMargin, setScrollMargin] = useState(0)
   const [hasInitialized, setHasInitialized] = useState(false)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
@@ -137,6 +118,8 @@ export default function EventMarketPositions({ market, collapsible = false }: Ev
     }
   }, [isCollapsible, market.condition_id, positionsExpanded])
 
+  const positionStatus = market.is_active && !market.is_resolved ? 'active' : 'closed'
+
   const {
     status,
     data,
@@ -145,12 +128,13 @@ export default function EventMarketPositions({ market, collapsible = false }: Ev
     hasNextPage,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ['user-market-positions', user?.address, market.condition_id],
+    queryKey: ['user-market-positions', userAddress, market.condition_id, positionStatus],
     queryFn: ({ pageParam = 0, signal }) =>
-      fetchMarketPositions({
+      fetchUserPositionsForMarket({
         pageParam,
-        userAddress: user?.address ?? '',
+        userAddress,
         conditionId: market.condition_id,
+        status: positionStatus,
         signal,
       }),
     getNextPageParam: (lastPage, allPages) => {
@@ -159,7 +143,7 @@ export default function EventMarketPositions({ market, collapsible = false }: Ev
       }
       return undefined
     },
-    enabled: Boolean(user?.address && market.condition_id && (positionsExpanded || !isCollapsible)),
+    enabled: Boolean(userAddress && market.condition_id && (positionsExpanded || !isCollapsible)),
     initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
@@ -209,7 +193,7 @@ export default function EventMarketPositions({ market, collapsible = false }: Ev
     },
   })
 
-  if (!user?.address) {
+  if (!userAddress) {
     return (
       <div className={`
         rounded-lg border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground
