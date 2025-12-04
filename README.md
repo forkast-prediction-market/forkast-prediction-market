@@ -51,6 +51,7 @@ Complete Step 3 (Supabase) and Step 4 (environment) first, then redeploy from yo
       - **Forkast CLOB Ordersbook**: Connect your wallet at [auth.forka.st](https://auth.forka.st), sign to verify ownership, and copy the API key, secret, and passphrase
       - **Reown AppKit**: Get Project ID at [dashboard.reown.com](https://dashboard.reown.com)
       - **Better Auth**: Generate secret at [better-auth.com](https://www.better-auth.com/docs/installation#set-environment-variables)
+      - **USERS_ENCRYPTION_KEY**: Create a random secret of at least 32 characters
       - **CRON_SECRET**: Create a random secret of at least 16 characters
    3. Go to your Vercel project dashboard
    4. Navigate to **Settings** → **Environment Variables**
@@ -81,16 +82,16 @@ In your forked Forkast repository:
 - 📊 Advanced Charts & Analytics
 - 🔒 Secure Smart Contracts
 
-## ⚠️ Disclaimer
-
-Forkast is provided "as is" and should be used at your own risk. Review the [Modified MIT License with Commons Clause](./LICENSE) before deploying production forks: running derivatives that alter the core on-chain contracts or orderbook modules may fall outside the permitted use. Always verify smart contracts and comply with relevant regulations in your jurisdiction.
-
 ## 🔧 Tech Stack
 
 - **Frontend:** Next.js 16 (React 19, TS, Tailwind, Zustand, @visx)
 - **Backend/DB:** Supabase (Postgres, Drizzle)
 - **Auth:** Better Auth + SIWE
 - **Blockchain:** Polygon (viem, wagmi)
+
+## ⚠️ Disclaimer
+
+Forkast is provided "as is" and should be used at your own risk. Review the [Modified MIT License with Commons Clause](./LICENSE) before deploying production forks: running derivatives that alter the core on-chain contracts or orderbook modules may fall outside the permitted use. Always verify smart contracts and comply with relevant regulations in your jurisdiction.
 
 ## 🔗 Links
 

@@ -35,7 +35,6 @@ import {
   buildApproveTokenTransactions,
   getSafeTxTypedData,
   packSafeSignature,
-
 } from '@/lib/safe/transactions'
 import {
   buildTradingAuthMessage,
@@ -581,7 +580,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
           <div className="mt-6 space-y-6 text-left">
             <TradingRequirementStep
               title="Deploy Proxy Wallet"
-              description="Deploy your proxy wallet to trade on Polymarket."
+              description={`Deploy your proxy wallet to trade on ${process.env.NEXT_PUBLIC_SITE_NAME}.`}
               actionLabel={proxyStep === 'signing' ? 'Signing…' : proxyStep === 'deploying' ? 'Deploying' : 'Deploy'}
               isLoading={proxyStep === 'signing'}
               disabled={proxyStep === 'signing' || proxyStep === 'deploying'}
@@ -683,7 +682,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
           <div className="space-y-4">
             <TradingRequirementStep
               title="Deploy Proxy Wallet"
-              description="Deploy your proxy wallet to trade on Polymarket."
+              description={`Deploy your proxy wallet to trade on ${process.env.NEXT_PUBLIC_SITE_NAME}.`}
               actionLabel={proxyStep === 'signing' ? 'Signing…' : proxyStep === 'deploying' ? 'Deploying' : 'Deploy'}
               isLoading={proxyStep === 'signing'}
               disabled={proxyStep === 'signing' || proxyStep === 'deploying'}

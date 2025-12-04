@@ -7,9 +7,9 @@ const TAG_LENGTH = 16
 const ALGORITHM = 'aes-256-gcm'
 
 function resolveEncryptionKey() {
-  const secret = process.env.BETTER_AUTH_SECRET
+  const secret = process.env.USERS_ENCRYPTION_KEY
   if (!secret || secret.length < 32) {
-    throw new Error('BETTER_AUTH_SECRET must be at least 32 characters to encrypt sensitive values.')
+    throw new Error('USERS_ENCRYPTION_KEY must be at least 32 characters to encrypt sensitive values.')
   }
 
   return createHash('sha256').update(secret).digest()
