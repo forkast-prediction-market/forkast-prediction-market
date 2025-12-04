@@ -80,7 +80,9 @@ export function mapDataApiActivityToPublicActivity(activity: DataApiActivity): P
     eventSlug,
     icon: activity.icon,
     type: activity.type?.toLowerCase() || 'trade',
-    outcomeText: activity.outcomeIndex === 0 ? 'Yes' : 'No',
+    outcomeText: activity.outcomeIndex != null
+      ? (activity.outcomeIndex === 0 ? 'Yes' : 'No')
+      : activity.outcome,
     price: Number.isFinite(activity.price) ? Number(activity.price) : undefined,
     shares,
     usdcValue,
