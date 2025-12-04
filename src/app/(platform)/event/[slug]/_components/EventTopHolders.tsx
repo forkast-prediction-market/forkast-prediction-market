@@ -1,6 +1,6 @@
 'use client'
 
-import type { Event, TopHolder } from '@/types'
+import type { Event } from '@/types'
 import { useQuery } from '@tanstack/react-query'
 import { AlertCircleIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -9,40 +9,17 @@ import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
 import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { formatPosition } from '@/lib/formatters'
+import { fetchTopHolders } from '@/lib/data-api/holders'
 import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
 
 interface EventTopHoldersProps {
   event: Event
 }
 
-interface HoldersResponse {
-  yesHolders: TopHolder[]
-  noHolders: TopHolder[]
-}
-
-async function fetchEventHolders(eventSlug: string, conditionId: string): Promise<HoldersResponse> {
-  if (!conditionId) {
-    throw new Error('conditionId is required')
-  }
-
-  const params = new URLSearchParams()
-  params.set('condition_id', conditionId)
-
-  const url = `/api/events/${eventSlug}/holders${params.toString() ? `?${params}` : ''}`
-  const response = await fetch(url)
-
-  if (!response.ok) {
-    throw new Error('Failed to load holders')
-  }
-
-  return response.json()
-}
-
 function useEventHolders(eventSlug: string, conditionId?: string) {
   return useQuery({
     queryKey: ['event-holders', eventSlug, conditionId],
-    queryFn: () => fetchEventHolders(eventSlug, conditionId!),
+    queryFn: () => fetchTopHolders(conditionId!),
     enabled: Boolean(conditionId),
     staleTime: 30_000,
     gcTime: 300_000,
@@ -77,16 +54,6 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
 
   const conditionId = selectedMarket || fallbackConditionId
   const { data, isLoading, error } = useEventHolders(event.slug, conditionId)
-
-  function formatShares(value: string) {
-    const numeric = Number(value)
-    if (!Number.isFinite(numeric) || numeric <= 0) {
-      return '0'
-    }
-
-    const micro = Math.round(numeric * 1_000_000).toString()
-    return formatPosition(micro)
-  }
 
   function handleMarketChange(conditionId: string) {
     setSelectedMarket(conditionId)
@@ -175,7 +142,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
                       position={index + 1}
                     >
                       <span className="text-xs font-semibold text-yes">
-                        {formatShares(holder.net_position)}
+                        {holder.net_position}
                         {' '}
                         shares
                       </span>
@@ -198,7 +165,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
                       position={index + 1}
                     >
                       <span className="text-xs font-semibold text-no">
-                        {formatShares(holder.net_position)}
+                        {holder.net_position}
                         {' '}
                         shares
                       </span>
