@@ -1,0 +1,416 @@
+'use client'
+
+import type { ChangeEventHandler, FormEventHandler } from 'react'
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Copy,
+} from 'lucide-react'
+import { useState } from 'react'
+import QRCode from 'react-qr-code'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { cn } from '@/lib/utils'
+
+type WalletView = 'menu' | 'fund' | 'send' | 'receive'
+
+interface WalletModalProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  isMobile: boolean
+  walletAddress?: string | null
+  siteName?: string
+  meldUrl: string | null
+  hasDeployedProxyWallet: boolean
+  view: WalletView
+  onViewChange: (view: WalletView) => void
+  sendTo: string
+  onChangeSendTo: ChangeEventHandler<HTMLInputElement>
+  sendAmount: string
+  onChangeSendAmount: ChangeEventHandler<HTMLInputElement>
+  sendError: string | null
+  isSending: boolean
+  onSubmitSend: FormEventHandler<HTMLFormElement>
+}
+
+function WalletAddressCard({
+  walletAddress,
+  onCopy,
+  copied,
+}: {
+  walletAddress?: string | null
+  onCopy: () => void
+  copied: boolean
+}) {
+  return (
+    <div className="rounded-md border border-border/60 bg-muted/40 p-3 text-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-muted-foreground">Proxy wallet</p>
+          <p className="font-mono text-xs break-all">{walletAddress}</p>
+        </div>
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          onClick={onCopy}
+        >
+          {copied ? <Check className="size-4 text-primary" /> : <Copy className="size-4" />}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+function WalletMenu({
+  onFund,
+  onReceive,
+  onSend,
+  disabledFund,
+  disabledReceive,
+  disabledSend,
+}: {
+  onFund: () => void
+  onReceive: () => void
+  onSend: () => void
+  disabledFund: boolean
+  disabledReceive: boolean
+  disabledSend: boolean
+}) {
+  return (
+    <div className="space-y-3">
+      <button
+        type="button"
+        className={`
+          flex w-full items-center justify-between rounded-lg border border-border/70 bg-card px-4 py-3 text-left
+          transition
+          hover:border-primary hover:text-primary
+        `}
+        onClick={onFund}
+        disabled={disabledFund}
+      >
+        <div>
+          <p className="text-sm font-semibold">Fund wallet</p>
+          <p className="text-xs text-muted-foreground">Buy with card/PIX to your proxy wallet.</p>
+        </div>
+        <ArrowRight className="size-4" />
+      </button>
+
+      <button
+        type="button"
+        className={`
+          flex w-full items-center justify-between rounded-lg border border-border/70 bg-card px-4 py-3 text-left
+          transition
+          hover:border-primary hover:text-primary
+        `}
+        onClick={onReceive}
+        disabled={disabledReceive}
+      >
+        <div>
+          <p className="text-sm font-semibold">Receive</p>
+          <p className="text-xs text-muted-foreground">Share your proxy wallet address.</p>
+        </div>
+        <ArrowRight className="size-4" />
+      </button>
+
+      <button
+        type="button"
+        className={`
+          flex w-full items-center justify-between rounded-lg border border-border/70 bg-card px-4 py-3 text-left
+          transition
+          hover:border-primary hover:text-primary
+        `}
+        onClick={onSend}
+        disabled={disabledSend}
+      >
+        <div>
+          <p className="text-sm font-semibold">Send</p>
+          <p className="text-xs text-muted-foreground">Withdraw from your proxy wallet.</p>
+        </div>
+        <ArrowRight className="size-4" />
+      </button>
+    </div>
+  )
+}
+
+function WalletReceiveView({
+  walletAddress,
+  onBack,
+}: {
+  walletAddress?: string | null
+  onBack: () => void
+}) {
+  return (
+    <div className="space-y-3">
+      <button
+        type="button"
+        className="flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
+        onClick={onBack}
+      >
+        <ArrowLeft className="size-4" />
+        Back
+      </button>
+      <div className="flex justify-center rounded-lg border border-border/60 bg-white p-4">
+        {walletAddress
+          ? <QRCode value={walletAddress} size={200} />
+          : <p className="text-sm text-destructive">Proxy wallet not ready yet.</p>}
+      </div>
+    </div>
+  )
+}
+function WalletSendForm({
+  sendTo,
+  onChangeSendTo,
+  sendAmount,
+  onChangeSendAmount,
+  sendError,
+  isSending,
+  onSubmitSend,
+  onBack,
+}: {
+  sendTo: string
+  onChangeSendTo: ChangeEventHandler<HTMLInputElement>
+  sendAmount: string
+  onChangeSendAmount: ChangeEventHandler<HTMLInputElement>
+  sendError: string | null
+  isSending: boolean
+  onSubmitSend: FormEventHandler<HTMLFormElement>
+  onBack: () => void
+}) {
+  return (
+    <div className="space-y-3">
+      <button
+        type="button"
+        className="flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
+        onClick={onBack}
+      >
+        <ArrowLeft className="size-4" />
+        Back
+      </button>
+
+      <form className="space-y-3" onSubmit={onSubmitSend}>
+        <div className="space-y-1">
+          <Label htmlFor="wallet-send-to">Recipient address</Label>
+          <Input
+            id="wallet-send-to"
+            value={sendTo}
+            onChange={onChangeSendTo}
+            placeholder="0x..."
+            required
+          />
+        </div>
+        <div className="space-y-1">
+          <Label htmlFor="wallet-send-amount">Amount (USDC)</Label>
+          <Input
+            id="wallet-send-amount"
+            type="number"
+            min="0"
+            step="0.01"
+            value={sendAmount}
+            onChange={onChangeSendAmount}
+            placeholder="0.00"
+            required
+          />
+        </div>
+
+        {sendError && (
+          <p className="text-sm text-destructive">{sendError}</p>
+        )}
+
+        <Button type="submit" className="w-full" disabled={isSending}>
+          {isSending ? 'Submitting…' : 'Send from Proxy'}
+        </Button>
+      </form>
+    </div>
+  )
+}
+
+function WalletFundView({
+  meldUrl,
+  onBack,
+}: {
+  meldUrl: string | null
+  onBack: () => void
+}) {
+  return (
+    <div className="relative h-full w-full">
+      <button
+        type="button"
+        className={`
+          absolute top-4 left-4 z-10 flex items-center gap-2 rounded-full bg-background/90 p-2 text-sm
+          text-muted-foreground shadow
+          hover:text-foreground
+        `}
+        onClick={onBack}
+      >
+        <ArrowLeft className="size-4" />
+      </button>
+      {meldUrl
+        ? (
+            <iframe
+              src={meldUrl}
+              title="Meld Onramp"
+              className="h-full w-full"
+              allow="payment *"
+            />
+          )
+        : (
+            <div className="flex h-full items-center justify-center p-6 text-sm text-destructive">
+              Proxy wallet not ready yet.
+            </div>
+          )}
+    </div>
+  )
+}
+
+export function WalletModal(props: WalletModalProps) {
+  const {
+    open,
+    onOpenChange,
+    isMobile,
+    walletAddress,
+    siteName,
+    meldUrl,
+    hasDeployedProxyWallet,
+    view,
+    onViewChange,
+    sendTo,
+    onChangeSendTo,
+    sendAmount,
+    onChangeSendAmount,
+    sendError,
+    isSending,
+    onSubmitSend,
+  } = props
+
+  const [copied, setCopied] = useState(false)
+
+  function handleCopy() {
+    if (!walletAddress) {
+      return
+    }
+    void navigator.clipboard.writeText(walletAddress)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1200)
+  }
+
+  function renderMenu() {
+    return (
+      <WalletMenu
+        onFund={() => onViewChange('fund')}
+        onReceive={() => onViewChange('receive')}
+        onSend={() => onViewChange('send')}
+        disabledFund={!meldUrl}
+        disabledReceive={!hasDeployedProxyWallet}
+        disabledSend={!hasDeployedProxyWallet}
+      />
+    )
+  }
+
+  const sharedNonFund = (
+    <div className="space-y-4">
+      {(view === 'menu' || view === 'send' || view === 'receive') && (
+        <WalletAddressCard walletAddress={walletAddress} onCopy={handleCopy} copied={copied} />
+      )}
+      {view === 'menu' && renderMenu()}
+      {view === 'receive' && (
+        <WalletReceiveView walletAddress={walletAddress} onBack={() => onViewChange('menu')} />
+      )}
+      {view === 'send' && (
+        <WalletSendForm
+          sendTo={sendTo}
+          onChangeSendTo={onChangeSendTo}
+          sendAmount={sendAmount}
+          onChangeSendAmount={onChangeSendAmount}
+          sendError={sendError}
+          isSending={isSending}
+          onSubmitSend={onSubmitSend}
+          onBack={() => onViewChange('menu')}
+        />
+      )}
+    </div>
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer
+        open={open}
+        onOpenChange={(next) => {
+          setCopied(false)
+          onOpenChange(next)
+        }}
+      >
+        <DrawerContent
+          className={cn(
+            'w-full border-border/70 bg-background',
+            view === 'fund'
+              ? 'h-[100vh] border-none'
+              : 'max-h-[90vh] overflow-y-auto px-0',
+          )}
+        >
+          {view !== 'fund' && (
+            <DrawerHeader className="px-4 pt-4 pb-2">
+              <DrawerTitle>
+                Your Wallet on
+                {' '}
+                {siteName}
+              </DrawerTitle>
+            </DrawerHeader>
+          )}
+          <div className={cn('w-full', view === 'fund' ? 'h-full' : 'px-4 pb-4')}>
+            {view === 'fund'
+              ? <WalletFundView meldUrl={meldUrl} onBack={() => onViewChange('menu')} />
+              : sharedNonFund}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        setCopied(false)
+        onOpenChange(next)
+      }}
+    >
+      <DialogContent
+        className={cn(
+          'border border-border/70 bg-background',
+          view === 'fund'
+            ? 'h-[90vh] w-full max-w-screen overflow-hidden border-none bg-transparent p-0'
+            : 'w-full max-w-2xl p-6',
+        )}
+      >
+        {view !== 'fund' && (
+          <DialogHeader className="pb-3">
+            <DialogTitle>
+              Your Wallet on
+              {' '}
+              {siteName}
+            </DialogTitle>
+          </DialogHeader>
+        )}
+
+        {view === 'fund'
+          ? <WalletFundView meldUrl={meldUrl} onBack={() => onViewChange('menu')} />
+          : sharedNonFund}
+      </DialogContent>
+    </Dialog>
+  )
+}
