@@ -3,27 +3,23 @@
 import type { ReactNode } from 'react'
 import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
 import type { ProxyWalletStatus } from '@/types'
-import { Check, CircleDollarSign, Loader2, Wallet, X } from 'lucide-react'
 import { createContext, use, useCallback, useEffect, useMemo, useState } from 'react'
 import { hashTypedData, UserRejectedRequestError } from 'viem'
 import { useSignMessage, useSignTypedData } from 'wagmi'
 import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
 import { saveProxyWalletSignature } from '@/app/(platform)/_actions/proxy-wallet'
 import { generateTradingAuthAction } from '@/app/(platform)/_actions/trading-auth'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Separator } from '@/components/ui/separator'
+import { EnableTradingDialog, FundAccountDialog, TradeRequirementsDialog } from '@/components/trading/TradingDialogs'
+import { WalletFlow } from '@/components/trading/WalletFlow'
 import { useAppKit } from '@/hooks/useAppKit'
 import { defaultNetwork } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
-import { CONDITIONAL_TOKENS_CONTRACT, CTF_EXCHANGE_ADDRESS, DEFAULT_ERROR_MESSAGE, NEG_RISK_CTF_EXCHANGE_ADDRESS } from '@/lib/constants'
+import {
+  CONDITIONAL_TOKENS_CONTRACT,
+  CTF_EXCHANGE_ADDRESS,
+  DEFAULT_ERROR_MESSAGE,
+  NEG_RISK_CTF_EXCHANGE_ADDRESS,
+} from '@/lib/constants'
 import {
   getSafeProxyDomain,
   SAFE_PROXY_CREATE_PROXY_MESSAGE,
@@ -42,7 +38,6 @@ import {
   TRADING_AUTH_PRIMARY_TYPE,
   TRADING_AUTH_TYPES,
 } from '@/lib/trading-auth/client'
-import { cn } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 
 interface TradingOnboardingContextValue {
@@ -50,6 +45,7 @@ interface TradingOnboardingContextValue {
   ensureTradingReady: () => boolean
   openTradeRequirements: () => void
   hasProxyWallet: boolean
+  openWalletModal: () => void
 }
 
 const TradingOnboardingContext = createContext<TradingOnboardingContextValue | null>(null)
@@ -69,6 +65,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
   const [proxyStep, setProxyStep] = useState<'idle' | 'signing' | 'deploying' | 'completed'>('idle')
   const [tradingAuthStep, setTradingAuthStep] = useState<'idle' | 'signing' | 'completed'>('idle')
   const [approvalsStep, setApprovalsStep] = useState<'idle' | 'signing' | 'completed'>('idle')
+  const [walletModalOpen, setWalletModalOpen] = useState(false)
 
   const proxyWalletStatus = user?.proxy_wallet_status ?? null
   const hasProxyWalletAddress = Boolean(user?.proxy_wallet_address)
@@ -239,16 +236,11 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     setTradingAuthError(null)
     setTokenApprovalError(null)
     setShouldShowFundAfterProxy(false)
+    setWalletModalOpen(false)
     if (proxyStep !== 'completed') {
       setProxyStep('idle')
     }
   }, [proxyStep])
-
-  const handleDepositModalOpen = useCallback(() => {
-    queueMicrotask(() => {
-      void open()
-    })
-  }, [open])
 
   const handleProxyWalletSignature = useCallback(async () => {
     setProxyWalletError(null)
@@ -492,24 +484,6 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     }
   }, [hasTradingAuth, refreshSessionUserState, signMessageAsync, user])
 
-  const startDepositFlow = useCallback(() => {
-    if (!user) {
-      queueMicrotask(() => {
-        void open()
-      })
-      return
-    }
-
-    if (hasDeployedProxyWallet) {
-      handleDepositModalOpen()
-      return
-    }
-
-    resetEnableFlowState()
-    setShouldShowFundAfterProxy(true)
-    setEnableModalOpen(true)
-  }, [handleDepositModalOpen, hasDeployedProxyWallet, open, resetEnableFlowState, user])
-
   const ensureTradingReady = useCallback(() => {
     if (!user) {
       queueMicrotask(() => {
@@ -539,6 +513,36 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     setTradeModalOpen(true)
   }, [open, resetEnableFlowState, user])
 
+  const openWalletModal = useCallback(() => {
+    if (!user) {
+      queueMicrotask(() => void open())
+      return
+    }
+    if (!hasDeployedProxyWallet) {
+      openTradeRequirements()
+      return
+    }
+    setWalletModalOpen(true)
+  }, [hasDeployedProxyWallet, open, openTradeRequirements, user])
+
+  const startDepositFlow = useCallback(() => {
+    if (!user) {
+      queueMicrotask(() => {
+        void open()
+      })
+      return
+    }
+
+    if (hasDeployedProxyWallet) {
+      setWalletModalOpen(true)
+      return
+    }
+
+    resetEnableFlowState()
+    setShouldShowFundAfterProxy(true)
+    setEnableModalOpen(true)
+  }, [hasDeployedProxyWallet, open, resetEnableFlowState, user])
+
   const closeFundModal = useCallback((nextOpen: boolean) => {
     setFundModalOpen(nextOpen)
     if (!nextOpen) {
@@ -551,13 +555,27 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     ensureTradingReady,
     openTradeRequirements,
     hasProxyWallet: hasDeployedProxyWallet,
-  }), [ensureTradingReady, hasDeployedProxyWallet, openTradeRequirements, startDepositFlow])
+    openWalletModal,
+  }), [ensureTradingReady, hasDeployedProxyWallet, openTradeRequirements, openWalletModal, startDepositFlow])
+
+  const meldUrl = useMemo(() => {
+    if (!hasDeployedProxyWallet || !user?.proxy_wallet_address) {
+      return null
+    }
+    const params = new URLSearchParams({
+      publicKey: 'WXETMuFUQmqqybHuRkSgxv:25B8LJHSfpG6LVjR2ytU5Cwh7Z4Sch2ocoU',
+      destinationCurrencyCode: 'USDC',
+      walletAddressLocked: user.proxy_wallet_address,
+      externalCustomerId: user.id,
+    })
+    return `https://meldcrypto.com/?${params.toString()}`
+  }, [hasDeployedProxyWallet, user])
 
   return (
     <TradingOnboardingContext value={contextValue}>
       {children}
 
-      <Dialog
+      <EnableTradingDialog
         open={enableModalOpen}
         onOpenChange={(next) => {
           setEnableModalOpen(next)
@@ -565,216 +583,52 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
             resetPendingFundState()
           }
         }}
-      >
-        <DialogContent className="max-w-md border border-border/70 bg-background p-8 text-center">
-          <DialogHeader className="space-y-3 text-center">
-            <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <Wallet className="size-8" />
-            </div>
-            <DialogTitle className="text-center text-2xl font-bold">Enable Trading</DialogTitle>
-            <DialogDescription className="text-center text-base text-muted-foreground">
-              {`Let's set up your wallet to trade on ${process.env.NEXT_PUBLIC_SITE_NAME}.`}
-            </DialogDescription>
-          </DialogHeader>
+        proxyStep={proxyStep}
+        tradingAuthStep={tradingAuthStep}
+        approvalsStep={approvalsStep}
+        hasTradingAuth={hasTradingAuth}
+        hasDeployedProxyWallet={hasDeployedProxyWallet}
+        proxyWalletError={proxyWalletError}
+        tradingAuthError={tradingAuthError}
+        tokenApprovalError={tokenApprovalError}
+        onProxyAction={handleProxyWalletSignature}
+        onTradingAuthAction={handleTradingAuthSignature}
+        onApprovalsAction={handleApproveTokens}
+      />
 
-          <div className="mt-6 space-y-6 text-left">
-            <TradingRequirementStep
-              title="Deploy Proxy Wallet"
-              description={`Deploy your proxy wallet to trade on ${process.env.NEXT_PUBLIC_SITE_NAME}.`}
-              actionLabel={proxyStep === 'signing' ? 'Signing…' : proxyStep === 'deploying' ? 'Deploying' : 'Deploy'}
-              isLoading={proxyStep === 'signing'}
-              disabled={proxyStep === 'signing' || proxyStep === 'deploying'}
-              isComplete={proxyStep === 'completed'}
-              error={proxyWalletError}
-              onAction={handleProxyWalletSignature}
-            />
+      <FundAccountDialog
+        open={fundModalOpen}
+        onOpenChange={closeFundModal}
+        onDeposit={() => {
+          closeFundModal(false)
+          openWalletModal()
+        }}
+        onSkip={() => closeFundModal(false)}
+      />
 
-            <Separator className="bg-border/70" />
+      <TradeRequirementsDialog
+        open={tradeModalOpen}
+        onOpenChange={setTradeModalOpen}
+        proxyStep={proxyStep}
+        tradingAuthStep={tradingAuthStep}
+        approvalsStep={approvalsStep}
+        hasTradingAuth={hasTradingAuth}
+        hasDeployedProxyWallet={hasDeployedProxyWallet}
+        proxyWalletError={proxyWalletError}
+        tradingAuthError={tradingAuthError}
+        tokenApprovalError={tokenApprovalError}
+        onProxyAction={handleProxyWalletSignature}
+        onTradingAuthAction={handleTradingAuthSignature}
+        onApprovalsAction={handleApproveTokens}
+      />
 
-            <TradingRequirementStep
-              title="Enable Trading"
-              description="You need to sign this each time you trade on a new browser."
-              actionLabel={tradingAuthStep === 'signing' ? 'Signing…' : 'Sign'}
-              isLoading={tradingAuthStep === 'signing'}
-              disabled={!hasDeployedProxyWallet || tradingAuthStep === 'completed' || tradingAuthStep === 'signing'}
-              isComplete={tradingAuthStep === 'completed'}
-              error={tradingAuthError}
-              onAction={handleTradingAuthSignature}
-            />
-
-            <Separator className="bg-border/70" />
-
-            <TradingRequirementStep
-              title="Approve Tokens"
-              description="Start trading securely with your USDC."
-              actionLabel={approvalsStep === 'signing' ? 'Signing…' : 'Sign'}
-              isLoading={approvalsStep === 'signing'}
-              disabled={
-                !hasTradingAuth
-                || !hasDeployedProxyWallet
-                || approvalsStep === 'completed'
-                || approvalsStep === 'signing'
-              }
-              isComplete={approvalsStep === 'completed'}
-              error={tokenApprovalError}
-              onAction={handleApproveTokens}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={fundModalOpen} onOpenChange={closeFundModal}>
-        <DialogContent className="max-w-md border border-border/70 bg-background p-8 text-center">
-          <DialogHeader className="space-y-3 text-center">
-            <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-              <CircleDollarSign className="size-8" />
-            </div>
-            <DialogTitle className="text-center text-2xl font-bold">Fund Your Account</DialogTitle>
-          </DialogHeader>
-
-          <div className="mt-6 space-y-4">
-            <Button
-              className="h-12 w-full text-base"
-              onClick={() => {
-                closeFundModal(false)
-                handleDepositModalOpen()
-              }}
-            >
-              Deposit Funds
-            </Button>
-
-            <button
-              type="button"
-              className={`
-                mx-auto block text-sm font-medium text-muted-foreground transition-colors
-                hover:text-foreground
-              `}
-              onClick={() => closeFundModal(false)}
-            >
-              Skip for now
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={tradeModalOpen} onOpenChange={setTradeModalOpen}>
-        <DialogContent showCloseButton={false} className="max-w-xl border border-border/70 bg-background p-6">
-          <DialogHeader className="pb-2 text-center">
-            <DialogTitle className="text-center text-lg font-semibold">
-              Trade on
-              {' '}
-              {process.env.NEXT_PUBLIC_SITE_NAME}
-            </DialogTitle>
-          </DialogHeader>
-          <DialogClose asChild>
-            <button
-              type="button"
-              className={`
-                absolute top-4 right-4 rounded-full p-1 text-muted-foreground transition-colors
-                hover:text-foreground
-              `}
-              aria-label="Close"
-            >
-              <X className="size-4" />
-            </button>
-          </DialogClose>
-
-          <div className="space-y-4">
-            <TradingRequirementStep
-              title="Deploy Proxy Wallet"
-              description={`Deploy your proxy wallet to trade on ${process.env.NEXT_PUBLIC_SITE_NAME}.`}
-              actionLabel={proxyStep === 'signing' ? 'Signing…' : proxyStep === 'deploying' ? 'Deploying' : 'Deploy'}
-              isLoading={proxyStep === 'signing'}
-              disabled={proxyStep === 'signing' || proxyStep === 'deploying'}
-              isComplete={proxyStep === 'completed'}
-              error={proxyWalletError}
-              onAction={handleProxyWalletSignature}
-            />
-            <Separator className="bg-border/70" />
-            <TradingRequirementStep
-              title="Enable Trading"
-              description="You need to sign this each time you trade on a new browser."
-              actionLabel={tradingAuthStep === 'signing' ? 'Signing…' : 'Sign'}
-              isLoading={tradingAuthStep === 'signing'}
-              disabled={!hasDeployedProxyWallet || tradingAuthStep === 'completed' || tradingAuthStep === 'signing'}
-              isComplete={tradingAuthStep === 'completed'}
-              error={tradingAuthError}
-              onAction={handleTradingAuthSignature}
-            />
-            <Separator className="bg-border/70" />
-            <TradingRequirementStep
-              title="Approve Tokens"
-              description="Start trading securely with your USDC."
-              actionLabel={approvalsStep === 'signing' ? 'Signing…' : 'Sign'}
-              isLoading={approvalsStep === 'signing'}
-              disabled={
-                !hasTradingAuth
-                || !hasDeployedProxyWallet
-                || approvalsStep === 'completed'
-                || approvalsStep === 'signing'
-              }
-              isComplete={approvalsStep === 'completed'}
-              error={tokenApprovalError}
-              onAction={handleApproveTokens}
-            />
-          </div>
-        </DialogContent>
-      </Dialog>
+      <WalletFlow
+        open={walletModalOpen}
+        onOpenChange={setWalletModalOpen}
+        user={user}
+        meldUrl={meldUrl}
+      />
     </TradingOnboardingContext>
-  )
-}
-
-interface TradingRequirementStepProps {
-  title: string
-  description: string
-  actionLabel: string
-  isLoading: boolean
-  disabled?: boolean
-  isComplete: boolean
-  error?: string | null
-  onAction: () => void
-}
-
-function TradingRequirementStep({
-  title,
-  description,
-  actionLabel,
-  isLoading,
-  disabled,
-  isComplete,
-  error,
-  onAction,
-}: TradingRequirementStepProps) {
-  return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1">
-          <p className="text-base font-semibold text-foreground">{title}</p>
-          <p className="text-sm text-muted-foreground">{description}</p>
-          {!isComplete && error && (
-            <p className="mt-2 text-sm text-destructive">{error}</p>
-          )}
-        </div>
-
-        {isComplete
-          ? (
-              <div className="flex min-w-[110px] items-center justify-center gap-1 text-sm font-semibold text-primary">
-                <Check className="size-4" />
-                Complete
-              </div>
-            )
-          : (
-              <Button
-                size="sm"
-                className={cn('min-w-[110px]', isLoading && 'pointer-events-none opacity-80')}
-                disabled={Boolean(disabled) || isLoading}
-                onClick={onAction}
-              >
-                {isLoading ? <Loader2 className="size-4 animate-spin" /> : actionLabel}
-              </Button>
-            )}
-      </div>
-    </div>
   )
 }
 

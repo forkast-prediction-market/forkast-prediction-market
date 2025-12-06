@@ -124,6 +124,21 @@ interface ApproveOptions {
   operators?: `0x${string}`[]
 }
 
+function parseAmountToBaseUnits(amount: string | number | bigint, decimals: number): bigint {
+  if (typeof amount === 'bigint') {
+    return amount
+  }
+
+  const normalized = typeof amount === 'number' ? amount.toString() : amount
+  const [whole, fraction = ''] = normalized.split('.')
+  const fractionPadded = (fraction + '0'.repeat(decimals)).slice(0, decimals)
+
+  return (
+    BigInt(whole || '0') * 10n ** BigInt(decimals)
+    + BigInt(fractionPadded || '0')
+  )
+}
+
 export function buildApproveTokenTransactions(options?: ApproveOptions): SafeTransaction[] {
   const spender = (options?.spender ?? CONDITIONAL_TOKENS_CONTRACT) as `0x${string}`
   const operators = options?.operators?.length
@@ -157,6 +172,26 @@ export function buildApproveTokenTransactions(options?: ApproveOptions): SafeTra
   }
 
   return transactions
+}
+
+export function buildSendErc20Transaction(params: {
+  token: `0x${string}`
+  to: `0x${string}`
+  amount: string | number | bigint
+  decimals?: number
+}): SafeTransaction {
+  const value = parseAmountToBaseUnits(params.amount, params.decimals ?? 6)
+
+  return {
+    to: params.token,
+    value: '0',
+    data: encodeFunctionData({
+      abi: erc20Abi,
+      functionName: 'transfer',
+      args: [params.to, value],
+    }),
+    operation: SafeOperationType.Call,
+  }
 }
 
 interface ConditionalPositionArgs {
