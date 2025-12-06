@@ -3,9 +3,9 @@
 import type { ReactNode } from 'react'
 import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
 import type { ProxyWalletStatus } from '@/types'
-import { Check, CircleDollarSign, Loader2, Wallet, X } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Check, CircleDollarSign, Copy, Loader2, Wallet, X } from 'lucide-react'
 import { createContext, use, useCallback, useEffect, useMemo, useState } from 'react'
-import { hashTypedData, UserRejectedRequestError } from 'viem'
+import { hashTypedData, isAddress, UserRejectedRequestError } from 'viem'
 import { useSignMessage, useSignTypedData } from 'wagmi'
 import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
 import { saveProxyWalletSignature } from '@/app/(platform)/_actions/proxy-wallet'
@@ -19,11 +19,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { useAppKit } from '@/hooks/useAppKit'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { defaultNetwork } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
-import { CONDITIONAL_TOKENS_CONTRACT, CTF_EXCHANGE_ADDRESS, DEFAULT_ERROR_MESSAGE, NEG_RISK_CTF_EXCHANGE_ADDRESS } from '@/lib/constants'
+import {
+  COLLATERAL_TOKEN_ADDRESS,
+  CONDITIONAL_TOKENS_CONTRACT,
+  CTF_EXCHANGE_ADDRESS,
+  DEFAULT_ERROR_MESSAGE,
+  NEG_RISK_CTF_EXCHANGE_ADDRESS,
+} from '@/lib/constants'
 import {
   getSafeProxyDomain,
   SAFE_PROXY_CREATE_PROXY_MESSAGE,
@@ -33,6 +48,7 @@ import {
 import {
   aggregateSafeTransactions,
   buildApproveTokenTransactions,
+  buildSendErc20Transaction,
   getSafeTxTypedData,
   packSafeSignature,
 } from '@/lib/safe/transactions'
@@ -50,6 +66,7 @@ interface TradingOnboardingContextValue {
   ensureTradingReady: () => boolean
   openTradeRequirements: () => void
   hasProxyWallet: boolean
+  openWalletModal: () => void
 }
 
 const TradingOnboardingContext = createContext<TradingOnboardingContextValue | null>(null)
@@ -69,6 +86,13 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
   const [proxyStep, setProxyStep] = useState<'idle' | 'signing' | 'deploying' | 'completed'>('idle')
   const [tradingAuthStep, setTradingAuthStep] = useState<'idle' | 'signing' | 'completed'>('idle')
   const [approvalsStep, setApprovalsStep] = useState<'idle' | 'signing' | 'completed'>('idle')
+  const [walletModalOpen, setWalletModalOpen] = useState(false)
+  const [walletModalView, setWalletModalView] = useState<'menu' | 'fund' | 'send'>('menu')
+  const [walletSendTo, setWalletSendTo] = useState('')
+  const [walletSendAmount, setWalletSendAmount] = useState('')
+  const [walletSendError, setWalletSendError] = useState<string | null>(null)
+  const [isWalletSending, setIsWalletSending] = useState(false)
+  const [walletCopied, setWalletCopied] = useState(false)
 
   const proxyWalletStatus = user?.proxy_wallet_status ?? null
   const hasProxyWalletAddress = Boolean(user?.proxy_wallet_address)
@@ -239,16 +263,13 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     setTradingAuthError(null)
     setTokenApprovalError(null)
     setShouldShowFundAfterProxy(false)
+    setWalletSendError(null)
+    setIsWalletSending(false)
+    setWalletModalView('menu')
     if (proxyStep !== 'completed') {
       setProxyStep('idle')
     }
   }, [proxyStep])
-
-  const handleDepositModalOpen = useCallback(() => {
-    queueMicrotask(() => {
-      void open()
-    })
-  }, [open])
 
   const handleProxyWalletSignature = useCallback(async () => {
     setProxyWalletError(null)
@@ -492,24 +513,6 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     }
   }, [hasTradingAuth, refreshSessionUserState, signMessageAsync, user])
 
-  const startDepositFlow = useCallback(() => {
-    if (!user) {
-      queueMicrotask(() => {
-        void open()
-      })
-      return
-    }
-
-    if (hasDeployedProxyWallet) {
-      handleDepositModalOpen()
-      return
-    }
-
-    resetEnableFlowState()
-    setShouldShowFundAfterProxy(true)
-    setEnableModalOpen(true)
-  }, [handleDepositModalOpen, hasDeployedProxyWallet, open, resetEnableFlowState, user])
-
   const ensureTradingReady = useCallback(() => {
     if (!user) {
       queueMicrotask(() => {
@@ -539,6 +542,37 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     setTradeModalOpen(true)
   }, [open, resetEnableFlowState, user])
 
+  const openWalletModal = useCallback(() => {
+    if (!user) {
+      queueMicrotask(() => void open())
+      return
+    }
+    if (!hasDeployedProxyWallet) {
+      openTradeRequirements()
+      return
+    }
+    setWalletModalView('menu')
+    setWalletModalOpen(true)
+  }, [hasDeployedProxyWallet, open, openTradeRequirements, user])
+
+  const startDepositFlow = useCallback(() => {
+    if (!user) {
+      queueMicrotask(() => {
+        void open()
+      })
+      return
+    }
+
+    if (hasDeployedProxyWallet) {
+      openWalletModal()
+      return
+    }
+
+    resetEnableFlowState()
+    setShouldShowFundAfterProxy(true)
+    setEnableModalOpen(true)
+  }, [hasDeployedProxyWallet, open, openWalletModal, resetEnableFlowState, user])
+
   const closeFundModal = useCallback((nextOpen: boolean) => {
     setFundModalOpen(nextOpen)
     if (!nextOpen) {
@@ -551,7 +585,114 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     ensureTradingReady,
     openTradeRequirements,
     hasProxyWallet: hasDeployedProxyWallet,
-  }), [ensureTradingReady, hasDeployedProxyWallet, openTradeRequirements, startDepositFlow])
+    openWalletModal,
+  }), [ensureTradingReady, hasDeployedProxyWallet, openTradeRequirements, openWalletModal, startDepositFlow])
+
+  const meldUrl = useMemo(() => {
+    if (!hasDeployedProxyWallet || !user?.proxy_wallet_address) {
+      return null
+    }
+    const params = new URLSearchParams({
+      publicKey: 'WXETMuFUQmqqybHuRkSgxv:25B8LJHSfpG6LVjR2ytU5Cwh7Z4Sch2ocoU',
+      destinationCurrencyCode: 'USDC',
+      walletAddressLocked: user.proxy_wallet_address,
+      externalCustomerId: user.id,
+    })
+    return `https://meldcrypto.com/?${params.toString()}`
+  }, [hasDeployedProxyWallet, user?.id, user?.proxy_wallet_address])
+
+  const handleWalletSend = useCallback(async (event?: React.FormEvent<HTMLFormElement>) => {
+    event?.preventDefault()
+    setWalletSendError(null)
+
+    if (!user?.address || !user?.proxy_wallet_address) {
+      setWalletSendError('Deploy your proxy wallet first.')
+      return
+    }
+    if (!isAddress(walletSendTo)) {
+      setWalletSendError('Enter a valid recipient address.')
+      return
+    }
+    const amountNumber = Number(walletSendAmount)
+    if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+      setWalletSendError('Enter a valid amount.')
+      return
+    }
+
+    setIsWalletSending(true)
+    try {
+      const nonceResult = await getSafeNonceAction()
+      if (nonceResult.error || !nonceResult.nonce) {
+        setWalletSendError(nonceResult.error ?? DEFAULT_ERROR_MESSAGE)
+        return
+      }
+
+      const transaction = buildSendErc20Transaction({
+        token: COLLATERAL_TOKEN_ADDRESS,
+        to: walletSendTo as `0x${string}`,
+        amount: walletSendAmount,
+        decimals: 6,
+      })
+
+      const typedData = getSafeTxTypedData({
+        chainId: defaultNetwork.id,
+        safeAddress: user.proxy_wallet_address as `0x${string}`,
+        transaction,
+        nonce: nonceResult.nonce,
+      })
+
+      const structHash = hashTypedData({
+        domain: typedData.domain,
+        types: typedData.types,
+        primaryType: typedData.primaryType,
+        message: typedData.message,
+      }) as `0x${string}`
+
+      const signature = await signMessageAsync({ message: { raw: structHash } })
+
+      const payload: SafeTransactionRequestPayload = {
+        type: 'SAFE',
+        from: user.address,
+        to: transaction.to,
+        proxyWallet: user.proxy_wallet_address,
+        data: transaction.data,
+        nonce: nonceResult.nonce,
+        signature: packSafeSignature(signature as `0x${string}`),
+        signatureParams: typedData.signatureParams,
+        metadata: 'send_tokens',
+      }
+
+      const result = await submitSafeTransactionAction(payload)
+      if (result.error) {
+        setWalletSendError(result.error)
+        return
+      }
+
+      setWalletSendTo('')
+      setWalletSendAmount('')
+      setWalletSendError(null)
+      setWalletModalView('menu')
+    }
+    catch (error) {
+      const message = error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE
+      setWalletSendError(message)
+    }
+    finally {
+      setIsWalletSending(false)
+    }
+  }, [signMessageAsync, user?.address, user?.proxy_wallet_address, walletSendAmount, walletSendTo])
+
+  const isMobile = useIsMobile()
+
+  const handleWalletModalChange = useCallback((next: boolean) => {
+    setWalletModalOpen(next)
+    if (!next) {
+      setWalletModalView('menu')
+      setWalletSendError(null)
+      setIsWalletSending(false)
+      setWalletCopied(false)
+    }
+  }, [])
 
   return (
     <TradingOnboardingContext value={contextValue}>
@@ -637,7 +778,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
               className="h-12 w-full text-base"
               onClick={() => {
                 closeFundModal(false)
-                handleDepositModalOpen()
+                openWalletModal()
               }}
             >
               Deposit Funds
@@ -720,6 +861,348 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
           </div>
         </DialogContent>
       </Dialog>
+
+      {isMobile
+        ? (
+            <Drawer open={walletModalOpen} onOpenChange={handleWalletModalChange}>
+              <DrawerContent
+                className={cn(
+                  'w-full border-border/70 bg-background',
+                  walletModalView === 'fund'
+                    ? 'h-[100vh] border-none'
+                    : 'max-h-[90vh] overflow-y-auto px-0',
+                )}
+              >
+
+                {walletModalView !== 'fund' && (
+                  <DrawerHeader className="px-4 pt-4 pb-2">
+                    <DrawerTitle>
+                      Your Wallet on
+                      {' '}
+                      {process.env.NEXT_PUBLIC_SITE_NAME}
+                    </DrawerTitle>
+                  </DrawerHeader>
+                )}
+                <div className={cn('w-full', walletModalView === 'fund' ? 'h-full' : 'px-4 pb-4')}>
+                  {walletModalView === 'fund'
+                    ? (
+                        <div className="relative h-full w-full">
+                          <button
+                            type="button"
+                            className={`
+                              absolute top-4 left-4 z-10 flex items-center gap-2 rounded-full bg-background/90 px-3 py-2
+                              text-sm text-muted-foreground shadow
+                              hover:text-foreground
+                            `}
+                            onClick={() => setWalletModalView('menu')}
+                          >
+                            <ArrowLeft className="size-4" />
+                            Back
+                          </button>
+                          {meldUrl
+                            ? (
+                                <iframe
+                                  src={meldUrl}
+                                  title="Meld Onramp"
+                                  className="h-full w-full"
+                                  allow="payment *"
+                                />
+                              )
+                            : (
+                                <div className="flex h-full items-center justify-center p-6 text-sm text-destructive">
+                                  Proxy wallet not ready yet.
+                                </div>
+                              )}
+                        </div>
+                      )
+                    : (
+                        <div className="space-y-4">
+                          <div className="rounded-md border border-border/60 bg-muted/40 p-3 text-sm">
+                            <div className="flex items-center justify-between gap-3">
+                              <div className="space-y-1">
+                                <p className="text-xs font-semibold text-muted-foreground">Proxy wallet</p>
+                                <p className="font-mono text-xs break-all">{user?.proxy_wallet_address}</p>
+                              </div>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                onClick={async () => {
+                                  if (!user?.proxy_wallet_address) {
+                                    return
+                                  }
+                                  await navigator.clipboard.writeText(user.proxy_wallet_address)
+                                  setWalletCopied(true)
+                                  setTimeout(() => setWalletCopied(false), 1200)
+                                }}
+                              >
+                                {walletCopied ? <Check className="size-4 text-primary" /> : <Copy className="size-4" />}
+                              </Button>
+                            </div>
+                          </div>
+
+                          {walletModalView === 'menu' && (
+                            <div className="space-y-3">
+                              <button
+                                type="button"
+                                className={`
+                                  flex w-full items-center justify-between rounded-lg border border-border/70 bg-card
+                                  px-4 py-3 text-left transition
+                                  hover:border-primary hover:text-primary
+                                `}
+                                onClick={() => setWalletModalView('fund')}
+                                disabled={!meldUrl}
+                              >
+                                <div>
+                                  <p className="text-sm font-semibold">Fund wallet</p>
+                                  <p className="text-xs text-muted-foreground">Buy with card/PIX (Meld) to your proxy wallet.</p>
+                                </div>
+                                <ArrowRight className="size-4" />
+                              </button>
+
+                              <button
+                                type="button"
+                                className={`
+                                  flex w-full items-center justify-between rounded-lg border border-border/70 bg-card
+                                  px-4 py-3 text-left transition
+                                  hover:border-primary hover:text-primary
+                                `}
+                                onClick={() => setWalletModalView('send')}
+                                disabled={!hasDeployedProxyWallet}
+                              >
+                                <div>
+                                  <p className="text-sm font-semibold">Send</p>
+                                  <p className="text-xs text-muted-foreground">Withdraw from your proxy wallet.</p>
+                                </div>
+                                <ArrowRight className="size-4" />
+                              </button>
+                            </div>
+                          )}
+
+                          {walletModalView === 'send' && (
+                            <div className="space-y-3">
+                              <button
+                                type="button"
+                                className={`
+                                  flex items-center gap-2 text-sm text-muted-foreground transition
+                                  hover:text-foreground
+                                `}
+                                onClick={() => setWalletModalView('menu')}
+                              >
+                                <ArrowLeft className="size-4" />
+                                Back
+                              </button>
+
+                              <form className="space-y-3" onSubmit={handleWalletSend}>
+                                <div className="space-y-1">
+                                  <Label htmlFor="wallet-send-to">Recipient address</Label>
+                                  <Input
+                                    id="wallet-send-to"
+                                    value={walletSendTo}
+                                    onChange={event => setWalletSendTo(event.target.value)}
+                                    placeholder="0x..."
+                                    required
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <Label htmlFor="wallet-send-amount">Amount (USDC)</Label>
+                                  <Input
+                                    id="wallet-send-amount"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={walletSendAmount}
+                                    onChange={event => setWalletSendAmount(event.target.value)}
+                                    placeholder="0.00"
+                                    required
+                                  />
+                                </div>
+
+                                {walletSendError && (
+                                  <p className="text-sm text-destructive">{walletSendError}</p>
+                                )}
+
+                                <Button type="submit" className="w-full" disabled={isWalletSending}>
+                                  {isWalletSending ? 'Submitting…' : 'Send from Proxy'}
+                                </Button>
+                              </form>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                </div>
+              </DrawerContent>
+            </Drawer>
+          )
+        : (
+            <Dialog open={walletModalOpen} onOpenChange={handleWalletModalChange}>
+              <DialogContent
+                className={cn(
+                  'border border-border/70 bg-background',
+                  walletModalView === 'fund'
+                    ? 'h-[90vh] w-full max-w-screen overflow-hidden border-none bg-transparent p-0'
+                    : 'w-full max-w-2xl p-6',
+                )}
+              >
+                {walletModalView !== 'fund' && (
+                  <DialogHeader className="pb-3">
+                    <DialogTitle>
+                      Your Wallet on
+                      {' '}
+                      {process.env.NEXT_PUBLIC_SITE_NAME}
+                    </DialogTitle>
+                  </DialogHeader>
+                )}
+
+                {walletModalView === 'fund'
+                  ? (
+                      <div className="relative h-full w-full">
+                        <button
+                          type="button"
+                          className={`
+                            absolute top-4 left-4 z-10 flex items-center gap-2 rounded-full bg-background/90 px-3 py-2
+                            text-sm text-muted-foreground shadow
+                            hover:text-foreground
+                          `}
+                          onClick={() => setWalletModalView('menu')}
+                        >
+                          <ArrowLeft className="size-4" />
+                          Back
+                        </button>
+                        {meldUrl
+                          ? (
+                              <iframe
+                                src={meldUrl}
+                                title="Meld Onramp"
+                                className="h-full w-full"
+                                allow="payment *"
+                              />
+                            )
+                          : (
+                              <div className="flex h-full items-center justify-center p-6 text-sm text-destructive">
+                                Proxy wallet not ready yet.
+                              </div>
+                            )}
+                      </div>
+                    )
+                  : (
+                      <div className="space-y-4">
+                        <div className="rounded-md border border-border/60 bg-muted/40 p-3 text-sm">
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="space-y-1">
+                              <p className="text-xs font-semibold text-muted-foreground">Proxy wallet</p>
+                              <p className="font-mono text-xs break-all">{user?.proxy_wallet_address}</p>
+                            </div>
+                            <Button
+                              type="button"
+                              size="icon"
+                              variant="outline"
+                              onClick={async () => {
+                                if (!user?.proxy_wallet_address) {
+                                  return
+                                }
+                                await navigator.clipboard.writeText(user.proxy_wallet_address)
+                                setWalletCopied(true)
+                                setTimeout(() => setWalletCopied(false), 1200)
+                              }}
+                            >
+                              {walletCopied ? <Check className="size-4 text-primary" /> : <Copy className="size-4" />}
+                            </Button>
+                          </div>
+                        </div>
+
+                        {walletModalView === 'menu' && (
+                          <div className="space-y-3">
+                            <button
+                              type="button"
+                              className={`
+                                flex w-full items-center justify-between rounded-lg border border-border/70 bg-card px-4
+                                py-3 text-left transition
+                                hover:border-primary hover:text-primary
+                              `}
+                              onClick={() => setWalletModalView('fund')}
+                              disabled={!meldUrl}
+                            >
+                              <div>
+                                <p className="text-sm font-semibold">Fund wallet</p>
+                                <p className="text-xs text-muted-foreground">Buy with card/PIX (Meld) to your proxy wallet.</p>
+                              </div>
+                              <ArrowRight className="size-4" />
+                            </button>
+
+                            <button
+                              type="button"
+                              className={`
+                                flex w-full items-center justify-between rounded-lg border border-border/70 bg-card px-4
+                                py-3 text-left transition
+                                hover:border-primary hover:text-primary
+                              `}
+                              onClick={() => setWalletModalView('send')}
+                              disabled={!hasDeployedProxyWallet}
+                            >
+                              <div>
+                                <p className="text-sm font-semibold">Send</p>
+                                <p className="text-xs text-muted-foreground">Withdraw from your proxy wallet.</p>
+                              </div>
+                              <ArrowRight className="size-4" />
+                            </button>
+                          </div>
+                        )}
+
+                        {walletModalView === 'send' && (
+                          <div className="space-y-3">
+                            <button
+                              type="button"
+                              className={`
+                                flex items-center gap-2 text-sm text-muted-foreground transition
+                                hover:text-foreground
+                              `}
+                              onClick={() => setWalletModalView('menu')}
+                            >
+                              <ArrowLeft className="size-4" />
+                              Back
+                            </button>
+
+                            <form className="space-y-3" onSubmit={handleWalletSend}>
+                              <div className="space-y-1">
+                                <Label htmlFor="wallet-send-to">Recipient address</Label>
+                                <Input
+                                  id="wallet-send-to"
+                                  value={walletSendTo}
+                                  onChange={event => setWalletSendTo(event.target.value)}
+                                  placeholder="0x..."
+                                  required
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label htmlFor="wallet-send-amount">Amount (USDC)</Label>
+                                <Input
+                                  id="wallet-send-amount"
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={walletSendAmount}
+                                  onChange={event => setWalletSendAmount(event.target.value)}
+                                  placeholder="0.00"
+                                  required
+                                />
+                              </div>
+
+                              {walletSendError && (
+                                <p className="text-sm text-destructive">{walletSendError}</p>
+                              )}
+
+                              <Button type="submit" className="w-full" disabled={isWalletSending}>
+                                {isWalletSending ? 'Submitting…' : 'Send from Proxy'}
+                              </Button>
+                            </form>
+                          </div>
+                        )}
+                      </div>
+                    )}
+              </DialogContent>
+            </Dialog>
+          )}
     </TradingOnboardingContext>
   )
 }
