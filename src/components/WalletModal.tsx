@@ -349,7 +349,7 @@ export function WalletModal(props: WalletModalProps) {
           className={cn(
             'w-full border-border/70 bg-background',
             view === 'buy'
-              ? 'size-full max-w-screen overflow-hidden border-none bg-[#0D111C] p-0'
+              ? 'h-[90vh] w-full max-w-screen overflow-hidden border-none bg-[#0D111C] p-0'
               : 'max-h-[90vh] overflow-y-auto px-0',
           )}
         >
@@ -384,7 +384,7 @@ export function WalletModal(props: WalletModalProps) {
         className={cn(
           'border border-border/70 bg-background',
           view === 'buy'
-            ? 'h-full w-full max-w-screen overflow-hidden border-none bg-transparent p-0'
+            ? 'h-[90vh] w-full max-w-screen overflow-hidden border-none bg-transparent p-0'
             : 'w-full max-w-2xl p-6',
         )}
       >
