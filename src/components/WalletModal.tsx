@@ -279,13 +279,18 @@ export function WalletModal(props: WalletModalProps) {
 
   const [copied, setCopied] = useState(false)
 
-  function handleCopy() {
+  async function handleCopy() {
     if (!walletAddress) {
       return
     }
-    void navigator.clipboard.writeText(walletAddress)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 1200)
+    try {
+      await navigator.clipboard.writeText(walletAddress)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1200)
+    }
+    catch {
+      //
+    }
   }
 
   function renderMenu() {
