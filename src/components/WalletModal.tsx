@@ -26,7 +26,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 
-type WalletView = 'menu' | 'fund' | 'send' | 'receive'
+type WalletView = 'menu' | 'fund' | 'buy' | 'receive' | 'send'
 
 interface WalletModalProps {
   open: boolean
@@ -78,17 +78,13 @@ function WalletAddressCard({
 
 function WalletMenu({
   onFund,
-  onReceive,
   onSend,
   disabledFund,
-  disabledReceive,
   disabledSend,
 }: {
   onFund: () => void
-  onReceive: () => void
   onSend: () => void
   disabledFund: boolean
-  disabledReceive: boolean
   disabledSend: boolean
 }) {
   return (
@@ -106,23 +102,6 @@ function WalletMenu({
         <div>
           <p className="text-sm font-semibold">Fund wallet</p>
           <p className="text-xs text-muted-foreground">Buy with card/PIX to your proxy wallet.</p>
-        </div>
-        <ArrowRight className="size-4" />
-      </button>
-
-      <button
-        type="button"
-        className={`
-          flex w-full items-center justify-between rounded-lg border border-border/70 bg-card px-4 py-3 text-left
-          transition
-          hover:border-primary hover:text-primary
-        `}
-        onClick={onReceive}
-        disabled={disabledReceive}
-      >
-        <div>
-          <p className="text-sm font-semibold">Receive</p>
-          <p className="text-xs text-muted-foreground">Share your proxy wallet address.</p>
         </div>
         <ArrowRight className="size-4" />
       </button>
@@ -169,6 +148,7 @@ function WalletReceiveView({
           ? <QRCode value={walletAddress} size={200} />
           : <p className="text-sm text-destructive">Proxy wallet not ready yet.</p>}
       </div>
+      <p className="text-center text-xs text-muted-foreground">Copy your address or scan this QR code</p>
     </div>
   )
 }
@@ -264,7 +244,7 @@ function WalletFundView({
             <iframe
               src={meldUrl}
               title="Meld Onramp"
-              className="h-full w-full"
+              className="size-full"
               allow="payment *"
             />
           )
@@ -312,23 +292,34 @@ export function WalletModal(props: WalletModalProps) {
     return (
       <WalletMenu
         onFund={() => onViewChange('fund')}
-        onReceive={() => onViewChange('receive')}
         onSend={() => onViewChange('send')}
         disabledFund={!meldUrl}
-        disabledReceive={!hasDeployedProxyWallet}
         disabledSend={!hasDeployedProxyWallet}
+      />
+    )
+  }
+
+  function renderFundMenu() {
+    return (
+      <WalletFundMenu
+        onBuy={() => onViewChange('buy')}
+        onReceive={() => onViewChange('receive')}
+        onBack={() => onViewChange('menu')}
+        disabledBuy={!meldUrl}
+        disabledReceive={!hasDeployedProxyWallet}
       />
     )
   }
 
   const sharedNonFund = (
     <div className="space-y-4">
-      {(view === 'menu' || view === 'send' || view === 'receive') && (
+      {(view === 'menu' || view === 'fund' || view === 'send' || view === 'receive') && (
         <WalletAddressCard walletAddress={walletAddress} onCopy={handleCopy} copied={copied} />
       )}
       {view === 'menu' && renderMenu()}
+      {view === 'fund' && renderFundMenu()}
       {view === 'receive' && (
-        <WalletReceiveView walletAddress={walletAddress} onBack={() => onViewChange('menu')} />
+        <WalletReceiveView walletAddress={walletAddress} onBack={() => onViewChange('fund')} />
       )}
       {view === 'send' && (
         <WalletSendForm
@@ -357,12 +348,12 @@ export function WalletModal(props: WalletModalProps) {
         <DrawerContent
           className={cn(
             'w-full border-border/70 bg-background',
-            view === 'fund'
-              ? 'h-[100vh] border-none'
+            view === 'buy'
+              ? 'size-full max-w-screen overflow-hidden border-none bg-[#0D111C] p-0'
               : 'max-h-[90vh] overflow-y-auto px-0',
           )}
         >
-          {view !== 'fund' && (
+          {view !== 'buy' && (
             <DrawerHeader className="px-4 pt-4 pb-2">
               <DrawerTitle>
                 Your Wallet on
@@ -371,9 +362,9 @@ export function WalletModal(props: WalletModalProps) {
               </DrawerTitle>
             </DrawerHeader>
           )}
-          <div className={cn('w-full', view === 'fund' ? 'h-full' : 'px-4 pb-4')}>
-            {view === 'fund'
-              ? <WalletFundView meldUrl={meldUrl} onBack={() => onViewChange('menu')} />
+          <div className={cn('w-full', view === 'buy' ? 'h-full' : 'px-4 pb-4')}>
+            {view === 'buy'
+              ? <WalletFundView meldUrl={meldUrl} onBack={() => onViewChange('fund')} />
               : sharedNonFund}
           </div>
         </DrawerContent>
@@ -392,12 +383,12 @@ export function WalletModal(props: WalletModalProps) {
       <DialogContent
         className={cn(
           'border border-border/70 bg-background',
-          view === 'fund'
-            ? 'h-[90vh] w-full max-w-screen overflow-hidden border-none bg-transparent p-0'
+          view === 'buy'
+            ? 'h-full w-full max-w-screen overflow-hidden border-none bg-transparent p-0'
             : 'w-full max-w-2xl p-6',
         )}
       >
-        {view !== 'fund' && (
+        {view !== 'buy' && (
           <DialogHeader className="pb-3">
             <DialogTitle>
               Your Wallet on
@@ -407,10 +398,70 @@ export function WalletModal(props: WalletModalProps) {
           </DialogHeader>
         )}
 
-        {view === 'fund'
-          ? <WalletFundView meldUrl={meldUrl} onBack={() => onViewChange('menu')} />
+        {view === 'buy'
+          ? <WalletFundView meldUrl={meldUrl} onBack={() => onViewChange('fund')} />
           : sharedNonFund}
       </DialogContent>
     </Dialog>
+  )
+}
+function WalletFundMenu({
+  onBuy,
+  onReceive,
+  onBack,
+  disabledBuy,
+  disabledReceive,
+}: {
+  onBuy: () => void
+  onReceive: () => void
+  onBack: () => void
+  disabledBuy: boolean
+  disabledReceive: boolean
+}) {
+  return (
+    <div className="space-y-3">
+      <button
+        type="button"
+        className="flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
+        onClick={onBack}
+      >
+        <ArrowLeft className="size-4" />
+        Back
+      </button>
+
+      <button
+        type="button"
+        className={`
+          flex w-full items-center justify-between rounded-lg border border-border/70 bg-card px-4 py-3 text-left
+          transition
+          hover:border-primary hover:text-primary
+        `}
+        onClick={onBuy}
+        disabled={disabledBuy}
+      >
+        <div>
+          <p className="text-sm font-semibold">Buy crypto</p>
+          <p className="text-xs text-muted-foreground">Purchase with card/PIX via Meld.</p>
+        </div>
+        <ArrowRight className="size-4" />
+      </button>
+
+      <button
+        type="button"
+        className={`
+          flex w-full items-center justify-between rounded-lg border border-border/70 bg-card px-4 py-3 text-left
+          transition
+          hover:border-primary hover:text-primary
+        `}
+        onClick={onReceive}
+        disabled={disabledReceive}
+      >
+        <div>
+          <p className="text-sm font-semibold">Receive funds</p>
+          <p className="text-xs text-muted-foreground">Share your proxy address or QR code.</p>
+        </div>
+        <ArrowRight className="size-4" />
+      </button>
+    </div>
   )
 }
