@@ -11,39 +11,11 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { OUTCOME_INDEX } from '@/lib/constants'
-import { formatCurrency, formatSharePriceLabel, fromMicro, toMicro } from '@/lib/formatters'
+import { fetchEventTrades } from '@/lib/data-api/trades'
+import { formatCurrency, formatSharePriceLabel, fromMicro } from '@/lib/formatters'
 
 interface EventActivityProps {
   event: Event
-}
-
-interface FetchActivitiesParams {
-  pageParam: number
-  eventSlug: string
-  minAmountFilter: string
-}
-
-async function fetchActivities({
-  pageParam,
-  eventSlug,
-  minAmountFilter,
-}: FetchActivitiesParams): Promise<ActivityOrder[]> {
-  const params = new URLSearchParams({
-    limit: '50',
-    offset: pageParam.toString(),
-  })
-
-  if (minAmountFilter && minAmountFilter !== 'none') {
-    params.set('minAmount', toMicro(minAmountFilter))
-  }
-
-  const response = await fetch(`/api/events/${eventSlug}/activity?${params}`)
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch activity data')
-  }
-
-  return await response.json()
 }
 
 export default function EventActivity({ event }: EventActivityProps) {
@@ -65,6 +37,9 @@ export default function EventActivity({ event }: EventActivityProps) {
     })
   }, [])
 
+  const marketIds = event.markets.map(market => market.condition_id).filter(Boolean)
+  const hasMarkets = marketIds.length > 0
+
   const {
     status,
     data,
@@ -73,12 +48,13 @@ export default function EventActivity({ event }: EventActivityProps) {
     hasNextPage,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ['event-activity', event.slug, minAmountFilter],
-    queryFn: ({ pageParam = 0 }) =>
-      fetchActivities({
+    queryKey: ['event-activity', event.slug, marketIds.join(','), minAmountFilter],
+    queryFn: ({ pageParam = 0, signal }) =>
+      fetchEventTrades({
+        marketIds,
         pageParam,
-        eventSlug: event.slug,
         minAmountFilter,
+        signal,
       }),
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length === 50) {
@@ -90,11 +66,12 @@ export default function EventActivity({ event }: EventActivityProps) {
     initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    enabled: hasMarkets,
   })
 
-  const activities = data?.pages.flat() ?? []
-  const loading = status === 'pending'
-  const hasInitialError = status === 'error'
+  const activities: ActivityOrder[] = data?.pages.flat() ?? []
+  const loading = hasMarkets && status === 'pending'
+  const hasInitialError = hasMarkets && status === 'error'
 
   const virtualizer = useWindowVirtualizer({
     count: activities.length,
@@ -142,12 +119,23 @@ export default function EventActivity({ event }: EventActivityProps) {
     })
   }
 
+  if (!hasMarkets) {
+    return (
+      <div className="mt-6">
+        <Alert variant="destructive">
+          <AlertCircleIcon />
+          <AlertTitle>No market available for this event</AlertTitle>
+        </Alert>
+      </div>
+    )
+  }
+
   if (hasInitialError) {
     return (
       <div className="mt-6">
         <Alert variant="destructive">
           <AlertCircleIcon />
-          <AlertTitle>Internal server error</AlertTitle>
+          <AlertTitle>Failed to load activity</AlertTitle>
           <AlertDescription>
             <Button
               type="button"
