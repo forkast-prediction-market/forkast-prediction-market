@@ -239,8 +239,6 @@ export default function EventCard({ event }: EventCardProps) {
         avgSellPrice: '—',
         buyPrice: selectedOutcome.outcome.buy_price,
         queryClient,
-        eventSlug: event.slug,
-        userId: user.id,
         outcomeIndex: selectedOutcome.outcome.outcome_index,
         lastMouseEvent,
       })

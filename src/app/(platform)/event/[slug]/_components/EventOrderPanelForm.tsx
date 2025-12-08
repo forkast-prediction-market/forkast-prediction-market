@@ -259,8 +259,6 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         avgSellPrice: avgSellPriceLabel,
         buyPrice: state.outcome.buy_price,
         queryClient,
-        eventSlug: event.slug,
-        userId: user.id,
         outcomeIndex: state.outcome.outcome_index,
         lastMouseEvent: state.lastMouseEvent,
       })
