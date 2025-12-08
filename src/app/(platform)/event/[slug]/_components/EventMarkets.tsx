@@ -291,17 +291,13 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
 
                     {tabToRender === 'positions' && (
                       <div className={MARKET_DETAIL_PANEL_CLASS}>
-                        <EventMarketPositions market={market} collapsible={false} />
+                        <EventMarketPositions market={market} />
                       </div>
                     )}
 
                     {tabToRender === 'openOrders' && (
                       <div className={MARKET_DETAIL_PANEL_CLASS}>
-                        <EventMarketOpenOrders
-                          market={market}
-                          eventSlug={event.slug}
-                          collapsible={false}
-                        />
+                        <EventMarketOpenOrders market={market} eventSlug={event.slug} />
                       </div>
                     )}
 
