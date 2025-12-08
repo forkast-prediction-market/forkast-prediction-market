@@ -18,7 +18,6 @@ import { useUser } from '@/stores/useUser'
 
 interface EventMarketPositionsProps {
   market: Event['markets'][number]
-  collapsible?: boolean
 }
 
 const POSITIONS_GRID_TEMPLATE = 'minmax(120px,1fr) repeat(4, minmax(80px,1fr)) minmax(150px,auto)'

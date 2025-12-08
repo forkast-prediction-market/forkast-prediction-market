@@ -17,7 +17,6 @@ import { useUser } from '@/stores/useUser'
 interface EventMarketOpenOrdersProps {
   market: Event['markets'][number]
   eventSlug: string
-  collapsible?: boolean
 }
 
 interface FetchOpenOrdersParams {

@@ -81,9 +81,9 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
         <EventMarkets event={event} isMobile={isMobile} />
         {event.total_markets_count === 1 && (
           <>
-            { currentUser && <EventMarketPositions market={event.markets[0]} collapsible /> }
+            { currentUser && <EventMarketPositions market={event.markets[0]} /> }
             <EventSingleMarketOrderBook market={event.markets[0]} />
-            { currentUser && <EventMarketOpenOrders market={event.markets[0]} eventSlug={event.slug} collapsible />}
+            { currentUser && <EventMarketOpenOrders market={event.markets[0]} eventSlug={event.slug} />}
             { currentUser && <EventMarketHistory market={event.markets[0]} /> }
           </>
         )}
