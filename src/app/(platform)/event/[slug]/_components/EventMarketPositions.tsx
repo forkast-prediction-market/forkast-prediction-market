@@ -3,14 +3,17 @@
 import type { Event, UserPosition } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
-import { AlertCircleIcon } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { AlertCircleIcon, ShareIcon } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { useIsMobile } from '@/hooks/useIsMobile'
+import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { fetchUserPositionsForMarket } from '@/lib/data-api/user'
-import { formatTimeAgo, fromMicro } from '@/lib/formatters'
+import { formatAmountInputValue, formatCentsLabel, formatCurrency, formatPercent, fromMicro, sharesFormatter } from '@/lib/formatters'
 import { getUserPrimaryAddress } from '@/lib/user-address'
 import { cn } from '@/lib/utils'
+import { useOrder } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
 
 interface EventMarketPositionsProps {
@@ -18,105 +21,177 @@ interface EventMarketPositionsProps {
   collapsible?: boolean
 }
 
-function MarketPositionRow({ position }: { position: UserPosition }) {
-  const isActive = position.market.is_active && !position.market.is_resolved
-  const lastActiveLabel = position.last_activity_at
-    ? formatTimeAgo(position.last_activity_at)
+const POSITIONS_GRID_TEMPLATE = 'minmax(120px,1fr) repeat(4, minmax(80px,1fr)) minmax(150px,auto)'
+
+function MarketPositionRow({
+  position,
+  onSell,
+}: {
+  position: UserPosition
+  onSell: (position: UserPosition) => void
+}) {
+  const outcomeText = position.outcome_text
+    || (position.outcome_index === 1 ? 'No' : 'Yes')
+  const normalizedOutcome = outcomeText?.toLowerCase() ?? ''
+  const explicitOutcomeIndex = typeof position.outcome_index === 'number' ? position.outcome_index : undefined
+  const resolvedOutcomeIndex = explicitOutcomeIndex != null
+    ? explicitOutcomeIndex
+    : normalizedOutcome === 'no'
+      ? OUTCOME_INDEX.NO
+      : OUTCOME_INDEX.YES
+  const isYesOutcome = resolvedOutcomeIndex === OUTCOME_INDEX.YES
+  const quantity = typeof position.total_shares === 'number' ? position.total_shares : 0
+  const formattedQuantity = quantity > 0
+    ? sharesFormatter.format(quantity)
     : '—'
-  const outcomeChipClass = position.outcome_text?.toLowerCase() === 'yes'
-    ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
-    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-200'
+  const averagePrice = Number(fromMicro(String(position.average_position), 6))
+  const averageLabel = formatCentsLabel(averagePrice, { fallback: '—' })
+  const totalValue = Number(fromMicro(String(position.total_position_value), 2))
+  const valueLabel = formatCurrency(totalValue, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+  const baseCostValue = typeof position.total_position_cost === 'number'
+    ? Number(fromMicro(String(position.total_position_cost), 2))
+    : null
+  const shouldSplitCost = Boolean(position.opposite_outcome_text)
+  const adjustedCostValue = baseCostValue != null
+    ? Number((shouldSplitCost ? baseCostValue / 2 : baseCostValue).toFixed(2))
+    : null
+  const costLabel = adjustedCostValue != null
+    ? formatCurrency(adjustedCostValue, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : null
+  const profitLossValue = typeof position.profit_loss_value === 'number'
+    ? Number(fromMicro(String(position.profit_loss_value), 2))
+    : baseCostValue != null
+      ? Number((totalValue - baseCostValue).toFixed(2))
+      : 0
+  const percentSource = typeof position.profit_loss_percent === 'number'
+    ? position.profit_loss_percent
+    : baseCostValue && baseCostValue !== 0
+      ? (profitLossValue / baseCostValue) * 100
+      : 0
+  const normalizedPercent = Math.abs(percentSource) <= 1
+    ? percentSource * 100
+    : percentSource
+  const percentDigits = Math.abs(normalizedPercent) >= 10 ? 0 : 1
+  const percentLabel = formatPercent(Math.abs(normalizedPercent), { digits: percentDigits })
+  const isPositive = profitLossValue >= 0
+  const isNeutralReturn = Math.abs(profitLossValue) < 0.005
+  const neutralReturnLabel = formatCurrency(Math.abs(profitLossValue), {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })
+  const displayedReturnValue = isNeutralReturn
+    ? neutralReturnLabel
+    : `${isPositive ? '+' : '-'}${neutralReturnLabel}`
+  const outcomeButtonLabel = outcomeText || (isYesOutcome ? 'Yes' : 'No')
+
+  const returnColorClass = isPositive ? 'text-yes' : 'text-no'
 
   return (
-    <div className={`
-      flex flex-col gap-3 border-b border-border px-3 py-3
-      last:border-b-0
-      sm:flex-row sm:items-center sm:gap-4 sm:px-4
-    `}
+    <div
+      className="grid items-center gap-3 px-3 py-1 text-[11px] leading-tight text-foreground sm:text-[12px]"
+      style={{ gridTemplateColumns: POSITIONS_GRID_TEMPLATE }}
     >
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 text-xs font-medium sm:text-sm">
-          <span className="line-clamp-2 text-foreground">{position.market.title}</span>
-          <span className={cn(
-            'inline-flex min-w-[68px] justify-center rounded-md px-2 py-0.5 text-2xs font-semibold',
-            isActive
-              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-200'
-              : 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-200',
+      <div className="flex items-center">
+        <span
+          className={cn(
+            `
+              inline-flex min-w-[48px] justify-center rounded-sm px-3 py-1 text-[12px] leading-none font-semibold
+              tracking-wide
+            `,
+            isYesOutcome ? 'bg-yes/15 text-yes-foreground' : 'bg-no/15 text-no-foreground',
           )}
-          >
-            {isActive ? 'Active' : 'Closed'}
-          </span>
-        </div>
-
-        <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          {position.outcome_text && (
-            <span className={cn(
-              'inline-flex items-center rounded-md px-2 py-1 text-2xs font-semibold',
-              outcomeChipClass,
-            )}
-            >
-              {position.outcome_text}
-            </span>
-          )}
-          <span>
-            {position.order_count}
-            {' '}
-            order
-            {position.order_count === 1 ? '' : 's'}
-          </span>
-          <span aria-hidden="true">•</span>
-          <span>
-            Last activity:
-            {' '}
-            {lastActiveLabel}
-          </span>
-        </div>
+        >
+          {outcomeButtonLabel}
+        </span>
       </div>
-
-      <div className="flex flex-1 items-center justify-end gap-6 sm:flex-none">
-        <div className="text-right">
-          <div className="text-2xs tracking-wide text-muted-foreground uppercase">Avg</div>
-          <div className="text-sm font-semibold">
-            $
-            {fromMicro(String(position.average_position), 2)}
-          </div>
-        </div>
-        <div className="text-right">
-          <div className="text-2xs tracking-wide text-muted-foreground uppercase">Value</div>
-          <div className="text-sm font-semibold">
-            $
-            {fromMicro(String(position.total_position_value), 2)}
-          </div>
-        </div>
+      <div className="text-center text-[11px] leading-tight font-semibold sm:text-sm">
+        {formattedQuantity}
+      </div>
+      <div className="text-center text-[11px] leading-tight font-semibold sm:text-sm">
+        {averageLabel}
+      </div>
+      <div className="flex flex-col leading-tight">
+        <span className="text-[11px] font-semibold sm:text-sm">{valueLabel}</span>
+        <span className="text-[9px] font-medium tracking-wide text-muted-foreground uppercase">
+          {costLabel ? `Cost ${costLabel}` : 'Cost —'}
+        </span>
+      </div>
+      <div className="flex items-center gap-1 text-[11px] leading-tight font-semibold sm:text-sm">
+        <span
+          className="inline-flex items-center"
+          style={{ borderBottom: '1px dotted currentColor', paddingBottom: '0.04rem' }}
+        >
+          {displayedReturnValue}
+        </span>
+        {!isNeutralReturn && (
+          <span className={cn('text-[10px] font-semibold', returnColorClass)}>
+            (
+            {isPositive ? '+' : '-'}
+            {percentLabel}
+            )
+          </span>
+        )}
+      </div>
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          className={cn(
+            'h-8 rounded-md border border-border/70 bg-transparent px-3 text-[12px] font-semibold',
+            'hover:bg-muted/30 dark:border-white/30 dark:text-white dark:hover:bg-white/10',
+          )}
+          onClick={() => onSell(position)}
+        >
+          Sell
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label={`Share ${outcomeButtonLabel} position`}
+          className={cn(
+            'h-8 w-8 rounded-md border border-border/70 bg-transparent text-foreground',
+            'hover:bg-muted/30 dark:border-white/30 dark:text-white dark:hover:bg-white/10',
+          )}
+        >
+          <ShareIcon className="size-4" />
+        </Button>
       </div>
     </div>
   )
 }
 
-export default function EventMarketPositions({ market, collapsible = false }: EventMarketPositionsProps) {
-  const emptyHeightClass = 'min-h-16'
+export default function EventMarketPositions({ market }: EventMarketPositionsProps) {
   const parentRef = useRef<HTMLDivElement | null>(null)
   const user = useUser()
   const userAddress = getUserPrimaryAddress(user)
   const [scrollMargin, setScrollMargin] = useState(0)
   const [hasInitialized, setHasInitialized] = useState(false)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
-  const isCollapsible = collapsible !== false
-  const [positionsExpanded, setPositionsExpanded] = useState(!isCollapsible)
+  const isMobile = useIsMobile()
+  const setOrderMarket = useOrder(state => state.setMarket)
+  const setOrderOutcome = useOrder(state => state.setOutcome)
+  const setOrderSide = useOrder(state => state.setSide)
+  const setOrderAmount = useOrder(state => state.setAmount)
+  const setIsMobileOrderPanelOpen = useOrder(state => state.setIsMobileOrderPanelOpen)
+  const orderInputRef = useOrder(state => state.inputRef)
+  const setOrderUserShares = useOrder(state => state.setUserShares)
 
   useEffect(() => {
     queueMicrotask(() => {
       setHasInitialized(false)
       setInfiniteScrollError(null)
-      setPositionsExpanded(!isCollapsible)
     })
-  }, [isCollapsible, market.condition_id])
+  }, [market.condition_id])
 
   useEffect(() => {
-    if (parentRef.current && (positionsExpanded || !isCollapsible)) {
+    if (parentRef.current) {
       setScrollMargin(parentRef.current.offsetTop)
     }
-  }, [isCollapsible, market.condition_id, positionsExpanded])
+  }, [market.condition_id])
 
   const positionStatus = market.is_active && !market.is_resolved ? 'active' : 'closed'
 
@@ -143,7 +218,7 @@ export default function EventMarketPositions({ market, collapsible = false }: Ev
       }
       return undefined
     },
-    enabled: Boolean(userAddress && market.condition_id && (positionsExpanded || !isCollapsible)),
+    enabled: Boolean(userAddress && market.condition_id),
     initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
@@ -153,13 +228,54 @@ export default function EventMarketPositions({ market, collapsible = false }: Ev
   const loading = status === 'pending' && Boolean(user?.address)
   const hasInitialError = status === 'error' && Boolean(user?.address)
 
+  const aggregatedShares = useMemo(() => {
+    const map: Record<string, Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>> = {}
+
+    positions.forEach((positionItem) => {
+      const quantity = typeof positionItem.total_shares === 'number' ? positionItem.total_shares : null
+      if (!quantity || quantity <= 0) {
+        return
+      }
+      const conditionId = positionItem.market?.condition_id || market.condition_id
+      if (!conditionId) {
+        return
+      }
+
+      const normalizedOutcome = positionItem.outcome_text?.toLowerCase()
+      const explicitOutcomeIndex = typeof positionItem.outcome_index === 'number' ? positionItem.outcome_index : undefined
+      const resolvedOutcomeIndex = explicitOutcomeIndex != null
+        ? explicitOutcomeIndex
+        : normalizedOutcome === 'no'
+          ? OUTCOME_INDEX.NO
+          : OUTCOME_INDEX.YES
+
+      if (!map[conditionId]) {
+        map[conditionId] = {
+          [OUTCOME_INDEX.YES]: 0,
+          [OUTCOME_INDEX.NO]: 0,
+        }
+      }
+
+      const bucket = resolvedOutcomeIndex === OUTCOME_INDEX.NO ? OUTCOME_INDEX.NO : OUTCOME_INDEX.YES
+      map[conditionId][bucket] += quantity
+    })
+
+    return map
+  }, [market.condition_id, positions])
+
+  useEffect(() => {
+    if (Object.keys(aggregatedShares).length > 0) {
+      setOrderUserShares(aggregatedShares)
+    }
+  }, [aggregatedShares, setOrderUserShares])
+
   const virtualizer = useWindowVirtualizer({
     count: positions.length,
     estimateSize: () => {
       if (typeof window !== 'undefined') {
-        return window.innerWidth < 768 ? 110 : 76
+        return window.innerWidth < 768 ? 62 : 54
       }
-      return 76
+      return 54
     },
     scrollMargin,
     overscan: 5,
@@ -169,7 +285,7 @@ export default function EventMarketPositions({ market, collapsible = false }: Ev
         return
       }
 
-      if (!positions.length || (isCollapsible && !positionsExpanded)) {
+      if (!positions.length) {
         return
       }
 
@@ -193,15 +309,45 @@ export default function EventMarketPositions({ market, collapsible = false }: Ev
     },
   })
 
+  const handleSell = useCallback((positionItem: UserPosition) => {
+    if (!market) {
+      return
+    }
+
+    const normalizedOutcome = positionItem.outcome_text?.toLowerCase()
+    const explicitOutcomeIndex = typeof positionItem.outcome_index === 'number' ? positionItem.outcome_index : undefined
+    const resolvedOutcomeIndex = explicitOutcomeIndex != null
+      ? explicitOutcomeIndex
+      : normalizedOutcome === 'no'
+        ? OUTCOME_INDEX.NO
+        : OUTCOME_INDEX.YES
+    const targetOutcome = market.outcomes.find(outcome => outcome.outcome_index === resolvedOutcomeIndex)
+      ?? market.outcomes[0]
+
+    setOrderMarket(market)
+    if (targetOutcome) {
+      setOrderOutcome(targetOutcome)
+    }
+    setOrderSide(ORDER_SIDE.SELL)
+
+    const shares = typeof positionItem.total_shares === 'number' ? positionItem.total_shares : 0
+    if (shares > 0) {
+      setOrderAmount(formatAmountInputValue(shares))
+    }
+    else {
+      setOrderAmount('')
+    }
+
+    if (isMobile) {
+      setIsMobileOrderPanelOpen(true)
+    }
+    else {
+      orderInputRef?.current?.focus()
+    }
+  }, [isMobile, market, orderInputRef, setIsMobileOrderPanelOpen, setOrderAmount, setOrderMarket, setOrderOutcome, setOrderSide])
+
   if (!userAddress) {
-    return (
-      <div className={`
-        rounded-lg border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground
-      `}
-      >
-        Connect your wallet to view your positions for this market.
-      </div>
-    )
+    return null
   }
 
   if (hasInitialError) {
@@ -221,34 +367,38 @@ export default function EventMarketPositions({ market, collapsible = false }: Ev
     )
   }
 
-  const content = (
-    <div ref={parentRef} className="grid gap-4">
-      {loading && (
-        <div className={`flex ${emptyHeightClass}
-          items-center justify-center rounded-lg border border-dashed border-border px-4 text-sm text-muted-foreground
-        `}
-        >
-          Loading positions...
-        </div>
-      )}
+  if (loading || positions.length === 0) {
+    return null
+  }
 
-      {!loading && positions.length === 0 && (
-        <div className={`flex ${emptyHeightClass}
-          items-center justify-center rounded-lg border border-dashed border-border px-4 text-center text-sm
-          text-muted-foreground
-        `}
-        >
-          You don&apos;t have any positions in this market yet.
-        </div>
-      )}
-
-      {!loading && positions.length > 0 && (
-        <div className="overflow-hidden rounded-lg border border-border">
+  return (
+    <section
+      ref={parentRef}
+      className="overflow-hidden rounded-xl border border-border/60 bg-background/80"
+    >
+      <div className="px-4 py-4">
+        <h3 className="text-lg font-semibold text-foreground">Positions</h3>
+      </div>
+      <div className="overflow-x-auto">
+        <div className="min-w-[760px] px-2 pb-2">
           <div
-            className="divide-y divide-border"
+            className={`
+              grid h-9 items-center gap-3 border-b border-border/60 bg-background px-3 text-[10px] font-semibold
+              tracking-wide text-muted-foreground uppercase
+            `}
+            style={{ gridTemplateColumns: POSITIONS_GRID_TEMPLATE }}
+          >
+            <span>Outcome</span>
+            <span className="text-center">Qty</span>
+            <span className="text-center">Avg</span>
+            <span>Value</span>
+            <span>Return</span>
+            <span aria-hidden="true" />
+          </div>
+          <div
+            className="relative mt-2"
             style={{
               height: `${virtualizer.getTotalSize()}px`,
-              position: 'relative',
               width: '100%',
             }}
           >
@@ -267,121 +417,50 @@ export default function EventMarketPositions({ market, collapsible = false }: Ev
                     top: 0,
                     left: 0,
                     width: '100%',
-                    transform: `translateY(${
-                      virtualItem.start
-                      - (virtualizer.options.scrollMargin ?? 0)
-                    }px)`,
+                    transform: `translateY(${virtualItem.start - (virtualizer.options.scrollMargin ?? 0)}px)`,
                   }}
                 >
-                  <MarketPositionRow position={position} />
+                  <MarketPositionRow position={position} onSell={handleSell} />
                 </div>
               )
             })}
           </div>
+        </div>
+      </div>
 
-          {isFetchingNextPage && (
-            <div className="flex items-center justify-center px-4 py-4 text-sm text-muted-foreground">
-              Loading more positions...
-            </div>
-          )}
-
-          {!hasNextPage && positions.length > 0 && !isFetchingNextPage && (
-            <div className="border-t bg-muted/30 px-4 py-3 text-center text-xs text-muted-foreground">
-              All positions for this market are loaded.
-            </div>
-          )}
-
-          {infiniteScrollError && (
-            <div className="border-t px-4 py-3">
-              <Alert variant="destructive">
-                <AlertCircleIcon />
-                <AlertTitle>Couldn&apos;t load more positions</AlertTitle>
-                <AlertDescription>
-                  <Button
-                    type="button"
-                    variant="link"
-                    size="sm"
-                    className="-ml-3"
-                    onClick={() => {
-                      setInfiniteScrollError(null)
-                      fetchNextPage().catch((error: any) => {
-                        if (error?.name === 'CanceledError' || error?.name === 'AbortError') {
-                          return
-                        }
-                        setInfiniteScrollError(error?.message || 'Failed to load more positions')
-                      })
-                    }}
-                  >
-                    Try again
-                  </Button>
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
+      {isFetchingNextPage && (
+        <div className="border-t border-border/60 px-4 py-3 text-center text-xs text-muted-foreground">
+          Loading more positions...
         </div>
       )}
-    </div>
-  )
 
-  if (!isCollapsible) {
-    return content
-  }
-
-  return (
-    <div className="rounded-lg border transition-all duration-200 ease-in-out">
-      <button
-        type="button"
-        onClick={() => {
-          setPositionsExpanded((current) => {
-            const next = !current
-            if (next) {
-              setHasInitialized(false)
-              setInfiniteScrollError(null)
-            }
-            return next
-          })
-        }}
-        className={`
-          flex w-full items-center justify-between p-4 text-left transition-colors
-          hover:bg-muted/50
-          focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
-          focus-visible:outline-none
-        `}
-        aria-expanded={positionsExpanded}
-      >
-        <span className="text-lg font-medium">Positions</span>
-        <span
-          aria-hidden="true"
-          className={`
-            pointer-events-none flex size-8 items-center justify-center rounded-md border border-border/60 bg-background
-            text-muted-foreground transition
-            ${positionsExpanded ? 'bg-muted/50' : ''}
-          `}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className={`transition-transform ${positionsExpanded ? 'rotate-180' : ''}`}
-          >
-            <path
-              d="M4 6L8 10L12 6"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
-      </button>
-
-      {positionsExpanded && (
-        <div className="border-t border-border/30 px-3 pt-3 pb-3">
-          {content}
+      {infiniteScrollError && (
+        <div className="border-t border-border/60 px-4 py-3">
+          <Alert variant="destructive">
+            <AlertCircleIcon />
+            <AlertTitle>Couldn&apos;t load more positions</AlertTitle>
+            <AlertDescription>
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="-ml-3"
+                onClick={() => {
+                  setInfiniteScrollError(null)
+                  fetchNextPage().catch((error: any) => {
+                    if (error?.name === 'CanceledError' || error?.name === 'AbortError') {
+                      return
+                    }
+                    setInfiniteScrollError(error?.message || 'Failed to load more positions')
+                  })
+                }}
+              >
+                Try again
+              </Button>
+            </AlertDescription>
+          </Alert>
         </div>
       )}
-    </div>
+    </section>
   )
 }

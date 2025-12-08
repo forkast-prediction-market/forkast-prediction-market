@@ -351,6 +351,11 @@ export interface UserPosition {
   outcome_text?: string
   average_position: number
   total_position_value: number
+  total_position_cost?: number
+  total_shares?: number
+  profit_loss_value?: number
+  profit_loss_percent?: number
+  opposite_outcome_text?: string
   order_count: number
   last_activity_at: string
 }

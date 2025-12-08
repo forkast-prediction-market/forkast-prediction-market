@@ -88,11 +88,11 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
   useEffect(() => {
     if (!makerAddress) {
-      setUserShares({})
+      setUserShares({}, { replace: true })
       return
     }
 
-    setUserShares(sharesByCondition)
+    setUserShares(sharesByCondition, { replace: true })
   }, [makerAddress, setUserShares, sharesByCondition])
 
   const conditionShares = state.market ? state.userShares[state.market.condition_id] : undefined

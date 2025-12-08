@@ -11,6 +11,7 @@ import MarketOutcomeGraph from '@/app/(platform)/event/[slug]/_components/Market
 import { useChanceRefresh } from '@/app/(platform)/event/[slug]/_hooks/useChanceRefresh'
 import { useEventMarketRows } from '@/app/(platform)/event/[slug]/_hooks/useEventMarketRows'
 import { useMarketDetailController } from '@/app/(platform)/event/[slug]/_hooks/useMarketDetailController'
+import { useUserShareBalances } from '@/app/(platform)/event/[slug]/_hooks/useUserShareBalances'
 import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { cn } from '@/lib/utils'
@@ -39,6 +40,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   const setOutcome = useOrder(state => state.setOutcome)
   const setSide = useOrder(state => state.setSide)
   const setIsMobileOrderPanelOpen = useOrder(state => state.setIsMobileOrderPanelOpen)
+  const setUserShares = useOrder(state => state.setUserShares)
   const inputRef = useOrder(state => state.inputRef)
   const user = useUser()
   const isSingleMarket = useIsSingleMarket()
@@ -82,6 +84,22 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
     isLoading: isOrderBookLoading,
   } = useOrderBookSummaries(eventTokenIds, { enabled: shouldEnableOrderBookPolling })
   const shouldShowOrderBookLoader = !shouldEnableOrderBookPolling || (isOrderBookLoading && !orderBookSummaries)
+  const ownerAddress = useMemo(() => {
+    if (!user?.address) {
+      return null
+    }
+    if (user.proxy_wallet_address && user.proxy_wallet_status === 'deployed') {
+      return user.proxy_wallet_address as `0x${string}`
+    }
+    return user.address as `0x${string}`
+  }, [user?.address, user?.proxy_wallet_address, user?.proxy_wallet_status])
+  const { sharesByCondition } = useUserShareBalances({ event, ownerAddress })
+
+  useEffect(() => {
+    if (ownerAddress && Object.keys(sharesByCondition).length > 0) {
+      setUserShares(sharesByCondition)
+    }
+  }, [ownerAddress, setUserShares, sharesByCondition])
 
   useEffect(() => {
     setChancePulseToken(0)
@@ -289,7 +307,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
 
                     {tabToRender === 'history' && (
                       <div className={MARKET_DETAIL_PANEL_CLASS}>
-                        <EventMarketHistory market={market} eventSlug={event.slug} collapsible={false} />
+                        <EventMarketHistory market={market} />
                       </div>
                     )}
 

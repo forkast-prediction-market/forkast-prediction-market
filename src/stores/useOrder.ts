@@ -48,7 +48,7 @@ interface OrderState {
   setIsLoading: (loading: boolean) => void
   setIsMobileOrderPanelOpen: (loading: boolean) => void
   setLastMouseEvent: (lastMouseEvent: any) => void
-  setUserShares: (shares: Record<string, ConditionShares>) => void
+  setUserShares: (shares: Record<string, ConditionShares>, options?: { replace?: boolean }) => void
 }
 
 export const useOrder = create<OrderState>()((set, _, store) => ({
@@ -93,7 +93,9 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   setIsLoading: (loading: boolean) => set({ isLoading: loading }),
   setIsMobileOrderPanelOpen: (open: boolean) => set({ isMobileOrderPanelOpen: open }),
   setLastMouseEvent: (lastMouseEvent: any) => set({ lastMouseEvent }),
-  setUserShares: (shares: Record<string, ConditionShares>) => set({ userShares: shares }),
+  setUserShares: (shares: Record<string, ConditionShares>, options?: { replace?: boolean }) => set(state => ({
+    userShares: options?.replace ? shares : { ...state.userShares, ...shares },
+  })),
 }))
 
 function clampNormalizedPrice(value: unknown) {

@@ -136,7 +136,7 @@ function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
   )
 }
 
-export default function EventMarketOpenOrders({ market, eventSlug, collapsible = false }: EventMarketOpenOrdersProps) {
+export default function EventMarketOpenOrders({ market, eventSlug }: EventMarketOpenOrdersProps) {
   const emptyHeightClass = 'min-h-16'
   const parentRef = useRef<HTMLDivElement | null>(null)
   const user = useUser()
@@ -144,23 +144,20 @@ export default function EventMarketOpenOrders({ market, eventSlug, collapsible =
   const [scrollMargin, setScrollMargin] = useState(0)
   const [hasInitialized, setHasInitialized] = useState(false)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
-  const isCollapsible = collapsible !== false
-  const [ordersExpanded, setOrdersExpanded] = useState(!isCollapsible)
   const [pendingCancelIds, setPendingCancelIds] = useState<Set<string>>(() => new Set())
 
   useEffect(() => {
     queueMicrotask(() => {
       setHasInitialized(false)
       setInfiniteScrollError(null)
-      setOrdersExpanded(!isCollapsible)
     })
-  }, [isCollapsible, market.condition_id, eventSlug])
+  }, [market.condition_id, eventSlug])
 
   useEffect(() => {
-    if (parentRef.current && (ordersExpanded || !isCollapsible)) {
+    if (parentRef.current) {
       setScrollMargin(parentRef.current.offsetTop)
     }
-  }, [isCollapsible, market.condition_id, eventSlug, ordersExpanded])
+  }, [market.condition_id, eventSlug])
 
   const {
     status,
@@ -184,16 +181,15 @@ export default function EventMarketOpenOrders({ market, eventSlug, collapsible =
       }
       return undefined
     },
-    enabled: Boolean(user?.id && eventSlug && market.condition_id && (ordersExpanded || !isCollapsible)),
+    enabled: Boolean(user?.id && eventSlug && market.condition_id),
     initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   })
 
   const orders = useMemo(() => data?.pages.flat() ?? [], [data?.pages])
-  const isExpanded = ordersExpanded || !isCollapsible
-  const loading = isExpanded && status === 'pending'
-  const hasInitialError = isExpanded && status === 'error'
+  const loading = status === 'pending'
+  const hasInitialError = status === 'error'
 
   const handleCancelOrder = useCallback(async (order: UserOpenOrder) => {
     if (pendingCancelIds.has(order.id)) {
@@ -253,7 +249,7 @@ export default function EventMarketOpenOrders({ market, eventSlug, collapsible =
         return
       }
 
-      if (!orders.length || (isCollapsible && !ordersExpanded)) {
+      if (!orders.length) {
         return
       }
 
@@ -327,12 +323,11 @@ export default function EventMarketOpenOrders({ market, eventSlug, collapsible =
       )}
 
       {!loading && orders.length > 0 && (
-        <div className="overflow-hidden rounded-lg border border-border">
+        <div className="space-y-3">
           <div
-            className="divide-y divide-border"
+            className="relative"
             style={{
               height: `${virtualizer.getTotalSize()}px`,
-              position: 'relative',
               width: '100%',
             }}
           >
@@ -411,65 +406,14 @@ export default function EventMarketOpenOrders({ market, eventSlug, collapsible =
     </div>
   )
 
-  if (!isCollapsible) {
-    return content
-  }
-
   return (
-    <div className="rounded-lg border transition-all duration-200 ease-in-out">
-      <button
-        type="button"
-        onClick={() => {
-          setOrdersExpanded((current) => {
-            const next = !current
-            if (next) {
-              setHasInitialized(false)
-              setInfiniteScrollError(null)
-            }
-            return next
-          })
-        }}
-        className={`
-          flex w-full items-center justify-between p-4 text-left transition-colors
-          hover:bg-muted/50
-          focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
-          focus-visible:outline-none
-        `}
-        aria-expanded={ordersExpanded}
-      >
-        <span className="text-lg font-medium">Open Orders</span>
-        <span
-          aria-hidden="true"
-          className={`
-            pointer-events-none flex size-8 items-center justify-center rounded-md border border-border/60 bg-background
-            text-muted-foreground transition
-            ${ordersExpanded ? 'bg-muted/50' : ''}
-          `}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className={`transition-transform ${ordersExpanded ? 'rotate-180' : ''}`}
-          >
-            <path
-              d="M4 6L8 10L12 6"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
-      </button>
-
-      {ordersExpanded && (
-        <div className="border-t border-border/30 px-3 pt-3 pb-3">
-          {content}
-        </div>
-      )}
-    </div>
+    <section className="overflow-hidden rounded-xl border border-border/60 bg-background/80">
+      <div className="px-4 py-4">
+        <h3 className="text-lg font-semibold text-foreground">Open Orders</h3>
+      </div>
+      <div className="px-4 pb-4">
+        {content}
+      </div>
+    </section>
   )
 }

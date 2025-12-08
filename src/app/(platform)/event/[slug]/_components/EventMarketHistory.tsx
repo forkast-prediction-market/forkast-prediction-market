@@ -4,36 +4,27 @@ import type { Event } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { AlertCircleIcon, Loader2Icon } from 'lucide-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { fetchUserActivityData, mapDataApiActivityToActivityOrder } from '@/lib/data-api/user'
-import { formatSharePriceLabel, formatTimeAgo, fromMicro } from '@/lib/formatters'
+import { formatCurrency, formatSharePriceLabel, formatTimeAgo, fromMicro, sharesFormatter } from '@/lib/formatters'
 import { getUserPrimaryAddress } from '@/lib/user-address'
+import { cn } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 
 interface EventMarketHistoryProps {
   market: Event['markets'][number]
-  collapsible?: boolean
-  eventSlug?: string
 }
 
-function formatTotalValue(totalValueMicro: number) {
-  const totalValue = totalValueMicro / 1e6
-  return formatSharePriceLabel(totalValue, { fallback: '0¢' })
-}
-
-export default function EventMarketHistory({ market, collapsible = true }: EventMarketHistoryProps) {
+export default function EventMarketHistory({ market }: EventMarketHistoryProps) {
   const parentRef = useRef<HTMLDivElement | null>(null)
-  const isCollapsible = collapsible !== false
-  const [historyExpanded, setHistoryExpanded] = useState(!isCollapsible)
   const [hasInitialized, setHasInitialized] = useState(false)
   const [scrollMargin, setScrollMargin] = useState(0)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const user = useUser()
   const userAddress = getUserPrimaryAddress(user)
-  const emptyHeightClass = 'min-h-16'
 
   useEffect(() => {
     queueMicrotask(() => setInfiniteScrollError(null))
@@ -41,12 +32,12 @@ export default function EventMarketHistory({ market, collapsible = true }: Event
 
   useEffect(() => {
     queueMicrotask(() => {
-      if (parentRef.current && (historyExpanded || !isCollapsible)) {
+      if (parentRef.current) {
         setScrollMargin(parentRef.current.offsetTop)
       }
       setHasInitialized(false)
     })
-  }, [historyExpanded, isCollapsible, market.condition_id])
+  }, [market.condition_id])
 
   const {
     status,
@@ -71,26 +62,29 @@ export default function EventMarketHistory({ market, collapsible = true }: Event
 
       return undefined
     },
-    enabled: Boolean(userAddress && market.condition_id && (historyExpanded || !isCollapsible)),
+    enabled: Boolean(userAddress && market.condition_id),
     initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   })
 
-  const activities = (data?.pages.flat() ?? []).filter(
-    activity => activity.market.condition_id === market.condition_id,
+  const activities = useMemo(
+    () => (data?.pages.flat() ?? [])
+      .filter(activity =>
+        activity.market.condition_id === market.condition_id
+        && activity.type === 'trade'),
+    [data?.pages, market.condition_id],
   )
-  const isExpanded = historyExpanded || !isCollapsible
-  const loading = isExpanded && status === 'pending'
-  const hasInitialError = isExpanded && status === 'error'
+  const isLoadingInitial = status === 'pending'
+  const hasInitialError = status === 'error'
 
   const virtualizer = useWindowVirtualizer({
     count: activities.length,
     estimateSize: () => {
       if (typeof window !== 'undefined') {
-        return window.innerWidth < 768 ? 120 : 70
+        return window.innerWidth < 768 ? 72 : 60
       }
-      return 70
+      return 60
     },
     scrollMargin,
     overscan: 5,
@@ -125,249 +119,153 @@ export default function EventMarketHistory({ market, collapsible = true }: Event
     })
   }
 
-  const content = (
-    <>
-      {!user?.address
-        ? (
-            <div className="pt-0 text-center text-sm text-muted-foreground">
-              Sign in to view your trading history for this market.
-            </div>
-          )
-        : hasInitialError
-          ? (
-              <div className="pt-0">
-                <Alert variant="destructive">
-                  <AlertCircleIcon />
-                  <AlertTitle>Failed to load activity</AlertTitle>
-                  <AlertDescription>
-                    <Button
-                      type="button"
-                      onClick={() => refetch()}
-                      size="sm"
-                      variant="link"
-                      className="-ml-3"
-                    >
-                      Try again
-                    </Button>
-                  </AlertDescription>
-                </Alert>
-              </div>
-            )
-          : (
-              <div ref={parentRef} className="grid gap-4 pt-0">
-                {loading && (
-                  <div className={`flex ${emptyHeightClass}
-                    items-center justify-center rounded-lg border border-dashed border-border px-4 text-sm
-                    text-muted-foreground
-                  `}
-                  >
-                    Loading history...
-                  </div>
-                )}
+  if (!user?.address || !userAddress) {
+    return null
+  }
 
-                {!loading && activities.length === 0 && (
-                  <div className={`flex ${emptyHeightClass}
-                    items-center justify-center rounded-lg border border-dashed border-border px-4 text-center text-sm
-                    text-muted-foreground
-                  `}
-                  >
-                    No trading activity yet for this market.
-                  </div>
-                )}
-
-                {!loading && activities.length > 0 && (
-                  <div>
-                    <div
-                      className="divide-y divide-border"
-                      style={{
-                        height: `${virtualizer.getTotalSize()}px`,
-                        position: 'relative',
-                        width: '100%',
-                      }}
-                    >
-                      {virtualizer.getVirtualItems().map((virtualItem) => {
-                        const activity = activities[virtualItem.index]
-                        if (!activity) {
-                          return null
-                        }
-
-                        return (
-                          <div
-                            key={virtualItem.key}
-                            data-index={virtualItem.index}
-                            style={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              width: '100%',
-                              transform: `translateY(${
-                                virtualItem.start
-                                - (virtualizer.options.scrollMargin ?? 0)
-                              }px)`,
-                            }}
-                          >
-                            <div className="flex items-start gap-2 rounded-lg px-1 py-3">
-                              <div className="flex-1">
-                                <div className="text-xs text-muted-foreground">
-                                  {formatTimeAgo(activity.created_at)}
-                                </div>
-                                {activity.type === 'split'
-                                  ? (
-                                      <div className="mt-1 text-sm text-muted-foreground">
-                                        split
-                                        {' '}
-                                        <span className="font-semibold text-foreground">
-                                          {fromMicro(activity.amount)}
-                                        </span>
-                                        {' '}
-                                        shares into:
-                                        {' '}
-                                        <span className="font-semibold text-yes">Yes 50¢</span>
-                                        {' '}
-                                        /
-                                        {' '}
-                                        <span className="font-semibold text-no">No 50¢</span>
-                                        {' '}
-                                        for
-                                        {' '}
-                                        <span className="font-semibold text-foreground">
-                                          {activity.market.title || market.title}
-                                        </span>
-                                      </div>
-                                    )
-                                  : (
-                                      <div className="mt-1 text-sm text-muted-foreground">
-                                        {activity.side === 'buy' ? 'bought' : 'sold'}
-                                        {' '}
-                                        <span className="font-semibold text-foreground">{fromMicro(activity.amount)}</span>
-                                        {' '}
-                                        <span className={`font-semibold ${
-                                          activity.outcome.index === OUTCOME_INDEX.YES
-                                            ? 'text-yes'
-                                            : 'text-no'
-                                        }`}
-                                        >
-                                          {activity.outcome.text}
-                                        </span>
-                                        {' '}
-                                        for
-                                        {' '}
-                                        <span className="font-semibold text-foreground">{activity.market.title || market.title}</span>
-                                        {' '}
-                                        at
-                                        {' '}
-                                        <span className="font-semibold text-foreground">
-                                          {formatSharePriceLabel(Number(activity.price))}
-                                        </span>
-                                        {' '}
-                                        (
-                                        {formatTotalValue(activity.total_value)}
-                                        )
-                                      </div>
-                                    )}
-                              </div>
-                            </div>
-                          </div>
-                        )
-                      })}
-                    </div>
-
-                    {isFetchingNextPage && (
-                      <div className="flex items-center justify-center gap-2 px-4 py-4 text-sm text-muted-foreground">
-                        <Loader2Icon className="size-4 animate-spin" />
-                        Loading more history...
-                      </div>
-                    )}
-
-                    {infiniteScrollError && (
-                      <div className="mt-4">
-                        <Alert variant="destructive">
-                          <AlertCircleIcon />
-                          <AlertTitle>Failed to load more activity</AlertTitle>
-                          <AlertDescription>
-                            <Button
-                              type="button"
-                              onClick={retryInfiniteScroll}
-                              size="sm"
-                              variant="link"
-                              className="-ml-3"
-                            >
-                              Try again
-                            </Button>
-                          </AlertDescription>
-                        </Alert>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-    </>
-  )
-
-  if (!isCollapsible) {
+  if (hasInitialError) {
     return (
-      <div className="grid gap-4">
-        {content}
-      </div>
+      <section className="rounded-xl border border-border/60 bg-background/80">
+        <div className="px-4 py-4">
+          <h3 className="text-lg font-semibold text-foreground">History</h3>
+        </div>
+        <div className="border-t border-border/60 px-4 py-4">
+          <Alert variant="destructive">
+            <AlertCircleIcon />
+            <AlertTitle>Failed to load activity</AlertTitle>
+            <AlertDescription>
+              <Button
+                type="button"
+                onClick={() => refetch()}
+                size="sm"
+                variant="link"
+                className="-ml-3"
+              >
+                Try again
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </div>
+      </section>
     )
   }
 
-  return (
-    <div className="rounded-lg border transition-all duration-200 ease-in-out">
-      <button
-        type="button"
-        onClick={() => {
-          setHistoryExpanded((current) => {
-            const next = !current
-            if (next) {
-              setHasInitialized(false)
-              setInfiniteScrollError(null)
-            }
-            return next
-          })
-        }}
-        className={`
-          flex w-full items-center justify-between p-4 text-left transition-colors
-          hover:bg-muted/50
-          focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
-          focus-visible:outline-none
-        `}
-        aria-expanded={historyExpanded}
-      >
-        <span className="text-lg font-medium">History</span>
-        <span
-          aria-hidden="true"
-          className={`
-            pointer-events-none flex size-8 items-center justify-center rounded-md border border-border/60 bg-background
-            text-muted-foreground transition
-            ${historyExpanded ? 'bg-muted/50' : ''}
-          `}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 16 16"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-            className={`transition-transform ${historyExpanded ? 'rotate-180' : ''}`}
-          >
-            <path
-              d="M4 6L8 10L12 6"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </span>
-      </button>
+  if (isLoadingInitial || activities.length === 0) {
+    return null
+  }
 
-      {historyExpanded && (
-        <div className="border-t border-border/30 px-3 pt-3 pb-3">
-          {content}
+  return (
+    <section className="overflow-hidden rounded-xl border border-border/60 bg-background/80">
+      <div className="px-4 py-4">
+        <h3 className="text-lg font-semibold text-foreground">History</h3>
+      </div>
+      <div ref={parentRef}>
+        <div
+          className="divide-y divide-border"
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            position: 'relative',
+            width: '100%',
+          }}
+        >
+          {virtualizer.getVirtualItems().map((virtualItem) => {
+            const activity = activities[virtualItem.index]
+            if (!activity) {
+              return null
+            }
+
+            const sharesValue = Number.parseFloat(fromMicro(activity.amount, 4))
+            const sharesLabel = Number.isFinite(sharesValue)
+              ? sharesFormatter.format(sharesValue)
+              : '—'
+            const outcomeColorClass = activity.outcome.index === OUTCOME_INDEX.YES ? 'text-yes' : 'text-no'
+            const actionLabel = activity.side === 'sell' ? 'Sold' : 'Bought'
+            const priceLabel = formatSharePriceLabel(Number(activity.price), { fallback: '—' })
+            const totalValue = Number(activity.total_value) / 1e6
+            const totalValueLabel = formatCurrency(totalValue, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+            const timeAgoLabel = formatTimeAgo(activity.created_at)
+            const fullDateLabel = new Date(activity.created_at).toLocaleString('en-US', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+            })
+
+            return (
+              <div
+                key={virtualItem.key}
+                data-index={virtualItem.index}
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  transform: `translateY(${
+                    virtualItem.start
+                    - (virtualizer.options.scrollMargin ?? 0)
+                  }px)`,
+                }}
+              >
+                <div className="flex items-center justify-between gap-3 px-3 py-2 text-sm text-foreground">
+                  <div className="flex flex-wrap items-center gap-1">
+                    <span className="font-semibold">
+                      {actionLabel}
+                    </span>
+                    <span className={cn('font-semibold', outcomeColorClass)}>
+                      {sharesLabel}
+                      {' '}
+                      {activity.outcome.text}
+                    </span>
+                    <span>at</span>
+                    <span className="font-semibold">
+                      {priceLabel}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      (
+                      {totalValueLabel}
+                      )
+                    </span>
+                  </div>
+                  <span className="text-xs text-muted-foreground" title={fullDateLabel}>
+                    {timeAgoLabel}
+                  </span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {isFetchingNextPage && (
+        <div className="border-t border-border/60 px-4 py-3 text-center text-xs text-muted-foreground">
+          <Loader2Icon className="mr-2 inline size-4 animate-spin align-middle" />
+          Loading more history...
         </div>
       )}
-    </div>
+
+      {infiniteScrollError && (
+        <div className="border-t border-border/60 px-4 py-3">
+          <Alert variant="destructive">
+            <AlertCircleIcon />
+            <AlertTitle>Failed to load more activity</AlertTitle>
+            <AlertDescription>
+              <Button
+                type="button"
+                onClick={retryInfiniteScroll}
+                size="sm"
+                variant="link"
+                className="-ml-3"
+              >
+                Try again
+              </Button>
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
+    </section>
   )
 }

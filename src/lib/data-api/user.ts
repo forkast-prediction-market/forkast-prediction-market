@@ -187,12 +187,37 @@ export function mapDataApiPositionToUserPosition(
     ? position.timestamp * 1000
     : Date.now()
 
+  const size = Number.isFinite(position.size) ? Number(position.size) : undefined
   const avgPrice = Number.isFinite(position.avgPrice) ? Number(position.avgPrice) : 0
   const currentValue = Number.isFinite(position.currentValue) ? Number(position.currentValue) : 0
   const realizedValue = Number.isFinite(position.realizedPnl)
     ? Number(position.realizedPnl)
     : currentValue
   const normalizedValue = status === 'closed' ? realizedValue : currentValue
+  const derivedCostFromCash = Number.isFinite(position.cashPnl)
+    ? normalizedValue - Number(position.cashPnl)
+    : undefined
+  const baseCost = Number.isFinite(position.totalBought)
+    ? Number(position.totalBought)
+    : Number.isFinite(position.initialValue)
+      ? Number(position.initialValue)
+      : derivedCostFromCash
+  const fallbackCost = size != null ? size * avgPrice : normalizedValue
+  const normalizedCost = Math.max(
+    0,
+    Number.isFinite(baseCost) && baseCost != null ? Number(baseCost) : fallbackCost,
+  )
+  const pnlValueRaw = Number.isFinite(position.cashPnl)
+    ? Number(position.cashPnl)
+    : normalizedValue - normalizedCost
+  const percentPnlRaw = Number.isFinite(position.percentPnl)
+    ? Number(position.percentPnl)
+    : normalizedCost > 0
+      ? (pnlValueRaw / normalizedCost) * 100
+      : 0
+  const normalizedPercent = Number.isFinite(percentPnlRaw)
+    ? (Math.abs(percentPnlRaw) <= 1 ? percentPnlRaw * 100 : percentPnlRaw)
+    : 0
 
   const orderCount = typeof position.orderCount === 'number'
     ? Math.max(0, Math.round(position.orderCount))
@@ -200,6 +225,7 @@ export function mapDataApiPositionToUserPosition(
   const outcomeIndex = typeof position.outcomeIndex === 'number' ? position.outcomeIndex : undefined
   const outcomeText = position.outcome
     || (outcomeIndex != null ? (outcomeIndex === 0 ? 'Yes' : 'No') : undefined)
+  const oppositeOutcomeText = position.oppositeOutcome
 
   return {
     market: {
@@ -217,6 +243,11 @@ export function mapDataApiPositionToUserPosition(
     outcome_text: outcomeText,
     average_position: Math.round(avgPrice * 1e6),
     total_position_value: Math.round(normalizedValue * 1e6),
+    total_position_cost: Math.round(normalizedCost * 1e6),
+    total_shares: size,
+    profit_loss_value: Math.round(pnlValueRaw * 1e6),
+    profit_loss_percent: normalizedPercent,
+    opposite_outcome_text: oppositeOutcomeText,
     order_count: orderCount,
     last_activity_at: new Date(timestampMs).toISOString(),
   }
