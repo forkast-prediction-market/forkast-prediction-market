@@ -13,6 +13,7 @@ export type OrderValidationError
     | 'LIMIT_SHARES_TOO_LOW'
     | 'INVALID_LIMIT_EXPIRATION'
     | 'INSUFFICIENT_BALANCE'
+    | 'INSUFFICIENT_SHARES'
 
 export const MIN_LIMIT_ORDER_SHARES = 5
 
@@ -30,6 +31,7 @@ interface ValidateOrderArgs {
   limitPrice: string
   limitShares: string
   availableBalance: number
+  availableShares?: number
   limitExpirationEnabled?: boolean
   limitExpirationOption?: LimitExpirationOption
   limitExpirationTimestamp?: number | null
@@ -51,10 +53,13 @@ export function validateOrder({
   limitPrice,
   limitShares,
   availableBalance,
+  availableShares = 0,
   limitExpirationEnabled = false,
   limitExpirationOption = 'end-of-day',
   limitExpirationTimestamp = null,
 }: ValidateOrderArgs): OrderValidationResult {
+  const normalizedAvailableShares = Number.isFinite(availableShares) ? Math.max(0, availableShares) : 0
+
   if (isLoading) {
     return { ok: false, reason: 'IS_LOADING' }
   }
@@ -108,6 +113,9 @@ export function validateOrder({
         return { ok: false, reason: 'INSUFFICIENT_BALANCE' }
       }
     }
+    else if (limitSharesValue > normalizedAvailableShares) {
+      return { ok: false, reason: 'INSUFFICIENT_SHARES' }
+    }
 
     return { ok: true }
   }
@@ -116,8 +124,12 @@ export function validateOrder({
     return { ok: false, reason: 'INVALID_AMOUNT' }
   }
 
-  if (amountNumber > availableBalance) {
+  if (side === ORDER_SIDE.BUY && amountNumber > availableBalance) {
     return { ok: false, reason: 'INSUFFICIENT_BALANCE' }
+  }
+
+  if (side === ORDER_SIDE.SELL && amountNumber > normalizedAvailableShares) {
+    return { ok: false, reason: 'INSUFFICIENT_SHARES' }
   }
 
   return { ok: true }

@@ -15,7 +15,7 @@ import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_componen
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
 import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
-import { useUserOutcomePositions } from '@/app/(platform)/event/[slug]/_hooks/useUserOutcomePositions'
+import { useUserShareBalances } from '@/app/(platform)/event/[slug]/_hooks/useUserShareBalances'
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { SAFE_BALANCE_QUERY_KEY, useBalance } from '@/hooks/useBalance'
@@ -70,13 +70,13 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       : null
   }, [state.limitExpirationOption, state.limitExpirationTimestamp])
   const affiliateMetadata = useAffiliateOrderMetadata()
-  const { sharesByCondition } = useUserOutcomePositions({ eventSlug: event.slug, userId: user?.id })
   const { ensureTradingReady } = useTradingOnboarding()
   const hasDeployedProxyWallet = Boolean(user?.proxy_wallet_address && user?.proxy_wallet_status === 'deployed')
   const proxyWalletAddress = hasDeployedProxyWallet ? normalizeAddress(user?.proxy_wallet_address) : null
   const userAddress = normalizeAddress(user?.address)
   const makerAddress = proxyWalletAddress ?? userAddress ?? null
   const signatureType = proxyWalletAddress ? 2 : 0
+  const { sharesByCondition } = useUserShareBalances({ event, ownerAddress: makerAddress })
   const isNegRiskEnabled = Boolean(event.enable_neg_risk)
   const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskEnabled), [isNegRiskEnabled])
   const endOfDayTimestamp = useMemo(() => {
@@ -87,13 +87,13 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const [showLimitMinimumWarning, setShowLimitMinimumWarning] = useState(false)
 
   useEffect(() => {
-    if (!user?.id) {
+    if (!makerAddress) {
       setUserShares({})
       return
     }
 
     setUserShares(sharesByCondition)
-  }, [sharesByCondition, setUserShares, user?.id])
+  }, [makerAddress, setUserShares, sharesByCondition])
 
   const conditionShares = state.market ? state.userShares[state.market.condition_id] : undefined
   const yesShares = conditionShares?.[OUTCOME_INDEX.YES] ?? 0
@@ -102,6 +102,12 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const availableSplitBalance = Math.max(0, balance.raw)
   const outcomeIndex = state.outcome?.outcome_index as typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO | undefined
   const selectedShares = outcomeIndex === undefined ? 0 : conditionShares?.[outcomeIndex] ?? 0
+  const selectedShareLabel = state.outcome?.outcome_text
+    ?? (outcomeIndex === OUTCOME_INDEX.NO
+      ? 'No'
+      : outcomeIndex === OUTCOME_INDEX.YES
+        ? 'Yes'
+        : undefined)
 
   const sellAmountValue = useMemo(() => {
     if (!state.market || !state.outcome) {
@@ -156,6 +162,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       limitPrice: state.limitPrice,
       limitShares: state.limitShares,
       availableBalance: balance.raw,
+      availableShares: selectedShares,
       limitExpirationEnabled: state.limitExpirationEnabled,
       limitExpirationOption: state.limitExpirationOption,
       limitExpirationTimestamp: validCustomExpirationTimestamp,
@@ -168,7 +175,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       else {
         setShowLimitMinimumWarning(false)
       }
-      handleValidationError(validation.reason, { openWalletModal: open })
+      handleValidationError(validation.reason, {
+        openWalletModal: open,
+        shareLabel: selectedShareLabel,
+      })
       return
     }
     setShowLimitMinimumWarning(false)

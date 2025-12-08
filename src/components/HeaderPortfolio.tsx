@@ -8,9 +8,13 @@ import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 export default function HeaderPortfolio() {
   const { startDepositFlow } = useTradingOnboarding()
   const { isLoadingBalance, balance } = useBalance()
-  const { isLoading, isFetching, text: portfolioValue } = usePortfolioValue()
+  const { isLoading, isFetching, value: positionsValue } = usePortfolioValue()
   const isInitialLoading = isLoading && !isFetching
   const isLoadingValue = isInitialLoading || isLoadingBalance
+  const totalPortfolioValue = positionsValue + balance.raw
+  const formattedPortfolioValue = Number.isFinite(totalPortfolioValue)
+    ? totalPortfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : '0.00'
 
   if (isLoadingValue) {
     return (
@@ -32,7 +36,7 @@ export default function HeaderPortfolio() {
           <div className="text-xs font-medium text-muted-foreground">Portfolio</div>
           <div className="text-sm font-semibold text-primary">
             $
-            {portfolioValue}
+            {formattedPortfolioValue}
           </div>
         </Button>
       </Link>

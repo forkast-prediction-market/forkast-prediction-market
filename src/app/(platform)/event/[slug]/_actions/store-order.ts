@@ -1,14 +1,17 @@
 'use server'
 
 import { updateTag } from 'next/cache'
+import { createPublicClient, erc1155Abi, http } from 'viem'
 import { z } from 'zod'
+import { defaultNetwork } from '@/lib/appkit'
 import { cacheTags } from '@/lib/cache-tags'
-import { CLOB_ORDER_TYPE, ORDER_TYPE } from '@/lib/constants'
+import { CLOB_ORDER_TYPE, CONDITIONAL_TOKENS_CONTRACT, ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
 import { toMicro } from '@/lib/formatters'
 import { buildClobHmacSignature } from '@/lib/hmac'
 import { getUserTradingAuthSecrets } from '@/lib/trading-auth/server'
+import { normalizeAddress } from '@/lib/wallet'
 
 const StoreOrderSchema = z.object({
   // begin blockchain data
@@ -39,6 +42,48 @@ const StoreOrderSchema = z.object({
 type StoreOrderInput = z.infer<typeof StoreOrderSchema>
 
 const DEFAULT_ERROR_MESSAGE = 'Something went wrong while processing your order. Please try again.'
+const RPC_TRANSPORT = http(defaultNetwork.rpcUrls.default.http[0])
+
+let conditionalTokensClient: ReturnType<typeof createPublicClient> | null = null
+
+function getConditionalTokensClient() {
+  if (!conditionalTokensClient) {
+    conditionalTokensClient = createPublicClient({
+      chain: defaultNetwork,
+      transport: RPC_TRANSPORT,
+    })
+  }
+  return conditionalTokensClient
+}
+
+async function ensureSufficientSellShares(maker: string, tokenId: string, makerAmount: string) {
+  const normalizedMaker = normalizeAddress(maker)
+  if (!normalizedMaker) {
+    return { ok: false, error: 'Invalid maker address.' }
+  }
+
+  try {
+    const balance = await getConditionalTokensClient().readContract({
+      address: CONDITIONAL_TOKENS_CONTRACT,
+      abi: erc1155Abi,
+      functionName: 'balanceOf',
+      args: [normalizedMaker, BigInt(tokenId)],
+    }) as bigint
+
+    if (balance < BigInt(makerAmount)) {
+      return {
+        ok: false,
+        error: 'Insufficient shares available. Reduce the sell amount or split more shares.',
+      }
+    }
+
+    return { ok: true }
+  }
+  catch (error) {
+    console.error('Failed to verify conditional token balance.', error)
+    return { ok: false, error: DEFAULT_ERROR_MESSAGE }
+  }
+}
 
 export async function storeOrderAction(payload: StoreOrderInput) {
   const user = await UserRepository.getCurrentUser()
@@ -66,6 +111,18 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       : CLOB_ORDER_TYPE.GTC)
 
   try {
+    if (validated.data.side === ORDER_SIDE.SELL) {
+      const shareCheck = await ensureSufficientSellShares(
+        validated.data.maker,
+        validated.data.token_id,
+        validated.data.maker_amount,
+      )
+
+      if (!shareCheck.ok) {
+        return { error: shareCheck.error }
+      }
+    }
+
     const clobPayload = {
       order: {
         salt: validated.data.salt,

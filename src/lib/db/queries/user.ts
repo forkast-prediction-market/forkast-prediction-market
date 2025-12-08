@@ -1,14 +1,12 @@
-import type { MarketOrderType, ProxyWalletStatus, QueryResult, User, UserMarketOutcomePosition } from '@/types'
+import type { MarketOrderType, ProxyWalletStatus, User } from '@/types'
 import { randomBytes } from 'node:crypto'
-import { and, asc, count, desc, eq, ilike, inArray, or } from 'drizzle-orm'
+import { asc, count, desc, eq, ilike, inArray, or } from 'drizzle-orm'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { getSafeProxyWalletAddress, isProxyWalletDeployed } from '@/lib/contracts/safeProxy'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
 import { users } from '@/lib/db/schema/auth/tables'
-import { events, markets } from '@/lib/db/schema/events/tables'
-import { v_user_outcome_positions } from '@/lib/db/schema/orders/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
@@ -361,48 +359,6 @@ export const UserRepository = {
 
   // getUserActivity removed (replaced by DATA API usage)
   // getUserPositions removed (replaced by DATA API usage)
-
-  async getUserOutcomePositionsByEvent(args: { userId: string, eventSlug: string }): Promise<QueryResult<UserMarketOutcomePosition[]>> {
-    return await runQuery(async () => {
-      const rows = await db
-        .select({
-          condition_id: v_user_outcome_positions.condition_id,
-          token_id: v_user_outcome_positions.token_id,
-          outcome_index: v_user_outcome_positions.outcome_index,
-          outcome_text: v_user_outcome_positions.outcome_text,
-          shares_micro: v_user_outcome_positions.net_shares_micro,
-          order_count: v_user_outcome_positions.order_count,
-          last_activity_at: v_user_outcome_positions.last_activity_at,
-        })
-        .from(v_user_outcome_positions)
-        .innerJoin(markets, eq(v_user_outcome_positions.condition_id, markets.condition_id))
-        .innerJoin(events, eq(markets.event_id, events.id))
-        .where(and(
-          eq(v_user_outcome_positions.user_id, args.userId),
-          eq(events.slug, args.eventSlug),
-        ))
-
-      const data: UserMarketOutcomePosition[] = rows.map(row => ({
-        condition_id: row.condition_id,
-        token_id: row.token_id,
-        outcome_index: typeof row.outcome_index === 'number'
-          ? row.outcome_index
-          : Number(row.outcome_index || 0),
-        outcome_text: row.outcome_text || '',
-        shares_micro: typeof row.shares_micro === 'string'
-          ? row.shares_micro
-          : (row.shares_micro ?? 0).toString(),
-        order_count: typeof row.order_count === 'bigint'
-          ? Number(row.order_count)
-          : Number(row.order_count || 0),
-        last_activity_at: row.last_activity_at instanceof Date
-          ? row.last_activity_at.toISOString()
-          : (row.last_activity_at ? new Date(row.last_activity_at).toISOString() : null),
-      })) as UserMarketOutcomePosition[]
-
-      return { data, error: null }
-    })
-  },
 }
 
 function generateUsername() {

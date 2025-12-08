@@ -19,9 +19,13 @@ export default function PortfolioSummaryCard() {
   const { status } = useAppKitAccount()
   const { open } = useAppKit()
   const { startDepositFlow } = useTradingOnboarding()
-  const { text: formattedValue, isLoading, isFetching } = usePortfolioValue()
+  const { value: positionsValue, isLoading, isFetching } = usePortfolioValue()
   const isLoadingState = !isMounted || status === 'connecting' || (isLoading && !isFetching)
   const { balance } = useBalance()
+  const portfolioTotalValue = positionsValue + balance.raw
+  const formattedValue = Number.isFinite(portfolioTotalValue)
+    ? portfolioTotalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : '0.00'
 
   if (isLoadingState) {
     return <Skeleton className="h-56 w-full" />
