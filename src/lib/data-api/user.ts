@@ -210,13 +210,14 @@ export function mapDataApiPositionToUserPosition(
   const pnlValueRaw = Number.isFinite(position.cashPnl)
     ? Number(position.cashPnl)
     : normalizedValue - normalizedCost
-  const percentPnlRaw = Number.isFinite(position.percentPnl)
+  const hasPercentPnl = Number.isFinite(position.percentPnl)
+  const percentPnlRaw = hasPercentPnl
     ? Number(position.percentPnl)
     : normalizedCost > 0
       ? (pnlValueRaw / normalizedCost) * 100
       : 0
   const normalizedPercent = Number.isFinite(percentPnlRaw)
-    ? (Math.abs(percentPnlRaw) <= 1 ? percentPnlRaw * 100 : percentPnlRaw)
+    ? (hasPercentPnl && Math.abs(percentPnlRaw) <= 1 ? percentPnlRaw * 100 : percentPnlRaw)
     : 0
 
   const orderCount = typeof position.orderCount === 'number'

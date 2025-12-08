@@ -65,12 +65,13 @@ function MarketPositionRow({
     : baseCostValue != null
       ? Number((totalValue - baseCostValue).toFixed(2))
       : 0
-  const percentSource = typeof position.profit_loss_percent === 'number'
-    ? position.profit_loss_percent
-    : baseCostValue && baseCostValue !== 0
+  const hasPercentSource = typeof position.profit_loss_percent === 'number'
+  const percentSource: number = hasPercentSource
+    ? Number(position.profit_loss_percent)
+    : baseCostValue != null && baseCostValue !== 0
       ? (profitLossValue / baseCostValue) * 100
       : 0
-  const normalizedPercent = Math.abs(percentSource) <= 1
+  const normalizedPercent = hasPercentSource && Math.abs(percentSource) <= 1
     ? percentSource * 100
     : percentSource
   const percentDigits = Math.abs(normalizedPercent) >= 10 ? 0 : 1
