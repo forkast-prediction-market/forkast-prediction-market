@@ -21,8 +21,6 @@ interface OrderSuccessFeedbackArgs {
   avgSellPrice: string
   buyPrice?: number
   queryClient: QueryClient
-  eventSlug: string
-  userId?: string
   outcomeIndex: number
   lastMouseEvent: any
 }
@@ -97,8 +95,6 @@ export function handleOrderSuccessFeedback({
   avgSellPrice,
   buyPrice,
   queryClient,
-  eventSlug,
-  userId,
   outcomeIndex,
   lastMouseEvent,
 }: OrderSuccessFeedbackArgs) {
@@ -143,11 +139,9 @@ export function handleOrderSuccessFeedback({
 
   triggerConfetti(outcomeIndex === OUTCOME_INDEX.YES ? 'yes' : 'no', lastMouseEvent)
 
-  if (userId) {
-    queryClient.invalidateQueries({
-      queryKey: ['user-event-positions', eventSlug, userId],
-    })
-  }
+  queryClient.invalidateQueries({
+    queryKey: ['user-conditional-shares'],
+  })
 }
 
 export function handleOrderErrorFeedback(message: string, description?: string) {
