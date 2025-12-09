@@ -25,7 +25,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
     >
       <DrawerTrigger asChild>
         {isSingleMarket && (
-          <div className="fixed right-0 bottom-0 left-0 border-t bg-background p-4 lg:hidden">
+          <div className="fixed right-0 bottom-0 left-0 z-30 border-t bg-background p-4 lg:hidden">
             <div className="flex gap-2">
               <Button
                 variant="yes"
