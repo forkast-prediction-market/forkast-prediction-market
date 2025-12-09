@@ -155,7 +155,7 @@
 }
 
 @utility text-2xs {
-  @apply text-[10px];
+  font-size: 10px;
 }
 
 @utility scrollbar-hide {
