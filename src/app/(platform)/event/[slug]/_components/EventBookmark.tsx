@@ -2,7 +2,7 @@
 
 import { useAppKitAccount } from '@reown/appkit/react'
 import { BookmarkIcon } from 'lucide-react'
-import { useCallback, useState, useTransition } from 'react'
+import { useCallback, useEffect, useState, useTransition } from 'react'
 import { toggleBookmarkAction } from '@/app/(platform)/event/[slug]/_actions/toggle-bookmark'
 import { Button } from '@/components/ui/button'
 import { useAppKit } from '@/hooks/useAppKit'
@@ -39,6 +39,10 @@ export default function EventBookmark({ event }: EventBookmarkProps) {
       }
     })
   }, [isBookmarked, event.id])
+
+  useEffect(() => {
+    setIsBookmarked(event.is_bookmarked)
+  }, [event.is_bookmarked])
 
   return (
     <Button

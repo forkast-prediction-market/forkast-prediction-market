@@ -11,6 +11,7 @@ import EventCardSkeleton from '@/components/EventCardSkeleton'
 import EventsGridSkeleton from '@/components/EventsGridSkeleton'
 import { useColumns } from '@/hooks/useColumns'
 import { cn } from '@/lib/utils'
+import { useUser } from '@/stores/useUser'
 
 interface EventsGridProps {
   filters: FilterState
@@ -53,6 +54,8 @@ export default function EventsGrid({
   initialEvents = EMPTY_EVENTS,
 }: EventsGridProps) {
   const parentRef = useRef<HTMLDivElement | null>(null)
+  const user = useUser()
+  const userCacheKey = user?.id ?? 'guest'
   const [hasInitialized, setHasInitialized] = useState(false)
   const [scrollMargin, setScrollMargin] = useState(0)
   const PAGE_SIZE = 40
@@ -67,8 +70,9 @@ export default function EventsGrid({
     fetchNextPage,
     hasNextPage,
     isPending,
+    refetch,
   } = useInfiniteQuery({
-    queryKey: ['events', filters.tag, filters.search, filters.bookmarked, filters.hideSports, filters.hideCrypto, filters.hideEarnings],
+    queryKey: ['events', filters.tag, filters.search, filters.bookmarked, filters.hideSports, filters.hideCrypto, filters.hideEarnings, userCacheKey],
     queryFn: ({ pageParam }) => fetchEvents({
       pageParam,
       filters,
@@ -81,6 +85,17 @@ export default function EventsGrid({
     staleTime: 0,
     placeholderData: previousData => previousData,
   })
+
+  const previousUserKeyRef = useRef(userCacheKey)
+
+  useEffect(() => {
+    if (previousUserKeyRef.current === userCacheKey) {
+      return
+    }
+
+    previousUserKeyRef.current = userCacheKey
+    void refetch()
+  }, [refetch, userCacheKey])
 
   const allEvents = useMemo(() => (data ? data.pages.flat() : []), [data])
 
