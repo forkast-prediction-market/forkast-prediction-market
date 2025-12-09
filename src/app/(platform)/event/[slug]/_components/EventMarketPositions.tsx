@@ -127,7 +127,7 @@ function MarketPositionRow({
           {displayedReturnValue}
         </span>
         {!isNeutralReturn && (
-          <span className={cn('text-[10px] font-semibold', returnColorClass)}>
+          <span className={cn('text-2xs font-semibold', returnColorClass)}>
             (
             {isPositive ? '+' : '-'}
             {percentLabel}
@@ -264,9 +264,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
   }, [market.condition_id, positions])
 
   useEffect(() => {
-    if (Object.keys(aggregatedShares).length > 0) {
-      setOrderUserShares(aggregatedShares)
-    }
+    setOrderUserShares(aggregatedShares, { replace: true })
   }, [aggregatedShares, setOrderUserShares])
 
   const virtualizer = useWindowVirtualizer({
@@ -383,7 +381,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
         <div className="min-w-[760px] px-2 pb-2">
           <div
             className={`
-              grid h-9 items-center gap-3 border-b border-border/60 bg-background px-3 text-[10px] font-semibold
+              grid h-9 items-center gap-3 border-b border-border/60 bg-background px-3 text-2xs font-semibold
               tracking-wide text-muted-foreground uppercase
             `}
             style={{ gridTemplateColumns: POSITIONS_GRID_TEMPLATE }}

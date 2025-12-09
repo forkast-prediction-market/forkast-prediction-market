@@ -1,6 +1,6 @@
 import type { Event } from '@/types'
 import { useAppKitAccount } from '@reown/appkit/react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Form from 'next/form'
 import { useEffect, useMemo, useState } from 'react'
 import { useSignTypedData } from 'wagmi'
@@ -20,6 +20,7 @@ import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { SAFE_BALANCE_QUERY_KEY, useBalance } from '@/hooks/useBalance'
 import { CLOB_ORDER_TYPE, getExchangeEip712Domain, ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
+import { fetchUserPositionsForMarket } from '@/lib/data-api/user'
 import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
 import { signOrderPayload } from '@/lib/orders/signing'
@@ -85,6 +86,52 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     return Math.floor(now.getTime() / 1000)
   }, [])
   const [showLimitMinimumWarning, setShowLimitMinimumWarning] = useState(false)
+  const positionsQuery = useQuery({
+    queryKey: ['order-panel-user-positions', makerAddress, state.market?.condition_id],
+    enabled: Boolean(makerAddress && state.market?.condition_id),
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 5,
+    queryFn: ({ signal }) =>
+      fetchUserPositionsForMarket({
+        pageParam: 0,
+        userAddress: makerAddress!,
+        conditionId: state.market?.condition_id,
+        status: 'active',
+        signal,
+      }),
+  })
+  const aggregatedPositionShares = useMemo(() => {
+    if (!positionsQuery.data?.length) {
+      return null
+    }
+
+    return positionsQuery.data.reduce<Record<string, Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>>>((acc, position) => {
+      const conditionId = position.market?.condition_id
+      const quantity = typeof position.total_shares === 'number' ? position.total_shares : 0
+      if (!conditionId || quantity <= 0) {
+        return acc
+      }
+
+      const normalizedOutcome = position.outcome_text?.toLowerCase()
+      const explicitOutcomeIndex = typeof position.outcome_index === 'number' ? position.outcome_index : undefined
+      const resolvedOutcomeIndex = explicitOutcomeIndex != null
+        ? explicitOutcomeIndex
+        : normalizedOutcome === 'no'
+          ? OUTCOME_INDEX.NO
+          : OUTCOME_INDEX.YES
+
+      if (!acc[conditionId]) {
+        acc[conditionId] = {
+          [OUTCOME_INDEX.YES]: 0,
+          [OUTCOME_INDEX.NO]: 0,
+        }
+      }
+
+      const bucket = resolvedOutcomeIndex === OUTCOME_INDEX.NO ? OUTCOME_INDEX.NO : OUTCOME_INDEX.YES
+      acc[conditionId][bucket] += quantity
+      return acc
+    }, {})
+  }, [positionsQuery.data])
 
   useEffect(() => {
     if (!makerAddress) {
@@ -92,8 +139,58 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       return
     }
 
-    setUserShares(sharesByCondition, { replace: true })
+    if (!Object.keys(sharesByCondition).length) {
+      return
+    }
+
+    const currentShares = useOrder.getState().userShares
+    const mergedShares: typeof currentShares = {}
+
+    Object.entries(currentShares).forEach(([conditionId, outcomes]) => {
+      mergedShares[conditionId] = { ...outcomes }
+    })
+
+    Object.entries(sharesByCondition).forEach(([conditionId, outcomes]) => {
+      const existing = mergedShares[conditionId] ?? {
+        [OUTCOME_INDEX.YES]: 0,
+        [OUTCOME_INDEX.NO]: 0,
+      }
+
+      mergedShares[conditionId] = {
+        [OUTCOME_INDEX.YES]: Math.max(existing[OUTCOME_INDEX.YES] ?? 0, outcomes[OUTCOME_INDEX.YES] ?? 0),
+        [OUTCOME_INDEX.NO]: Math.max(existing[OUTCOME_INDEX.NO] ?? 0, outcomes[OUTCOME_INDEX.NO] ?? 0),
+      }
+    })
+
+    setUserShares(mergedShares, { replace: true })
   }, [makerAddress, setUserShares, sharesByCondition])
+
+  useEffect(() => {
+    if (!aggregatedPositionShares) {
+      return
+    }
+
+    const currentShares = useOrder.getState().userShares
+    const mergedShares: typeof currentShares = {}
+
+    Object.entries(currentShares).forEach(([conditionId, outcomes]) => {
+      mergedShares[conditionId] = { ...outcomes }
+    })
+
+    Object.entries(aggregatedPositionShares).forEach(([conditionId, outcomes]) => {
+      const existing = mergedShares[conditionId] ?? {
+        [OUTCOME_INDEX.YES]: 0,
+        [OUTCOME_INDEX.NO]: 0,
+      }
+
+      mergedShares[conditionId] = {
+        [OUTCOME_INDEX.YES]: Math.max(existing[OUTCOME_INDEX.YES] ?? 0, outcomes[OUTCOME_INDEX.YES] ?? 0),
+        [OUTCOME_INDEX.NO]: Math.max(existing[OUTCOME_INDEX.NO] ?? 0, outcomes[OUTCOME_INDEX.NO] ?? 0),
+      }
+    })
+
+    setUserShares(mergedShares, { replace: true })
+  }, [aggregatedPositionShares, setUserShares])
 
   const conditionShares = state.market ? state.userShares[state.market.condition_id] : undefined
   const yesShares = conditionShares?.[OUTCOME_INDEX.YES] ?? 0
