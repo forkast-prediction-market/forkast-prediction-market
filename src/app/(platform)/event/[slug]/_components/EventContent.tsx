@@ -112,7 +112,7 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
       }
 
       const rect = contentRef.current.getBoundingClientRect()
-      setBackToTopBounds({ left: rect.left + window.scrollX, width: rect.width })
+      setBackToTopBounds({ left: rect.left, width: rect.width })
     }
 
     handleResize()
