@@ -91,35 +91,32 @@ function MarketPositionRow({
 
   return (
     <div
-      className="grid items-center gap-3 px-3 py-1 text-[11px] leading-tight text-foreground sm:text-[12px]"
+      className="grid items-center gap-3 px-3 py-1 text-2xs leading-tight text-foreground sm:text-xs"
       style={{ gridTemplateColumns: POSITIONS_GRID_TEMPLATE }}
     >
       <div className="flex items-center">
         <span
           className={cn(
-            `
-              inline-flex min-h-[28px] items-center justify-center rounded-sm px-3 text-[12px] font-semibold
-              tracking-wide
-            `,
+            `inline-flex min-h-7 items-center justify-center rounded-sm px-3 text-xs font-semibold tracking-wide`,
             isYesOutcome ? 'bg-yes/15 text-yes-foreground' : 'bg-no/15 text-no-foreground',
           )}
         >
           {outcomeButtonLabel}
         </span>
       </div>
-      <div className="text-center text-[11px] leading-tight font-semibold sm:text-sm">
+      <div className="text-center text-2xs leading-tight font-semibold sm:text-sm">
         {formattedQuantity}
       </div>
-      <div className="text-center text-[11px] leading-tight font-semibold sm:text-sm">
+      <div className="text-center text-2xs leading-tight font-semibold sm:text-sm">
         {averageLabel}
       </div>
       <div className="flex flex-col leading-tight">
-        <span className="text-[11px] font-semibold sm:text-sm">{valueLabel}</span>
-        <span className="text-[9px] font-medium tracking-wide text-muted-foreground uppercase">
+        <span className="text-2xs font-semibold sm:text-sm">{valueLabel}</span>
+        <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
           {costLabel ? `Cost ${costLabel}` : 'Cost —'}
         </span>
       </div>
-      <div className="flex items-center gap-1 text-[11px] leading-tight font-semibold sm:text-sm">
+      <div className="flex items-center gap-1 text-2xs leading-tight font-semibold sm:text-sm">
         <span
           className="inline-flex items-center"
           style={{ borderBottom: '1px dotted currentColor', paddingBottom: '0.04rem' }}
@@ -140,7 +137,7 @@ function MarketPositionRow({
           type="button"
           variant="ghost"
           className={cn(
-            'h-8 rounded-md border border-border/70 bg-transparent px-3 text-[12px] font-semibold',
+            'h-8 rounded-md border border-border/70 bg-transparent px-3 text-xs font-semibold',
             'hover:bg-muted/30 dark:border-white/30 dark:text-white dark:hover:bg-white/10',
           )}
           onClick={() => onSell(position)}

@@ -1138,7 +1138,7 @@ export function PredictionChart({
         {tooltipActive && positionedTooltipEntries.length > 0 && tooltipData && (
           <div className="pointer-events-none absolute inset-0 z-0">
             <div
-              className="absolute text-[12px] font-medium text-[var(--muted-foreground)]"
+              className="absolute text-xs font-medium text-muted-foreground"
               style={{
                 top: Math.max(margin.top - 28, 0),
                 left: margin.left + clampedTooltipX,

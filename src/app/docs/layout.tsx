@@ -23,7 +23,7 @@ export default async function Layout({ children }: LayoutProps<'/docs'>) {
                   __html: sanitizeSvg(process.env.NEXT_PUBLIC_SITE_LOGO_SVG!),
                 }}
               />
-              <span className="font-medium [.uwu_&]:hidden [header_&]:text-[15px]">
+              <span className="font-medium">
                 {`${process.env.NEXT_PUBLIC_SITE_NAME} Docs`}
               </span>
             </>
