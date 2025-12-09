@@ -356,9 +356,6 @@ export const UserRepository = {
       return { data: result, error: null }
     })
   },
-
-  // getUserActivity removed (replaced by DATA API usage)
-  // getUserPositions removed (replaced by DATA API usage)
 }
 
 function generateUsername() {

@@ -1,10 +1,8 @@
-import type { ActivityOrder, ClobOrderType, Event, QueryResult, UserOpenOrder } from '@/types'
+import type { ClobOrderType, Event, QueryResult, UserOpenOrder } from '@/types'
 import { and, desc, eq, exists, ilike, inArray, sql } from 'drizzle-orm'
 import { cacheTag } from 'next/cache'
-import { filterActivitiesByMinAmount } from '@/lib/activity/filter'
 import { cacheTags } from '@/lib/cache-tags'
 import { OUTCOME_INDEX } from '@/lib/constants'
-import { users } from '@/lib/db/schema/auth/tables'
 import { bookmarks } from '@/lib/db/schema/bookmarks/tables'
 import { comments } from '@/lib/db/schema/comments/tables'
 import { conditions, event_tags, events, markets, outcomes, tags } from '@/lib/db/schema/events/tables'
@@ -83,13 +81,6 @@ interface ListEventsProps {
   userId?: string | undefined
   bookmarked?: boolean
   offset?: number
-}
-
-interface ActivityArgs {
-  slug: string
-  limit: number
-  offset: number
-  minAmount?: number
 }
 
 interface RelatedEventOptions {
@@ -247,45 +238,6 @@ function safeNumber(value: unknown): number {
     return Number.isFinite(parsed) ? parsed : 0
   }
   return 0
-}
-
-function transformActivityOrder(order: any): ActivityOrder {
-  const userImage = order.user_image
-    ? getSupabaseImageUrl(order.user_image)
-    : `https://avatar.vercel.sh/${order.user_address || 'unknown'}.png`
-
-  const side = order.side === 0 ? 'buy' : 'sell'
-  const makerAmount = safeNumber(order.maker_amount)
-  const takerAmount = safeNumber(order.taker_amount)
-  const amount = side === 'buy' ? takerAmount : makerAmount
-  const price = Number(order.price || 0.5)
-  const parsedTotalValue = order.total_value != null ? Number(order.total_value) : Number.NaN
-  const totalValue = Number.isFinite(parsedTotalValue) ? parsedTotalValue : amount * price
-
-  return {
-    id: order.id || '',
-    user: {
-      id: order.user_id || '',
-      username: order.user_username as string,
-      address: order.user_address || '',
-      image: userImage,
-    },
-    side,
-    amount: amount.toString(),
-    price: price.toString(),
-    outcome: {
-      index: order.outcome_index || 0,
-      text: order.outcome_text || '',
-    },
-    market: {
-      title: order.market_title || '',
-      slug: order.market_slug || '',
-      icon_url: order.market_icon_url || '',
-    },
-    total_value: totalValue,
-    created_at: order.created_at?.toISOString() || new Date().toISOString(),
-    status: order.status || '',
-  }
 }
 
 export const EventRepository = {
@@ -740,80 +692,6 @@ export const EventRepository = {
       }))
 
       return { data, error: null }
-    })
-  },
-
-  async getEventActivity(args: ActivityArgs): Promise<QueryResult<ActivityOrder[]>> {
-    'use cache'
-    cacheTag(cacheTags.activity(args.slug))
-
-    return runQuery(async () => {
-      const priceExpression = sql<number>`CASE
-        WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0
-        THEN ${orders.taker_amount}::numeric / (${orders.maker_amount} + ${orders.taker_amount})::numeric
-        ELSE 0.5
-      END`
-
-      const totalValueExpression = sql<number>`CASE
-        WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0
-        THEN (${orders.taker_amount}::numeric * ${orders.taker_amount}::numeric) / (${orders.maker_amount} + ${orders.taker_amount})::numeric
-        ELSE 0.5 * ${orders.taker_amount}::numeric
-      END`
-
-      const whereConditions = [
-        eq(events.slug, args.slug),
-        eq(orders.status, 'matched'),
-      ]
-
-      if (args.minAmount && args.minAmount > 0) {
-        whereConditions.push(sql`${totalValueExpression} >= ${args.minAmount}`)
-      }
-
-      const results = await db
-        .select({
-          id: orders.id,
-          side: orders.side,
-          maker_amount: orders.maker_amount,
-          taker_amount: orders.taker_amount,
-          price: priceExpression,
-          created_at: orders.created_at,
-          status: orders.status,
-          user_id: users.id,
-          user_username: users.username,
-          user_address: users.address,
-          user_image: users.image,
-          outcome_text: outcomes.outcome_text,
-          outcome_index: outcomes.outcome_index,
-          outcome_token_id: outcomes.token_id,
-          condition_id: conditions.id,
-          market_title: markets.short_title,
-          market_slug: markets.slug,
-          market_icon_url: markets.icon_url,
-          event_slug: events.slug,
-          total_value: totalValueExpression,
-        })
-        .from(orders)
-        .innerJoin(users, eq(orders.user_id, users.id))
-        .innerJoin(outcomes, eq(orders.token_id, outcomes.token_id))
-        .innerJoin(conditions, eq(orders.condition_id, conditions.id))
-        .innerJoin(markets, eq(conditions.id, markets.condition_id))
-        .innerJoin(events, eq(markets.event_id, events.id))
-        .where(and(...whereConditions))
-        .orderBy(desc(orders.id))
-        .limit(args.limit)
-        .offset(args.offset)
-
-      if (!results?.length) {
-        return { data: [], error: null }
-      }
-
-      const activities: ActivityOrder[] = results
-        .filter(order => order.user_id && order.outcome_text && order.event_slug)
-        .map(order => transformActivityOrder(order))
-
-      const filteredActivities = filterActivitiesByMinAmount(activities, args.minAmount)
-
-      return { data: filteredActivities, error: null }
     })
   },
 }
