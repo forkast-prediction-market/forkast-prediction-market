@@ -158,8 +158,8 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
               type="button"
               onClick={handleBackToTop}
               className={`
-                pointer-events-auto justify-self-center rounded-full bg-background/90 px-4 py-2 text-sm font-semibold
-                text-foreground shadow-lg backdrop-blur transition-colors
+                pointer-events-auto justify-self-center rounded-full border bg-background/90 px-4 py-2 text-sm
+                font-semibold text-foreground shadow-lg backdrop-blur transition-colors
                 hover:text-muted-foreground
               `}
               aria-label="Back to top"
