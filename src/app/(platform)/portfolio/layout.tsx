@@ -2,6 +2,7 @@
 
 import PublicProfileHeroCards from '@/app/(platform)/[username]/_components/PublicProfileHeroCards'
 import PortfolioMarketsWonCard from '@/app/(platform)/portfolio/_components/PortfolioMarketsWonCard'
+import PortfolioWalletActions from '@/app/(platform)/portfolio/_components/PortfolioWalletActions'
 import { UserRepository } from '@/lib/db/queries/user'
 import { fetchPortfolioSnapshot } from '@/lib/portfolio'
 
@@ -21,6 +22,7 @@ export default async function PortfolioLayout({ children }: LayoutProps<'/portfo
             address: proxyAddress ?? undefined,
           }}
           snapshot={snapshot}
+          actions={<PortfolioWalletActions />}
         />
 
         <PortfolioMarketsWonCard />

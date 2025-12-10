@@ -1,5 +1,6 @@
 'use client'
 
+import type { ReactNode } from 'react'
 import type { PortfolioSnapshot } from '@/lib/portfolio'
 import { CheckIcon, CircleHelpIcon, EyeIcon, FocusIcon, MinusIcon, TriangleIcon } from 'lucide-react'
 import Image from 'next/image'
@@ -24,13 +25,22 @@ interface PublicProfileHeroCardsProps {
   snapshot: PortfolioSnapshot
   platformName?: string
   platformLogoSvg?: string
+  actions?: ReactNode
 }
 
 function formatCurrency(value: number) {
   return usdFormatter.format(Number.isFinite(value) ? value : 0)
 }
 
-function ProfileOverviewCard({ profile, snapshot }: { profile: ProfileForCards, snapshot: PortfolioSnapshot }) {
+function ProfileOverviewCard({
+  profile,
+  snapshot,
+  actions,
+}: {
+  profile: ProfileForCards
+  snapshot: PortfolioSnapshot
+  actions?: ReactNode
+}) {
   const { copied, copy } = useClipboard()
   const { value: livePositionsValue, isLoading, isFetching } = usePortfolioValue(profile.address)
   const hasLiveValue = Boolean(profile.address) && !isLoading && !isFetching
@@ -121,23 +131,27 @@ function ProfileOverviewCard({ profile, snapshot }: { profile: ProfileForCards, 
           )}
         </div>
 
-        <div className="mt-auto grid grid-cols-3 gap-3 pt-1">
-          {stats.map((stat, index) => (
-            <div
-              key={stat.label}
-              className={cn(
-                'space-y-1 rounded-lg bg-background/40 p-2.5 shadow-sm',
-                index > 0 && 'border-l border-border/50',
-              )}
-            >
-              <p className="text-sm font-medium text-muted-foreground">
-                {stat.label}
-              </p>
-              <p className="text-xl font-semibold tracking-tight text-foreground">
-                {stat.value}
-              </p>
+        <div className="mt-auto pt-1">
+          {actions ?? (
+            <div className="grid grid-cols-3 gap-3">
+              {stats.map((stat, index) => (
+                <div
+                  key={stat.label}
+                  className={cn(
+                    'space-y-1 rounded-lg bg-background/40 p-2.5 shadow-sm',
+                    index > 0 && 'border-l border-border/50',
+                  )}
+                >
+                  <p className="text-sm font-medium text-muted-foreground">
+                    {stat.label}
+                  </p>
+                  <p className="text-xl font-semibold tracking-tight text-foreground">
+                    {stat.value}
+                  </p>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       </CardContent>
     </Card>
@@ -287,10 +301,16 @@ function ProfitLossCard({
   )
 }
 
-export default function PublicProfileHeroCards({ profile, snapshot, platformLogoSvg, platformName }: PublicProfileHeroCardsProps) {
+export default function PublicProfileHeroCards({
+  profile,
+  snapshot,
+  platformLogoSvg,
+  platformName,
+  actions,
+}: PublicProfileHeroCardsProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <ProfileOverviewCard profile={profile} snapshot={snapshot} />
+      <ProfileOverviewCard profile={profile} snapshot={snapshot} actions={actions} />
       <ProfitLossCard snapshot={snapshot} platformLogoSvg={platformLogoSvg} platformName={platformName} />
     </div>
   )

@@ -1,15 +1,12 @@
 'use client'
 
 import { useAppKitAccount } from '@reown/appkit/react'
-import { ArrowDownToLine, ArrowUpFromLine } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import PortfolioWalletActions from '@/app/(platform)/portfolio/_components/PortfolioWalletActions'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
 import { useClientMounted } from '@/hooks/useClientMounted'
 import { usePortfolioValue } from '@/hooks/usePortfolioValue'
-import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 
 export default function PortfolioSummaryCard() {
   const dailyChange = 0.00
@@ -17,8 +14,6 @@ export default function PortfolioSummaryCard() {
   const isPositive = dailyChange >= 0
   const isMounted = useClientMounted()
   const { status } = useAppKitAccount()
-  const { open } = useAppKit()
-  const { startDepositFlow } = useTradingOnboarding()
   const { value: positionsValue, isLoading, isFetching } = usePortfolioValue()
   const isLoadingState = !isMounted || status === 'connecting' || (isLoading && !isFetching)
   const { balance } = useBalance()
@@ -92,16 +87,7 @@ export default function PortfolioSummaryCard() {
         </div>
 
         {/* Action buttons */}
-        <div className="mt-auto flex gap-3">
-          <Button className="h-11 flex-1" onClick={startDepositFlow}>
-            <ArrowDownToLine className="size-4" />
-            Deposit
-          </Button>
-          <Button variant="outline" className="h-11 flex-1" onClick={() => open({ view: 'WalletSend' })}>
-            <ArrowUpFromLine className="size-4" />
-            Withdraw
-          </Button>
-        </div>
+        <PortfolioWalletActions className="mt-auto" />
       </CardContent>
     </Card>
   )

@@ -6,15 +6,18 @@ import { useCallback, useMemo, useState } from 'react'
 import { hashTypedData, isAddress } from 'viem'
 import { useSignMessage } from 'wagmi'
 import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
-import { WalletModal } from '@/components/WalletModal'
+import { WalletDepositModal, WalletWithdrawModal } from '@/components/WalletModal'
+import { useBalance } from '@/hooks/useBalance'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { defaultNetwork } from '@/lib/appkit'
 import { COLLATERAL_TOKEN_ADDRESS, DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { buildSendErc20Transaction, getSafeTxTypedData, packSafeSignature } from '@/lib/safe/transactions'
 
 interface WalletFlowProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  depositOpen: boolean
+  onDepositOpenChange: (open: boolean) => void
+  withdrawOpen: boolean
+  onWithdrawOpenChange: (open: boolean) => void
   user: {
     id: string
     address: string
@@ -24,27 +27,44 @@ interface WalletFlowProps {
   meldUrl: string | null
 }
 
-export function WalletFlow({ open, onOpenChange, user, meldUrl }: WalletFlowProps) {
+export function WalletFlow({
+  depositOpen,
+  onDepositOpenChange,
+  withdrawOpen,
+  onWithdrawOpenChange,
+  user,
+  meldUrl,
+}: WalletFlowProps) {
   const isMobile = useIsMobile()
   const { signMessageAsync } = useSignMessage()
-  const [walletModalView, setWalletModalView] = useState<'menu' | 'fund' | 'send' | 'receive'>('menu')
+  const [depositView, setDepositView] = useState<'fund' | 'receive'>('fund')
   const [walletSendTo, setWalletSendTo] = useState('')
   const [walletSendAmount, setWalletSendAmount] = useState('')
   const [walletSendError, setWalletSendError] = useState<string | null>(null)
   const [isWalletSending, setIsWalletSending] = useState(false)
+  const { balance } = useBalance()
+  const connectedWalletAddress = user?.address ?? null
 
   const hasDeployedProxyWallet = useMemo(() => (
     Boolean(user?.proxy_wallet_address && user?.proxy_wallet_status === 'deployed')
   ), [user?.proxy_wallet_address, user?.proxy_wallet_status])
 
-  const handleWalletModalChange = useCallback((next: boolean) => {
-    onOpenChange(next)
+  const handleDepositModalChange = useCallback((next: boolean) => {
+    onDepositOpenChange(next)
     if (!next) {
-      setWalletModalView('menu')
+      setDepositView('fund')
+    }
+  }, [onDepositOpenChange])
+
+  const handleWithdrawModalChange = useCallback((next: boolean) => {
+    onWithdrawOpenChange(next)
+    if (!next) {
       setWalletSendError(null)
       setIsWalletSending(false)
+      setWalletSendTo('')
+      setWalletSendAmount('')
     }
-  }, [onOpenChange])
+  }, [onWithdrawOpenChange])
 
   const handleWalletSend = useCallback(async (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault()
@@ -116,7 +136,7 @@ export function WalletFlow({ open, onOpenChange, user, meldUrl }: WalletFlowProp
       setWalletSendTo('')
       setWalletSendAmount('')
       setWalletSendError(null)
-      setWalletModalView('menu')
+      handleWithdrawModalChange(false)
     }
     catch (error) {
       const message = error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE
@@ -125,7 +145,7 @@ export function WalletFlow({ open, onOpenChange, user, meldUrl }: WalletFlowProp
     finally {
       setIsWalletSending(false)
     }
-  }, [signMessageAsync, user?.address, user?.proxy_wallet_address, walletSendAmount, walletSendTo])
+  }, [handleWithdrawModalChange, signMessageAsync, user?.address, user?.proxy_wallet_address, walletSendAmount, walletSendTo])
 
   const handleBuy = useCallback((url?: string | null) => {
     const targetUrl = url ?? meldUrl
@@ -143,29 +163,53 @@ export function WalletFlow({ open, onOpenChange, user, meldUrl }: WalletFlowProp
 
     if (popup) {
       popup.focus()
-      handleWalletModalChange(false)
+      handleDepositModalChange(false)
     }
-  }, [handleWalletModalChange, meldUrl])
+  }, [handleDepositModalChange, meldUrl])
+
+  const handleUseConnectedWallet = useCallback(() => {
+    if (!connectedWalletAddress) {
+      return
+    }
+    setWalletSendTo(connectedWalletAddress)
+  }, [connectedWalletAddress])
+
+  const handleSetMaxAmount = useCallback(() => {
+    setWalletSendAmount(balance.text)
+  }, [balance.text])
 
   return (
-    <WalletModal
-      open={open}
-      onOpenChange={handleWalletModalChange}
-      isMobile={isMobile}
-      walletAddress={user?.proxy_wallet_address ?? null}
-      siteName={process.env.NEXT_PUBLIC_SITE_NAME}
-      meldUrl={meldUrl}
-      hasDeployedProxyWallet={hasDeployedProxyWallet}
-      view={walletModalView}
-      onViewChange={setWalletModalView}
-      onBuy={handleBuy}
-      sendTo={walletSendTo}
-      onChangeSendTo={event => setWalletSendTo(event.target.value)}
-      sendAmount={walletSendAmount}
-      onChangeSendAmount={event => setWalletSendAmount(event.target.value)}
-      sendError={walletSendError}
-      isSending={isWalletSending}
-      onSubmitSend={handleWalletSend}
-    />
+    <>
+      <WalletDepositModal
+        open={depositOpen}
+        onOpenChange={handleDepositModalChange}
+        isMobile={isMobile}
+        walletAddress={user?.proxy_wallet_address ?? null}
+        siteName={process.env.NEXT_PUBLIC_SITE_NAME}
+        meldUrl={meldUrl}
+        hasDeployedProxyWallet={hasDeployedProxyWallet}
+        view={depositView}
+        onViewChange={setDepositView}
+        onBuy={handleBuy}
+        walletBalance={balance.text}
+      />
+      <WalletWithdrawModal
+        open={withdrawOpen}
+        onOpenChange={handleWithdrawModalChange}
+        isMobile={isMobile}
+        siteName={process.env.NEXT_PUBLIC_SITE_NAME}
+        sendTo={walletSendTo}
+        onChangeSendTo={event => setWalletSendTo(event.target.value)}
+        sendAmount={walletSendAmount}
+        onChangeSendAmount={event => setWalletSendAmount(event.target.value)}
+        sendError={walletSendError}
+        isSending={isWalletSending}
+        onSubmitSend={handleWalletSend}
+        connectedWalletAddress={connectedWalletAddress}
+        onUseConnectedWallet={handleUseConnectedWallet}
+        availableBalance={balance.text}
+        onMax={handleSetMaxAmount}
+      />
+    </>
   )
 }

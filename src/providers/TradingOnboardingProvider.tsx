@@ -42,6 +42,7 @@ import { useUser } from '@/stores/useUser'
 
 interface TradingOnboardingContextValue {
   startDepositFlow: () => void
+  startWithdrawFlow: () => void
   ensureTradingReady: () => boolean
   openTradeRequirements: () => void
   hasProxyWallet: boolean
@@ -65,7 +66,8 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
   const [proxyStep, setProxyStep] = useState<'idle' | 'signing' | 'deploying' | 'completed'>('idle')
   const [tradingAuthStep, setTradingAuthStep] = useState<'idle' | 'signing' | 'completed'>('idle')
   const [approvalsStep, setApprovalsStep] = useState<'idle' | 'signing' | 'completed'>('idle')
-  const [walletModalOpen, setWalletModalOpen] = useState(false)
+  const [depositModalOpen, setDepositModalOpen] = useState(false)
+  const [withdrawModalOpen, setWithdrawModalOpen] = useState(false)
 
   const proxyWalletStatus = user?.proxy_wallet_status ?? null
   const hasProxyWalletAddress = Boolean(user?.proxy_wallet_address)
@@ -243,7 +245,8 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     setTradingAuthError(null)
     setTokenApprovalError(null)
     setShouldShowFundAfterProxy(false)
-    setWalletModalOpen(false)
+    setDepositModalOpen(false)
+    setWithdrawModalOpen(false)
     if (proxyStep !== 'completed') {
       setProxyStep('idle')
     }
@@ -539,7 +542,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       openTradeRequirements()
       return
     }
-    setWalletModalOpen(true)
+    setDepositModalOpen(true)
   }, [hasDeployedProxyWallet, open, openTradeRequirements, user])
 
   const startDepositFlow = useCallback(() => {
@@ -551,7 +554,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     }
 
     if (hasDeployedProxyWallet) {
-      setWalletModalOpen(true)
+      setDepositModalOpen(true)
       return
     }
 
@@ -559,6 +562,22 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     setShouldShowFundAfterProxy(true)
     setEnableModalOpen(true)
   }, [hasDeployedProxyWallet, open, resetEnableFlowState, user])
+
+  const startWithdrawFlow = useCallback(() => {
+    if (!user) {
+      queueMicrotask(() => {
+        void open()
+      })
+      return
+    }
+
+    if (!hasDeployedProxyWallet) {
+      openTradeRequirements()
+      return
+    }
+
+    setWithdrawModalOpen(true)
+  }, [hasDeployedProxyWallet, open, openTradeRequirements, user])
 
   const closeFundModal = useCallback((nextOpen: boolean) => {
     setFundModalOpen(nextOpen)
@@ -569,11 +588,12 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
 
   const contextValue = useMemo<TradingOnboardingContextValue>(() => ({
     startDepositFlow,
+    startWithdrawFlow,
     ensureTradingReady,
     openTradeRequirements,
     hasProxyWallet: hasDeployedProxyWallet,
     openWalletModal,
-  }), [ensureTradingReady, hasDeployedProxyWallet, openTradeRequirements, openWalletModal, startDepositFlow])
+  }), [ensureTradingReady, hasDeployedProxyWallet, openTradeRequirements, openWalletModal, startDepositFlow, startWithdrawFlow])
 
   const meldUrl = useMemo(() => {
     if (!hasDeployedProxyWallet || !user?.proxy_wallet_address) {
@@ -639,8 +659,10 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       />
 
       <WalletFlow
-        open={walletModalOpen}
-        onOpenChange={setWalletModalOpen}
+        depositOpen={depositModalOpen}
+        onDepositOpenChange={setDepositModalOpen}
+        withdrawOpen={withdrawModalOpen}
+        onWithdrawOpenChange={setWithdrawModalOpen}
         user={user}
         meldUrl={meldUrl}
       />
