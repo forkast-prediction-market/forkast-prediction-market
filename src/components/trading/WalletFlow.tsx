@@ -175,8 +175,9 @@ export function WalletFlow({
   }, [connectedWalletAddress])
 
   const handleSetMaxAmount = useCallback(() => {
-    setWalletSendAmount(balance.text)
-  }, [balance.text])
+    const amount = Number.isFinite(balance.raw) ? balance.raw : 0
+    setWalletSendAmount(amount.toFixed(2))
+  }, [balance.raw])
 
   return (
     <>

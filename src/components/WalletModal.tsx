@@ -3,10 +3,12 @@
 import type { ChangeEventHandler, FormEventHandler } from 'react'
 import {
   ArrowLeft,
+  ArrowUpToLine,
   Check,
   CircleDollarSign,
   Copy,
   CreditCard,
+  Wallet,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
@@ -179,8 +181,16 @@ function WalletSendForm({
   availableBalance?: string | null
   onMax?: () => void
 }) {
+  const trimmedRecipient = sendTo.trim()
+  const isRecipientAddress = /^0x[a-fA-F0-9]{40}$/.test(trimmedRecipient)
   const parsedAmount = Number(sendAmount)
-  const isSubmitDisabled = isSending || !sendTo.trim() || !Number.isFinite(parsedAmount) || parsedAmount <= 0
+  const isSubmitDisabled = (
+    isSending
+    || !trimmedRecipient
+    || !isRecipientAddress
+    || !Number.isFinite(parsedAmount)
+    || parsedAmount <= 0
+  )
   const showConnectedWalletButton = !sendTo?.trim()
 
   return (
@@ -196,7 +206,7 @@ function WalletSendForm({
         </button>
       )}
 
-      <form className="space-y-5" onSubmit={onSubmitSend}>
+      <form className="space-y-8" onSubmit={onSubmitSend}>
         <div className="space-y-2">
           <Label htmlFor="wallet-send-to">Recipient address</Label>
           <div className="relative">
@@ -205,24 +215,25 @@ function WalletSendForm({
               value={sendTo}
               onChange={onChangeSendTo}
               placeholder="0x..."
-              className={`${showConnectedWalletButton ? 'pr-28' : ''}text-[11px] placeholder:text-[11px]`}
+              className={`${showConnectedWalletButton ? 'pr-28' : ''} h-14 text-[14px] placeholder:text-[14px]`}
               required
             />
             {showConnectedWalletButton && (
               <Button
                 type="button"
-                variant="ghost"
+                variant="default"
                 onClick={onUseConnectedWallet}
                 disabled={!connectedWalletAddress}
-                className="absolute inset-y-1 right-1 h-7 px-2 text-[10px] text-primary"
+                className="absolute inset-y-3 right-2 h-8 gap-1 px-3 text-[11px]"
               >
-                Connected wallet
+                <Wallet className="size-3.5 shrink-0" />
+                <span>use connected</span>
               </Button>
             )}
           </div>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="wallet-send-amount">Amount (USDC)</Label>
+        <div className="space-y-1">
+          <Label htmlFor="wallet-send-amount">Amount</Label>
           <div className="relative">
             <Input
               id="wallet-send-amount"
@@ -233,6 +244,7 @@ function WalletSendForm({
               onChange={onChangeSendAmount}
               placeholder="0.00"
               className={`
+                h-14
                 [appearance:textfield]
                 pr-16 text-sm
                 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
@@ -241,8 +253,8 @@ function WalletSendForm({
             />
             <Button
               type="button"
-              variant="ghost"
-              className="absolute inset-y-1 right-1 h-7 px-2 text-[10px] text-primary"
+              variant="default"
+              className="absolute inset-y-3 right-2 h-8 px-3 text-[11px]"
               onClick={onMax}
               disabled={!onMax}
             >
@@ -250,12 +262,15 @@ function WalletSendForm({
             </Button>
           </div>
           {availableBalance && (
-            <p className="text-xs text-muted-foreground">
-              Balance:
-              {' '}
-              $
-              {availableBalance}
-            </p>
+            <div className="mr-2 ml-2 flex items-center justify-between text-xs text-muted-foreground">
+              <span>USDC</span>
+              <span>
+                Balance:
+                {' '}
+                $
+                {availableBalance}
+              </span>
+            </div>
           )}
         </div>
 
@@ -263,7 +278,8 @@ function WalletSendForm({
           <p className="text-sm text-destructive">{sendError}</p>
         )}
 
-        <Button type="submit" className="h-12 w-full text-base" disabled={isSubmitDisabled}>
+        <Button type="submit" className="h-12 w-full gap-2 text-base" disabled={isSubmitDisabled}>
+          <ArrowUpToLine className="size-4" />
           {isSending ? 'Submitting…' : 'Withdrawl'}
         </Button>
       </form>
@@ -295,8 +311,8 @@ function WalletFundMenu({
       <button
         type="button"
         className={`
-          flex w-full items-center justify-between gap-4 rounded-lg border border-border/70 bg-card px-4 py-3 text-left
-          transition
+          group flex w-full items-center justify-between gap-4 rounded-lg border border-border/70 bg-card px-4 py-3
+          text-left transition
           hover:border-primary hover:text-primary
           disabled:cursor-not-allowed disabled:opacity-50
         `}
@@ -313,7 +329,7 @@ function WalletFundMenu({
             <CreditCard className="size-6" />
           </div>
           <div>
-            <p className="text-sm font-semibold">Buy crypto</p>
+            <p className="text-sm font-semibold">Buy Crypto</p>
             <p className="text-xs text-muted-foreground">
               card
               {' \u00B7 '}
@@ -321,7 +337,7 @@ function WalletFundMenu({
             </p>
           </div>
         </div>
-        <div className="flex items-center -space-x-2">
+        <div className="flex items-center -space-x-2 transition-all group-hover:-space-x-1">
           {paymentLogos.map(logo => (
             <div
               key={logo}
@@ -331,7 +347,7 @@ function WalletFundMenu({
                 src={logo}
                 alt="Meld payment method"
                 fill
-                sizes="28px"
+                sizes="24px"
                 className="object-cover"
               />
             </div>
@@ -342,8 +358,8 @@ function WalletFundMenu({
       <button
         type="button"
         className={`
-          flex w-full items-center justify-between gap-4 rounded-lg border border-border/70 bg-card px-4 py-3 text-left
-          transition
+          group flex w-full items-center justify-between gap-4 rounded-lg border border-border/70 bg-card px-4 py-3
+          text-left transition
           hover:border-primary hover:text-primary
           disabled:cursor-not-allowed disabled:opacity-50
         `}
@@ -355,7 +371,7 @@ function WalletFundMenu({
             <CircleDollarSign className="size-6" />
           </div>
           <div>
-            <p className="text-sm font-semibold">Transfer funds</p>
+            <p className="text-sm font-semibold">Transfer Funds</p>
             <p className="text-xs text-muted-foreground">
               USDC
               {' \u00B7 '}
@@ -363,7 +379,7 @@ function WalletFundMenu({
             </p>
           </div>
         </div>
-        <div className="flex items-center -space-x-2">
+        <div className="flex items-center -space-x-2 transition-all group-hover:-space-x-1">
           {transferLogos.map(logo => (
             <div
               key={logo}
@@ -450,7 +466,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
       >
         <DrawerContent className="max-h-[90vh] w-full border-border/70 bg-background px-0">
           <DrawerHeader className="px-4 pt-4 pb-3">
-            <DrawerTitle className="text-center text-2xl font-semibold text-white">Deposit</DrawerTitle>
+            <DrawerTitle className="text-center text-2xl font-semibold text-foreground">Deposit</DrawerTitle>
             <p className="text-center text-sm text-muted-foreground">
               {siteLabel}
               {' '}
@@ -481,7 +497,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
     >
       <DialogContent className="w-full max-w-xl border border-border/70 bg-background p-6">
         <DialogHeader className="pb-3">
-          <DialogTitle className="text-center text-2xl font-semibold text-white">Deposit</DialogTitle>
+          <DialogTitle className="text-center text-2xl font-semibold text-foreground">Deposit</DialogTitle>
           <p className="text-center text-sm text-muted-foreground">
             {siteLabel}
             {' '}
@@ -540,12 +556,13 @@ export function WalletWithdrawModal(props: WalletWithdrawModalProps) {
       <Drawer open={open} onOpenChange={onOpenChange}>
         <DrawerContent className="max-h-[90vh] w-full border-border/70 bg-background px-0">
           <DrawerHeader className="px-4 pt-4 pb-2">
-            <DrawerTitle className="text-center">
+            <DrawerTitle className="text-center text-foreground">
               Withdraw from
               {' '}
               {siteName}
             </DrawerTitle>
           </DrawerHeader>
+          <div className="border-t border-border/60" />
           <div className="w-full px-4 pb-4">
             {content}
           </div>
@@ -558,12 +575,13 @@ export function WalletWithdrawModal(props: WalletWithdrawModalProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-full max-w-xl border border-border/70 bg-background p-6">
         <DialogHeader className="pb-3">
-          <DialogTitle className="text-center">
+          <DialogTitle className="text-center text-foreground">
             Withdraw from
             {' '}
             {siteName}
           </DialogTitle>
         </DialogHeader>
+        <div className="border-t border-border/60" />
 
         {content}
       </DialogContent>
