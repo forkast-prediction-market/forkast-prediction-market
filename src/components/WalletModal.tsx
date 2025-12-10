@@ -280,7 +280,7 @@ function WalletSendForm({
 
         <Button type="submit" className="h-12 w-full gap-2 text-base" disabled={isSubmitDisabled}>
           <ArrowUpToLine className="size-4" />
-          {isSending ? 'Submitting…' : 'Withdrawl'}
+          {isSending ? 'Submitting…' : 'Withdraw'}
         </Button>
       </form>
     </div>
