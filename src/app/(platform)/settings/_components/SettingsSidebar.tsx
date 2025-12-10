@@ -17,7 +17,6 @@ const menuItems: MenuItem[] = [
   { id: 'trading', label: 'Trading', href: '/settings/trading' as Route },
   { id: 'affiliate', label: 'Affiliate', href: '/settings/affiliate' as Route },
   { id: 'two-factor', label: 'Two-Factor Auth', href: '/settings/two-factor' as Route },
-  { id: 'export-key', label: 'Export Private Key', href: '/settings/export-key' as Route },
 ]
 
 export default function SettingsSidebar() {

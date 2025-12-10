@@ -12,7 +12,6 @@ export const { GET } = createSearchAPI('advanced', {
     description: page.data.description,
     url: page.url,
     id: page.url,
-    // @ts-expect-error - revisit fumadocs types.
     structuredData: page.data.structuredData,
   })),
 })

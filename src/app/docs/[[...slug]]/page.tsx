@@ -33,14 +33,11 @@ export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
     redirect('/docs/users')
   }
 
-  // @ts-expect-error - revisit fumadocs types.
   const MDX = page.data.body
 
   return (
     <DocsPage
-      // @ts-expect-error - revisit fumadocs types.
       toc={page.data.toc}
-      // @ts-expect-error - revisit fumadocs types.
       full={page.data.full}
       tableOfContent={{
         style: 'clerk',
