@@ -315,6 +315,8 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         amountInput: state.amount,
         outcomeText: state.outcome.outcome_text,
         eventTitle: event.title,
+        marketImage: state.market?.icon_url,
+        marketTitle: state.market?.short_title || state.market?.title,
         sellAmountValue,
         avgSellPrice: avgSellPriceLabel,
         buyPrice: state.outcome.buy_price,

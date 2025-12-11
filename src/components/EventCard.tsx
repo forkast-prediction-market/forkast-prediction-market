@@ -235,6 +235,8 @@ export default function EventCard({ event }: EventCardProps) {
         amountInput: tradeAmount,
         outcomeText: selectedOutcome.outcome.outcome_text,
         eventTitle: event.title,
+        marketImage: selectedOutcome.market.icon_url,
+        marketTitle: selectedOutcome.market.short_title || selectedOutcome.market.title,
         sellAmountValue: 0,
         avgSellPrice: '—',
         buyPrice: selectedOutcome.outcome.buy_price,
