@@ -2,6 +2,8 @@
 
 import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from 'react'
+import TestModeBanner from '@/components/TestModeBanner'
+import { defaultNetwork } from '@/lib/appkit'
 import { openSauceOne } from '@/lib/fonts'
 import './globals.css'
 
@@ -22,9 +24,12 @@ export const viewport: Viewport = {
 }
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
+  const isTestMode = defaultNetwork.id === 80002
+
   return (
     <html lang="en" className={`${openSauceOne.variable}`} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col font-sans antialiased">
+        {isTestMode && <TestModeBanner />}
         {children}
       </body>
     </html>

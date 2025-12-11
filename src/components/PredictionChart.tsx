@@ -1,11 +1,6 @@
 'use client'
 
-import type {
-  Dispatch,
-  MutableRefObject,
-  ReactNode,
-  SetStateAction,
-} from 'react'
+import type { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react'
 import { AxisBottom, AxisRight } from '@visx/axis'
 import { curveLinear } from '@visx/curve'
 import { localPoint } from '@visx/event'
@@ -14,17 +9,9 @@ import { scaleLinear, scaleTime } from '@visx/scale'
 import { LinePath } from '@visx/shape'
 import { useTooltip } from '@visx/tooltip'
 import { bisector } from 'd3-array'
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { sanitizeSvg } from '@/lib/utils'
 
-// Data types
 interface DataPoint {
   date: Date
   [key: string]: number | Date
@@ -60,17 +47,6 @@ export interface PredictionChartCursorSnapshot {
   date: Date
   values: Record<string, number>
 }
-
-// Example usage with multiple custom series:
-// const customData = [
-//   { date: new Date(), option1: 40, option2: 35, option3: 25 }
-// ];
-// const customSeries = [
-//   { key: "option1", name: "Option 1", color: "#10b981" },
-//   { key: "option2", name: "Option 2", color: "#ef4444" },
-//   { key: "option3", name: "Option 3", color: "#f59e0b" }
-// ];
-// <PredictionChart data={customData} series={customSeries} />
 
 const defaultMargin = { top: 30, right: 60, bottom: 40, left: 0 }
 const TOOLTIP_LABEL_HEIGHT = 20
@@ -429,8 +405,7 @@ export function PredictionChart({
       const clampedTime = Math.max(domainStart, Math.min(domainEnd, snappedTime))
       const targetDate = new Date(clampedTime)
       const domainSpan = Math.max(1, domainEnd - domainStart)
-      const hoverProgress = clamp01((clampedTime - domainStart) / domainSpan)
-      lastCursorProgressRef.current = hoverProgress
+      lastCursorProgressRef.current = clamp01((clampedTime - domainStart) / domainSpan)
       hasPointerInteractionRef.current = true
       stopRevealAnimation(revealAnimationFrameRef)
       const index = bisectDate(data, targetDate, 1)
@@ -931,7 +906,7 @@ export function PredictionChart({
               {watermark?.iconSvg
                 ? (
                     <div
-                      className="size-6 [&_*]:fill-current [&_*]:stroke-current"
+                      className="size-6 **:fill-current **:stroke-current"
                       dangerouslySetInnerHTML={{ __html: sanitizeSvg(watermark.iconSvg) }}
                     />
                   )
@@ -1024,7 +999,6 @@ export function PredictionChart({
               )
             })}
 
-            {/* Marcadores nas pontas das séries */}
             {showEndpointMarkers
               && lastDataPoint
               && series.map((seriesItem) => {
@@ -1173,7 +1147,7 @@ export function PredictionChart({
                 <div
                   key={`${entry.key}-label`}
                   className={`
-                    absolute flex h-5 min-w-[112px] items-center justify-between gap-2 rounded px-2 text-2xs leading-5
+                    absolute flex h-5 min-w-28 items-center justify-between gap-2 rounded px-2 text-2xs leading-5
                     font-semibold text-white
                   `}
                   style={{
