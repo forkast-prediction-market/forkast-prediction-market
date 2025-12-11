@@ -125,9 +125,7 @@ export function handleOrderSuccessFeedback({
       {
         description: (
           <EventTradeToast title={eventTitle} marketImage={marketImage} marketTitle={marketTitle}>
-            {buyAmountLabel}
-            {' '}
-            @
+            at
             {' '}
             {priceLabel}
           </EventTradeToast>
