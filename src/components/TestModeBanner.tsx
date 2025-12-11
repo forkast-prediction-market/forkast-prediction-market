@@ -9,22 +9,30 @@ export default function TestModeBanner({
 }: TestModeBannerProps) {
   return (
     <div
-      className="sticky inset-x-0 top-0 z-60 bg-orange-50 text-orange-900 shadow-sm"
+      className={`
+        sticky inset-x-0 top-0 z-60 border-b border-orange-200/70 bg-white text-orange-900
+        shadow-[0_10px_30px_rgba(249,115,22,0.08)]
+      `}
       role="region"
       aria-label="Test mode banner"
     >
-      <div className="mx-auto flex max-w-screen items-center justify-between gap-4 px-4 py-2">
-        <div className="flex items-center gap-3">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-orange-100">
-            <span className="inline-block size-3 rounded-full bg-orange-500" />
-          </span>
-          <p className="text-sm">
-            <span className="font-medium">
+      <div className="container px-4 py-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-3 sm:items-center">
+            <span className={`
+              inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold tracking-wide
+              text-orange-800 uppercase shadow-sm ring-1 ring-orange-200
+            `}
+            >
+              <span className="size-2 rounded-full bg-orange-500 shadow-[0_0_0_2px_rgba(255,255,255,0.85)]" />
               {label}
-              {' '}
             </span>
-            {message}
-          </p>
+            <p className="text-sm leading-relaxed text-orange-900">
+              <span className="font-semibold text-orange-800">Heads up:</span>
+              {' '}
+              {message}
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -4,6 +4,8 @@ export const DEFAULT_ERROR_MESSAGE = 'Internal server error. Try again in a few 
 
 export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as `0x${string}`
 
+export const AMOY_CHAIN_ID = 80002
+
 const conditionalTokensAddress = (
   process.env.CONDITIONAL_TOKENS_CONTRACT
   ?? process.env.NEXT_PUBLIC_CONDITIONAL_TOKENS_ADDRESS

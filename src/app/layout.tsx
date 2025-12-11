@@ -4,6 +4,7 @@ import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from 'react'
 import TestModeBanner from '@/components/TestModeBanner'
 import { defaultNetwork } from '@/lib/appkit'
+import { AMOY_CHAIN_ID } from '@/lib/constants'
 import { openSauceOne } from '@/lib/fonts'
 import './globals.css'
 
@@ -24,7 +25,7 @@ export const viewport: Viewport = {
 }
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const isTestMode = defaultNetwork.id === 80002
+  const isTestMode = defaultNetwork.id === AMOY_CHAIN_ID
 
   return (
     <html lang="en" className={`${openSauceOne.variable}`} suppressHydrationWarning>
