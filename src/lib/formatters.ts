@@ -201,7 +201,7 @@ export function formatPosition(amountMicro: string): string {
   return `${millions.toFixed(1)}M`
 }
 
-export function toCents(value?: string | number) {
+export function toCents(value?: string | number | null) {
   if (value === null || value === undefined) {
     return null
   }

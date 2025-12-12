@@ -1,0 +1,51 @@
+import { describe, expect, it } from 'vitest'
+import { formatAmountInputValue, formatCentsLabel, formatSharePriceLabel, fromMicro, toCents, toMicro } from '@/lib/formatters'
+
+describe('money/price formatters', () => {
+  it('toMicro rounds to nearest micro', () => {
+    expect(toMicro(0)).toBe('0')
+    expect(toMicro(1)).toBe('1000000')
+    expect(toMicro(0.0000004)).toBe('0')
+    expect(toMicro(0.0000005)).toBe('1')
+    expect(toMicro('12.3456789')).toBe('12345679')
+  })
+
+  it('fromMicro formats with precision', () => {
+    expect(fromMicro('0')).toBe('0.0')
+    expect(fromMicro('1000000')).toBe('1.0')
+    expect(fromMicro('1234567', 6)).toBe('1.234567')
+    expect(fromMicro('not-a-number', 2)).toBe('0.00')
+  })
+
+  it('toCents clamps numeric 0..1 and returns null for nullish', () => {
+    expect(toCents(null)).toBeNull()
+    expect(toCents(undefined)).toBeNull()
+    expect(toCents(-10)).toBe(0)
+    expect(toCents(0.3333)).toBe(33.3)
+    expect(toCents(10)).toBe(100)
+  })
+
+  it('formatCentsLabel handles null/NaN and <1 vs >=1 inputs', () => {
+    expect(formatCentsLabel(null)).toBe('—')
+    expect(formatCentsLabel('nope')).toBe('—')
+    expect(formatCentsLabel(0.5)).toBe('50¢')
+    expect(formatCentsLabel(0.03)).toBe('3¢')
+    expect(formatCentsLabel(55.56)).toBe('55.6¢')
+  })
+
+  it('formatSharePriceLabel formats sub-dollar as cents and >=1 as currency', () => {
+    expect(formatSharePriceLabel(null)).toBe('50.0¢')
+    expect(formatSharePriceLabel('0.5')).toBe('50¢')
+    expect(formatSharePriceLabel(1)).toBe('$1.00')
+    expect(formatSharePriceLabel(12.345, { currencyDigits: 1 })).toBe('$12.3')
+  })
+
+  it('formatAmountInputValue normalizes to 2 decimals and omits zeros', () => {
+    expect(formatAmountInputValue(Number.NaN)).toBe('')
+    expect(formatAmountInputValue(0)).toBe('')
+    expect(formatAmountInputValue(0.001)).toBe('')
+    expect(formatAmountInputValue(1)).toBe('1')
+    expect(formatAmountInputValue(1.239)).toBe('1.24')
+    expect(formatAmountInputValue(-10)).toBe('')
+  })
+})
