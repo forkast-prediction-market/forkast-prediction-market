@@ -1,0 +1,82 @@
+import { describe, expect, it, vi } from 'vitest'
+
+const mocks = vi.hoisted(() => ({
+  getCurrentUser: vi.fn(),
+  isProxyWalletDeployed: vi.fn(),
+  update: vi.fn(),
+  set: vi.fn(),
+  where: vi.fn(),
+  eq: vi.fn(() => ({ eq: true })),
+}))
+
+vi.mock('@/lib/db/queries/user', () => ({
+  UserRepository: { getCurrentUser: (...args: any[]) => mocks.getCurrentUser(...args) },
+}))
+
+vi.mock('@/lib/contracts/safeProxy', () => ({
+  isProxyWalletDeployed: (...args: any[]) => mocks.isProxyWalletDeployed(...args),
+}))
+
+vi.mock('drizzle-orm', () => ({
+  eq: (...args: any[]) => mocks.eq(...args),
+}))
+
+vi.mock('@/lib/db/schema/auth/tables', () => ({
+  users: { id: 'id' },
+}))
+
+vi.mock('@/lib/drizzle', () => {
+  mocks.where.mockResolvedValue({ ok: true })
+  mocks.set.mockReturnValue({ where: mocks.where })
+  mocks.update.mockReturnValue({ set: mocks.set })
+
+  return {
+    db: { update: mocks.update },
+  }
+})
+
+const { GET } = await import('@/app/api/user/proxy/route')
+
+describe('user proxy route', () => {
+  it('returns 401 when unauthenticated', async () => {
+    mocks.getCurrentUser.mockResolvedValueOnce(null)
+    const response = await GET()
+    expect(response.status).toBe(401)
+  })
+
+  it('updates status to deployed when contract is deployed', async () => {
+    mocks.getCurrentUser.mockResolvedValueOnce({
+      id: 'user-1',
+      proxy_wallet_address: '0x0000000000000000000000000000000000000002',
+      proxy_wallet_status: 'deploying',
+      proxy_wallet_signature: 'sig',
+      proxy_wallet_signed_at: 1,
+      proxy_wallet_tx_hash: '0xtx',
+    })
+    mocks.isProxyWalletDeployed.mockResolvedValueOnce(true)
+
+    const response = await GET()
+    expect(response.status).toBe(200)
+    const body = await response.json()
+    expect(body.proxy_wallet_status).toBe('deployed')
+    expect(mocks.update).toHaveBeenCalled()
+    expect(mocks.set).toHaveBeenCalledWith({ proxy_wallet_status: 'deployed', proxy_wallet_tx_hash: null })
+  })
+
+  it('downgrades status to deploying when contract is not deployed', async () => {
+    mocks.getCurrentUser.mockResolvedValueOnce({
+      id: 'user-1',
+      proxy_wallet_address: '0x0000000000000000000000000000000000000002',
+      proxy_wallet_status: 'deployed',
+      proxy_wallet_signature: null,
+      proxy_wallet_signed_at: null,
+      proxy_wallet_tx_hash: null,
+    })
+    mocks.isProxyWalletDeployed.mockResolvedValueOnce(false)
+
+    const response = await GET()
+    const body = await response.json()
+    expect(body.proxy_wallet_status).toBe('deploying')
+    expect(mocks.set).toHaveBeenCalledWith({ proxy_wallet_status: 'deploying' })
+  })
+})
