@@ -6,7 +6,7 @@ const mocks = vi.hoisted(() => ({
   update: vi.fn(),
   set: vi.fn(),
   where: vi.fn(),
-  eq: vi.fn(() => ({ eq: true })),
+  eq: vi.fn((..._args: any[]) => ({ eq: true })),
 }))
 
 vi.mock('@/lib/db/queries/user', () => ({
