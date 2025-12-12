@@ -1,0 +1,49 @@
+import { describe, expect, it, vi } from 'vitest'
+
+const confettiMock = vi.hoisted(() => ({
+  fn: vi.fn(),
+}))
+
+vi.mock('canvas-confetti', () => ({
+  default: confettiMock.fn,
+}))
+
+describe('utils (confetti/cn)', () => {
+  it('cn merges class names', async () => {
+    const { cn } = await import('@/lib/utils')
+    expect(cn('a', false && 'b', 'c')).toContain('a')
+    expect(cn('a', false && 'b', 'c')).toContain('c')
+  })
+
+  it('triggerConfetti uses default origin when no event', async () => {
+    const { triggerConfetti } = await import('@/lib/utils')
+    confettiMock.fn.mockReset()
+
+    triggerConfetti('yes')
+
+    expect(confettiMock.fn).toHaveBeenCalledWith(expect.objectContaining({
+      origin: { y: 0.6 },
+      colors: expect.any(Array),
+    }))
+  })
+
+  it('triggerConfetti computes origin from event coords', async () => {
+    const { triggerConfetti } = await import('@/lib/utils')
+    confettiMock.fn.mockReset()
+
+    Object.defineProperty(window, 'innerWidth', { value: 1000, writable: true })
+    Object.defineProperty(window, 'innerHeight', { value: 500, writable: true })
+
+    triggerConfetti('primary', { clientX: 250, clientY: 125 })
+
+    expect(confettiMock.fn).toHaveBeenCalledWith(expect.objectContaining({
+      origin: { x: 0.25, y: 0.25 },
+    }))
+  })
+
+  it('sanitizeSvg drops unterminated <script blocks', async () => {
+    const { sanitizeSvg } = await import('@/lib/utils')
+    const sanitized = sanitizeSvg('<svg><script>alert(1)</svg>')
+    expect(sanitized.toLowerCase()).not.toContain('<script')
+  })
+})

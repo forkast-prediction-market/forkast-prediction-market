@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { formatAmountInputValue, formatCentsLabel, formatSharePriceLabel, fromMicro, toCents, toMicro } from '@/lib/formatters'
+import { formatAmountInputValue, formatCentsLabel, formatCurrency, formatDate, formatPercent, formatSharePriceLabel, formatTimeAgo, formatVolume, fromMicro, toCents, toMicro, truncateAddress } from '@/lib/formatters'
 
 describe('money/price formatters', () => {
   it('toMicro rounds to nearest micro', () => {
@@ -47,5 +47,32 @@ describe('money/price formatters', () => {
     expect(formatAmountInputValue(1)).toBe('1')
     expect(formatAmountInputValue(1.239)).toBe('1.24')
     expect(formatAmountInputValue(-10)).toBe('')
+  })
+
+  it('formatCurrency supports stripping the symbol', () => {
+    expect(formatCurrency(12.3, { includeSymbol: false })).toBe('12.30')
+    expect(formatCurrency(Number.NaN, { includeSymbol: false })).toBe('0.00')
+  })
+
+  it('formatPercent supports stripping the symbol', () => {
+    expect(formatPercent(1, { includeSymbol: false })).toBe('1.00')
+    expect(formatPercent(Number.NaN, { includeSymbol: false })).toBe('0.00')
+  })
+
+  it('formatVolume handles negatives and scales', () => {
+    expect(formatVolume(-1)).toBe('$0')
+    expect(formatVolume(999)).toBe('$999')
+    expect(formatVolume(1000)).toBe('$1k')
+    expect(formatVolume(1_000_000)).toBe('$1.0M')
+  })
+
+  it('formatDate and formatTimeAgo are deterministic enough', () => {
+    expect(formatDate(new Date(Date.UTC(2020, 0, 2)))).toBe('Jan 2, 2020')
+    expect(formatTimeAgo(new Date(Date.now()).toISOString())).toMatch(/s ago$/)
+  })
+
+  it('truncateAddress shortens and handles empty', () => {
+    expect(truncateAddress('')).toBe('')
+    expect(truncateAddress('0x1234567890abcdef')).toBe('0x12…abcdef')
   })
 })
