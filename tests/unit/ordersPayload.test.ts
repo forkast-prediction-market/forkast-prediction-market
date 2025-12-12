@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ORDER_SIDE, ORDER_TYPE, ZERO_ADDRESS } from '@/lib/constants'
 import { buildOrderPayload } from '@/lib/orders'
 
@@ -11,8 +11,12 @@ describe('buildOrderPayload money-safety defaults', () => {
   const validReferrer = '0x00000000000000000000000000000000000000aa' as const
   const validAffiliate = '0x00000000000000000000000000000000000000bb' as const
 
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   it('uses env fee recipient when referrer is invalid', () => {
-    process.env.NEXT_PUBLIC_FEE_RECIPIENT_WALLET = validReferrer
+    vi.stubEnv('NEXT_PUBLIC_FEE_RECIPIENT_WALLET', validReferrer)
 
     const payload = buildOrderPayload({
       userAddress,

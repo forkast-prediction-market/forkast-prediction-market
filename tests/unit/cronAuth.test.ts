@@ -1,9 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { isCronAuthorized } from '@/lib/auth-cron'
 
 describe('isCronAuthorized', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs()
+  })
+
   it('rejects when no secret is configured', () => {
-    delete process.env.CRON_SECRET
+    vi.stubEnv('CRON_SECRET', '')
     expect(isCronAuthorized('Bearer x', undefined)).toBe(false)
   })
 
@@ -13,7 +17,7 @@ describe('isCronAuthorized', () => {
   })
 
   it('can read secret from env', () => {
-    process.env.CRON_SECRET = 'env-secret'
+    vi.stubEnv('CRON_SECRET', 'env-secret')
     expect(isCronAuthorized('Bearer env-secret')).toBe(true)
     expect(isCronAuthorized('Bearer nope')).toBe(false)
   })

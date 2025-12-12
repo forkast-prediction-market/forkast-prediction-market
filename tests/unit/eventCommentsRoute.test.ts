@@ -28,7 +28,7 @@ vi.mock('@/lib/db/queries/comment', () => ({
 }))
 
 vi.mock('@/lib/supabase', () => ({
-  getSupabaseImageUrl: (...args: any[]) => mocks.getSupabaseImageUrl(...args),
+  getSupabaseImageUrl: (path: string) => mocks.getSupabaseImageUrl(path),
 }))
 
 const { GET } = await import('@/app/(platform)/api/events/[slug]/comments/route')
@@ -118,6 +118,6 @@ describe('event comments route', () => {
     expect(body[0].is_owner).toBe(true)
     expect(body[0].user_has_liked).toBe(true)
     expect(body[0].recent_replies[0].user_has_liked).toBe(true)
-    expect(body[0].recent_replies[0].user_avatar).toBe('https://avatar.vercel.sh/me.png')
+    expect(body[0].recent_replies[0].user_avatar).toBe('https://avatar.vercel.sh/0xdef.png')
   })
 })

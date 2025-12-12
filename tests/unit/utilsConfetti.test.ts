@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const confettiMock = vi.hoisted(() => ({
   fn: vi.fn(),
@@ -9,10 +9,14 @@ vi.mock('canvas-confetti', () => ({
 }))
 
 describe('utils (confetti/cn)', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('cn merges class names', async () => {
     const { cn } = await import('@/lib/utils')
-    expect(cn('a', false && 'b', 'c')).toContain('a')
-    expect(cn('a', false && 'b', 'c')).toContain('c')
+    expect(cn('a', false, 'c')).toContain('a')
+    expect(cn('a', false, 'c')).toContain('c')
   })
 
   it('triggerConfetti uses default origin when no event', async () => {
@@ -31,8 +35,8 @@ describe('utils (confetti/cn)', () => {
     const { triggerConfetti } = await import('@/lib/utils')
     confettiMock.fn.mockReset()
 
-    Object.defineProperty(window, 'innerWidth', { value: 1000, writable: true })
-    Object.defineProperty(window, 'innerHeight', { value: 500, writable: true })
+    vi.stubGlobal('innerWidth', 1000)
+    vi.stubGlobal('innerHeight', 500)
 
     triggerConfetti('primary', { clientX: 250, clientY: 125 })
 
