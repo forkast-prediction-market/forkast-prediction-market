@@ -100,7 +100,11 @@ export function validateOrder({
       && Number.isFinite(limitExpirationTimestamp)
       && limitExpirationTimestamp > 0
 
-    if (hasCustomExpiration && customExpirationIsValid) {
+    if (hasCustomExpiration) {
+      if (!customExpirationIsValid) {
+        return { ok: false, reason: 'INVALID_LIMIT_EXPIRATION' }
+      }
+
       const nowSeconds = Math.floor(Date.now() / 1000)
       if (limitExpirationTimestamp <= nowSeconds) {
         return { ok: false, reason: 'INVALID_LIMIT_EXPIRATION' }

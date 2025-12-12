@@ -81,5 +81,9 @@ export function triggerConfetti(color: 'primary' | 'yes' | 'no', event?: any) {
 }
 
 export function calculateWinnings(amount: number, price: number): number {
+  if (!Number.isFinite(amount) || !Number.isFinite(price) || amount <= 0 || price <= 0) {
+    return 0
+  }
+
   return amount / price - amount
 }
