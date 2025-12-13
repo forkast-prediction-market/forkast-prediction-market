@@ -336,7 +336,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
           <div className="mt-2">
             {positions.map(position => (
               <MarketPositionRow
-                key={`${position.market?.condition_id || market.condition_id}-${position.outcome_index ?? position.outcome_text ?? 'unknown'}-${position.last_activity_at}`}
+                key={`${position.outcome_text}-${position.last_activity_at}`}
                 position={position}
                 onSell={handleSell}
               />
