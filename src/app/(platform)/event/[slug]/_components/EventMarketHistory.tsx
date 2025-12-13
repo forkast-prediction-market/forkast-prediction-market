@@ -12,6 +12,7 @@ import { fetchUserActivityData, mapDataApiActivityToActivityOrder } from '@/lib/
 import { formatCurrency, formatSharePriceLabel, formatTimeAgo, fromMicro, sharesFormatter } from '@/lib/formatters'
 import { getUserPrimaryAddress } from '@/lib/user-address'
 import { cn } from '@/lib/utils'
+import { useIsSingleMarket } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
 
 interface EventMarketHistoryProps {
@@ -24,6 +25,7 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
   const [scrollMargin, setScrollMargin] = useState(0)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const user = useUser()
+  const isSingleMarket = useIsSingleMarket()
   const userAddress = getUserPrimaryAddress(user)
 
   useEffect(() => {
@@ -152,13 +154,17 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
 
   if (isLoadingInitial || activities.length === 0) {
     return (
-      <div className={`
-        flex min-h-16 items-center justify-center rounded border border-dashed border-border px-4 text-center text-sm
-        text-muted-foreground
-      `}
-      >
-        No activity for this outcome.
-      </div>
+      isSingleMarket
+        ? <></>
+        : (
+            <div className={`
+              flex min-h-16 items-center justify-center rounded border border-dashed border-border px-4 text-center
+              text-sm text-muted-foreground
+            `}
+            >
+              No activity for this outcome.
+            </div>
+          )
     )
   }
 

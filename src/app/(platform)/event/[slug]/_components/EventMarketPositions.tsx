@@ -1,10 +1,9 @@
 'use client'
 
 import type { Event, UserPosition } from '@/types'
-import { useInfiniteQuery } from '@tanstack/react-query'
-import { useWindowVirtualizer } from '@tanstack/react-virtual'
+import { useQuery } from '@tanstack/react-query'
 import { AlertCircleIcon, ShareIcon } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -161,12 +160,8 @@ function MarketPositionRow({
 }
 
 export default function EventMarketPositions({ market }: EventMarketPositionsProps) {
-  const parentRef = useRef<HTMLDivElement | null>(null)
   const user = useUser()
   const userAddress = getUserPrimaryAddress(user)
-  const [scrollMargin, setScrollMargin] = useState(0)
-  const [hasInitialized, setHasInitialized] = useState(false)
-  const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const isMobile = useIsMobile()
   const isSingleMarket = useIsSingleMarket()
   const setOrderMarket = useOrder(state => state.setMarket)
@@ -177,53 +172,30 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
   const orderInputRef = useOrder(state => state.inputRef)
   const setOrderUserShares = useOrder(state => state.setUserShares)
 
-  useEffect(() => {
-    queueMicrotask(() => {
-      setHasInitialized(false)
-      setInfiniteScrollError(null)
-    })
-  }, [market.condition_id])
-
-  useEffect(() => {
-    if (parentRef.current) {
-      setScrollMargin(parentRef.current.offsetTop)
-    }
-  }, [market.condition_id])
-
   const positionStatus = market.is_active && !market.is_resolved ? 'active' : 'closed'
 
   const {
     status,
     data,
-    isFetchingNextPage,
-    fetchNextPage,
-    hasNextPage,
     refetch,
-  } = useInfiniteQuery({
+  } = useQuery({
     queryKey: ['user-market-positions', userAddress, market.condition_id, positionStatus],
-    queryFn: ({ pageParam = 0, signal }) =>
+    queryFn: ({ signal }) =>
       fetchUserPositionsForMarket({
-        pageParam,
+        pageParam: 0,
         userAddress,
         conditionId: market.condition_id,
         status: positionStatus,
         signal,
       }),
-    getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.length === 50) {
-        return allPages.reduce((total, page) => total + page.length, 0)
-      }
-      return undefined
-    },
     enabled: Boolean(userAddress && market.condition_id),
-    initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
     refetchInterval: userAddress ? 10_000 : false,
     refetchIntervalInBackground: true,
     gcTime: 1000 * 60 * 10,
   })
 
-  const positions = useMemo(() => data?.pages.flat() ?? [], [data?.pages])
+  const positions = useMemo(() => data ?? [], [data])
   const loading = status === 'pending' && Boolean(user?.address)
   const hasInitialError = status === 'error' && Boolean(user?.address)
 
@@ -265,46 +237,6 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
   useEffect(() => {
     setOrderUserShares(aggregatedShares, { replace: true })
   }, [aggregatedShares, setOrderUserShares])
-
-  const virtualizer = useWindowVirtualizer({
-    count: positions.length,
-    estimateSize: () => {
-      if (typeof window !== 'undefined') {
-        return window.innerWidth < 768 ? 62 : 54
-      }
-      return 54
-    },
-    scrollMargin,
-    overscan: 5,
-    onChange: (instance) => {
-      if (!hasInitialized) {
-        setHasInitialized(true)
-        return
-      }
-
-      if (!positions.length) {
-        return
-      }
-
-      const items = instance.getVirtualItems()
-      const lastItem = items[items.length - 1]
-      const shouldLoadMore = lastItem
-        && lastItem.index >= positions.length - 2
-        && hasNextPage
-        && !isFetchingNextPage
-        && !infiniteScrollError
-        && status !== 'pending'
-
-      if (shouldLoadMore) {
-        fetchNextPage().catch((error: any) => {
-          if (error?.name === 'CanceledError' || error?.name === 'AbortError') {
-            return
-          }
-          setInfiniteScrollError(error?.message || 'Failed to load more positions')
-        })
-      }
-    },
-  })
 
   const handleSell = useCallback((positionItem: UserPosition) => {
     if (!market) {
@@ -378,7 +310,6 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
 
   return (
     <section
-      ref={parentRef}
       className="overflow-hidden rounded-xl border border-border/60 bg-background/80"
     >
       {isSingleMarket && (
@@ -402,72 +333,17 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
             <span>Return</span>
             <span aria-hidden="true" />
           </div>
-          <div
-            className="relative mt-2"
-            style={{
-              height: `${virtualizer.getTotalSize()}px`,
-              width: '100%',
-            }}
-          >
-            {virtualizer.getVirtualItems().map((virtualItem) => {
-              const position = positions[virtualItem.index]
-              if (!position) {
-                return null
-              }
-
-              return (
-                <div
-                  key={virtualItem.key}
-                  data-index={virtualItem.index}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    transform: `translateY(${virtualItem.start - (virtualizer.options.scrollMargin ?? 0)}px)`,
-                  }}
-                >
-                  <MarketPositionRow position={position} onSell={handleSell} />
-                </div>
-              )
-            })}
+          <div className="mt-2">
+            {positions.map(position => (
+              <MarketPositionRow
+                key={`${position.market?.condition_id || market.condition_id}-${position.outcome_index ?? position.outcome_text ?? 'unknown'}-${position.last_activity_at}`}
+                position={position}
+                onSell={handleSell}
+              />
+            ))}
           </div>
         </div>
       </div>
-
-      {isFetchingNextPage && (
-        <div className="border-t border-border/60 px-4 py-3 text-center text-xs text-muted-foreground">
-          Loading more positions...
-        </div>
-      )}
-
-      {infiniteScrollError && (
-        <div className="border-t border-border/60 px-4 py-3">
-          <Alert variant="destructive">
-            <AlertCircleIcon />
-            <AlertTitle>Could not load more positions</AlertTitle>
-            <AlertDescription>
-              <Button
-                type="button"
-                variant="link"
-                size="sm"
-                className="-ml-3"
-                onClick={() => {
-                  setInfiniteScrollError(null)
-                  fetchNextPage().catch((error: any) => {
-                    if (error?.name === 'CanceledError' || error?.name === 'AbortError') {
-                      return
-                    }
-                    setInfiniteScrollError(error?.message || 'Failed to load more positions')
-                  })
-                }}
-              >
-                Try again
-              </Button>
-            </AlertDescription>
-          </Alert>
-        </div>
-      )}
     </section>
   )
 }

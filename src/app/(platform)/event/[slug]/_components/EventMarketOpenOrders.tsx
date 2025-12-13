@@ -37,7 +37,7 @@ type SortColumn = 'side' | 'outcome' | 'price' | 'filled' | 'total' | 'expiratio
 const OPEN_ORDERS_GRID_TEMPLATE = 'minmax(60px,0.6fr) minmax(100px,1.1fr) minmax(70px,0.7fr) minmax(110px,0.8fr) minmax(120px,1fr) minmax(180px,1.2fr) minmax(72px,0.4fr)'
 
 const CANCEL_ICON_BUTTON_CLASS = `
-  inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/70 bg-transparent text-foreground
+  inline-flex size-8 items-center justify-center rounded-md border border-border/70 bg-transparent text-foreground
   transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
   dark:border-white/30 dark:text-white dark:hover:bg-white/10
 `
@@ -497,12 +497,12 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
       className="overflow-hidden rounded-xl border border-border/60 bg-background/80"
     >
       {isSingleMarket && (
-        <div className="px-4 py-4">
+        <div className="p-4">
           <h3 className="text-lg font-semibold text-foreground">Open Orders</h3>
         </div>
       )}
 
-      <div className="overflow-x-auto px-2 pb-4">
+      <div className="overflow-x-auto px-2">
         <div className="min-w-lg">
           <div
             className={`
