@@ -77,7 +77,7 @@ export default function EventSingleMarketOrderBook({ market, eventSlug }: EventS
   }
 
   if (market.outcomes.length < 2) {
-    return null
+    return <></>
   }
 
   return (

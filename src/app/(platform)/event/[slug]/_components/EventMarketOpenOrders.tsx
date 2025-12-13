@@ -17,6 +17,7 @@ import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { formatCurrency, formatSharePriceLabel, sharesFormatter } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
+import { useIsSingleMarket } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
 
 interface EventMarketOpenOrdersProps {
@@ -33,7 +34,7 @@ interface OpenOrderRowProps {
 type SortDirection = 'asc' | 'desc'
 type SortColumn = 'side' | 'outcome' | 'price' | 'filled' | 'total' | 'expiration'
 
-const OPEN_ORDERS_GRID_TEMPLATE = 'minmax(60px,0.6fr) minmax(140px,1.1fr) minmax(70px,0.7fr) minmax(110px,0.8fr) minmax(120px,1fr) minmax(180px,1.2fr) minmax(72px,0.4fr)'
+const OPEN_ORDERS_GRID_TEMPLATE = 'minmax(60px,0.6fr) minmax(100px,1.1fr) minmax(70px,0.7fr) minmax(110px,0.8fr) minmax(120px,1fr) minmax(180px,1.2fr) minmax(72px,0.4fr)'
 
 const CANCEL_ICON_BUTTON_CLASS = `
   inline-flex h-8 w-8 items-center justify-center rounded-md border border-border/70 bg-transparent text-foreground
@@ -253,6 +254,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
   const parentRef = useRef<HTMLElement | null>(null)
   const user = useUser()
   const queryClient = useQueryClient()
+  const isSingleMarket = useIsSingleMarket()
   const [scrollMargin, setScrollMargin] = useState(0)
   const [hasInitialized, setHasInitialized] = useState(false)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
@@ -478,87 +480,94 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
   const shouldRender = Boolean(user?.id && status === 'success' && hasOrders)
 
   if (!shouldRender) {
-    return null
-  }
-
-  const content = (
-    <div className="overflow-x-auto px-2 pb-4">
-      <div className="min-w-[780px]">
-        <div
-          className={`
-            grid h-9 items-center gap-3 border-b border-border/60 bg-background px-3 text-2xs font-semibold
-            tracking-wide text-muted-foreground uppercase
-          `}
-          style={{ gridTemplateColumns: OPEN_ORDERS_GRID_TEMPLATE }}
-        >
-          <SortHeaderButton column="side" label="Side" sortState={sortState} onSort={handleSort} />
-          <SortHeaderButton column="outcome" label="Outcome" sortState={sortState} onSort={handleSort} />
-          <SortHeaderButton column="price" label="Price" alignment="center" sortState={sortState} onSort={handleSort} />
-          <SortHeaderButton column="filled" label="Filled" alignment="center" sortState={sortState} onSort={handleSort} />
-          <SortHeaderButton column="total" label="Total" alignment="center" sortState={sortState} onSort={handleSort} />
-          <SortHeaderButton column="expiration" label="Expiration" sortState={sortState} onSort={handleSort} />
-          <button
-            type="button"
-            className={`
-              flex justify-end text-2xs font-semibold tracking-wide text-destructive uppercase transition-opacity
-              disabled:opacity-40
-            `}
-            onClick={handleCancelAll}
-            disabled={isCancellingAll || !hasOrders}
-          >
-            {isCancellingAll ? 'Cancelling…' : 'Cancel All'}
-          </button>
-        </div>
-
-        <div
-          className="relative mt-2"
-          style={{
-            height: `${virtualizer.getTotalSize()}px`,
-            width: '100%',
-          }}
-        >
-          {virtualizer.getVirtualItems().map((virtualItem) => {
-            const order = sortedOrders[virtualItem.index]
-            if (!order) {
-              return null
-            }
-
-            const translateY = virtualItem.start - (virtualizer.options.scrollMargin ?? 0)
-
-            return (
-              <div
-                key={virtualItem.key}
-                data-index={virtualItem.index}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  transform: `translateY(${translateY}px)`,
-                }}
-              >
-                <OpenOrderRow
-                  order={order}
-                  onCancel={handleCancelOrder}
-                  isCancelling={pendingCancelIds.has(order.id)}
-                />
-              </div>
-            )
-          })}
-        </div>
+    return (
+      <div className={`
+        flex min-h-16 items-center justify-center rounded border border-dashed border-border px-4 text-center text-sm
+        text-muted-foreground
+      `}
+      >
+        No open orders.
       </div>
-    </div>
-  )
+    )
+  }
 
   return (
     <section
       ref={parentRef}
       className="overflow-hidden rounded-xl border border-border/60 bg-background/80"
     >
-      <div className="px-4 py-4">
-        <h3 className="text-lg font-semibold text-foreground">Open Orders</h3>
+      {isSingleMarket && (
+        <div className="px-4 py-4">
+          <h3 className="text-lg font-semibold text-foreground">Open Orders</h3>
+        </div>
+      )}
+
+      <div className="overflow-x-auto px-2 pb-4">
+        <div className="min-w-lg">
+          <div
+            className={`
+              grid h-9 items-center gap-3 border-b border-border/60 bg-background px-3 text-2xs font-semibold
+              tracking-wide text-muted-foreground uppercase
+            `}
+            style={{ gridTemplateColumns: OPEN_ORDERS_GRID_TEMPLATE }}
+          >
+            <SortHeaderButton column="side" label="Side" sortState={sortState} onSort={handleSort} />
+            <SortHeaderButton column="outcome" label="Outcome" sortState={sortState} onSort={handleSort} />
+            <SortHeaderButton column="price" label="Price" alignment="center" sortState={sortState} onSort={handleSort} />
+            <SortHeaderButton column="filled" label="Filled" alignment="center" sortState={sortState} onSort={handleSort} />
+            <SortHeaderButton column="total" label="Total" alignment="center" sortState={sortState} onSort={handleSort} />
+            <SortHeaderButton column="expiration" label="Expiration" sortState={sortState} onSort={handleSort} />
+            <button
+              type="button"
+              className={`
+                flex justify-end text-2xs font-semibold tracking-wide text-destructive uppercase transition-opacity
+                disabled:opacity-40
+              `}
+              onClick={handleCancelAll}
+              disabled={isCancellingAll || !hasOrders}
+            >
+              {isCancellingAll ? 'Cancelling…' : 'Cancel All'}
+            </button>
+          </div>
+
+          <div
+            className="relative mt-2"
+            style={{
+              height: `${virtualizer.getTotalSize()}px`,
+              width: '100%',
+            }}
+          >
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const order = sortedOrders[virtualItem.index]
+              if (!order) {
+                return null
+              }
+
+              const translateY = virtualItem.start - (virtualizer.options.scrollMargin ?? 0)
+
+              return (
+                <div
+                  key={virtualItem.key}
+                  data-index={virtualItem.index}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${translateY}px)`,
+                  }}
+                >
+                  <OpenOrderRow
+                    order={order}
+                    onCancel={handleCancelOrder}
+                    isCancelling={pendingCancelIds.has(order.id)}
+                  />
+                </div>
+              )
+            })}
+          </div>
+        </div>
       </div>
-      {content}
 
       {hasOrders && isFetchingNextPage && (
         <div className="border-t border-border/60 px-4 py-3 text-center text-xs text-muted-foreground">
@@ -570,7 +579,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
         <div className="border-t border-border/60 px-4 py-3">
           <Alert variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>Couldn&apos;t load more open orders</AlertTitle>
+            <AlertTitle>Could not load more open orders</AlertTitle>
             <AlertDescription>
               <Button
                 type="button"

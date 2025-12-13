@@ -120,7 +120,7 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
   }
 
   if (!user?.address || !userAddress) {
-    return null
+    return <></>
   }
 
   if (hasInitialError) {
@@ -151,7 +151,15 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
   }
 
   if (isLoadingInitial || activities.length === 0) {
-    return null
+    return (
+      <div className={`
+        flex min-h-16 items-center justify-center rounded border border-dashed border-border px-4 text-center text-sm
+        text-muted-foreground
+      `}
+      >
+        No activity for this outcome.
+      </div>
+    )
   }
 
   return (

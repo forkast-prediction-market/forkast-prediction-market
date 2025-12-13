@@ -13,7 +13,7 @@ import { fetchUserPositionsForMarket } from '@/lib/data-api/user'
 import { formatAmountInputValue, formatCentsLabel, formatCurrency, formatPercent, fromMicro, sharesFormatter } from '@/lib/formatters'
 import { getUserPrimaryAddress } from '@/lib/user-address'
 import { cn } from '@/lib/utils'
-import { useOrder } from '@/stores/useOrder'
+import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
 
 interface EventMarketPositionsProps {
@@ -168,6 +168,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
   const [hasInitialized, setHasInitialized] = useState(false)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const isMobile = useIsMobile()
+  const isSingleMarket = useIsSingleMarket()
   const setOrderMarket = useOrder(state => state.setMarket)
   const setOrderOutcome = useOrder(state => state.setOutcome)
   const setOrderSide = useOrder(state => state.setSide)
@@ -343,7 +344,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
   }, [isMobile, market, orderInputRef, setIsMobileOrderPanelOpen, setOrderAmount, setOrderMarket, setOrderOutcome, setOrderSide])
 
   if (!userAddress) {
-    return null
+    return <></>
   }
 
   if (hasInitialError) {
@@ -364,7 +365,15 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
   }
 
   if (loading || positions.length === 0) {
-    return null
+    return (
+      <div className={`
+        flex min-h-16 items-center justify-center rounded border border-dashed border-border px-4 text-center text-sm
+        text-muted-foreground
+      `}
+      >
+        No positions for this outcome.
+      </div>
+    )
   }
 
   return (
@@ -372,9 +381,11 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
       ref={parentRef}
       className="overflow-hidden rounded-xl border border-border/60 bg-background/80"
     >
-      <div className="px-4 py-4">
-        <h3 className="text-lg font-semibold text-foreground">Positions</h3>
-      </div>
+      {isSingleMarket && (
+        <div className="p-4">
+          <h3 className="text-lg font-semibold text-foreground">Positions</h3>
+        </div>
+      )}
       <div className="overflow-x-auto">
         <div className="min-w-[760px] px-2 pb-2">
           <div
@@ -434,7 +445,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
         <div className="border-t border-border/60 px-4 py-3">
           <Alert variant="destructive">
             <AlertCircleIcon />
-            <AlertTitle>Couldn&apos;t load more positions</AlertTitle>
+            <AlertTitle>Could not load more positions</AlertTitle>
             <AlertDescription>
               <Button
                 type="button"
