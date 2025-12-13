@@ -330,7 +330,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
 
   const handleTradingAuthSignature = useCallback(async () => {
     if (!user?.address) {
-      setTradingAuthError('Please sign in to continue.')
+      setTradingAuthError('Unauthenticated.')
       return
     }
 

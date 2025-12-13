@@ -179,7 +179,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
         'FORKAST_SIGNATURE': signature,
       },
       body,
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(5_000),
     })
 
     const clobStoreOrderResponseJson = await clobStoreOrderResponse.json()

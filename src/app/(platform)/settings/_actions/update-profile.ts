@@ -4,6 +4,7 @@ import { Buffer } from 'node:buffer'
 import { revalidatePath } from 'next/cache'
 import sharp from 'sharp'
 import { z } from 'zod'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
 import { supabaseAdmin } from '@/lib/supabase'
 
@@ -87,7 +88,7 @@ export async function updateUserAction(formData: FormData): Promise<ActionState>
     return {}
   }
   catch {
-    return { error: 'Failed to update user.' }
+    return { error: DEFAULT_ERROR_MESSAGE }
   }
 }
 

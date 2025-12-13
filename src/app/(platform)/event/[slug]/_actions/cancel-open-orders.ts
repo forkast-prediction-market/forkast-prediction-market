@@ -9,7 +9,7 @@ interface BulkCancelResult {
 export async function cancelMultipleOrdersAction(orderIds: string[]): Promise<BulkCancelResult> {
   const uniqueOrderIds = Array.from(
     new Set(
-      orderIds.filter((id): id is string => typeof id === 'string' && id.trim().length > 0),
+      orderIds.filter((id): id is string => id.trim().length > 0),
     ),
   )
 

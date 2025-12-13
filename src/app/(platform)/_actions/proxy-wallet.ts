@@ -3,7 +3,11 @@
 import type { ProxyWalletStatus } from '@/types'
 import { eq } from 'drizzle-orm'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
-import { getSafeProxyWalletAddress, isProxyWalletDeployed, SAFE_PROXY_CREATE_PROXY_MESSAGE } from '@/lib/contracts/safeProxy'
+import {
+  getSafeProxyWalletAddress,
+  isProxyWalletDeployed,
+  SAFE_PROXY_CREATE_PROXY_MESSAGE,
+} from '@/lib/contracts/safeProxy'
 import { UserRepository } from '@/lib/db/queries/user'
 import { users } from '@/lib/db/schema/auth/tables'
 import { db } from '@/lib/drizzle'
@@ -26,7 +30,7 @@ interface SaveProxyWalletSignatureResult {
 }
 
 export async function saveProxyWalletSignature({ signature }: SaveProxyWalletSignatureArgs): Promise<SaveProxyWalletSignatureResult> {
-  const trimmedSignature = typeof signature === 'string' ? signature.trim() : ''
+  const trimmedSignature = signature.trim()
 
   if (!trimmedSignature || !trimmedSignature.startsWith('0x')) {
     return { data: null, error: 'Invalid signature received.' }
@@ -34,7 +38,7 @@ export async function saveProxyWalletSignature({ signature }: SaveProxyWalletSig
 
   const currentUser = await UserRepository.getCurrentUser({ disableCookieCache: true })
   if (!currentUser) {
-    return { data: null, error: 'Please sign in to continue.' }
+    return { data: null, error: 'Unauthenticated.' }
   }
 
   try {
@@ -163,10 +167,10 @@ async function triggerSafeProxyDeployment({
       'FORKAST_SIGNATURE': hmacSignature,
     },
     body,
-    signal: AbortSignal.timeout(15000),
+    signal: AbortSignal.timeout(15_000),
   })
 
-  let json: any = null
+  let json: any
   try {
     json = await response.json()
   }
@@ -174,7 +178,7 @@ async function triggerSafeProxyDeployment({
     json = null
   }
 
-  if (!response.ok) {
+  if (!response.ok && json) {
     const message = typeof json?.error === 'string'
       ? json.error
       : typeof json?.message === 'string'
@@ -183,6 +187,5 @@ async function triggerSafeProxyDeployment({
     throw new Error(message)
   }
 
-  const txHash = typeof json?.txHash === 'string' ? json.txHash : null
-  return txHash
+  return json && typeof json?.txHash === 'string' ? json.txHash : null
 }

@@ -22,7 +22,7 @@ interface SubmitSafeTransactionResult {
 export async function getSafeNonceAction(): Promise<SafeNonceResult> {
   const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
   if (!user) {
-    return { error: 'Please sign in to continue.' }
+    return { error: 'Unauthenticated.' }
   }
   if (!user.proxy_wallet_address) {
     return { error: 'Deploy your proxy wallet before approving tokens.' }
@@ -77,7 +77,7 @@ export async function getSafeNonceAction(): Promise<SafeNonceResult> {
 export async function submitSafeTransactionAction(request: SafeTransactionRequestPayload): Promise<SubmitSafeTransactionResult> {
   const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
   if (!user) {
-    return { error: 'Please sign in to continue.' }
+    return { error: 'Unauthenticated.' }
   }
 
   const auth = await getUserTradingAuthSecrets(user.id)

@@ -312,8 +312,8 @@ export function useInfiniteComments(eventSlug: string) {
   const deleteCommentMutation = useMutation({
     mutationFn: async ({ eventId, commentId }: { eventId: string, commentId: string }) => {
       const result = await deleteCommentAction(eventId, commentId)
-      if (result.error !== false) {
-        throw new Error(typeof result.error === 'string' ? result.error : 'Failed to delete comment')
+      if (result.error) {
+        throw new Error(result.error)
       }
       return commentId
     },

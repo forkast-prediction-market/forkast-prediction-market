@@ -59,7 +59,6 @@ async function fetchAdminUsers(params: UseAdminUsersParams): Promise<AdminUsersR
 export function useAdminUsers(params: UseAdminUsersParams = {}) {
   const { limit = 50, search, sortBy = 'created_at', sortOrder = 'desc', pageIndex = 0 } = params
 
-  // Debounce search to avoid excessive API calls
   const debouncedSearch = useDebounce(search, 300)
 
   const queryKey = useMemo(() => [
@@ -81,7 +80,7 @@ export function useAdminUsers(params: UseAdminUsersParams = {}) {
   })
 
   const retry = useCallback(() => {
-    query.refetch()
+    void query.refetch()
   }, [query])
 
   return {

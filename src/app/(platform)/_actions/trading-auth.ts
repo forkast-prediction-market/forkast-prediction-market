@@ -56,7 +56,7 @@ async function requestApiKey(baseUrl: string, headers: Record<string, string>) {
 export async function generateTradingAuthAction(input: z.input<typeof GenerateTradingAuthSchema>): Promise<TradingAuthActionResult> {
   const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
   if (!user) {
-    return { error: 'Please sign in to continue.', data: null }
+    return { error: 'Unauthenticated.', data: null }
   }
   if (!user.proxy_wallet_address) {
     return { error: 'Deploy your proxy wallet before enabling trading.', data: null }

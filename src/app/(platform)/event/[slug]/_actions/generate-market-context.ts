@@ -3,6 +3,7 @@
 import { z } from 'zod'
 import { generateMarketContext } from '@/lib/ai/market-context'
 import { loadMarketContextSettings } from '@/lib/ai/market-context-config'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { EventRepository } from '@/lib/db/queries/event'
 
 const GenerateMarketContextSchema = z.object({
@@ -44,6 +45,6 @@ export async function generateMarketContextAction(input: GenerateMarketContextIn
   }
   catch (error) {
     console.error('Failed to generate market context.', error)
-    return { error: 'Unable to generate market context. Please try again shortly.' }
+    return { error: DEFAULT_ERROR_MESSAGE }
   }
 }

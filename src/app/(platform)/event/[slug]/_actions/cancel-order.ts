@@ -65,7 +65,7 @@ export async function cancelOrderAction(rawOrderId: string) {
         'FORKAST_SIGNATURE': signature,
       },
       body,
-      signal: AbortSignal.timeout(5000),
+      signal: AbortSignal.timeout(5_000),
     })
 
     let payload: any
@@ -84,9 +84,9 @@ export async function cancelOrderAction(rawOrderId: string) {
         return { error: 'Order is already filled or cancelled.' }
       }
 
-      const message = typeof payload?.error === 'string'
+      const message = payload && typeof payload?.error === 'string'
         ? payload.error
-        : typeof payload?.message === 'string'
+        : payload && typeof payload?.message === 'string'
           ? payload.message
           : null
 

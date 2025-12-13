@@ -59,7 +59,7 @@ export default function EventsGrid({
   const [hasInitialized, setHasInitialized] = useState(false)
   const [scrollMargin, setScrollMargin] = useState(0)
   const PAGE_SIZE = 40
-  const isDefaultState = filters.tag === 'trending' && filters.search === '' && filters.bookmarked === false
+  const isDefaultState = filters.tag === 'trending' && filters.search === '' && !filters.bookmarked
   const shouldUseInitialData = isDefaultState && initialEvents.length > 0
 
   const {
