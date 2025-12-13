@@ -170,6 +170,8 @@ async function triggerSafeProxyDeployment({
     signal: AbortSignal.timeout(15_000),
   })
 
+  const responseForText = response.clone()
+
   let json: any
   try {
     json = await response.json()
@@ -178,12 +180,25 @@ async function triggerSafeProxyDeployment({
     json = null
   }
 
-  if (!response.ok && json) {
-    const message = typeof json?.error === 'string'
+  if (!response.ok) {
+    const messageFromJson = json && typeof json?.error === 'string'
       ? json.error
-      : typeof json?.message === 'string'
+      : json && typeof json?.message === 'string'
         ? json.message
-        : DEFAULT_ERROR_MESSAGE
+        : null
+
+    let messageFromText: string | null = null
+    if (!messageFromJson) {
+      try {
+        const text = await responseForText.text()
+        messageFromText = text.trim().slice(0, 300) || null
+      }
+      catch {
+        messageFromText = null
+      }
+    }
+
+    const message = messageFromJson ?? messageFromText ?? DEFAULT_ERROR_MESSAGE
     throw new Error(message)
   }
 

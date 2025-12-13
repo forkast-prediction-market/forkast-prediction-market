@@ -6,10 +6,10 @@ interface BulkCancelResult {
   failed: Array<{ id: string, error: string }>
 }
 
-export async function cancelMultipleOrdersAction(orderIds: string[]): Promise<BulkCancelResult> {
+export async function cancelMultipleOrdersAction(orderIds: Array<unknown>): Promise<BulkCancelResult> {
   const uniqueOrderIds = Array.from(
     new Set(
-      orderIds.filter((id): id is string => id.trim().length > 0),
+      orderIds.filter((id): id is string => typeof id === 'string' && id.trim().length > 0),
     ),
   )
 

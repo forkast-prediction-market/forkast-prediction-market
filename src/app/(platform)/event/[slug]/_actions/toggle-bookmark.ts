@@ -1,5 +1,6 @@
 'use server'
 
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { BookmarkRepository } from '@/lib/db/queries/bookmark'
 import { UserRepository } from '@/lib/db/queries/user'
 
@@ -14,6 +15,6 @@ export async function toggleBookmarkAction(eventId: string) {
     return await BookmarkRepository.toggleBookmark(userId, eventId)
   }
   catch {
-    return { data: null, error: 'Internal server error.' }
+    return { data: null, error: DEFAULT_ERROR_MESSAGE }
   }
 }
