@@ -69,7 +69,7 @@
     "@tailwindcss/postcss": "^4.1.12",
     "@tailwindcss/typography": "^0.5.19",
     "@testing-library/jest-dom": "^6.6.3",
-    "@testing-library/react": "^16.1.0",
+    "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.0",
     "@types/canvas-confetti": "^1.9.0",
     "@types/mdx": "^2.0.13",
