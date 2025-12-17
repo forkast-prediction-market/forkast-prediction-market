@@ -1,7 +1,6 @@
 'use server'
 
 import { z } from 'zod'
-import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
 import { buildClobHmacSignature } from '@/lib/hmac'
 import { getUserTradingAuthSecrets } from '@/lib/trading-auth/server'
@@ -31,14 +30,9 @@ export async function cancelOrderAction(rawOrderId: string) {
     return { error: parsed.error.issues[0]?.message ?? 'Invalid order.' }
   }
 
-  const lookup = await OrderRepository.findUserOrderById(parsed.data.orderId, user.id)
-  if (lookup.error || !lookup.data) {
-    return { error: 'Order not found.' }
-  }
-
   const method = 'DELETE'
   const path = '/order'
-  const body = JSON.stringify({ orderId: lookup.data.clob_order_id })
+  const body = JSON.stringify({ orderId: parsed.data.orderId })
   const timestamp = Math.floor(Date.now() / 1000)
   const signature = buildClobHmacSignature(
     auth.clob.secret,

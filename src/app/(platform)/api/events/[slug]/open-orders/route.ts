@@ -2,7 +2,6 @@ import type { ClobOrderType, UserOpenOrder } from '@/types'
 import { NextResponse } from 'next/server'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { EventRepository } from '@/lib/db/queries/event'
-import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
 import { buildClobHmacSignature } from '@/lib/hmac'
 import { getUserTradingAuthSecrets } from '@/lib/trading-auth/server'
@@ -87,22 +86,8 @@ export async function GET(
       auth: tradingAuth.clob,
     })
 
-    const { data: localOrders } = await OrderRepository.findUserOrdersByClobIds(
-      user.id,
-      clobOrders.map(order => order.id).filter(Boolean),
-    )
-    const localOrderIdMap = new Map<string, { id: string, condition_id: string }>()
-    localOrders?.forEach((row) => {
-      if (row?.clob_order_id) {
-        localOrderIdMap.set(row.clob_order_id, {
-          id: row.id,
-          condition_id: row.condition_id,
-        })
-      }
-    })
-
     const normalizedOrders = clobOrders
-      .map(order => mapClobOrder(order, marketMap, outcomeMap, localOrderIdMap))
+      .map(order => mapClobOrder(order, marketMap, outcomeMap))
       .filter((order): order is UserOpenOrder => Boolean(order))
 
     const sortedOrders = normalizedOrders.sort((a, b) => {
@@ -220,14 +205,12 @@ function mapClobOrder(
   order: ClobOpenOrder,
   marketMap: Map<string, UserOpenOrder['market']>,
   outcomeMap: Map<string, { index: number, text: string }>,
-  localOrderIdMap: Map<string, { id: string, condition_id: string }>,
 ): UserOpenOrder | null {
   const marketMeta = marketMap.get(normalizeId(order.market))
   if (!marketMeta) {
     return null
   }
 
-  const localMetadata = localOrderIdMap.get(order.id)
   const outcomeMeta = resolveOutcome(order, outcomeMap)
   const side = order.side === 'SELL' ? 'sell' : 'buy'
   const priceValue = clampNumber(parseNumber(order.price), 0, 1)
@@ -237,7 +220,7 @@ function mapClobOrder(
   const expiry = parseNumber(order.expiration)
 
   return {
-    id: localMetadata?.id || order.id,
+    id: order.id,
     side,
     type: order.type ?? 'GTC',
     status: order.status || 'live',
