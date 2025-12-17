@@ -316,7 +316,7 @@ export default function EventOrderBook({
         return next
       })
     }
-  }, [openOrdersQueryKey, pendingCancelIds, queryClient, removeOrderFromCache, scheduleOpenOrdersRefresh])
+  }, [openOrdersQueryKey, pendingCancelIds, queryClient, removeOrderFromCache, scheduleOpenOrdersRefresh, openTradeRequirements])
 
   useEffect(() => () => {
     if (refreshTimeoutRef.current) {
