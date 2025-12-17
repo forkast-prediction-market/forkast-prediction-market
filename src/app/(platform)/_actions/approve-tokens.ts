@@ -4,6 +4,7 @@ import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
 import { buildClobHmacSignature } from '@/lib/hmac'
+import { TRADING_AUTH_REQUIRED_ERROR } from '@/lib/trading-auth/errors'
 import { getUserTradingAuthSecrets, markTokenApprovalsCompleted } from '@/lib/trading-auth/server'
 
 interface SafeNonceResult {
@@ -30,7 +31,7 @@ export async function getSafeNonceAction(): Promise<SafeNonceResult> {
 
   const auth = await getUserTradingAuthSecrets(user.id)
   if (!auth?.relayer) {
-    return { error: 'Enable trading before approving tokens.' }
+    return { error: TRADING_AUTH_REQUIRED_ERROR }
   }
 
   const relayerUrl = process.env.RELAYER_URL
@@ -82,7 +83,7 @@ export async function submitSafeTransactionAction(request: SafeTransactionReques
 
   const auth = await getUserTradingAuthSecrets(user.id)
   if (!auth?.relayer) {
-    return { error: 'Enable trading before approving tokens.' }
+    return { error: TRADING_AUTH_REQUIRED_ERROR }
   }
 
   if (!user.proxy_wallet_address) {

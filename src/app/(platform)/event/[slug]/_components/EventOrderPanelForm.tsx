@@ -26,6 +26,7 @@ import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
 import { signOrderPayload } from '@/lib/orders/signing'
 import { MIN_LIMIT_ORDER_SHARES, validateOrder } from '@/lib/orders/validation'
+import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
 import { cn } from '@/lib/utils'
 import { isUserRejectedRequestError, normalizeAddress } from '@/lib/wallet'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
@@ -82,7 +83,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       : null
   }, [state.limitExpirationOption, state.limitExpirationTimestamp])
   const affiliateMetadata = useAffiliateOrderMetadata()
-  const { ensureTradingReady } = useTradingOnboarding()
+  const { ensureTradingReady, openTradeRequirements } = useTradingOnboarding()
   const hasDeployedProxyWallet = Boolean(user?.proxy_wallet_address && user?.proxy_wallet_status === 'deployed')
   const proxyWalletAddress = hasDeployedProxyWallet ? normalizeAddress(user?.proxy_wallet_address) : null
   const userAddress = normalizeAddress(user?.address)
@@ -386,6 +387,9 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       })
 
       if (result?.error) {
+        if (isTradingAuthRequiredError(result.error)) {
+          openTradeRequirements()
+        }
         handleOrderErrorFeedback('Trade failed', result.error)
         return
       }

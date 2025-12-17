@@ -9,6 +9,7 @@ import { isAdminWallet } from '@/lib/admin'
 import { projectId } from '@/lib/appkit'
 import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
+import { ensureUserTradingAuthSecretFingerprint } from '@/lib/trading-auth/server'
 import { sanitizeTradingAuthSettings } from '@/lib/trading-auth/utils'
 import * as schema from './db/schema'
 
@@ -26,10 +27,14 @@ export const auth = betterAuth({
   },
   plugins: [
     customSession(async ({ user, session }) => {
+      const userId = String((user as any).id ?? '')
       const rawSettings = (user as any).settings as Record<string, any> | undefined
-      const settings = rawSettings
-        ? sanitizeTradingAuthSettings(rawSettings)
+      const hydratedSettings = rawSettings && userId
+        ? await ensureUserTradingAuthSecretFingerprint(userId, rawSettings)
         : rawSettings
+      const settings = hydratedSettings
+        ? sanitizeTradingAuthSettings(hydratedSettings)
+        : hydratedSettings
 
       return {
         user: {

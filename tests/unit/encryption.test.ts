@@ -7,7 +7,7 @@ describe('encryption', () => {
   })
 
   it('encrypts and decrypts a secret round-trip', () => {
-    vi.stubEnv('USERS_ENCRYPTION_KEY', 'x'.repeat(32))
+    vi.stubEnv('BETTER_AUTH_SECRET', 'x'.repeat(32))
 
     const encrypted = encryptSecret('hello')
     expect(encrypted).toMatch(/^enc\.v1\./)
@@ -18,7 +18,7 @@ describe('encryption', () => {
   })
 
   it('returns empty string for empty inputs', () => {
-    vi.stubEnv('USERS_ENCRYPTION_KEY', 'x'.repeat(32))
+    vi.stubEnv('BETTER_AUTH_SECRET', 'x'.repeat(32))
     expect(encryptSecret('')).toBe('')
     expect(decryptSecret('')).toBe('')
     expect(decryptSecret(null)).toBe('')
@@ -26,14 +26,14 @@ describe('encryption', () => {
   })
 
   it('passes through non-prefixed values without needing a key', () => {
-    vi.stubEnv('USERS_ENCRYPTION_KEY', '')
+    vi.stubEnv('BETTER_AUTH_SECRET', '')
     expect(decryptSecret('plain-text')).toBe('plain-text')
   })
 
   it('fails closed when decrypting with missing/invalid key', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
     try {
-      vi.stubEnv('USERS_ENCRYPTION_KEY', '')
+      vi.stubEnv('BETTER_AUTH_SECRET', '')
       const result = decryptSecret('enc.v1.not-base64')
       expect(result).toBe('')
       expect(errorSpy).toHaveBeenCalled()
@@ -44,7 +44,7 @@ describe('encryption', () => {
   })
 
   it('throws when encrypting without a sufficiently long key', () => {
-    vi.stubEnv('USERS_ENCRYPTION_KEY', 'short')
-    expect(() => encryptSecret('hello')).toThrow(/USERS_ENCRYPTION_KEY/)
+    vi.stubEnv('BETTER_AUTH_SECRET', 'short')
+    expect(() => encryptSecret('hello')).toThrow(/BETTER_AUTH_SECRET/)
   })
 })

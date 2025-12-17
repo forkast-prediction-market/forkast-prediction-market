@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { TRADING_AUTH_REQUIRED_ERROR } from '@/lib/trading-auth/errors'
 
 const mocks = vi.hoisted(() => ({
   buildClobHmacSignature: vi.fn(() => 'sig'),
@@ -55,7 +56,7 @@ describe('cancelOrderAction', () => {
     mocks.getUserTradingAuthSecrets.mockResolvedValueOnce({ clob: null })
 
     const { cancelOrderAction } = await import('@/app/(platform)/event/[slug]/_actions/cancel-order')
-    expect(await cancelOrderAction('order-1')).toEqual({ error: 'Please enable trading first.' })
+    expect(await cancelOrderAction('order-1')).toEqual({ error: TRADING_AUTH_REQUIRED_ERROR })
 
     mocks.getUserTradingAuthSecrets.mockResolvedValueOnce({ clob: { key: 'k', passphrase: 'p', secret: 's' } })
     expect(await cancelOrderAction('order-1')).toEqual({ error: 'Deploy your proxy wallet before trading.' })

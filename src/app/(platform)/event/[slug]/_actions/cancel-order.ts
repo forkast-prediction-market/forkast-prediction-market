@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
 import { buildClobHmacSignature } from '@/lib/hmac'
+import { TRADING_AUTH_REQUIRED_ERROR } from '@/lib/trading-auth/errors'
 import { getUserTradingAuthSecrets } from '@/lib/trading-auth/server'
 
 const CancelOrderSchema = z.object({
@@ -20,7 +21,7 @@ export async function cancelOrderAction(rawOrderId: string) {
 
   const auth = await getUserTradingAuthSecrets(user.id)
   if (!auth?.clob) {
-    return { error: 'Please enable trading first.' }
+    return { error: TRADING_AUTH_REQUIRED_ERROR }
   }
   if (!user.proxy_wallet_address) {
     return { error: 'Deploy your proxy wallet before trading.' }

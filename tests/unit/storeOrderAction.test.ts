@@ -1,5 +1,6 @@
 import type { storeOrderAction } from '@/app/(platform)/event/[slug]/_actions/store-order'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { TRADING_AUTH_REQUIRED_ERROR } from '@/lib/trading-auth/errors'
 
 type StoreOrderInput = Parameters<typeof storeOrderAction>[0]
 
@@ -107,7 +108,7 @@ describe('storeOrderAction', () => {
 
     const { storeOrderAction } = await import('@/app/(platform)/event/[slug]/_actions/store-order')
     const result = await storeOrderAction(basePayload())
-    expect(result?.error).toBe('Please enable trading to continue.')
+    expect(result?.error).toBe(TRADING_AUTH_REQUIRED_ERROR)
 
     mocks.getCurrentUser.mockResolvedValueOnce(baseUser)
     mocks.getUserTradingAuthSecrets.mockResolvedValueOnce({

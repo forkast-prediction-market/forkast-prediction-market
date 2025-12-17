@@ -12,7 +12,9 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel, sharesFormatter, toCents, usdFormatter } from '@/lib/formatters'
+import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
 import { cn } from '@/lib/utils'
+import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useOrder } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
 
@@ -188,6 +190,7 @@ export default function EventOrderBook({
   eventSlug,
 }: EventOrderBookProps) {
   const user = useUser()
+  const { openTradeRequirements } = useTradingOnboarding()
   const queryClient = useQueryClient()
   const refreshTimeoutRef = useRef<number | null>(null)
   const [pendingCancelIds, setPendingCancelIds] = useState<Set<string>>(() => new Set())
@@ -283,6 +286,9 @@ export default function EventOrderBook({
     try {
       const response = await cancelOrderAction(orderId)
       if (response?.error) {
+        if (isTradingAuthRequiredError(response.error)) {
+          openTradeRequirements()
+        }
         throw new Error(response.error)
       }
 
@@ -376,7 +382,7 @@ export default function EventOrderBook({
   }
 
   return (
-    <div className="relative scrollbar-hide max-h-[360px] overflow-y-auto">
+    <div className="relative scrollbar-hide max-h-90 overflow-y-auto">
       <div>
         <div
           className={`

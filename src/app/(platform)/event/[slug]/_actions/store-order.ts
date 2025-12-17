@@ -10,6 +10,7 @@ import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
 import { toMicro } from '@/lib/formatters'
 import { buildClobHmacSignature } from '@/lib/hmac'
+import { TRADING_AUTH_REQUIRED_ERROR } from '@/lib/trading-auth/errors'
 import { getUserTradingAuthSecrets } from '@/lib/trading-auth/server'
 import { normalizeAddress } from '@/lib/wallet'
 
@@ -93,7 +94,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
 
   const auth = await getUserTradingAuthSecrets(user.id)
   if (!auth?.clob) {
-    return { error: 'Please enable trading to continue.' }
+    return { error: TRADING_AUTH_REQUIRED_ERROR }
   }
   if (!user.proxy_wallet_address) {
     return { error: 'Deploy your proxy wallet before trading.' }
