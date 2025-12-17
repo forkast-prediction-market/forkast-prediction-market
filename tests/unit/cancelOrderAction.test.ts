@@ -5,7 +5,6 @@ const mocks = vi.hoisted(() => ({
   getUserTradingAuthSecrets: vi.fn(),
   getCurrentUser: vi.fn(),
   findUserOrderById: vi.fn(),
-  cancelOrder: vi.fn(),
 }))
 
 vi.mock('@/lib/hmac', () => ({
@@ -23,7 +22,6 @@ vi.mock('@/lib/db/queries/user', () => ({
 vi.mock('@/lib/db/queries/order', () => ({
   OrderRepository: {
     findUserOrderById: (...args: any[]) => mocks.findUserOrderById(...args),
-    cancelOrder: (...args: any[]) => mocks.cancelOrder(...args),
   },
 }))
 
@@ -34,7 +32,6 @@ describe('cancelOrderAction', () => {
     mocks.getUserTradingAuthSecrets.mockReset()
     mocks.getCurrentUser.mockReset()
     mocks.findUserOrderById.mockReset()
-    mocks.cancelOrder.mockReset()
   })
 
   it('rejects unauthenticated users', async () => {
@@ -76,9 +73,6 @@ describe('cancelOrderAction', () => {
 
     mocks.findUserOrderById.mockResolvedValueOnce({ data: null, error: null })
     expect(await cancelOrderAction('order-1')).toEqual({ error: 'Order not found.' })
-
-    mocks.findUserOrderById.mockResolvedValueOnce({ data: { id: '1', status: 'matched' }, error: null })
-    expect(await cancelOrderAction('order-1')).toEqual({ error: 'This order can no longer be cancelled.' })
   })
 
   it('maps CLOB HTTP errors to user-facing messages', async () => {
@@ -116,10 +110,8 @@ describe('cancelOrderAction', () => {
       status: 200,
       json: async () => ({}),
     }) as any
-    mocks.cancelOrder.mockResolvedValueOnce({ error: null })
 
     const { cancelOrderAction } = await import('@/app/(platform)/event/[slug]/_actions/cancel-order')
     expect(await cancelOrderAction('order-1')).toEqual({ error: null })
-    expect(mocks.cancelOrder).toHaveBeenCalledWith('local', 'user-1')
   })
 })

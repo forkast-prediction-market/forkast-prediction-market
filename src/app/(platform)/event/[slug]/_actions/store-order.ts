@@ -8,7 +8,6 @@ import { cacheTags } from '@/lib/cache-tags'
 import { CLOB_ORDER_TYPE, CONDITIONAL_TOKENS_CONTRACT, ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
-import { toMicro } from '@/lib/formatters'
 import { buildClobHmacSignature } from '@/lib/hmac'
 import { getUserTradingAuthSecrets } from '@/lib/trading-auth/server'
 import { normalizeAddress } from '@/lib/wallet'
@@ -194,29 +193,20 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       return { error: DEFAULT_ERROR_MESSAGE }
     }
 
-    fetch(`${process.env.CLOB_URL}/data/order/${clobStoreOrderResponseJson.orderId}`)
-      .then(res => res.json())
-      .then((res) => {
-        OrderRepository.createOrder({
-          ...validated.data,
-          salt: BigInt(validated.data.salt),
-          maker_amount: BigInt(validated.data.maker_amount),
-          taker_amount: BigInt(validated.data.taker_amount),
-          nonce: BigInt(validated.data.nonce),
-          fee_rate_bps: Number(validated.data.fee_rate_bps),
-          affiliate_percentage: Number(validated.data.affiliate_percentage),
-          expiration: BigInt(validated.data.expiration),
-          user_id: user.id,
-          affiliate_user_id: user.referred_by_user_id,
-          type: clobOrderType,
-          status: res.order.status,
-          clob_order_id: res.order.id,
-          size_matched: BigInt(toMicro(res.order.sizeMatched)),
-        })
-      })
-      .catch((err) => {
-        console.error('Failed to get order from CLOB.', err.message)
-      })
+    void OrderRepository.createOrder({
+      ...validated.data,
+      salt: BigInt(validated.data.salt),
+      maker_amount: BigInt(validated.data.maker_amount),
+      taker_amount: BigInt(validated.data.taker_amount),
+      nonce: BigInt(validated.data.nonce),
+      fee_rate_bps: Number(validated.data.fee_rate_bps),
+      affiliate_percentage: Number(validated.data.affiliate_percentage),
+      expiration: BigInt(validated.data.expiration),
+      user_id: user.id,
+      affiliate_user_id: user.referred_by_user_id,
+      type: clobOrderType,
+      clob_order_id: clobStoreOrderResponseJson.orderId,
+    })
 
     updateTag(cacheTags.activity(validated.data.slug))
     updateTag(cacheTags.holders(validated.data.condition_id))

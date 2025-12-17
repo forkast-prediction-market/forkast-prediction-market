@@ -1,12 +1,12 @@
-import type { ClobOrderType, Event, QueryResult, UserOpenOrder } from '@/types'
+import type { conditions, outcomes } from '@/lib/db/schema/events/tables'
+import type { Event, QueryResult } from '@/types'
 import { and, desc, eq, exists, ilike, inArray, sql } from 'drizzle-orm'
 import { cacheTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { bookmarks } from '@/lib/db/schema/bookmarks/tables'
 import { comments } from '@/lib/db/schema/comments/tables'
-import { conditions, event_tags, events, markets, outcomes, tags } from '@/lib/db/schema/events/tables'
-import { orders } from '@/lib/db/schema/orders/tables'
+import { event_tags, events, markets, tags } from '@/lib/db/schema/events/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
@@ -688,95 +688,6 @@ export const EventRepository = {
         .slice(0, 3)
 
       return { data: transformedResults, error: null }
-    })
-  },
-
-  async getUserOpenOrdersBySlug(args: {
-    slug: string
-    userId: string
-    limit: number
-    offset: number
-    conditionId?: string
-  }): Promise<QueryResult<UserOpenOrder[]>> {
-    return runQuery(async () => {
-      const priceExpression = sql<number>`CASE
-        WHEN ${orders.maker_amount} + ${orders.taker_amount} > 0
-        THEN ${orders.taker_amount}::numeric / (${orders.maker_amount} + ${orders.taker_amount})::numeric
-        ELSE 0.5
-      END`
-
-      const filters = [
-        eq(events.slug, args.slug),
-        eq(orders.user_id, args.userId),
-        eq(orders.status, 'live'),
-        inArray(orders.type, ['GTC', 'GTD']),
-      ]
-
-      if (args.conditionId) {
-        filters.push(eq(orders.condition_id, args.conditionId))
-      }
-
-      const whereCondition = filters.length > 1 ? and(...filters) : filters[0]
-
-      const rows = await db
-        .select({
-          id: orders.id,
-          side: orders.side,
-          type: orders.type,
-          status: orders.status,
-          maker_amount: orders.maker_amount,
-          taker_amount: orders.taker_amount,
-          size_matched: orders.size_matched,
-          price: priceExpression,
-          expiration: orders.expiration,
-          created_at: orders.created_at,
-          condition_id: conditions.id,
-          market_title: markets.title,
-          market_slug: markets.slug,
-          market_is_active: markets.is_active,
-          market_is_resolved: markets.is_resolved,
-          outcome_index: outcomes.outcome_index,
-          outcome_text: outcomes.outcome_text,
-        })
-        .from(orders)
-        .innerJoin(conditions, eq(orders.condition_id, conditions.id))
-        .innerJoin(outcomes, eq(orders.token_id, outcomes.token_id))
-        .innerJoin(markets, eq(conditions.id, markets.condition_id))
-        .innerJoin(events, eq(markets.event_id, events.id))
-        .where(whereCondition)
-        .orderBy(desc(orders.created_at))
-        .limit(args.limit)
-        .offset(args.offset)
-
-      const data: UserOpenOrder[] = rows.map((row: any) => ({
-        id: row.id || '',
-        side: row.side === 0 ? 'buy' : 'sell',
-        type: (row.type as ClobOrderType) || 'GTC',
-        status: row.status || '',
-        price: safeNumber(row.price ?? 0.5),
-        maker_amount: safeNumber(row.maker_amount),
-        taker_amount: safeNumber(row.taker_amount),
-        size_matched: safeNumber(row.size_matched),
-        created_at: row.created_at instanceof Date
-          ? row.created_at.toISOString()
-          : new Date().toISOString(),
-        expiration: safeNumber(row.expiration),
-        outcome: {
-          index: typeof row.outcome_index === 'number'
-            ? row.outcome_index
-            : safeNumber(row.outcome_index),
-          text: row.outcome_text || '',
-        },
-        market: {
-          condition_id: row.condition_id || '',
-          title: row.market_title || '',
-          slug: row.market_slug || '',
-          is_active: Boolean(row.market_is_active),
-          is_resolved: Boolean(row.market_is_resolved),
-        },
-      }))
-
-      return { data, error: null }
     })
   },
 }

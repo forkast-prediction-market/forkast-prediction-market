@@ -36,10 +36,6 @@ export async function cancelOrderAction(rawOrderId: string) {
     return { error: 'Order not found.' }
   }
 
-  if (!['live', 'pending'].includes(lookup.data.status)) {
-    return { error: 'This order can no longer be cancelled.' }
-  }
-
   const method = 'DELETE'
   const path = '/order'
   const body = JSON.stringify({ orderId: lookup.data.clob_order_id })
@@ -92,11 +88,6 @@ export async function cancelOrderAction(rawOrderId: string) {
 
       console.error('Failed to cancel order on CLOB.', message ?? `Status ${response.status}`)
       return { error: message || CANCEL_ORDER_ERROR }
-    }
-
-    const { error: cancelError } = await OrderRepository.cancelOrder(lookup.data.id, user.id)
-    if (cancelError) {
-      console.error('Failed to mark order as cancelled locally.', cancelError)
     }
 
     return { error: null }

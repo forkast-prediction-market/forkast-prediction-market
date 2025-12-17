@@ -26,10 +26,8 @@ CREATE TABLE orders
   user_id              TEXT                                             NOT NULL,
   condition_id         TEXT                                             NOT NULL,
   type                 TEXT                                             NOT NULL,
-  status               TEXT                     DEFAULT 'live'          NOT NULL,
   affiliate_user_id    TEXT,
   clob_order_id        TEXT                                             NOT NULL,
-  size_matched         BIGINT                   DEFAULT 0               NOT NULL,
   created_at           TIMESTAMP WITH TIME ZONE DEFAULT NOW()           NOT NULL,
   updated_at           TIMESTAMP WITH TIME ZONE DEFAULT NOW()           NOT NULL,
   CONSTRAINT orders_type_check CHECK (orders.type IN ('FAK', 'FOK', 'GTC', 'GTD')),
@@ -60,68 +58,7 @@ ALTER TABLE orders
 CREATE POLICY service_role_all_orders ON orders AS PERMISSIVE FOR ALL TO service_role USING (TRUE) WITH CHECK (TRUE);
 
 -- ===========================================
--- 5. VIEWS
--- ===========================================
-
-CREATE OR REPLACE VIEW v_user_outcome_positions
-  WITH (security_invoker = true) AS
-WITH normalized_orders AS (SELECT o.id,
-                                  o.user_id,
-                                  o.condition_id,
-                                  o.token_id,
-                                  o.side,
-                                  o.created_at,
-                                  CASE
-                                    WHEN o.side = 0 THEN o.taker_amount :: NUMERIC
-                                    ELSE o.maker_amount :: NUMERIC
-                                    END AS shares_micro,
-                                  CASE
-                                    WHEN o.side = 0 THEN o.maker_amount :: NUMERIC
-                                    ELSE o.taker_amount :: NUMERIC
-                                    END AS value_micro
-                           FROM orders o
-                           WHERE o.status = 'matched')
-SELECT n.user_id,
-       n.condition_id,
-       n.token_id,
-       out.outcome_index,
-       out.outcome_text,
-       SUM(
-         CASE
-           WHEN n.side = 0 THEN n.shares_micro
-           ELSE - n.shares_micro
-           END
-       )                  AS net_shares_micro,
-       SUM(
-         CASE
-           WHEN n.side = 0 THEN n.value_micro
-           ELSE 0
-           END
-       )                  AS total_cost_micro,
-       SUM(
-         CASE
-           WHEN n.side = 1 THEN n.value_micro
-           ELSE 0
-           END
-       )                  AS total_proceeds_micro,
-       COUNT(*) :: BIGINT AS order_count,
-       MAX(n.created_at)  AS last_activity_at
-FROM normalized_orders n
-       JOIN outcomes out ON out.token_id = n.token_id
-GROUP BY n.user_id,
-         n.condition_id,
-         n.token_id,
-         out.outcome_index,
-         out.outcome_text
-HAVING SUM(
-         CASE
-           WHEN n.side = 0 THEN n.shares_micro
-           ELSE - n.shares_micro
-           END
-       ) <> 0;
-
--- ===========================================
--- 6. TRIGGERS
+-- 5. TRIGGERS
 -- ===========================================
 CREATE TRIGGER set_orders_updated_at
   BEFORE

@@ -11,7 +11,6 @@ export const OrderRepository = {
         .select({
           id: orders.id,
           clob_order_id: orders.clob_order_id,
-          status: orders.status,
         })
         .from(orders)
         .where(and(
@@ -52,40 +51,13 @@ export const OrderRepository = {
     user_id: string
     affiliate_user_id: string
     condition_id: string
-    status: string
     clob_order_id: string
-    size_matched: bigint
   }) {
     return await runQuery(async () => {
       const result = await db
         .insert(orders)
         .values(args)
         .returning()
-
-      return { data: result[0], error: null }
-    })
-  },
-
-  async cancelOrder(orderId: string, userId: string) {
-    return await runQuery(async () => {
-      const result = await db
-        .update(orders)
-        .set({
-          status: 'cancelled',
-        })
-        .where(and(
-          eq(orders.id, orderId),
-          eq(orders.user_id, userId),
-          inArray(orders.status, ['delayed', 'live']),
-        ))
-        .returning()
-
-      if (result.length === 0) {
-        return {
-          data: null,
-          error: 'No matching order found or order cannot be cancelled',
-        }
-      }
 
       return { data: result[0], error: null }
     })
