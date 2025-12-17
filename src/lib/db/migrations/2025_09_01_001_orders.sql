@@ -32,7 +32,6 @@ CREATE TABLE orders
   updated_at           TIMESTAMP WITH TIME ZONE DEFAULT NOW()           NOT NULL,
   CONSTRAINT orders_type_check CHECK (orders.type IN ('FAK', 'FOK', 'GTC', 'GTD')),
   CONSTRAINT orders_side_check CHECK (orders.side IN (0, 1)),
-  CONSTRAINT orders_status_check CHECK (orders.status IN ('live', 'matched', 'delayed', 'unmatched'))
 );
 
 -- ===========================================
@@ -41,7 +40,6 @@ CREATE TABLE orders
 
 CREATE INDEX idx_orders_user_id ON orders (user_id);
 CREATE INDEX idx_orders_condition ON orders (condition_id, token_id);
-CREATE INDEX idx_orders_status ON orders (status);
 CREATE INDEX idx_orders_created_at ON orders (created_at);
 
 -- ===========================================
