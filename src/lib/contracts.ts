@@ -1,4 +1,4 @@
-import { IS_TEST_MODE } from '@/lib/constants'
+import { IS_TEST_MODE } from '@/lib/network'
 
 export const COLLATERAL_TOKEN_ADDRESS = IS_TEST_MODE
   ? '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582' as `0x${string}`

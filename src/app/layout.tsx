@@ -3,8 +3,8 @@
 import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from 'react'
 import TestModeBanner from '@/components/TestModeBanner'
-import { IS_TEST_MODE } from '@/lib/constants'
 import { openSauceOne } from '@/lib/fonts'
+import { IS_TEST_MODE } from '@/lib/network'
 import './globals.css'
 
 export const metadata: Metadata = {

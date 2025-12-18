@@ -3,10 +3,6 @@ import { CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS } from '@/lib/contr
 
 export const DEFAULT_ERROR_MESSAGE = 'Internal server error. Try again in a few moments.'
 
-export const AMOY_CHAIN_ID = 80_002
-
-export const IS_TEST_MODE = defaultNetwork.id === AMOY_CHAIN_ID
-
 export const DEFAULT_CONDITION_PARTITION = ['1', '2'] as const
 
 export const ORDER_SIDE = {
