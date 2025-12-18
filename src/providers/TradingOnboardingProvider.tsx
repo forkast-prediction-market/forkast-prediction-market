@@ -15,17 +15,16 @@ import { useAppKit } from '@/hooks/useAppKit'
 import { defaultNetwork } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
 import {
-  CONDITIONAL_TOKENS_CONTRACT,
-  CTF_EXCHANGE_ADDRESS,
   DEFAULT_ERROR_MESSAGE,
-  NEG_RISK_CTF_EXCHANGE_ADDRESS,
+
 } from '@/lib/constants'
+import { CONDITIONAL_TOKENS_CONTRACT, CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS } from '@/lib/contracts'
 import {
   getSafeProxyDomain,
   SAFE_PROXY_CREATE_PROXY_MESSAGE,
   SAFE_PROXY_PRIMARY_TYPE,
   SAFE_PROXY_TYPES,
-} from '@/lib/contracts/safeProxy'
+} from '@/lib/safe-proxy'
 import {
   aggregateSafeTransactions,
   buildApproveTokenTransactions,

@@ -10,7 +10,8 @@ import { WalletDepositModal, WalletWithdrawModal } from '@/components/WalletModa
 import { useBalance } from '@/hooks/useBalance'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { defaultNetwork } from '@/lib/appkit'
-import { COLLATERAL_TOKEN_ADDRESS, DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
+import { COLLATERAL_TOKEN_ADDRESS } from '@/lib/contracts'
 import { buildSendErc20Transaction, getSafeTxTypedData, packSafeSignature } from '@/lib/safe/transactions'
 
 interface WalletFlowProps {

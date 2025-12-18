@@ -17,7 +17,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { defaultNetwork } from '@/lib/appkit'
-import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE, ZERO_COLLECTION_ID } from '@/lib/constants'
+import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
+import { ZERO_COLLECTION_ID } from '@/lib/contracts'
 import { formatAmountInputValue, toMicro } from '@/lib/formatters'
 import {
   aggregateSafeTransactions,

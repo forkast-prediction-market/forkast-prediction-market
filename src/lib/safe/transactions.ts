@@ -8,7 +8,14 @@ import {
   size,
   zeroAddress,
 } from 'viem'
-import { COLLATERAL_TOKEN_ADDRESS, CONDITIONAL_TOKENS_CONTRACT, CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS, ZERO_COLLECTION_ID } from '@/lib/constants'
+import {
+  COLLATERAL_TOKEN_ADDRESS,
+  CONDITIONAL_TOKENS_CONTRACT,
+  CTF_EXCHANGE_ADDRESS,
+  NEG_RISK_CTF_EXCHANGE_ADDRESS,
+  SAFE_MULTISEND_ADDRESS,
+  ZERO_COLLECTION_ID,
+} from '@/lib/contracts'
 
 export enum SafeOperationType {
   Call = 0,
@@ -37,7 +44,6 @@ const SAFE_TX_TYPES = {
   ],
 } as const
 
-const SAFE_MULTISEND_ADDRESS = '0xA238CBeb142c10Ef7Ad8442C6D1f9E89e07e7761'
 const MAX_ALLOWANCE = BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff')
 
 const multisendAbi = [
@@ -278,7 +284,7 @@ export function aggregateSafeTransactions(transactions: SafeTransaction[]): Safe
   })
 
   return {
-    to: SAFE_MULTISEND_ADDRESS as `0x${string}`,
+    to: SAFE_MULTISEND_ADDRESS,
     value: '0',
     data,
     operation: SafeOperationType.DelegateCall,

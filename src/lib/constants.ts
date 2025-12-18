@@ -1,20 +1,11 @@
 import { defaultNetwork } from '@/lib/appkit'
+import { CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS } from '@/lib/contracts'
 
 export const DEFAULT_ERROR_MESSAGE = 'Internal server error. Try again in a few moments.'
-
-export const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000' as `0x${string}`
 
 export const AMOY_CHAIN_ID = 80_002
 
 export const IS_TEST_MODE = defaultNetwork.id === AMOY_CHAIN_ID
-
-export const CONDITIONAL_TOKENS_CONTRACT = '0x211B46233799C69da351cd7e8d0Bfe9071323Cb6' as `0x${string}`
-
-export const COLLATERAL_TOKEN_ADDRESS = IS_TEST_MODE
-  ? '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582' as `0x${string}`
-  : '0x2791bca1f2de4661ed88a30c99a7a9449aa84174' as `0x${string}`
-
-export const ZERO_COLLECTION_ID = '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`
 
 export const DEFAULT_CONDITION_PARTITION = ['1', '2'] as const
 
@@ -42,10 +33,6 @@ export const OUTCOME_INDEX = {
 
 export const CAP_MICRO = 990_000n
 export const FLOOR_MICRO = 10_000n
-
-export const CTF_EXCHANGE_ADDRESS = '0x828da759D63e7d7890AF8F30e3Cdc9c456F7533e' as `0x${string}`
-
-export const NEG_RISK_CTF_EXCHANGE_ADDRESS = '0x3314ad2140f1b5F3b305Fd062E2D2d3E75Fc5205' as `0x${string}`
 
 export const EIP712_DOMAIN = {
   name: 'Forkast CTF Exchange',

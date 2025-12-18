@@ -1,7 +1,8 @@
 import type { CLOB_ORDER_TYPE } from '@/lib/constants'
 import type { BlockchainOrder, OrderSide, OrderType, Outcome } from '@/types'
 import { storeOrderAction } from '@/app/(platform)/event/[slug]/_actions/store-order'
-import { CAP_MICRO, FLOOR_MICRO, ORDER_SIDE, ORDER_TYPE, ZERO_ADDRESS } from '@/lib/constants'
+import { CAP_MICRO, FLOOR_MICRO, ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
+import { ZERO_ADDRESS } from '@/lib/contracts'
 import { toMicro } from '@/lib/formatters'
 
 export interface CalculateOrderAmountsArgs {

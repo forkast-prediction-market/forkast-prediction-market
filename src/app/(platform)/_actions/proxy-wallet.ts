@@ -3,15 +3,15 @@
 import type { ProxyWalletStatus } from '@/types'
 import { eq } from 'drizzle-orm'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
-import {
-  getSafeProxyWalletAddress,
-  isProxyWalletDeployed,
-  SAFE_PROXY_CREATE_PROXY_MESSAGE,
-} from '@/lib/contracts/safeProxy'
 import { UserRepository } from '@/lib/db/queries/user'
 import { users } from '@/lib/db/schema/auth/tables'
 import { db } from '@/lib/drizzle'
 import { buildClobHmacSignature } from '@/lib/hmac'
+import {
+  getSafeProxyWalletAddress,
+  isProxyWalletDeployed,
+  SAFE_PROXY_CREATE_PROXY_MESSAGE,
+} from '@/lib/safe-proxy'
 import { getUserTradingAuthSecrets } from '@/lib/trading-auth/server'
 
 interface SaveProxyWalletSignatureArgs {

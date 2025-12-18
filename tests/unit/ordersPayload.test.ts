@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ORDER_SIDE, ORDER_TYPE, ZERO_ADDRESS } from '@/lib/constants'
+import { ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
+import { ZERO_ADDRESS } from '@/lib/contracts'
 import { buildOrderPayload } from '@/lib/orders'
 
 vi.mock('@/app/(platform)/event/[slug]/_actions/store-order', () => ({

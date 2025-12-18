@@ -3,7 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { createPublicClient, erc1155Abi, http } from 'viem'
 import { defaultNetwork } from '@/lib/appkit'
-import { CONDITIONAL_TOKENS_CONTRACT, OUTCOME_INDEX } from '@/lib/constants'
+import { OUTCOME_INDEX } from '@/lib/constants'
+import { CONDITIONAL_TOKENS_CONTRACT } from '@/lib/contracts'
 
 export interface SharesByCondition {
   [conditionId: string]: {

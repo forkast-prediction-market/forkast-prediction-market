@@ -1,9 +1,9 @@
 import { eq } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
-import { isProxyWalletDeployed } from '@/lib/contracts/safeProxy'
 import { UserRepository } from '@/lib/db/queries/user'
 import { users } from '@/lib/db/schema/auth/tables'
 import { db } from '@/lib/drizzle'
+import { isProxyWalletDeployed } from '@/lib/safe-proxy'
 
 export async function GET() {
   const user = await UserRepository.getCurrentUser({ disableCookieCache: true })

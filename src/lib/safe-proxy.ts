@@ -1,12 +1,10 @@
 import type { Address, TypedDataDomain } from 'viem'
 import { createPublicClient, http } from 'viem'
 import { defaultNetwork } from '@/lib/appkit'
-import { ZERO_ADDRESS } from '@/lib/constants'
+import { SAFE_PROXY_FACTORY_ADDRESS, ZERO_ADDRESS } from '@/lib/contracts'
 
 export const SAFE_PROXY_DOMAIN_NAME = 'Forkast Contract Proxy Factory'
 export const SAFE_PROXY_PRIMARY_TYPE = 'CreateProxy'
-
-export const SAFE_PROXY_FACTORY_ADDRESS = '0x960a8ac6378A8C6702BFbe9F3bE237e87d7a96dd' as Address
 
 export const SAFE_PROXY_TYPES = {
   CreateProxy: [

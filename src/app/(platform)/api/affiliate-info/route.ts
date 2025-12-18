@@ -1,7 +1,8 @@
 'use server'
 
 import { NextResponse } from 'next/server'
-import { DEFAULT_ERROR_MESSAGE, ZERO_ADDRESS } from '@/lib/constants'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
+import { ZERO_ADDRESS } from '@/lib/contracts'
 import { SettingsRepository } from '@/lib/db/queries/settings'
 import { UserRepository } from '@/lib/db/queries/user'
 

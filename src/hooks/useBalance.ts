@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { createPublicClient, getContract, http } from 'viem'
 import { defaultNetwork } from '@/lib/appkit'
-import { COLLATERAL_TOKEN_ADDRESS } from '@/lib/constants'
+import { COLLATERAL_TOKEN_ADDRESS } from '@/lib/contracts'
 import { normalizeAddress } from '@/lib/wallet'
 import { useUser } from '@/stores/useUser'
 

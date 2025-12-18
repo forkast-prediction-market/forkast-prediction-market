@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { ZERO_ADDRESS } from '@/lib/constants'
+
+import { ZERO_ADDRESS } from '@/lib/contracts'
 
 interface AffiliateInfoResponse {
   referrerAddress: `0x${string}`
