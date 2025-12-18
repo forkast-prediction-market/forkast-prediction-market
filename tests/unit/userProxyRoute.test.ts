@@ -13,7 +13,7 @@ vi.mock('@/lib/db/queries/user', () => ({
   UserRepository: { getCurrentUser: (...args: any[]) => mocks.getCurrentUser(...args) },
 }))
 
-vi.mock('@/lib/contracts/safeProxy', () => ({
+vi.mock('@/lib/safe-proxy', () => ({
   isProxyWalletDeployed: (...args: any[]) => mocks.isProxyWalletDeployed(...args),
 }))
 
