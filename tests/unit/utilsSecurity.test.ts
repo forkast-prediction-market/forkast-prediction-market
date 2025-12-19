@@ -21,6 +21,27 @@ describe('sanitizeSvg', () => {
     const sanitized = sanitizeSvg(input)
     expect(sanitized).toContain('data:image/png;base64')
   })
+
+  it('removes foreignObject blocks', () => {
+    const input = `<svg><foreignObject><div xmlns="http://www.w3.org/1999/xhtml"><script>alert(1)</script></div></foreignObject><rect /></svg>`
+    const sanitized = sanitizeSvg(input).toLowerCase()
+    expect(sanitized).not.toContain('foreignobject')
+    expect(sanitized).not.toContain('<script')
+  })
+
+  it('drops external url() paint references', () => {
+    const input = `<svg><path fill="url(https://evil.example/x)" stroke="url(#safe)"/></svg>`
+    const sanitized = sanitizeSvg(input).toLowerCase()
+    expect(sanitized).not.toContain('fill="url(https://')
+    expect(sanitized).toContain('stroke="url(#safe')
+  })
+
+  it('removes unquoted event handlers and data:image/svg+xml', () => {
+    const input = `<svg onload=alert(1)><image href="data:image/svg+xml;base64,PHN2Zz48c2NyaXB0PmFsZXJ0KDEpPC9zY3JpcHQ+PC9zdmc+"/></svg>`
+    const sanitized = sanitizeSvg(input).toLowerCase()
+    expect(sanitized).not.toContain('onload=')
+    expect(sanitized).not.toContain('data:image/svg+xml')
+  })
 })
 
 describe('isMarketNew', () => {

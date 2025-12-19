@@ -21,38 +21,161 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-const SCRIPT_OPEN_TAG = '<script'
-const SCRIPT_CLOSE_TAG = '</script>'
+const DISALLOWED_ELEMENT_TAGS_WITH_CONTENT = [
+  'script',
+  'foreignobject',
+  'iframe',
+  'object',
+  'embed',
+  'style',
+] as const
 
-function stripScriptTags(svg: string) {
+const DISALLOWED_ELEMENT_TAGS_SELF_CLOSING = [
+  'link',
+  'meta',
+  'base',
+] as const
+
+const DROP_TAGS_BUT_KEEP_CONTENT = [
+  'a',
+  'use',
+] as const
+
+function stripElementBlocks(svg: string, tag: string) {
+  const openTag = `<${tag}`
+  const closeTag = `</${tag}>`
   const lower = svg.toLowerCase()
   let cursor = 0
   let sanitized = ''
 
   while (cursor < svg.length) {
-    const start = lower.indexOf(SCRIPT_OPEN_TAG, cursor)
+    const start = lower.indexOf(openTag, cursor)
     if (start === -1) {
       sanitized += svg.slice(cursor)
       break
     }
 
     sanitized += svg.slice(cursor, start)
-    const end = lower.indexOf(SCRIPT_CLOSE_TAG, start)
+    const end = lower.indexOf(closeTag, start)
     if (end === -1) {
       break
     }
 
-    cursor = end + SCRIPT_CLOSE_TAG.length
+    cursor = end + closeTag.length
+  }
+
+  return sanitized
+}
+
+function stripScriptTags(svg: string) {
+  return stripElementBlocks(svg, 'script')
+}
+
+function stripDangerousElements(svg: string) {
+  let sanitized = svg
+
+  for (const tag of DISALLOWED_ELEMENT_TAGS_WITH_CONTENT) {
+    sanitized = stripElementBlocks(sanitized, tag)
+  }
+
+  if (DISALLOWED_ELEMENT_TAGS_SELF_CLOSING.length) {
+    const selfClosingTags = DISALLOWED_ELEMENT_TAGS_SELF_CLOSING.join('|')
+    sanitized = sanitized.replace(new RegExp(`<\\s*(?:${selfClosingTags})\\b[^>]*\>`, 'gi'), '')
+  }
+
+  if (DROP_TAGS_BUT_KEEP_CONTENT.length) {
+    const droppedTags = DROP_TAGS_BUT_KEEP_CONTENT.join('|')
+    sanitized = sanitized.replace(new RegExp(`<\\/?\\s*(?:${droppedTags})\\b[^>]*>`, 'gi'), '')
+  }
+
+  sanitized = sanitized
+    .replace(/<\?xml[\s\S]*?\?>/gi, '')
+    .replace(/<!doctype[\s\S]*?>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<!\[cdata\[[\s\S]*?\]\]>/gi, '')
+
+  return sanitized
+}
+
+function isSafeDataImageUrl(value: string) {
+  const normalized = value.trim().toLowerCase()
+  return /^data:image\/(?:png|jpe?g|gif|webp)\b/.test(normalized)
+}
+
+function sanitizeUrlAttribute(match: string, quotedValue?: string, singleQuotedValue?: string, rawValue?: string) {
+  const value = (quotedValue ?? singleQuotedValue ?? rawValue ?? '').trim()
+  const normalized = value.toLowerCase()
+
+  if (!value) {
+    return ''
+  }
+
+  if (value.startsWith('#')) {
+    const escaped = value.replace(/"/g, '&quot;')
+    return match.startsWith(' xlink:href') ? ` xlink:href="${escaped}"` : ` href="${escaped}"`
+  }
+
+  if (isSafeDataImageUrl(value)) {
+    const escaped = value.replace(/"/g, '&quot;')
+    return match.startsWith(' xlink:href') ? ` xlink:href="${escaped}"` : ` href="${escaped}"`
+  }
+
+  if (normalized.startsWith('data:') || normalized.startsWith('javascript:') || normalized.startsWith('http:') || normalized.startsWith('https:')) {
+    return ''
+  }
+
+  return ''
+}
+
+function stripUnsafeUrlPaintAttributes(svg: string) {
+  const urlPaintAttrs = [
+    'fill',
+    'stroke',
+    'filter',
+    'clip-path',
+    'mask',
+  ]
+
+  let sanitized = svg
+
+  for (const attr of urlPaintAttrs) {
+    const pattern = new RegExp(`\\s${attr}\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s>]+))`, 'gi')
+    sanitized = sanitized.replace(pattern, (full, q1, q2, q3) => {
+      const value = String(q1 ?? q2 ?? q3 ?? '').trim()
+      const normalized = value.toLowerCase()
+
+      if (!value) {
+        return ''
+      }
+
+      if (normalized.includes('url(')) {
+        // Only allow internal references: url(#something)
+        const isInternal = /url\(\s*['"]?#/i.test(value)
+        return isInternal ? full : ''
+      }
+
+      // Allow typical paint values like "none", "currentColor", hex colors, rgb(), etc.
+      return full
+    })
   }
 
   return sanitized
 }
 
 export function sanitizeSvg(svg: string) {
-  return stripScriptTags(svg)
-    .replace(/on\w+=["'][^"']*["']/gi, '')
-    .replace(/javascript:/gi, '')
-    .replace(/data:(?!image\/)/gi, '')
+  let sanitized = stripDangerousElements(svg)
+
+  sanitized = stripScriptTags(sanitized)
+  sanitized = sanitized.replace(/\son\w+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+  sanitized = sanitized.replace(/\sstyle\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+  sanitized = sanitized.replace(/javascript:/gi, '')
+  sanitized = sanitized.replace(/data:(?!image\/(?:png|jpe?g|gif|webp)\b)/gi, '')
+  sanitized = sanitized.replace(/\s(?:href|xlink:href)\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi, sanitizeUrlAttribute)
+  sanitized = sanitized.replace(/\ssrc\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+))/gi, '')
+
+  sanitized = stripUnsafeUrlPaintAttributes(sanitized)
+
+  return sanitized
 }
 
 export function triggerConfetti(color: 'primary' | 'yes' | 'no', event?: any) {
