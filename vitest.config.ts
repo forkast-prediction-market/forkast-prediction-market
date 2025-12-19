@@ -9,6 +9,7 @@ export default defineConfig({
     include: ['tests/unit/*.test.{ts,tsx}'],
     alias: {
       '@': path.resolve(__dirname, './src'),
+      'server-only': path.resolve(__dirname, './tests/empty-module.ts'),
     },
   },
 })
