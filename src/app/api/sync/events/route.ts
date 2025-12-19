@@ -226,19 +226,24 @@ async function syncMarkets(): Promise<SyncStats> {
       cursor = conditionCursor
     }
 
-    if (timeLimitReached) {
-      break
-    }
-
     if (eventIdsNeedingStatusUpdate.size > 0) {
       await updateEventStatusesFromMarketsBatch(Array.from(eventIdsNeedingStatusUpdate))
       eventIdsNeedingStatusUpdate.clear()
+    }
+
+    if (timeLimitReached) {
+      break
     }
 
     if (page.conditions.length < PNL_PAGE_SIZE) {
       console.log('📭 Last fetched page was smaller than the configured page size; stopping pagination')
       break
     }
+  }
+
+  if (eventIdsNeedingStatusUpdate.size > 0) {
+    await updateEventStatusesFromMarketsBatch(Array.from(eventIdsNeedingStatusUpdate))
+    eventIdsNeedingStatusUpdate.clear()
   }
 
   return {
