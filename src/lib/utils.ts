@@ -149,12 +149,10 @@ function stripUnsafeUrlPaintAttributes(svg: string) {
       }
 
       if (normalized.includes('url(')) {
-        // Only allow internal references: url(#something)
         const isInternal = /url\(\s*['"]?#/i.test(value)
         return isInternal ? full : ''
       }
 
-      // Allow typical paint values like "none", "currentColor", hex colors, rgb(), etc.
       return full
     })
   }
