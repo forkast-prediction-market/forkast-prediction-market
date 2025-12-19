@@ -65,7 +65,9 @@ export async function updateMarketContextSettingsAction(
 
   let encryptedKey = ''
   try {
-    encryptedKey = parsed.data.apiKey ? encryptSecret(parsed.data.apiKey) : ''
+    const { data: allSettings } = await SettingsRepository.getSettings()
+    const existingEncryptedKey = allSettings?.ai?.openrouter_api_key?.value ?? ''
+    encryptedKey = parsed.data.apiKey ? encryptSecret(parsed.data.apiKey) : existingEncryptedKey
   }
   catch (error) {
     console.error('Failed to encrypt OpenRouter API key', error)

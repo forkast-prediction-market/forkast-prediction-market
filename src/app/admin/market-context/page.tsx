@@ -11,7 +11,6 @@ export default async function AdminMarketContextSettingsPage() {
   const parsedSettings = parseMarketContextSettings(allSettings ?? undefined)
   const defaultPrompt = parsedSettings.prompt
   const defaultModel = parsedSettings.model ?? ''
-  const defaultApiKey = parsedSettings.apiKey ?? ''
   const isEnabled = parsedSettings.enabled
   const apiKeyForModels = parsedSettings.apiKey
   const isModelSelectEnabled = Boolean(apiKeyForModels)
@@ -52,7 +51,6 @@ export default async function AdminMarketContextSettingsPage() {
         variables={MARKET_CONTEXT_VARIABLES}
         models={modelOptions}
         defaultModel={defaultModel}
-        defaultApiKey={defaultApiKey}
         isEnabled={isEnabled}
         isModelSelectEnabled={isModelSelectEnabled}
         modelsError={modelsError}

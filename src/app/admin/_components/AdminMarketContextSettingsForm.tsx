@@ -31,7 +31,6 @@ interface AdminMarketContextSettingsFormProps {
   variables: MarketContextVariable[]
   models: ModelOption[]
   defaultModel?: string
-  defaultApiKey?: string
   isModelSelectEnabled: boolean
   isEnabled: boolean
   modelsError?: string
@@ -42,7 +41,6 @@ export default function AdminMarketContextSettingsForm({
   variables,
   models,
   defaultModel,
-  defaultApiKey,
   isModelSelectEnabled,
   isEnabled,
   modelsError,
@@ -51,7 +49,7 @@ export default function AdminMarketContextSettingsForm({
   const [promptValue, setPromptValue] = useState(defaultPrompt)
   const [modelValue, setModelValue] = useState(defaultModel ?? '')
   const [selectValue, setSelectValue] = useState(defaultModel || AUTOMATIC_MODEL_VALUE)
-  const [apiKeyValue, setApiKeyValue] = useState(defaultApiKey ?? '')
+  const [apiKeyValue, setApiKeyValue] = useState('')
   const [enabled, setEnabled] = useState(isEnabled)
   const [modelOptions, setModelOptions] = useState<ModelOption[]>(models)
   const [modelsStateError, setModelsStateError] = useState<string | undefined>(modelsError)
