@@ -10,26 +10,21 @@ CREATE TABLE affiliate_referrals
   affiliate_user_id CHAR(26)    NOT NULL REFERENCES users (id) ON DELETE CASCADE,        -- The referring affiliate
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()                                   -- When attribution was recorded
 );
-
 -- ===========================================
--- 2. INDEXES
--- ===========================================
-
--- ===========================================
--- 3. ROW LEVEL SECURITY
+-- 2. ROW LEVEL SECURITY
 -- ===========================================
 
 ALTER TABLE affiliate_referrals
   ENABLE ROW LEVEL SECURITY;
 
 -- ===========================================
--- 4. POLICIES
+-- 3. POLICIES
 -- ===========================================
 
 CREATE POLICY "service_role_all_affiliate_referrals" ON "affiliate_referrals" AS PERMISSIVE FOR ALL TO "service_role" USING (TRUE) WITH CHECK (TRUE);
 
 -- ===========================================
--- 5. FUNCTIONS
+-- 4. FUNCTIONS
 -- ===========================================
 
 CREATE OR REPLACE FUNCTION get_affiliate_stats(target_user_id CHAR(26))

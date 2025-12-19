@@ -2,7 +2,6 @@
 -- 1. TABLES
 -- ===========================================
 
--- Conditions table - Primary entity from Activity/PnL subgraphs
 CREATE TABLE conditions
 (
   id           CHAR(66) PRIMARY KEY,
@@ -18,7 +17,6 @@ CREATE TABLE conditions
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Tags table - Hierarchical categorization system for events
 CREATE TABLE tags
 (
   id                   SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -34,7 +32,6 @@ CREATE TABLE tags
   updated_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Events table - Core content structure for prediction markets
 CREATE TABLE events
 (
   id                   CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
@@ -57,7 +54,6 @@ CREATE TABLE events
   CHECK (status IN ('draft', 'active', 'archived'))
 );
 
--- Event-Tag relationship table - Many-to-many between events and tags
 CREATE TABLE event_tags
 (
   event_id CHAR(26) NOT NULL REFERENCES events (id) ON DELETE CASCADE ON UPDATE CASCADE,
@@ -65,7 +61,6 @@ CREATE TABLE event_tags
   PRIMARY KEY (event_id, tag_id)
 );
 
--- Markets table - Core trading markets (belongs to events)
 CREATE TABLE markets
 (
   -- IDs and Identifiers
@@ -106,7 +101,6 @@ CREATE TABLE markets
   CHECK (volume >= 0)
 );
 
--- Outcomes table - Individual market outcomes (belongs to markets via condition_id)
 CREATE TABLE outcomes
 (
   id                 CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
@@ -130,7 +124,6 @@ CREATE TABLE outcomes
   CHECK (payout_value IS NULL OR payout_value >= 0)
 );
 
--- subgraph_syncs table - Blockchain synchronization tracking
 CREATE TABLE subgraph_syncs
 (
   id              SMALLINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,

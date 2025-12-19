@@ -2,7 +2,6 @@
 -- 1. TABLES
 -- ===========================================
 
--- Users table - Core user identity with affiliate functionality
 CREATE TABLE users
 (
   id                     CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
@@ -34,7 +33,6 @@ CREATE TABLE users
   updated_at             TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Sessions table - Better Auth session management
 CREATE TABLE sessions
 (
   id         CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
@@ -47,7 +45,6 @@ CREATE TABLE sessions
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Accounts table - OAuth/social login accounts
 CREATE TABLE accounts
 (
   id                       CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
@@ -65,7 +62,6 @@ CREATE TABLE accounts
   updated_at               TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Verifications table - Email/SIWE verification tokens
 CREATE TABLE verifications
 (
   id         CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
@@ -76,7 +72,6 @@ CREATE TABLE verifications
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Wallets table - User Web3 wallet connections
 CREATE TABLE wallets
 (
   id         CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
@@ -87,7 +82,6 @@ CREATE TABLE wallets
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- two-factor authentication table
 CREATE TABLE two_factors
 (
   id           CHAR(26) NOT NULL DEFAULT generate_ulid(),
