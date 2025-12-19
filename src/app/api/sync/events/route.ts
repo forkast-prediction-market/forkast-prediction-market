@@ -824,14 +824,15 @@ async function checkSyncRunning(): Promise<boolean> {
     .select('status')
     .eq('service_name', 'market_sync')
     .eq('subgraph_name', 'pnl')
-    .lt('updated_at', new Date(Date.now() - 15 * 60 * 1000).toISOString())
+    .eq('status', 'running')
+    .gt('updated_at', new Date(Date.now() - 15 * 60 * 1000).toISOString())
     .maybeSingle()
 
   if (error && error.code !== 'PGRST116') {
     throw new Error(`Failed to check sync status: ${error.message}`)
   }
 
-  return data?.status === 'running'
+  return Boolean(data)
 }
 
 async function updateSyncStatus(
