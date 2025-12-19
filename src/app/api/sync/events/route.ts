@@ -155,6 +155,7 @@ async function syncMarkets(): Promise<SyncStats> {
   let skippedCreatorCount = 0
   const errors: { conditionId: string, error: string }[] = []
   let timeLimitReached = false
+  const eventIdsNeedingStatusUpdate = new Set<string>()
 
   while (Date.now() - syncStartedAt < SYNC_TIME_LIMIT_MS) {
     const page = await fetchPnLConditionsPage(cursor)
@@ -207,7 +208,10 @@ async function syncMarkets(): Promise<SyncStats> {
       }
 
       try {
-        await processMarket(condition)
+        const eventIdForStatusUpdate = await processMarket(condition)
+        if (eventIdForStatusUpdate) {
+          eventIdsNeedingStatusUpdate.add(eventIdForStatusUpdate)
+        }
         processedCount++
         console.log(`✅ Processed market: ${condition.id}`)
       }
@@ -224,6 +228,11 @@ async function syncMarkets(): Promise<SyncStats> {
 
     if (timeLimitReached) {
       break
+    }
+
+    if (eventIdsNeedingStatusUpdate.size > 0) {
+      await updateEventStatusesFromMarketsBatch(Array.from(eventIdsNeedingStatusUpdate))
+      eventIdsNeedingStatusUpdate.clear()
     }
 
     if (page.conditions.length < PNL_PAGE_SIZE) {
@@ -365,7 +374,7 @@ async function processMarket(market: SubgraphCondition) {
     metadata.event,
     market.creator!,
   )
-  await processMarketData(market, metadata, eventId)
+  return await processMarketData(market, metadata, eventId)
 }
 
 async function fetchMetadata(arweaveHash: string) {
@@ -389,16 +398,6 @@ async function fetchMetadata(arweaveHash: string) {
 }
 
 async function processCondition(market: SubgraphCondition) {
-  const { data: existingCondition } = await supabaseAdmin
-    .from('conditions')
-    .select('id')
-    .eq('id', market.id)
-    .maybeSingle()
-
-  if (existingCondition) {
-    console.log(`Condition ${market.id} already exists, updating if needed...`)
-  }
-
   if (!market.oracle) {
     throw new Error(`Market ${market.id} missing required oracle field`)
   }
@@ -634,39 +633,46 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
     await processOutcomes(market.id, metadata.outcomes)
   }
 
-  await updateEventStatusFromMarkets(eventIdForStatusUpdate)
+  return eventIdForStatusUpdate
+}
+
+async function updateEventStatusesFromMarketsBatch(eventIds: string[]) {
+  for (const eventId of eventIds) {
+    await updateEventStatusFromMarkets(eventId)
+  }
 }
 
 async function updateEventStatusFromMarkets(eventId: string) {
-  const { data: markets, error } = await supabaseAdmin
+  const { count: totalCount, error: totalError } = await supabaseAdmin
     .from('markets')
-    .select('is_active, is_resolved')
+    .select('condition_id', { count: 'exact', head: true })
     .eq('event_id', eventId)
 
-  if (error) {
-    console.error(`Failed to compute status for event ${eventId}:`, error)
+  if (totalError) {
+    console.error(`Failed to compute market counts for event ${eventId}:`, totalError)
     return
   }
 
-  const marketsList = markets ?? []
-  const hasMarkets = marketsList.length > 0
-  const hasActiveMarket = marketsList.some((market) => {
-    if (market.is_active === null || market.is_active === undefined) {
-      return !market.is_resolved
-    }
-    return market.is_active
-  })
+  const { count: activeCount, error: activeError } = await supabaseAdmin
+    .from('markets')
+    .select('condition_id', { count: 'exact', head: true })
+    .eq('event_id', eventId)
+    .or('is_active.eq.true,and(is_active.is.null,is_resolved.eq.false)')
 
-  let nextStatus: 'draft' | 'active' | 'archived'
-  if (hasActiveMarket) {
-    nextStatus = 'active'
+  if (activeError) {
+    console.error(`Failed to compute active market count for event ${eventId}:`, activeError)
+    return
   }
-  else if (hasMarkets) {
-    nextStatus = 'archived'
-  }
-  else {
-    nextStatus = 'draft'
-  }
+
+  const hasMarkets = (totalCount ?? 0) > 0
+  const hasActiveMarket = (activeCount ?? 0) > 0
+
+  const nextStatus: 'draft' | 'active' | 'archived'
+    = hasActiveMarket
+      ? 'active'
+      : hasMarkets
+        ? 'archived'
+        : 'draft'
 
   const { error: updateError } = await supabaseAdmin
     .from('events')
