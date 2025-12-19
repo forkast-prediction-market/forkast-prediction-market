@@ -17,6 +17,7 @@ import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components
 import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
 import { buildUserOpenOrdersQueryKey, useUserOpenOrdersQuery } from '@/app/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
 import { useUserShareBalances } from '@/app/(platform)/event/[slug]/_hooks/useUserShareBalances'
+import { useActiveWalletInfo } from '@/hooks/useActiveWalletInfo'
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { SAFE_BALANCE_QUERY_KEY, useBalance } from '@/hooks/useBalance'
@@ -31,6 +32,7 @@ import { cn } from '@/lib/utils'
 import { isUserRejectedRequestError, normalizeAddress } from '@/lib/wallet'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useAmountAsNumber, useIsLimitOrder, useIsSingleMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
+import { useSignaturePrompt } from '@/stores/useSignaturePrompt'
 import { useUser } from '@/stores/useUser'
 
 interface EventOrderPanelFormProps {
@@ -107,6 +109,8 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     now.setHours(23, 59, 59, 0)
     return Math.floor(now.getTime() / 1000)
   }, [])
+  const { walletName, walletImageSrc } = useActiveWalletInfo()
+  const { showPrompt, hidePrompt } = useSignaturePrompt()
   const [showLimitMinimumWarning, setShowLimitMinimumWarning] = useState(false)
   const positionsQuery = useQuery({
     queryKey: ['order-panel-user-positions', makerAddress, state.market?.condition_id],
@@ -361,6 +365,8 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         closeAppKit: close,
         embeddedWalletInfo,
         onWalletApprovalPrompt: notifyWalletApprovalPrompt,
+        showWalletPrompt: () => showPrompt({ walletName, walletImageSrc }),
+        hideWalletPrompt: hidePrompt,
       })
     }
     catch (error) {

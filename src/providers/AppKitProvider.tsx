@@ -7,7 +7,6 @@ import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/a
 import { createAppKit, useAppKitTheme } from '@reown/appkit/react'
 import { generateRandomString } from 'better-auth/crypto'
 import { useTheme } from 'next-themes'
-import { redirect } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { WagmiProvider } from 'wagmi'
 import { AppKitContext, defaultAppKitValue } from '@/hooks/useAppKit'
@@ -99,7 +98,9 @@ function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
           try {
             await authClient.signOut()
             useUser.setState(null)
-            queueMicrotask(() => redirect('/'))
+            if (typeof window !== 'undefined') {
+              window.location.reload()
+            }
             return true
           }
           catch {

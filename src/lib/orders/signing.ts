@@ -14,6 +14,8 @@ export interface SignOrderArgs {
   closeAppKit: () => Promise<void>
   embeddedWalletInfo?: unknown
   onWalletApprovalPrompt?: () => void
+  showWalletPrompt?: () => void
+  hideWalletPrompt?: () => void
 }
 
 export async function signOrderPayload({
@@ -24,17 +26,26 @@ export async function signOrderPayload({
   closeAppKit,
   embeddedWalletInfo,
   onWalletApprovalPrompt,
+  showWalletPrompt,
+  hideWalletPrompt,
 }: SignOrderArgs) {
   let shouldCloseModal = false
+  let shouldHidePrompt = false
 
   if (!embeddedWalletInfo) {
     try {
+      showWalletPrompt?.()
+      shouldHidePrompt = true
       await openAppKit({ view: 'ApproveTransaction' })
       shouldCloseModal = true
       onWalletApprovalPrompt?.()
     }
     catch {
       shouldCloseModal = false
+      if (shouldHidePrompt) {
+        hideWalletPrompt?.()
+        shouldHidePrompt = false
+      }
     }
   }
 
@@ -68,6 +79,9 @@ export async function signOrderPayload({
         await closeAppKit()
       }
       catch {}
+    }
+    if (shouldHidePrompt) {
+      hideWalletPrompt?.()
     }
   }
 }

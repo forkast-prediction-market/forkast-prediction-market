@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from 'next-themes'
 import GoogleAnalytics from '@/components/GoogleAnalytics'
+import { SignaturePrompt } from '@/components/SignaturePrompt'
 import { Toaster } from '@/components/ui/sonner'
 import AppKitProvider from '@/providers/AppKitProvider'
 import ProgressIndicatorProvider from '@/providers/ProgressIndicatorProvider'
@@ -22,6 +23,7 @@ export function Providers({ children }: { children: ReactNode }) {
               <div className="min-h-screen bg-background">
                 {children}
               </div>
+              <SignaturePrompt />
               <Toaster position="top-center" />
               {process.env.NODE_ENV === 'production' && <SpeedInsights />}
               {process.env.NODE_ENV === 'production' && <GoogleAnalytics />}

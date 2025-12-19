@@ -15,6 +15,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { useActiveWalletInfo } from '@/hooks/useActiveWalletInfo'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { defaultNetwork } from '@/lib/appkit'
 import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
@@ -29,6 +30,7 @@ import {
 } from '@/lib/safe/transactions'
 import { cn } from '@/lib/utils'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
+import { useSignaturePrompt } from '@/stores/useSignaturePrompt'
 import { useUser } from '@/stores/useUser'
 
 interface EventMergeSharesDialogProps {
@@ -50,6 +52,8 @@ export default function EventMergeSharesDialog({
   const { ensureTradingReady } = useTradingOnboarding()
   const user = useUser()
   const { signMessageAsync } = useSignMessage()
+  const { walletName, walletImageSrc } = useActiveWalletInfo()
+  const { showPrompt, hidePrompt } = useSignaturePrompt()
   const [amount, setAmount] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -157,9 +161,11 @@ export default function EventMergeSharesDialog({
         message: safeTypedData.message,
       }) as `0x${string}`
 
+      showPrompt({ walletName: walletName ?? undefined, walletImageSrc: walletImageSrc ?? undefined })
       const signature = await signMessageAsync({
         message: { raw: structHash },
       })
+      hidePrompt()
 
       const payload: SafeTransactionRequestPayload = {
         type: 'SAFE',
@@ -203,6 +209,7 @@ export default function EventMergeSharesDialog({
       onOpenChange(false)
     }
     catch (error) {
+      hidePrompt()
       console.error('Failed to submit merge operation.', error)
       toast.error('We could not submit your merge request. Please try again.')
     }

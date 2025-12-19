@@ -18,6 +18,7 @@ import { OpenCardContext } from '@/components/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { NewBadge } from '@/components/ui/new-badge'
+import { useActiveWalletInfo } from '@/hooks/useActiveWalletInfo'
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
@@ -30,6 +31,7 @@ import { validateOrder } from '@/lib/orders/validation'
 import { isMarketNew } from '@/lib/utils'
 import { isUserRejectedRequestError, normalizeAddress } from '@/lib/wallet'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
+import { useSignaturePrompt } from '@/stores/useSignaturePrompt'
 import { useUser } from '@/stores/useUser'
 
 interface EventCardProps {
@@ -55,6 +57,8 @@ export default function EventCard({ event }: EventCardProps) {
   const affiliateMetadata = useAffiliateOrderMetadata()
   const { balance } = useBalance()
   const { ensureTradingReady } = useTradingOnboarding()
+  const { walletName, walletImageSrc } = useActiveWalletInfo()
+  const { showPrompt, hidePrompt } = useSignaturePrompt()
   const queryClient = useQueryClient()
   const hasDeployedProxyWallet = Boolean(user?.proxy_wallet_address && user?.proxy_wallet_status === 'deployed')
   const proxyWalletAddress = hasDeployedProxyWallet ? normalizeAddress(user?.proxy_wallet_address) : null
@@ -203,6 +207,8 @@ export default function EventCard({ event }: EventCardProps) {
         closeAppKit: close,
         embeddedWalletInfo,
         onWalletApprovalPrompt: notifyWalletApprovalPrompt,
+        showWalletPrompt: () => showPrompt({ walletName, walletImageSrc }),
+        hideWalletPrompt: hidePrompt,
       })
     }
     catch (error) {

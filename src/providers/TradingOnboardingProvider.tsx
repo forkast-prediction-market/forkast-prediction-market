@@ -11,6 +11,7 @@ import { saveProxyWalletSignature } from '@/app/(platform)/_actions/proxy-wallet
 import { generateTradingAuthAction } from '@/app/(platform)/_actions/trading-auth'
 import { EnableTradingDialog, FundAccountDialog, TradeRequirementsDialog } from '@/components/trading/TradingDialogs'
 import { WalletFlow } from '@/components/trading/WalletFlow'
+import { useActiveWalletInfo } from '@/hooks/useActiveWalletInfo'
 import { useAppKit } from '@/hooks/useAppKit'
 import { defaultNetwork } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
@@ -37,6 +38,7 @@ import {
   TRADING_AUTH_PRIMARY_TYPE,
   TRADING_AUTH_TYPES,
 } from '@/lib/trading-auth/client'
+import { useSignaturePrompt } from '@/stores/useSignaturePrompt'
 import { useUser } from '@/stores/useUser'
 
 interface TradingOnboardingContextValue {
@@ -53,6 +55,8 @@ const TradingOnboardingContext = createContext<TradingOnboardingContextValue | n
 export function TradingOnboardingProvider({ children }: { children: ReactNode }) {
   const user = useUser()
   const { open } = useAppKit()
+  const { walletName, walletImageSrc } = useActiveWalletInfo()
+  const { showPrompt, hidePrompt } = useSignaturePrompt()
   const { signTypedDataAsync } = useSignTypedData()
   const { signMessageAsync } = useSignMessage()
   const [enableModalOpen, setEnableModalOpen] = useState(false)
@@ -283,12 +287,14 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       setProxyStep('signing')
       const domain = getSafeProxyDomain()
 
+      showPrompt({ walletName, walletImageSrc })
       const signature = await signTypedDataAsync({
         domain,
         types: SAFE_PROXY_TYPES,
         primaryType: SAFE_PROXY_PRIMARY_TYPE,
         message: SAFE_PROXY_CREATE_PROXY_MESSAGE,
       })
+      hidePrompt()
 
       const result = await saveProxyWalletSignature({ signature })
 
@@ -331,6 +337,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       resetPendingFundState()
     }
     catch (error) {
+      hidePrompt()
       if (error instanceof UserRejectedRequestError) {
         setProxyWalletError('You rejected the signature request.')
         setProxyStep('idle')
@@ -344,7 +351,16 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
         setProxyStep('idle')
       }
     }
-  }, [refreshSessionUserState, resetPendingFundState, shouldShowFundAfterProxy, signTypedDataAsync])
+  }, [
+    hidePrompt,
+    refreshSessionUserState,
+    resetPendingFundState,
+    shouldShowFundAfterProxy,
+    showPrompt,
+    signTypedDataAsync,
+    walletImageSrc,
+    walletName,
+  ])
 
   const handleTradingAuthSignature = useCallback(async () => {
     if (!user?.address) {
@@ -362,12 +378,14 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
         timestamp,
       })
 
+      showPrompt({ walletName, walletImageSrc })
       const signature = await signTypedDataAsync({
         domain: getTradingAuthDomain(),
         types: TRADING_AUTH_TYPES,
         primaryType: TRADING_AUTH_PRIMARY_TYPE,
         message,
       })
+      hidePrompt()
 
       const result = await generateTradingAuthAction({
         signature,
@@ -403,6 +421,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       setTradingAuthStep('completed')
     }
     catch (error) {
+      hidePrompt()
       if (error instanceof UserRejectedRequestError) {
         setTradingAuthError('You rejected the signature request.')
         setTradingAuthStep('idle')
@@ -416,7 +435,15 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
         setTradingAuthStep('idle')
       }
     }
-  }, [refreshSessionUserState, signTypedDataAsync, user])
+  }, [
+    hidePrompt,
+    refreshSessionUserState,
+    showPrompt,
+    signTypedDataAsync,
+    user,
+    walletImageSrc,
+    walletName,
+  ])
 
   const handleApproveTokens = useCallback(async () => {
     if (!user?.address || !user?.proxy_wallet_address) {
@@ -466,9 +493,11 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
         message: typedData.message,
       }) as `0x${string}`
 
+      showPrompt({ walletName, walletImageSrc })
       const signature = await signMessageAsync({
         message: { raw: structHash },
       })
+      hidePrompt()
 
       const requestPayload: SafeTransactionRequestPayload = {
         type: 'SAFE',
@@ -512,6 +541,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     }
     catch (error) {
       console.error('Failed to approve tokens', error)
+      hidePrompt()
       if (error instanceof Error) {
         setTokenApprovalError(error.message || DEFAULT_ERROR_MESSAGE)
       }
@@ -520,7 +550,16 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       }
       setApprovalsStep('idle')
     }
-  }, [refreshSessionUserState, signMessageAsync, tradingAuthSatisfied, user])
+  }, [
+    hidePrompt,
+    refreshSessionUserState,
+    showPrompt,
+    signMessageAsync,
+    tradingAuthSatisfied,
+    user,
+    walletImageSrc,
+    walletName,
+  ])
 
   const ensureTradingReady = useCallback(() => {
     if (!user) {
