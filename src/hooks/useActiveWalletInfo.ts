@@ -48,7 +48,7 @@ export function useActiveWalletInfo() {
   const connectorId = activeChain ? activeConnectorIds[activeChain] : undefined
   const connector = connectorId ? ConnectorController.getConnectorById(connectorId) : undefined
   const connectorName = connector ? ConnectorController.getConnectorName(connector.name) : undefined
-  const connectorRdns = connector?.rdns
+  const connectorRdns = (connector as unknown as { rdns?: string } | null)?.rdns
   const recentWallet = useMemo(() => {
     try {
       const single = StorageUtil.getRecentWallet() as { id?: string, name?: string, rdns?: string } | null
