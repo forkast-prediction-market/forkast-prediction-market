@@ -96,6 +96,8 @@ CREATE TABLE two_factors
 
 CREATE UNIQUE INDEX idx_users_email ON users (LOWER(email));
 CREATE UNIQUE INDEX idx_users_username ON users (LOWER(username));
+CREATE UNIQUE INDEX idx_users_address ON users (LOWER(address));
+CREATE UNIQUE INDEX idx_users_proxy_wallet_address ON users (LOWER(proxy_wallet_address));
 CREATE UNIQUE INDEX idx_users_affiliate_code ON users (LOWER(affiliate_code));
 CREATE INDEX idx_sessions_user_id ON sessions (user_id);
 CREATE INDEX idx_accounts_user_id ON accounts (user_id);

@@ -1,6 +1,5 @@
 import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
 import { useQueryClient } from '@tanstack/react-query'
-import { CheckIcon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { hashTypedData } from 'viem'
@@ -182,8 +181,8 @@ export default function EventSplitSharesDialog({
 
       toast.success('Split shares', {
         description: marketTitle ?? 'Request submitted.',
-        icon: <SuccessIcon />,
       })
+
       void queryClient.invalidateQueries({ queryKey: ['user-conditional-shares'] })
       void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
       void queryClient.invalidateQueries({ queryKey: ['user-market-positions'] })
@@ -266,13 +265,5 @@ export default function EventSplitSharesDialog({
         </div>
       </DialogContent>
     </Dialog>
-  )
-}
-
-function SuccessIcon() {
-  return (
-    <span className="flex size-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-500">
-      <CheckIcon className="size-4" />
-    </span>
   )
 }

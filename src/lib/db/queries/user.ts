@@ -1,6 +1,6 @@
 import type { MarketOrderType, ProxyWalletStatus, User } from '@/types'
 import { randomBytes } from 'node:crypto'
-import { asc, count, desc, eq, ilike, inArray, or } from 'drizzle-orm'
+import { asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
@@ -14,9 +14,8 @@ import { sanitizeTradingAuthSettings } from '@/lib/trading-auth/utils'
 
 export const UserRepository = {
   async getProfileByUsername(username: string) {
-    'use cache'
-
     return await runQuery(async () => {
+      const normalizedUsername = username.toLowerCase()
       const result = await db
         .select({
           id: users.id,
@@ -28,9 +27,9 @@ export const UserRepository = {
         })
         .from(users)
         .where(or(
-          eq(users.username, username),
-          eq(users.address, username),
-          eq(users.proxy_wallet_address, username),
+          eq(sql`LOWER(${users.username})`, normalizedUsername),
+          eq(sql`LOWER(${users.address})`, normalizedUsername),
+          eq(sql`LOWER(${users.proxy_wallet_address})`, normalizedUsername),
         ))
         .limit(1)
 
