@@ -70,7 +70,7 @@ function mapHolder(holder: DataApiHolder, outcomeHint: 'yes' | 'no' | null) {
   }
 }
 
-export async function fetchTopHolders(
+export async function fetchTopHoldersFromDataApi(
   conditionId: string,
   limit = 50,
   options?: { yesToken?: string, noToken?: string },
@@ -143,4 +143,40 @@ export async function fetchTopHolders(
   })
 
   return { yesHolders, noHolders }
+}
+
+export async function fetchTopHolders(
+  conditionId: string,
+  limit = 50,
+  options?: { yesToken?: string, noToken?: string },
+): Promise<TopHoldersResult> {
+  if (!conditionId) {
+    throw new Error('conditionId is required')
+  }
+
+  if (typeof window === 'undefined') {
+    return fetchTopHoldersFromDataApi(conditionId, limit, options)
+  }
+
+  const params = new URLSearchParams({
+    conditionId,
+    limit: String(Math.min(Math.max(limit, 1), 500)),
+  })
+
+  if (options?.yesToken) {
+    params.set('yesToken', options.yesToken)
+  }
+  if (options?.noToken) {
+    params.set('noToken', options.noToken)
+  }
+
+  const response = await fetch(`/api/holders?${params.toString()}`)
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null)
+    const errorMessage = errorBody?.error || 'Failed to load top holders'
+    throw new Error(errorMessage)
+  }
+
+  return await response.json()
 }

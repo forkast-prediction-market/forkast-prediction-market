@@ -11,6 +11,7 @@ import { db } from '@/lib/drizzle'
 import { getSafeProxyWalletAddress, isProxyWalletDeployed } from '@/lib/safe-proxy'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 import { sanitizeTradingAuthSettings } from '@/lib/trading-auth/utils'
+import { normalizeAddress } from '@/lib/wallet'
 
 export const UserRepository = {
   async getProfileByUsername(username: string) {
@@ -352,6 +353,44 @@ export const UserRepository = {
         })
         .from(users)
         .where(inArray(users.id, ids))
+
+      return { data: result, error: null }
+    })
+  },
+
+  async getUsersByAddresses(addresses: string[]) {
+    const normalizedAddresses = Array.from(new Set(
+      (addresses || [])
+        .map(address => normalizeAddress(address)?.toLowerCase())
+        .filter(Boolean) as string[],
+    ))
+
+    if (!normalizedAddresses.length) {
+      return { data: [], error: null }
+    }
+
+    return await runQuery(async () => {
+      const addressClauses = normalizedAddresses.map(addr => ilike(users.address, addr))
+      const proxyClauses = normalizedAddresses.map(addr => ilike(users.proxy_wallet_address, addr))
+      const whereConditions = [...addressClauses, ...proxyClauses].filter(Boolean)
+      const whereClause = whereConditions.length > 1
+        ? or(...whereConditions)
+        : whereConditions[0]
+
+      if (!whereClause) {
+        return { data: [], error: null }
+      }
+
+      const result = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          address: users.address,
+          proxy_wallet_address: users.proxy_wallet_address,
+          image: users.image,
+        })
+        .from(users)
+        .where(whereClause)
 
       return { data: result, error: null }
     })
