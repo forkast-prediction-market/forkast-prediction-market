@@ -8,7 +8,6 @@ import { normalizeAddress } from '@/lib/wallet'
 interface HolderUser {
   id: string
   username: string
-  address: string
   proxy_wallet_address?: string | null
   image: string
 }
@@ -57,13 +56,9 @@ export async function GET(request: Request) {
     function collectAddresses(holders: Holder[]) {
       holders.forEach(({ user }) => {
         const proxy = normalizeAddressKey(user.proxy_wallet_address)
-        const address = normalizeAddressKey(user.address)
 
         if (proxy) {
           addressSet.add(proxy)
-        }
-        if (address) {
-          addressSet.add(address)
         }
       })
     }
@@ -84,14 +79,10 @@ export async function GET(request: Request) {
         const fallbackAddress = profile.proxy_wallet_address ?? profile.address
         const normalizedAddress = normalizeAddressKey(profile.address)
         const normalizedProxyAddress = normalizeAddressKey(profile.proxy_wallet_address)
-        const imageUrl = normalizeAvatarUrl(
-          profile.image ? getSupabaseImageUrl(profile.image) : null,
-          fallbackAddress,
-        )
+        const imageUrl = normalizeAvatarUrl(profile.image, fallbackAddress)
         const profileData: HolderUser = {
           id: profile.id,
           username: profile.username || fallbackAddress,
-          address: profile.address,
           proxy_wallet_address: profile.proxy_wallet_address ?? null,
           image: imageUrl,
         }
@@ -109,14 +100,13 @@ export async function GET(request: Request) {
       return holders.map((holder) => {
         const lookupKeys = [
           normalizeAddressKey(holder.user.proxy_wallet_address),
-          normalizeAddressKey(holder.user.address),
         ].filter(Boolean) as string[]
 
         const matchedProfile = lookupKeys
           .map(key => profileLookup.get(key))
           .find(Boolean)
 
-        const fallbackAddress = holder.user.proxy_wallet_address ?? holder.user.address ?? holder.user.id
+        const fallbackAddress = holder.user.proxy_wallet_address ?? holder.user.id
         const hydratedImage = normalizeAvatarUrl(
           matchedProfile?.image ?? holder.user.image,
           fallbackAddress,
@@ -128,7 +118,6 @@ export async function GET(request: Request) {
             ...holder.user,
             id: matchedProfile?.id ?? holder.user.id,
             username: matchedProfile?.username || holder.user.username,
-            address: matchedProfile?.address ?? holder.user.address,
             proxy_wallet_address: matchedProfile?.proxy_wallet_address ?? holder.user.proxy_wallet_address,
             image: hydratedImage,
           },
