@@ -13,13 +13,12 @@ import { getSupabaseImageUrl } from '@/lib/supabase'
 import { sanitizeTradingAuthSettings } from '@/lib/trading-auth/utils'
 
 export const UserRepository = {
-  async getProfileByUsername(username: string) {
+  async getProfileByUsernameOrProxyAddress(username: string) {
     return await runQuery(async () => {
       const normalizedUsername = username.toLowerCase()
       const result = await db
         .select({
           id: users.id,
-          address: users.address,
           proxy_wallet_address: users.proxy_wallet_address,
           username: users.username,
           image: users.image,
@@ -28,7 +27,6 @@ export const UserRepository = {
         .from(users)
         .where(or(
           eq(sql`LOWER(${users.username})`, normalizedUsername),
-          eq(sql`LOWER(${users.address})`, normalizedUsername),
           eq(sql`LOWER(${users.proxy_wallet_address})`, normalizedUsername),
         ))
         .limit(1)
@@ -41,10 +39,9 @@ export const UserRepository = {
 
       const data = {
         id: rawData.id,
-        address: rawData.address,
         proxy_wallet_address: rawData.proxy_wallet_address,
         username: rawData.username!,
-        image: rawData.image ? getSupabaseImageUrl(rawData.image) : `https://avatar.vercel.sh/${rawData.address}.png`,
+        image: rawData.image ? getSupabaseImageUrl(rawData.image) : `https://avatar.vercel.sh/${rawData.username}.png`,
         created_at: rawData.created_at,
       }
 

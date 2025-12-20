@@ -21,12 +21,12 @@ export async function generateMetadata({ params }: PageProps<'/[username]'>): Pr
 
 export default async function ProfilePage({ params }: PageProps<'/[username]'>) {
   const { username } = await params
-  const { data: profile } = await UserRepository.getProfileByUsername(username)
+  const { data: profile } = await UserRepository.getProfileByUsernameOrProxyAddress(username)
   if (!profile) {
     notFound()
   }
 
-  const userAddress = profile.proxy_wallet_address ?? profile.address
+  const userAddress = profile.proxy_wallet_address!
   const snapshot = await fetchPortfolioSnapshot(userAddress)
 
   return (
