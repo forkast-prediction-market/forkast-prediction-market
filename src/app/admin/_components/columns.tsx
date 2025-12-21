@@ -68,7 +68,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
         <div className="flex min-w-44 items-center gap-2">
           <Image
             src={user.avatarUrl}
-            alt={user.username || user.address}
+            alt={user.username}
             width={28}
             height={28}
             className="shrink-0 rounded-full sm:size-8"
@@ -80,7 +80,7 @@ export const columns: ColumnDef<AdminUserRow>[] = [
               className="flex items-center gap-1 font-medium text-foreground hover:text-primary"
             >
               <span>
-                {user.username || user.address}
+                {user.username || user.proxy_wallet_address}
               </span>
               {user.is_admin && <Badge variant="outline" className="mt-1 text-xs">Admin</Badge>}
             </a>

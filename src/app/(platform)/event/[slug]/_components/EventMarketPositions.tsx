@@ -196,8 +196,8 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
   })
 
   const positions = useMemo(() => data ?? [], [data])
-  const loading = status === 'pending' && Boolean(user?.address)
-  const hasInitialError = status === 'error' && Boolean(user?.address)
+  const loading = status === 'pending' && Boolean(user?.proxy_wallet_address)
+  const hasInitialError = status === 'error' && Boolean(user?.proxy_wallet_address)
 
   const aggregatedShares = useMemo(() => {
     const map: Record<string, Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>> = {}

@@ -8,7 +8,7 @@ import { fetchPortfolioSnapshot } from '@/lib/portfolio'
 
 export default async function PortfolioLayout({ children }: LayoutProps<'/portfolio'>) {
   const user = await UserRepository.getCurrentUser()
-  const snapshotAddress = user?.proxy_wallet_address ?? user?.address
+  const snapshotAddress = user?.proxy_wallet_address
   const publicAddress = user?.proxy_wallet_address ?? null
   const snapshot = await fetchPortfolioSnapshot(snapshotAddress)
 

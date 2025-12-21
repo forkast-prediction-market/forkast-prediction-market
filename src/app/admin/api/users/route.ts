@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
             year: 'numeric',
           })
 
-      const fallbackAddress = user.proxy_wallet_address ?? user.address
+      const proxyWalletAddress = user.proxy_wallet_address
       const profilePath = user.username
 
       const referredSource = user.referred_by_user_id
@@ -90,14 +90,14 @@ export async function GET(request: NextRequest) {
         user.username,
         user.email,
         user.address,
-        fallbackAddress,
+        proxyWalletAddress,
         referredDisplay,
       ].filter(Boolean).join(' ').toLowerCase()
 
       return {
         ...user,
         is_admin: isAdminWallet(user.address),
-        avatarUrl: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${fallbackAddress}.png`,
+        avatarUrl: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${proxyWalletAddress}.png`,
         referred_by_display: referredDisplay,
         referred_by_profile_url: referredProfile,
         created_label: createdLabel,

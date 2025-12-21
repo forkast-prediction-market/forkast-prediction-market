@@ -114,7 +114,7 @@ export default function EventSplitSharesDialog({
       return
     }
 
-    if (!user?.proxy_wallet_address || !user?.address) {
+    if (!user?.proxy_wallet_address) {
       toast.error('Deploy your proxy wallet before splitting shares.')
       return
     }

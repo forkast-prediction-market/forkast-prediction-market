@@ -59,7 +59,7 @@ export default function EventCard({ event }: EventCardProps) {
   const hasDeployedProxyWallet = Boolean(user?.proxy_wallet_address && user?.proxy_wallet_status === 'deployed')
   const proxyWalletAddress = hasDeployedProxyWallet ? normalizeAddress(user?.proxy_wallet_address) : null
   const userAddress = normalizeAddress(user?.address)
-  const makerAddress = proxyWalletAddress ?? userAddress ?? null
+  const makerAddress = proxyWalletAddress ?? null
   const signatureType = proxyWalletAddress ? 2 : 0
   const isOpen = openCardId === `${event.id}`
   const amountNumber = Number.parseFloat(tradeAmount) || 0

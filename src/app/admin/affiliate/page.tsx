@@ -65,17 +65,15 @@ export default async function AdminSettingsPage() {
 
   const profileMap = new Map<string, AffiliateProfile>(profiles.map(profile => [profile.id, profile]))
 
-  const defaultAddress = '0x0000000000000000000000000000000000000000'
-
   const rows: RowSummary[] = overview.map((item) => {
     const profile = profileMap.get(item.affiliate_user_id)
 
-    const profileAddress = profile?.proxy_wallet_address ?? profile?.address ?? defaultAddress
+    const profileAddress = profile?.proxy_wallet_address ?? ''
 
     return {
       id: item.affiliate_user_id,
       username: profile?.username as string,
-      address: profile?.address ?? defaultAddress,
+      address: profile?.address ?? '',
       proxy_wallet_address: profile?.proxy_wallet_address ?? null,
       image: profile?.image ? getSupabaseImageUrl(profile.image) : `https://avatar.vercel.sh/${profileAddress || item.affiliate_user_id}.png`,
       affiliate_code: profile?.affiliate_code ?? null,

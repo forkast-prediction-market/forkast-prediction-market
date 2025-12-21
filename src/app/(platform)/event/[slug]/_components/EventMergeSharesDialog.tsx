@@ -116,7 +116,7 @@ export default function EventMergeSharesDialog({
       return
     }
 
-    if (!user?.proxy_wallet_address || !user?.address) {
+    if (!user?.proxy_wallet_address) {
       toast.error('Deploy your proxy wallet before merging shares.')
       return
     }
