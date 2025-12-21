@@ -419,7 +419,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
   }, [refreshSessionUserState, signTypedDataAsync, user])
 
   const handleApproveTokens = useCallback(async () => {
-    if (!user?.address || !user?.proxy_wallet_address) {
+    if (!user?.proxy_wallet_address) {
       setTokenApprovalError('Deploy your proxy wallet first.')
       return
     }
