@@ -7,11 +7,15 @@ export function sanitizeUserForClient(user: User | null): User | null {
   }
 
   const publicAddress = getUserPublicAddress(user)
-  const { name: _omitName, ...rest } = user as Record<string, any>
 
-  return {
-    ...rest,
+  const sanitized: User = {
+    ...user,
     address: publicAddress,
     proxy_wallet_address: user.proxy_wallet_address ?? null,
   }
+
+  // Drop any auth "name" field that might mirror the EOA
+  delete (sanitized as any).name
+
+  return sanitized
 }
