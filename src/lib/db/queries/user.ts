@@ -1,5 +1,4 @@
 import type { MarketOrderType, ProxyWalletStatus, User } from '@/types'
-import { randomBytes } from 'node:crypto'
 import { asc, count, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm'
 import { cookies, headers } from 'next/headers'
 import { auth } from '@/lib/auth'
@@ -193,14 +192,14 @@ export const UserRepository = {
         }
       }
 
-      await ensureUserProxyWallet(user)
+      const proxyAddress = await ensureUserProxyWallet(user)
 
       if (user.settings) {
         user.settings = sanitizeTradingAuthSettings(user.settings)
       }
 
-      if (!user.username) {
-        const generatedUsername = generateUsername()
+      if (proxyAddress && !user.username) {
+        const generatedUsername = generateUsername(proxyAddress)
 
         if (generatedUsername) {
           try {
@@ -355,11 +354,10 @@ export const UserRepository = {
   },
 }
 
-function generateUsername() {
-  const randomAddress = `0x${randomBytes(20).toString('hex')}`
+function generateUsername(proxyAddress: string) {
   const timestamp = Date.now()
 
-  return `${randomAddress}-${timestamp}`
+  return `${proxyAddress}-${timestamp}`
 }
 
 async function ensureUserProxyWallet(user: any): Promise<string | null> {
