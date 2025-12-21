@@ -1,6 +1,7 @@
 'use cache: private'
 
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import SettingsNotificationsContent from '@/app/(platform)/settings/_components/SettingsNotificationsContent'
 import { UserRepository } from '@/lib/db/queries/user'
 import { sanitizeUserForClient } from '@/lib/sanitize-user'
@@ -12,6 +13,9 @@ export const metadata: Metadata = {
 export default async function NotificationsSettingsPage() {
   const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
   const clientUser = sanitizeUserForClient(user)
+  if (!clientUser) {
+    notFound()
+  }
 
   return (
     <section className="grid gap-8">

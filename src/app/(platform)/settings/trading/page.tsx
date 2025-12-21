@@ -1,6 +1,7 @@
 'use cache: private'
 
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import SettingsTradingContent from '@/app/(platform)/settings/_components/SettingsTradingContent'
 import { UserRepository } from '@/lib/db/queries/user'
 import { sanitizeUserForClient } from '@/lib/sanitize-user'
@@ -12,6 +13,9 @@ export const metadata: Metadata = {
 export default async function TradingSettingsPage() {
   const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
   const clientUser = sanitizeUserForClient(user)
+  if (!clientUser) {
+    notFound()
+  }
 
   return (
     <section className="grid gap-8">
