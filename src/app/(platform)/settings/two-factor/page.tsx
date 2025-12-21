@@ -4,7 +4,6 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import SettingsTwoFactorAuthContent from '@/app/(platform)/settings/_components/SettingsTwoFactorAuthContent'
 import { UserRepository } from '@/lib/db/queries/user'
-import { sanitizeUserForClient } from '@/lib/sanitize-user'
 
 export const metadata: Metadata = {
   title: 'Two Factor Settings',
@@ -12,8 +11,7 @@ export const metadata: Metadata = {
 
 export default async function TwoFactorSettingsPage() {
   const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
-  const clientUser = sanitizeUserForClient(user)
-  if (!clientUser) {
+  if (!user) {
     notFound()
   }
 
@@ -27,7 +25,7 @@ export default async function TwoFactorSettingsPage() {
       </div>
 
       <div className="mx-auto w-full max-w-2xl lg:mx-0">
-        <SettingsTwoFactorAuthContent user={clientUser} />
+        <SettingsTwoFactorAuthContent user={user} />
       </div>
     </section>
   )

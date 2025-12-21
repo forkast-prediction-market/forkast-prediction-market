@@ -4,7 +4,6 @@ import EventContent from '@/app/(platform)/event/[slug]/_components/EventContent
 import { loadMarketContextSettings } from '@/lib/ai/market-context-config'
 import { EventRepository } from '@/lib/db/queries/event'
 import { UserRepository } from '@/lib/db/queries/user'
-import { sanitizeUserForClient } from '@/lib/sanitize-user'
 
 export async function generateMetadata({ params }: PageProps<'/event/[slug]'>): Promise<Metadata> {
   const { slug } = await params
@@ -26,12 +25,10 @@ export default async function EventPage({ params }: PageProps<'/event/[slug]'>) 
     notFound()
   }
 
-  const clientUser = sanitizeUserForClient(user)
-
   return (
     <EventContent
       event={event}
-      user={clientUser}
+      user={user}
       marketContextEnabled={marketContextEnabled}
       key={`is-bookmarked-${event.is_bookmarked}`}
     />
