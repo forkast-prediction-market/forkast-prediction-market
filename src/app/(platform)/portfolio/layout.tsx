@@ -8,8 +8,9 @@ import { fetchPortfolioSnapshot } from '@/lib/portfolio'
 
 export default async function PortfolioLayout({ children }: LayoutProps<'/portfolio'>) {
   const user = await UserRepository.getCurrentUser()
-  const proxyAddress = user?.proxy_wallet_address ?? user?.address
-  const snapshot = await fetchPortfolioSnapshot(proxyAddress)
+  const snapshotAddress = user?.proxy_wallet_address ?? user?.address
+  const publicAddress = user?.proxy_wallet_address ?? null
+  const snapshot = await fetchPortfolioSnapshot(snapshotAddress)
 
   return (
     <main className="container py-8">
@@ -17,9 +18,9 @@ export default async function PortfolioLayout({ children }: LayoutProps<'/portfo
         <PublicProfileHeroCards
           profile={{
             username: user?.username ?? 'Your portfolio',
-            avatarUrl: user?.image ?? `https://avatar.vercel.sh/${user?.address ?? 'user'}.png`,
+            avatarUrl: user?.image ?? `https://avatar.vercel.sh/${publicAddress ?? user?.id ?? 'user'}.png`,
             joinedAt: (user as any)?.created_at?.toString?.() ?? (user as any)?.createdAt?.toString?.(),
-            address: proxyAddress ?? undefined,
+            portfolioAddress: publicAddress ?? undefined,
           }}
           snapshot={snapshot}
           actions={<PortfolioWalletActions />}

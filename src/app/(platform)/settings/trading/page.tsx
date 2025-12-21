@@ -3,6 +3,7 @@
 import type { Metadata } from 'next'
 import SettingsTradingContent from '@/app/(platform)/settings/_components/SettingsTradingContent'
 import { UserRepository } from '@/lib/db/queries/user'
+import { sanitizeUserForClient } from '@/lib/sanitize-user'
 
 export const metadata: Metadata = {
   title: 'Trading Settings',
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 
 export default async function TradingSettingsPage() {
   const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
+  const clientUser = sanitizeUserForClient(user)
 
   return (
     <section className="grid gap-8">
@@ -21,7 +23,7 @@ export default async function TradingSettingsPage() {
       </div>
 
       <div className="mx-auto w-full max-w-2xl lg:mx-0">
-        <SettingsTradingContent user={user} />
+        <SettingsTradingContent user={clientUser} />
       </div>
     </section>
   )

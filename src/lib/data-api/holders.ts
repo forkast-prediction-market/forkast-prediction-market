@@ -133,6 +133,11 @@ export async function fetchTopHolders(
       })()
 
       const mapped = mapHolder(holder, outcomeHint)
+      const netPosition = Number(mapped.net_position)
+      if (!Number.isFinite(netPosition) || netPosition <= 0) {
+        return
+      }
+
       if (mapped.outcome_index === 0) {
         yesHolders.push(mapped)
       }

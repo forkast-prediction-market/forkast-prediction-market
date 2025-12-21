@@ -60,6 +60,7 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
     initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    enabled: Boolean(userAddress),
   })
 
   const activities = data?.pages.flat() ?? []

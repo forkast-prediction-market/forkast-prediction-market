@@ -36,7 +36,7 @@ export default async function ProfilePage({ params }: PageProps<'/[username]'>) 
           username: profile.username,
           avatarUrl: profile.image,
           joinedAt: profile.created_at?.toString(),
-          address: userAddress,
+          portfolioAddress: userAddress,
         }}
         snapshot={snapshot}
       />

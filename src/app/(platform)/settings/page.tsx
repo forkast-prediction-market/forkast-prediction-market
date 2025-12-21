@@ -3,6 +3,7 @@
 import type { Metadata } from 'next'
 import SettingsProfileContent from '@/app/(platform)/settings/_components/SettingsProfileContent'
 import { UserRepository } from '@/lib/db/queries/user'
+import { sanitizeUserForClient } from '@/lib/sanitize-user'
 
 export const metadata: Metadata = {
   title: 'Settings',
@@ -10,6 +11,7 @@ export const metadata: Metadata = {
 
 export default async function SettingsPage() {
   const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
+  const clientUser = sanitizeUserForClient(user)
 
   return (
     <section className="grid gap-8">
@@ -21,7 +23,7 @@ export default async function SettingsPage() {
       </div>
 
       <div className="mx-auto w-full max-w-2xl lg:mx-0">
-        <SettingsProfileContent user={user} />
+        <SettingsProfileContent user={clientUser} />
       </div>
     </section>
   )

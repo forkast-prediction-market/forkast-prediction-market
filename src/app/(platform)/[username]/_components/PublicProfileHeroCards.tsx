@@ -17,7 +17,7 @@ interface ProfileForCards {
   avatarUrl: string
   joinedAt?: string
   viewsCount?: number
-  address?: string
+  portfolioAddress?: string | null
 }
 
 interface PublicProfileHeroCardsProps {
@@ -42,8 +42,8 @@ function ProfileOverviewCard({
   actions?: ReactNode
 }) {
   const { copied, copy } = useClipboard()
-  const { value: livePositionsValue, isLoading, isFetching } = usePortfolioValue(profile.address)
-  const hasLiveValue = Boolean(profile.address) && !isLoading && !isFetching
+  const { value: livePositionsValue, isLoading, isFetching } = usePortfolioValue(profile.portfolioAddress)
+  const hasLiveValue = Boolean(profile.portfolioAddress) && !isLoading && !isFetching
   const positionsValue = hasLiveValue ? livePositionsValue : snapshot.positionsValue
   const joinedText = useMemo(() => {
     if (!profile.joinedAt) {
@@ -114,7 +114,7 @@ function ProfileOverviewCard({
             </div>
           </div>
 
-          {profile.address && (
+          {profile.portfolioAddress && (
             <Button
               variant="ghost"
               size="icon"
@@ -123,7 +123,7 @@ function ProfileOverviewCard({
                 transition-colors
                 hover:bg-background
               `}
-              onClick={() => copy(profile.address!)}
+              onClick={() => copy(profile.portfolioAddress!)}
               aria-label="Copy portfolio address"
             >
               {copied ? <CheckIcon className="size-4 text-yes" /> : <FocusIcon className="size-4" />}

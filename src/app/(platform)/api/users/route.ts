@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { UserRepository } from '@/lib/db/queries/user'
 import { getSupabaseImageUrl } from '@/lib/supabase'
+import { getUserPublicAddress } from '@/lib/user-address'
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -26,12 +27,14 @@ export async function GET(request: Request) {
     }
 
     const profiles: PublicProfile[] = (data || []).map((user) => {
-      const fallbackAddress = user.proxy_wallet_address ?? user.address
+      const publicAddress = getUserPublicAddress(user) || ''
+      const avatarSeed = publicAddress || user.id
+
       return {
-        address: user.address,
+        address: publicAddress,
         proxy_wallet_address: user.proxy_wallet_address ?? null,
         username: user.username!,
-        image: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${fallbackAddress}.png`,
+        image: user.image ? getSupabaseImageUrl(user.image) : `https://avatar.vercel.sh/${avatarSeed}.png`,
         created_at: new Date(user.created_at),
       }
     })
