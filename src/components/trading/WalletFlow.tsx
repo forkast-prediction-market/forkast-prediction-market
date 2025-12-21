@@ -71,7 +71,7 @@ export function WalletFlow({
     event?.preventDefault()
     setWalletSendError(null)
 
-    if (!user?.address || !user?.proxy_wallet_address) {
+    if (!user?.proxy_wallet_address) {
       setWalletSendError('Deploy your proxy wallet first.')
       return
     }

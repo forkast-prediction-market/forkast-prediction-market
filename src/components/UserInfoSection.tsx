@@ -14,15 +14,15 @@ export default function UserInfoSection() {
     return <></>
   }
 
-  const fallbackAddress = user.proxy_wallet_address ?? user.address
+  const proxyWalletAddress = user.proxy_wallet_address!
   const displayUsername = user.username?.length > 12
     ? `${user.username.slice(0, 12)}...`
     : user.username
 
-  const polygonscanUrl = `https://polygonscan.com/address/${fallbackAddress}`
+  const polygonscanUrl = `https://polygonscan.com/address/${proxyWalletAddress}`
 
   function handleCopyWallet() {
-    copy(fallbackAddress)
+    void copy(proxyWalletAddress)
   }
 
   return (
@@ -57,7 +57,7 @@ export default function UserInfoSection() {
             title={copied ? 'Copied!' : 'Copy address'}
           >
             <span className="font-mono">
-              {truncateAddress(fallbackAddress)}
+              {truncateAddress(proxyWalletAddress)}
             </span>
             {copied
               ? (

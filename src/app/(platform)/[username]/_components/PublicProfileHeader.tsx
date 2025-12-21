@@ -17,12 +17,12 @@ export default function PublicProfileHeader({ profile }: PublicProfileHeaderProp
   const user = useUser()
   const { copied, copy } = useClipboard()
 
-  const fallbackAddress = profile.proxy_wallet_address ?? profile.address
+  const proxyWalletAddress = profile.proxy_wallet_address!
   function handleCopyAddress() {
-    void copy(fallbackAddress)
+    void copy(proxyWalletAddress)
   }
 
-  const address = truncateAddress(fallbackAddress)
+  const address = truncateAddress(proxyWalletAddress)
   const joinDate = new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
   return (
@@ -64,7 +64,7 @@ export default function PublicProfileHeader({ profile }: PublicProfileHeaderProp
       </div>
 
       <div className="flex flex-col gap-4 lg:self-start">
-        {user?.address === profile.address && (
+        {user?.proxy_wallet_address === profile.proxy_wallet_address && (
           <Link href="/settings">
             <Button variant="outline">
               Edit profile

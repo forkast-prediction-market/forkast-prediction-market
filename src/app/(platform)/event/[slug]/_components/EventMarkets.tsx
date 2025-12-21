@@ -83,14 +83,11 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   } = useOrderBookSummaries(eventTokenIds, { enabled: shouldEnableOrderBookPolling })
   const shouldShowOrderBookLoader = !shouldEnableOrderBookPolling || (isOrderBookLoading && !orderBookSummaries)
   const ownerAddress = useMemo(() => {
-    if (!user?.address) {
-      return null
-    }
-    if (user.proxy_wallet_address && user.proxy_wallet_status === 'deployed') {
+    if (user && user.proxy_wallet_address && user.proxy_wallet_status === 'deployed') {
       return user.proxy_wallet_address as `0x${string}`
     }
-    return user.address as `0x${string}`
-  }, [user?.address, user?.proxy_wallet_address, user?.proxy_wallet_status])
+    return '' as `0x${string}`
+  }, [user])
   const { sharesByCondition } = useUserShareBalances({ event, ownerAddress })
 
   useEffect(() => {

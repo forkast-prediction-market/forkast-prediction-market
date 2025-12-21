@@ -121,7 +121,7 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
     })
   }
 
-  if (!user?.address || !userAddress) {
+  if (!userAddress) {
     return <></>
   }
 
