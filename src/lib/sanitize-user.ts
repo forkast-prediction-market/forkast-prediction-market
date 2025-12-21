@@ -14,7 +14,6 @@ export function sanitizeUserForClient(user: User | null): User | null {
     proxy_wallet_address: user.proxy_wallet_address ?? null,
   }
 
-  // Drop any auth "name" field that might mirror the EOA
   delete (sanitized as any).name
 
   return sanitized

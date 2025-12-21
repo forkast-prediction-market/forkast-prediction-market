@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { fetchUserActivityData, mapDataApiActivityToActivityOrder } from '@/lib/data-api/user'
 import { formatCurrency, formatSharePriceLabel, formatTimeAgo, fromMicro, sharesFormatter } from '@/lib/formatters'
-import { getUserPrimaryAddress } from '@/lib/user-address'
+import { getUserPublicAddress } from '@/lib/user-address'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
@@ -26,7 +26,7 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const user = useUser()
   const isSingleMarket = useIsSingleMarket()
-  const userAddress = getUserPrimaryAddress(user)
+  const userAddress = getUserPublicAddress(user)
 
   useEffect(() => {
     queueMicrotask(() => setInfiniteScrollError(null))

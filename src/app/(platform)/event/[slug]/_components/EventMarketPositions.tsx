@@ -10,7 +10,7 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { fetchUserPositionsForMarket } from '@/lib/data-api/user'
 import { formatAmountInputValue, formatCentsLabel, formatCurrency, formatPercent, fromMicro, sharesFormatter } from '@/lib/formatters'
-import { getUserPrimaryAddress } from '@/lib/user-address'
+import { getUserPublicAddress } from '@/lib/user-address'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
@@ -161,7 +161,7 @@ function MarketPositionRow({
 
 export default function EventMarketPositions({ market }: EventMarketPositionsProps) {
   const user = useUser()
-  const userAddress = getUserPrimaryAddress(user)
+  const userAddress = getUserPublicAddress(user)
   const isMobile = useIsMobile()
   const isSingleMarket = useIsSingleMarket()
   const setOrderMarket = useOrder(state => state.setMarket)
