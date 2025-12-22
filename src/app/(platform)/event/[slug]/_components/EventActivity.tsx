@@ -238,9 +238,21 @@ export default function EventActivity({ event }: EventActivityProps) {
 
       {loading && (
         <div className="overflow-hidden">
-          <ProfileLinkSkeleton showDate={true} showChildren={true} />
-          <ProfileLinkSkeleton showDate={true} showChildren={true} />
-          <ProfileLinkSkeleton showDate={true} showChildren={true} />
+          <ProfileLinkSkeleton
+            showTrailing={true}
+            usernameMaxWidthClassName="max-w-[260px]"
+            trailingWidthClassName="w-14"
+          />
+          <ProfileLinkSkeleton
+            showTrailing={true}
+            usernameMaxWidthClassName="max-w-[260px]"
+            trailingWidthClassName="w-14"
+          />
+          <ProfileLinkSkeleton
+            showTrailing={true}
+            usernameMaxWidthClassName="max-w-[260px]"
+            trailingWidthClassName="w-14"
+          />
         </div>
       )}
 
