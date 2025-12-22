@@ -20,6 +20,7 @@ export interface PublicPosition {
   outcomeIndex?: number
   oppositeOutcome?: string
   size?: number
+  curPrice?: number
 }
 
 interface PositionItemProps {

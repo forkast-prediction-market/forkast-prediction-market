@@ -301,6 +301,9 @@ export interface UserOpenOrder {
     slug: string
     is_active: boolean
     is_resolved: boolean
+    icon_url?: string
+    event_slug?: string
+    event_title?: string
   }
 }
 

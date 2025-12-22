@@ -26,13 +26,21 @@ function microToUnit(value?: number) {
   return Number.isFinite(value) ? (value ?? 0) / 1e6 : 0
 }
 
+type PublicUserOpenOrder = UserOpenOrder & {
+  market: UserOpenOrder['market'] & {
+    icon_url?: string
+    event_slug?: string
+    event_title?: string
+  }
+}
+
 async function fetchOpenOrders({
   pageParam,
   signal,
 }: {
   pageParam: number
   signal?: AbortSignal
-}): Promise<UserOpenOrder[]> {
+}): Promise<PublicUserOpenOrder[]> {
   const params = new URLSearchParams({
     limit: '50',
     offset: pageParam.toString(),
@@ -58,7 +66,7 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery<UserOpenOrder[]>({
+  } = useInfiniteQuery<PublicUserOpenOrder[]>({
     queryKey: ['public-open-orders', userAddress],
     queryFn: ({ pageParam = 0, signal }) => fetchOpenOrders({ pageParam: pageParam as number, signal }),
     getNextPageParam: (lastPage, allPages) => {
