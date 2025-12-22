@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBalance } from '@/hooks/useBalance'
@@ -8,9 +9,15 @@ import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 export default function HeaderPortfolio() {
   const { startDepositFlow } = useTradingOnboarding()
   const { isLoadingBalance, balance } = useBalance()
-  const { isLoading, isFetching, value: positionsValue } = usePortfolioValue()
-  const positionsReady = !isLoading && !isFetching && Number.isFinite(positionsValue)
-  const isLoadingValue = isLoadingBalance || !positionsReady
+  const { isLoading, value: positionsValue } = usePortfolioValue()
+  const isInitialLoading = isLoadingBalance || isLoading
+  const [hasLoaded, setHasLoaded] = useState(!isInitialLoading)
+  useEffect(() => {
+    if (!isInitialLoading) {
+      setHasLoaded(true)
+    }
+  }, [isInitialLoading])
+  const isLoadingValue = !hasLoaded
   const totalPortfolioValue = (positionsValue ?? 0) + (balance?.raw ?? 0)
   const formattedPortfolioValue = Number.isFinite(totalPortfolioValue)
     ? totalPortfolioValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })

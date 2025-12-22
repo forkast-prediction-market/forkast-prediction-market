@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import type { PortfolioSnapshot } from '@/lib/portfolio'
 import { CheckIcon, CircleHelpIcon, EyeIcon, FocusIcon, MinusIcon, TriangleIcon } from 'lucide-react'
 import Image from 'next/image'
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -47,12 +47,19 @@ function ProfileOverviewCard({
   variant?: 'public' | 'portfolio'
 }) {
   const { copied, copy } = useClipboard()
-  const { value: livePositionsValue, isLoading, isFetching } = usePortfolioValue(profile.portfolioAddress)
-  const hasLiveValue = Boolean(profile.portfolioAddress) && !isLoading && !isFetching
+  const { value: livePositionsValue, isLoading } = usePortfolioValue(profile.portfolioAddress)
+  const hasLiveValue = Boolean(profile.portfolioAddress) && !isLoading
   const positionsValue = hasLiveValue ? livePositionsValue ?? snapshot.positionsValue : snapshot.positionsValue
   const { balance, isLoadingBalance } = useBalance()
   const shouldWaitForBalance = variant === 'portfolio'
-  const isReady = shouldWaitForBalance ? !isLoadingBalance && !isLoading && !isFetching : !isLoading && !isFetching
+  const isInitialLoading = shouldWaitForBalance ? isLoadingBalance || isLoading : isLoading
+  const [hasLoaded, setHasLoaded] = useState(!isInitialLoading)
+  useEffect(() => {
+    if (!isInitialLoading) {
+      setHasLoaded(true)
+    }
+  }, [isInitialLoading])
+  const isReady = hasLoaded
   const totalPortfolioValue = (positionsValue ?? 0) + (balance?.raw ?? 0)
   const formattedTotalValue = formatCurrency(totalPortfolioValue)
   const joinedText = useMemo(() => {
