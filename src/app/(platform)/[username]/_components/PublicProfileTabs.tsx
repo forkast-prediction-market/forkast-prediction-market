@@ -1,14 +1,15 @@
 'use client'
 
-import { useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import PublicHistoryList from '@/app/(platform)/[username]/_components/PublicHistoryList'
 import PublicOpenOrdersList from '@/app/(platform)/[username]/_components/PublicOpenOrdersList'
 import PublicPositionsList from '@/app/(platform)/[username]/_components/PublicPositionsList'
 import { cn } from '@/lib/utils'
+import { useUser } from '@/stores/useUser'
 
 type TabType = 'positions' | 'openOrders' | 'history'
 
-const tabs = [
+const baseTabs = [
   { id: 'positions' as const, label: 'Positions' },
   { id: 'openOrders' as const, label: 'Open orders' },
   { id: 'history' as const, label: 'History' },
@@ -19,10 +20,26 @@ interface PublicProfileTabsProps {
 }
 
 export default function PublicProfileTabs({ userAddress }: PublicProfileTabsProps) {
+  const user = useUser()
   const [activeTab, setActiveTab] = useState<TabType>('positions')
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })
   const [isInitialized, setIsInitialized] = useState(false)
+  const canShowOpenOrders = Boolean(
+    user?.proxy_wallet_address
+    && userAddress
+    && user.proxy_wallet_address.toLowerCase() === userAddress.toLowerCase(),
+  )
+  const tabs = useMemo(
+    () => (canShowOpenOrders ? baseTabs : baseTabs.filter(tab => tab.id !== 'openOrders')),
+    [canShowOpenOrders],
+  )
+
+  useEffect(() => {
+    if (!canShowOpenOrders && activeTab === 'openOrders') {
+      setActiveTab('positions')
+    }
+  }, [activeTab, canShowOpenOrders])
 
   useLayoutEffect(() => {
     const activeTabIndex = tabs.findIndex(tab => tab.id === activeTab)
@@ -41,7 +58,7 @@ export default function PublicProfileTabs({ userAddress }: PublicProfileTabsProp
         setIsInitialized(prev => prev || true)
       })
     }
-  }, [activeTab])
+  }, [activeTab, tabs])
 
   return (
     <div className="overflow-hidden rounded-2xl border border-border/80">
