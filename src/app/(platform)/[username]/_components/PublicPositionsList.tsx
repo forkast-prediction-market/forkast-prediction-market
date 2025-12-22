@@ -730,7 +730,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
           <div className="text-right text-sm font-semibold text-foreground">
             {formatCurrencyValue(toWinValue)}
             <div className={cn('text-xs', pnlDiff >= 0 ? 'text-yes' : 'text-no')}>
-              {`${pnlDiff >= 0 ? '+' : ''}${formatCurrency(Math.abs(pnlDiff))}`}
+              {`${pnlDiff >= 0 ? '+' : '-'}${formatCurrency(Math.abs(pnlDiff))}`}
               {' '}
               (
               {pnlPct.toFixed(2)}
