@@ -76,7 +76,7 @@
     "@types/node": "^24.5.2",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",
-    "@vitest/coverage-v8": "^4.0.15",
+    "@vitest/coverage-v8": "^4.0.16",
     "eslint": "^9.39.2",
     "eslint-plugin-better-tailwindcss": "^3.7.8",
     "eslint-plugin-react-hooks": "^7.0.0",
