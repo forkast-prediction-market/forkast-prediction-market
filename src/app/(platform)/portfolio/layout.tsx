@@ -14,7 +14,7 @@ export default async function PortfolioLayout({ children }: LayoutProps<'/portfo
 
   return (
     <main className="container py-8">
-      <div className="mx-auto grid max-w-4xl gap-6">
+      <div className="mx-auto grid max-w-6xl gap-6">
         <PublicProfileHeroCards
           profile={{
             username: user?.username ?? 'Your portfolio',
@@ -24,6 +24,7 @@ export default async function PortfolioLayout({ children }: LayoutProps<'/portfo
           }}
           snapshot={snapshot}
           actions={<PortfolioWalletActions />}
+          variant="portfolio"
         />
 
         <PortfolioMarketsWonCard />

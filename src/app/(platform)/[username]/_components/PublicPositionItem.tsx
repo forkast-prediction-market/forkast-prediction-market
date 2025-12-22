@@ -15,6 +15,10 @@ export interface PublicPosition {
   timestamp: number
   status: 'active' | 'closed'
   outcome?: string
+  conditionId?: string
+  mergeable?: boolean
+  outcomeIndex?: number
+  oppositeOutcome?: string
   size?: number
 }
 

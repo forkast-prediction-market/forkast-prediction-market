@@ -1,65 +1,96 @@
 'use client'
 
+import type { MergeableMarket } from './MergePositionsDialog'
 import type { PublicPosition } from './PublicPositionItem'
+import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
-import { useWindowVirtualizer } from '@tanstack/react-virtual'
-import { SearchIcon, XIcon } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { ArrowDownNarrowWideIcon, ArrowRightIcon, GitMergeIcon, SearchIcon, ShareIcon, XIcon } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+import { toast } from 'sonner'
+import { hashTypedData } from 'viem'
+import { useSignMessage } from 'wagmi'
+import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
 import { Button } from '@/components/ui/button'
-import { ButtonGroup } from '@/components/ui/button-group'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { useDebounce } from '@/hooks/useDebounce'
-import PublicPositionItem from './PublicPositionItem'
-import PublicPositionsEmpty from './PublicPositionsEmpty'
+import { defaultNetwork } from '@/lib/appkit'
+import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
+import { ZERO_COLLECTION_ID } from '@/lib/contracts'
+import { formatCurrency, toMicro } from '@/lib/formatters'
+import { aggregateSafeTransactions, buildMergePositionTransaction, getSafeTxTypedData, packSafeSignature } from '@/lib/safe/transactions'
+import { cn } from '@/lib/utils'
+
+import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
+import { useUser } from '@/stores/useUser'
+import { MergePositionsDialog } from './MergePositionsDialog'
 import PublicPositionsError from './PublicPositionsError'
-import PublicPositionsInfiniteScrollError from './PublicPositionsInfiniteScrollError'
-import PublicPositionsInfiniteScrollSkeleton from './PublicPositionsInfiniteScrollSkeleton'
 import PublicPositionsLoadingState from './PublicPositionsLoadingState'
 
+type SortOption
+  = | 'currentValue'
+    | 'trade'
+    | 'pnlPercent'
+    | 'pnlValue'
+    | 'shares'
+    | 'alpha'
+    | 'endingSoon'
+    | 'payout'
+    | 'latestPrice'
+    | 'avgCost'
+
+function getTradeValue(position: PublicPosition) {
+  return (position.size ?? 0) * (position.avgPrice ?? 0)
+}
+
+function getValue(position: PublicPosition) {
+  return position.currentValue ?? 0
+}
+
+function getPnlValue(position: PublicPosition) {
+  return getValue(position) - getTradeValue(position)
+}
+
+function getPnlPercent(position: PublicPosition) {
+  const trade = getTradeValue(position)
+  return trade > 0 ? (getPnlValue(position) / trade) * 100 : 0
+}
+
 interface PositionsFilterControlsProps {
-  marketStatusFilter: 'active' | 'closed'
   searchQuery: string
-  minAmountFilter: string
-  handleStatusFilterChange: (status: 'active' | 'closed') => void
+  sortBy: SortOption
   handleSearchChange: (query: string) => void
-  handleAmountFilterChange: (amount: string) => void
+  handleSortChange: (value: SortOption) => void
+  showMergeButton: boolean
+  onMergeClick: () => void
 }
 
 function PositionsFilterControls({
-  marketStatusFilter,
   searchQuery,
-  minAmountFilter,
-  handleStatusFilterChange,
+  sortBy,
   handleSearchChange,
-  handleAmountFilterChange,
+  handleSortChange,
+  showMergeButton,
+  onMergeClick,
 }: PositionsFilterControlsProps) {
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-        <ButtonGroup>
-          <Button
-            variant={marketStatusFilter === 'active' ? 'secondary' : 'outline'}
-            onClick={() => handleStatusFilterChange('active')}
-          >
-            Active
-          </Button>
-          <Button
-            variant={marketStatusFilter === 'closed' ? 'secondary' : 'outline'}
-            onClick={() => handleStatusFilterChange('closed')}
-          >
-            Closed
-          </Button>
-        </ButtonGroup>
-
-        <div className="relative w-full">
+    <div className="space-y-3 px-2 pt-2 sm:px-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative flex-1">
           <SearchIcon className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="text"
             placeholder="Search markets..."
             value={searchQuery}
             onChange={e => handleSearchChange(e.target.value)}
-            className="w-full pr-9 pl-9"
+            className={`
+              w-full bg-transparent pr-10 pl-9 shadow-none ring-1 ring-border/70
+              focus-visible:ring-2 focus-visible:ring-primary/50
+            `}
           />
           {searchQuery && (
             <Button
@@ -67,7 +98,7 @@ function PositionsFilterControls({
               variant="ghost"
               size="sm"
               onClick={() => handleSearchChange('')}
-              className="absolute top-1/2 right-1 size-7 -translate-y-1/2 p-0 hover:bg-muted"
+              className="absolute top-1/2 right-1 size-7 -translate-y-1/2 p-0 hover:bg-transparent"
             >
               <XIcon className="size-3" />
               <span className="sr-only">Clear search</span>
@@ -75,20 +106,41 @@ function PositionsFilterControls({
           )}
         </div>
 
-        <Select value={minAmountFilter} onValueChange={handleAmountFilterChange}>
-          <SelectTrigger className="w-full sm:w-48">
-            <SelectValue placeholder="All" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">Min amount: None</SelectItem>
-            <SelectItem value="10">$10</SelectItem>
-            <SelectItem value="100">$100</SelectItem>
-            <SelectItem value="1000">$1,000</SelectItem>
-            <SelectItem value="10000">$10,000</SelectItem>
-            <SelectItem value="100000">$100,000</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <Select value={sortBy} onValueChange={value => handleSortChange(value as SortOption)}>
+            <SelectTrigger className="w-48 justify-start gap-2 pr-3 [&>svg:last-of-type]:hidden">
+              <ArrowDownNarrowWideIcon className="size-4 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="currentValue">Current value</SelectItem>
+              <SelectItem value="trade">Trade</SelectItem>
+              <SelectItem value="pnlPercent">Profit &amp; Loss %</SelectItem>
+              <SelectItem value="pnlValue">Profit &amp; Loss $</SelectItem>
+              <SelectItem value="shares">Shares</SelectItem>
+              <SelectItem value="alpha">Alphabetically</SelectItem>
+              <SelectItem value="endingSoon">Ending soon</SelectItem>
+              <SelectItem value="payout">Payout</SelectItem>
+              <SelectItem value="latestPrice">Latest Price</SelectItem>
+              <SelectItem value="avgCost">Average cost per share</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {showMergeButton && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="shrink-0 rounded-lg"
+              onClick={onMergeClick}
+              aria-label="Merge positions"
+            >
+              <GitMergeIcon className="size-4" />
+            </Button>
+          )}
+        </div>
       </div>
+
     </div>
   )
 }
@@ -110,12 +162,12 @@ interface DataApiPosition {
   avgPrice?: number
   initialValue?: number
   currentValue?: number
+  curPrice?: number
   cashPnl?: number
   totalBought?: number
   realizedPnl?: number
   percentPnl?: number
   percentRealizedPnl?: number
-  curPrice?: number
   redeemable?: boolean
   mergeable?: boolean
   title?: string
@@ -149,13 +201,83 @@ function mapDataApiPosition(position: DataApiPosition, status: 'active' | 'close
     slug,
     eventSlug,
     icon: position.icon,
+    conditionId: position.conditionId,
     avgPrice: Number.isFinite(position.avgPrice) ? Number(position.avgPrice) : 0,
     currentValue: normalizedValue,
+    curPrice: Number.isFinite(position.curPrice) ? Number(position.curPrice) : undefined,
     timestamp: timestampMs,
     status,
     outcome: position.outcome,
+    outcomeIndex: position.outcomeIndex,
+    oppositeOutcome: position.oppositeOutcome,
+    mergeable: Boolean(position.mergeable),
     size: typeof position.size === 'number' ? position.size : undefined,
   }
+}
+
+function buildMergeableMarkets(positions: PublicPosition[]): MergeableMarket[] {
+  const activeMergeable = positions.filter(
+    position => position.status === 'active' && position.mergeable && position.conditionId,
+  )
+
+  const grouped = new Map<string, PublicPosition[]>()
+
+  activeMergeable.forEach((position) => {
+    const key = position.conditionId as string
+    const existing = grouped.get(key) ?? []
+    grouped.set(key, [...existing, position])
+  })
+
+  const markets: MergeableMarket[] = []
+
+  grouped.forEach((groupPositions, conditionId) => {
+    const outcomes = new Map<string, PublicPosition>()
+
+    groupPositions.forEach((position) => {
+      const outcomeKey = typeof position.outcomeIndex === 'number'
+        ? position.outcomeIndex.toString()
+        : position.outcome ?? 'unknown'
+
+      const existing = outcomes.get(outcomeKey)
+      if (!existing || (position.size ?? 0) > (existing.size ?? 0)) {
+        outcomes.set(outcomeKey, position)
+      }
+    })
+
+    if (outcomes.size < 2) {
+      return
+    }
+
+    const outcomePositions = Array.from(outcomes.values())
+    const mergeableAmount = Math.min(
+      ...outcomePositions
+        .map(position => position.size ?? 0)
+        .filter(amount => amount > 0),
+    )
+
+    if (!Number.isFinite(mergeableAmount) || mergeableAmount <= 0) {
+      return
+    }
+
+    const displayValue = Math.min(
+      ...outcomePositions
+        .map(position => position.currentValue ?? position.size ?? 0)
+        .filter(amount => amount > 0),
+    )
+
+    const sample = outcomePositions[0]
+
+    markets.push({
+      conditionId,
+      eventSlug: sample.eventSlug || sample.slug,
+      title: sample.title,
+      icon: sample.icon,
+      mergeAmount: mergeableAmount,
+      displayValue: Number.isFinite(displayValue) && displayValue > 0 ? displayValue : mergeableAmount,
+    })
+  })
+
+  return markets
 }
 
 async function fetchUserPositions({
@@ -215,60 +337,38 @@ interface PublicPositionsListProps {
 
 export default function PublicPositionsList({ userAddress }: PublicPositionsListProps) {
   const queryClient = useQueryClient()
-  const parentRef = useRef<HTMLDivElement | null>(null)
+  const { ensureTradingReady } = useTradingOnboarding()
+  const user = useUser()
+  const { signMessageAsync } = useSignMessage()
 
-  const [hasInitialized, setHasInitialized] = useState(false)
-  const [marketStatusFilter, setMarketStatusFilter] = useState<'active' | 'closed'>('active')
+  const marketStatusFilter: 'active' | 'closed' = 'active'
   const [searchQuery, setSearchQuery] = useState('')
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
-  const [minAmountFilter, setMinAmountFilter] = useState('All')
+  const [sortBy, setSortBy] = useState<SortOption>('currentValue')
+  const minAmountFilter = 'All'
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
-  const [scrollMargin, setScrollMargin] = useState(0)
-
-  const handleStatusFilterChange = useCallback((newStatus: 'active' | 'closed') => {
-    setInfiniteScrollError(null)
-    setHasInitialized(false)
-    setIsLoadingMore(false)
-    setRetryCount(0)
-
-    setMarketStatusFilter(newStatus)
-
-    void queryClient.invalidateQueries({
-      queryKey: ['user-positions', userAddress],
-    })
-  }, [queryClient, userAddress])
+  const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false)
+  const [isMergeProcessing, setIsMergeProcessing] = useState(false)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
   const handleSearchChange = useCallback((query: string) => {
     setInfiniteScrollError(null)
-    setHasInitialized(false)
     setIsLoadingMore(false)
     setRetryCount(0)
     setSearchQuery(query)
   }, [])
 
-  const handleAmountFilterChange = useCallback((newFilter: string) => {
-    setInfiniteScrollError(null)
-    setHasInitialized(false)
-    setIsLoadingMore(false)
-    setRetryCount(0)
-
-    setMinAmountFilter(newFilter)
-
-    void queryClient.invalidateQueries({
-      queryKey: ['user-positions', userAddress],
-    })
-  }, [queryClient, userAddress])
+  const handleSortChange = useCallback((value: SortOption) => {
+    setSortBy(value)
+  }, [])
 
   useEffect(() => {
     queueMicrotask(() => {
-      setHasInitialized(false)
       setInfiniteScrollError(null)
       setIsLoadingMore(false)
-      setMarketStatusFilter('active')
       setSearchQuery('')
-      setMinAmountFilter('All')
       setRetryCount(0)
     })
   }, [userAddress])
@@ -303,20 +403,55 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     enabled: Boolean(userAddress),
   })
 
-  const positions = data?.pages.flat() ?? []
+  const positions = useMemo(
+    () => data?.pages.flat() ?? [],
+    [data?.pages],
+  )
+
+  const sortedPositions = useMemo(() => {
+    const list = [...positions]
+
+    list.sort((a, b) => {
+      switch (sortBy) {
+        case 'currentValue':
+          return getValue(b) - getValue(a)
+        case 'trade':
+          return getTradeValue(b) - getTradeValue(a)
+        case 'pnlPercent':
+          return getPnlPercent(b) - getPnlPercent(a)
+        case 'pnlValue':
+          return getPnlValue(b) - getPnlValue(a)
+        case 'shares':
+          return (b.size ?? 0) - (a.size ?? 0)
+        case 'alpha':
+          return a.title.localeCompare(b.title)
+        case 'endingSoon':
+          return (a.timestamp ?? 0) - (b.timestamp ?? 0)
+        case 'payout':
+          return getValue(b) - getValue(a)
+        case 'latestPrice':
+          return (b.curPrice ?? 0) - (a.curPrice ?? 0)
+        case 'avgCost':
+          return (b.avgPrice ?? 0) - (a.avgPrice ?? 0)
+        default:
+          return 0
+      }
+    })
+
+    return list
+  }, [positions, sortBy])
+
   const loading = status === 'pending'
   const hasInitialError = status === 'error'
 
   const isSearchActive = debouncedSearchQuery.trim().length > 0
+  const mergeableMarkets = useMemo(
+    () => buildMergeableMarkets(positions),
+    [positions],
+  )
+  const hasMergeableMarkets = mergeableMarkets.length > 0
 
   useEffect(() => {
-    if (parentRef.current) {
-      setScrollMargin(parentRef.current.offsetTop)
-    }
-  }, [])
-
-  useEffect(() => {
-    setHasInitialized(false)
     setInfiniteScrollError(null)
     setIsLoadingMore(false)
 
@@ -325,41 +460,15 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     }
   }, [debouncedSearchQuery, minAmountFilter, marketStatusFilter])
 
-  const virtualizer = useWindowVirtualizer({
-    count: positions.length,
-    estimateSize: () => {
-      if (typeof window !== 'undefined') {
-        return window.innerWidth < 768 ? 110 : 70
-      }
-      return 70
-    },
-    scrollMargin,
-    overscan: 5,
-    onChange: (instance) => {
-      if (!hasInitialized && positions.length > 0) {
-        setHasInitialized(true)
-        return
-      }
+  useEffect(() => {
+    if (!hasNextPage || !loadMoreRef.current) {
+      return undefined
+    }
 
-      if (!hasInitialized || positions.length === 0) {
-        return
-      }
-
-      const items = instance.getVirtualItems()
-      const lastItem = items[items.length - 1]
-
-      const shouldLoadMore = lastItem
-        && lastItem.index >= positions.length - 5
-        && hasNextPage
-        && !isFetchingNextPage
-        && !isLoadingMore
-        && !infiniteScrollError
-        && status !== 'pending'
-
-      if (shouldLoadMore) {
+    const observer = new IntersectionObserver((entries) => {
+      const [entry] = entries
+      if (entry?.isIntersecting && !isFetchingNextPage && !isLoadingMore && !infiniteScrollError) {
         setIsLoadingMore(true)
-        setInfiniteScrollError(null)
-
         fetchNextPage()
           .then(() => {
             setIsLoadingMore(false)
@@ -368,47 +477,22 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
           .catch((error) => {
             setIsLoadingMore(false)
             if (error.name !== 'AbortError') {
-              const errorMessage = error.message || 'Failed to load more positions'
-              setInfiniteScrollError(errorMessage)
+              setInfiniteScrollError(error.message || 'Failed to load more positions')
             }
           })
       }
-    },
-  })
+    }, { rootMargin: '200px' })
 
-  const retryInfiniteScroll = useCallback(() => {
-    setInfiniteScrollError(null)
-    setIsLoadingMore(true)
+    observer.observe(loadMoreRef.current)
 
-    const currentRetryCount = retryCount + 1
-    setRetryCount(currentRetryCount)
-
-    const delay = Math.min(1000 * 2 ** (currentRetryCount - 1), 8000)
-
-    setTimeout(() => {
-      fetchNextPage()
-        .then(() => {
-          setIsLoadingMore(false)
-          setRetryCount(0)
-        })
-        .catch((error) => {
-          setIsLoadingMore(false)
-          if (error.name !== 'AbortError') {
-            const errorMessage = debouncedSearchQuery.trim()
-              ? `Failed to load more search results for "${debouncedSearchQuery}"`
-              : 'Failed to load more positions'
-            setInfiniteScrollError(errorMessage)
-          }
-        })
-    }, delay)
-  }, [fetchNextPage, debouncedSearchQuery, retryCount])
+    return () => observer.disconnect()
+  }, [fetchNextPage, hasNextPage, infiniteScrollError, isFetchingNextPage, isLoadingMore])
 
   const retryInitialLoad = useCallback(() => {
     const currentRetryCount = retryCount + 1
     setRetryCount(currentRetryCount)
     setInfiniteScrollError(null)
     setIsLoadingMore(false)
-    setHasInitialized(false)
 
     const delay = Math.min(1000 * 2 ** (currentRetryCount - 1), 8000)
 
@@ -417,18 +501,281 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     }, delay)
   }, [refetch, retryCount])
 
-  if (hasInitialError) {
-    return (
-      <div className="grid gap-6">
-        <PositionsFilterControls
-          marketStatusFilter={marketStatusFilter}
-          searchQuery={searchQuery}
-          minAmountFilter={minAmountFilter}
-          handleStatusFilterChange={handleStatusFilterChange}
-          handleSearchChange={handleSearchChange}
-          handleAmountFilterChange={handleAmountFilterChange}
-        />
+  const handleMergeAll = useCallback(async () => {
+    if (!hasMergeableMarkets) {
+      toast.info('No mergeable positions available right now.')
+      return
+    }
 
+    if (!ensureTradingReady()) {
+      return
+    }
+
+    if (!user?.proxy_wallet_address || !user?.address) {
+      toast.error('Deploy your proxy wallet before merging shares.')
+      return
+    }
+
+    const transactions = mergeableMarkets
+      .filter(market => market.mergeAmount > 0 && market.conditionId)
+      .map(market =>
+        buildMergePositionTransaction({
+          conditionId: market.conditionId as `0x${string}`,
+          partition: [...DEFAULT_CONDITION_PARTITION],
+          amount: toMicro(market.mergeAmount),
+          parentCollectionId: ZERO_COLLECTION_ID,
+        }),
+      )
+
+    if (transactions.length === 0) {
+      toast.info('No eligible pairs to merge.')
+      return
+    }
+
+    setIsMergeProcessing(true)
+
+    try {
+      const nonceResult = await getSafeNonceAction()
+      if (nonceResult.error || !nonceResult.nonce) {
+        toast.error(nonceResult.error ?? DEFAULT_ERROR_MESSAGE)
+        setIsMergeProcessing(false)
+        return
+      }
+
+      const aggregated = aggregateSafeTransactions(transactions)
+      const typedData = getSafeTxTypedData({
+        chainId: defaultNetwork.id,
+        safeAddress: user.proxy_wallet_address as `0x${string}`,
+        transaction: aggregated,
+        nonce: nonceResult.nonce,
+      })
+
+      const { signatureParams, ...safeTypedData } = typedData
+      const structHash = hashTypedData({
+        domain: safeTypedData.domain,
+        types: safeTypedData.types,
+        primaryType: safeTypedData.primaryType,
+        message: safeTypedData.message,
+      }) as `0x${string}`
+
+      const signature = await signMessageAsync({
+        message: { raw: structHash },
+      })
+
+      const payload: SafeTransactionRequestPayload = {
+        type: 'SAFE',
+        from: user.address,
+        to: aggregated.to,
+        proxyWallet: user.proxy_wallet_address,
+        data: aggregated.data,
+        nonce: nonceResult.nonce,
+        signature: packSafeSignature(signature as `0x${string}`),
+        signatureParams,
+        metadata: 'merge_position',
+      }
+
+      const response = await submitSafeTransactionAction(payload)
+
+      if (response?.error) {
+        toast.error(response.error)
+        setIsMergeProcessing(false)
+        return
+      }
+
+      toast.success('Merge submitted', {
+        description: 'We sent a merge transaction for your eligible positions.',
+      })
+
+      setIsMergeDialogOpen(false)
+      setIsMergeProcessing(false)
+
+      void queryClient.invalidateQueries({ queryKey: ['user-positions'] })
+      void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
+
+      setTimeout(() => {
+        void queryClient.invalidateQueries({ queryKey: ['user-positions'] })
+        void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
+      }, 3000)
+    }
+    catch (error) {
+      console.error('Failed to submit merge operation.', error)
+      toast.error('We could not submit your merge request. Please try again.')
+    }
+    finally {
+      setIsMergeProcessing(false)
+    }
+  }, [
+    ensureTradingReady,
+    hasMergeableMarkets,
+    mergeableMarkets,
+    queryClient,
+    signMessageAsync,
+    user?.address,
+    user?.proxy_wallet_address,
+  ])
+
+  const totals = useMemo(() => {
+    const trade = positions.reduce((sum, position) => {
+      const tradeValue = (position.size ?? 0) * (position.avgPrice ?? 0)
+      return sum + tradeValue
+    }, 0)
+    const value = positions.reduce((sum, position) => sum + (position.currentValue ?? 0), 0)
+    const diff = value - trade
+    const pct = trade > 0 ? (diff / trade) * 100 : 0
+    return { trade, value, diff, pct, toWin: value }
+  }, [positions])
+
+  function formatCents(price?: number) {
+    if (!Number.isFinite(price)) {
+      return '—'
+    }
+    return `${Math.round((price ?? 0) * 100)}¢`
+  }
+
+  function formatCurrencyValue(value?: number) {
+    return Number.isFinite(value) ? formatCurrency(value ?? 0) : '—'
+  }
+
+  function renderRows() {
+    return sortedPositions.map((position, index) => {
+      const imageSrc = position.icon ? `https://gateway.irys.xyz/${position.icon}` : null
+      const avgPrice = position.avgPrice ?? 0
+      const nowPrice = Number.isFinite(position.curPrice) && position.curPrice !== undefined
+        ? position.curPrice!
+        : avgPrice
+      const tradeValue = (position.size ?? 0) * avgPrice
+      const toWinValue = position.currentValue ?? 0
+      const pnlDiff = toWinValue - tradeValue
+      const pnlPct = tradeValue > 0 ? (pnlDiff / tradeValue) * 100 : 0
+      const outcomeLabel = position.outcome ?? '—'
+      const outcomeColor = outcomeLabel.toLowerCase().includes('yes') ? 'bg-yes/15 text-yes' : 'bg-no/15 text-no'
+      const isStriped = index % 2 === 0
+      const eventSlug = position.eventSlug || position.slug
+
+      return (
+        <div
+          key={`${position.id}-${index}`}
+          className={`
+            grid grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] items-center gap-4 border-b border-border/60
+            px-2 py-3 transition-colors
+            last:border-b-0
+            hover:bg-muted/50
+            sm:px-3
+            ${isStriped ? 'bg-muted/40' : ''}
+          `}
+        >
+          <div className="flex min-w-0 items-start gap-3">
+            <Link
+              href={`/event/${eventSlug}`}
+              className="relative size-12 shrink-0 overflow-hidden rounded bg-muted"
+            >
+              {imageSrc
+                ? (
+                    <Image
+                      src={imageSrc}
+                      alt={position.title}
+                      fill
+                      sizes="48px"
+                      className="object-cover"
+                    />
+                  )
+                : (
+                    <div className="grid size-full place-items-center text-[11px] text-muted-foreground">No image</div>
+                  )}
+            </Link>
+            <div className="min-w-0 space-y-1">
+              <Link
+                href={`/event/${eventSlug}`}
+                className={`
+                  block max-w-[64ch] truncate text-sm font-semibold text-foreground no-underline
+                  hover:no-underline
+                `}
+                title={position.title}
+              >
+                {position.title}
+              </Link>
+              <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
+                <span className={cn('inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold', outcomeColor)}>
+                  {outcomeLabel}
+                  {' '}
+                  {formatCents(avgPrice)}
+                </span>
+                {Number.isFinite(position.size) && (
+                  <span className="text-muted-foreground">
+                    {(position.size ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    {' '}
+                    shares
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="text-left text-sm text-foreground">
+            <div className="flex items-center gap-1">
+              <span className="text-muted-foreground">{formatCents(avgPrice)}</span>
+              <ArrowRightIcon className="size-3 text-muted-foreground" />
+              <span className="text-foreground">{formatCents(nowPrice)}</span>
+            </div>
+          </div>
+
+          <div className="text-center text-sm font-semibold text-muted-foreground">
+            {formatCurrencyValue(tradeValue)}
+          </div>
+
+          <div className="text-center text-sm font-semibold text-muted-foreground">
+            {formatCurrencyValue(toWinValue)}
+          </div>
+
+          <div className="text-right text-sm font-semibold text-foreground">
+            {formatCurrencyValue(toWinValue)}
+            <div className={cn('text-xs', pnlDiff >= 0 ? 'text-yes' : 'text-no')}>
+              {`${pnlDiff >= 0 ? '+' : ''}${formatCurrency(Math.abs(pnlDiff))}`}
+              {' '}
+              (
+              {pnlPct.toFixed(2)}
+              %)
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <Button size="sm">Sell</Button>
+            <Button size="icon" variant="outline" className="rounded-lg">
+              <ShareIcon className="size-4" />
+            </Button>
+          </div>
+        </div>
+      )
+    })
+  }
+
+  return (
+    <div className="space-y-3 pb-0">
+      <PositionsFilterControls
+        searchQuery={searchQuery}
+        sortBy={sortBy}
+        handleSearchChange={handleSearchChange}
+        handleSortChange={handleSortChange}
+        showMergeButton={hasMergeableMarkets && marketStatusFilter === 'active'}
+        onMergeClick={() => setIsMergeDialogOpen(true)}
+      />
+
+      <div
+        className={`
+          grid grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] items-center gap-4 px-2 pt-1 pb-2 text-xs
+          font-semibold tracking-wide text-muted-foreground uppercase
+          sm:px-3
+        `}
+      >
+        <div className="text-left">Market</div>
+        <div className="text-left">Avg → Now</div>
+        <div className="text-center">Trade</div>
+        <div className="text-center">To win</div>
+        <div className="text-right">Value</div>
+        <div />
+      </div>
+
+      {hasInitialError && (
         <PublicPositionsError
           isSearchActive={isSearchActive}
           searchQuery={debouncedSearchQuery}
@@ -437,35 +784,11 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
           onRetry={retryInitialLoad}
           onRefreshPage={() => window.location.reload()}
         />
-      </div>
-    )
-  }
-
-  return (
-    <div ref={parentRef} className="space-y-6">
-
-      <PositionsFilterControls
-        marketStatusFilter={marketStatusFilter}
-        searchQuery={searchQuery}
-        minAmountFilter={minAmountFilter}
-        handleStatusFilterChange={handleStatusFilterChange}
-        handleSearchChange={handleSearchChange}
-        handleAmountFilterChange={handleAmountFilterChange}
-      />
-
-      <div className={`
-        mb-2 flex items-center gap-3 px-3 py-2 text-xs font-medium tracking-wide text-muted-foreground uppercase
-        sm:gap-4 sm:px-5
-      `}
-      >
-        <div className="flex-1">Market</div>
-        <div className="text-right">Avg Price</div>
-        <div className="text-right">Value</div>
-      </div>
+      )}
 
       {loading && (
         <PublicPositionsLoadingState
-          skeletonCount={8}
+          skeletonCount={5}
           isSearchActive={isSearchActive}
           searchQuery={debouncedSearchQuery}
           marketStatusFilter={marketStatusFilter}
@@ -473,102 +796,71 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         />
       )}
 
-      {!loading && positions.length === 0 && (
-        <PublicPositionsEmpty
-          searchQuery={debouncedSearchQuery}
-          minAmountFilter={minAmountFilter}
-          marketStatusFilter={marketStatusFilter}
-          onClearSearch={() => handleSearchChange('')}
-          onClearAmountFilter={() => handleAmountFilterChange('All')}
-        />
+      {!loading && positions.length === 0 && !hasInitialError && (
+        <div className="py-12 text-center text-sm text-muted-foreground">
+          {marketStatusFilter === 'active' ? 'No positions found.' : 'No closed positions found.'}
+        </div>
       )}
 
       {!loading && positions.length > 0 && (
-        <div className="overflow-hidden rounded-lg border border-border">
+        <div className="space-y-0">
+          {renderRows()}
+
           <div
-            style={{
-              height: `${virtualizer.getTotalSize()}px`,
-              position: 'relative',
-              width: '100%',
-            }}
+            className={cn(
+              `
+                grid grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] items-center gap-4 border-b
+                border-border/80 px-2 py-3
+                sm:px-3
+              `,
+              positions.length % 2 === 0 ? 'bg-muted/40' : '',
+            )}
           >
-            {virtualizer.getVirtualItems().map((virtualItem) => {
-              const position = positions[virtualItem.index]
-              if (!position) {
-                return null
-              }
-
-              return (
-                <div
-                  key={virtualItem.key}
-                  data-index={virtualItem.index}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    transform: `translateY(${
-                      virtualItem.start
-                      - (virtualizer.options.scrollMargin ?? 0)
-                    }px)`,
-                  }}
-                >
-                  <PublicPositionItem item={position} />
-                </div>
-              )
-            })}
-          </div>
-
-          {(isFetchingNextPage || isLoadingMore) && <PublicPositionsInfiniteScrollSkeleton skeletonCount={3} />}
-
-          {!hasNextPage && positions.length > 0 && !isFetchingNextPage && !isLoadingMore && (
-            <div className="mt-4 border-t bg-muted/20 p-6 text-center">
-              <div className="space-y-3">
-                <div className="text-sm font-medium text-foreground">
-                  You've reached the end
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {debouncedSearchQuery.trim()
-                    ? `All ${positions.length} result${positions.length === 1 ? '' : 's'} for "${debouncedSearchQuery}" loaded`
-                    : minAmountFilter && minAmountFilter !== 'All'
-                      ? `Showing all ${marketStatusFilter} positions with minimum value of $${minAmountFilter}`
-                      : `All ${positions.length} ${marketStatusFilter} position${positions.length === 1 ? '' : 's'} loaded`}
-                </div>
-
-                {debouncedSearchQuery.trim() && (
-                  <div className={`
-                    mt-3 inline-flex items-center gap-2 rounded-full bg-orange-100 px-3 py-1 text-xs font-medium
-                    text-orange-800
-                    dark:bg-orange-900/30 dark:text-orange-300
-                  `}
-                  >
-                    <SearchIcon className="size-3" />
-                    Search: "
-                    {debouncedSearchQuery}
-                    "
-                  </div>
-                )}
+            <div className="text-sm font-semibold text-foreground">Total</div>
+            <div className="text-sm text-muted-foreground">—</div>
+            <div className="text-center text-sm font-semibold text-foreground">
+              {formatCurrencyValue(totals.trade)}
+            </div>
+            <div className="text-center text-sm font-semibold text-foreground">
+              {formatCurrencyValue(totals.toWin)}
+            </div>
+            <div className="text-right text-sm font-semibold text-foreground">
+              {formatCurrencyValue(totals.value)}
+              <div className={cn('text-xs', totals.diff >= 0 ? 'text-yes' : 'text-no')}>
+                {`${totals.diff >= 0 ? '+' : ''}${formatCurrency(Math.abs(totals.diff))}`}
+                {' '}
+                (
+                {totals.pct.toFixed(2)}
+                %)
               </div>
             </div>
-          )}
-
-          {infiniteScrollError && (
-            <PublicPositionsInfiniteScrollError
-              searchQuery={debouncedSearchQuery}
-              retryCount={retryCount}
-              isLoadingMore={isLoadingMore}
-              onRetry={retryInfiniteScroll}
-              onStartOver={() => {
-                setInfiniteScrollError(null)
-                setRetryCount(0)
-                void queryClient.invalidateQueries({
-                  queryKey: ['user-positions', userAddress, marketStatusFilter, minAmountFilter, debouncedSearchQuery],
-                })
-              }}
-            />
-          )}
+            <div />
+          </div>
+          <div ref={loadMoreRef} className="h-0" />
         </div>
       )}
+
+      {(isFetchingNextPage || isLoadingMore) && (
+        <div className="py-4 text-center text-xs text-muted-foreground">Loading more...</div>
+      )}
+
+      {infiniteScrollError && (
+        <div className="py-4 text-center text-xs text-no">
+          {infiniteScrollError}
+          {' '}
+          <button type="button" onClick={retryInitialLoad} className="underline underline-offset-2">
+            Retry
+          </button>
+        </div>
+      )}
+
+      <MergePositionsDialog
+        open={isMergeDialogOpen}
+        onOpenChange={setIsMergeDialogOpen}
+        markets={mergeableMarkets}
+        isProcessing={isMergeProcessing}
+        onConfirm={handleMergeAll}
+      />
     </div>
   )
 }

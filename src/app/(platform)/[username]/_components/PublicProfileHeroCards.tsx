@@ -7,6 +7,8 @@ import Image from 'next/image'
 import { useId, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Skeleton } from '@/components/ui/skeleton'
+import { useBalance } from '@/hooks/useBalance'
 import { useClipboard } from '@/hooks/useClipboard'
 import { usePortfolioValue } from '@/hooks/usePortfolioValue'
 import { usdFormatter } from '@/lib/formatters'
@@ -26,6 +28,7 @@ interface PublicProfileHeroCardsProps {
   platformName?: string
   platformLogoSvg?: string
   actions?: ReactNode
+  variant?: 'public' | 'portfolio'
 }
 
 function formatCurrency(value: number) {
@@ -36,15 +39,22 @@ function ProfileOverviewCard({
   profile,
   snapshot,
   actions,
+  variant = 'public',
 }: {
   profile: ProfileForCards
   snapshot: PortfolioSnapshot
   actions?: ReactNode
+  variant?: 'public' | 'portfolio'
 }) {
   const { copied, copy } = useClipboard()
   const { value: livePositionsValue, isLoading, isFetching } = usePortfolioValue(profile.portfolioAddress)
   const hasLiveValue = Boolean(profile.portfolioAddress) && !isLoading && !isFetching
-  const positionsValue = hasLiveValue ? livePositionsValue : snapshot.positionsValue
+  const positionsValue = hasLiveValue ? livePositionsValue ?? snapshot.positionsValue : snapshot.positionsValue
+  const { balance, isLoadingBalance } = useBalance()
+  const shouldWaitForBalance = variant === 'portfolio'
+  const isReady = shouldWaitForBalance ? !isLoadingBalance && !isLoading && !isFetching : !isLoading && !isFetching
+  const totalPortfolioValue = (positionsValue ?? 0) + (balance?.raw ?? 0)
+  const formattedTotalValue = formatCurrency(totalPortfolioValue)
   const joinedText = useMemo(() => {
     if (!profile.joinedAt) {
       return null
@@ -63,96 +73,162 @@ function ProfileOverviewCard({
   ]
 
   return (
-    <Card className="relative h-full overflow-hidden border border-border/60 bg-card/70">
-      <CardContent className="relative flex h-full flex-col gap-3 p-4">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex min-w-0 flex-1 items-start gap-3">
-            <div className={`
-              relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full border
-              border-border/60 bg-muted/40
-            `}
-            >
-              {profile.avatarUrl
-                ? (
-                    <Image
-                      src={profile.avatarUrl}
-                      alt={`${profile.username} avatar`}
-                      fill
-                      className="object-cover"
-                    />
-                  )
-                : (
-                    <span className="text-lg font-semibold text-muted-foreground uppercase">
-                      {profile.username.slice(0, 2)}
-                    </span>
-                  )}
-            </div>
-            <div className="min-w-0 flex-1 space-y-1">
-              <p className="truncate text-lg leading-tight font-semibold sm:text-xl" title={profile.username}>
-                {profile.username}
-              </p>
-              <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                {joinedText && (
-                  <span className="inline-flex items-center gap-1">
-                    Joined
-                    {' '}
-                    {joinedText}
-                  </span>
-                )}
-                {typeof profile.viewsCount === 'number' && (
-                  <>
-                    <span aria-hidden className="text-muted-foreground/50">•</span>
-                    <span className="inline-flex items-center gap-1">
-                      <EyeIcon className="size-4" />
-                      {profile.viewsCount.toLocaleString('en-US')}
-                      {' '}
-                      views
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
+    <Card className="relative h-full overflow-hidden border border-border bg-background">
+      <CardContent className="relative flex h-full flex-col gap-2.5 p-3 sm:p-4">
+        {isReady
+          ? (
+              <>
+                {variant === 'portfolio'
+                  ? (
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 flex-col gap-1">
+                          <span className="text-sm font-semibold tracking-wide text-muted-foreground">Portfolio</span>
+                          <p className="text-3xl leading-tight font-bold text-foreground sm:text-4xl">
+                            {formattedTotalValue}
+                          </p>
+                          <div
+                            className={cn(
+                              'flex items-center gap-2 text-sm font-semibold',
+                              snapshot.profitLoss > 0
+                                ? 'text-yes'
+                                : snapshot.profitLoss < 0
+                                  ? 'text-no'
+                                  : 'text-muted-foreground',
+                            )}
+                          >
+                            <span>
+                              {snapshot.profitLoss >= 0 ? '+' : '-'}
+                              {formatCurrency(Math.abs(snapshot.profitLoss))}
+                            </span>
+                            <span>
+                              (
+                              {positionsValue > 0
+                                ? `${((snapshot.profitLoss / positionsValue) * 100).toFixed(2)}%`
+                                : '0.00%'}
+                              )
+                            </span>
+                            <span className="text-muted-foreground">Today</span>
+                          </div>
+                        </div>
 
-          {profile.portfolioAddress && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className={`
-                size-9 rounded-full border border-border/60 bg-background/60 text-muted-foreground shadow-sm
-                transition-colors
-                hover:bg-background
-              `}
-              onClick={() => copy(profile.portfolioAddress!)}
-              aria-label="Copy portfolio address"
-            >
-              {copied ? <CheckIcon className="size-4 text-yes" /> : <FocusIcon className="size-4" />}
-            </Button>
-          )}
-        </div>
+                        <div
+                          className={`
+                            flex shrink-0 items-center gap-2 rounded-full border border-border/60 bg-card/70 px-3 py-2
+                            shadow-sm
+                          `}
+                        >
+                          <div className="relative size-6">
+                            <Image src="/images/trade/money.svg" alt="Cash" fill sizes="24px" className="object-contain" />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-extrabold text-foreground">
+                              $
+                              {balance?.text ?? '0.00'}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  : (
+                      <div className="flex items-start justify-between gap-3 sm:gap-4">
+                        <div className="flex min-w-0 flex-1 items-start gap-3">
+                          <div
+                            className={`
+                              relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full
+                              border border-border/60 bg-muted/40
+                            `}
+                          >
+                            {profile.avatarUrl
+                              ? (
+                                  <Image
+                                    src={profile.avatarUrl}
+                                    alt={`${profile.username} avatar`}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                )
+                              : (
+                                  <span className="text-lg font-semibold text-muted-foreground uppercase">
+                                    {profile.username.slice(0, 2)}
+                                  </span>
+                                )}
+                          </div>
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <p className="truncate text-lg leading-tight font-semibold sm:text-xl" title={profile.username}>
+                              {profile.username}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                              {joinedText && (
+                                <span className="inline-flex items-center gap-1">
+                                  Joined
+                                  {' '}
+                                  {joinedText}
+                                </span>
+                              )}
+                              {typeof profile.viewsCount === 'number' && (
+                                <>
+                                  <span aria-hidden className="text-muted-foreground/50">•</span>
+                                  <span className="inline-flex items-center gap-1">
+                                    <EyeIcon className="size-4" />
+                                    {profile.viewsCount.toLocaleString('en-US')}
+                                    {' '}
+                                    views
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
 
-        <div className="mt-auto pt-1">
-          {actions ?? (
-            <div className="grid grid-cols-3 gap-3">
-              {stats.map((stat, index) => (
-                <div
-                  key={stat.label}
-                  className={cn(
-                    'space-y-1 rounded-lg bg-background/40 p-2.5 shadow-sm',
-                    index > 0 && 'border-l border-border/50',
+                        {profile.portfolioAddress && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className={`
+                              size-9 rounded-full border border-border/60 bg-background/60 text-muted-foreground
+                              shadow-sm transition-colors
+                              hover:bg-background
+                            `}
+                            onClick={() => profile.portfolioAddress && copy(profile.portfolioAddress)}
+                            aria-label="Copy portfolio address"
+                          >
+                            {copied ? <CheckIcon className="size-4 text-yes" /> : <FocusIcon className="size-4" />}
+                          </Button>
+                        )}
+                      </div>
+                    )}
+
+                <div className="mt-auto pt-1">
+                  {actions ?? (
+                    <div className="grid grid-cols-3 gap-2.5">
+                      {stats.map((stat, index) => (
+                        <div
+                          key={stat.label}
+                          className={cn(
+                            'space-y-1 rounded-lg bg-background/40 p-2 shadow-sm',
+                            index > 0 && 'border-l border-border/50',
+                          )}
+                        >
+                          <p className="text-sm font-medium text-muted-foreground">
+                            {stat.label}
+                          </p>
+                          <p className="text-xl font-semibold tracking-tight text-foreground">
+                            {stat.value}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                >
-                  <p className="text-sm font-medium text-muted-foreground">
-                    {stat.label}
-                  </p>
-                  <p className="text-xl font-semibold tracking-tight text-foreground">
-                    {stat.value}
-                  </p>
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </>
+            )
+          : (
+              <div className="space-y-3">
+                <Skeleton className="h-5 w-24" />
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-4 w-28" />
+              </div>
+            )}
       </CardContent>
     </Card>
   )
@@ -212,9 +288,9 @@ function ProfitLossCard({
   const isNegative = profitLoss < 0
 
   return (
-    <Card className="relative h-full overflow-hidden border border-border/60 bg-card/70">
-      <CardContent className="relative flex h-full flex-col gap-3 p-4">
-        <div className="flex items-center justify-between gap-4">
+    <Card className="relative h-full overflow-hidden border border-border bg-background">
+      <CardContent className="relative flex h-full flex-col gap-2.5 p-3 sm:p-4">
+        <div className="flex items-center justify-between gap-3 sm:gap-4">
           <div className="flex items-center gap-2">
             <span
               className={cn(
@@ -251,24 +327,29 @@ function ProfitLossCard({
           </div>
         </div>
 
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-3 sm:gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <p className="text-3xl leading-none font-bold tracking-tight">
+              <p className="text-2xl leading-none font-bold tracking-tight sm:text-3xl">
                 {isPositive ? '+' : ''}
                 {formatCurrency(Math.abs(profitLoss))}
               </p>
               <CircleHelpIcon className="size-4 text-muted-foreground" />
             </div>
             <p className="text-sm text-muted-foreground">
-              {activeTimeframe === 'ALL' ? 'All-Time' : activeTimeframe}
+              {({
+                'ALL': 'All-Time',
+                '1D': 'Past Day',
+                '1W': 'Past Week',
+                '1M': 'Past Month',
+              } as const)[activeTimeframe] || 'All-Time'}
             </p>
           </div>
 
           <div className="flex items-center gap-2 text-muted-foreground/70">
             {platformLogoSvg && (
               <div
-                className="size-6 opacity-50"
+                className="size-6 text-foreground/70 [&_*]:fill-current [&_*]:stroke-current"
                 dangerouslySetInnerHTML={{ __html: sanitizeSvg(platformLogoSvg) }}
               />
             )}
@@ -276,8 +357,8 @@ function ProfitLossCard({
           </div>
         </div>
 
-        <div className="relative mt-auto w-full overflow-hidden">
-          <svg viewBox="0 0 100 36" className="size-full">
+        <div className="relative mt-auto h-24 w-full overflow-hidden sm:h-28">
+          <svg viewBox="0 0 100 36" className="h-full w-full">
             <defs>
               <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="rgb(58,131,250)" stopOpacity="0.28" />
@@ -291,9 +372,10 @@ function ProfitLossCard({
             <path d={area} fill={`url(#${gradientId})`} opacity="0.9" />
             <path d={line} fill="none" stroke={`url(#${lineGradientId})`} strokeWidth="2.2" strokeLinecap="round" />
           </svg>
-          <div className={`
-            pointer-events-none absolute inset-0 bg-linear-to-t from-background via-transparent/60 to-transparent
-          `}
+          <div
+            className={`
+              pointer-events-none absolute inset-0 bg-linear-to-t from-background via-transparent/60 to-transparent
+            `}
           />
         </div>
       </CardContent>
@@ -307,10 +389,11 @@ export default function PublicProfileHeroCards({
   platformLogoSvg,
   platformName,
   actions,
+  variant = 'public',
 }: PublicProfileHeroCardsProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2">
-      <ProfileOverviewCard profile={profile} snapshot={snapshot} actions={actions} />
+      <ProfileOverviewCard profile={profile} snapshot={snapshot} actions={actions} variant={variant} />
       <ProfitLossCard snapshot={snapshot} platformLogoSvg={platformLogoSvg} platformName={platformName} />
     </div>
   )

@@ -2,7 +2,6 @@
 
 import type { PublicActivity } from '@/types'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
-import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { AlertCircleIcon, RefreshCwIcon } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { PublicActivityItem } from '@/app/(platform)/[username]/_components/PublicActivityItem'
@@ -20,16 +19,13 @@ interface PublicActivityListProps {
 
 export default function PublicActivityList({ userAddress }: PublicActivityListProps) {
   const queryClient = useQueryClient()
-  const parentRef = useRef<HTMLDivElement | null>(null)
-  const [hasInitialized, setHasInitialized] = useState(false)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
-  const [scrollMargin, setScrollMargin] = useState(0)
 
   useEffect(() => {
     queueMicrotask(() => {
-      setHasInitialized(false)
       setInfiniteScrollError(null)
       setIsLoadingMore(false)
       setRetryCount(0)
@@ -68,43 +64,13 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
   const hasInitialError = status === 'error'
 
   useEffect(() => {
-    if (parentRef.current) {
-      setScrollMargin(parentRef.current.offsetTop)
+    if (!hasNextPage || !loadMoreRef.current) {
+      return undefined
     }
-  }, [])
 
-  const virtualizer = useWindowVirtualizer({
-    count: activities.length,
-    estimateSize: () => {
-      if (typeof window !== 'undefined') {
-        return window.innerWidth < 768 ? 110 : 70
-      }
-      return 70
-    },
-    scrollMargin,
-    overscan: 5,
-    onChange: (instance) => {
-      if (!hasInitialized && activities.length > 0) {
-        setHasInitialized(true)
-        return
-      }
-
-      if (!hasInitialized || activities.length === 0) {
-        return
-      }
-
-      const items = instance.getVirtualItems()
-      const lastItem = items[items.length - 1]
-
-      const shouldLoadMore = lastItem
-        && lastItem.index >= activities.length - 5
-        && hasNextPage
-        && !isFetchingNextPage
-        && !isLoadingMore
-        && !infiniteScrollError
-        && status !== 'pending'
-
-      if (shouldLoadMore) {
+    const observer = new IntersectionObserver((entries) => {
+      const [entry] = entries
+      if (entry?.isIntersecting && !isFetchingNextPage && !isLoadingMore && !infiniteScrollError) {
         setIsLoadingMore(true)
         setInfiniteScrollError(null)
 
@@ -121,8 +87,12 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
             }
           })
       }
-    },
-  })
+    }, { rootMargin: '200px' })
+
+    observer.observe(loadMoreRef.current)
+
+    return () => observer.disconnect()
+  }, [fetchNextPage, hasNextPage, infiniteScrollError, isFetchingNextPage, isLoadingMore])
 
   const retryInfiniteScroll = useCallback(() => {
     setInfiniteScrollError(null)
@@ -146,7 +116,6 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
     setRetryCount(prev => prev + 1)
     setInfiniteScrollError(null)
     setIsLoadingMore(false)
-    setHasInitialized(false)
     void refetch()
   }, [refetch])
 
@@ -163,7 +132,7 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
   }
 
   return (
-    <div ref={parentRef} className="space-y-6">
+    <div className="space-y-6">
 
       <div className={`
         mb-2 flex items-center gap-3 px-3 py-2 text-xs font-medium tracking-wide text-muted-foreground uppercase
@@ -193,38 +162,10 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
 
       {!loading && activities.length > 0 && (
         <div className="overflow-hidden rounded-lg border border-border">
-          <div
-            style={{
-              height: `${virtualizer.getTotalSize()}px`,
-              position: 'relative',
-              width: '100%',
-            }}
-          >
-            {virtualizer.getVirtualItems().map((virtualItem) => {
-              const activity = activities[virtualItem.index]
-              if (!activity) {
-                return null
-              }
-
-              return (
-                <div
-                  key={virtualItem.key}
-                  data-index={virtualItem.index}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    transform: `translateY(${
-                      virtualItem.start
-                      - (virtualizer.options.scrollMargin ?? 0)
-                    }px)`,
-                  }}
-                >
-                  <PublicActivityItem item={activity} />
-                </div>
-              )
-            })}
+          <div className="divide-y divide-border/70">
+            {activities.map(activity => (
+              <PublicActivityItem key={activity.id} item={activity} />
+            ))}
           </div>
 
           {(isFetchingNextPage || isLoadingMore) && (
@@ -292,6 +233,8 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
           )}
         </div>
       )}
+
+      <div ref={loadMoreRef} />
     </div>
   )
 }
