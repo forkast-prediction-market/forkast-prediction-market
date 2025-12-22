@@ -13,6 +13,8 @@ interface FetchEventTradesParams {
   signal?: AbortSignal
 }
 
+export const EVENT_ACTIVITY_PAGE_SIZE = 10
+
 export async function fetchEventTrades({
   marketIds,
   pageParam,
@@ -28,16 +30,47 @@ export async function fetchEventTrades({
     throw new Error('At least one market id is required to load event activity.')
   }
 
+  const parsedFilterAmount = Number(minAmountFilter)
+  const hasFilterAmount = Number.isFinite(parsedFilterAmount) && parsedFilterAmount > 0
+  const minAmountMicro = hasFilterAmount ? Number(toMicro(parsedFilterAmount)) : undefined
+
+  const isBrowser = typeof window !== 'undefined'
+
+  // Use internal API in the browser to hydrate profiles like Top Holders
+  if (isBrowser) {
+    const params = new URLSearchParams({
+      limit: EVENT_ACTIVITY_PAGE_SIZE.toString(),
+      offset: pageParam.toString(),
+      market: markets.join(','),
+      takerOnly: 'false',
+    })
+
+    if (hasFilterAmount) {
+      params.set('filterAmount', parsedFilterAmount.toString())
+    }
+
+    const response = await fetch(`/api/event-activity?${params.toString()}`, { signal })
+
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => null)
+      const errorMessage = errorBody?.error || 'Failed to load event activity.'
+      throw new Error(errorMessage)
+    }
+
+    const result = await response.json()
+    if (!Array.isArray(result)) {
+      throw new TypeError('Unexpected response from event activity API.')
+    }
+
+    return filterActivitiesByMinAmount(result as ActivityOrder[], minAmountMicro)
+  }
+
   const params = new URLSearchParams({
-    limit: '50',
+    limit: EVENT_ACTIVITY_PAGE_SIZE.toString(),
     offset: pageParam.toString(),
     market: markets.join(','),
     takerOnly: 'false',
   })
-
-  const parsedFilterAmount = Number(minAmountFilter)
-  const hasFilterAmount = Number.isFinite(parsedFilterAmount) && parsedFilterAmount > 0
-  const minAmountMicro = hasFilterAmount ? Number(toMicro(parsedFilterAmount)) : undefined
 
   if (hasFilterAmount) {
     params.set('filterType', 'CASH')

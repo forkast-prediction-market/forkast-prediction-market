@@ -21,8 +21,7 @@ export default function ProfileLinkSkeleton({
   return (
     <div
       className={cn(
-        'flex gap-3 border-b border-border/30 py-2 last:border-b-0',
-        showChildren || showTrailing ? 'items-start' : 'items-center',
+        'flex items-center gap-3 border-b border-border/30 px-3 py-2 last:border-b-0',
       )}
     >
       <div className="relative shrink-0">
@@ -34,21 +33,18 @@ export default function ProfileLinkSkeleton({
 
       <div
         className={cn(
-          'flex min-w-0 flex-1 gap-3',
-          showChildren ? 'items-start' : 'items-center',
+          'flex min-w-0 flex-1 items-center gap-3',
+          showTrailing ? 'justify-between' : '',
         )}
       >
-        <div className="min-w-0 flex-1">
-          <div
+        <div className="flex min-w-0 flex-1 items-center gap-2">
+          <Skeleton
             className={cn(
-              'flex min-w-0 items-center gap-1',
+              'h-3.5 max-w-[240px] min-w-[140px] flex-1',
               usernameMaxWidthClassName ?? 'max-w-32 lg:max-w-64',
             )}
-          >
-            <Skeleton className="h-4 w-20" />
-            {showDate && <Skeleton className="h-3 w-12" />}
-          </div>
-          {showChildren && <Skeleton className="mt-1 h-4 w-3/4" />}
+          />
+          {(showChildren || showDate) && <Skeleton className="h-3 w-14 shrink-0" />}
         </div>
         {showTrailing && (
           <Skeleton className={cn('h-4 shrink-0', trailingWidthClassName)} />
