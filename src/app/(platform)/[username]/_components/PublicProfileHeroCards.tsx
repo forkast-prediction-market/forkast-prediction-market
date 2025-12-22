@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useBalance } from '@/hooks/useBalance'
 import { useClipboard } from '@/hooks/useClipboard'
 import { usePortfolioValue } from '@/hooks/usePortfolioValue'
-import { usdFormatter } from '@/lib/formatters'
+import { formatCurrency } from '@/lib/formatters'
 import { cn, sanitizeSvg } from '@/lib/utils'
 
 interface ProfileForCards {
@@ -29,10 +29,6 @@ interface PublicProfileHeroCardsProps {
   platformLogoSvg?: string
   actions?: ReactNode
   variant?: 'public' | 'portfolio'
-}
-
-function formatCurrency(value: number) {
-  return usdFormatter.format(Number.isFinite(value) ? value : 0)
 }
 
 function ProfileOverviewCard({
