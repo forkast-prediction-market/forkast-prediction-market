@@ -36,7 +36,6 @@ export async function fetchEventTrades({
 
   const isBrowser = typeof window !== 'undefined'
 
-  // Use internal API in the browser to hydrate profiles like Top Holders
   if (isBrowser) {
     const params = new URLSearchParams({
       limit: EVENT_ACTIVITY_PAGE_SIZE.toString(),
