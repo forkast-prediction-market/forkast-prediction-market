@@ -2,7 +2,6 @@
 
 import type { Event } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { AlertCircleIcon, Loader2Icon } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -20,9 +19,7 @@ interface EventMarketHistoryProps {
 }
 
 export default function EventMarketHistory({ market }: EventMarketHistoryProps) {
-  const parentRef = useRef<HTMLDivElement | null>(null)
-  const [hasInitialized, setHasInitialized] = useState(false)
-  const [scrollMargin, setScrollMargin] = useState(0)
+  const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const user = useUser()
   const isSingleMarket = useIsSingleMarket()
@@ -30,16 +27,6 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
 
   useEffect(() => {
     queueMicrotask(() => setInfiniteScrollError(null))
-  }, [market.condition_id])
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      if (parentRef.current && typeof window !== 'undefined') {
-        const rect = parentRef.current.getBoundingClientRect()
-        setScrollMargin(rect.top + window.scrollY)
-      }
-      setHasInitialized(false)
-    })
   }, [market.condition_id])
 
   const {
@@ -81,39 +68,32 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
   const isLoadingInitial = status === 'pending'
   const hasInitialError = status === 'error'
 
-  const virtualizer = useWindowVirtualizer({
-    count: activities.length,
-    estimateSize: () => {
-      if (typeof window !== 'undefined') {
-        return window.innerWidth < 768 ? 48 : 44
-      }
-      return 44
-    },
-    scrollMargin,
-    overscan: 5,
-    onChange: (instance) => {
-      if (!hasInitialized) {
-        setHasInitialized(true)
-        return
-      }
+  useEffect(() => {
+    const node = loadMoreRef.current
+    if (!node) {
+      return
+    }
 
-      const items = instance.getVirtualItems()
-      const last = items[items.length - 1]
-      if (
-        last
-        && last.index >= activities.length - 1
-        && hasNextPage
-        && !isFetchingNextPage
-        && !infiniteScrollError
-      ) {
-        queueMicrotask(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (
+          entry?.isIntersecting
+          && hasNextPage
+          && !isFetchingNextPage
+          && !infiniteScrollError
+        ) {
           fetchNextPage().catch((error) => {
             setInfiniteScrollError(error.message || 'Failed to load more activity')
           })
-        })
-      }
-    },
-  })
+        }
+      },
+      { rootMargin: '200px 0px' },
+    )
+
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [fetchNextPage, hasNextPage, infiniteScrollError, isFetchingNextPage])
 
   function retryInfiniteScroll() {
     setInfiniteScrollError(null)
@@ -158,10 +138,10 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
       isSingleMarket
         ? <></>
         : (
-            <div className={`
-              flex min-h-16 items-center justify-center rounded border border-dashed border-border px-4 text-center
-              text-sm text-muted-foreground
-            `}
+            <div className={cn(
+              'flex min-h-16 items-center justify-center rounded border border-dashed border-border px-4 text-center',
+              'text-sm text-muted-foreground',
+            )}
             >
               No activity for this outcome.
             </div>
@@ -174,98 +154,75 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
       <div className="px-4 py-4">
         <h3 className="text-lg font-semibold text-foreground">History</h3>
       </div>
-      <div ref={parentRef}>
-        <div
-          className="divide-y divide-border"
-          style={{
-            height: `${virtualizer.getTotalSize()}px`,
-            position: 'relative',
-            width: '100%',
-          }}
-        >
-          {virtualizer.getVirtualItems().map((virtualItem) => {
-            const activity = activities[virtualItem.index]
-            if (!activity) {
-              return null
-            }
+      <div className="divide-y divide-border">
+        {activities.map((activity) => {
+          const sharesValue = Number.parseFloat(fromMicro(activity.amount, 4))
+          const sharesLabel = Number.isFinite(sharesValue)
+            ? sharesFormatter.format(sharesValue)
+            : '—'
+          const outcomeColorClass = (activity.outcome.text || '').toLowerCase() === 'yes'
+            ? 'text-yes'
+            : 'text-no'
+          const actionLabel = activity.side === 'sell' ? 'Sold' : 'Bought'
+          const priceLabel = formatSharePriceLabel(Number(activity.price), { fallback: '—' })
+          const totalValue = Number(activity.total_value) / 1e6
+          const totalValueLabel = formatCurrency(totalValue, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })
+          const timeAgoLabel = formatTimeAgo(activity.created_at)
+          const fullDateLabel = new Date(activity.created_at).toLocaleString('en-US', {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+          })
+          const txUrl = activity.tx_hash ? `${POLYGON_SCAN_BASE}/tx/${activity.tx_hash}` : null
 
-            const sharesValue = Number.parseFloat(fromMicro(activity.amount, 4))
-            const sharesLabel = Number.isFinite(sharesValue)
-              ? sharesFormatter.format(sharesValue)
-              : '—'
-            const outcomeColorClass = (activity.outcome.text || '').toLowerCase() === 'yes'
-              ? 'text-yes'
-              : 'text-no'
-            const actionLabel = activity.side === 'sell' ? 'Sold' : 'Bought'
-            const priceLabel = formatSharePriceLabel(Number(activity.price), { fallback: '—' })
-            const totalValue = Number(activity.total_value) / 1e6
-            const totalValueLabel = formatCurrency(totalValue, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })
-            const timeAgoLabel = formatTimeAgo(activity.created_at)
-            const fullDateLabel = new Date(activity.created_at).toLocaleString('en-US', {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-            })
-            const txUrl = activity.tx_hash ? `${POLYGON_SCAN_BASE}/tx/${activity.tx_hash}` : null
-
-            return (
-              <div
-                key={virtualItem.key}
-                data-index={virtualItem.index}
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  transform: `translateY(${virtualItem.start - (virtualizer.options.scrollMargin ?? 0)}px)`,
-                }}
-              >
-                <div className="flex h-11 items-center justify-between gap-3 px-3 text-sm leading-none text-foreground">
-                  <div className="flex min-w-0 items-center gap-2 overflow-hidden leading-none whitespace-nowrap">
-                    <span className="font-semibold">{actionLabel}</span>
-                    <span className={cn('font-semibold', outcomeColorClass)}>
-                      {sharesLabel}
-                      {' '}
-                      {activity.outcome.text}
-                    </span>
-                    <span className="text-foreground">at</span>
-                    <span className="font-semibold">{priceLabel}</span>
-                    <span className="text-muted-foreground">
-                      (
-                      {totalValueLabel}
-                      )
-                    </span>
-                  </div>
-                  {txUrl
-                    ? (
-                        <a
-                          href={txUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className={`
-                            text-xs whitespace-nowrap text-muted-foreground transition-colors
-                            hover:text-foreground
-                          `}
-                          title={fullDateLabel}
-                        >
-                          {timeAgoLabel}
-                        </a>
-                      )
-                    : (
-                        <span className="text-xs whitespace-nowrap text-muted-foreground" title={fullDateLabel}>
-                          {timeAgoLabel}
-                        </span>
-                      )}
-                </div>
+          return (
+            <div
+              key={activity.id}
+              className={cn('flex h-11 items-center justify-between gap-3 px-3 text-sm leading-none text-foreground')}
+            >
+              <div className="flex min-w-0 items-center gap-2 overflow-hidden leading-none whitespace-nowrap">
+                <span className="font-semibold">{actionLabel}</span>
+                <span className={cn('font-semibold', outcomeColorClass)}>
+                  {sharesLabel}
+                  {' '}
+                  {activity.outcome.text}
+                </span>
+                <span className="text-foreground">at</span>
+                <span className="font-semibold">{priceLabel}</span>
+                <span className="text-muted-foreground">
+                  (
+                  {totalValueLabel}
+                  )
+                </span>
               </div>
-            )
-          })}
-        </div>
+              {txUrl
+                ? (
+                    <a
+                      href={txUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={`
+                        text-xs whitespace-nowrap text-muted-foreground transition-colors
+                        hover:text-foreground
+                      `}
+                      title={fullDateLabel}
+                    >
+                      {timeAgoLabel}
+                    </a>
+                  )
+                : (
+                    <span className="text-xs whitespace-nowrap text-muted-foreground" title={fullDateLabel}>
+                      {timeAgoLabel}
+                    </span>
+                  )}
+            </div>
+          )
+        })}
       </div>
 
       {isFetchingNextPage && (
@@ -294,6 +251,8 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
           </Alert>
         </div>
       )}
+
+      <div ref={loadMoreRef} className="h-1 w-full" aria-hidden />
     </section>
   )
 }
