@@ -5,21 +5,18 @@ export default async function Loading() {
   return (
     <div className="grid gap-4">
       <div className="space-y-4">
-        <div className="rounded-lg border bg-card/60 p-4">
-          <div className="flex items-center gap-3">
-            <Skeleton className="size-12 rounded-sm" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-5 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
+        <div className="mb-16 flex items-center gap-3">
+          <Skeleton className="size-12 rounded-sm" />
+          <div className="flex-1 space-y-2">
+            <Skeleton className="h-5 w-2/4" />
           </div>
         </div>
 
-        <Skeleton className="h-64 w-full rounded-lg border bg-card" />
+        <Skeleton className="mb-16 h-80 w-full rounded-lg border bg-card" />
 
-        <div className="grid gap-3">
+        <div className="grid gap-6">
           {Array.from({ length: 3 }).map((_, index) => (
-            <Skeleton key={`summary-${index}`} className="h-32 rounded-lg border bg-card" />
+            <Skeleton key={`summary-${index}`} className="h-16 rounded-lg border bg-card" />
           ))}
         </div>
       </div>
