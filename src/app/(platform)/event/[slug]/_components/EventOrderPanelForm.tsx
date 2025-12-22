@@ -22,7 +22,7 @@ import { useAppKit } from '@/hooks/useAppKit'
 import { SAFE_BALANCE_QUERY_KEY, useBalance } from '@/hooks/useBalance'
 import { CLOB_ORDER_TYPE, getExchangeEip712Domain, ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { fetchUserPositionsForMarket } from '@/lib/data-api/user'
-import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
+import { formatCentsLabel, formatCurrency, toCents } from '@/lib/formatters'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
 import { signOrderPayload } from '@/lib/orders/signing'
 import { MIN_LIMIT_ORDER_SHARES, validateOrder } from '@/lib/orders/validation'
@@ -442,12 +442,28 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
   const yesOutcome = state.market?.outcomes[OUTCOME_INDEX.YES]
   const noOutcome = state.market?.outcomes[OUTCOME_INDEX.NO]
+  function handleTypeChange(nextType: typeof state.type) {
+    state.setType(nextType)
+    if (nextType !== ORDER_TYPE.LIMIT) {
+      return
+    }
+    const outcomeIndex = state.outcome?.outcome_index
+    const nextPrice = outcomeIndex === OUTCOME_INDEX.NO ? noPrice : yesPrice
+    if (nextPrice === null || nextPrice === undefined) {
+      return
+    }
+    const cents = toCents(nextPrice)
+    if (cents === null) {
+      return
+    }
+    state.setLimitPrice(cents.toFixed(1))
+  }
 
   return (
     <Form
       action={onSubmit}
       className={cn({
-        'rounded-lg border lg:w-[340px]': !isMobile,
+        'rounded-lg border lg:w-85': !isMobile,
       }, 'w-full p-4 shadow-xl/5')}
     >
       {!isMobile && !isSingleMarket && <EventOrderPanelMarketInfo market={state.market} />}
@@ -468,7 +484,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         conditionId={state.market?.condition_id}
         marketTitle={state.market?.title || state.market?.short_title}
         onSideChange={state.setSide}
-        onTypeChange={state.setType}
+        onTypeChange={handleTypeChange}
         onAmountReset={() => state.setAmount('')}
         onFocusInput={focusInput}
       />

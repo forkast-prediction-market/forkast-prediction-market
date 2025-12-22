@@ -22,7 +22,7 @@ export default async function Loading() {
       </div>
 
       <Teleport to="#event-order-panel">
-        <section className="rounded-lg border bg-card/60 p-4 shadow-xl/5 lg:w-[340px]">
+        <section className="rounded-lg border bg-card/60 p-4 shadow-xl/5 lg:w-85">
           <Skeleton className="h-4 w-1/3" />
           <div className="mt-6 flex gap-2">
             <Skeleton className="h-12 w-full" />

@@ -248,7 +248,7 @@ export default function EventRelated({ event }: EventRelatedProps) {
         <div
           ref={scrollContainerRef}
           className={cn(
-            `relative scrollbar-hide min-w-0 overflow-x-auto overflow-y-hidden px-2 pb-1 lg:w-[340px] lg:max-w-[340px]`,
+            `relative scrollbar-hide min-w-0 overflow-x-auto overflow-y-hidden px-2 pb-1 lg:w-85 lg:max-w-85`,
             (showLeftShadow || showRightShadow)
             && `
               mask-[linear-gradient(to_right,transparent,black_32px,black_calc(100%-32px),transparent)]
@@ -320,7 +320,7 @@ export default function EventRelated({ event }: EventRelatedProps) {
             )
           : events.length > 0
             ? (
-                <ul className="grid gap-2 lg:w-[340px]">
+                <ul className="grid gap-2 lg:w-85">
                   {events.map(relatedEvent => (
                     <li key={relatedEvent.id}>
                       <Link

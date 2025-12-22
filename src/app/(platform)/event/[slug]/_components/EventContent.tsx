@@ -20,7 +20,7 @@ import EventSingleMarketOrderBook from '@/app/(platform)/event/[slug]/_component
 import EventTabs from '@/app/(platform)/event/[slug]/_components/EventTabs'
 import { Teleport } from '@/components/Teleport'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { useOrder } from '@/stores/useOrder'
+import { useOrder, useSyncLimitPriceWithOutcome } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
 
 interface EventContentProps {
@@ -126,6 +126,7 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
 
   return (
     <EventOutcomeChanceProvider eventId={event.id}>
+      <OrderLimitPriceSync />
       <div className="grid gap-3" ref={contentRef}>
         <EventHeader event={event} />
         <EventMetaInformation event={event} />
@@ -183,4 +184,9 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
           )}
     </EventOutcomeChanceProvider>
   )
+}
+
+function OrderLimitPriceSync() {
+  useSyncLimitPriceWithOutcome()
+  return null
 }

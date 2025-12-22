@@ -89,7 +89,7 @@ export default function HeaderNotifications() {
       </DropdownMenuTrigger>
 
       <DropdownMenuContent
-        className="max-h-[400px] w-[340px] overflow-hidden lg:w-[380px]"
+        className="max-h-100 w-85 overflow-hidden lg:w-95"
         align="end"
         collisionPadding={32}
       >
@@ -97,7 +97,7 @@ export default function HeaderNotifications() {
           <h3 className="text-sm font-semibold text-foreground">Notifications</h3>
         </div>
 
-        <div className="max-h-[400px] overflow-y-auto">
+        <div className="max-h-100 overflow-y-auto">
           {isLoading && (
             <div className="p-4 text-center text-muted-foreground">
               <BellIcon className="mx-auto mb-2 size-8 animate-pulse opacity-50" />
@@ -149,8 +149,8 @@ export default function HeaderNotifications() {
                           )
                         : (
                             <div className={`
-                              flex h-[42px] w-[42px] items-center justify-center rounded-md bg-muted text-xs
-                              font-semibold text-muted-foreground uppercase
+                              flex size-10.5 items-center justify-center rounded-md bg-muted text-xs font-semibold
+                              text-muted-foreground uppercase
                             `}
                             >
                               {notification.title.slice(0, 2)}

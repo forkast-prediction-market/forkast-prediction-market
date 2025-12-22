@@ -142,7 +142,7 @@ export default function HeaderHowItWorks() {
       )}
 
       <DialogContent className="max-h-[95vh] gap-0 overflow-y-auto p-0 sm:max-w-md" data-testid="how-it-works-dialog">
-        <div className="h-[340px] overflow-hidden rounded-t-lg">
+        <div className="h-85 overflow-hidden rounded-t-lg">
           <Image
             src={currentStep.image}
             alt={currentStep.imageAlt}

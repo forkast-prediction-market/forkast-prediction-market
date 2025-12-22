@@ -1,12 +1,12 @@
 'use client'
 
 import type { RefObject } from 'react'
-import type { OUTCOME_INDEX } from '@/lib/constants'
 import type { Event, Market, OrderSide, OrderType, Outcome } from '@/types'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { create } from 'zustand'
 import { useMarketYesPrices } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
-import { ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
+import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
+import { toCents } from '@/lib/formatters'
 
 type ConditionShares = Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>
 
@@ -157,4 +157,41 @@ export function useIsLimitOrder() {
 
 export function useAmountAsNumber() {
   return useOrder(state => Number.parseFloat(state.amount) || 0)
+}
+
+export function useSyncLimitPriceWithOutcome() {
+  const outcomeIndex = useOrder(state => state.outcome?.outcome_index)
+  const setLimitPrice = useOrder(state => state.setLimitPrice)
+  const yesPrice = useYesPrice()
+  const noPrice = useNoPrice()
+  const lastOutcomeIndexRef = useRef(outcomeIndex)
+  const hasSyncedRef = useRef(false)
+
+  useEffect(() => {
+    if (outcomeIndex !== lastOutcomeIndexRef.current) {
+      lastOutcomeIndexRef.current = outcomeIndex
+      hasSyncedRef.current = false
+    }
+
+    if (outcomeIndex === undefined || outcomeIndex === null) {
+      return
+    }
+
+    if (hasSyncedRef.current) {
+      return
+    }
+
+    const nextPrice = outcomeIndex === OUTCOME_INDEX.NO ? noPrice : yesPrice
+    if (nextPrice === null || nextPrice === undefined) {
+      return
+    }
+
+    const cents = toCents(nextPrice)
+    if (cents === null) {
+      return
+    }
+
+    setLimitPrice(cents.toFixed(1))
+    hasSyncedRef.current = true
+  }, [noPrice, outcomeIndex, setLimitPrice, yesPrice])
 }
