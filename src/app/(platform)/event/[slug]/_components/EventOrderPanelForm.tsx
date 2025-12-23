@@ -604,7 +604,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
               {showMarketMinimumWarning && (
                 <div className="mt-3 flex items-center justify-center gap-2 pb-1 text-sm font-semibold text-orange-500">
                   <TriangleAlertIcon className="size-4" />
-                  Market buys must be greater than $1
+                  Market buys must be at least $1
                 </div>
               )}
             </>
