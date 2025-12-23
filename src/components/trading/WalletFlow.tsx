@@ -173,9 +173,14 @@ export function WalletFlow({
 
   const handleSetMaxAmount = useCallback(() => {
     const amount = Number.isFinite(balance.raw) ? balance.raw : 0
-    setWalletSendAmount(
-      amount.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 6 }).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, ''),
-    )
+    const formattedAmount = amount.toLocaleString('en-US', {
+      useGrouping: false,
+      maximumFractionDigits: 6,
+    })
+    const [whole, fraction] = formattedAmount.split('.')
+    const trimmedFraction = fraction ? fraction.replace(/0+$/, '') : ''
+    const normalizedAmount = trimmedFraction ? `${whole}.${trimmedFraction}` : whole
+    setWalletSendAmount(normalizedAmount)
   }, [balance.raw])
 
   return (
