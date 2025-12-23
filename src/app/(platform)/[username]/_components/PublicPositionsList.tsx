@@ -4,7 +4,7 @@ import type { MergeableMarket } from './MergePositionsDialog'
 import type { PublicPosition } from './PublicPositionItem'
 import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
-import { ArrowDownNarrowWideIcon, ArrowRightIcon, GitMergeIcon, SearchIcon, ShareIcon } from 'lucide-react'
+import { ArrowDownNarrowWideIcon, ArrowRightIcon, MergeIcon, SearchIcon, ShareIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -120,7 +120,7 @@ function PositionsFilterControls({
               onClick={onMergeClick}
               aria-label="Merge positions"
             >
-              <GitMergeIcon className="size-4" />
+              <MergeIcon className="size-4 rotate-90" />
             </Button>
           )}
         </div>

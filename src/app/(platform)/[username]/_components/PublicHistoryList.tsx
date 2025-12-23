@@ -11,8 +11,8 @@ import {
   CircleMinusIcon,
   CirclePlusIcon,
   DownloadIcon,
-  GitMergeIcon,
   ListFilterIcon,
+  MergeIcon,
   SearchIcon,
   UnfoldHorizontalIcon,
 } from 'lucide-react'
@@ -125,7 +125,7 @@ function activityIcon(variant: ActivityVariant) {
     case 'split':
       return { Icon: UnfoldHorizontalIcon, label: 'Split', className: '' }
     case 'merge':
-      return { Icon: GitMergeIcon, label: 'Merged', className: '' }
+      return { Icon: MergeIcon, label: 'Merged', className: 'rotate-90' }
     case 'deposit':
       return { Icon: ArrowDownToLineIcon, label: 'Deposited', className: '' }
     case 'withdraw':
