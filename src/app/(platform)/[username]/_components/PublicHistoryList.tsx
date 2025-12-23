@@ -230,10 +230,13 @@ export default function PublicHistoryList({ userAddress }: PublicHistoryListProp
       const isFundsFlow = variant === 'deposit' || variant === 'withdraw'
       const isStriped = index % 2 === 0
       const valueNumber = Number(activity.total_value) / MICRO_UNIT
-      const isPositive = variant === 'deposit' || variant === 'sell' || valueNumber > 0
-      const isNegative = variant === 'withdraw' || variant === 'buy' || valueNumber < 0
-      const valueDisplay = Number.isFinite(valueNumber) ? formatCurrency(Math.abs(valueNumber)) : '—'
-      const valuePrefix = isNegative ? '-' : '+'
+      const hasValue = Number.isFinite(valueNumber)
+      const isCreditVariant = variant === 'merge' || variant === 'deposit' || variant === 'sell'
+      const isDebitVariant = variant === 'withdraw' || variant === 'split' || variant === 'buy'
+      const isPositive = isCreditVariant || (!isDebitVariant && hasValue && valueNumber > 0)
+      const isNegative = isDebitVariant || (!isCreditVariant && hasValue && valueNumber < 0)
+      const valueDisplay = hasValue ? formatCurrency(Math.abs(valueNumber)) : '—'
+      const valuePrefix = hasValue ? (isNegative ? '-' : '+') : ''
 
       return (
         <div
