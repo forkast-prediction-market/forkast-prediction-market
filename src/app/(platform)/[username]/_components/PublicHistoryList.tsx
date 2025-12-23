@@ -238,7 +238,7 @@ export default function PublicHistoryList({ userAddress }: PublicHistoryListProp
       const valuePrefix = hasValue ? (isNegative ? '-' : '+') : ''
       const marketContent = isFundsFlow
         ? (
-            <div className="flex min-w-0 items-start gap-2.5">
+            <div className="flex min-w-0 items-center gap-2.5">
               <div className={`
                 grid size-12 shrink-0 place-items-center overflow-hidden rounded bg-primary/10 text-primary
               `}
