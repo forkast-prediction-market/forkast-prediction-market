@@ -3,6 +3,7 @@
 import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
 import type { ProxyWalletStatus } from '@/types'
 import { useCallback, useMemo, useState } from 'react'
+import { toast } from 'sonner'
 import { hashTypedData, isAddress } from 'viem'
 import { useSignMessage } from 'wagmi'
 import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
@@ -41,7 +42,6 @@ export function WalletFlow({
   const [depositView, setDepositView] = useState<'fund' | 'receive'>('fund')
   const [walletSendTo, setWalletSendTo] = useState('')
   const [walletSendAmount, setWalletSendAmount] = useState('')
-  const [walletSendError, setWalletSendError] = useState<string | null>(null)
   const [isWalletSending, setIsWalletSending] = useState(false)
   const { balance } = useBalance()
   const connectedWalletAddress = user?.address ?? null
@@ -60,7 +60,6 @@ export function WalletFlow({
   const handleWithdrawModalChange = useCallback((next: boolean) => {
     onWithdrawOpenChange(next)
     if (!next) {
-      setWalletSendError(null)
       setIsWalletSending(false)
       setWalletSendTo('')
       setWalletSendAmount('')
@@ -69,19 +68,17 @@ export function WalletFlow({
 
   const handleWalletSend = useCallback(async (event?: React.FormEvent<HTMLFormElement>) => {
     event?.preventDefault()
-    setWalletSendError(null)
-
     if (!user?.proxy_wallet_address) {
-      setWalletSendError('Deploy your proxy wallet first.')
+      toast.error('Deploy your proxy wallet first.')
       return
     }
     if (!isAddress(walletSendTo)) {
-      setWalletSendError('Enter a valid recipient address.')
+      toast.error('Enter a valid recipient address.')
       return
     }
     const amountNumber = Number(walletSendAmount)
     if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
-      setWalletSendError('Enter a valid amount.')
+      toast.error('Enter a valid amount.')
       return
     }
 
@@ -89,7 +86,7 @@ export function WalletFlow({
     try {
       const nonceResult = await getSafeNonceAction()
       if (nonceResult.error || !nonceResult.nonce) {
-        setWalletSendError(nonceResult.error ?? DEFAULT_ERROR_MESSAGE)
+        toast.error(nonceResult.error ?? DEFAULT_ERROR_MESSAGE)
         return
       }
 
@@ -130,18 +127,17 @@ export function WalletFlow({
 
       const result = await submitSafeTransactionAction(payload)
       if (result.error) {
-        setWalletSendError(result.error)
+        toast.error(result.error)
         return
       }
 
       setWalletSendTo('')
       setWalletSendAmount('')
-      setWalletSendError(null)
       handleWithdrawModalChange(false)
     }
     catch (error) {
       const message = error instanceof Error ? error.message : DEFAULT_ERROR_MESSAGE
-      setWalletSendError(message)
+      toast.error(message)
     }
     finally {
       setIsWalletSending(false)
@@ -177,7 +173,9 @@ export function WalletFlow({
 
   const handleSetMaxAmount = useCallback(() => {
     const amount = Number.isFinite(balance.raw) ? balance.raw : 0
-    setWalletSendAmount(amount.toFixed(2))
+    setWalletSendAmount(
+      amount.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 6 }).replace(/\.?0+$/, ''),
+    )
   }, [balance.raw])
 
   return (
@@ -204,12 +202,11 @@ export function WalletFlow({
         onChangeSendTo={event => setWalletSendTo(event.target.value)}
         sendAmount={walletSendAmount}
         onChangeSendAmount={event => setWalletSendAmount(event.target.value)}
-        sendError={walletSendError}
         isSending={isWalletSending}
         onSubmitSend={handleWalletSend}
         connectedWalletAddress={connectedWalletAddress}
         onUseConnectedWallet={handleUseConnectedWallet}
-        availableBalance={balance.text}
+        availableBalance={balance.raw}
         onMax={handleSetMaxAmount}
       />
     </>
