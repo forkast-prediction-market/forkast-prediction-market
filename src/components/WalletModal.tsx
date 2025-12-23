@@ -532,7 +532,6 @@ export function WalletWithdrawModal(props: WalletWithdrawModalProps) {
     onChangeSendTo,
     sendAmount,
     onChangeSendAmount,
-    sendError,
     isSending,
     onSubmitSend,
     connectedWalletAddress,
@@ -547,7 +546,6 @@ export function WalletWithdrawModal(props: WalletWithdrawModalProps) {
       onChangeSendTo={onChangeSendTo}
       sendAmount={sendAmount}
       onChangeSendAmount={onChangeSendAmount}
-      sendError={sendError}
       isSending={isSending}
       onSubmitSend={onSubmitSend}
       connectedWalletAddress={connectedWalletAddress}
