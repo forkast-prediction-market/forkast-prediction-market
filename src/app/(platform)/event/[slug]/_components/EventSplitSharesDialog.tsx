@@ -16,9 +16,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { defaultNetwork } from '@/lib/appkit'
-import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
+import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE, MICRO_UNIT } from '@/lib/constants'
 import { ZERO_COLLECTION_ID } from '@/lib/contracts'
-import { formatAmountInputValue, toMicro } from '@/lib/formatters'
+import { toMicro } from '@/lib/formatters'
 import {
   aggregateSafeTransactions,
   buildSplitPositionTransaction,
@@ -53,6 +53,17 @@ export default function EventSplitSharesDialog({
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  function formatFullPrecision(value: number) {
+    if (!Number.isFinite(value)) {
+      return '0'
+    }
+    const asString = value.toLocaleString('en-US', {
+      useGrouping: false,
+      maximumFractionDigits: 6,
+    })
+    return asString.replace(/\.?0+$/, '') || '0'
+  }
+
   useEffect(() => {
     if (!open) {
       setAmount('')
@@ -63,14 +74,10 @@ export default function EventSplitSharesDialog({
 
   const formattedUsdcBalance = useMemo(() => {
     if (!Number.isFinite(availableUsdc)) {
-      return '$0.00'
+      return '$0'
     }
-    return availableUsdc.toLocaleString('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    })
+    const formatted = formatFullPrecision(availableUsdc)
+    return `$${formatted}`
   }, [availableUsdc])
 
   const numericAvailableBalance = Number.isFinite(availableUsdc) ? availableUsdc : 0
@@ -88,8 +95,8 @@ export default function EventSplitSharesDialog({
       return
     }
 
-    const formatted = formatAmountInputValue(numericAvailableBalance) || numericAvailableBalance.toFixed(2)
-    setAmount(formatted)
+    // Use the raw value to avoid rounding up tiny remainders that would fail validation
+    setAmount(`${numericAvailableBalance}`)
     setError(null)
   }
 
@@ -109,7 +116,9 @@ export default function EventSplitSharesDialog({
       return
     }
 
-    if (numericAmount > numericAvailableBalance) {
+    const amountMicro = Math.floor(numericAmount * MICRO_UNIT + 1e-9)
+    const availableMicro = Math.floor(numericAvailableBalance * MICRO_UNIT + 1e-9)
+    if (amountMicro > availableMicro) {
       setError('Amount exceeds available balance.')
       return
     }
