@@ -198,7 +198,7 @@ function WalletSendForm({
       useGrouping: false,
       maximumFractionDigits: 6,
     })
-    return asString.replace(/\.?0+$/, '') || '0'
+    return asString.includes('.') ? (asString.replace(/\.?0+$/, '') || '0') : asString
   }
 
   return (
