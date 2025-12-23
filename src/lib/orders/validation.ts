@@ -8,6 +8,7 @@ export type OrderValidationError
     | 'MISSING_MARKET'
     | 'MISSING_OUTCOME'
     | 'INVALID_AMOUNT'
+    | 'MARKET_MIN_AMOUNT'
     | 'INVALID_LIMIT_PRICE'
     | 'INVALID_LIMIT_SHARES'
     | 'LIMIT_SHARES_TOO_LOW'
@@ -126,6 +127,10 @@ export function validateOrder({
 
   if (amountNumber <= 0) {
     return { ok: false, reason: 'INVALID_AMOUNT' }
+  }
+
+  if (!isLimitOrder && side === ORDER_SIDE.BUY && amountNumber < 1) {
+    return { ok: false, reason: 'MARKET_MIN_AMOUNT' }
   }
 
   if (side === ORDER_SIDE.BUY && amountNumber > availableBalance) {

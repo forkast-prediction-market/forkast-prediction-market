@@ -68,6 +68,9 @@ export function handleValidationError(reason: OrderValidationError, { openWallet
         description: 'Pick a future date and time for your custom expiration.',
       })
       break
+    case 'MARKET_MIN_AMOUNT':
+      toast.error('Market buys must be greater than $1')
+      break
     case 'INSUFFICIENT_BALANCE':
       toast.error('Insufficient balance', {
         description: 'Reduce the order size or deposit more into your Safe.',

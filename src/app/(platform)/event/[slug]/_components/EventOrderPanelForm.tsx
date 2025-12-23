@@ -1,6 +1,7 @@
 import type { Event } from '@/types'
 import { useAppKitAccount } from '@reown/appkit/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { TriangleAlertIcon } from 'lucide-react'
 import Form from 'next/form'
 import { useEffect, useMemo, useState } from 'react'
 import { useSignTypedData } from 'wagmi'
@@ -59,6 +60,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const isSingleMarket = useIsSingleMarket()
   const amountNumber = useAmountAsNumber()
   const isLimitOrder = useIsLimitOrder()
+  const [showMarketMinimumWarning, setShowMarketMinimumWarning] = useState(false)
   const limitSharesNumber = Number.parseFloat(state.limitShares) || 0
   const { balance } = useBalance()
   const validCustomExpirationTimestamp = useMemo(() => {
@@ -196,6 +198,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   useEffect(() => {
     if (!makerAddress) {
       setUserShares({}, { replace: true })
+      setShowMarketMinimumWarning(false)
       return
     }
 
@@ -282,6 +285,17 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     }
   }, [isLimitOrder, limitSharesNumber])
 
+  useEffect(() => {
+    if (
+      isLimitOrder
+      || state.side !== ORDER_SIDE.BUY
+      || amountNumber >= 1
+      || amountNumber <= 0
+    ) {
+      setShowMarketMinimumWarning(false)
+    }
+  }, [amountNumber, isLimitOrder, state.side])
+
   function focusInput() {
     state.inputRef?.current?.focus()
   }
@@ -312,9 +326,15 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     if (!validation.ok) {
       if (validation.reason === 'LIMIT_SHARES_TOO_LOW') {
         setShowLimitMinimumWarning(true)
+        return
+      }
+      else if (validation.reason === 'MARKET_MIN_AMOUNT') {
+        setShowMarketMinimumWarning(true)
+        return
       }
       else {
         setShowLimitMinimumWarning(false)
+        setShowMarketMinimumWarning(false)
       }
       handleValidationError(validation.reason, {
         openWalletModal: open,
@@ -580,6 +600,12 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                   avgSellPriceLabel={avgSellPriceLabel}
                   avgBuyPriceLabel={avgBuyPriceLabel}
                 />
+              )}
+              {showMarketMinimumWarning && (
+                <div className="mt-3 flex items-center justify-center gap-2 pb-1 text-sm font-semibold text-orange-500">
+                  <TriangleAlertIcon className="size-4" />
+                  Market buys must be greater than $1
+                </div>
               )}
             </>
           )}
