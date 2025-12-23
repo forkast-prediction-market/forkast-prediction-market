@@ -140,6 +140,7 @@ function activityIcon(variant: ActivityVariant) {
 }
 
 export default function PublicHistoryList({ userAddress }: PublicHistoryListProps) {
+  const rowGridClass = 'grid grid-cols-[minmax(9rem,auto)_minmax(0,2.6fr)_minmax(0,1fr)_auto] items-center gap-3'
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<HistoryTypeFilter>('all')
@@ -238,7 +239,7 @@ export default function PublicHistoryList({ userAddress }: PublicHistoryListProp
       const valuePrefix = hasValue ? (isNegative ? '-' : '+') : ''
       const marketContent = isFundsFlow
         ? (
-            <div className="flex min-w-0 items-center gap-2.5">
+            <div className="flex min-w-0 items-center gap-2.5 pl-1">
               <div className={`
                 grid size-12 shrink-0 place-items-center overflow-hidden rounded bg-primary/10 text-primary
               `}
@@ -253,7 +254,7 @@ export default function PublicHistoryList({ userAddress }: PublicHistoryListProp
             </div>
           )
         : (
-            <div className="flex min-w-0 items-start gap-2.5">
+            <div className="flex min-w-0 items-start gap-2.5 pl-1">
               <Link
                 href={`/event/${eventSlug}`}
                 className="relative size-12 shrink-0 overflow-hidden rounded bg-muted"
@@ -307,9 +308,9 @@ export default function PublicHistoryList({ userAddress }: PublicHistoryListProp
         <div
           key={activity.id}
           className={cn(
+            rowGridClass,
             `
-              grid grid-cols-[minmax(0,0.95fr)_minmax(0,2.55fr)_minmax(0,1fr)_auto] items-center gap-1 border-b
-              border-border/60 px-2 py-2 transition-colors
+              border-b border-border/60 px-2 py-2 transition-colors
               first:border-t first:border-border/60
               hover:bg-muted/50
               sm:px-3
@@ -392,16 +393,17 @@ export default function PublicHistoryList({ userAddress }: PublicHistoryListProp
       </div>
 
       <div
-        className={`
-          grid grid-cols-[minmax(0,0.95fr)_minmax(0,2.55fr)_minmax(0,1fr)_auto] items-center gap-1 px-2 pt-2 pb-3
-          text-xs font-semibold tracking-wide text-muted-foreground uppercase
-          sm:px-3
-        `}
+        className={cn(
+          rowGridClass,
+          `px-2 pt-2 pb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:px-3`,
+        )}
       >
         <div>Activity</div>
         <div>Market</div>
         <div className="text-right">Value</div>
-        <div className="text-right"> </div>
+        <div className="text-right text-transparent" aria-hidden>
+          <span className="invisible">Time</span>
+        </div>
       </div>
 
       {isLoading && (

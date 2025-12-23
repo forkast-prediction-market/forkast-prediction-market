@@ -321,6 +321,7 @@ interface PublicPositionsListProps {
 }
 
 export default function PublicPositionsList({ userAddress }: PublicPositionsListProps) {
+  const rowGridClass = 'grid grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] items-center gap-4'
   const queryClient = useQueryClient()
   const { ensureTradingReady } = useTradingOnboarding()
   const user = useUser()
@@ -639,14 +640,16 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       return (
         <div
           key={`${position.id}-${index}`}
-          className={`
-            grid grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] items-center gap-4 border-b border-border/60
-            px-2 py-3 transition-colors
-            first:border-t first:border-border/60
-            last:border-b-0
-            hover:bg-muted/50
-            sm:px-3
-          `}
+          className={cn(
+            rowGridClass,
+            `
+              border-b border-border/60 px-2 py-3 transition-colors
+              first:border-t first:border-border/60
+              last:border-b-0
+              hover:bg-muted/50
+              sm:px-3
+            `,
+          )}
         >
           <div className="flex min-w-0 items-start gap-3">
             <Link
@@ -745,18 +748,19 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       />
 
       <div
-        className={`
-          grid grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] items-center gap-4 px-2 pt-2 pb-3 text-xs
-          font-semibold tracking-wide text-muted-foreground uppercase
-          sm:px-3
-        `}
+        className={cn(
+          rowGridClass,
+          `px-2 pt-2 pb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:px-3`,
+        )}
       >
-        <div className="text-left">Market</div>
+        <div className="pl-[3.75rem] text-left">Market</div>
         <div className="text-left">Avg → Now</div>
         <div className="text-center">Trade</div>
         <div className="text-center">To win</div>
         <div className="text-right">Value</div>
-        <div />
+        <div className="flex justify-end">
+          <div className="w-[96px]" aria-hidden />
+        </div>
       </div>
 
       {hasInitialError && (
@@ -791,14 +795,13 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
           {renderRows()}
 
           <div
-            className={`
-              grid grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] items-center gap-4 border-b border-border/80
-              px-2 py-3
-              sm:px-3
-            `}
+            className={cn(
+              rowGridClass,
+              `border-b border-border/80 px-2 py-3 sm:px-3`,
+            )}
           >
-            <div className="text-sm font-semibold text-foreground">Total</div>
-            <div className="text-sm text-muted-foreground">—</div>
+            <div className="pl-[3.75rem] text-sm font-semibold text-foreground">Total</div>
+            <div className="text-sm text-muted-foreground" />
             <div className="text-center text-sm font-semibold text-foreground">
               {formatCurrencyValue(totals.trade)}
             </div>
@@ -815,7 +818,9 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
                 %)
               </div>
             </div>
-            <div />
+            <div className="flex justify-end">
+              <div className="w-[96px]" aria-hidden />
+            </div>
           </div>
           <div ref={loadMoreRef} className="h-0" />
         </div>
