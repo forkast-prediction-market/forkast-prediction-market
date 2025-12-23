@@ -6,7 +6,7 @@ import { AlertCircleIcon, Loader2Icon } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import { POLYGON_SCAN_BASE } from '@/lib/constants'
+import { MICRO_UNIT, POLYGON_SCAN_BASE } from '@/lib/constants'
 import { fetchUserActivityData, mapDataApiActivityToActivityOrder } from '@/lib/data-api/user'
 import { formatCurrency, formatSharePriceLabel, formatTimeAgo, fromMicro, sharesFormatter } from '@/lib/formatters'
 import { getUserPublicAddress } from '@/lib/user-address'
@@ -165,7 +165,7 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
             : 'text-no'
           const actionLabel = activity.side === 'sell' ? 'Sold' : 'Bought'
           const priceLabel = formatSharePriceLabel(Number(activity.price), { fallback: '—' })
-          const totalValue = Number(activity.total_value) / 1e6
+          const totalValue = Number(activity.total_value) / MICRO_UNIT
           const totalValueLabel = formatCurrency(totalValue, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,

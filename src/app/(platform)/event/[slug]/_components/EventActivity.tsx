@@ -11,7 +11,7 @@ import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { POLYGON_SCAN_BASE } from '@/lib/constants'
+import { MICRO_UNIT, POLYGON_SCAN_BASE } from '@/lib/constants'
 import { EVENT_ACTIVITY_PAGE_SIZE, fetchEventTrades } from '@/lib/data-api/trades'
 import { formatCurrency, formatSharePriceLabel, formatTimeAgo, fromMicro } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -174,7 +174,7 @@ export default function EventActivity({ event }: EventActivityProps) {
   }, [hasMarkets, refreshLatestActivity])
 
   function formatTotalValue(totalValueMicro: number) {
-    const totalValue = totalValueMicro / 1e6
+    const totalValue = totalValueMicro / MICRO_UNIT
     return formatSharePriceLabel(totalValue, { fallback: '0¢' })
   }
 

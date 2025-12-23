@@ -253,7 +253,7 @@ export function toMicro(amount: string | number): string {
   if (!Number.isFinite(numeric)) {
     return '0'
   }
-  return Math.round(numeric * 1e6).toString()
+  return Math.round(numeric * MICRO_UNIT).toString()
 }
 
 export function fromMicro(amount: string | number, precision: number = 1): string {
@@ -261,7 +261,7 @@ export function fromMicro(amount: string | number, precision: number = 1): strin
   if (!Number.isFinite(numeric)) {
     return (0).toFixed(precision)
   }
-  return (numeric / 1e6).toFixed(precision)
+  return (numeric / MICRO_UNIT).toFixed(precision)
 }
 
 export function formatAmountInputValue(value: number): string {

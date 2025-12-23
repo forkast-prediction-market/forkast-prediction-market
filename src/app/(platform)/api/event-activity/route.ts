@@ -1,7 +1,7 @@
 import type { ActivityOrder } from '@/types'
 import { NextResponse } from 'next/server'
 import { filterActivitiesByMinAmount } from '@/lib/activity/filter'
-import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
+import { DEFAULT_ERROR_MESSAGE, MICRO_UNIT } from '@/lib/constants'
 import { EVENT_ACTIVITY_PAGE_SIZE } from '@/lib/data-api/trades'
 import { mapDataApiActivityToActivityOrder } from '@/lib/data-api/user'
 import { UserRepository } from '@/lib/db/queries/user'
@@ -93,7 +93,7 @@ export async function GET(request: Request) {
     }
 
     const activities = (result as DataApiActivity[]).map(mapDataApiActivityToActivityOrder)
-    const minAmount = hasFilterAmount ? parsedFilterAmount * 1e6 : undefined
+    const minAmount = hasFilterAmount ? parsedFilterAmount * MICRO_UNIT : undefined
     const filtered = filterActivitiesByMinAmount(activities, minAmount)
 
     const addressSet = new Set<string>()

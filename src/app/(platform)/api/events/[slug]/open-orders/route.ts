@@ -1,6 +1,6 @@
 import type { ClobOrderType, UserOpenOrder } from '@/types'
 import { NextResponse } from 'next/server'
-import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
+import { DEFAULT_ERROR_MESSAGE, MICRO_UNIT } from '@/lib/constants'
 import { EventRepository } from '@/lib/db/queries/event'
 import { UserRepository } from '@/lib/db/queries/user'
 import { buildClobHmacSignature } from '@/lib/hmac'
@@ -227,7 +227,7 @@ function mapClobOrder(
     price: priceValue,
     maker_amount: makerAmount,
     taker_amount: takerAmount,
-    size_matched: Math.round(filledShares * 1e6),
+    size_matched: Math.round(filledShares * MICRO_UNIT),
     created_at: order.createdAt || order.updatedAt || new Date().toISOString(),
     expiration: Number.isFinite(expiry) ? expiry : null,
     outcome: {
@@ -261,8 +261,8 @@ function resolveOutcome(order: ClobOpenOrder, outcomeMap: Map<string, { index: n
 }
 
 function calculateAmounts(totalShares: number, price: number, side: 'buy' | 'sell') {
-  const sharesMicro = Math.round(totalShares * 1e6)
-  const valueMicro = Math.round(totalShares * price * 1e6)
+  const sharesMicro = Math.round(totalShares * MICRO_UNIT)
+  const valueMicro = Math.round(totalShares * price * MICRO_UNIT)
 
   if (side === 'buy') {
     return {

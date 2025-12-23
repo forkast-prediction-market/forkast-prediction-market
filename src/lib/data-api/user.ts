@@ -1,4 +1,5 @@
 import type { ActivityOrder, PublicActivity, UserPosition } from '@/types'
+import { MICRO_UNIT } from '@/lib/constants'
 
 interface DataApiRequestParams {
   pageParam: number
@@ -72,10 +73,10 @@ function normalizeValue(value: number | undefined | null): number {
 
   const numeric = Number(value)
   if (numeric > 1e12) {
-    return numeric / 1e6
+    return numeric / MICRO_UNIT
   }
-  if (numeric > 1e6) {
-    return numeric / 1e6
+  if (numeric > MICRO_UNIT) {
+    return numeric / MICRO_UNIT
   }
 
   return numeric
@@ -88,8 +89,8 @@ function normalizeShares(value?: number | null): number {
 
   const numeric = Number(value)
   const abs = Math.abs(numeric)
-  if (abs > 1e12 || abs > 1e6 || abs > 1e4) {
-    return numeric / 1e6
+  if (abs > 1e12 || abs > MICRO_UNIT || abs > 1e4) {
+    return numeric / MICRO_UNIT
   }
   if (abs > 1e3) {
     return numeric / 1e3
@@ -105,8 +106,8 @@ function normalizeUsd(value?: number | null): number {
 
   const numeric = Number(value)
   const abs = Math.abs(numeric)
-  if (abs > 1e12 || abs > 1e6 || abs > 1e4) {
-    return numeric / 1e6
+  if (abs > 1e12 || abs > MICRO_UNIT || abs > 1e4) {
+    return numeric / MICRO_UNIT
   }
 
   return numeric
@@ -169,10 +170,10 @@ export function mapDataApiActivityToActivityOrder(activity: DataApiActivity): Ac
 
   let baseSize = normalizeShares(activity.size)
   if (baseSize > 10_000) {
-    baseSize = baseSize / 1e6
+    baseSize = baseSize / MICRO_UNIT
   }
   if (normalizedUsd > 10_000) {
-    normalizedUsd = normalizedUsd / 1e6
+    normalizedUsd = normalizedUsd / MICRO_UNIT
   }
 
   const price = isSplit ? 0.5 : normalizedPrice
@@ -212,7 +213,7 @@ export function mapDataApiActivityToActivityOrder(activity: DataApiActivity): Ac
       image: avatarUrl,
     },
     side: activity.side?.toLowerCase() === 'sell' ? 'sell' : 'buy',
-    amount: Math.round(size * 1e6).toString(),
+    amount: Math.round(size * MICRO_UNIT).toString(),
     price: price.toString(),
     outcome: {
       index: outcomeIndex ?? 0,
@@ -228,7 +229,7 @@ export function mapDataApiActivityToActivityOrder(activity: DataApiActivity): Ac
         show_market_icons: Boolean(activity.icon),
       },
     },
-    total_value: Math.round(totalUsd * 1e6),
+    total_value: Math.round(totalUsd * MICRO_UNIT),
     created_at: new Date(timestampMs).toISOString(),
     status: 'completed',
     tx_hash: txHash,
@@ -335,11 +336,11 @@ export function mapDataApiPositionToUserPosition(
     },
     outcome_index: outcomeIndex,
     outcome_text: outcomeText,
-    average_position: Math.round(avgPrice * 1e6),
-    total_position_value: Math.round(normalizedValue * 1e6),
-    total_position_cost: Math.round(normalizedCost * 1e6),
+    average_position: Math.round(avgPrice * MICRO_UNIT),
+    total_position_value: Math.round(normalizedValue * MICRO_UNIT),
+    total_position_cost: Math.round(normalizedCost * MICRO_UNIT),
     total_shares: size,
-    profit_loss_value: Math.round(pnlValueRaw * 1e6),
+    profit_loss_value: Math.round(pnlValueRaw * MICRO_UNIT),
     profit_loss_percent: normalizedPercent,
     opposite_outcome_text: oppositeOutcomeText,
     order_count: orderCount,

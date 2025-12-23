@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { MICRO_UNIT } from '@/lib/constants'
 import { formatCurrency } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
@@ -23,7 +24,7 @@ function formatCents(price?: number) {
 }
 
 function microToUnit(value?: number) {
-  return Number.isFinite(value) ? (value ?? 0) / 1e6 : 0
+  return Number.isFinite(value) ? (value ?? 0) / MICRO_UNIT : 0
 }
 
 type PublicUserOpenOrder = UserOpenOrder & {

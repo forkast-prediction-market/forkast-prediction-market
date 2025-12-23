@@ -22,6 +22,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { MICRO_UNIT } from '@/lib/constants'
 import { mapDataApiActivityToActivityOrder } from '@/lib/data-api/user'
 import { formatCurrency, formatTimeAgo } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -72,7 +73,7 @@ function formatShares(amount: string | number | undefined) {
   if (amount == null) {
     return null
   }
-  const numeric = Number(amount) / 1e6
+  const numeric = Number(amount) / MICRO_UNIT
   if (!Number.isFinite(numeric) || numeric <= 0) {
     return null
   }
@@ -227,7 +228,7 @@ export default function PublicHistoryList({ userAddress }: PublicHistoryListProp
         : null
       const isFundsFlow = variant === 'deposit' || variant === 'withdraw'
       const isStriped = index % 2 === 0
-      const valueNumber = Number(activity.total_value) / 1e6
+      const valueNumber = Number(activity.total_value) / MICRO_UNIT
       const isPositive = variant === 'deposit' || variant === 'sell' || valueNumber > 0
       const isNegative = variant === 'withdraw' || variant === 'buy' || valueNumber < 0
       const valueDisplay = Number.isFinite(valueNumber) ? formatCurrency(Math.abs(valueNumber)) : '—'
