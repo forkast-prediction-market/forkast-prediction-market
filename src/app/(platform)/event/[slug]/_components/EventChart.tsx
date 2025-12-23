@@ -104,6 +104,28 @@ function getTopMarketIds(chances: Record<string, number>, limit: number) {
     .map(([key]) => key)
 }
 
+function isDefaultMarketLabel(label?: string | null) {
+  if (!label) {
+    return true
+  }
+  return /^(?:outcome|token)\s*\d+$/i.test(label.trim())
+}
+
+function deriveSeriesName(market: Event['markets'][number]) {
+  const outcomeLabel = market.outcomes?.[0]?.outcome_text?.trim()
+  const shortTitle = market.short_title?.trim()
+
+  if (shortTitle && !isDefaultMarketLabel(shortTitle)) {
+    return shortTitle
+  }
+
+  if (outcomeLabel) {
+    return outcomeLabel
+  }
+
+  return market.title
+}
+
 function buildChartSeries(event: Event, marketIds: string[]) {
   return marketIds
     .map((conditionId, index) => {
@@ -113,7 +135,7 @@ function buildChartSeries(event: Event, marketIds: string[]) {
       }
       return {
         key: conditionId,
-        name: market.short_title || market.title,
+        name: deriveSeriesName(market),
         color: CHART_COLORS[index % CHART_COLORS.length],
       }
     })
@@ -247,17 +269,18 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
         <div className="flex min-h-5 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
           {legendEntries.map((entry) => {
             const resolvedValue = typeof entry.value === 'number' ? entry.value : 0
+
             return (
               <div key={entry.key} className="flex items-center gap-2">
                 <div
                   className="size-2 shrink-0 rounded-full"
                   style={{ backgroundColor: entry.color }}
                 />
-                <span className="text-xs font-medium text-muted-foreground">
-                  {entry.name}
-                  {' '}
-                  <span className="font-semibold text-muted-foreground">
-                    {`${resolvedValue.toFixed(1)}%`}
+                <span className="inline-flex w-fit items-center gap-0.5 text-xs font-medium text-muted-foreground">
+                  <span>{entry.name}</span>
+                  <span className="font-semibold">
+                    {resolvedValue.toFixed(1)}
+                    %
                   </span>
                 </span>
               </div>

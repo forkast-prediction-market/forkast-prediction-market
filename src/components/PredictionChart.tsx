@@ -1131,10 +1131,7 @@ export function PredictionChart({
 
             {(() => {
               const labelRightBoundary = margin.left + innerWidth - 4
-              const labelLeftBoundary = Math.min(
-                labelRightBoundary,
-                margin.left + TOOLTIP_LABEL_MAX_WIDTH,
-              )
+              const labelLeftBoundary = margin.left + 80
               const baseLabelAnchor = margin.left
                 + clampedTooltipX
                 - TOOLTIP_LABEL_ANCHOR_OFFSET
@@ -1147,7 +1144,7 @@ export function PredictionChart({
                 <div
                   key={`${entry.key}-label`}
                   className={`
-                    absolute flex h-5 min-w-28 items-center justify-between gap-2 rounded px-2 text-2xs leading-5
+                    absolute inline-flex h-5 w-fit items-center gap-1 rounded px-1.5 py-0.5 text-2xs leading-5
                     font-semibold text-white
                   `}
                   style={{
@@ -1158,10 +1155,10 @@ export function PredictionChart({
                     backgroundColor: entry.color,
                   }}
                 >
-                  <span className="max-w-[140px] truncate capitalize">
+                  <span className="max-w-[120px] truncate capitalize">
                     {entry.name}
                   </span>
-                  <span>
+                  <span className="tabular-nums">
                     {entry.value.toFixed(1)}
                     %
                   </span>
