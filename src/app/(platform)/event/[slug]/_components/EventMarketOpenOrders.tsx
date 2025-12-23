@@ -3,7 +3,6 @@
 import type { InfiniteData } from '@tanstack/react-query'
 import type { Event, UserOpenOrder } from '@/types'
 import { useQueryClient } from '@tanstack/react-query'
-import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { AlertCircleIcon, ChevronDown, ChevronUp, XIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -251,12 +250,10 @@ function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
 }
 
 export default function EventMarketOpenOrders({ market, eventSlug }: EventMarketOpenOrdersProps) {
-  const parentRef = useRef<HTMLElement | null>(null)
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
   const user = useUser()
   const queryClient = useQueryClient()
   const isSingleMarket = useIsSingleMarket()
-  const [scrollMargin, setScrollMargin] = useState(0)
-  const [hasInitialized, setHasInitialized] = useState(false)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const [pendingCancelIds, setPendingCancelIds] = useState<Set<string>>(() => new Set())
   const [isCancellingAll, setIsCancellingAll] = useState(false)
@@ -264,15 +261,8 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
 
   useEffect(() => {
     queueMicrotask(() => {
-      setHasInitialized(false)
       setInfiniteScrollError(null)
     })
-  }, [market.condition_id, eventSlug])
-
-  useEffect(() => {
-    if (parentRef.current) {
-      setScrollMargin(parentRef.current.offsetTop)
-    }
   }, [market.condition_id, eventSlug])
 
   const openOrdersQueryKey = useMemo(
@@ -437,45 +427,30 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
     return () => window.clearInterval(intervalId)
   }, [hasOrders, openOrdersQueryKey, queryClient])
 
-  const virtualizer = useWindowVirtualizer({
-    count: sortedOrders.length,
-    estimateSize: () => {
-      if (typeof window !== 'undefined') {
-        return window.innerWidth < 768 ? 80 : 60
+  useEffect(() => {
+    if (!sentinelRef.current || !hasNextPage || status === 'pending') {
+      return
+    }
+
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!entry?.isIntersecting) {
+        return
       }
-      return 60
-    },
-    scrollMargin,
-    overscan: 5,
-    onChange: (instance) => {
-      if (!hasInitialized) {
-        setHasInitialized(true)
+      if (isFetchingNextPage || infiniteScrollError) {
         return
       }
 
-      if (!sortedOrders.length) {
-        return
-      }
+      fetchNextPage().catch((error: any) => {
+        if (error?.name === 'CanceledError' || error?.name === 'AbortError') {
+          return
+        }
+        setInfiniteScrollError(error?.message || 'Failed to load more open orders')
+      })
+    }, { rootMargin: '200px 0px' })
 
-      const items = instance.getVirtualItems()
-      const lastItem = items[items.length - 1]
-      const shouldLoadMore = lastItem
-        && lastItem.index >= sortedOrders.length - 2
-        && hasNextPage
-        && !isFetchingNextPage
-        && !infiniteScrollError
-        && status !== 'pending'
-
-      if (shouldLoadMore) {
-        fetchNextPage().catch((error: any) => {
-          if (error?.name === 'CanceledError' || error?.name === 'AbortError') {
-            return
-          }
-          setInfiniteScrollError(error?.message || 'Failed to load more open orders')
-        })
-      }
-    },
-  })
+    observer.observe(sentinelRef.current)
+    return () => observer.disconnect()
+  }, [fetchNextPage, hasNextPage, infiniteScrollError, isFetchingNextPage, status])
 
   const shouldRender = Boolean(user?.id && status === 'success' && hasOrders)
 
@@ -484,10 +459,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
   }
 
   return (
-    <section
-      ref={parentRef}
-      className="overflow-hidden rounded-xl border border-border/60 bg-background/80"
-    >
+    <section className="overflow-hidden rounded-xl border border-border/60 bg-background/80">
       {isSingleMarket && (
         <div className="p-4">
           <h3 className="text-lg font-semibold text-foreground">Open Orders</h3>
@@ -522,41 +494,18 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
             </button>
           </div>
 
-          <div
-            className="relative mt-2"
-            style={{
-              height: `${virtualizer.getTotalSize()}px`,
-              width: '100%',
-            }}
-          >
-            {virtualizer.getVirtualItems().map((virtualItem) => {
-              const order = sortedOrders[virtualItem.index]
-              if (!order) {
-                return null
-              }
-
-              const translateY = virtualItem.start - (virtualizer.options.scrollMargin ?? 0)
-
-              return (
-                <div
-                  key={virtualItem.key}
-                  data-index={virtualItem.index}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    transform: `translateY(${translateY}px)`,
-                  }}
-                >
-                  <OpenOrderRow
-                    order={order}
-                    onCancel={handleCancelOrder}
-                    isCancelling={pendingCancelIds.has(order.id)}
-                  />
-                </div>
-              )
-            })}
+          <div className="mt-2">
+            {sortedOrders.map(order => (
+              <OpenOrderRow
+                key={order.id}
+                order={order}
+                onCancel={handleCancelOrder}
+                isCancelling={pendingCancelIds.has(order.id)}
+              />
+            ))}
+            {hasNextPage && !infiniteScrollError && (
+              <div ref={sentinelRef} className="h-1" />
+            )}
           </div>
         </div>
       </div>
