@@ -189,6 +189,7 @@ function WalletSendForm({
     || parsedAmount <= 0
   )
   const showConnectedWalletButton = !sendTo?.trim()
+  const hasAvailableBalance = typeof availableBalance === 'number' && Number.isFinite(availableBalance)
 
   function formatFullPrecision(value: number | null | undefined) {
     if (typeof value !== 'number' || !Number.isFinite(value)) {
@@ -198,7 +199,7 @@ function WalletSendForm({
       useGrouping: false,
       maximumFractionDigits: 6,
     })
-    return asString.includes('.') ? (asString.replace(/\.?0+$/, '') || '0') : asString
+    return asString.replace(/\.?0+$/, '') || '0'
   }
 
   return (
@@ -271,7 +272,7 @@ function WalletSendForm({
               Max
             </Button>
           </div>
-          {availableBalance && (
+          {hasAvailableBalance && (
             <div className="mr-2 ml-2 flex items-center justify-between text-xs text-muted-foreground">
               <span>USDC</span>
               <span>
