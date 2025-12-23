@@ -125,7 +125,10 @@ export function useYesPrice() {
       return override
     }
 
-    return null
+    const yesOutcome = market.outcomes.find(outcome => outcome.outcome_index === OUTCOME_INDEX.YES)
+      ?? market.outcomes[0]
+    const fallbackPrice = clampNormalizedPrice(yesOutcome?.buy_price)
+    return fallbackPrice ?? null
   }, [market, yesPriceByMarket])
 }
 
@@ -143,7 +146,16 @@ export function useNoPrice() {
       return Math.max(0, Math.min(1, 1 - override))
     }
 
-    return null
+    const yesOutcome = market.outcomes.find(outcome => outcome.outcome_index === OUTCOME_INDEX.YES)
+      ?? market.outcomes[0]
+    const yesFallback = clampNormalizedPrice(yesOutcome?.buy_price)
+    if (yesFallback !== null) {
+      return Math.max(0, Math.min(1, 1 - yesFallback))
+    }
+
+    const noOutcome = market.outcomes.find(outcome => outcome.outcome_index === OUTCOME_INDEX.NO)
+    const fallbackPrice = clampNormalizedPrice(noOutcome?.buy_price)
+    return fallbackPrice ?? null
   }, [market, yesPriceByMarket])
 }
 
@@ -161,15 +173,20 @@ export function useAmountAsNumber() {
 
 export function useSyncLimitPriceWithOutcome() {
   const outcomeIndex = useOrder(state => state.outcome?.outcome_index)
+  const syncKey = useOrder(state => [
+    state.event?.id ?? 'no-event',
+    state.market?.condition_id ?? 'no-market',
+    state.outcome?.id ?? 'no-outcome',
+  ].join(':'))
   const setLimitPrice = useOrder(state => state.setLimitPrice)
   const yesPrice = useYesPrice()
   const noPrice = useNoPrice()
-  const lastOutcomeIndexRef = useRef(outcomeIndex)
+  const lastSyncKeyRef = useRef(syncKey)
   const hasSyncedRef = useRef(false)
 
   useEffect(() => {
-    if (outcomeIndex !== lastOutcomeIndexRef.current) {
-      lastOutcomeIndexRef.current = outcomeIndex
+    if (syncKey !== lastSyncKeyRef.current) {
+      lastSyncKeyRef.current = syncKey
       hasSyncedRef.current = false
     }
 
@@ -193,5 +210,5 @@ export function useSyncLimitPriceWithOutcome() {
 
     setLimitPrice(cents.toFixed(1))
     hasSyncedRef.current = true
-  }, [noPrice, outcomeIndex, setLimitPrice, yesPrice])
+  }, [noPrice, outcomeIndex, setLimitPrice, syncKey, yesPrice])
 }
