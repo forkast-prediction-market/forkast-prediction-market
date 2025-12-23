@@ -101,7 +101,7 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
   }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
   function renderRows() {
-    return orders.map((order, index) => {
+    return orders.map((order) => {
       const totalShares = order.side === 'buy'
         ? microToUnit(order.taker_amount)
         : microToUnit(order.maker_amount)
@@ -119,8 +119,6 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
         : new Date(order.expiration * 1000).toLocaleString()
       const marketIcon = order.market.icon_url || undefined
       const eventSlug = order.market.event_slug || order.market.slug
-      const isStriped = index % 2 === 0
-
       return (
         <div
           key={order.id}
@@ -128,11 +126,11 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
             `
               grid grid-cols-[minmax(0,2.2fr)_repeat(6,minmax(0,1fr))_auto] items-center gap-4 border-b border-border/60
               px-2 py-3 transition-colors
+              first:border-t first:border-border/60
               hover:bg-muted/50
               sm:px-3
             `,
             'last:border-b-0',
-            isStriped && 'bg-muted/40',
           )}
         >
           <div className="flex min-w-0 items-start gap-3">

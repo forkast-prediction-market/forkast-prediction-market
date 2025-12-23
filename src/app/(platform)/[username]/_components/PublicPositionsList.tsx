@@ -634,7 +634,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       const pnlPct = tradeValue > 0 ? (pnlDiff / tradeValue) * 100 : 0
       const outcomeLabel = position.outcome ?? '—'
       const outcomeColor = outcomeLabel.toLowerCase().includes('yes') ? 'bg-yes/15 text-yes' : 'bg-no/15 text-no'
-      const isStriped = index % 2 === 0
       const eventSlug = position.eventSlug || position.slug
 
       return (
@@ -643,10 +642,10 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
           className={`
             grid grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] items-center gap-4 border-b border-border/60
             px-2 py-3 transition-colors
+            first:border-t first:border-border/60
             last:border-b-0
             hover:bg-muted/50
             sm:px-3
-            ${isStriped ? 'bg-muted/40' : ''}
           `}
         >
           <div className="flex min-w-0 items-start gap-3">
@@ -792,14 +791,11 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
           {renderRows()}
 
           <div
-            className={cn(
-              `
-                grid grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] items-center gap-4 border-b
-                border-border/80 px-2 py-3
-                sm:px-3
-              `,
-              positions.length % 2 === 0 ? 'bg-muted/40' : '',
-            )}
+            className={`
+              grid grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] items-center gap-4 border-b border-border/80
+              px-2 py-3
+              sm:px-3
+            `}
           >
             <div className="text-sm font-semibold text-foreground">Total</div>
             <div className="text-sm text-muted-foreground">—</div>
