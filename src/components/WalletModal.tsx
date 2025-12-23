@@ -170,13 +170,12 @@ function WalletSendForm({
   onChangeSendTo: ChangeEventHandler<HTMLInputElement>
   sendAmount: string
   onChangeSendAmount: ChangeEventHandler<HTMLInputElement>
-  sendError: string | null
   isSending: boolean
   onSubmitSend: FormEventHandler<HTMLFormElement>
   onBack?: () => void
   connectedWalletAddress?: string | null
   onUseConnectedWallet?: () => void
-  availableBalance?: string | null
+  availableBalance?: number | null
   onMax?: () => void
 }) {
   const trimmedRecipient = sendTo.trim()
