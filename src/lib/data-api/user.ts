@@ -72,9 +72,6 @@ function normalizeValue(value: number | undefined | null): number {
   }
 
   const numeric = Number(value)
-  if (numeric > 1e12) {
-    return numeric / MICRO_UNIT
-  }
   if (numeric > MICRO_UNIT) {
     return numeric / MICRO_UNIT
   }
@@ -89,7 +86,7 @@ function normalizeShares(value?: number | null): number {
 
   const numeric = Number(value)
   const abs = Math.abs(numeric)
-  if (abs > 1e12 || abs > MICRO_UNIT || abs > 1e4) {
+  if (abs > 1e4) {
     return numeric / MICRO_UNIT
   }
   if (abs > 1e3) {
@@ -106,7 +103,7 @@ function normalizeUsd(value?: number | null): number {
 
   const numeric = Number(value)
   const abs = Math.abs(numeric)
-  if (abs > 1e12 || abs > MICRO_UNIT || abs > 1e4) {
+  if (abs > 1e4) {
     return numeric / MICRO_UNIT
   }
 
