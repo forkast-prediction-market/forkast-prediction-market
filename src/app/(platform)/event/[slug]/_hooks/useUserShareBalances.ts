@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { createPublicClient, erc1155Abi, http } from 'viem'
 import { defaultNetwork } from '@/lib/appkit'
-import { OUTCOME_INDEX } from '@/lib/constants'
+import { MICRO_UNIT, OUTCOME_INDEX } from '@/lib/constants'
 import { CONDITIONAL_TOKENS_CONTRACT } from '@/lib/contracts'
 
 export interface SharesByCondition {
@@ -17,8 +17,6 @@ interface UseUserShareBalancesOptions {
   event?: Event
   ownerAddress?: `0x${string}` | null
 }
-
-const MICRO_UNIT = 1_000_000
 
 function normalizeSharesFromBalance(balance: bigint): number {
   if (balance <= 0n) {

@@ -1,6 +1,7 @@
 import type { ActivityOrder } from '@/types'
 import { describe, expect, it } from 'vitest'
 import { filterActivitiesByMinAmount } from '@/lib/activity/filter'
+import { MICRO_UNIT } from '@/lib/constants'
 
 function createActivity(overrides: Partial<ActivityOrder> = {}): ActivityOrder {
   return {
@@ -12,7 +13,7 @@ function createActivity(overrides: Partial<ActivityOrder> = {}): ActivityOrder {
       image: 'https://avatar.vercel.sh/user.png',
     },
     side: overrides.side ?? 'buy',
-    amount: overrides.amount ?? (1_000_000).toString(),
+    amount: overrides.amount ?? (MICRO_UNIT).toString(),
     price: overrides.price ?? '0.5',
     outcome: overrides.outcome ?? { index: 0, text: 'Yes' },
     market: overrides.market ?? {

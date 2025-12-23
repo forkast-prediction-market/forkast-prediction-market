@@ -10,7 +10,7 @@ import { cancelOrderAction } from '@/app/(platform)/event/[slug]/_actions/cancel
 import { buildUserOpenOrdersQueryKey, useUserOpenOrdersQuery } from '@/app/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
-import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
+import { MICRO_UNIT, ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel, sharesFormatter, toCents, usdFormatter } from '@/lib/formatters'
 import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
 import { cn } from '@/lib/utils'
@@ -723,7 +723,7 @@ function microToUnit(value?: number) {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return 0
   }
-  return value / 1_000_000
+  return value / MICRO_UNIT
 }
 
 function OrderBookEmptyRow({ label }: { label: string }) {

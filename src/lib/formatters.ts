@@ -1,3 +1,5 @@
+import { MICRO_UNIT } from '@/lib/constants'
+
 const DEFAULT_LOCALE = 'en-US'
 const DEFAULT_CURRENCY = 'USD'
 
@@ -85,8 +87,8 @@ export function formatVolume(volume: number): string {
     return '$0'
   }
 
-  if (volume >= 1_000_000) {
-    return `$${(volume / 1_000_000).toFixed(1)}M`
+  if (volume >= MICRO_UNIT) {
+    return `$${(volume / MICRO_UNIT).toFixed(1)}M`
   }
   if (volume >= 1_000) {
     return `$${(volume / 1_000).toFixed(0)}k`
@@ -226,11 +228,11 @@ export function formatPosition(amountMicro: string): string {
     return amount.toString()
   }
 
-  if (amount < 1_000_000) {
+  if (amount < MICRO_UNIT) {
     return Math.floor(amount).toLocaleString(DEFAULT_LOCALE)
   }
 
-  const millions = amount / 1_000_000
+  const millions = amount / MICRO_UNIT
   return `${millions.toFixed(1)}M`
 }
 

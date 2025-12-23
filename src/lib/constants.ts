@@ -28,6 +28,7 @@ export const OUTCOME_INDEX = {
   NO: 1,
 } as const
 
+export const MICRO_UNIT = 1_000_000
 export const CAP_MICRO = 990_000n
 export const FLOOR_MICRO = 10_000n
 

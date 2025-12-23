@@ -14,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
-import { OUTCOME_INDEX } from '@/lib/constants'
+import { MICRO_UNIT, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCurrency, formatSharePriceLabel, sharesFormatter } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
@@ -147,7 +147,7 @@ function microToUnit(value?: number) {
   if (typeof value !== 'number' || !Number.isFinite(value)) {
     return 0
   }
-  return value / 1_000_000
+  return value / MICRO_UNIT
 }
 
 function formatExpirationLabel(order: UserOpenOrder) {

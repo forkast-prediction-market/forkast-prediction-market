@@ -20,7 +20,7 @@ import { useUserShareBalances } from '@/app/(platform)/event/[slug]/_hooks/useUs
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { SAFE_BALANCE_QUERY_KEY, useBalance } from '@/hooks/useBalance'
-import { CLOB_ORDER_TYPE, getExchangeEip712Domain, ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
+import { CLOB_ORDER_TYPE, getExchangeEip712Domain, MICRO_UNIT, ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { fetchUserPositionsForMarket } from '@/lib/data-api/user'
 import { formatCentsLabel, formatCurrency, toCents } from '@/lib/formatters'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
@@ -37,8 +37,6 @@ interface EventOrderPanelFormProps {
   isMobile: boolean
   event: Event
 }
-
-const MICRO_UNIT = 1_000_000
 
 function normalizeShares(value?: number) {
   if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {

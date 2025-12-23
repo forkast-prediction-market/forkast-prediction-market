@@ -1,7 +1,7 @@
 import type { CLOB_ORDER_TYPE } from '@/lib/constants'
 import type { BlockchainOrder, OrderSide, OrderType, Outcome } from '@/types'
 import { storeOrderAction } from '@/app/(platform)/event/[slug]/_actions/store-order'
-import { CAP_MICRO, FLOOR_MICRO, ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
+import { CAP_MICRO, FLOOR_MICRO, MICRO_UNIT, ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 import { ZERO_ADDRESS } from '@/lib/contracts'
 import { toMicro } from '@/lib/formatters'
 
@@ -74,21 +74,21 @@ export function calculateOrderAmounts({ orderType, side, amount, limitPrice, lim
     const sharesMicro = BigInt(toMicro(limitShares))
 
     if (side === ORDER_SIDE.BUY) {
-      makerAmount = (priceMicro * sharesMicro) / 1_000_000n
+      makerAmount = (priceMicro * sharesMicro) / BigInt(MICRO_UNIT)
       takerAmount = sharesMicro
     }
     else {
       makerAmount = sharesMicro
-      takerAmount = (priceMicro * sharesMicro) / 1_000_000n
+      takerAmount = (priceMicro * sharesMicro) / BigInt(MICRO_UNIT)
     }
   }
   else {
     makerAmount = BigInt(toMicro(amount))
     if (side === ORDER_SIDE.BUY) {
-      takerAmount = makerAmount * 1_000_000n / CAP_MICRO
+      takerAmount = makerAmount * BigInt(MICRO_UNIT) / CAP_MICRO
     }
     else {
-      takerAmount = FLOOR_MICRO * makerAmount / 1_000_000n
+      takerAmount = FLOOR_MICRO * makerAmount / BigInt(MICRO_UNIT)
     }
   }
 
