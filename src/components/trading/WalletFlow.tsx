@@ -174,7 +174,7 @@ export function WalletFlow({
   const handleSetMaxAmount = useCallback(() => {
     const amount = Number.isFinite(balance.raw) ? balance.raw : 0
     setWalletSendAmount(
-      amount.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 6 }).replace(/\.?0+$/, ''),
+      amount.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 6 }).replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, ''),
     )
   }, [balance.raw])
 
