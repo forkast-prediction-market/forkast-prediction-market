@@ -43,20 +43,7 @@ export default function EventOrderPanelInput({
     const cleaned = sanitizeNumericInput(rawValue)
 
     if (side === ORDER_SIDE.SELL) {
-      if (cleaned === '') {
-        onAmountChange('')
-        return
-      }
-
-      const nextValue = Number.parseFloat(cleaned)
-      if (Number.isNaN(nextValue)) {
-        onAmountChange('')
-        return
-      }
-
-      if (nextValue <= availableShares) {
-        onAmountChange(cleaned)
-      }
+      onAmountChange(cleaned)
       return
     }
 
@@ -77,7 +64,7 @@ export default function EventOrderPanelInput({
     }
 
     const clampedValue = side === ORDER_SIDE.SELL
-      ? Math.min(numeric, availableShares)
+      ? numeric
       : Math.min(numeric, MAX_AMOUNT_INPUT)
 
     onAmountChange(formatAmountInputValue(clampedValue))
@@ -87,9 +74,7 @@ export default function EventOrderPanelInput({
     const nextValue = amountNumber + delta
 
     if (side === ORDER_SIDE.SELL) {
-      if (nextValue <= availableShares) {
-        onAmountChange(formatAmountInputValue(nextValue))
-      }
+      onAmountChange(formatAmountInputValue(nextValue))
       return
     }
 
