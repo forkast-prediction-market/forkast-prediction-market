@@ -152,7 +152,7 @@ export default function EventSingleMarketOrderBook({ market, eventSlug }: EventS
               type="button"
               onClick={() => { void refetchOrderBook() }}
               className={cn(
-                `inline-flex h-8 w-8 items-center justify-center rounded-sm text-muted-foreground transition-colors`,
+                `inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground transition-colors`,
                 'hover:bg-muted/70 hover:text-foreground',
                 'focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none',
               )}
@@ -162,7 +162,7 @@ export default function EventSingleMarketOrderBook({ market, eventSlug }: EventS
             >
               <RefreshCwIcon
                 className={cn(
-                  'size-4',
+                  'size-3',
                   (isOrderBookLoading || isOrderBookRefetching) && 'animate-spin',
                 )}
               />

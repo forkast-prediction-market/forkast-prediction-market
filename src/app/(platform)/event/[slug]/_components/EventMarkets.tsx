@@ -372,7 +372,7 @@ function MarketDetailTabs({
             type="button"
             className={cn(
               `
-                ml-auto inline-flex h-8 w-8 items-center justify-center rounded-sm text-muted-foreground
+                ml-auto inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground
                 transition-colors
               `,
               'hover:bg-muted/70 hover:text-foreground',
@@ -385,7 +385,7 @@ function MarketDetailTabs({
           >
             <RefreshCwIcon
               className={cn(
-                'size-4',
+                'size-3',
                 (isOrderBookLoading || orderBookQuery.isRefetching) && 'animate-spin',
               )}
             />
