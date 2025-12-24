@@ -20,6 +20,7 @@ interface EventOrderPanelInputProps {
   balance: BalanceSummary
   inputRef: RefObject<HTMLInputElement | null>
   onAmountChange: (value: string) => void
+  shouldShake?: boolean
 }
 
 const BUY_CHIPS_DESKTOP = ['+$5', '+$25', '+$100']
@@ -34,6 +35,7 @@ export default function EventOrderPanelInput({
   balance,
   inputRef,
   onAmountChange,
+  shouldShake,
 }: EventOrderPanelInputProps) {
   function focusInput() {
     inputRef?.current?.focus()
@@ -144,9 +146,22 @@ export default function EventOrderPanelInput({
   const inputValue = side === ORDER_SIDE.SELL
     ? formattedAmount
     : formattedAmount ? `$${formattedAmount}` : ''
+  const shakeStyle = shouldShake ? { animation: 'order-shake 0.28s ease-in-out' } : undefined
 
   return (
     <>
+      <style jsx>
+        {`
+          @keyframes order-shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-4px); }
+            40% { transform: translateX(4px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+            100% { transform: translateX(0); }
+          }
+        `}
+      </style>
       {isMobile
         ? (
             <div className="mb-4">
@@ -179,6 +194,7 @@ export default function EventOrderPanelInput({
                     value={inputValue}
                     onChange={e => handleInputChange(e.target.value)}
                     onBlur={e => handleBlur(e.target.value)}
+                    style={shakeStyle}
                   />
                 </div>
                 <button
@@ -222,6 +238,7 @@ export default function EventOrderPanelInput({
                   value={inputValue}
                   onChange={e => handleInputChange(e.target.value)}
                   onBlur={e => handleBlur(e.target.value)}
+                  style={shakeStyle}
                 />
               </div>
             </div>

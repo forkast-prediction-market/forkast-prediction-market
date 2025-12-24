@@ -3,7 +3,7 @@ import { useAppKitAccount } from '@reown/appkit/react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { TriangleAlertIcon } from 'lucide-react'
 import Form from 'next/form'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSignTypedData } from 'wagmi'
 import { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
 import EventOrderPanelBuySellTabs from '@/app/(platform)/event/[slug]/_components/EventOrderPanelBuySellTabs'
@@ -19,6 +19,7 @@ import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components
 import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
 import { buildUserOpenOrdersQueryKey, useUserOpenOrdersQuery } from '@/app/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
 import { useUserShareBalances } from '@/app/(platform)/event/[slug]/_hooks/useUserShareBalances'
+import { Button } from '@/components/ui/button'
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { SAFE_BALANCE_QUERY_KEY, useBalance } from '@/hooks/useBalance'
@@ -175,6 +176,12 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const isLimitOrder = useIsLimitOrder()
   const [showMarketMinimumWarning, setShowMarketMinimumWarning] = useState(false)
   const [showInsufficientSharesWarning, setShowInsufficientSharesWarning] = useState(false)
+  const [showInsufficientBalanceWarning, setShowInsufficientBalanceWarning] = useState(false)
+  const [showAmountTooLowWarning, setShowAmountTooLowWarning] = useState(false)
+  const [shouldShakeInput, setShouldShakeInput] = useState(false)
+  const [shouldShakeLimitShares, setShouldShakeLimitShares] = useState(false)
+  const limitSharesInputRef = useRef<HTMLInputElement | null>(null)
+  const shakeStyle = { animation: 'order-shake 0.28s ease-in-out' }
   const limitSharesNumber = Number.parseFloat(state.limitShares) || 0
   const { balance } = useBalance()
   const outcomeTokenId = state.outcome?.token_id ? String(state.outcome.token_id) : null
@@ -202,7 +209,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       : null
   }, [state.limitExpirationOption, state.limitExpirationTimestamp])
   const affiliateMetadata = useAffiliateOrderMetadata()
-  const { ensureTradingReady, openTradeRequirements } = useTradingOnboarding()
+  const { ensureTradingReady, openTradeRequirements, startDepositFlow } = useTradingOnboarding()
   const hasDeployedProxyWallet = Boolean(user?.proxy_wallet_address && user?.proxy_wallet_status === 'deployed')
   const proxyWalletAddress = hasDeployedProxyWallet ? normalizeAddress(user?.proxy_wallet_address) : null
   const userAddress = normalizeAddress(user?.address)
@@ -433,12 +440,15 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       priceCents: effectivePriceCents ?? Number.NaN,
       totalValue,
     }
-  }, [marketSellFill, state.amount, state.limitPrice, state.limitShares, state.outcome?.buy_price, state.side, state.type])
+  }, [marketSellFill, state.amount, state.limitPrice, state.limitShares, state.side, state.type])
 
   const sellAmountValue = state.side === ORDER_SIDE.SELL ? sellOrderSnapshot.totalValue : 0
 
   const avgSellPriceLabel = formatCentsLabel(sellOrderSnapshot.priceCents, { fallback: '—' })
-  const currentBuyPriceCents = useMemo(() => {
+  const outcomeFallbackBuyPriceCents = typeof state.outcome?.buy_price === 'number'
+    ? Number((state.outcome.buy_price * 100).toFixed(1))
+    : null
+  const currentBuyPriceCents = (() => {
     if (isLimitOrder && state.side === ORDER_SIDE.BUY) {
       return Number.parseFloat(state.limitPrice || '0') || 0
     }
@@ -447,12 +457,15 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       return marketBuyFill?.avgPriceCents ?? null
     }
 
-    const outcomeFallback = typeof state.outcome?.buy_price === 'number'
-      ? Number((state.outcome.buy_price * 100).toFixed(1))
-      : null
+    return outcomeFallbackBuyPriceCents
+  })()
 
-    return outcomeFallback
-  }, [isLimitOrder, marketBuyFill?.avgPriceCents, state.limitPrice, state.outcome?.buy_price, state.side])
+  const effectiveMarketBuyCost = state.side === ORDER_SIDE.BUY && state.type === ORDER_TYPE.MARKET
+    ? (marketBuyFill?.totalCost ?? amountNumber)
+    : 0
+  const shouldShowDepositCta = state.side === ORDER_SIDE.BUY
+    && state.type === ORDER_TYPE.MARKET
+    && Math.max(effectiveMarketBuyCost, amountNumber) > balance.raw
 
   const avgBuyPriceLabel = formatCentsLabel(currentBuyPriceCents ?? undefined, { fallback: '—' })
   const sellAmountLabel = formatCurrency(sellAmountValue)
@@ -464,6 +477,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
   useEffect(() => {
     setShowInsufficientSharesWarning(false)
+    setShowInsufficientBalanceWarning(false)
+    setShowAmountTooLowWarning(false)
+    setShouldShakeInput(false)
+    setShouldShakeLimitShares(false)
   }, [state.amount, state.side, selectedShares])
 
   useEffect(() => {
@@ -479,6 +496,12 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
   function focusInput() {
     state.inputRef?.current?.focus()
+  }
+
+  function triggerLimitSharesShake() {
+    setShouldShakeLimitShares(true)
+    limitSharesInputRef.current?.focus()
+    setTimeout(() => setShouldShakeLimitShares(false), 320)
   }
 
   async function onSubmit() {
@@ -505,22 +528,61 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     })
 
     if (!validation.ok) {
-      if (validation.reason === 'LIMIT_SHARES_TOO_LOW') {
-        setShowLimitMinimumWarning(true)
-        return
-      }
-      else if (validation.reason === 'MARKET_MIN_AMOUNT') {
-        setShowMarketMinimumWarning(true)
-        return
-      }
-      else if (validation.reason === 'INSUFFICIENT_SHARES') {
-        setShowInsufficientSharesWarning(true)
-        return
-      }
-      else {
-        setShowLimitMinimumWarning(false)
-        setShowMarketMinimumWarning(false)
-        setShowInsufficientSharesWarning(false)
+      switch (validation.reason) {
+        case 'LIMIT_SHARES_TOO_LOW': {
+          setShowLimitMinimumWarning(true)
+          triggerLimitSharesShake()
+          return
+        }
+        case 'MARKET_MIN_AMOUNT': {
+          setShowMarketMinimumWarning(true)
+          return
+        }
+        case 'INVALID_AMOUNT':
+        case 'INVALID_LIMIT_SHARES': {
+          setShowAmountTooLowWarning(true)
+          if (isLimitOrder) {
+            triggerLimitSharesShake()
+          }
+          else {
+            setShouldShakeInput(true)
+            state.inputRef?.current?.focus()
+            setTimeout(() => setShouldShakeInput(false), 320)
+          }
+          return
+        }
+        case 'INSUFFICIENT_SHARES': {
+          setShowInsufficientSharesWarning(true)
+          if (isLimitOrder) {
+            triggerLimitSharesShake()
+          }
+          else {
+            setShouldShakeInput(true)
+            state.inputRef?.current?.focus()
+            setTimeout(() => setShouldShakeInput(false), 320)
+          }
+          return
+        }
+        case 'INSUFFICIENT_BALANCE': {
+          setShowInsufficientBalanceWarning(true)
+          if (isLimitOrder) {
+            triggerLimitSharesShake()
+          }
+          else {
+            setShouldShakeInput(true)
+            state.inputRef?.current?.focus()
+            setTimeout(() => setShouldShakeInput(false), 320)
+          }
+          return
+        }
+        default:
+          setShowLimitMinimumWarning(false)
+          setShowMarketMinimumWarning(false)
+          setShowInsufficientSharesWarning(false)
+          setShowInsufficientBalanceWarning(false)
+          setShowAmountTooLowWarning(false)
+          setShouldShakeInput(false)
+          setShouldShakeLimitShares(false)
       }
       handleValidationError(validation.reason, {
         openWalletModal: open,
@@ -530,6 +592,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     }
     setShowLimitMinimumWarning(false)
     setShowInsufficientSharesWarning(false)
+    setShowInsufficientBalanceWarning(false)
+    setShowAmountTooLowWarning(false)
+    setShouldShakeInput(false)
+    setShouldShakeLimitShares(false)
 
     if (!state.market || !state.outcome || !user || !userAddress || !makerAddress) {
       return
@@ -700,6 +766,18 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         'rounded-lg border lg:w-85': !isMobile,
       }, 'w-full p-4 shadow-xl/5')}
     >
+      <style jsx>
+        {`
+          @keyframes order-shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-4px); }
+            40% { transform: translateX(4px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
+            100% { transform: translateX(0); }
+          }
+        `}
+      </style>
       {!isMobile && !isSingleMarket && <EventOrderPanelMarketInfo market={state.market} />}
       {isMobile && (
         <EventOrderPanelMobileMarketInfo
@@ -772,6 +850,8 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 isLimitOrder={isLimitOrder}
                 availableShares={selectedShares}
                 showLimitMinimumWarning={showLimitMinimumWarning}
+                shouldShakeShares={shouldShakeLimitShares}
+                limitSharesRef={limitSharesInputRef}
                 onLimitPriceChange={state.setLimitPrice}
                 onLimitSharesChange={state.setLimitShares}
                 onLimitExpirationEnabledChange={state.setLimitExpirationEnabled}
@@ -801,6 +881,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 balance={balance}
                 inputRef={state.inputRef}
                 onAmountChange={state.setAmount}
+                shouldShake={shouldShakeInput}
               />
               {amountNumber > 0 && (
                 <EventOrderPanelEarnings
@@ -813,7 +894,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 />
               )}
               {showMarketMinimumWarning && (
-                <div className="mt-3 flex items-center justify-center gap-2 pb-1 text-sm font-semibold text-orange-500">
+                <div
+                  className="mt-3 flex items-center justify-center gap-2 pb-1 text-sm font-semibold text-orange-500"
+                  style={shakeStyle}
+                >
                   <TriangleAlertIcon className="size-4" />
                   Market buys must be at least $1
                 </div>
@@ -821,18 +905,43 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
             </>
           )}
 
-      {showInsufficientSharesWarning && (
-        <div className="mt-2 mb-3 flex items-center justify-center gap-2 text-sm font-semibold text-orange-500">
+      {(showInsufficientSharesWarning || showInsufficientBalanceWarning || showAmountTooLowWarning) && (
+        <div
+          className="mt-2 mb-3 flex items-center justify-center gap-2 text-sm font-semibold text-orange-500"
+          style={shakeStyle}
+        >
           <TriangleAlertIcon className="size-4" />
-          Insufficient balance
+          {showAmountTooLowWarning
+            ? 'Amount too low'
+            : showInsufficientBalanceWarning
+              ? 'Insufficient USDC balance'
+              : 'Insufficient shares for this order'}
         </div>
       )}
 
-      <EventOrderPanelSubmitButton
-        isLoading={state.isLoading}
-        isDisabled={state.isLoading}
-        onClick={event => state.setLastMouseEvent(event)}
-      />
+      {shouldShowDepositCta
+        ? (
+            <Button
+              type="button"
+              size="outcome"
+              disabled={state.isLoading}
+              aria-disabled={state.isLoading}
+              onClick={() => {
+                focusInput()
+                startDepositFlow()
+              }}
+              className="w-full text-base font-bold"
+            >
+              Deposit
+            </Button>
+          )
+        : (
+            <EventOrderPanelSubmitButton
+              isLoading={state.isLoading}
+              isDisabled={state.isLoading}
+              onClick={event => state.setLastMouseEvent(event)}
+            />
+          )}
       <EventOrderPanelTermsDisclaimer />
     </Form>
   )
