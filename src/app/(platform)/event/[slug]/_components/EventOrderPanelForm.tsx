@@ -503,6 +503,12 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     setTimeout(() => setShouldShakeLimitShares(false), 320)
   }
 
+  function triggerInputShake() {
+    setShouldShakeInput(true)
+    state.inputRef?.current?.focus()
+    setTimeout(() => setShouldShakeInput(false), 320)
+  }
+
   async function onSubmit() {
     if (!ensureTradingReady()) {
       return
@@ -544,9 +550,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
             triggerLimitSharesShake()
           }
           else {
-            setShouldShakeInput(true)
-            state.inputRef?.current?.focus()
-            setTimeout(() => setShouldShakeInput(false), 320)
+            triggerInputShake()
           }
           return
         }
@@ -556,9 +560,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
             triggerLimitSharesShake()
           }
           else {
-            setShouldShakeInput(true)
-            state.inputRef?.current?.focus()
-            setTimeout(() => setShouldShakeInput(false), 320)
+            triggerInputShake()
           }
           return
         }
@@ -568,9 +570,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
             triggerLimitSharesShake()
           }
           else {
-            setShouldShakeInput(true)
-            state.inputRef?.current?.focus()
-            setTimeout(() => setShouldShakeInput(false), 320)
+            triggerInputShake()
           }
           return
         }
