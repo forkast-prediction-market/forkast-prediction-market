@@ -130,8 +130,13 @@ export default function EventSingleMarketOrderBook({ market, eventSlug }: EventS
 
       {isExpanded && (
         <div className="border-t border-border/30">
-          <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3 text-sm font-semibold">
-            <div className="flex flex-wrap gap-3">
+          <div
+            className={`
+              flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-6 pt-3 pb-0 text-sm
+              font-semibold
+            `}
+          >
+            <div className="flex flex-wrap gap-4">
               <OutcomeToggle
                 label="Trade Yes"
                 selected={selectedOutcomeIndex === OUTCOME_INDEX.YES}
@@ -189,8 +194,10 @@ function OutcomeToggle({ label, selected, onClick }: OutcomeToggleProps) {
       type="button"
       onClick={onClick}
       className={cn(
-        'text-sm font-semibold transition-colors',
-        selected ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+        `-mb-[2px] border-b-2 border-transparent pt-1 pb-2 text-sm font-semibold transition-colors`,
+        selected
+          ? 'border-primary text-foreground'
+          : 'text-muted-foreground hover:text-foreground',
       )}
     >
       {label}
