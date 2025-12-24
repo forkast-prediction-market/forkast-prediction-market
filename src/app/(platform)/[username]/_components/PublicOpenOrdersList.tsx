@@ -171,7 +171,7 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
           </div>
 
           <div className="text-left text-sm font-semibold">
-            <span className={cn('inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold', outcomeColor)}>
+            <span className={cn('inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-sm font-semibold md:text-sm', outcomeColor)}>
               {outcomeText}
             </span>
           </div>

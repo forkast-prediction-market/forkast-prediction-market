@@ -290,7 +290,7 @@ export default function PublicHistoryList({ userAddress }: PublicHistoryListProp
                 <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
                   {(variant === 'buy' || variant === 'sell') && (
                     <span className={cn(`
-                      inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold
+                      inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold
                     `, outcomeColor)}
                     >
                       {outcomeText}

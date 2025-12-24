@@ -606,9 +606,10 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       return sum + tradeValue
     }, 0)
     const value = positions.reduce((sum, position) => sum + (position.currentValue ?? 0), 0)
+    const toWin = positions.reduce((sum, position) => sum + (position.size ?? 0), 0)
     const diff = value - trade
     const pct = trade > 0 ? (diff / trade) * 100 : 0
-    return { trade, value, diff, pct, toWin: value }
+    return { trade, value, diff, pct, toWin }
   }, [positions])
 
   function formatCents(price?: number) {
@@ -629,9 +630,11 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       const nowPrice = Number.isFinite(position.curPrice) && position.curPrice !== undefined
         ? position.curPrice!
         : avgPrice
-      const tradeValue = (position.size ?? 0) * avgPrice
-      const toWinValue = position.currentValue ?? 0
-      const pnlDiff = toWinValue - tradeValue
+      const shares = position.size ?? 0
+      const tradeValue = shares * avgPrice
+      const currentValue = Number.isFinite(position.currentValue) ? Number(position.currentValue) : 0
+      const toWinValue = shares
+      const pnlDiff = currentValue - tradeValue
       const pnlPct = tradeValue > 0 ? (pnlDiff / tradeValue) * 100 : 0
       const outcomeLabel = position.outcome ?? '—'
       const outcomeColor = outcomeLabel.toLowerCase().includes('yes') ? 'bg-yes/15 text-yes' : 'bg-no/15 text-no'
@@ -682,7 +685,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
                 {position.title}
               </Link>
               <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <span className={cn('inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] font-semibold', outcomeColor)}>
+                <span className={cn('inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold', outcomeColor)}>
                   {outcomeLabel}
                   {' '}
                   {formatCents(avgPrice)}
@@ -720,7 +723,10 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
               {`${pnlDiff >= 0 ? '+' : '-'}${formatCurrency(Math.abs(pnlDiff))}`}
               {' '}
               (
-              {pnlPct.toFixed(2)}
+              {Math.abs(pnlPct).toLocaleString(undefined, {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2,
+              })}
               %)
             </div>
           </div>
