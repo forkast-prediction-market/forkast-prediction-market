@@ -177,8 +177,6 @@ export default function EventOrderPanelLimitControls({
     medium: 'text-base',
     small: 'text-sm',
   })
-  const shakeStyle = shouldShakeShares ? { animation: 'order-shake 0.28s ease-in-out' } : undefined
-
   useEffect(() => {
     if (limitExpirationTimestamp) {
       setDraftExpiration(new Date(limitExpirationTimestamp * 1000))
@@ -215,21 +213,6 @@ export default function EventOrderPanelLimitControls({
 
   return (
     <div className="mt-4 space-y-5">
-      <style jsx>
-        {`
-          @keyframes order-shake {
-            0% { transform: translateX(0); }
-            20% { transform: translateX(-4px); }
-            40% { transform: translateX(4px); }
-            60% { transform: translateX(-3px); }
-            80% { transform: translateX(3px); }
-            100% { transform: translateX(0); }
-          }
-          .animate-order-shake {
-            animation: order-shake 0.28s ease-in-out;
-          }
-        `}
-      </style>
       <div className="flex items-center justify-between gap-3">
         <span className="text-lg font-medium text-foreground">
           Limit Price
@@ -245,7 +228,12 @@ export default function EventOrderPanelLimitControls({
 
       <div>
         <div className="mb-2 flex items-center justify-between gap-3">
-          <span className="text-lg font-medium text-foreground" style={shakeStyle}>
+          <span
+            className={cn(
+              'text-lg font-medium text-foreground',
+              shouldShakeShares && 'animate-order-shake',
+            )}
+          >
             Shares
           </span>
           <div className="flex w-1/2 items-center justify-end gap-2">
@@ -258,8 +246,8 @@ export default function EventOrderPanelLimitControls({
               className={cn(
                 'h-10 bg-transparent! text-right font-bold',
                 limitSharesSizeClass,
+                shouldShakeShares && 'animate-order-shake',
               )}
-              style={shakeStyle}
             />
           </div>
         </div>

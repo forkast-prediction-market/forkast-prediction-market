@@ -181,7 +181,6 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const [shouldShakeInput, setShouldShakeInput] = useState(false)
   const [shouldShakeLimitShares, setShouldShakeLimitShares] = useState(false)
   const limitSharesInputRef = useRef<HTMLInputElement | null>(null)
-  const shakeStyle = { animation: 'order-shake 0.28s ease-in-out' }
   const limitSharesNumber = Number.parseFloat(state.limitShares) || 0
   const { balance } = useBalance()
   const outcomeTokenId = state.outcome?.token_id ? String(state.outcome.token_id) : null
@@ -766,18 +765,6 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         'rounded-lg border lg:w-85': !isMobile,
       }, 'w-full p-4 shadow-xl/5')}
     >
-      <style jsx>
-        {`
-          @keyframes order-shake {
-            0% { transform: translateX(0); }
-            20% { transform: translateX(-4px); }
-            40% { transform: translateX(4px); }
-            60% { transform: translateX(-3px); }
-            80% { transform: translateX(3px); }
-            100% { transform: translateX(0); }
-          }
-        `}
-      </style>
       {!isMobile && !isSingleMarket && <EventOrderPanelMarketInfo market={state.market} />}
       {isMobile && (
         <EventOrderPanelMobileMarketInfo
@@ -895,8 +882,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
               )}
               {showMarketMinimumWarning && (
                 <div
-                  className="mt-3 flex items-center justify-center gap-2 pb-1 text-sm font-semibold text-orange-500"
-                  style={shakeStyle}
+                  className={`
+                    mt-3 flex animate-order-shake items-center justify-center gap-2 pb-1 text-sm font-semibold
+                    text-orange-500
+                  `}
                 >
                   <TriangleAlertIcon className="size-4" />
                   Market buys must be at least $1
@@ -907,8 +896,9 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
       {(showInsufficientSharesWarning || showInsufficientBalanceWarning || showAmountTooLowWarning) && (
         <div
-          className="mt-2 mb-3 flex items-center justify-center gap-2 text-sm font-semibold text-orange-500"
-          style={shakeStyle}
+          className={`
+            mt-2 mb-3 flex animate-order-shake items-center justify-center gap-2 text-sm font-semibold text-orange-500
+          `}
         >
           <TriangleAlertIcon className="size-4" />
           {showAmountTooLowWarning
