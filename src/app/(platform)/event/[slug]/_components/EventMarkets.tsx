@@ -232,6 +232,8 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                     summaries: orderBookSummaries,
                     isLoading: shouldShowOrderBookLoader,
                     lastPriceOverrideCents,
+                    refetch: orderBookQuery.refetch,
+                    isRefetching: orderBookQuery.isRefetching,
                   }}
                   sharesByCondition={sharesByCondition}
                 />
@@ -260,6 +262,8 @@ interface MarketDetailTabsProps {
     summaries: OrderBookSummariesResponse | undefined
     isLoading: boolean
     lastPriceOverrideCents: number | null
+    refetch: () => Promise<unknown>
+    isRefetching: boolean
   }
   sharesByCondition: SharesByCondition
 }
@@ -380,13 +384,13 @@ function MarketDetailTabs({
             )}
             aria-label="Refresh order book"
             title="Refresh order book"
-            onClick={() => { void orderBookQuery.refetch() }}
-            disabled={isOrderBookLoading || orderBookQuery.isRefetching}
+            onClick={() => { void orderBookData.refetch() }}
+            disabled={orderBookData.isLoading || orderBookData.isRefetching}
           >
             <RefreshCwIcon
               className={cn(
                 'size-3',
-                (isOrderBookLoading || orderBookQuery.isRefetching) && 'animate-spin',
+                (orderBookData.isLoading || orderBookData.isRefetching) && 'animate-spin',
               )}
             />
           </button>
