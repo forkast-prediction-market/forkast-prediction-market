@@ -6,7 +6,6 @@ import { ArrowDownNarrowWideIcon, SearchIcon, XIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
-
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -25,6 +24,28 @@ function formatCents(price?: number) {
 
 function microToUnit(value?: number) {
   return Number.isFinite(value) ? (value ?? 0) / MICRO_UNIT : 0
+}
+
+function formatExpirationLabel(order: PublicUserOpenOrder) {
+  if (order.type === 'GTC') {
+    return 'Until Cancelled'
+  }
+
+  const rawExpiration = typeof order.expiration === 'number'
+    ? order.expiration
+    : Number(order.expiration)
+
+  if (!Number.isFinite(rawExpiration) || rawExpiration <= 0) {
+    return '—'
+  }
+
+  const date = new Date(rawExpiration * 1000)
+  return date.toLocaleString(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
 }
 
 type PublicUserOpenOrder = UserOpenOrder & {
@@ -115,9 +136,7 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
       const outcomeIsYes = order.outcome.index === 0
       const outcomeColor = outcomeIsYes ? 'bg-yes/15 text-yes' : 'bg-no/15 text-no'
       const priceLabel = formatCents(order.price)
-      const expirationLabel = order.type === 'GTC' || !order.expiration
-        ? 'Until Cancelled'
-        : new Date(order.expiration * 1000).toLocaleString()
+      const expirationLabel = formatExpirationLabel(order)
       const marketIcon = order.market.icon_url || undefined
       const eventSlug = order.market.event_slug || order.market.slug
       return (
@@ -188,7 +207,7 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
             {formatCurrency(totalValue)}
           </div>
 
-          <div className="text-left text-sm text-foreground">
+          <div className="text-left text-xs font-medium text-muted-foreground">
             {expirationLabel}
           </div>
 
@@ -253,7 +272,7 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
           `px-2 pt-2 pb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:px-3`,
         )}
       >
-        <div className="pl-[3.75rem] text-left">Market</div>
+        <div className="pl-15 text-left">Market</div>
         <div className="text-center">Side</div>
         <div className="text-left">Outcome</div>
         <div className="text-center">Price</div>
