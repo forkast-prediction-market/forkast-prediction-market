@@ -2,7 +2,7 @@
 
 import type { Event, Market, Outcome } from '@/types'
 import { useAppKitAccount } from '@reown/appkit/react'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { ChevronsDownIcon, ChevronsUpIcon, DollarSignIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -132,6 +132,69 @@ export default function EventCard({ event }: EventCardProps) {
   const primaryMarket = event.markets[0]
   const primaryDisplayChance = primaryMarket ? getDisplayChance(primaryMarket.condition_id) : 0
   const roundedPrimaryDisplayChance = Math.round(primaryDisplayChance)
+
+  const volumeRequestPayload = useMemo(() => {
+    const conditions = event.markets
+      .map((market) => {
+        const tokenIds = (market.outcomes ?? [])
+          .map(outcome => outcome.token_id)
+          .filter(Boolean)
+          .slice(0, 2)
+        if (!market.condition_id || tokenIds.length < 2) {
+          return null
+        }
+        return {
+          condition_id: market.condition_id,
+          token_ids: tokenIds as [string, string],
+        }
+      })
+      .filter((item): item is { condition_id: string, token_ids: [string, string] } => item !== null)
+
+    const signature = conditions
+      .map(condition => `${condition.condition_id}:${condition.token_ids.join(':')}`)
+      .join('|')
+
+    return { conditions, signature }
+  }, [event.markets])
+
+  const { data: volumeFromApi } = useQuery({
+    queryKey: ['trade-volumes', event.id, volumeRequestPayload.signature],
+    enabled: volumeRequestPayload.conditions.length > 0,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const response = await fetch('https://clob.forka.st/data/volumes', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          include_24h: false,
+          conditions: volumeRequestPayload.conditions,
+        }),
+      })
+
+      const payload = await response.json() as Array<{
+        condition_id: string
+        status: number
+        volume?: string
+      }>
+
+      return payload
+        .filter(entry => entry?.status === 200)
+        .reduce((total, entry) => {
+          const numeric = Number(entry.volume ?? 0)
+          return Number.isFinite(numeric) ? total + numeric : total
+        }, 0)
+    },
+  })
+
+  const resolvedVolume = useMemo(() => {
+    if (typeof volumeFromApi === 'number' && Number.isFinite(volumeFromApi)) {
+      return volumeFromApi
+    }
+    return event.volume
+  }, [event.volume, volumeFromApi])
 
   function handleTrade(outcome: Outcome, market: Market, variant: 'yes' | 'no') {
     setSelectedOutcome({
@@ -629,7 +692,7 @@ export default function EventCard({ event }: EventCardProps) {
                 ? <NewBadge />
                 : (
                     <span>
-                      {formatVolume(event.volume)}
+                      {formatVolume(resolvedVolume)}
                       {' '}
                       Vol.
                     </span>

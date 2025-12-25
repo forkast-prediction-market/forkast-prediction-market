@@ -252,17 +252,20 @@ export function useEventPriceHistory({
   }
 }
 
-export function buildMarketTargets(markets: Market[]): MarketTokenTarget[] {
+export function buildMarketTargets(
+  markets: Market[],
+  outcomeIndex: typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO = OUTCOME_INDEX.YES,
+): MarketTokenTarget[] {
   return markets
     .map((market) => {
-      const yesOutcome = market.outcomes.find(outcome => outcome.outcome_index === OUTCOME_INDEX.YES)
+      const matchingOutcome = market.outcomes.find(outcome => outcome.outcome_index === outcomeIndex)
         ?? market.outcomes[0]
-      if (!yesOutcome?.token_id) {
+      if (!matchingOutcome?.token_id) {
         return null
       }
       return {
         conditionId: market.condition_id,
-        tokenId: yesOutcome.token_id,
+        tokenId: matchingOutcome.token_id,
       }
     })
     .filter((target): target is MarketTokenTarget => target !== null)
