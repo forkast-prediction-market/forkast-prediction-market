@@ -12,7 +12,7 @@ const PNL_PAGE_SIZE = 200
 
 interface SyncCursor {
   conditionId: string
-  creationTimestamp: number
+  updatedAt: number
 }
 
 interface SubgraphCondition {
@@ -24,6 +24,7 @@ interface SubgraphCondition {
   creator: string | null
   owner?: string | null
   creationTimestamp: string
+  updatedAt: string
 }
 
 interface SyncStats {
@@ -140,8 +141,8 @@ async function syncMarkets(): Promise<SyncStats> {
   let cursor = await getLastProcessedConditionCursor()
 
   if (cursor) {
-    const cursorIso = new Date(cursor.creationTimestamp * 1000).toISOString()
-    console.log(`⏱️ Resuming sync after condition ${cursor.conditionId} (created at ${cursorIso})`)
+    const cursorIso = new Date(cursor.updatedAt * 1000).toISOString()
+    console.log(`⏱️ Resuming sync after condition ${cursor.conditionId} (updated at ${cursorIso})`)
   }
   else {
     console.log('📥 No existing markets found, starting full sync')
@@ -171,15 +172,15 @@ async function syncMarkets(): Promise<SyncStats> {
     const existingIds = await getExistingConditionIds(page.conditions.map(condition => condition.id))
 
     for (const condition of page.conditions) {
-      const creationTimestamp = Number(condition.creationTimestamp)
-      if (Number.isNaN(creationTimestamp)) {
-        console.error(`⚠️ Skipping condition ${condition.id} - invalid creationTimestamp: ${condition.creationTimestamp}`)
+      const updatedAt = Number(condition.updatedAt)
+      if (Number.isNaN(updatedAt)) {
+        console.error(`⚠️ Skipping condition ${condition.id} - invalid updatedAt: ${condition.updatedAt}`)
         continue
       }
 
       const conditionCursor: SyncCursor = {
         conditionId: condition.id,
-        creationTimestamp,
+        updatedAt,
       }
 
       if (!condition.creator) {
@@ -286,10 +287,10 @@ async function getExistingConditionIds(conditionIds: string[]): Promise<Set<stri
 
 async function getLastProcessedConditionCursor(): Promise<SyncCursor | null> {
   const { data, error } = await supabaseAdmin
-    .from('markets')
-    .select('condition_id, created_at')
-    .order('created_at', { ascending: false })
-    .order('condition_id', { ascending: false })
+    .from('conditions')
+    .select('id, updated_at')
+    .order('updated_at', { ascending: false })
+    .order('id', { ascending: false })
     .limit(1)
     .maybeSingle()
 
@@ -297,34 +298,34 @@ async function getLastProcessedConditionCursor(): Promise<SyncCursor | null> {
     throw new Error(`Failed to get last processed condition: ${error.message}`)
   }
 
-  if (!data?.condition_id || !data?.created_at) {
+  if (!data?.id || !data?.updated_at) {
     return null
   }
 
-  const creationTimestamp = Math.floor(new Date(data.created_at).getTime() / 1000)
+  const updatedAt = Math.floor(new Date(data.updated_at).getTime() / 1000)
 
   return {
-    conditionId: data.condition_id,
-    creationTimestamp,
+    conditionId: data.id,
+    updatedAt,
   }
 }
 
 async function fetchPnLConditionsPage(afterCursor: SyncCursor | null): Promise<{ conditions: SubgraphCondition[] }> {
-  const cursorTimestamp = afterCursor?.creationTimestamp
+  const cursorUpdatedAt = afterCursor?.updatedAt
   const cursorConditionId = afterCursor?.conditionId
 
   let whereClause = ''
-  if (cursorTimestamp !== undefined && cursorConditionId !== undefined) {
-    const timestampLiteral = JSON.stringify(cursorTimestamp.toString())
+  if (cursorUpdatedAt !== undefined && cursorConditionId !== undefined) {
+    const timestampLiteral = JSON.stringify(cursorUpdatedAt.toString())
     const conditionIdLiteral = JSON.stringify(cursorConditionId)
-    whereClause = `, where: { or: [{ creationTimestamp_gt: ${timestampLiteral} }, { creationTimestamp: ${timestampLiteral}, id_gt: ${conditionIdLiteral} }] }`
+    whereClause = `, where: { or: [{ updatedAt_gt: ${timestampLiteral} }, { updatedAt: ${timestampLiteral}, id_gt: ${conditionIdLiteral} }] }`
   }
 
   const query = `
     {
       conditions(
         first: ${PNL_PAGE_SIZE},
-        orderBy: creationTimestamp,
+        orderBy: updatedAt,
         orderDirection: asc${whereClause}
       ) {
         id
@@ -335,6 +336,7 @@ async function fetchPnLConditionsPage(afterCursor: SyncCursor | null): Promise<{
         creator
         owner
         creationTimestamp
+        updatedAt
       }
     }
   `
@@ -423,11 +425,21 @@ async function processCondition(market: SubgraphCondition) {
     throw new Error(`Market ${market.id} missing required creationTimestamp field`)
   }
 
+  if (!market.updatedAt) {
+    throw new Error(`Market ${market.id} missing required updatedAt field`)
+  }
+
   const creationTimestamp = Number(market.creationTimestamp)
   if (Number.isNaN(creationTimestamp)) {
     throw new TypeError(`Market ${market.id} has invalid creationTimestamp: ${market.creationTimestamp}`)
   }
   const createdAtIso = new Date(creationTimestamp * 1000).toISOString()
+
+  const updatedAtTimestamp = Number(market.updatedAt)
+  if (Number.isNaN(updatedAtTimestamp)) {
+    throw new TypeError(`Market ${market.id} has invalid updatedAt: ${market.updatedAt}`)
+  }
+  const updatedAtIso = new Date(updatedAtTimestamp * 1000).toISOString()
 
   const { error } = await supabaseAdmin.from('conditions').upsert({
     id: market.id,
@@ -437,6 +449,7 @@ async function processCondition(market: SubgraphCondition) {
     arweave_hash: market.arweaveHash,
     creator: market.creator!,
     created_at: createdAtIso,
+    updated_at: updatedAtIso,
   })
 
   if (error) {
@@ -580,11 +593,21 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
     throw new Error(`Market ${market.id} missing required creationTimestamp field`)
   }
 
+  if (!market.updatedAt) {
+    throw new Error(`Market ${market.id} missing required updatedAt field`)
+  }
+
   const creationTimestamp = Number(market.creationTimestamp)
   if (Number.isNaN(creationTimestamp)) {
     throw new TypeError(`Market ${market.id} has invalid creationTimestamp: ${market.creationTimestamp}`)
   }
   const createdAtIso = new Date(creationTimestamp * 1000).toISOString()
+
+  const updatedAtTimestamp = Number(market.updatedAt)
+  if (Number.isNaN(updatedAtTimestamp)) {
+    throw new TypeError(`Market ${market.id} has invalid updatedAt: ${market.updatedAt}`)
+  }
+  const updatedAtIso = new Date(updatedAtTimestamp * 1000).toISOString()
 
   console.log(`${marketAlreadyExists ? 'Updating' : 'Creating'} market ${market.id} with eventId: ${eventId}`)
 
@@ -626,6 +649,7 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
     metadata_version: metadataVersion ?? null,
     metadata_schema: metadataSchema ?? null,
     created_at: createdAtIso,
+    updated_at: updatedAtIso,
   }
 
   const { error } = await supabaseAdmin.from('markets').upsert(marketData)
