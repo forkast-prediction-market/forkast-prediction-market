@@ -52,7 +52,6 @@ const defaultMargin = { top: 30, right: 60, bottom: 40, left: 0 }
 const TOOLTIP_LABEL_HEIGHT = 20
 const TOOLTIP_LABEL_GAP = 6
 const TOOLTIP_LABEL_MAX_WIDTH = 160
-const TOOLTIP_LABEL_ANCHOR_OFFSET = 10
 const FUTURE_LINE_COLOR_DARK = '#2C3F4F'
 const FUTURE_LINE_COLOR_LIGHT = '#99A6B5'
 const FUTURE_LINE_OPACITY_DARK = 0.55
@@ -397,15 +396,13 @@ export function PredictionChart({
       })
 
       const rawDate = xScale.invert(x - margin.left)
-      const snappedTime = snapTimestampToInterval(
-        rawDate.getTime(),
-        cursorStepMs,
-        domainStart,
-      )
-      const clampedTime = Math.max(domainStart, Math.min(domainEnd, snappedTime))
-      const targetDate = new Date(clampedTime)
+      const clampedTime = Math.max(domainStart, Math.min(domainEnd, rawDate.getTime()))
+      const targetTime = cursorStepMs && cursorStepMs > 0
+        ? snapTimestampToInterval(clampedTime, cursorStepMs, domainStart)
+        : clampedTime
+      const targetDate = new Date(targetTime)
       const domainSpan = Math.max(1, domainEnd - domainStart)
-      lastCursorProgressRef.current = clamp01((clampedTime - domainStart) / domainSpan)
+      lastCursorProgressRef.current = clamp01((targetTime - domainStart) / domainSpan)
       hasPointerInteractionRef.current = true
       stopRevealAnimation(revealAnimationFrameRef)
       const index = bisectDate(data, targetDate, 1)
@@ -1083,7 +1080,7 @@ export function PredictionChart({
               <line
                 x1={clampedTooltipX}
                 x2={clampedTooltipX}
-                y1={-16}
+                y1={-32}
                 y2={innerHeight}
                 stroke="#2C3F4F"
                 strokeWidth={1.5}
@@ -1114,10 +1111,39 @@ export function PredictionChart({
             <div
               className="absolute text-xs font-medium text-muted-foreground"
               style={{
-                top: Math.max(margin.top - 28, 0),
-                left: margin.left + clampedTooltipX,
-                transform: 'translateX(-50%)',
+                top: Math.max(0, margin.top - 36),
+                left: (() => {
+                  const dateLabelMaxWidth = 180
+                  const pointerX = margin.left + clampedTooltipX
+                  const offset = 6
+                  const chartLeft = margin.left + 4
+                  const chartRight = margin.left + innerWidth - 4
+                  const preferRight = pointerX + offset + dateLabelMaxWidth <= chartRight
+                  const anchorRightSide = preferRight
+                    ? pointerX + offset
+                    : pointerX - offset
+
+                  if (preferRight) {
+                    return Math.min(
+                      Math.max(anchorRightSide, chartLeft),
+                      chartRight - dateLabelMaxWidth,
+                    )
+                  }
+
+                  const minLeftForLeftAnchor = chartLeft + dateLabelMaxWidth
+                  return Math.min(
+                    Math.max(anchorRightSide, minLeftForLeftAnchor),
+                    chartRight,
+                  )
+                })(),
+                maxWidth: '180px',
                 whiteSpace: 'nowrap',
+                transform: (() => {
+                  const pointerX = margin.left + clampedTooltipX
+                  const chartRight = margin.left + innerWidth - 4
+                  const preferRight = pointerX + 6 + 180 <= chartRight
+                  return preferRight ? 'translateX(0)' : 'translateX(-100%)'
+                })(),
               }}
             >
               {tooltipData.date.toLocaleString('en-US', {
@@ -1130,15 +1156,29 @@ export function PredictionChart({
             </div>
 
             {(() => {
-              const labelRightBoundary = margin.left + innerWidth - 4
-              const labelLeftBoundary = margin.left + 80
-              const baseLabelAnchor = margin.left
-                + clampedTooltipX
-                - TOOLTIP_LABEL_ANCHOR_OFFSET
-              const resolvedLeft = Math.min(
-                labelRightBoundary,
-                Math.max(labelLeftBoundary, baseLabelAnchor),
-              )
+              const pointerX = margin.left + clampedTooltipX
+              const chartLeft = margin.left + 4
+              const chartRight = margin.left + innerWidth - 4
+              const anchorOffset = 6 // match date label offset and flip point
+              const anchorBoundaryWidth = 180 // match date label flip threshold
+              const labelMaxWidth = TOOLTIP_LABEL_MAX_WIDTH
+
+              const preferRight = pointerX + anchorOffset + anchorBoundaryWidth <= chartRight
+              const anchor = preferRight
+                ? pointerX + anchorOffset
+                : pointerX - anchorOffset
+
+              const resolvedLeft = preferRight
+                ? Math.min(
+                    Math.max(anchor, chartLeft),
+                    chartRight - labelMaxWidth,
+                  )
+                : Math.min(
+                    Math.max(anchor, chartLeft + labelMaxWidth),
+                    chartRight,
+                  )
+
+              const translateX = preferRight ? '0' : '-100%'
 
               return positionedTooltipEntries.map(entry => (
                 <div
@@ -1151,7 +1191,7 @@ export function PredictionChart({
                     top: entry.top,
                     left: resolvedLeft,
                     maxWidth: `${TOOLTIP_LABEL_MAX_WIDTH}px`,
-                    transform: 'translateX(-100%)',
+                    transform: `translateX(${translateX})`,
                     backgroundColor: entry.color,
                   }}
                 >

@@ -12,7 +12,6 @@ import {
 } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
 import {
   buildMarketTargets,
-  CURSOR_STEP_MS,
   TIME_RANGES,
   useEventPriceHistory,
 } from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
@@ -317,7 +316,6 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
           height={280}
           margin={{ top: 30, right: 40, bottom: 52, left: 0 }}
           dataSignature={chartSignature}
-          cursorStepMs={CURSOR_STEP_MS[activeTimeRange]}
           onCursorDataChange={setCursorSnapshot}
           xAxisTickCount={isMobile ? 3 : 6}
           legendContent={legendContent}

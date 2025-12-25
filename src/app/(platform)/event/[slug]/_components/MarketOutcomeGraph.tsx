@@ -5,7 +5,6 @@ import type { Market, Outcome } from '@/types'
 import { useMemo, useState } from 'react'
 import {
   buildMarketTargets,
-  CURSOR_STEP_MS,
   TIME_RANGES,
 
   useEventPriceHistory,
@@ -74,7 +73,6 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
         height={260}
         margin={{ top: 20, right: 40, bottom: 48, left: 0 }}
         dataSignature={chartSignature}
-        cursorStepMs={CURSOR_STEP_MS[activeTimeRange]}
         xAxisTickCount={isMobile ? 3 : 6}
         legendContent={null}
         showLegend={false}
