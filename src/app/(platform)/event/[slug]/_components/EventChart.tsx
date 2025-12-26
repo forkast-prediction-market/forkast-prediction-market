@@ -3,7 +3,7 @@
 import type { TimeRange } from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
 import type { PredictionChartCursorSnapshot, SeriesConfig } from '@/components/PredictionChart'
 import type { Event } from '@/types'
-import { Shuffle, Triangle } from 'lucide-react'
+import { ShuffleIcon, TriangleIcon } from 'lucide-react'
 import { memo, useEffect, useMemo, useState } from 'react'
 import { AnimatedCounter } from 'react-animated-counter'
 import {
@@ -459,9 +459,9 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
                       />
                     )
                   : (
-                      <span className="text-[24px] leading-none font-extrabold">--</span>
+                      <span className="text-2xl leading-none font-extrabold">--</span>
                     )}
-                <span className="text-[24px] leading-none font-extrabold">
+                <span className="text-2xl leading-none font-extrabold">
                   % chance
                 </span>
               </div>
@@ -490,7 +490,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
 
               return (
                 <div className={`flex items-center gap-1 tabular-nums ${colorClass}`}>
-                  <Triangle
+                  <TriangleIcon
                     className="size-3.5"
                     fill="currentColor"
                     stroke="none"
@@ -578,7 +578,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
                     }}
                     aria-label={`switch to ${oppositeOutcomeLabel}`}
                   >
-                    <Shuffle className="size-4" />
+                    <ShuffleIcon className="size-4" />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent

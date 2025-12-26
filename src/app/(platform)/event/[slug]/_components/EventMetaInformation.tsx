@@ -44,7 +44,7 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
     staleTime: 60_000,
     refetchInterval: 60_000,
     queryFn: async () => {
-      const response = await fetch('https://clob.forka.st/data/volumes', {
+      const response = await fetch(`${process.env.CLOB_URL}/data/volumes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
