@@ -20,6 +20,11 @@ interface EventMarketPositionsProps {
   market: Event['markets'][number]
 }
 
+function toNumber(value: unknown) {
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : null
+}
+
 const POSITIONS_GRID_TEMPLATE = 'minmax(120px,1fr) repeat(4, minmax(80px,1fr)) minmax(150px,auto)'
 
 function MarketPositionRow({
@@ -39,42 +44,48 @@ function MarketPositionRow({
       ? OUTCOME_INDEX.NO
       : OUTCOME_INDEX.YES
   const isYesOutcome = resolvedOutcomeIndex === OUTCOME_INDEX.YES
-  const quantity = typeof position.total_shares === 'number' ? position.total_shares : 0
+  const quantity = toNumber(position.size)
+    ?? (typeof position.total_shares === 'number' ? position.total_shares : 0)
   const formattedQuantity = quantity > 0
     ? sharesFormatter.format(quantity)
     : '—'
-  const averagePrice = Number(fromMicro(String(position.average_position), 6))
-  const averageLabel = formatCentsLabel(averagePrice, { fallback: '—' })
-  const totalValue = Number(fromMicro(String(position.total_position_value), 2))
-  const valueLabel = formatCurrency(totalValue, {
+  const averagePriceDollars = toNumber(position.avgPrice)
+    ?? Number(fromMicro(String(position.average_position ?? 0), 6))
+  const averageLabel = formatCentsLabel(averagePriceDollars, { fallback: '—' })
+  const totalValue = toNumber(position.currentValue)
+    ?? Number(fromMicro(String(position.total_position_value ?? 0), 2))
+  const valueLabel = formatCurrency(Math.max(0, totalValue), {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
-  const baseCostValue = typeof position.total_position_cost === 'number'
-    ? Number(fromMicro(String(position.total_position_cost), 2))
-    : null
+  const baseCostValue = toNumber(position.totalBought)
+    ?? toNumber(position.initialValue)
+    ?? (typeof position.total_position_cost === 'number'
+      ? Number(fromMicro(String(position.total_position_cost), 2))
+      : null)
   const costLabel = baseCostValue != null
     ? formatCurrency(baseCostValue, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : null
-  const profitLossValue = typeof position.profit_loss_value === 'number'
-    ? Number(fromMicro(String(position.profit_loss_value), 2))
-    : baseCostValue != null
-      ? Number((totalValue - baseCostValue).toFixed(2))
-      : 0
-  const hasPercentSource = typeof position.profit_loss_percent === 'number'
-  const percentSource: number = hasPercentSource
-    ? Number(position.profit_loss_percent)
-    : baseCostValue != null && baseCostValue !== 0
-      ? (profitLossValue / baseCostValue) * 100
-      : 0
-  const normalizedPercent = hasPercentSource && Math.abs(percentSource) <= 1
+  const realizedPnlValue = toNumber(position.realizedPnl)
+    ?? toNumber(position.cashPnl)
+    ?? 0
+  const unrealizedValue = baseCostValue != null
+    ? Number((totalValue - baseCostValue).toFixed(6))
+    : 0
+  const totalProfitLossValue = Number((unrealizedValue + realizedPnlValue).toFixed(6))
+  const percentFromPayload = toNumber(position.percentPnl)
+    ?? toNumber(position.profit_loss_percent)
+  const percentSource = percentFromPayload ?? (baseCostValue && baseCostValue !== 0
+    ? (totalProfitLossValue / baseCostValue) * 100
+    : 0)
+  const normalizedPercent = Math.abs(percentSource) <= 1 && percentFromPayload !== null
     ? percentSource * 100
     : percentSource
   const percentDigits = Math.abs(normalizedPercent) >= 10 ? 0 : 1
   const percentLabel = formatPercent(Math.abs(normalizedPercent), { digits: percentDigits })
-  const isPositive = profitLossValue >= 0
-  const isNeutralReturn = Math.abs(profitLossValue) < 0.005
-  const neutralReturnLabel = formatCurrency(Math.abs(profitLossValue), {
+  const isPositive = totalProfitLossValue >= 0
+  const isNeutralReturn = Math.abs(totalProfitLossValue) < 0.005
+  const neutralReturnLabel = formatCurrency(Math.abs(totalProfitLossValue), {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
@@ -97,8 +108,8 @@ function MarketPositionRow({
     return `+${abs}`
   }
 
-  const unrealizedLabel = formatSignedCurrency(profitLossValue)
-  const realizedLabel = formatSignedCurrency(0)
+  const unrealizedLabel = formatSignedCurrency(unrealizedValue)
+  const realizedLabel = formatSignedCurrency(realizedPnlValue)
   const totalLabel = displayedReturnValue
 
   return (
