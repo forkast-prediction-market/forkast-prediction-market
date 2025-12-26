@@ -687,14 +687,14 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     const marketLimitPriceCents = (() => {
       if (state.side === ORDER_SIDE.SELL) {
         const value = marketSellFill?.limitPriceCents ?? sellOrderSnapshot.priceCents
-        return Number.isFinite(value) && value && value > 0 ? value : undefined
+        return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined
       }
 
       const value = marketBuyFill?.limitPriceCents
         ?? currentBuyPriceCents
         ?? outcomeFallbackBuyPriceCents
 
-      return Number.isFinite(value) && value > 0 ? value : undefined
+      return typeof value === 'number' && Number.isFinite(value) && value > 0 ? value : undefined
     })()
 
     const payload = buildOrderPayload({

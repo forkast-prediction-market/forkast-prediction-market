@@ -173,11 +173,9 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO
   >(OUTCOME_INDEX.YES)
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
-  const [baselineYesChance, setBaselineYesChance] = useState<number | null>(null)
 
   useEffect(() => {
     setCursorSnapshot(null)
-    setBaselineYesChance(null)
   }, [activeTimeRange, event.slug, activeOutcomeIndex])
 
   const marketTargets = useMemo(
@@ -371,23 +369,10 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   const isHovering = cursorSnapshot !== null
     && cursorYesChance !== null
     && Number.isFinite(cursorYesChance)
-  const effectiveBaselineYesChance = isHovering
-    ? (baselineYesChance ?? cursorYesChance)
-    : defaultBaselineYesChance
+  const effectiveBaselineYesChance = defaultBaselineYesChance
   const effectiveCurrentYesChance = isHovering
     ? cursorYesChance
     : defaultCurrentYesChance
-
-  useEffect(() => {
-    if (cursorSnapshot === null) {
-      setBaselineYesChance(null)
-      return
-    }
-
-    if (baselineYesChance === null && cursorYesChance !== null) {
-      setBaselineYesChance(cursorYesChance)
-    }
-  }, [cursorSnapshot, cursorYesChance, baselineYesChance])
 
   const legendContent = shouldRenderLegendEntries
     ? (
