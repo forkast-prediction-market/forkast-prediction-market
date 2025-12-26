@@ -418,11 +418,6 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   if (!hasLegendSeries) {
     return null
   }
-
-  if (!hasLegendSeries) {
-    return null
-  }
-
   return (
     <div className="grid gap-4">
       {isSingleMarket && (
