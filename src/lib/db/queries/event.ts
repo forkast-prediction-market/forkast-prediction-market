@@ -260,7 +260,15 @@ export const EventRepository = {
       whereConditions.push(eq(events.status, 'active'))
 
       if (search) {
-        whereConditions.push(ilike(events.title, `%${search.toLowerCase()}%`))
+        const normalizedSearch = search.trim().toLowerCase()
+        const searchTerms = normalizedSearch.split(/\s+/).filter(Boolean)
+
+        if (searchTerms.length > 0) {
+          const loweredTitle = sql<string>`LOWER(${events.title})`
+          whereConditions.push(
+            and(...searchTerms.map(term => ilike(loweredTitle, `%${term}%`))),
+          )
+        }
       }
 
       if (tag && tag !== 'trending' && tag !== 'new') {
