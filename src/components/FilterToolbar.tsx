@@ -114,6 +114,14 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
     || filterSettings.hideEarnings !== BASE_FILTER_SETTINGS.hideEarnings
     || filters.bookmarked
   ), [filterSettings, filters.bookmarked])
+  const hasActiveSettingsFilters = useMemo(() => (
+    filterSettings.sortBy !== BASE_FILTER_SETTINGS.sortBy
+    || filterSettings.frequency !== BASE_FILTER_SETTINGS.frequency
+    || filterSettings.status !== BASE_FILTER_SETTINGS.status
+    || filterSettings.hideSports !== BASE_FILTER_SETTINGS.hideSports
+    || filterSettings.hideCrypto !== BASE_FILTER_SETTINGS.hideCrypto
+    || filterSettings.hideEarnings !== BASE_FILTER_SETTINGS.hideEarnings
+  ), [filterSettings])
 
   useEffect(() => {
     setFilterSettings((prev) => {
@@ -202,7 +210,7 @@ export default function FilterToolbar({ filters, onFiltersChange }: FilterToolba
 
           <div className="flex items-center gap-2 md:gap-3">
             <SettingsToggle
-              isActive={isSettingsOpen || hasActiveFilters}
+              isActive={isSettingsOpen || hasActiveSettingsFilters}
               isOpen={isSettingsOpen}
               onToggle={handleSettingsToggle}
             />
