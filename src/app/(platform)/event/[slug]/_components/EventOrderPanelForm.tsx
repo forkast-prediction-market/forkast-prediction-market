@@ -353,7 +353,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       const takerAmountMicro = BigInt(Math.max(0, Math.trunc(order.taker_amount || 0)))
       const filledMicro = BigInt(Math.max(0, Math.trunc(order.size_matched || 0)))
       if (makerAmountMicro === 0n || takerAmountMicro === 0n) {
-        return acc + Number(makerAmountMicro)
+        return acc + (Number(makerAmountMicro) / MICRO_UNIT)
       }
 
       const filledRatio = filledMicro >= takerAmountMicro
@@ -361,7 +361,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         : (filledMicro * BigInt(MICRO_UNIT)) / takerAmountMicro
 
       const remainingMaker = makerAmountMicro - ((makerAmountMicro * filledRatio) / BigInt(MICRO_UNIT))
-      return acc + Number(remainingMaker)
+      return acc + (Number(remainingMaker) / MICRO_UNIT)
     }, 0)
   }, [openOrders])
 
