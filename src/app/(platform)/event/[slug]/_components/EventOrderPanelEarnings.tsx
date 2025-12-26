@@ -50,6 +50,9 @@ export default function EventOrderPanelEarnings({
     if (!decimalOdds || decimalOdds <= 0) {
       return null
     }
+    if (decimalOdds === 1) {
+      return null
+    }
     if (decimalOdds >= 2) {
       return (decimalOdds - 1) * 100
     }
