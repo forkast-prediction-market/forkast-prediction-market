@@ -363,7 +363,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
         </div>
       )}
       <div className="overflow-x-auto">
-        <div className="min-w-[760px] px-2 pb-2">
+        <div className="min-w-190 px-2 pb-2">
           <div
             className={`
               grid h-9 items-center gap-3 border-b border-border/60 bg-background px-3 text-2xs font-semibold

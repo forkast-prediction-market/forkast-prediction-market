@@ -195,7 +195,7 @@ export default function EventsGrid({
     return (
       <div
         ref={parentRef}
-        className="flex min-h-[200px] min-w-0 items-center justify-center text-sm text-muted-foreground"
+        className="flex min-h-50 min-w-0 items-center justify-center text-sm text-muted-foreground"
       >
         No events match your filters.
       </div>

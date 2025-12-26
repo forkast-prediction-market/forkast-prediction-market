@@ -194,7 +194,7 @@ function OutcomeToggle({ label, selected, onClick }: OutcomeToggleProps) {
       type="button"
       onClick={onClick}
       className={cn(
-        `-mb-[2px] border-b-2 border-transparent pt-1 pb-2 text-sm font-semibold transition-colors`,
+        `-mb-0.5 border-b-2 border-transparent pt-1 pb-2 text-sm font-semibold transition-colors`,
         selected
           ? 'border-primary text-foreground'
           : 'text-muted-foreground hover:text-foreground',

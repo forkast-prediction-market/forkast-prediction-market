@@ -372,7 +372,7 @@ export default function EventCard({ event }: EventCardProps) {
   return (
     <Card
       className={`
-        flex h-[180px] cursor-pointer flex-col transition-all
+        flex h-45 cursor-pointer flex-col transition-all
         hover:-translate-y-0.5 hover:shadow-lg
         ${isInTradingMode ? 'ring-2 ring-primary/20' : ''}
         overflow-hidden

@@ -35,7 +35,7 @@ export function DataTableToolbar<TData>({
           placeholder={searchPlaceholder}
           value={search}
           onChange={event => onSearchChange(event.target.value)}
-          className="h-8 w-[150px] lg:w-[250px]"
+          className="h-8 w-37.5 lg:w-62.5"
           disabled={isLoading}
         />
         {isFiltered && (

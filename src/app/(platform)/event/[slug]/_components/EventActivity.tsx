@@ -240,17 +240,17 @@ export default function EventActivity({ event }: EventActivityProps) {
         <div className="overflow-hidden">
           <ProfileLinkSkeleton
             showTrailing={true}
-            usernameMaxWidthClassName="max-w-[260px]"
+            usernameMaxWidthClassName="max-w-65"
             trailingWidthClassName="w-14"
           />
           <ProfileLinkSkeleton
             showTrailing={true}
-            usernameMaxWidthClassName="max-w-[260px]"
+            usernameMaxWidthClassName="max-w-65"
             trailingWidthClassName="w-14"
           />
           <ProfileLinkSkeleton
             showTrailing={true}
-            usernameMaxWidthClassName="max-w-[260px]"
+            usernameMaxWidthClassName="max-w-65"
             trailingWidthClassName="w-14"
           />
         </div>

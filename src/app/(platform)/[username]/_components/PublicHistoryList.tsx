@@ -270,7 +270,7 @@ export default function PublicHistoryList({ userAddress }: PublicHistoryListProp
                       />
                     )
                   : (
-                      <div className="grid size-full place-items-center text-[11px] text-muted-foreground">
+                      <div className="grid size-full place-items-center text-2xs text-muted-foreground">
                         No image
                       </div>
                     )}
@@ -287,12 +287,9 @@ export default function PublicHistoryList({ userAddress }: PublicHistoryListProp
                 >
                   {activity.market.title}
                 </Link>
-                <div className="flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-1.5 text-2xs text-muted-foreground">
                   {(variant === 'buy' || variant === 'sell') && (
-                    <span className={cn(`
-                      inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold
-                    `, outcomeColor)}
-                    >
+                    <span className={cn(`inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-2xs font-semibold`, outcomeColor)}>
                       {outcomeText}
                       {' '}
                       {priceText}

@@ -1195,7 +1195,7 @@ export function PredictionChart({
                     backgroundColor: entry.color,
                   }}
                 >
-                  <span className="max-w-[120px] truncate capitalize">
+                  <span className="max-w-30 truncate capitalize">
                     {entry.name}
                   </span>
                   <span className="tabular-nums">

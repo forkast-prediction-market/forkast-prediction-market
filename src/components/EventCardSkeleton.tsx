@@ -1,6 +1,6 @@
 export default function EventCardSkeleton() {
   return (
-    <div className="h-[180px] animate-pulse rounded-lg border bg-card p-4">
+    <div className="h-45 animate-pulse rounded-lg border bg-card p-4">
       <div className="mb-3 flex items-start gap-2">
         <div className="size-10 rounded bg-muted"></div>
         <div className="flex-1 space-y-2">

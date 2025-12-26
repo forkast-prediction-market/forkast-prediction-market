@@ -169,7 +169,7 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
                     />
                   )
                 : (
-                    <div className="grid size-full place-items-center text-[11px] text-muted-foreground">
+                    <div className="grid size-full place-items-center text-2xs text-muted-foreground">
                       No image
                     </div>
                   )}

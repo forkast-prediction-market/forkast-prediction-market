@@ -787,7 +787,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
                     />
                   )
                 : (
-                    <div className="grid size-full place-items-center text-[11px] text-muted-foreground">No image</div>
+                    <div className="grid size-full place-items-center text-2xs text-muted-foreground">No image</div>
                   )}
             </Link>
             <div className="min-w-0 space-y-1">
@@ -801,8 +801,8 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
               >
                 {position.title}
               </Link>
-              <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
-                <span className={cn('inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-[11px] font-semibold', outcomeColor)}>
+              <div className="flex flex-wrap items-center gap-1.5 text-2xs">
+                <span className={cn('inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-2xs font-semibold', outcomeColor)}>
                   {outcomeLabel}
                   {' '}
                   {formatCents(avgPrice)}

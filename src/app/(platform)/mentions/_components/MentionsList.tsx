@@ -92,7 +92,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
       )}
     >
       <div className="flex items-start gap-3 md:w-60 md:shrink-0 md:items-center md:gap-4">
-        <div className="flex w-16 flex-col items-center justify-center leading-none md:w-[68px]">
+        <div className="flex w-16 flex-col items-center justify-center leading-none md:w-17">
           <span className="text-3xl font-bold tracking-tight text-foreground md:text-3xl">
             {dayLabel}
           </span>
@@ -196,7 +196,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
                     `
                       max-w-[calc(100vw-2.5rem)] rounded-xl border border-border bg-background/95 p-3 text-sm
                       wrap-break-word whitespace-normal text-foreground shadow-xl backdrop-blur-sm
-                      sm:max-w-[360px]
+                      sm:max-w-90
                     `,
                   )}
                 >
@@ -224,7 +224,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
         )}
       </div>
 
-      <div className="hidden md:flex md:w-[180px] md:shrink-0 md:flex-col md:items-center md:justify-center">
+      <div className="hidden md:flex md:w-45 md:shrink-0 md:flex-col md:items-center md:justify-center">
         <Button asChild size="lg" className="px-6">
           <span>Trade</span>
         </Button>

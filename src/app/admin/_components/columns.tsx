@@ -150,9 +150,9 @@ export const columns: ColumnDef<AdminUserRow>[] = [
                   target={user.referred_by_profile_url ? '_blank' : undefined}
                   rel={user.referred_by_profile_url ? 'noreferrer' : undefined}
                   className={`
-                    block max-w-[60px] touch-manipulation truncate text-xs font-medium text-foreground
+                    block max-w-15 touch-manipulation truncate text-xs font-medium text-foreground
                     hover:text-primary
-                    sm:max-w-[100px]
+                    sm:max-w-25
                   `}
                 >
                   {user.referred_by_display}

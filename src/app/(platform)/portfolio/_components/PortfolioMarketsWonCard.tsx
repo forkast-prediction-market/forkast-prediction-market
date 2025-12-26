@@ -54,7 +54,7 @@ export default function PortfolioMarketsWonCard() {
             <div className="flex flex-wrap items-center gap-4 md:gap-8">
               {stats.map((stat, index) => (
                 <Fragment key={stat.label}>
-                  <div className="flex min-w-[110px] flex-col justify-center text-sm">
+                  <div className="flex min-w-27.5 flex-col justify-center text-sm">
                     <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
                       {stat.label}
                     </span>

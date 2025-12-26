@@ -96,7 +96,7 @@ export function DataTablePagination<TData>({
             value={`${pageSize}`}
             onValueChange={handlePageSizeChange}
           >
-            <SelectTrigger className="h-8 w-[70px]">
+            <SelectTrigger className="h-8 w-17.5">
               <SelectValue placeholder={pageSize} />
             </SelectTrigger>
             <SelectContent side="top">
@@ -108,7 +108,7 @@ export function DataTablePagination<TData>({
             </SelectContent>
           </Select>
         </div>
-        <div className="flex w-[100px] items-center justify-center text-sm font-medium whitespace-nowrap">
+        <div className="flex w-25 items-center justify-center text-sm font-medium whitespace-nowrap">
           Page
           {' '}
           {pageIndex + 1}

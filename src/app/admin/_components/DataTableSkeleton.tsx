@@ -29,10 +29,10 @@ export function DataTableSkeleton({
       {searchable && (
         <div className="flex items-center justify-between">
           <div className="flex flex-1 items-center space-x-2">
-            <Skeleton className="h-8 w-[250px]" />
-            <Skeleton className="h-8 w-[70px]" />
+            <Skeleton className="h-8 w-62.5" />
+            <Skeleton className="h-8 w-17.5" />
           </div>
-          <Skeleton className="h-8 w-[70px]" />
+          <Skeleton className="h-8 w-17.5" />
         </div>
       )}
 
@@ -56,11 +56,11 @@ export function DataTableSkeleton({
                       ? <Skeleton className="size-4" />
                       : cellIndex === 1
                         ? (
-                            <div className="flex min-w-[200px] items-start gap-3">
+                            <div className="flex min-w-50 items-start gap-3">
                               <Skeleton className="size-10 shrink-0 rounded-full" />
                               <div className="flex min-w-0 flex-col gap-1">
-                                <Skeleton className="h-4 w-[120px]" />
-                                <Skeleton className="h-3 w-[60px]" />
+                                <Skeleton className="h-4 w-30" />
+                                <Skeleton className="h-3 w-15" />
                               </div>
                             </div>
                           )
@@ -72,12 +72,12 @@ export function DataTableSkeleton({
                             )
                           : cellIndex === 3
                             ? (
-                                <div className="min-w-[100px]">
+                                <div className="min-w-25">
                                   <Skeleton className="h-4 w-20" />
                                 </div>
                               )
                             : (
-                                <div className="min-w-[100px] text-right">
+                                <div className="min-w-25 text-right">
                                   <Skeleton className="ml-auto h-4 w-20" />
                                 </div>
                               )}
@@ -92,15 +92,15 @@ export function DataTableSkeleton({
       {showPagination && (
         <div className="flex items-center justify-between px-2">
           <div className="flex-1 text-sm text-muted-foreground">
-            <Skeleton className="h-4 w-[100px]" />
+            <Skeleton className="h-4 w-25" />
           </div>
           <div className="flex items-center space-x-6 lg:space-x-8">
             <div className="flex items-center space-x-2">
-              <Skeleton className="h-4 w-[100px]" />
-              <Skeleton className="h-8 w-[70px]" />
+              <Skeleton className="h-4 w-25" />
+              <Skeleton className="h-8 w-17.5" />
             </div>
             <div className="flex items-center space-x-2">
-              <Skeleton className="h-4 w-[100px]" />
+              <Skeleton className="h-4 w-25" />
             </div>
             <div className="flex items-center space-x-2">
               <Skeleton className="size-8" />
