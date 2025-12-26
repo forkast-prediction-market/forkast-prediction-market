@@ -40,13 +40,16 @@ export default function EventOrderPanelEarnings({
 
   const mobileEarningsLabel = side === ORDER_SIDE.SELL ? sellAmountLabel : buyPayoutLabel
   const desktopEarningsLabel = side === ORDER_SIDE.SELL ? sellAmountLabel : buyPayoutLabel
-  const shouldShowMoneyIcon = side !== ORDER_SIDE.SELL
+  const shouldShowMoneyIcon = true
   const effectivePriceCents = side === ORDER_SIDE.SELL ? avgSellPriceCents : avgBuyPriceCents
   const effectivePriceDollars = typeof effectivePriceCents === 'number' && Number.isFinite(effectivePriceCents)
     ? effectivePriceCents / 100
     : null
   const decimalOdds = effectivePriceDollars && effectivePriceDollars > 0 ? 1 / effectivePriceDollars : null
   const americanOdds = decimalOdds ? (decimalOdds - 1) * 100 : null
+  const sellProfitLabel = formatCurrency(0)
+  const sellChangeLabel = '+0%'
+  const sellMultiplierLabel = decimalOdds != null ? `${decimalOdds.toFixed(3)}x` : '—'
 
   function getWholeDigitCount(value: string) {
     const numericValue = Number.parseFloat(value.replace(/[^0-9.]/g, ''))
@@ -75,11 +78,10 @@ export default function EventOrderPanelEarnings({
       {!isMobile && <hr className="mb-3 border" />}
       <div className={cn('flex', isMobile ? 'flex-col' : 'items-center justify-between')}>
         <div className={isMobile ? 'mb-1' : ''}>
-          <div
-            className={cn(
-              'flex items-center gap-1 font-bold',
-              isMobile ? 'justify-center text-lg text-foreground' : 'text-sm text-muted-foreground',
-            )}
+          <div className={cn(
+            'flex items-center gap-1 font-bold text-foreground',
+            isMobile ? 'justify-center text-lg' : 'text-sm',
+          )}
           >
             {side === ORDER_SIDE.SELL ? 'You\'ll receive' : 'To win'}
             {shouldShowMoneyIcon && (
@@ -100,23 +102,30 @@ export default function EventOrderPanelEarnings({
                   sideOffset={8}
                   hideArrow
                   className={`
-                    w-52 border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground shadow-xl
+                    w-52 border border-border bg-background px-4 py-3 text-sm font-semibold text-muted-foreground
+                    shadow-xl
                   `}
                 >
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-3">
                       <span>Profit</span>
                       <span className="text-base font-bold text-yes">
-                        {buyProfit >= 0 ? `+${buyProfitLabel}` : buyProfitLabel}
+                        {side === ORDER_SIDE.SELL
+                          ? sellProfitLabel
+                          : (buyProfit >= 0 ? `+${buyProfitLabel}` : buyProfitLabel)}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <span>Change</span>
-                      <span className="text-base font-bold text-yes">{buyChangeLabel}</span>
+                      <span className="text-base font-bold text-yes">
+                        {side === ORDER_SIDE.SELL ? sellChangeLabel : buyChangeLabel}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <span>Multiplier</span>
-                      <span className="text-base font-bold text-yes">{buyMultiplierLabel}</span>
+                      <span className="text-base font-bold text-yes">
+                        {side === ORDER_SIDE.SELL ? sellMultiplierLabel : buyMultiplierLabel}
+                      </span>
                     </div>
                   </div>
                 </TooltipContent>
@@ -160,13 +169,14 @@ export default function EventOrderPanelEarnings({
                   sideOffset={8}
                   hideArrow
                   className={`
-                    w-52 border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground shadow-xl
+                    w-52 border border-border bg-background px-4 py-3 text-sm font-semibold text-muted-foreground
+                    shadow-xl
                   `}
                 >
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="h-3.5 w-1.5 rounded-full bg-blue-500" />
+                        <span className="h-4 w-1.5 rounded-full bg-blue-500" />
                         <span>Price</span>
                       </div>
                       <span className="text-base font-bold">
@@ -176,7 +186,7 @@ export default function EventOrderPanelEarnings({
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="h-3.5 w-1.5 rounded-full bg-amber-400" />
+                        <span className="h-4 w-1.5 rounded-full bg-amber-400" />
                         <span>American</span>
                       </div>
                       <span className="text-base font-bold">
@@ -185,7 +195,7 @@ export default function EventOrderPanelEarnings({
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="h-3.5 w-1.5 rounded-full bg-emerald-500" />
+                        <span className="h-4 w-1.5 rounded-full bg-emerald-500" />
                         <span>Decimal</span>
                       </div>
                       <span className="text-base font-bold">
