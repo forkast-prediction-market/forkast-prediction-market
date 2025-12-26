@@ -1,31 +1,52 @@
 import type { OrderSide } from '@/types'
+import { InfoIcon } from 'lucide-react'
 import Image from 'next/image'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ORDER_SIDE } from '@/lib/constants'
 import { formatCurrency } from '@/lib/formatters'
-import { calculateWinnings, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
 interface EventOrderPanelEarningsProps {
   isMobile: boolean
   side: OrderSide
-  amountNumber: number
   sellAmountLabel: string
   avgSellPriceLabel: string
   avgBuyPriceLabel: string
+  avgSellPriceCents: number | null
+  avgBuyPriceCents: number | null
+  buyPayout: number
+  buyProfit: number
+  buyChangePct: number
+  buyMultiplier: number
 }
 
 export default function EventOrderPanelEarnings({
   isMobile,
   side,
-  amountNumber,
   sellAmountLabel,
   avgSellPriceLabel,
   avgBuyPriceLabel,
+  avgSellPriceCents,
+  avgBuyPriceCents,
+  buyPayout,
+  buyProfit,
+  buyChangePct,
+  buyMultiplier,
 }: EventOrderPanelEarningsProps) {
-  const buyWinningsSample = formatCurrency(calculateWinnings(amountNumber, 0.72))
-  const buyWinningsDesktop = formatCurrency(calculateWinnings(amountNumber, 0.26))
-  const mobileEarningsLabel = side === ORDER_SIDE.SELL ? sellAmountLabel : buyWinningsSample
-  const desktopEarningsLabel = side === ORDER_SIDE.SELL ? sellAmountLabel : buyWinningsDesktop
+  const buyPayoutLabel = formatCurrency(Math.max(0, buyPayout))
+  const buyProfitLabel = formatCurrency(buyProfit)
+  const buyChangeLabel = `${buyChangePct >= 0 ? '+' : ''}${Math.abs(buyChangePct).toFixed(0)}%`
+  const buyMultiplierLabel = `${Math.max(0, buyMultiplier).toFixed(2)}x`
+
+  const mobileEarningsLabel = side === ORDER_SIDE.SELL ? sellAmountLabel : buyPayoutLabel
+  const desktopEarningsLabel = side === ORDER_SIDE.SELL ? sellAmountLabel : buyPayoutLabel
   const shouldShowMoneyIcon = side !== ORDER_SIDE.SELL
+  const effectivePriceCents = side === ORDER_SIDE.SELL ? avgSellPriceCents : avgBuyPriceCents
+  const effectivePriceDollars = typeof effectivePriceCents === 'number' && Number.isFinite(effectivePriceCents)
+    ? effectivePriceCents / 100
+    : null
+  const decimalOdds = effectivePriceDollars && effectivePriceDollars > 0 ? 1 / effectivePriceDollars : null
+  const americanOdds = decimalOdds ? (decimalOdds - 1) * 100 : null
 
   function getWholeDigitCount(value: string) {
     const numericValue = Number.parseFloat(value.replace(/[^0-9.]/g, ''))
@@ -61,35 +82,48 @@ export default function EventOrderPanelEarnings({
             )}
           >
             {side === ORDER_SIDE.SELL ? 'You\'ll receive' : 'To win'}
-            {shouldShowMoneyIcon && !isMobile && (
-              <Image
-                src="/images/trade/money.svg"
-                alt=""
-                width={20}
-                height={14}
-                className="ml-1 h-4 w-6"
-              />
-            )}
-            {shouldShowMoneyIcon && isMobile && (
-              <Image
-                src="/images/trade/money.svg"
-                alt=""
-                width={20}
-                height={14}
-                className="h-5 w-8"
-              />
+            {shouldShowMoneyIcon && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-flex cursor-help items-center">
+                    <Image
+                      src="/images/trade/money.svg"
+                      alt=""
+                      width={20}
+                      height={14}
+                      className={isMobile ? 'h-5 w-8' : 'ml-1 h-4 w-6'}
+                    />
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  sideOffset={8}
+                  hideArrow
+                  className={`
+                    w-52 border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground shadow-xl
+                  `}
+                >
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <span>Profit</span>
+                      <span className="text-base font-bold text-yes">
+                        {buyProfit >= 0 ? `+${buyProfitLabel}` : buyProfitLabel}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span>Change</span>
+                      <span className="text-base font-bold text-yes">{buyChangeLabel}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <span>Multiplier</span>
+                      <span className="text-base font-bold text-yes">{buyMultiplierLabel}</span>
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
             )}
             {isMobile && (
               <span className={mobileEarningsClass}>
-                {side === ORDER_SIDE.SELL && (
-                  <Image
-                    src="/images/trade/money.svg"
-                    alt=""
-                    width={20}
-                    height={14}
-                    className="h-4 w-6"
-                  />
-                )}
                 {mobileEarningsLabel}
               </span>
             )}
@@ -100,24 +134,72 @@ export default function EventOrderPanelEarnings({
               isMobile ? 'text-center text-sm' : 'text-xs',
             )}
           >
-            {side === ORDER_SIDE.SELL
-              ? `Avg. price ${avgSellPriceLabel}`
-              : `Avg. price ${avgBuyPriceLabel}`}
+            <span>
+              {side === ORDER_SIDE.SELL
+                ? `Avg. price ${avgSellPriceLabel}`
+                : `Avg. price ${avgBuyPriceLabel}`}
+            </span>
+            {effectivePriceDollars && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className={cn(
+                      `
+                        ml-1 inline-flex h-4 w-4 items-center justify-center rounded-sm text-muted-foreground
+                        transition-colors
+                      `,
+                      'hover:text-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none',
+                    )}
+                  >
+                    <InfoIcon className="h-3 w-3" aria-hidden />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="top"
+                  sideOffset={8}
+                  hideArrow
+                  className={`
+                    w-52 border border-border bg-background px-4 py-3 text-sm font-semibold text-foreground shadow-xl
+                  `}
+                >
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="h-3.5 w-1.5 rounded-full bg-blue-500" />
+                        <span>Price</span>
+                      </div>
+                      <span className="text-base font-bold">
+                        {(effectivePriceCents ?? 0).toFixed(1)}
+                        ¢
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="h-3.5 w-1.5 rounded-full bg-amber-400" />
+                        <span>American</span>
+                      </div>
+                      <span className="text-base font-bold">
+                        {americanOdds != null ? `${americanOdds >= 0 ? '+' : ''}${americanOdds.toFixed(1)}` : '—'}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="h-3.5 w-1.5 rounded-full bg-emerald-500" />
+                        <span>Decimal</span>
+                      </div>
+                      <span className="text-base font-bold">
+                        {decimalOdds != null ? decimalOdds.toFixed(3) : '—'}
+                      </span>
+                    </div>
+                  </div>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </div>
         {!isMobile && (
-          <div className={desktopEarningsClass}>
-            {side === ORDER_SIDE.SELL && (
-              <Image
-                src="/images/trade/money.svg"
-                alt=""
-                width={20}
-                height={14}
-                className="h-4 w-6"
-              />
-            )}
-            {desktopEarningsLabel}
-          </div>
+          <div className={desktopEarningsClass}>{desktopEarningsLabel}</div>
         )}
       </div>
     </div>

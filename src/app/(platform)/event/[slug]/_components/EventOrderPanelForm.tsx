@@ -528,7 +528,47 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     && state.type === ORDER_TYPE.MARKET
     && Math.max(effectiveMarketBuyCost, amountNumber) > balance.raw
 
+  const buyPayoutSummary = useMemo(() => {
+    if (state.side !== ORDER_SIDE.BUY) {
+      return {
+        payout: 0,
+        cost: 0,
+        profit: 0,
+        changePct: 0,
+        multiplier: 0,
+      }
+    }
+
+    if (isLimitOrder) {
+      const price = Number.parseFloat(state.limitPrice || '0') / 100
+      const shares = Number.parseFloat(state.limitShares || '0') || 0
+      const cost = price > 0 ? shares * price : 0
+      const payout = shares
+      const profit = payout - cost
+      const changePct = cost > 0 ? (profit / cost) * 100 : 0
+      const multiplier = cost > 0 ? payout / cost : 0
+      return { payout, cost, profit, changePct, multiplier }
+    }
+
+    const avgPrice = marketBuyFill?.avgPriceCents != null ? marketBuyFill.avgPriceCents / 100 : (currentBuyPriceCents ?? 0) / 100
+    const cost = marketBuyFill?.totalCost ?? amountNumber
+    const payout = marketBuyFill?.filledShares && marketBuyFill.filledShares > 0
+      ? marketBuyFill.filledShares
+      : (avgPrice > 0 ? amountNumber / avgPrice : 0)
+    const profit = payout - cost
+    const changePct = cost > 0 ? (profit / cost) * 100 : 0
+    const multiplier = cost > 0 ? payout / cost : 0
+
+    return { payout, cost, profit, changePct, multiplier }
+  }, [amountNumber, currentBuyPriceCents, isLimitOrder, marketBuyFill, state.limitPrice, state.limitShares, state.side])
+
   const avgBuyPriceLabel = formatCentsLabel(currentBuyPriceCents ?? undefined, { fallback: '—' })
+  const avgBuyPriceCentsValue = typeof currentBuyPriceCents === 'number' && Number.isFinite(currentBuyPriceCents)
+    ? currentBuyPriceCents
+    : null
+  const avgSellPriceCentsValue = Number.isFinite(sellOrderSnapshot.priceCents) && sellOrderSnapshot.priceCents > 0
+    ? sellOrderSnapshot.priceCents
+    : null
   const sellAmountLabel = formatCurrency(sellAmountValue)
   useEffect(() => {
     if (!isLimitOrder || limitSharesNumber >= MIN_LIMIT_ORDER_SHARES) {
@@ -944,10 +984,15 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 <EventOrderPanelEarnings
                   isMobile={isMobile}
                   side={state.side}
-                  amountNumber={amountNumber}
                   sellAmountLabel={sellAmountLabel}
                   avgSellPriceLabel={avgSellPriceLabel}
                   avgBuyPriceLabel={avgBuyPriceLabel}
+                  avgSellPriceCents={avgSellPriceCentsValue}
+                  avgBuyPriceCents={avgBuyPriceCentsValue}
+                  buyPayout={buyPayoutSummary.payout}
+                  buyProfit={buyPayoutSummary.profit}
+                  buyChangePct={buyPayoutSummary.changePct}
+                  buyMultiplier={buyPayoutSummary.multiplier}
                 />
               )}
               {showMarketMinimumWarning && (
