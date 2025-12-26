@@ -195,6 +195,8 @@ export default function EventSplitSharesDialog({
       void queryClient.invalidateQueries({ queryKey: ['user-conditional-shares'] })
       void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
       void queryClient.invalidateQueries({ queryKey: ['user-market-positions'] })
+      void queryClient.refetchQueries({ queryKey: ['user-conditional-shares'], type: 'active' })
+
       setTimeout(() => {
         void queryClient.invalidateQueries({ queryKey: ['user-conditional-shares'] })
         void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })

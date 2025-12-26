@@ -111,13 +111,19 @@ function calculateMarketFill(
 ) {
   const levels = side === ORDER_SIDE.SELL ? bids : asks
   if (!levels.length || value <= 0) {
-    return { avgPriceCents: null as number | null, filledShares: 0, totalCost: 0 }
+    return {
+      avgPriceCents: null as number | null,
+      limitPriceCents: null as number | null,
+      filledShares: 0,
+      totalCost: 0,
+    }
   }
 
   let remainingShares = side === ORDER_SIDE.SELL ? value : 0
   let remainingBudget = side === ORDER_SIDE.BUY ? value : 0
   let filledShares = 0
   let totalCost = 0
+  let limitPriceCents: number | null = null
 
   for (const level of levels) {
     if (side === ORDER_SIDE.SELL && remainingShares <= 0) {
@@ -136,6 +142,7 @@ function calculateMarketFill(
       filledShares = Number((filledShares + fill).toFixed(4))
       totalCost = Number((totalCost + cost).toFixed(4))
       remainingShares = Math.max(0, Number((remainingShares - fill).toFixed(4)))
+      limitPriceCents = level.priceCents
     }
     else {
       const maxSharesAtLevel = level.priceDollars > 0 ? remainingBudget / level.priceDollars : 0
@@ -147,6 +154,7 @@ function calculateMarketFill(
       filledShares = Number((filledShares + fill).toFixed(4))
       totalCost = Number((totalCost + cost).toFixed(4))
       remainingBudget = Math.max(0, Number((remainingBudget - cost).toFixed(4)))
+      limitPriceCents = level.priceCents
     }
   }
 
@@ -156,6 +164,7 @@ function calculateMarketFill(
 
   return {
     avgPriceCents,
+    limitPriceCents,
     filledShares: Number(filledShares.toFixed(4)),
     totalCost: Number(totalCost.toFixed(4)),
   }
@@ -238,6 +247,8 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     enabled: Boolean(makerAddress && state.market?.condition_id),
     staleTime: 1000 * 30,
     gcTime: 1000 * 60 * 5,
+    refetchInterval: makerAddress ? 15_000 : false,
+    refetchIntervalInBackground: true,
     queryFn: ({ signal }) =>
       fetchUserPositionsForMarket({
         pageParam: 0,
@@ -328,6 +339,57 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     }, {})
   }, [openOrders])
 
+  const lockedBuyCollateral = useMemo(() => {
+    if (!openOrders.length) {
+      return 0
+    }
+
+    return openOrders.reduce((acc, order) => {
+      if (order.side !== 'buy') {
+        return acc
+      }
+
+      const makerAmountMicro = BigInt(Math.max(0, Math.trunc(order.maker_amount || 0)))
+      const takerAmountMicro = BigInt(Math.max(0, Math.trunc(order.taker_amount || 0)))
+      const filledMicro = BigInt(Math.max(0, Math.trunc(order.size_matched || 0)))
+      if (makerAmountMicro === 0n || takerAmountMicro === 0n) {
+        return acc + Number(makerAmountMicro)
+      }
+
+      const filledRatio = filledMicro >= takerAmountMicro
+        ? BigInt(MICRO_UNIT)
+        : (filledMicro * BigInt(MICRO_UNIT)) / takerAmountMicro
+
+      const remainingMaker = makerAmountMicro - ((makerAmountMicro * filledRatio) / BigInt(MICRO_UNIT))
+      return acc + Number(remainingMaker)
+    }, 0)
+  }, [openOrders])
+
+  const availableBalanceForOrders = Math.max(0, balance.raw - lockedBuyCollateral)
+
+  const mergedSharesByCondition = useMemo(() => {
+    const merged: Record<string, Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>> = {}
+    const keys = new Set([
+      ...Object.keys(sharesByCondition),
+      ...Object.keys(aggregatedPositionShares ?? {}),
+    ])
+
+    keys.forEach((conditionId) => {
+      merged[conditionId] = {
+        [OUTCOME_INDEX.YES]: Math.max(
+          sharesByCondition[conditionId]?.[OUTCOME_INDEX.YES] ?? 0,
+          aggregatedPositionShares?.[conditionId]?.[OUTCOME_INDEX.YES] ?? 0,
+        ),
+        [OUTCOME_INDEX.NO]: Math.max(
+          sharesByCondition[conditionId]?.[OUTCOME_INDEX.NO] ?? 0,
+          aggregatedPositionShares?.[conditionId]?.[OUTCOME_INDEX.NO] ?? 0,
+        ),
+      }
+    })
+
+    return merged
+  }, [aggregatedPositionShares, sharesByCondition])
+
   useEffect(() => {
     if (!makerAddress) {
       setUserShares({}, { replace: true })
@@ -335,13 +397,13 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       return
     }
 
-    if (!Object.keys(sharesByCondition).length) {
+    if (!Object.keys(mergedSharesByCondition).length) {
       setUserShares({}, { replace: true })
       return
     }
 
-    setUserShares(sharesByCondition, { replace: true })
-  }, [makerAddress, setUserShares, sharesByCondition])
+    setUserShares(mergedSharesByCondition, { replace: true })
+  }, [makerAddress, mergedSharesByCondition, setUserShares])
 
   const conditionTokenShares = state.market ? state.userShares[state.market.condition_id] : undefined
   const conditionPositionShares = state.market ? aggregatedPositionShares?.[state.market.condition_id] : undefined
@@ -525,7 +587,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       isLimitOrder,
       limitPrice: state.limitPrice,
       limitShares: state.limitShares,
-      availableBalance: balance.raw,
+      availableBalance: availableBalanceForOrders,
       availableShares: selectedShares,
       limitExpirationEnabled: state.limitExpirationEnabled,
       limitExpirationOption: state.limitExpirationOption,
@@ -622,12 +684,17 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       return state.amount
     })()
 
-    const marketPriceCents = (() => {
-      const value = state.side === ORDER_SIDE.SELL
-        ? sellOrderSnapshot.priceCents
-        : currentBuyPriceCents
+    const marketLimitPriceCents = (() => {
+      if (state.side === ORDER_SIDE.SELL) {
+        const value = marketSellFill?.limitPriceCents ?? sellOrderSnapshot.priceCents
+        return Number.isFinite(value) && value && value > 0 ? value : undefined
+      }
 
-      return Number.isFinite(value) && value && value > 0 ? value : undefined
+      const value = marketBuyFill?.limitPriceCents
+        ?? currentBuyPriceCents
+        ?? outcomeFallbackBuyPriceCents
+
+      return Number.isFinite(value) && value > 0 ? value : undefined
     })()
 
     const payload = buildOrderPayload({
@@ -640,7 +707,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       amount: effectiveAmountForOrder,
       limitPrice: state.limitPrice,
       limitShares: state.limitShares,
-      marketPriceCents,
+      marketPriceCents: marketLimitPriceCents,
       expirationTimestamp: state.limitExpirationEnabled
         ? (customExpirationTimestamp ?? endOfDayTimestamp)
         : undefined,
@@ -696,6 +763,9 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       const sellSharesLabel = state.side === ORDER_SIDE.SELL
         ? (state.type === ORDER_TYPE.LIMIT ? state.limitShares : state.amount)
         : undefined
+      const displayBuyPriceCents = state.side === ORDER_SIDE.BUY
+        ? (marketBuyFill?.avgPriceCents ?? currentBuyPriceCents ?? marketLimitPriceCents)
+        : undefined
 
       handleOrderSuccessFeedback({
         side: state.side,
@@ -708,7 +778,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         marketTitle: state.market?.short_title || state.market?.title,
         sellAmountValue,
         avgSellPrice: avgSellPriceLabel,
-        buyPrice: marketPriceCents,
+        buyPrice: displayBuyPriceCents,
         queryClient,
         outcomeIndex: state.outcome.outcome_index,
         lastMouseEvent: state.lastMouseEvent,

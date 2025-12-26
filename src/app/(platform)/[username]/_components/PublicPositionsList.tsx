@@ -13,18 +13,19 @@ import { toast } from 'sonner'
 import { hashTypedData } from 'viem'
 import { useSignMessage } from 'wagmi'
 import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
+import { fetchUserOpenOrders } from '@/app/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { useDebounce } from '@/hooks/useDebounce'
 import { defaultNetwork } from '@/lib/appkit'
-import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
+import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE, MICRO_UNIT, OUTCOME_INDEX } from '@/lib/constants'
 import { ZERO_COLLECTION_ID } from '@/lib/contracts'
 import { formatCurrency, toMicro } from '@/lib/formatters'
 import { aggregateSafeTransactions, buildMergePositionTransaction, getSafeTxTypedData, packSafeSignature } from '@/lib/safe/transactions'
-import { cn } from '@/lib/utils'
 
+import { cn } from '@/lib/utils'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useUser } from '@/stores/useUser'
 import { MergePositionsDialog } from './MergePositionsDialog'
@@ -265,6 +266,65 @@ function buildMergeableMarkets(positions: PublicPosition[]): MergeableMarket[] {
   return markets
 }
 
+type ConditionShares = Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>
+
+function normalizeOrderShares(value: number) {
+  const numeric = Number(value)
+  if (!Number.isFinite(numeric) || numeric <= 0) {
+    return 0
+  }
+  return numeric > 100_000 ? numeric / MICRO_UNIT : numeric
+}
+
+async function fetchLockedSharesByCondition(markets: MergeableMarket[]): Promise<Record<string, ConditionShares>> {
+  const uniqueKeys = Array.from(new Map(
+    markets
+      .filter(market => market.conditionId && market.eventSlug)
+      .map(market => [`${market.eventSlug}:${market.conditionId}`, { eventSlug: market.eventSlug!, conditionId: market.conditionId }]),
+  ).values())
+
+  const lockedByCondition: Record<string, ConditionShares> = {}
+
+  await Promise.all(uniqueKeys.map(async ({ eventSlug, conditionId }) => {
+    try {
+      const openOrders = await fetchUserOpenOrders({
+        pageParam: 0,
+        eventSlug,
+        conditionId,
+      })
+
+      openOrders.forEach((order) => {
+        if (order.side !== 'sell') {
+          return
+        }
+
+        const totalShares = Math.max(
+          normalizeOrderShares(order.maker_amount),
+          normalizeOrderShares(order.taker_amount),
+        )
+        const filledShares = normalizeOrderShares(order.size_matched)
+        const remainingShares = Math.max(totalShares - Math.min(filledShares, totalShares), 0)
+        if (remainingShares <= 0) {
+          return
+        }
+
+        const outcomeIndex = order.outcome?.index === OUTCOME_INDEX.NO ? OUTCOME_INDEX.NO : OUTCOME_INDEX.YES
+        const bucket = lockedByCondition[conditionId] ?? {
+          [OUTCOME_INDEX.YES]: 0,
+          [OUTCOME_INDEX.NO]: 0,
+        }
+        bucket[outcomeIndex] += remainingShares
+        lockedByCondition[conditionId] = bucket
+      })
+    }
+    catch (error) {
+      console.error('Failed to fetch open orders for mergeable lock calculation.', error)
+    }
+  }))
+
+  return lockedByCondition
+}
+
 async function fetchUserPositions({
   pageParam,
   userAddress,
@@ -435,6 +495,26 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     () => buildMergeableMarkets(positions),
     [positions],
   )
+  const positionsByCondition = useMemo(() => {
+    const map: Record<string, ConditionShares> = {}
+
+    positions
+      .filter(position => position.status === 'active' && position.conditionId)
+      .forEach((position) => {
+        const conditionId = position.conditionId as string
+        const outcomeIndex = position.outcomeIndex === OUTCOME_INDEX.NO ? OUTCOME_INDEX.NO : OUTCOME_INDEX.YES
+        const size = typeof position.size === 'number' ? position.size : 0
+        if (!map[conditionId]) {
+          map[conditionId] = {
+            [OUTCOME_INDEX.YES]: 0,
+            [OUTCOME_INDEX.NO]: 0,
+          }
+        }
+        map[conditionId][outcomeIndex] += size
+      })
+
+    return map
+  }, [positions])
   const hasMergeableMarkets = mergeableMarkets.length > 0
 
   useEffect(() => {
@@ -502,16 +582,49 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       return
     }
 
-    const transactions = mergeableMarkets
+    const lockedSharesByCondition = await fetchLockedSharesByCondition(mergeableMarkets)
+
+    const preparedMerges = mergeableMarkets
       .filter(market => market.mergeAmount > 0 && market.conditionId)
-      .map(market =>
-        buildMergePositionTransaction({
-          conditionId: market.conditionId as `0x${string}`,
-          partition: [...DEFAULT_CONDITION_PARTITION],
-          amount: toMicro(market.mergeAmount),
-          parentCollectionId: ZERO_COLLECTION_ID,
-        }),
-      )
+      .map((market) => {
+        const conditionId = market.conditionId as string
+        const positionShares = positionsByCondition[conditionId]
+        if (!positionShares) {
+          return null
+        }
+
+        const locked = lockedSharesByCondition[conditionId] ?? {
+          [OUTCOME_INDEX.YES]: 0,
+          [OUTCOME_INDEX.NO]: 0,
+        }
+        const availableYes = Math.max(0, positionShares[OUTCOME_INDEX.YES] - locked[OUTCOME_INDEX.YES])
+        const availableNo = Math.max(0, positionShares[OUTCOME_INDEX.NO] - locked[OUTCOME_INDEX.NO])
+        const safeMergeAmount = Math.min(market.mergeAmount, availableYes, availableNo)
+
+        if (!Number.isFinite(safeMergeAmount) || safeMergeAmount <= 0) {
+          return null
+        }
+
+        return {
+          conditionId,
+          mergeAmount: safeMergeAmount,
+        }
+      })
+      .filter((entry): entry is { conditionId: string, mergeAmount: number } => Boolean(entry))
+
+    if (preparedMerges.length === 0) {
+      toast.info('No eligible pairs to merge.')
+      return
+    }
+
+    const transactions = preparedMerges.map(entry =>
+      buildMergePositionTransaction({
+        conditionId: entry.conditionId as `0x${string}`,
+        partition: [...DEFAULT_CONDITION_PARTITION],
+        amount: toMicro(entry.mergeAmount),
+        parentCollectionId: ZERO_COLLECTION_ID,
+      }),
+    )
 
     if (transactions.length === 0) {
       toast.info('No eligible pairs to merge.')
@@ -577,10 +690,13 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
 
       void queryClient.invalidateQueries({ queryKey: ['user-positions'] })
       void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
+      void queryClient.invalidateQueries({ queryKey: ['user-conditional-shares'] })
+      void queryClient.refetchQueries({ queryKey: ['user-conditional-shares'], type: 'active' })
 
       setTimeout(() => {
         void queryClient.invalidateQueries({ queryKey: ['user-positions'] })
         void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
+        void queryClient.invalidateQueries({ queryKey: ['user-conditional-shares'] })
       }, 3000)
     }
     catch (error) {
@@ -594,6 +710,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     ensureTradingReady,
     hasMergeableMarkets,
     mergeableMarkets,
+    positionsByCondition,
     queryClient,
     signMessageAsync,
     user?.address,
