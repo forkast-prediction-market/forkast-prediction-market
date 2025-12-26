@@ -4,7 +4,7 @@ import type { TimeRange } from '@/app/(platform)/event/[slug]/_components/useEve
 import type { PredictionChartCursorSnapshot, SeriesConfig } from '@/components/PredictionChart'
 import type { Event } from '@/types'
 import { ShuffleIcon, TriangleIcon } from 'lucide-react'
-import { memo, useEffect, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatedCounter } from 'react-animated-counter'
 import {
   useUpdateEventOutcomeChanceChanges,
@@ -173,6 +173,8 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO
   >(OUTCOME_INDEX.YES)
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
+  const timeRangeContainerRef = useRef<HTMLDivElement | null>(null)
+  const [timeRangeIndicator, setTimeRangeIndicator] = useState({ width: 0, left: 0 })
 
   useEffect(() => {
     setCursorSnapshot(null)
@@ -374,6 +376,22 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     ? cursorYesChance
     : defaultCurrentYesChance
 
+  useEffect(() => {
+    const container = timeRangeContainerRef.current
+    if (!container) {
+      return
+    }
+    const target = container.querySelector<HTMLButtonElement>(`button[data-range="${activeTimeRange}"]`)
+    if (!target) {
+      return
+    }
+    const { offsetLeft, offsetWidth } = target
+    setTimeRangeIndicator({
+      width: offsetWidth,
+      left: offsetLeft,
+    })
+  }, [activeTimeRange])
+
   const legendContent = shouldRenderLegendEntries
     ? (
         <div className="flex min-h-5 flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
@@ -527,18 +545,29 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
           watermark={isSingleMarket ? undefined : watermark}
         />
         {hasChartData && (
-          <div className="relative z-10 mt-3 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+          <div className="relative mt-3 flex flex-wrap items-center justify-between gap-3">
+            <div
+              ref={timeRangeContainerRef}
+              className="relative flex flex-wrap items-center gap-2 text-xs font-semibold"
+            >
+              <div
+                className="absolute inset-y-0 rounded-md bg-muted transition-all duration-300"
+                style={{
+                  width: `${timeRangeIndicator.width}px`,
+                  left: `${timeRangeIndicator.left}px`,
+                }}
+              />
               {TIME_RANGES.map(range => (
                 <button
                   key={range}
                   type="button"
                   className={cn(
-                    'rounded-md px-3 py-2 transition-colors',
+                    'relative z-10 rounded-md px-3 py-2 transition-colors',
                     activeTimeRange === range
-                      ? 'bg-muted text-foreground'
-                      : 'bg-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground',
+                      ? 'text-foreground'
+                      : 'text-muted-foreground hover:text-foreground',
                   )}
+                  data-range={range}
                   onClick={() => setActiveTimeRange(range)}
                 >
                   {range}
