@@ -1,6 +1,6 @@
 import type { Market } from '@/types'
-import { useQuery } from '@tanstack/react-query'
-import { useMemo } from 'react'
+import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useEffect, useMemo, useRef } from 'react'
 import { OUTCOME_INDEX } from '@/lib/constants'
 
 export type TimeRange = '1H' | '6H' | '1D' | '1W' | '1M' | 'ALL'
@@ -238,11 +238,21 @@ export function useEventPriceHistory({
     gcTime: PRICE_REFRESH_INTERVAL_MS,
     refetchInterval: PRICE_REFRESH_INTERVAL_MS,
     refetchIntervalInBackground: true,
+    placeholderData: keepPreviousData,
   })
 
+  const lastPriceHistoryRef = useRef<typeof priceHistoryByMarket>(undefined)
+  useEffect(() => {
+    if (priceHistoryByMarket) {
+      lastPriceHistoryRef.current = priceHistoryByMarket
+    }
+  }, [priceHistoryByMarket])
+
+  const effectivePriceHistory = priceHistoryByMarket ?? lastPriceHistoryRef.current ?? {}
+
   const normalizedHistory = useMemo(
-    () => buildNormalizedHistory(priceHistoryByMarket ?? {}),
-    [priceHistoryByMarket],
+    () => buildNormalizedHistory(effectivePriceHistory),
+    [effectivePriceHistory],
   )
 
   return {
