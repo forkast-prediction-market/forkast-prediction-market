@@ -361,6 +361,15 @@ export interface UserPosition {
   total_shares?: number
   profit_loss_value?: number
   profit_loss_percent?: number
+  size?: number
+  avgPrice?: number
+  currentValue?: number
+  totalBought?: number
+  initialValue?: number
+  percentPnl?: number
+  percentRealizedPnl?: number
+  realizedPnl?: number
+  cashPnl?: number
   opposite_outcome_text?: string
   order_count: number
   last_activity_at: string
