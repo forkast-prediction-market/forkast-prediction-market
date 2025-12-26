@@ -35,7 +35,7 @@ export default function EventOrderPanelEarnings({
 }: EventOrderPanelEarningsProps) {
   const buyPayoutLabel = formatCurrency(Math.max(0, buyPayout))
   const buyProfitLabel = formatCurrency(buyProfit)
-  const buyChangeLabel = `${buyChangePct >= 0 ? '+' : ''}${Math.abs(buyChangePct).toFixed(0)}%`
+  const buyChangeLabel = `${buyChangePct >= 0 ? '+' : '-'}${Math.abs(buyChangePct).toFixed(0)}%`
   const buyMultiplierLabel = `${Math.max(0, buyMultiplier).toFixed(2)}x`
 
   const mobileEarningsLabel = side === ORDER_SIDE.SELL ? sellAmountLabel : buyPayoutLabel
@@ -46,7 +46,15 @@ export default function EventOrderPanelEarnings({
     ? effectivePriceCents / 100
     : null
   const decimalOdds = effectivePriceDollars && effectivePriceDollars > 0 ? 1 / effectivePriceDollars : null
-  const americanOdds = decimalOdds ? (decimalOdds - 1) * 100 : null
+  const americanOdds = (() => {
+    if (!decimalOdds || decimalOdds <= 0) {
+      return null
+    }
+    if (decimalOdds >= 2) {
+      return (decimalOdds - 1) * 100
+    }
+    return -100 / (decimalOdds - 1)
+  })()
   const sellProfitLabel = formatCurrency(0)
   const sellChangeLabel = '+0%'
   const sellMultiplierLabel = decimalOdds != null ? `${decimalOdds.toFixed(3)}x` : '—'

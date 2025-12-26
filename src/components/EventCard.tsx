@@ -93,10 +93,7 @@ async function fetchClobJson<T>(path: string, body: unknown): Promise<T> {
 
 async function fetchOrderBookSummary(tokenId: string): Promise<OrderBookSummaryResponse> {
   const payload = [{ token_id: tokenId }]
-  const [orderBooks] = await Promise.all([
-    fetchClobJson<Array<OrderBookSummaryResponse & { asset_id?: string, token_id?: string }>>('/books', payload),
-    fetchClobJson('/last-trades-prices', payload).catch(() => null),
-  ])
+  const orderBooks = await fetchClobJson<Array<OrderBookSummaryResponse & { asset_id?: string, token_id?: string }>>('/books', payload)
 
   const entry = Array.isArray(orderBooks)
     ? orderBooks.find(item => item && (item.asset_id === tokenId || (item as any).token_id === tokenId))

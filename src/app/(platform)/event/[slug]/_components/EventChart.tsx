@@ -175,6 +175,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
   const timeRangeContainerRef = useRef<HTMLDivElement | null>(null)
   const [timeRangeIndicator, setTimeRangeIndicator] = useState({ width: 0, left: 0 })
+  const [timeRangeIndicatorReady, setTimeRangeIndicatorReady] = useState(false)
 
   useEffect(() => {
     setCursorSnapshot(null)
@@ -390,6 +391,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
       width: offsetWidth,
       left: offsetLeft,
     })
+    setTimeRangeIndicatorReady(offsetWidth > 0)
   }, [activeTimeRange])
 
   const legendContent = shouldRenderLegendEntries
@@ -551,11 +553,15 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
               className="relative flex flex-wrap items-center gap-2 text-xs font-semibold"
             >
               <div
-                className="absolute inset-y-0 rounded-md bg-muted transition-all duration-300"
+                className={cn(
+                  'absolute inset-y-0 rounded-md bg-muted',
+                  timeRangeIndicatorReady ? 'opacity-100 transition-all duration-300' : 'opacity-0 transition-none',
+                )}
                 style={{
                   width: `${timeRangeIndicator.width}px`,
                   left: `${timeRangeIndicator.left}px`,
                 }}
+                aria-hidden={!timeRangeIndicatorReady}
               />
               {TIME_RANGES.map(range => (
                 <button

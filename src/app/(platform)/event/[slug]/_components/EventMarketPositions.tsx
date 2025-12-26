@@ -21,6 +21,9 @@ interface EventMarketPositionsProps {
 }
 
 function toNumber(value: unknown) {
+  if (value === null || value === undefined) {
+    return null
+  }
   const numeric = Number(value)
   return Number.isFinite(numeric) ? numeric : null
 }
