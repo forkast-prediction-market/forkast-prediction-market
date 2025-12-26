@@ -392,76 +392,80 @@ export default function PublicHistoryList({ userAddress }: PublicHistoryListProp
         </div>
       </div>
 
-      <div
-        className={cn(
-          rowGridClass,
-          `px-2 pt-2 pb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:px-3`,
-        )}
-      >
-        <div>Activity</div>
-        <div>Market</div>
-        <div className="text-right">Value</div>
-        <div className="text-right text-transparent" aria-hidden>
-          <span className="invisible">Time</span>
-        </div>
-      </div>
-
-      {isLoading && (
-        <div className="space-y-3 px-2 sm:px-3">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div
-              key={index}
-              className="h-14 rounded-lg border border-border/50 bg-muted/30"
-            />
-          ))}
-        </div>
-      )}
-
-      {hasError && (
-        <div className="py-10 text-center text-sm text-muted-foreground">
-          Could not load activity.
-          {' '}
-          <button
-            type="button"
-            onClick={() => refetch()}
-            className="underline underline-offset-2"
+      <div className="overflow-x-auto">
+        <div className="min-w-180">
+          <div
+            className={cn(
+              rowGridClass,
+              `px-2 pt-2 pb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:px-3`,
+            )}
           >
-            Retry
-          </button>
-        </div>
-      )}
+            <div>Activity</div>
+            <div>Market</div>
+            <div className="text-right">Value</div>
+            <div className="text-right text-transparent" aria-hidden>
+              <span className="invisible">Time</span>
+            </div>
+          </div>
 
-      {hasNoData && !hasError && (
-        <div className="py-12 text-center text-sm text-muted-foreground">
-          No history found.
-        </div>
-      )}
-
-      {!isLoading && !hasError && activities.length > 0 && (
-        <div>
-          {renderRows()}
-          {(isFetchingNextPage || isLoadingMore) && (
-            <div className="py-3 text-center text-xs text-muted-foreground">Loading more...</div>
+          {isLoading && (
+            <div className="space-y-3 px-2 sm:px-3">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-14 rounded-lg border border-border/50 bg-muted/30"
+                />
+              ))}
+            </div>
           )}
-          <div ref={loadMoreRef} />
-          {infiniteScrollError && (
-            <div className="py-3 text-center text-xs text-no">
-              {infiniteScrollError}
+
+          {hasError && (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              Could not load activity.
               {' '}
               <button
                 type="button"
-                onClick={() => {
-                  setInfiniteScrollError(null)
-                  void fetchNextPage()
-                }}
+                onClick={() => refetch()}
                 className="underline underline-offset-2"
               >
                 Retry
               </button>
             </div>
           )}
+
+          {hasNoData && !hasError && (
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              No history found.
+            </div>
+          )}
+
+          {!isLoading && !hasError && activities.length > 0 && (
+            <div>
+              {renderRows()}
+              {(isFetchingNextPage || isLoadingMore) && (
+                <div className="py-3 text-center text-xs text-muted-foreground">Loading more...</div>
+              )}
+              <div ref={loadMoreRef} />
+              {infiniteScrollError && (
+                <div className="py-3 text-center text-xs text-no">
+                  {infiniteScrollError}
+                  {' '}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setInfiniteScrollError(null)
+                      void fetchNextPage()
+                    }}
+                    className="underline underline-offset-2"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }

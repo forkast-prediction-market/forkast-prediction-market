@@ -1,6 +1,7 @@
 'use client'
 
 import { SearchIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import PublicPositionItemSkeleton from './PublicPositionItemSkeleton'
 
 interface PositionsLoadingStateProps {
@@ -18,12 +19,21 @@ export default function PublicPositionsLoadingState({
   marketStatusFilter = 'active',
   retryCount = 0,
 }: PositionsLoadingStateProps) {
-  const defaultSkeletonCount = typeof window !== 'undefined' && window.innerWidth < 768 ? 6 : 8
-  const finalSkeletonCount = skeletonCount ?? defaultSkeletonCount
+  const [resolvedCount, setResolvedCount] = useState(() => skeletonCount ?? 8)
+
+  useEffect(() => {
+    if (skeletonCount !== undefined) {
+      setResolvedCount(skeletonCount)
+      return
+    }
+
+    setResolvedCount(window.innerWidth < 768 ? 6 : 8)
+  }, [skeletonCount])
+
   return (
     <div className="overflow-hidden rounded-lg border border-border">
       <div className="space-y-0">
-        {Array.from({ length: finalSkeletonCount }).map((_, index) => (
+        {Array.from({ length: resolvedCount }).map((_, index) => (
           <PublicPositionItemSkeleton key={index} />
         ))}
       </div>

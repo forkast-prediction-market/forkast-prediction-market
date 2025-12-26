@@ -870,84 +870,88 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         onMergeClick={() => setIsMergeDialogOpen(true)}
       />
 
-      <div
-        className={cn(
-          rowGridClass,
-          `px-2 pt-2 pb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:px-3`,
-        )}
-      >
-        <div className="pl-[3.75rem] text-left">Market</div>
-        <div className="text-left">Avg → Now</div>
-        <div className="text-center">Trade</div>
-        <div className="text-center">To win</div>
-        <div className="text-right">Value</div>
-        <div className="flex justify-end">
-          <div className="w-[96px]" aria-hidden />
-        </div>
-      </div>
-
-      {hasInitialError && (
-        <PublicPositionsError
-          isSearchActive={isSearchActive}
-          searchQuery={debouncedSearchQuery}
-          retryCount={retryCount}
-          isLoading={loading}
-          onRetry={retryInitialLoad}
-          onRefreshPage={() => window.location.reload()}
-        />
-      )}
-
-      {loading && (
-        <PublicPositionsLoadingState
-          skeletonCount={5}
-          isSearchActive={isSearchActive}
-          searchQuery={debouncedSearchQuery}
-          marketStatusFilter={marketStatusFilter}
-          retryCount={retryCount}
-        />
-      )}
-
-      {!loading && positions.length === 0 && !hasInitialError && (
-        <div className="py-12 text-center text-sm text-muted-foreground">
-          {marketStatusFilter === 'active' ? 'No positions found.' : 'No closed positions found.'}
-        </div>
-      )}
-
-      {!loading && positions.length > 0 && (
-        <div className="space-y-0">
-          {renderRows()}
-
+      <div className="overflow-x-auto">
+        <div className="min-w-180">
           <div
             className={cn(
               rowGridClass,
-              `border-b border-border/80 px-2 py-3 sm:px-3`,
+              `px-2 pt-2 pb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:px-3`,
             )}
           >
-            <div className="pl-[3.75rem] text-sm font-semibold text-foreground">Total</div>
-            <div className="text-sm text-muted-foreground" />
-            <div className="text-center text-sm font-semibold text-foreground">
-              {formatCurrencyValue(totals.trade)}
-            </div>
-            <div className="text-center text-sm font-semibold text-foreground">
-              {formatCurrencyValue(totals.toWin)}
-            </div>
-            <div className="text-right text-sm font-semibold text-foreground">
-              {formatCurrencyValue(totals.value)}
-              <div className={cn('text-xs', totals.diff >= 0 ? 'text-yes' : 'text-no')}>
-                {`${totals.diff >= 0 ? '+' : ''}${formatCurrency(Math.abs(totals.diff))}`}
-                {' '}
-                (
-                {totals.pct.toFixed(2)}
-                %)
-              </div>
-            </div>
+            <div className="pl-15 text-left">Market</div>
+            <div className="text-left">Avg → Now</div>
+            <div className="text-center">Trade</div>
+            <div className="text-center">To win</div>
+            <div className="text-right">Value</div>
             <div className="flex justify-end">
-              <div className="w-[96px]" aria-hidden />
+              <div className="w-24" aria-hidden />
             </div>
           </div>
-          <div ref={loadMoreRef} className="h-0" />
+
+          {hasInitialError && (
+            <PublicPositionsError
+              isSearchActive={isSearchActive}
+              searchQuery={debouncedSearchQuery}
+              retryCount={retryCount}
+              isLoading={loading}
+              onRetry={retryInitialLoad}
+              onRefreshPage={() => window.location.reload()}
+            />
+          )}
+
+          {loading && (
+            <PublicPositionsLoadingState
+              skeletonCount={5}
+              isSearchActive={isSearchActive}
+              searchQuery={debouncedSearchQuery}
+              marketStatusFilter={marketStatusFilter}
+              retryCount={retryCount}
+            />
+          )}
+
+          {!loading && positions.length === 0 && !hasInitialError && (
+            <div className="py-12 text-center text-sm text-muted-foreground">
+              {marketStatusFilter === 'active' ? 'No positions found.' : 'No closed positions found.'}
+            </div>
+          )}
+
+          {!loading && positions.length > 0 && (
+            <div className="space-y-0">
+              {renderRows()}
+
+              <div
+                className={cn(
+                  rowGridClass,
+                  `border-b border-border/80 px-2 py-3 sm:px-3`,
+                )}
+              >
+                <div className="pl-15 text-sm font-semibold text-foreground">Total</div>
+                <div className="text-sm text-muted-foreground" />
+                <div className="text-center text-sm font-semibold text-foreground">
+                  {formatCurrencyValue(totals.trade)}
+                </div>
+                <div className="text-center text-sm font-semibold text-foreground">
+                  {formatCurrencyValue(totals.toWin)}
+                </div>
+                <div className="text-right text-sm font-semibold text-foreground">
+                  {formatCurrencyValue(totals.value)}
+                  <div className={cn('text-xs', totals.diff >= 0 ? 'text-yes' : 'text-no')}>
+                    {`${totals.diff >= 0 ? '+' : ''}${formatCurrency(Math.abs(totals.diff))}`}
+                    {' '}
+                    (
+                    {totals.pct.toFixed(2)}
+                    %)
+                  </div>
+                </div>
+                <div className="flex justify-end">
+                  <div className="w-24" aria-hidden />
+                </div>
+              </div>
+              <div ref={loadMoreRef} className="h-0" />
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {(isFetchingNextPage || isLoadingMore) && (
         <div className="py-4 text-center text-xs text-muted-foreground">Loading more...</div>
