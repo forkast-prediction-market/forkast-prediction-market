@@ -1,8 +1,9 @@
 'use client'
 
 import type { EventMarketRow } from '@/app/(platform)/event/[slug]/_hooks/useEventMarketRows'
+import { useQuery } from '@tanstack/react-query'
 import Image from 'next/image'
-import { memo } from 'react'
+import { memo, useMemo } from 'react'
 import EventMarketChance from '@/app/(platform)/event/[slug]/_components/EventMarketChance'
 import { Button } from '@/components/ui/button'
 import { OUTCOME_INDEX } from '@/lib/constants'
@@ -33,6 +34,57 @@ function EventMarketCardComponent({
   const { market, yesOutcome, noOutcome, yesPriceValue, noPriceValue, chanceMeta } = row
   const yesOutcomeText = yesOutcome?.outcome_text ?? 'Yes'
   const noOutcomeText = noOutcome?.outcome_text ?? 'No'
+  const volumeRequestPayload = useMemo(() => {
+    const tokenIds = [yesOutcome?.token_id, noOutcome?.token_id].filter(Boolean) as string[]
+    if (!market.condition_id || tokenIds.length < 2) {
+      return { conditions: [], signature: '' }
+    }
+
+    const signature = `${market.condition_id}:${tokenIds.join(':')}`
+    return {
+      conditions: [{ condition_id: market.condition_id, token_ids: tokenIds.slice(0, 2) as [string, string] }],
+      signature,
+    }
+  }, [market.condition_id, noOutcome?.token_id, yesOutcome?.token_id])
+
+  const { data: volumeFromApi } = useQuery({
+    queryKey: ['trade-volumes', market.condition_id, volumeRequestPayload.signature],
+    enabled: volumeRequestPayload.conditions.length > 0,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const response = await fetch(`${process.env.CLOB_URL}/data/volumes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          include_24h: false,
+          conditions: volumeRequestPayload.conditions,
+        }),
+      })
+
+      const payload = await response.json() as Array<{
+        condition_id: string
+        status: number
+        volume?: string
+      }>
+
+      return payload
+        .filter(entry => entry?.status === 200)
+        .reduce((total, entry) => {
+          const numeric = Number(entry.volume ?? 0)
+          return Number.isFinite(numeric) ? total + numeric : total
+        }, 0)
+    },
+  })
+
+  const resolvedVolume = useMemo(() => {
+    if (typeof volumeFromApi === 'number' && Number.isFinite(volumeFromApi)) {
+      return volumeFromApi
+    }
+    return market.volume
+  }, [market.volume, volumeFromApi])
 
   return (
     <div
@@ -72,7 +124,7 @@ function EventMarketCardComponent({
               </div>
               <div className="text-xs text-muted-foreground">
                 $
-                {market.volume?.toLocaleString('en-US', {
+                {resolvedVolume?.toLocaleString('en-US', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 }) || '0.00'}
@@ -151,7 +203,7 @@ function EventMarketCardComponent({
             </div>
             <div className="text-xs text-muted-foreground">
               $
-              {market.volume?.toLocaleString('en-US', {
+              {resolvedVolume?.toLocaleString('en-US', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               }) || '0.00'}
