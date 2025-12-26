@@ -559,7 +559,6 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
                     onClick={() => {
                       setActiveOutcomeIndex(oppositeOutcomeIndex)
                       setCursorSnapshot(null)
-                      setBaselineYesChance(null)
                     }}
                     aria-label={`switch to ${oppositeOutcomeLabel}`}
                   >
