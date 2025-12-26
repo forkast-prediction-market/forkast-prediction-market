@@ -564,7 +564,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
                   className={cn(
                     'relative z-10 rounded-md px-3 py-2 transition-colors',
                     activeTimeRange === range
-                      ? 'text-foreground'
+                      ? 'bg-muted text-foreground'
                       : 'text-muted-foreground hover:text-foreground',
                   )}
                   data-range={range}
