@@ -561,36 +561,40 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
               ))}
             </div>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
+            {isSingleMarket && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    className={`
+                      flex items-center justify-center rounded-md px-3 py-2 text-xs font-semibold text-muted-foreground
+                      transition-colors
+                      hover:bg-muted/70 hover:text-foreground
+                    `}
+                    onClick={() => {
+                      setActiveOutcomeIndex(oppositeOutcomeIndex)
+                      setCursorSnapshot(null)
+                      setBaselineYesChance(null)
+                    }}
+                    aria-label={`switch to ${oppositeOutcomeLabel}`}
+                  >
+                    <Shuffle className="size-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="left"
+                  sideOffset={8}
+                  hideArrow
                   className={`
-                    flex items-center justify-center rounded-md px-3 py-2 text-xs font-semibold text-muted-foreground
-                    transition-colors
-                    hover:bg-muted/70 hover:text-foreground
+                    border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground shadow-xl
                   `}
-                  onClick={() => {
-                    setActiveOutcomeIndex(oppositeOutcomeIndex)
-                    setCursorSnapshot(null)
-                    setBaselineYesChance(null)
-                  }}
-                  aria-label={`switch to ${oppositeOutcomeLabel}`}
                 >
-                  <Shuffle className="size-4" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent
-                side="left"
-                sideOffset={8}
-                hideArrow
-                className="border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground shadow-xl"
-              >
-                switch to
-                {' '}
-                {oppositeOutcomeLabel}
-              </TooltipContent>
-            </Tooltip>
+                  switch to
+                  {' '}
+                  {oppositeOutcomeLabel}
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         )}
       </div>
