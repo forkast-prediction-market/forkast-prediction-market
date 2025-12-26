@@ -2,7 +2,7 @@
 
 import type { Event, Market, Outcome } from '@/types'
 import { useAppKitAccount } from '@reown/appkit/react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { ChevronsDownIcon, ChevronsUpIcon, DollarSignIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -76,6 +76,7 @@ export default function EventCard({ event }: EventCardProps) {
   const hasRecentMarket = event.markets.some(market => isMarketNew(market.created_at))
   const isNegRiskEnabled = Boolean(event.enable_neg_risk)
   const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskEnabled), [isNegRiskEnabled])
+  const availableBalance = balance.raw
 
   const marketTargets = useMemo(() => buildMarketTargets(event.markets), [event.markets])
   const { latestSnapshot } = useEventPriceHistory({
@@ -133,68 +134,7 @@ export default function EventCard({ event }: EventCardProps) {
   const primaryDisplayChance = primaryMarket ? getDisplayChance(primaryMarket.condition_id) : 0
   const roundedPrimaryDisplayChance = Math.round(primaryDisplayChance)
 
-  const volumeRequestPayload = useMemo(() => {
-    const conditions = event.markets
-      .map((market) => {
-        const tokenIds = (market.outcomes ?? [])
-          .map(outcome => outcome.token_id)
-          .filter(Boolean)
-          .slice(0, 2)
-        if (!market.condition_id || tokenIds.length < 2) {
-          return null
-        }
-        return {
-          condition_id: market.condition_id,
-          token_ids: tokenIds as [string, string],
-        }
-      })
-      .filter((item): item is { condition_id: string, token_ids: [string, string] } => item !== null)
-
-    const signature = conditions
-      .map(condition => `${condition.condition_id}:${condition.token_ids.join(':')}`)
-      .join('|')
-
-    return { conditions, signature }
-  }, [event.markets])
-
-  const { data: volumeFromApi } = useQuery({
-    queryKey: ['trade-volumes', event.id, volumeRequestPayload.signature],
-    enabled: volumeRequestPayload.conditions.length > 0,
-    staleTime: 60_000,
-    refetchInterval: 60_000,
-    queryFn: async () => {
-      const response = await fetch(`${process.env.CLOB_URL}/data/volumes`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          include_24h: false,
-          conditions: volumeRequestPayload.conditions,
-        }),
-      })
-
-      const payload = await response.json() as Array<{
-        condition_id: string
-        status: number
-        volume?: string
-      }>
-
-      return payload
-        .filter(entry => entry?.status === 200)
-        .reduce((total, entry) => {
-          const numeric = Number(entry.volume ?? 0)
-          return Number.isFinite(numeric) ? total + numeric : total
-        }, 0)
-    },
-  })
-
-  const resolvedVolume = useMemo(() => {
-    if (typeof volumeFromApi === 'number' && Number.isFinite(volumeFromApi)) {
-      return volumeFromApi
-    }
-    return event.volume
-  }, [event.volume, volumeFromApi])
+  const resolvedVolume = useMemo(() => event.volume ?? 0, [event.volume])
 
   function handleTrade(outcome: Outcome, market: Market, variant: 'yes' | 'no') {
     setSelectedOutcome({
@@ -502,7 +442,8 @@ export default function EventCard({ event }: EventCardProps) {
                       className={`
                         w-full
                         [appearance:textfield]
-                        rounded border-0 bg-slate-100 py-2 pr-3 pl-10 text-sm text-slate-900 transition-colors
+                        rounded border ${amountNumber > availableBalance ? 'border-red-500' : 'border-transparent'}
+                        bg-slate-100 py-2 pr-3 pl-10 text-sm text-slate-900 transition-colors
                         placeholder:text-slate-500
                         focus:bg-slate-200 focus:outline-none
                         dark:bg-slate-500 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:bg-slate-600
@@ -524,6 +465,7 @@ export default function EventCard({ event }: EventCardProps) {
                       isLoading
                       || !activeOutcome
                       || amountNumber <= 0
+                      || amountNumber > availableBalance
                     }
                     size="outcome"
                     variant={activeOutcome.variant}
