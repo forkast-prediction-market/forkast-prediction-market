@@ -1,5 +1,5 @@
 import type { Market } from '@/types'
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { OUTCOME_INDEX } from '@/lib/constants'
 
@@ -238,7 +238,6 @@ export function useEventPriceHistory({
     gcTime: PRICE_REFRESH_INTERVAL_MS,
     refetchInterval: PRICE_REFRESH_INTERVAL_MS,
     refetchIntervalInBackground: true,
-    placeholderData: keepPreviousData,
   })
 
   const normalizedHistory = useMemo(
