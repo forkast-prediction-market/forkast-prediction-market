@@ -9,7 +9,7 @@ interface BuildEventMarketRowsOptions {
   outcomeChances: Record<string, number>
   outcomeChanceChanges: Record<string, number>
   marketYesPrices: Record<string, number>
-  marketQuotesByMarket: Record<string, MarketQuote>
+  marketQuotesByMarket?: Record<string, MarketQuote>
 }
 
 export interface EventMarketRowChanceMeta {
@@ -45,7 +45,7 @@ function clamp(value: number, min: number, max: number) {
 
 export function buildEventMarketRows(
   event: Event,
-  { outcomeChances, outcomeChanceChanges, marketYesPrices, marketQuotesByMarket }: BuildEventMarketRowsOptions,
+  { outcomeChances, outcomeChanceChanges, marketYesPrices, marketQuotesByMarket = {} }: BuildEventMarketRowsOptions,
 ): EventMarketRowsResult {
   const hasChanceData = event.markets.every(market => Number.isFinite(outcomeChances[market.condition_id]))
 

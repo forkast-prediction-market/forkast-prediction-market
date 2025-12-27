@@ -68,6 +68,7 @@ async function fetchQuotesByMarket(targets: MarketTokenTarget[]): Promise<Market
   })
 
   if (!response.ok) {
+    console.error('Failed to fetch market quotes.', response.status, response.statusText)
     return {}
   }
 
