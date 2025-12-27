@@ -68,8 +68,9 @@ async function fetchQuotesByMarket(targets: MarketTokenTarget[]): Promise<Market
   })
 
   if (!response.ok) {
-    console.error('Failed to fetch market quotes.', response.status, response.statusText)
-    return {}
+    const message = `Failed to fetch market quotes (${response.status} ${response.statusText}).`
+    console.error(message)
+    throw new Error(message)
   }
 
   const data = await response.json() as PriceApiResponse
