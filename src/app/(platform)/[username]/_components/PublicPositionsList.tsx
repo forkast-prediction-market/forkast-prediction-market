@@ -12,7 +12,6 @@ import {
   MergeIcon,
   SearchIcon,
   ShareIcon,
-  TwitterIcon,
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -492,6 +491,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const [sharePosition, setSharePosition] = useState<PublicPosition | null>(null)
   const [shareCardStatus, setShareCardStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
+  const [shareCardBlob, setShareCardBlob] = useState<Blob | null>(null)
   const [isCopyingShareImage, setIsCopyingShareImage] = useState(false)
   const [isSharingOnX, setIsSharingOnX] = useState(false)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
@@ -852,11 +852,44 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     setShareCardStatus('loading')
   }, [isShareDialogOpen, shareCardUrl])
 
+  useEffect(() => {
+    if (!shareCardUrl || shareCardStatus !== 'ready') {
+      setShareCardBlob(null)
+      return
+    }
+
+    let isCancelled = false
+
+    fetch(shareCardUrl, { cache: 'no-store' })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error('Share card fetch failed.')
+        }
+        return await response.blob()
+      })
+      .then((blob) => {
+        if (!isCancelled) {
+          setShareCardBlob(blob)
+        }
+      })
+      .catch((error) => {
+        if (!isCancelled) {
+          console.warn('Failed to preload share card image.', error)
+          setShareCardBlob(null)
+        }
+      })
+
+    return () => {
+      isCancelled = true
+    }
+  }, [shareCardStatus, shareCardUrl])
+
   const handleShareOpenChange = useCallback((open: boolean) => {
     setIsShareDialogOpen(open)
     if (!open) {
       setSharePosition(null)
       setShareCardStatus('idle')
+      setShareCardBlob(null)
       setIsCopyingShareImage(false)
       setIsSharingOnX(false)
     }
@@ -883,21 +916,35 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
 
     setIsCopyingShareImage(true)
     try {
-      const response = await fetch(shareCardUrl, { cache: 'no-store' })
-      if (!response.ok) {
-        throw new Error('Share card fetch failed.')
-      }
-      const blob = await response.blob()
-
-      if (typeof window === 'undefined' || !('ClipboardItem' in window)) {
-        await navigator.clipboard.writeText(shareCardUrl)
-        toast.success('Share card link copied.')
+      if (!shareCardBlob) {
+        toast.info('Share card is still preparing. Try again in a moment.')
         return
       }
 
-      const clipboardItem = new ClipboardItem({ [blob.type || 'image/png']: blob })
-      await navigator.clipboard.write([clipboardItem])
-      toast.success('Share card copied to clipboard.')
+      const blob = shareCardBlob.type ? shareCardBlob : new Blob([shareCardBlob], { type: 'image/png' })
+      const filename = 'position.png'
+
+      if (typeof window !== 'undefined' && window.isSecureContext && 'ClipboardItem' in window) {
+        try {
+          const clipboardItem = new ClipboardItem({ [blob.type || 'image/png']: blob })
+          await navigator.clipboard.write([clipboardItem])
+          toast.success('Share card copied to clipboard.')
+          return
+        }
+        catch (error) {
+          console.warn('Clipboard write failed, falling back to download.', error)
+        }
+      }
+
+      const objectUrl = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = objectUrl
+      link.download = filename
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(objectUrl)
+      toast.success('Share card downloaded.')
     }
     catch (error) {
       console.error('Failed to copy share card image.', error)
@@ -906,45 +953,28 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     finally {
       setIsCopyingShareImage(false)
     }
-  }, [shareCardUrl])
+  }, [shareCardBlob, shareCardUrl])
 
-  const handleShareOnX = useCallback(async () => {
+  const handleShareOnX = useCallback(() => {
     if (!shareCardPayload || !shareCardUrl) {
       return
     }
 
     setIsSharingOnX(true)
-    const outcomeLabel = shareCardPayload.outcome.toUpperCase()
-    const shareText = `Bought ${outcomeLabel} on "${shareCardPayload.title}".`
-    const baseUrl = window.location.origin
-    const shareCardAbsoluteUrl = new URL(shareCardUrl, baseUrl).toString()
-    const eventUrl = new URL(`/event/${shareCardPayload.eventSlug}`, baseUrl).toString()
-
     try {
-      const response = await fetch(shareCardAbsoluteUrl, { cache: 'no-store' })
-      const blob = await response.blob()
-      const file = new File([blob], 'forkast-position.png', { type: blob.type || 'image/png' })
+      const outcomeLabel = shareCardPayload.outcome.toUpperCase()
+      const shareText = `Bought ${outcomeLabel} on "${shareCardPayload.title}".`
+      const baseUrl = window.location.origin
+      const shareCardAbsoluteUrl = new URL(shareCardUrl, baseUrl).toString()
 
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          text: shareText,
-          url: eventUrl,
-        })
-        return
-      }
-    }
-    catch (error) {
-      console.error('Failed to open share sheet.', error)
+      const shareUrl = new URL('https://x.com/intent/tweet')
+      shareUrl.searchParams.set('text', shareText)
+      shareUrl.searchParams.set('url', shareCardAbsoluteUrl)
+      window.open(shareUrl.toString(), '_blank', 'noopener,noreferrer')
     }
     finally {
       setIsSharingOnX(false)
     }
-
-    const shareUrl = new URL('https://twitter.com/intent/tweet')
-    shareUrl.searchParams.set('text', shareText)
-    shareUrl.searchParams.set('url', shareCardAbsoluteUrl)
-    window.open(shareUrl.toString(), '_blank', 'noopener,noreferrer')
   }, [shareCardPayload, shareCardUrl])
 
   function renderRows() {
@@ -1128,11 +1158,22 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
           onClick={handleShareOnX}
           disabled={!isShareReady || isCopyingShareImage || isSharingOnX}
         >
-
           {isSharingOnX
             ? <Loader2Icon className="size-4 animate-spin" />
-            : <TwitterIcon className="size-4" />}
-          {isSharingOnX ? 'Opening...' : 'Share on X'}
+            : (
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 251 256"
+                  className="size-4"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M149.079 108.399L242.33 0h-22.098l-80.97 94.12L74.59 0H0l97.796 142.328L0 256h22.1l85.507-99.395L175.905 256h74.59L149.073 108.399zM118.81 143.58l-9.909-14.172l-78.84-112.773h33.943l63.625 91.011l9.909 14.173l82.705 118.3H186.3l-67.49-96.533z"
+                    fill="currentColor"
+                  />
+                </svg>
+              )}
+          {isSharingOnX ? 'Opening...' : 'Share'}
         </Button>
       </div>
     </div>
