@@ -67,6 +67,8 @@ interface ShareCardPayload {
   invested: string
   toWin: string
   imageUrl?: string
+  userName?: string
+  userImage?: string
   variant: ShareCardVariant
   eventSlug: string
 }
@@ -824,8 +826,13 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     if (!sharePosition) {
       return null
     }
-    return buildShareCardPayload(sharePosition)
-  }, [sharePosition])
+    const payload = buildShareCardPayload(sharePosition)
+    return {
+      ...payload,
+      userName: user?.username || undefined,
+      userImage: user?.image || undefined,
+    }
+  }, [sharePosition, user?.image, user?.username])
 
   const shareCardUrl = useMemo(() => {
     if (!shareCardPayload) {
@@ -1247,7 +1254,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         ? (
             <Drawer open={isShareDialogOpen} onOpenChange={handleShareOpenChange}>
               <DrawerContent className="max-h-[90vh] w-full border-border/70 bg-background">
-                <DrawerHeader className="text-center">
+                <DrawerHeader className="text-center sm:text-center">
                   <DrawerTitle className="text-xl font-semibold">Shill your bag</DrawerTitle>
                 </DrawerHeader>
                 <div className="space-y-4 px-4 pb-6">
@@ -1259,7 +1266,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         : (
             <Dialog open={isShareDialogOpen} onOpenChange={handleShareOpenChange}>
               <DialogContent className="max-w-md space-y-4">
-                <DialogHeader className="text-center">
+                <DialogHeader className="text-center sm:text-center">
                   <DialogTitle className="text-xl font-semibold">Shill your bag</DialogTitle>
                 </DialogHeader>
                 {shareDialogBody}

@@ -1,4 +1,5 @@
 import { ImageResponse } from 'next/og'
+import { sanitizeSvg } from '@/lib/utils'
 
 interface ShareCardPayload {
   title: string
@@ -9,6 +10,8 @@ interface ShareCardPayload {
   invested: string
   toWin: string
   imageUrl?: string
+  userName?: string
+  userImage?: string
   variant: 'yes' | 'no'
   eventSlug: string
 }
@@ -36,6 +39,31 @@ function normalizeText(value: unknown, fallback: string, maxLength = 120) {
   return trimmed.length > maxLength ? `${trimmed.slice(0, maxLength - 3)}...` : trimmed
 }
 
+function sanitizeImageUrl(rawUrl: string) {
+  const trimmed = rawUrl.trim()
+  if (!trimmed || trimmed.length > 2048) {
+    return ''
+  }
+  try {
+    const parsed = new URL(trimmed)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return ''
+    }
+    return trimmed
+  }
+  catch {
+    return ''
+  }
+}
+
+function buildSvgDataUri(svg: string) {
+  const sanitized = sanitizeSvg(svg)
+  if (!sanitized) {
+    return ''
+  }
+  return `data:image/svg+xml;utf8,${encodeURIComponent(sanitized)}`
+}
+
 function parsePayload(rawPayload: string | null): ShareCardPayload {
   if (!rawPayload) {
     return fallbackPayload
@@ -43,8 +71,10 @@ function parsePayload(rawPayload: string | null): ShareCardPayload {
 
   try {
     const parsed = JSON.parse(rawPayload) as Partial<ShareCardPayload>
-    const rawImageUrl = typeof parsed.imageUrl === 'string' ? parsed.imageUrl.trim() : ''
-    const safeImageUrl = rawImageUrl && rawImageUrl.length <= 2048 ? rawImageUrl : ''
+    const rawImageUrl = typeof parsed.imageUrl === 'string' ? parsed.imageUrl : ''
+    const rawUserImage = typeof parsed.userImage === 'string' ? parsed.userImage : ''
+    const safeImageUrl = sanitizeImageUrl(rawImageUrl)
+    const safeUserImage = sanitizeImageUrl(rawUserImage)
     return {
       title: normalizeText(parsed.title, fallbackPayload.title, 140),
       outcome: normalizeText(parsed.outcome, fallbackPayload.outcome, 24),
@@ -54,6 +84,8 @@ function parsePayload(rawPayload: string | null): ShareCardPayload {
       invested: normalizeText(parsed.invested, fallbackPayload.invested, 24),
       toWin: normalizeText(parsed.toWin, fallbackPayload.toWin, 24),
       imageUrl: safeImageUrl || undefined,
+      userName: parsed.userName,
+      userImage: safeUserImage || undefined,
       variant: parsed.variant === 'no' ? 'no' : 'yes',
       eventSlug: normalizeText(parsed.eventSlug, fallbackPayload.eventSlug, 120),
     }
@@ -70,6 +102,9 @@ export async function GET(request: Request) {
   const variant = payload.variant === 'no' ? 'no' : 'yes'
   const accent = variant === 'no' ? '#ef4444' : '#22c55e'
   const outcomeLabel = payload.outcome || (variant === 'no' ? 'No' : 'Yes')
+  const siteLogoSvg = process.env.NEXT_PUBLIC_SITE_LOGO_SVG ?? ''
+  const siteLogoSrc = siteLogoSvg ? buildSvgDataUri(siteLogoSvg) : ''
+  const hasUserBadge = Boolean(payload.userName || payload.userImage)
 
   const response = new ImageResponse(
     (
@@ -78,17 +113,52 @@ export async function GET(request: Request) {
           width: '100%',
           height: '100%',
           display: 'flex',
+          flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'space-around',
           background: 'linear-gradient(135deg, #0f172a 0%, #0b1324 100%)',
-          padding: '56px',
+          padding: '0 56px',
           fontFamily: 'ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif',
         }}
       >
+        {hasUserBadge && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              padding: '10px 18px',
+              borderRadius: '999px',
+              backgroundColor: 'rgba(15, 23, 42, 0.7)',
+              color: '#e2e8f0',
+            }}
+          >
+            {payload.userImage && (
+              // eslint-disable-next-line next/no-img-element
+              <img
+                src={payload.userImage}
+                alt=""
+                width={40}
+                height={40}
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '999px',
+                  objectFit: 'cover',
+                }}
+              />
+            )}
+            {payload.userName && (
+              <div style={{ display: 'flex', fontSize: '32px', fontWeight: 600 }}>
+                {payload.userName}
+              </div>
+            )}
+          </div>
+        )}
+
         <div
           style={{
             width: '100%',
-            height: '100%',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -197,7 +267,7 @@ export async function GET(request: Request) {
             </div>
             <div
               style={{
-                width: '1px',
+                width: '2px',
                 backgroundColor: '#e2e8f0',
                 alignSelf: 'stretch',
               }}
@@ -269,12 +339,12 @@ export async function GET(request: Request) {
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', marginTop: '12px' }}>
                 <div
                   style={{
                     display: 'flex',
                     width: '100%',
-                    height: '1px',
+                    height: '2px',
                     backgroundColor: '#e2e8f0',
                   }}
                 />
@@ -296,11 +366,36 @@ export async function GET(request: Request) {
             </div>
           </div>
         </div>
+
+        {siteLogoSrc && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              width: '100%',
+            }}
+          >
+            {/* eslint-disable-next-line next/no-img-element */}
+            <img
+              src={siteLogoSrc}
+              alt=""
+              width={64}
+              height={64}
+              style={{
+                width: '64px',
+                height: '64px',
+              }}
+            />
+            <div style={{ color: '#fff', fontSize: '64px' }}>{process.env.NEXT_PUBLIC_SITE_NAME}</div>
+          </div>
+        )}
       </div>
     ),
     {
       width: 1200,
-      height: 630,
+      height: 640,
     },
   )
 
