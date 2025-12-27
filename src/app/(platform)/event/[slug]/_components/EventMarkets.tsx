@@ -51,8 +51,11 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
     selectDetailTab,
     getSelectedDetailTab,
   } = useMarketDetailController(event.id)
-  const priceHistoryQueryKey = useMemo(
-    () => ['event-price-history', event.id] as const,
+  const chanceRefreshQueryKeys = useMemo(
+    () => [
+      ['event-price-history', event.id] as const,
+      ['event-market-quotes'] as const,
+    ],
     [event.id],
   )
   const [chancePulseToken, setChancePulseToken] = useState(0)
@@ -62,7 +65,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
     isDisabled: isChanceRefreshDisabled,
     isRefreshing: isManualChanceRefreshing,
     isFetching: isPriceHistoryFetching,
-  } = useChanceRefresh({ queryKey: priceHistoryQueryKey })
+  } = useChanceRefresh({ queryKeys: chanceRefreshQueryKeys })
   const eventTokenIds = useMemo(() => {
     const ids = new Set<string>()
 

@@ -56,6 +56,12 @@ const FUTURE_LINE_COLOR_DARK = '#2C3F4F'
 const FUTURE_LINE_COLOR_LIGHT = '#99A6B5'
 const FUTURE_LINE_OPACITY_DARK = 0.55
 const FUTURE_LINE_OPACITY_LIGHT = 0.35
+const GRID_LINE_COLOR_DARK = '#3E5364'
+const GRID_LINE_COLOR_LIGHT = '#A7B4C2'
+const GRID_LINE_OPACITY_DARK = 0.7
+const GRID_LINE_OPACITY_LIGHT = 0.35
+const MIDLINE_OPACITY_DARK = 0.8
+const MIDLINE_OPACITY_LIGHT = 0.45
 const INITIAL_REVEAL_DURATION = 1400
 const INTERACTION_BASE_REVEAL_DURATION = 1100
 const DEFAULT_Y_AXIS_MAX = 100
@@ -889,6 +895,15 @@ export function PredictionChart({
   const futureLineOpacity = isDarkMode
     ? FUTURE_LINE_OPACITY_DARK
     : FUTURE_LINE_OPACITY_LIGHT
+  const gridLineColor = isDarkMode
+    ? GRID_LINE_COLOR_DARK
+    : GRID_LINE_COLOR_LIGHT
+  const gridLineOpacity = isDarkMode
+    ? GRID_LINE_OPACITY_DARK
+    : GRID_LINE_OPACITY_LIGHT
+  const midlineOpacity = isDarkMode
+    ? MIDLINE_OPACITY_DARK
+    : MIDLINE_OPACITY_LIGHT
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -936,10 +951,10 @@ export function PredictionChart({
                 x2={innerWidth}
                 y1={yScale(value)}
                 y2={yScale(value)}
-                stroke="#344452"
+                stroke={gridLineColor}
                 strokeWidth={1}
                 strokeDasharray="1,3"
-                opacity={0.6}
+                opacity={gridLineOpacity}
               />
             ))}
 
@@ -949,10 +964,10 @@ export function PredictionChart({
                 x2={innerWidth}
                 y1={yScale(50)}
                 y2={yScale(50)}
-                stroke="#344452"
+                stroke={gridLineColor}
                 strokeWidth={1.5}
                 strokeDasharray="2,4"
-                opacity={0.8}
+                opacity={midlineOpacity}
               />
             )}
 

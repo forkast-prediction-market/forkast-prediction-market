@@ -10,10 +10,6 @@ import { use, useMemo, useState } from 'react'
 import { useSignTypedData } from 'wagmi'
 import EventBookmark from '@/app/(platform)/event/[slug]/_components/EventBookmark'
 import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
-import {
-  buildMarketTargets,
-  useEventPriceHistory,
-} from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
 import { OpenCardContext } from '@/components/EventOpenCardContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -24,6 +20,7 @@ import { useBalance } from '@/hooks/useBalance'
 import { formatDisplayAmount, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { getExchangeEip712Domain, ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 import { formatCurrency, formatVolume } from '@/lib/formatters'
+import { buildChanceByMarket } from '@/lib/market-chance'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
 import { signOrderPayload } from '@/lib/orders/signing'
 import { validateOrder } from '@/lib/orders/validation'
@@ -230,57 +227,13 @@ export default function EventCard({ event }: EventCardProps) {
   const availableBalance = balance.raw
   const selectedTokenId = selectedOutcome?.outcome.token_id ?? null
 
-  const marketTargets = useMemo(() => buildMarketTargets(event.markets), [event.markets])
-  const { latestSnapshot } = useEventPriceHistory({
-    eventId: event.id,
-    range: 'ALL',
-    targets: marketTargets,
-    eventCreatedAt: event.created_at,
-  })
-
-  const fallbackChanceByMarket = useMemo(() => {
-    function clampPrice(value: number | undefined | null) {
-      if (!Number.isFinite(value)) {
-        return 0
-      }
-      return Math.max(0, Math.min(1, Number(value)))
-    }
-
-    const baseMap = event.markets.reduce<Record<string, number>>((acc, market) => {
-      acc[market.condition_id] = clampPrice(market.price) * 100
-      return acc
-    }, {})
-
-    const activeMarkets = event.markets.filter(market => market.is_active && !market.is_resolved)
-    if (activeMarkets.length <= 1) {
-      return baseMap
-    }
-
-    const total = activeMarkets.reduce((sum, market) => sum + clampPrice(market.price), 0)
-    if (total <= 0) {
-      return baseMap
-    }
-
-    activeMarkets.forEach((market) => {
-      baseMap[market.condition_id] = (clampPrice(market.price) / total) * 100
-    })
-
-    return baseMap
-  }, [event.markets])
-
-  const displayChanceByMarket = useMemo(() => event.markets.reduce<Record<string, number>>((acc, market) => {
-    const snapshotValue = latestSnapshot[market.condition_id]
-    if (Number.isFinite(snapshotValue)) {
-      acc[market.condition_id] = snapshotValue
-    }
-    else {
-      acc[market.condition_id] = fallbackChanceByMarket[market.condition_id] ?? 0
-    }
-    return acc
-  }, {}), [event.markets, latestSnapshot, fallbackChanceByMarket])
+  const chanceByMarket = useMemo(
+    () => buildChanceByMarket(event.markets),
+    [event.markets],
+  )
 
   function getDisplayChance(marketId: string) {
-    return displayChanceByMarket[marketId] ?? 0
+    return chanceByMarket[marketId] ?? 0
   }
   const primaryMarket = event.markets[0]
   const primaryDisplayChance = primaryMarket ? getDisplayChance(primaryMarket.condition_id) : 0

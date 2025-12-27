@@ -3,7 +3,7 @@ import { useIsFetching, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef, useState } from 'react'
 
 interface UseChanceRefreshOptions {
-  queryKey: QueryKey
+  queryKeys: QueryKey[]
 }
 
 export interface ChanceRefreshResult {
@@ -13,9 +13,21 @@ export interface ChanceRefreshResult {
   isDisabled: boolean
 }
 
-export function useChanceRefresh({ queryKey }: UseChanceRefreshOptions): ChanceRefreshResult {
+function matchesQueryKey(target: QueryKey, full: QueryKey) {
+  if (!Array.isArray(target) || !Array.isArray(full)) {
+    return false
+  }
+  if (target.length > full.length) {
+    return false
+  }
+  return target.every((value, index) => Object.is(value, full[index]))
+}
+
+export function useChanceRefresh({ queryKeys }: UseChanceRefreshOptions): ChanceRefreshResult {
   const queryClient = useQueryClient()
-  const isFetching = useIsFetching({ queryKey }) > 0
+  const isFetching = useIsFetching({
+    predicate: query => queryKeys.some(key => matchesQueryKey(key, query.queryKey)),
+  }) > 0
   const [isRefreshing, setIsRefreshing] = useState(false)
   const isRefreshingRef = useRef(false)
 
@@ -30,18 +42,20 @@ export function useChanceRefresh({ queryKey }: UseChanceRefreshOptions): ChanceR
     setIsRefreshing(true)
 
     try {
-      await queryClient.invalidateQueries({ queryKey, refetchType: 'active' })
+      await Promise.all(
+        queryKeys.map(key => queryClient.invalidateQueries({ queryKey: key, refetchType: 'active' })),
+      )
       return { ok: true as const }
     }
     catch (error) {
-      console.error('Failed to refresh price history', error)
+      console.error('Failed to refresh chance data', error)
       return { ok: false as const, error }
     }
     finally {
       isRefreshingRef.current = false
       setIsRefreshing(false)
     }
-  }, [isFetching, queryClient, queryKey])
+  }, [isFetching, queryClient, queryKeys])
 
   return {
     refresh,

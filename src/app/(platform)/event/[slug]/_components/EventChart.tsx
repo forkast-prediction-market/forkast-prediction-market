@@ -1,5 +1,6 @@
 'use client'
 
+import type { MarketQuote } from '@/app/(platform)/event/[slug]/_components/useEventMidPrices'
 import type { TimeRange } from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
 import type { PredictionChartCursorSnapshot, SeriesConfig } from '@/components/PredictionChart'
 import type { Event } from '@/types'
@@ -7,10 +8,16 @@ import { ShuffleIcon, TriangleIcon } from 'lucide-react'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatedCounter } from 'react-animated-counter'
 import {
+  useEventOutcomeChanceChanges,
+  useEventOutcomeChances,
+  useMarketQuotes,
+  useMarketYesPrices,
   useUpdateEventOutcomeChanceChanges,
   useUpdateEventOutcomeChances,
+  useUpdateMarketQuotes,
   useUpdateMarketYesPrices,
 } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
+import { useEventMarketQuotes } from '@/app/(platform)/event/[slug]/_components/useEventMidPrices'
 import {
   buildMarketTargets,
   TIME_RANGES,
@@ -23,6 +30,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import { OUTCOME_INDEX } from '@/lib/constants'
+import { buildChanceByMarket } from '@/lib/market-chance'
 import { cn, sanitizeSvg } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
 
@@ -34,6 +42,33 @@ interface EventChartProps {
 const CHART_COLORS = ['#FF6600', '#2D9CDB', '#4E6377', '#FDC500']
 const MAX_SERIES = 4
 const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000
+
+function areNumberMapsEqual(a: Record<string, number>, b: Record<string, number>) {
+  const aKeys = Object.keys(a)
+  const bKeys = Object.keys(b)
+  if (aKeys.length !== bKeys.length) {
+    return false
+  }
+  return aKeys.every(key => Object.is(a[key], b[key]))
+}
+
+function areQuoteMapsEqual(a: Record<string, MarketQuote>, b: Record<string, MarketQuote>) {
+  const aKeys = Object.keys(a)
+  const bKeys = Object.keys(b)
+  if (aKeys.length !== bKeys.length) {
+    return false
+  }
+  return aKeys.every((key) => {
+    const aQuote = a[key]
+    const bQuote = b[key]
+    if (!aQuote || !bQuote) {
+      return false
+    }
+    return Object.is(aQuote.bid, bQuote.bid)
+      && Object.is(aQuote.ask, bQuote.ask)
+      && Object.is(aQuote.mid, bQuote.mid)
+  })
+}
 
 function buildMarketSignature(event: Event) {
   return event.markets
@@ -48,6 +83,7 @@ function buildMarketSignature(event: Event) {
 
 function computeChanceChanges(
   points: Array<Record<string, number | Date> & { date: Date }>,
+  currentOverrides: Record<string, number> = {},
 ) {
   if (!points.length) {
     return {}
@@ -68,16 +104,24 @@ function computeChanceChanges(
   const changes: Record<string, number> = {}
 
   Object.entries(latestPoint).forEach(([key, value]) => {
-    if (key === 'date' || typeof value !== 'number' || !Number.isFinite(value)) {
+    if (key === 'date') {
+      return
+    }
+
+    const overrideValue = currentOverrides[key]
+    const resolvedCurrent = typeof overrideValue === 'number' && Number.isFinite(overrideValue)
+      ? overrideValue
+      : value
+    if (typeof resolvedCurrent !== 'number' || !Number.isFinite(resolvedCurrent)) {
       return
     }
 
     const baselineValue = baselinePoint[key]
     const numericBaseline = typeof baselineValue === 'number' && Number.isFinite(baselineValue)
       ? baselineValue
-      : value
+      : resolvedCurrent
 
-    changes[key] = value - numericBaseline
+    changes[key] = resolvedCurrent - numericBaseline
   })
 
   return changes
@@ -164,8 +208,13 @@ function buildChartSeries(event: Event, marketIds: string[]) {
 
 function EventChartComponent({ event, isMobile }: EventChartProps) {
   const isSingleMarket = useIsSingleMarket()
+  const currentOutcomeChances = useEventOutcomeChances()
+  const currentOutcomeChanceChanges = useEventOutcomeChanceChanges()
+  const currentMarketQuotes = useMarketQuotes()
+  const currentMarketYesPrices = useMarketYesPrices()
   const updateOutcomeChances = useUpdateEventOutcomeChances()
   const updateMarketYesPrices = useUpdateMarketYesPrices()
+  const updateMarketQuotes = useUpdateMarketQuotes()
   const updateOutcomeChanceChanges = useUpdateEventOutcomeChanceChanges()
 
   const [activeTimeRange, setActiveTimeRange] = useState<TimeRange>('ALL')
@@ -181,25 +230,50 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     setCursorSnapshot(null)
   }, [activeTimeRange, event.slug, activeOutcomeIndex])
 
-  const marketTargets = useMemo(
-    () => buildMarketTargets(event.markets, activeOutcomeIndex),
-    [event.markets, activeOutcomeIndex],
+  const yesMarketTargets = useMemo(
+    () => buildMarketTargets(event.markets, OUTCOME_INDEX.YES),
+    [event.markets],
+  )
+  const noMarketTargets = useMemo(
+    () => (isSingleMarket ? buildMarketTargets(event.markets, OUTCOME_INDEX.NO) : []),
+    [event.markets, isSingleMarket],
   )
 
-  const {
-    normalizedHistory,
-    latestSnapshot,
-    latestRawPrices,
-  } = useEventPriceHistory({
+  const yesPriceHistory = useEventPriceHistory({
     eventId: event.id,
     range: activeTimeRange,
-    targets: marketTargets,
+    targets: yesMarketTargets,
     eventCreatedAt: event.created_at,
   })
-  const chanceChangeByMarket = useMemo(
-    () => computeChanceChanges(normalizedHistory),
-    [normalizedHistory],
+  const noPriceHistory = useEventPriceHistory({
+    eventId: event.id,
+    range: activeTimeRange,
+    targets: noMarketTargets,
+    eventCreatedAt: event.created_at,
+  })
+  const marketQuotesByMarket = useEventMarketQuotes(yesMarketTargets)
+  const midPricesByMarket = useMemo(
+    () => Object.fromEntries(
+      Object.entries(marketQuotesByMarket)
+        .map(([marketId, quote]) => [marketId, quote.mid])
+        .filter(([, value]) => typeof value === 'number' && Number.isFinite(value)),
+    ),
+    [marketQuotesByMarket],
   )
+  const midChanceByMarket = useMemo(
+    () => buildChanceByMarket(event.markets, midPricesByMarket),
+    [event.markets, midPricesByMarket],
+  )
+  const chanceChangeByMarket = useMemo(
+    () => computeChanceChanges(yesPriceHistory.normalizedHistory, midChanceByMarket),
+    [yesPriceHistory.normalizedHistory, midChanceByMarket],
+  )
+
+  const chartHistory = isSingleMarket && activeOutcomeIndex === OUTCOME_INDEX.NO
+    ? noPriceHistory
+    : yesPriceHistory
+  const normalizedHistory = chartHistory.normalizedHistory
+  const latestSnapshot = chartHistory.latestSnapshot
 
   const hasCompleteChanceData = useMemo(
     () => event.markets.every(market => Number.isFinite(latestSnapshot[market.condition_id])),
@@ -207,34 +281,40 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   )
 
   useEffect(() => {
-    if (activeOutcomeIndex !== OUTCOME_INDEX.YES) {
-      return
+    if (Object.keys(midChanceByMarket).length > 0) {
+      if (areNumberMapsEqual(midChanceByMarket, currentOutcomeChances)) {
+        return
+      }
+      updateOutcomeChances(midChanceByMarket)
     }
-
-    if (Object.keys(latestSnapshot).length > 0) {
-      updateOutcomeChances(latestSnapshot)
-    }
-  }, [latestSnapshot, updateOutcomeChances, activeOutcomeIndex])
-
-  useEffect(() => {
-    if (activeOutcomeIndex !== OUTCOME_INDEX.YES) {
-      return
-    }
-
-    if (Object.keys(latestRawPrices).length > 0) {
-      updateMarketYesPrices(latestRawPrices)
-    }
-  }, [latestRawPrices, updateMarketYesPrices, activeOutcomeIndex])
+  }, [currentOutcomeChances, midChanceByMarket, updateOutcomeChances])
 
   useEffect(() => {
-    if (activeOutcomeIndex !== OUTCOME_INDEX.YES) {
-      return
+    if (Object.keys(yesPriceHistory.latestRawPrices).length > 0) {
+      if (areNumberMapsEqual(yesPriceHistory.latestRawPrices, currentMarketYesPrices)) {
+        return
+      }
+      updateMarketYesPrices(yesPriceHistory.latestRawPrices)
     }
+  }, [currentMarketYesPrices, yesPriceHistory.latestRawPrices, updateMarketYesPrices])
 
+  useEffect(() => {
     if (Object.keys(chanceChangeByMarket).length > 0) {
+      if (areNumberMapsEqual(chanceChangeByMarket, currentOutcomeChanceChanges)) {
+        return
+      }
       updateOutcomeChanceChanges(chanceChangeByMarket)
     }
-  }, [chanceChangeByMarket, updateOutcomeChanceChanges, activeOutcomeIndex])
+  }, [chanceChangeByMarket, currentOutcomeChanceChanges, updateOutcomeChanceChanges])
+
+  useEffect(() => {
+    if (Object.keys(marketQuotesByMarket).length > 0) {
+      if (areQuoteMapsEqual(marketQuotesByMarket, currentMarketQuotes)) {
+        return
+      }
+      updateMarketQuotes(marketQuotesByMarket)
+    }
+  }, [currentMarketQuotes, marketQuotesByMarket, updateMarketQuotes])
 
   const topMarketIds = useMemo(
     () => getTopMarketIds(latestSnapshot, MAX_SERIES),
@@ -334,11 +414,25 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     ? cursorSnapshot?.values?.[leadingMarket.key]
     : null
   const latestYesChance = leadingMarket ? latestSnapshot[leadingMarket.key] : null
+  const hasMidChanceForLeading = Boolean(
+    leadingMarket
+    && midPricesByMarket[leadingMarket.key] != null,
+  )
+  const midYesChance = hasMidChanceForLeading
+    ? midChanceByMarket[leadingMarket.key]
+    : null
+  const midActiveChance = typeof midYesChance === 'number' && Number.isFinite(midYesChance)
+    ? (activeOutcomeIndex === OUTCOME_INDEX.NO
+        ? Math.max(0, Math.min(100, 100 - midYesChance))
+        : midYesChance)
+    : null
   const resolvedYesChance = typeof hoveredYesChance === 'number' && Number.isFinite(hoveredYesChance)
     ? hoveredYesChance
-    : (typeof latestYesChance === 'number' && Number.isFinite(latestYesChance)
-        ? latestYesChance
-        : null)
+    : (typeof midActiveChance === 'number' && Number.isFinite(midActiveChance)
+        ? midActiveChance
+        : (typeof latestYesChance === 'number' && Number.isFinite(latestYesChance)
+            ? latestYesChance
+            : null))
   const yesChanceValue = typeof resolvedYesChance === 'number' ? resolvedYesChance : null
   const showLegendValues = hasCompleteChanceData && chartSeries.length > 0
   const shouldRenderLegendEntries = showLegendValues && legendEntries.length > 0

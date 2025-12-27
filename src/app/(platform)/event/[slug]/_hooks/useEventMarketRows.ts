@@ -1,6 +1,7 @@
+import type { MarketQuote } from '@/app/(platform)/event/[slug]/_components/useEventMidPrices'
 import type { Event, Outcome } from '@/types'
 import { useEffect, useMemo } from 'react'
-import { useEventOutcomeChanceChanges, useEventOutcomeChances, useMarketYesPrices } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
+import { useEventOutcomeChanceChanges, useEventOutcomeChances, useMarketQuotes, useMarketYesPrices } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { toCents } from '@/lib/formatters'
 
@@ -8,6 +9,7 @@ interface BuildEventMarketRowsOptions {
   outcomeChances: Record<string, number>
   outcomeChanceChanges: Record<string, number>
   marketYesPrices: Record<string, number>
+  marketQuotesByMarket: Record<string, MarketQuote>
 }
 
 export interface EventMarketRowChanceMeta {
@@ -43,7 +45,7 @@ function clamp(value: number, min: number, max: number) {
 
 export function buildEventMarketRows(
   event: Event,
-  { outcomeChances, outcomeChanceChanges, marketYesPrices }: BuildEventMarketRowsOptions,
+  { outcomeChances, outcomeChanceChanges, marketYesPrices, marketQuotesByMarket }: BuildEventMarketRowsOptions,
 ): EventMarketRowsResult {
   const hasChanceData = event.markets.every(market => Number.isFinite(outcomeChances[market.condition_id]))
 
@@ -60,9 +62,16 @@ export function buildEventMarketRows(
     const normalizedYesPrice = typeof yesPriceOverride === 'number'
       ? clamp(yesPriceOverride, 0, 1)
       : null
-    const yesPriceValue = normalizedYesPrice ?? null
-    const noPriceValue = normalizedYesPrice != null
-      ? clamp(1 - normalizedYesPrice, 0, 1)
+    const marketQuote = marketQuotesByMarket[market.condition_id]
+    const normalizedBestAsk = typeof marketQuote?.ask === 'number'
+      ? clamp(marketQuote.ask, 0, 1)
+      : null
+    const normalizedBestBid = typeof marketQuote?.bid === 'number'
+      ? clamp(marketQuote.bid, 0, 1)
+      : null
+    const yesPriceValue = normalizedBestAsk
+    const noPriceValue = normalizedBestBid != null
+      ? clamp(1 - normalizedBestBid, 0, 1)
       : null
     const yesPriceCentsOverride = normalizedYesPrice != null ? toCents(normalizedYesPrice) : null
 
@@ -114,10 +123,16 @@ export function useEventMarketRows(event: Event): EventMarketRowsResult {
   const outcomeChances = useEventOutcomeChances()
   const outcomeChanceChanges = useEventOutcomeChanceChanges()
   const marketYesPrices = useMarketYesPrices()
+  const marketQuotesByMarket = useMarketQuotes()
 
   const result = useMemo(
-    () => buildEventMarketRows(event, { outcomeChances, outcomeChanceChanges, marketYesPrices }),
-    [event, outcomeChances, outcomeChanceChanges, marketYesPrices],
+    () => buildEventMarketRows(event, {
+      outcomeChances,
+      outcomeChanceChanges,
+      marketYesPrices,
+      marketQuotesByMarket,
+    }),
+    [event, outcomeChances, outcomeChanceChanges, marketYesPrices, marketQuotesByMarket],
   )
 
   useEffect(() => {
