@@ -264,12 +264,21 @@ export function fromMicro(amount: string | number, precision: number = 1): strin
   return (numeric / MICRO_UNIT).toFixed(precision)
 }
 
-export function formatAmountInputValue(value: number): string {
+interface AmountInputFormatOptions {
+  roundingMode?: 'round' | 'floor'
+}
+
+export function formatAmountInputValue(value: number, options: AmountInputFormatOptions = {}): string {
   if (!Number.isFinite(value)) {
     return ''
   }
 
-  const normalized = Math.max(0, Math.round(value * 100) / 100)
+  const roundingMode = options.roundingMode ?? 'round'
+  const scaled = value * 100
+  const roundedScaled = roundingMode === 'floor'
+    ? Math.floor(scaled + 1e-8)
+    : Math.round(scaled)
+  const normalized = Math.max(0, roundedScaled / 100)
   if (normalized === 0) {
     return ''
   }

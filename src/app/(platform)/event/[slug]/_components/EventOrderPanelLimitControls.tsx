@@ -164,10 +164,10 @@ export default function EventOrderPanelLimitControls({
     syncAmount(clampedValue, Number.parseFloat(limitShares) || 0)
   }
 
-  function updateLimitShares(nextValue: number) {
+  function updateLimitShares(nextValue: number, roundingMode: 'round' | 'floor' = 'round') {
     const numericValue = Number.isNaN(nextValue) ? 0 : nextValue
     const clampedValue = clamp(numericValue, 0, maxSharesForSide)
-    onLimitSharesChange(formatAmountInputValue(clampedValue))
+    onLimitSharesChange(formatAmountInputValue(clampedValue, { roundingMode }))
     syncAmount(Number.parseFloat(limitPrice) || 0, clampedValue)
   }
 
@@ -268,7 +268,7 @@ export default function EventOrderPanelLimitControls({
                       }
 
                       if (label === 'MAX') {
-                        updateLimitShares(availableShares)
+                        updateLimitShares(availableShares, 'floor')
                         return
                       }
 
