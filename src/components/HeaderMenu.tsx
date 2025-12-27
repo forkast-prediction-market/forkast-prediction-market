@@ -12,6 +12,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useAppKit } from '@/hooks/useAppKit'
 import { useClientMounted } from '@/hooks/useClientMounted'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useUser } from '@/stores/useUser'
 
 const { useSession } = createAuthClient()
@@ -22,6 +23,7 @@ export default function HeaderMenu() {
   const { isConnected, status } = useAppKitAccount()
   const { data: session } = useSession()
   const isMobile = useIsMobile()
+  const { startDepositFlow } = useTradingOnboarding()
 
   useEffect(() => {
     if (session?.user) {
@@ -37,6 +39,7 @@ export default function HeaderMenu() {
       <div className="flex gap-2">
         <Skeleton className="hidden h-9 w-20 lg:block" />
         <Skeleton className="hidden h-9 w-20 lg:block" />
+        <Skeleton className="hidden h-9 w-20 lg:block" />
         <Skeleton className="h-9 w-10" />
         <Skeleton className="h-9 w-20" />
       </div>
@@ -48,6 +51,11 @@ export default function HeaderMenu() {
       {isConnected && (
         <>
           {!isMobile && <HeaderPortfolio />}
+          {!isMobile && (
+            <Button size="sm" onClick={startDepositFlow}>
+              Deposit
+            </Button>
+          )}
           <HeaderNotifications />
           <HeaderDropdownUserMenuAuth />
         </>

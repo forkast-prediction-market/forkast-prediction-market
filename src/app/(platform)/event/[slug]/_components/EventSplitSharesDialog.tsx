@@ -61,7 +61,11 @@ export default function EventSplitSharesDialog({
       useGrouping: false,
       maximumFractionDigits: 6,
     })
-    return asString.replace(/\.?0+$/, '') || '0'
+    if (!asString.includes('.')) {
+      return asString
+    }
+    const trimmed = asString.replace(/0+$/, '').replace(/\.$/, '')
+    return trimmed || '0'
   }
 
   useEffect(() => {
