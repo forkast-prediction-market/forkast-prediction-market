@@ -15,8 +15,8 @@ export default function EventOrderPanelUserShares({ yesShares, noShares, activeO
     return null
   }
 
-  const formattedYesShares = sharesFormatter.format(Math.max(0, yesShares))
-  const formattedNoShares = sharesFormatter.format(Math.max(0, noShares))
+  const formattedYesShares = formatShareValue(yesShares)
+  const formattedNoShares = formatShareValue(noShares)
   const yesClass = activeOutcome === OUTCOME_INDEX.YES ? 'text-yes' : 'text-muted-foreground'
   const noClass = activeOutcome === OUTCOME_INDEX.NO ? 'text-no' : 'text-muted-foreground'
 
@@ -38,4 +38,13 @@ export default function EventOrderPanelUserShares({ yesShares, noShares, activeO
       </div>
     </div>
   )
+}
+
+function formatShareValue(value: number) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return '0'
+  }
+
+  const truncated = Math.floor(value * 100 + 1e-8) / 100
+  return sharesFormatter.format(Math.max(0, truncated))
 }
