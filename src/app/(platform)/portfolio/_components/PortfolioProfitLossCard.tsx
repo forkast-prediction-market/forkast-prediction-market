@@ -44,7 +44,7 @@ export default function PortfolioProfitLossCard() {
       return <TriangleIcon className="size-4 fill-yes text-yes" />
     }
     else if (isNegative) {
-      return <TriangleIcon className="size-4 rotate-180 fill-red-600 text-red-600" />
+      return <TriangleIcon className="size-4 rotate-180 fill-no text-no" />
     }
     else {
       return <MinusIcon className="size-4 text-muted-foreground" />
