@@ -17,7 +17,6 @@ import {
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-
 import { toast } from 'sonner'
 import { hashTypedData } from 'viem'
 import { useSignMessage } from 'wagmi'
@@ -34,7 +33,7 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { defaultNetwork } from '@/lib/appkit'
 import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE, MICRO_UNIT, OUTCOME_INDEX } from '@/lib/constants'
 import { ZERO_COLLECTION_ID } from '@/lib/contracts'
-import { formatCurrency, formatPercent, toMicro } from '@/lib/formatters'
+import { formatCentsLabel, formatCurrency, formatPercent, toMicro } from '@/lib/formatters'
 import { aggregateSafeTransactions, buildMergePositionTransaction, getSafeTxTypedData, packSafeSignature } from '@/lib/safe/transactions'
 
 import { cn } from '@/lib/utils'
@@ -73,13 +72,6 @@ interface ShareCardPayload {
   eventSlug: string
 }
 
-function formatCents(price?: number) {
-  if (!Number.isFinite(price)) {
-    return '—'
-  }
-  return `${Math.round((price ?? 0) * 100)}¢`
-}
-
 function formatCurrencyValue(value?: number) {
   return Number.isFinite(value) ? formatCurrency(value ?? 0) : '—'
 }
@@ -113,7 +105,7 @@ function buildShareCardPayload(position: PublicPosition): ShareCardPayload {
   return {
     title: position.title || 'Untitled market',
     outcome,
-    avgPrice: formatCents(avgPrice),
+    avgPrice: formatCentsLabel(avgPrice, { fallback: '—' }),
     odds: formatPercent(nowPrice * 100, { digits: 0 }),
     cost: formatCurrencyValue(tradeValue),
     invested: formatCurrencyValue(tradeValue),
@@ -125,10 +117,22 @@ function buildShareCardPayload(position: PublicPosition): ShareCardPayload {
 }
 
 function buildShareCardUrl(payload: ShareCardPayload) {
+  const encodedPayload = encodeSharePayload(payload)
   const params = new URLSearchParams({
-    position: JSON.stringify(payload),
+    position: encodedPayload,
   })
   return `/api/og?${params.toString()}`
+}
+
+function encodeSharePayload(payload: ShareCardPayload) {
+  const json = JSON.stringify(payload)
+  const bytes = new TextEncoder().encode(json)
+  let binary = ''
+  bytes.forEach((byte) => {
+    binary += String.fromCharCode(byte)
+  })
+  const base64 = btoa(binary)
+  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
 }
 
 function getTradeValue(position: PublicPosition) {
@@ -1008,7 +1012,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
                 <span className={cn('inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-2xs font-semibold', outcomeColor)}>
                   {outcomeLabel}
                   {' '}
-                  {formatCents(avgPrice)}
+                  {formatCentsLabel(avgPrice, { fallback: '—' })}
                 </span>
                 {Number.isFinite(position.size) && (
                   <span className="text-muted-foreground">
@@ -1023,9 +1027,9 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
 
           <div className="text-left text-sm text-foreground">
             <div className="flex items-center gap-1">
-              <span className="text-muted-foreground">{formatCents(avgPrice)}</span>
+              <span className="text-muted-foreground">{formatCentsLabel(avgPrice, { fallback: '—' })}</span>
               <ArrowRightIcon className="size-3 text-muted-foreground" />
-              <span className="text-foreground">{formatCents(nowPrice)}</span>
+              <span className="text-foreground">{formatCentsLabel(nowPrice, { fallback: '—' })}</span>
             </div>
           </div>
 

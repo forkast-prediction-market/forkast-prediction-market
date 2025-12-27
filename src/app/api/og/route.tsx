@@ -16,25 +16,24 @@ interface ShareCardPayload {
   eventSlug: string
 }
 
-const fallbackPayload: ShareCardPayload = {
-  title: 'Untitled market',
-  outcome: 'Yes',
-  avgPrice: '50c',
-  odds: '50%',
-  cost: '$0.00',
-  invested: '$0.00',
-  toWin: '$0.00',
-  variant: 'yes',
-  eventSlug: '',
-}
-
-function normalizeText(value: unknown, fallback: string, maxLength = 120) {
+function normalizeRequiredText(value: unknown, maxLength = 120) {
   if (typeof value !== 'string') {
-    return fallback
+    return null
   }
   const trimmed = value.trim()
   if (!trimmed) {
-    return fallback
+    return null
+  }
+  return trimmed.length > maxLength ? `${trimmed.slice(0, maxLength - 3)}...` : trimmed
+}
+
+function normalizeOptionalText(value: unknown, maxLength = 120) {
+  if (typeof value !== 'string') {
+    return ''
+  }
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return ''
   }
   return trimmed.length > maxLength ? `${trimmed.slice(0, maxLength - 3)}...` : trimmed
 }
@@ -64,41 +63,92 @@ function buildSvgDataUri(svg: string) {
   return `data:image/svg+xml;utf8,${encodeURIComponent(sanitized)}`
 }
 
-function parsePayload(rawPayload: string | null): ShareCardPayload {
+function parsePayload(rawPayload: string | null): ShareCardPayload | null {
   if (!rawPayload) {
-    return fallbackPayload
+    return null
   }
 
   try {
-    const parsed = JSON.parse(rawPayload) as Partial<ShareCardPayload>
-    const rawImageUrl = typeof parsed.imageUrl === 'string' ? parsed.imageUrl : ''
-    const rawUserImage = typeof parsed.userImage === 'string' ? parsed.userImage : ''
-    const safeImageUrl = sanitizeImageUrl(rawImageUrl)
-    const safeUserImage = sanitizeImageUrl(rawUserImage)
-    return {
-      title: normalizeText(parsed.title, fallbackPayload.title, 140),
-      outcome: normalizeText(parsed.outcome, fallbackPayload.outcome, 24),
-      avgPrice: normalizeText(parsed.avgPrice, fallbackPayload.avgPrice, 24),
-      odds: normalizeText(parsed.odds, fallbackPayload.odds, 16),
-      cost: normalizeText(parsed.cost, fallbackPayload.cost, 24),
-      invested: normalizeText(parsed.invested, fallbackPayload.invested, 24),
-      toWin: normalizeText(parsed.toWin, fallbackPayload.toWin, 24),
-      imageUrl: safeImageUrl || undefined,
-      userName: parsed.userName,
-      userImage: safeUserImage || undefined,
-      variant: parsed.variant === 'no' ? 'no' : 'yes',
-      eventSlug: normalizeText(parsed.eventSlug, fallbackPayload.eventSlug, 120),
+    const parsed = parsePayloadJson(rawPayload)
+    if (!parsed) {
+      return null
     }
+    const normalized = normalizeSharePayload(parsed)
+    return normalized ?? null
   }
   catch (error) {
     console.error('Failed to parse share payload.', error)
-    return fallbackPayload
+    return null
+  }
+}
+
+function parsePayloadJson(rawPayload: string) {
+  try {
+    return JSON.parse(rawPayload) as Partial<ShareCardPayload>
+  }
+  catch {
+    try {
+      const decoded = decodeBase64Url(rawPayload)
+      return JSON.parse(decoded) as Partial<ShareCardPayload>
+    }
+    catch {
+      return null
+    }
+  }
+}
+
+function decodeBase64Url(input: string) {
+  const normalized = input.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = normalized.padEnd(normalized.length + (4 - normalized.length % 4) % 4, '=')
+  const binary = atob(padded)
+  const bytes = Uint8Array.from(binary, char => char.charCodeAt(0))
+  return new TextDecoder().decode(bytes)
+}
+
+function normalizeSharePayload(parsed: Partial<ShareCardPayload>): ShareCardPayload | null {
+  const title = normalizeRequiredText(parsed.title, 140)
+  const outcome = normalizeRequiredText(parsed.outcome, 24)
+  const avgPrice = normalizeRequiredText(parsed.avgPrice, 24)
+  const odds = normalizeRequiredText(parsed.odds, 16)
+  const cost = normalizeRequiredText(parsed.cost, 24)
+  const toWin = normalizeRequiredText(parsed.toWin, 24)
+  const eventSlug = normalizeRequiredText(parsed.eventSlug, 120)
+
+  if (!title || !outcome || !avgPrice || !odds || !cost || !toWin || !eventSlug) {
+    return null
+  }
+
+  const variant = parsed.variant === 'no' || parsed.variant === 'yes' ? parsed.variant : null
+  if (!variant) {
+    return null
+  }
+
+  const rawImageUrl = typeof parsed.imageUrl === 'string' ? parsed.imageUrl : ''
+  const rawUserImage = typeof parsed.userImage === 'string' ? parsed.userImage : ''
+  const safeImageUrl = sanitizeImageUrl(rawImageUrl)
+  const safeUserImage = sanitizeImageUrl(rawUserImage)
+  return {
+    title,
+    outcome,
+    avgPrice,
+    odds,
+    cost,
+    invested: normalizeOptionalText(parsed.invested, 24),
+    toWin,
+    imageUrl: safeImageUrl || undefined,
+    userName: typeof parsed.userName === 'string' ? parsed.userName.trim() || undefined : undefined,
+    userImage: safeUserImage || undefined,
+    variant,
+    eventSlug,
   }
 }
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const payload = parsePayload(searchParams.get('position'))
+  if (!payload) {
+    return new Response('Missing or invalid share payload.', { status: 400 })
+  }
   const variant = payload.variant === 'no' ? 'no' : 'yes'
   const accent = variant === 'no' ? '#ef4444' : '#22c55e'
   const outcomeLabel = payload.outcome || (variant === 'no' ? 'No' : 'Yes')
