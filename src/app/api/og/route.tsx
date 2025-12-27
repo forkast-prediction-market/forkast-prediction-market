@@ -102,9 +102,9 @@ export async function GET(request: Request) {
           <div
             style={{
               position: 'absolute',
-              left: '-18px',
-              top: '50%',
-              transform: 'translateY(-50%)',
+              left: '63%',
+              top: '-18px',
+              transform: 'translateX(-50%)',
               width: '36px',
               height: '36px',
               borderRadius: '999px',
@@ -114,9 +114,9 @@ export async function GET(request: Request) {
           <div
             style={{
               position: 'absolute',
-              right: '-18px',
-              top: '50%',
-              transform: 'translateY(-50%)',
+              left: '63%',
+              bottom: '-18px',
+              transform: 'translateX(-50%)',
               width: '36px',
               height: '36px',
               borderRadius: '999px',
