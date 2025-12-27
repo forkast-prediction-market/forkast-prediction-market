@@ -1,4 +1,4 @@
-import type { MarketTokenTarget } from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
+import type { MarketTokenTarget } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 

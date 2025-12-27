@@ -831,7 +831,7 @@ export default function AdminCreateEventForm() {
       <Card className="bg-background">
         <CardContent className="pt-8 pb-8">
           <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 size-5 text-red-500" />
+            <AlertCircle className="mt-0.5 size-5 text-no" />
             <div className="space-y-2">
               <h4 className="font-semibold">Development Status - Not Ready for Production</h4>
               <ul className="space-y-1 text-sm text-muted-foreground">

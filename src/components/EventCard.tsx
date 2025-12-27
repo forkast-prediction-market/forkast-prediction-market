@@ -559,7 +559,7 @@ export default function EventCard({ event }: EventCardProps) {
                 <div className="flex-1 space-y-3">
                   <div className="relative">
                     <DollarSignIcon
-                      className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-green-600 dark:text-green-400"
+                      className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-yes"
                     />
                     <input
                       type="text"

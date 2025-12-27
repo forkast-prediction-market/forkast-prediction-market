@@ -71,7 +71,7 @@ export default function PortfolioSummaryCard() {
         </div>
 
         <div className="mb-6">
-          <div className={`flex items-center gap-1 text-sm ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`flex items-center gap-1 text-sm ${isPositive ? 'text-yes' : 'text-no'}`}>
             <span>
               $
               {dailyChange.toFixed(2)}

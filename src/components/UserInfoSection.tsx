@@ -62,7 +62,7 @@ export default function UserInfoSection() {
             {copied
               ? (
                   <CheckIcon
-                    className="size-3.5 text-green-500"
+                    className="size-3.5 text-yes"
                     data-testid="check-icon"
                   />
                 )

@@ -39,7 +39,7 @@ export default function HeaderPortfolio() {
       >
         <Link href="/portfolio">
           <div className="text-xs font-medium text-muted-foreground">Portfolio</div>
-          <div className="text-sm font-semibold text-green-600 dark:text-green-400">
+          <div className="text-sm font-semibold text-yes">
             $
             {formattedPortfolioValue}
           </div>
@@ -53,7 +53,7 @@ export default function HeaderPortfolio() {
       >
         <Link href="/portfolio">
           <div className="text-xs font-medium text-muted-foreground">Cash</div>
-          <div className="text-sm font-semibold text-green-600 dark:text-green-400">
+          <div className="text-sm font-semibold text-yes">
             $
             {balance.text}
           </div>

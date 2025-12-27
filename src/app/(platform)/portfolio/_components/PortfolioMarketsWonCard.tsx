@@ -89,7 +89,7 @@ export default function PortfolioMarketsWonCard() {
 
         <div className="flex justify-center">
           <div className="flex size-16 items-center justify-center rounded-full bg-green-500/15">
-            <CircleCheckIcon className="size-14 text-green-500" />
+            <CircleCheckIcon className="size-14 text-yes" />
           </div>
         </div>
 

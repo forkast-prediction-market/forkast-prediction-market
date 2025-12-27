@@ -116,7 +116,7 @@ export function FeeCalculationExample({ amount, className = '', format = 'table'
                 {calculation.affiliateSharePercent}
                 %):
               </span>
-              <span className="font-mono text-green-600">
+              <span className="font-mono text-yes">
                 $
                 {calculation.affiliateCommission}
               </span>

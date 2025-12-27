@@ -1,6 +1,6 @@
 'use client'
 
-import type { MarketQuote } from '@/app/(platform)/event/[slug]/_components/useEventMidPrices'
+import type { MarketQuote } from '@/app/(platform)/event/[slug]/_hooks/useEventMidPrices'
 import { createContext, use, useEffect, useMemo, useState } from 'react'
 
 interface EventOutcomeChanceContextValue {

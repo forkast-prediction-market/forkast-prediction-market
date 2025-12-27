@@ -41,7 +41,7 @@ export default function PortfolioProfitLossCard() {
 
   function getStatusIcon() {
     if (isPositive) {
-      return <TriangleIcon className="size-4 fill-green-600 text-green-600" />
+      return <TriangleIcon className="size-4 fill-yes text-yes" />
     }
     else if (isNegative) {
       return <TriangleIcon className="size-4 rotate-180 fill-red-600 text-red-600" />
@@ -67,7 +67,7 @@ export default function PortfolioProfitLossCard() {
         </div>
 
         <div className="mb-2 flex items-center justify-between">
-          <div className={`text-3xl font-bold ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
+          <div className={`text-3xl font-bold ${isPositive ? 'text-yes' : 'text-no'}`}>
             {isPositive ? '+' : isNegative ? '-' : ''}
             $
             {Math.abs(profitLoss).toFixed(2)}

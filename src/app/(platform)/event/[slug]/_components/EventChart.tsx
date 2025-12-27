@@ -1,7 +1,7 @@
 'use client'
 
-import type { MarketQuote } from '@/app/(platform)/event/[slug]/_components/useEventMidPrices'
-import type { TimeRange } from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
+import type { MarketQuote } from '@/app/(platform)/event/[slug]/_hooks/useEventMidPrices'
+import type { TimeRange } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import type { PredictionChartCursorSnapshot, SeriesConfig } from '@/components/PredictionChart'
 import type { Event } from '@/types'
 import { ShuffleIcon, TriangleIcon } from 'lucide-react'
@@ -17,12 +17,12 @@ import {
   useUpdateMarketQuotes,
   useUpdateMarketYesPrices,
 } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
-import { useEventMarketQuotes } from '@/app/(platform)/event/[slug]/_components/useEventMidPrices'
+import { useEventMarketQuotes } from '@/app/(platform)/event/[slug]/_hooks/useEventMidPrices'
 import {
   buildMarketTargets,
   TIME_RANGES,
   useEventPriceHistory,
-} from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
+} from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import PredictionChart from '@/components/PredictionChart'
 import {
   Tooltip,
@@ -585,7 +585,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
 
               const isPositive = roundedChange > 0
               const magnitude = Math.abs(roundedChange)
-              const colorClass = isPositive ? 'text-emerald-500' : 'text-red-500'
+              const colorClass = isPositive ? 'text-yes' : 'text-no'
 
               return (
                 <div className={`flex items-center gap-1 tabular-nums ${colorClass}`}>

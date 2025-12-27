@@ -1,14 +1,13 @@
 'use client'
 
-import type { TimeRange } from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
+import type { TimeRange } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import type { Market, Outcome } from '@/types'
 import { useMemo, useState } from 'react'
 import {
   buildMarketTargets,
   TIME_RANGES,
-
   useEventPriceHistory,
-} from '@/app/(platform)/event/[slug]/_components/useEventPriceHistory'
+} from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import PredictionChart from '@/components/PredictionChart'
 import { cn } from '@/lib/utils'
 

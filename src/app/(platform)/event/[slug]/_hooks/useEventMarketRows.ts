@@ -1,4 +1,4 @@
-import type { MarketQuote } from '@/app/(platform)/event/[slug]/_components/useEventMidPrices'
+import type { MarketQuote } from '@/app/(platform)/event/[slug]/_hooks/useEventMidPrices'
 import type { Event, Outcome } from '@/types'
 import { useEffect, useMemo } from 'react'
 import { useEventOutcomeChanceChanges, useEventOutcomeChances, useMarketQuotes, useMarketYesPrices } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
