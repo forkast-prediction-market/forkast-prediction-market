@@ -713,8 +713,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
           return requestedShares.toString()
         }
 
-        const cost = marketBuyFill?.totalCost ?? amountNumber
-        return cost.toString()
+        return (state.amount || amountNumber.toString())
       }
 
       if (state.side === ORDER_SIDE.SELL) {
