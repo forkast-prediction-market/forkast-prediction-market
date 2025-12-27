@@ -1,7 +1,7 @@
 import type { Market } from '@/types'
 
 function clampPrice(value: number | null | undefined) {
-  if (!Number.isFinite(value)) {
+  if (value == null || !Number.isFinite(value)) {
     return 0
   }
   if (value < 0) {
