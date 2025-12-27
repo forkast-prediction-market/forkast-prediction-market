@@ -34,7 +34,7 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { defaultNetwork } from '@/lib/appkit'
 import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE, MICRO_UNIT, OUTCOME_INDEX } from '@/lib/constants'
 import { ZERO_COLLECTION_ID } from '@/lib/contracts'
-import { formatCurrency, toMicro } from '@/lib/formatters'
+import { formatCurrency, formatPercent, toMicro } from '@/lib/formatters'
 import { aggregateSafeTransactions, buildMergePositionTransaction, getSafeTxTypedData, packSafeSignature } from '@/lib/safe/transactions'
 
 import { cn } from '@/lib/utils'
@@ -62,8 +62,11 @@ interface ShareCardPayload {
   title: string
   outcome: string
   avgPrice: string
+  odds: string
+  cost: string
   invested: string
   toWin: string
+  imageUrl?: string
   variant: ShareCardVariant
   eventSlug: string
 }
@@ -99,14 +102,21 @@ function buildShareCardPayload(position: PublicPosition): ShareCardPayload {
   const shares = position.size ?? 0
   const tradeValue = shares * avgPrice
   const toWinValue = shares
+  const nowPrice = Number.isFinite(position.curPrice) && position.curPrice !== undefined
+    ? position.curPrice!
+    : avgPrice
   const outcome = getOutcomeLabel(position)
+  const imageUrl = position.icon ? `https://gateway.irys.xyz/${position.icon}` : undefined
 
   return {
     title: position.title || 'Untitled market',
     outcome,
     avgPrice: formatCents(avgPrice),
+    odds: formatPercent(nowPrice * 100, { digits: 0 }),
+    cost: formatCurrencyValue(tradeValue),
     invested: formatCurrencyValue(tradeValue),
     toWin: formatCurrencyValue(toWinValue),
+    imageUrl,
     variant: getOutcomeVariant(position),
     eventSlug: position.eventSlug || position.slug,
   }
@@ -1059,6 +1069,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       `}
       >
         {shareCardUrl && (
+          // eslint-disable-next-line next/no-img-element
           <img
             key={shareCardUrl}
             src={shareCardUrl}

@@ -4,8 +4,11 @@ interface ShareCardPayload {
   title: string
   outcome: string
   avgPrice: string
+  odds: string
+  cost: string
   invested: string
   toWin: string
+  imageUrl?: string
   variant: 'yes' | 'no'
   eventSlug: string
 }
@@ -14,6 +17,8 @@ const fallbackPayload: ShareCardPayload = {
   title: 'Untitled market',
   outcome: 'Yes',
   avgPrice: '50c',
+  odds: '50%',
+  cost: '$0.00',
   invested: '$0.00',
   toWin: '$0.00',
   variant: 'yes',
@@ -38,12 +43,17 @@ function parsePayload(rawPayload: string | null): ShareCardPayload {
 
   try {
     const parsed = JSON.parse(rawPayload) as Partial<ShareCardPayload>
+    const rawImageUrl = typeof parsed.imageUrl === 'string' ? parsed.imageUrl.trim() : ''
+    const safeImageUrl = rawImageUrl && rawImageUrl.length <= 2048 ? rawImageUrl : ''
     return {
       title: normalizeText(parsed.title, fallbackPayload.title, 140),
       outcome: normalizeText(parsed.outcome, fallbackPayload.outcome, 24),
       avgPrice: normalizeText(parsed.avgPrice, fallbackPayload.avgPrice, 24),
+      odds: normalizeText(parsed.odds, fallbackPayload.odds, 16),
+      cost: normalizeText(parsed.cost, fallbackPayload.cost, 24),
       invested: normalizeText(parsed.invested, fallbackPayload.invested, 24),
       toWin: normalizeText(parsed.toWin, fallbackPayload.toWin, 24),
+      imageUrl: safeImageUrl || undefined,
       variant: parsed.variant === 'no' ? 'no' : 'yes',
       eventSlug: normalizeText(parsed.eventSlug, fallbackPayload.eventSlug, 120),
     }
@@ -59,8 +69,6 @@ export async function GET(request: Request) {
   const payload = parsePayload(searchParams.get('position'))
   const variant = payload.variant === 'no' ? 'no' : 'yes'
   const accent = variant === 'no' ? '#ef4444' : '#22c55e'
-  const accentSoft = variant === 'no' ? '#fee2e2' : '#dcfce7'
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Forkast'
   const outcomeLabel = payload.outcome || (variant === 'no' ? 'No' : 'Yes')
 
   const response = new ImageResponse(
@@ -72,8 +80,8 @@ export async function GET(request: Request) {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #0f172a 0%, #111827 100%)',
-          padding: '48px',
+          background: 'linear-gradient(135deg, #0f172a 0%, #0b1324 100%)',
+          padding: '56px',
           fontFamily: 'ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif',
         }}
       >
@@ -82,91 +90,210 @@ export async function GET(request: Request) {
             width: '100%',
             height: '100%',
             display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'space-between',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative',
             backgroundColor: '#ffffff',
-            borderRadius: '32px',
-            padding: '52px',
+            borderRadius: '28px',
+            padding: '44px',
+            boxShadow: '0 18px 40px rgba(15, 23, 42, 0.35)',
           }}
         >
           <div
             style={{
+              position: 'absolute',
+              left: '-18px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '36px',
+              height: '36px',
+              borderRadius: '999px',
+              backgroundColor: '#0b1324',
+            }}
+          />
+          <div
+            style={{
+              position: 'absolute',
+              right: '-18px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              width: '36px',
+              height: '36px',
+              borderRadius: '999px',
+              backgroundColor: '#0b1324',
+            }}
+          />
+          <div
+            style={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: '16px',
+              width: '100%',
+              height: '100%',
+              gap: '32px',
             }}
           >
-            <div
-              style={{
-                fontSize: '28px',
-                fontWeight: 600,
-                color: '#94a3b8',
-              }}
-            >
-              {siteName}
-            </div>
             <div
               style={{
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: accentSoft,
-                color: accent,
-                borderRadius: '999px',
-                padding: '10px 20px',
-                fontSize: '24px',
-                fontWeight: 700,
-                letterSpacing: '0.04em',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                flex: '3 1 0%',
+                minWidth: 0,
               }}
             >
-              {`Bought ${outcomeLabel}`}
-            </div>
-          </div>
-
-          <div
-            style={{
-              marginTop: '26px',
-              fontSize: '48px',
-              fontWeight: 700,
-              color: '#0f172a',
-              lineHeight: '1.2',
-              flexGrow: 1,
-            }}
-          >
-            {payload.title}
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'flex-end',
-              justifyContent: 'space-between',
-              gap: '24px',
-            }}
-          >
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <div style={{ fontSize: '24px', color: '#64748b' }}>Avg price</div>
-              <div style={{ fontSize: '36px', fontWeight: 700, color: '#0f172a' }}>
-                {payload.avgPrice}
+              <div
+                style={{
+                  display: 'flex',
+                  width: '160px',
+                  height: '160px',
+                  borderRadius: '20px',
+                  backgroundColor: '#e2e8f0',
+                  overflow: 'hidden',
+                  border: '2px solid #e2e8f0',
+                }}
+              >
+                {payload.imageUrl
+                  ? (
+                      // eslint-disable-next-line next/no-img-element
+                      <img
+                        src={payload.imageUrl}
+                        alt=""
+                        width={160}
+                        height={160}
+                        style={{
+                          width: '160px',
+                          height: '160px',
+                          objectFit: 'cover',
+                        }}
+                      />
+                    )
+                  : (
+                      <div
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#475569',
+                          fontSize: '18px',
+                          fontWeight: 600,
+                        }}
+                      >
+                        No image
+                      </div>
+                    )}
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  fontSize: '48px',
+                  fontWeight: 800,
+                  color: '#0f172a',
+                  lineHeight: 1.2,
+                }}
+              >
+                {payload.title}
               </div>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', textAlign: 'right' }}>
-              <div style={{ fontSize: '24px', color: '#64748b' }}>To win</div>
-              <div style={{ fontSize: '48px', fontWeight: 800, color: accent }}>
-                {payload.toWin}
+            <div
+              style={{
+                width: '1px',
+                backgroundColor: '#e2e8f0',
+                alignSelf: 'stretch',
+              }}
+            />
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                flex: '2 1 0%',
+                minWidth: 0,
+                alignItems: 'stretch',
+                paddingLeft: '12px',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px',
+                  alignItems: 'stretch',
+                  width: '100%',
+                }}
+              >
+                <div
+                  style={{
+                    color: accent,
+                    fontSize: '52px',
+                    fontWeight: 900,
+                    letterSpacing: '0.02em',
+                  }}
+                >
+                  {`Bought ${outcomeLabel}`}
+                </div>
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '10px',
+                    maxWidth: '100%',
+                    width: '100%',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                    }}
+                  >
+                    <div style={{ display: 'flex', fontSize: '32px', color: '#64748b' }}>Cost</div>
+                    <div style={{ display: 'flex', fontSize: '32px', fontWeight: 700, color: '#0f172a' }}>
+                      {payload.cost}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      width: '100%',
+                    }}
+                  >
+                    <div style={{ display: 'flex', fontSize: '32px', color: '#64748b' }}>Odds</div>
+                    <div style={{ display: 'flex', fontSize: '32px', fontWeight: 700, color: '#0f172a' }}>
+                      {payload.odds}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    width: '100%',
+                    height: '1px',
+                    backgroundColor: '#e2e8f0',
+                  }}
+                />
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'baseline',
+                    justifyContent: 'space-between',
+                    width: '100%',
+                  }}
+                >
+                  <div style={{ display: 'flex', fontSize: '38px', fontWeight: 900, color: '#0f172a' }}>To win</div>
+                  <div style={{ display: 'flex', fontSize: '64px', fontWeight: 900, color: '#0f172a' }}>
+                    {payload.toWin}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div
-            style={{
-              marginTop: '24px',
-              fontSize: '24px',
-              color: '#64748b',
-            }}
-          >
-            {`Invested ${payload.invested}`}
           </div>
         </div>
       </div>
