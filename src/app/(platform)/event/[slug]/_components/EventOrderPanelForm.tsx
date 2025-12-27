@@ -19,7 +19,6 @@ import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components
 import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
 import { buildUserOpenOrdersQueryKey, useUserOpenOrdersQuery } from '@/app/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
 import { useUserShareBalances } from '@/app/(platform)/event/[slug]/_hooks/useUserShareBalances'
-import { Button } from '@/components/ui/button'
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { SAFE_BALANCE_QUERY_KEY, useBalance } from '@/hooks/useBalance'
@@ -524,7 +523,8 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const effectiveMarketBuyCost = state.side === ORDER_SIDE.BUY && state.type === ORDER_TYPE.MARKET
     ? (marketBuyFill?.totalCost ?? amountNumber)
     : 0
-  const shouldShowDepositCta = state.side === ORDER_SIDE.BUY
+  const shouldShowDepositCta = isConnected
+    && state.side === ORDER_SIDE.BUY
     && state.type === ORDER_TYPE.MARKET
     && Math.max(effectiveMarketBuyCost, amountNumber) > balance.raw
 
@@ -1024,29 +1024,37 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         </div>
       )}
 
-      {shouldShowDepositCta
-        ? (
-            <Button
-              type="button"
-              size="outcome"
-              disabled={state.isLoading}
-              aria-disabled={state.isLoading}
-              onClick={() => {
-                focusInput()
-                startDepositFlow()
-              }}
-              className="w-full text-base font-bold"
-            >
-              Deposit
-            </Button>
-          )
-        : (
-            <EventOrderPanelSubmitButton
-              isLoading={state.isLoading}
-              isDisabled={state.isLoading}
-              onClick={event => state.setLastMouseEvent(event)}
-            />
-          )}
+      <EventOrderPanelSubmitButton
+        type={!isConnected || shouldShowDepositCta ? 'button' : 'submit'}
+        isLoading={state.isLoading}
+        isDisabled={state.isLoading}
+        onClick={(event) => {
+          if (!isConnected) {
+            open()
+            return
+          }
+          if (shouldShowDepositCta) {
+            focusInput()
+            startDepositFlow()
+            return
+          }
+          state.setLastMouseEvent(event)
+        }}
+        label={(() => {
+          if (!isConnected) {
+            return 'Trade'
+          }
+          if (shouldShowDepositCta) {
+            return 'Deposit'
+          }
+          const outcomeLabel = selectedShareLabel
+          if (outcomeLabel) {
+            const verb = state.side === ORDER_SIDE.SELL ? 'Sell' : 'Buy'
+            return `${verb} ${outcomeLabel}`
+          }
+          return 'Trade'
+        })()}
+      />
       <EventOrderPanelTermsDisclaimer />
     </Form>
   )
