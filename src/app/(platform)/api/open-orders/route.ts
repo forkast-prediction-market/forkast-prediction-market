@@ -50,6 +50,9 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const limit = Number.parseInt(searchParams.get('limit') || '50', 10)
     const offset = Number.parseInt(searchParams.get('offset') || '0', 10)
+    const idFilter = searchParams.get('id')?.trim() || undefined
+    const marketFilter = searchParams.get('market')?.trim() || undefined
+    const assetIdFilter = searchParams.get('asset_id')?.trim() || undefined
     const validatedLimit = Number.isNaN(limit) ? 50 : Math.min(Math.max(1, limit), 100)
     const validatedOffset = Number.isNaN(offset) ? 0 : Math.max(0, offset)
 
@@ -57,6 +60,9 @@ export async function GET(request: Request) {
       auth: tradingAuth.clob,
       userAddress: user.address,
       makerAddress: user.proxy_wallet_address as string,
+      id: idFilter,
+      market: marketFilter,
+      assetId: assetIdFilter,
     })
 
     const conditionIds = Array.from(
@@ -98,12 +104,31 @@ async function fetchClobOpenOrders({
   auth,
   userAddress,
   makerAddress,
+  id,
+  market,
+  assetId,
 }: {
   auth: { key: string, secret: string, passphrase: string }
   userAddress: string
   makerAddress?: string
+  id?: string
+  market?: string
+  assetId?: string
 }): Promise<ClobOpenOrder[]> {
-  const path = makerAddress ? `/data/orders?maker=${encodeURIComponent(makerAddress)}` : '/data/orders'
+  const params = new URLSearchParams()
+  if (makerAddress) {
+    params.set('maker', makerAddress)
+  }
+  if (id) {
+    params.set('id', id)
+  }
+  if (market) {
+    params.set('market', market)
+  }
+  if (assetId) {
+    params.set('asset_id', assetId)
+  }
+  const path = params.toString() ? `/data/orders?${params.toString()}` : '/data/orders'
   const timestamp = Math.floor(Date.now() / 1000)
   const signature = buildClobHmacSignature(auth.secret, timestamp, 'GET', path)
 

@@ -34,7 +34,6 @@ import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE, MICRO_UNIT, OUTCOME
 import { ZERO_COLLECTION_ID } from '@/lib/contracts'
 import { formatCentsLabel, formatCurrency, formatPercent, toMicro } from '@/lib/formatters'
 import { aggregateSafeTransactions, buildMergePositionTransaction, getSafeTxTypedData, packSafeSignature } from '@/lib/safe/transactions'
-
 import { cn } from '@/lib/utils'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useUser } from '@/stores/useUser'
@@ -139,7 +138,47 @@ function getTradeValue(position: PublicPosition) {
 }
 
 function getValue(position: PublicPosition) {
-  return position.currentValue ?? 0
+  const currentValue = Number(position.currentValue)
+  if (Number.isFinite(currentValue)) {
+    return currentValue
+  }
+
+  const size = Number(position.size)
+  if (!Number.isFinite(size) || size <= 0) {
+    return 0
+  }
+
+  const avgPrice = Number(position.avgPrice)
+  if (Number.isFinite(avgPrice)) {
+    return size * avgPrice
+  }
+
+  const curPrice = Number(position.curPrice)
+  if (Number.isFinite(curPrice)) {
+    return size * curPrice
+  }
+
+  return 0
+}
+
+function getLatestPrice(position: PublicPosition) {
+  const curPrice = Number(position.curPrice)
+  if (Number.isFinite(curPrice)) {
+    return curPrice
+  }
+
+  const avgPrice = Number(position.avgPrice)
+  if (Number.isFinite(avgPrice)) {
+    return avgPrice
+  }
+
+  const size = Number(position.size)
+  const currentValue = Number(position.currentValue)
+  if (Number.isFinite(size) && size > 0 && Number.isFinite(currentValue)) {
+    return currentValue / size
+  }
+
+  return 0
 }
 
 function getPnlValue(position: PublicPosition) {
@@ -149,6 +188,85 @@ function getPnlValue(position: PublicPosition) {
 function getPnlPercent(position: PublicPosition) {
   const trade = getTradeValue(position)
   return trade > 0 ? (getPnlValue(position) / trade) * 100 : 0
+}
+
+function parseNumber(value?: number | string | null) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : Number.NaN
+  }
+  if (typeof value === 'string') {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : Number.NaN
+  }
+  return Number.NaN
+}
+
+function resolvePositionsSortParams(sortBy: SortOption) {
+  switch (sortBy) {
+    case 'alpha':
+      return { sortBy: 'TITLE', sortDirection: 'ASC' as const }
+    case 'endingSoon':
+      return { sortBy: 'RESOLVING', sortDirection: 'ASC' as const }
+    case 'shares':
+      return { sortBy: 'TOKENS', sortDirection: 'DESC' as const }
+    case 'trade':
+      return { sortBy: 'INITIAL', sortDirection: 'DESC' as const }
+    case 'pnlPercent':
+      return { sortBy: 'PERCENTPNL', sortDirection: 'DESC' as const }
+    case 'pnlValue':
+      return { sortBy: 'CASHPNL', sortDirection: 'DESC' as const }
+    case 'latestPrice':
+      return { sortBy: 'PRICE', sortDirection: 'DESC' as const }
+    case 'avgCost':
+      return { sortBy: 'AVGPRICE', sortDirection: 'DESC' as const }
+    case 'payout':
+      return { sortBy: 'TOKENS', sortDirection: 'DESC' as const }
+    case 'currentValue':
+    default:
+      return { sortBy: 'CURRENT', sortDirection: 'DESC' as const }
+  }
+}
+
+function isClientOnlySort(sortBy: SortOption) {
+  return sortBy === 'currentValue' || sortBy === 'latestPrice'
+}
+
+function resolvePositionsSearchParams(searchQuery: string) {
+  const trimmed = searchQuery.trim()
+  if (!trimmed) {
+    return {}
+  }
+
+  const parts = trimmed.split(',').map(part => part.trim()).filter(Boolean)
+  const isConditionList = parts.length > 0
+    && parts.every(part => /^0x[a-fA-F0-9]{64}$/.test(part))
+
+  if (isConditionList) {
+    return { market: parts.join(',') }
+  }
+
+  return { title: trimmed.slice(0, 100) }
+}
+
+function matchesPositionsSearchQuery(position: PublicPosition, searchQuery: string) {
+  const trimmed = searchQuery.trim().toLowerCase()
+  if (!trimmed) {
+    return true
+  }
+
+  const marketTitle = position.title?.toLowerCase() ?? ''
+  const outcomeText = position.outcome?.toLowerCase() ?? ''
+  const eventSlug = position.eventSlug?.toLowerCase() ?? ''
+  const slug = position.slug?.toLowerCase() ?? ''
+  const conditionId = position.conditionId?.toLowerCase() ?? ''
+
+  return (
+    marketTitle.includes(trimmed)
+    || outcomeText.includes(trimmed)
+    || eventSlug.includes(trimmed)
+    || slug.includes(trimmed)
+    || conditionId.includes(trimmed)
+  )
 }
 
 interface PositionsFilterControlsProps {
@@ -177,7 +295,7 @@ function PositionsFilterControls({
             type="text"
             placeholder="Search markets..."
             value={searchQuery}
-            onClick={() => handleSearchChange('')}
+            onChange={event => handleSearchChange(event.target.value)}
             className="w-full pr-3 pl-9"
           />
         </div>
@@ -226,6 +344,7 @@ interface FetchUserPositionsParams {
   userAddress: string
   status: 'active' | 'closed'
   minAmountFilter: string
+  sortBy: SortOption
   searchQuery?: string
   signal?: AbortSignal
 }
@@ -265,11 +384,32 @@ function mapDataApiPosition(position: DataApiPosition, status: 'active' | 'close
   const timestampMs = typeof position.timestamp === 'number'
     ? position.timestamp * 1000
     : Date.now()
-  const currentValue = Number.isFinite(position.currentValue) ? Number(position.currentValue) : 0
-  const realizedValue = Number.isFinite(position.realizedPnl)
-    ? Number(position.realizedPnl)
-    : currentValue
+  const sizeValue = parseNumber(position.size)
+  const avgPriceValue = parseNumber(position.avgPrice)
+  const currentValueRaw = parseNumber(position.currentValue)
+  const realizedValueRaw = parseNumber(position.realizedPnl)
+  const curPriceRaw = parseNumber(position.curPrice)
+
+  let derivedCurrentValue = Number.isFinite(currentValueRaw) ? currentValueRaw : Number.NaN
+  if (!Number.isFinite(derivedCurrentValue)) {
+    if (Number.isFinite(sizeValue) && sizeValue > 0) {
+      if (Number.isFinite(curPriceRaw)) {
+        derivedCurrentValue = sizeValue * curPriceRaw
+      }
+      else if (Number.isFinite(avgPriceValue)) {
+        derivedCurrentValue = sizeValue * avgPriceValue
+      }
+    }
+  }
+
+  const currentValue = Number.isFinite(derivedCurrentValue) ? derivedCurrentValue : 0
+  const realizedValue = Number.isFinite(realizedValueRaw) ? realizedValueRaw : currentValue
   const normalizedValue = status === 'closed' ? realizedValue : currentValue
+  const derivedCurPrice = Number.isFinite(curPriceRaw)
+    ? curPriceRaw
+    : (Number.isFinite(sizeValue) && sizeValue > 0 && Number.isFinite(currentValue))
+        ? currentValue / sizeValue
+        : (Number.isFinite(avgPriceValue) ? avgPriceValue : Number.NaN)
 
   return {
     id: `${position.conditionId || slug}-${position.outcomeIndex ?? 0}-${status}`,
@@ -278,16 +418,16 @@ function mapDataApiPosition(position: DataApiPosition, status: 'active' | 'close
     eventSlug,
     icon: position.icon,
     conditionId: position.conditionId,
-    avgPrice: Number.isFinite(position.avgPrice) ? Number(position.avgPrice) : 0,
+    avgPrice: Number.isFinite(avgPriceValue) ? avgPriceValue : 0,
     currentValue: normalizedValue,
-    curPrice: Number.isFinite(position.curPrice) ? Number(position.curPrice) : undefined,
+    curPrice: Number.isFinite(derivedCurPrice) ? derivedCurPrice : undefined,
     timestamp: timestampMs,
     status,
     outcome: position.outcome,
     outcomeIndex: position.outcomeIndex,
     oppositeOutcome: position.oppositeOutcome,
     mergeable: Boolean(position.mergeable),
-    size: typeof position.size === 'number' ? position.size : undefined,
+    size: Number.isFinite(sizeValue) ? sizeValue : undefined,
   }
 }
 
@@ -420,15 +560,18 @@ async function fetchUserPositions({
   userAddress,
   status,
   minAmountFilter,
+  sortBy,
   searchQuery,
   signal,
 }: FetchUserPositionsParams): Promise<PublicPosition[]> {
   const endpoint = status === 'active' ? '/positions' : '/closed-positions'
+  const { sortBy: apiSortBy, sortDirection } = resolvePositionsSortParams(sortBy)
+  const { market, title } = resolvePositionsSearchParams(searchQuery ?? '')
+  const shouldApplySort = status === 'active' && !isClientOnlySort(sortBy)
   const params = new URLSearchParams({
     user: userAddress,
     limit: '50',
     offset: pageParam.toString(),
-    sortDirection: 'DESC',
   })
 
   if (status === 'active') {
@@ -438,32 +581,62 @@ async function fetchUserPositions({
     else {
       params.set('sizeThreshold', '0')
     }
-  }
-
-  if (searchQuery && searchQuery.trim()) {
-    params.set('title', searchQuery.trim())
+    if (shouldApplySort) {
+      params.set('sortBy', apiSortBy)
+      params.set('sortDirection', sortDirection)
+    }
+    if (market) {
+      params.set('market', market)
+    }
+    else if (title) {
+      params.set('title', title)
+    }
   }
 
   if (status === 'closed') {
     params.set('sortBy', 'TIMESTAMP')
+    params.set('sortDirection', 'DESC')
+    if (market) {
+      params.set('market', market)
+    }
+    else if (title) {
+      params.set('title', title)
+    }
   }
 
-  const response = await fetch(`${DATA_API_URL}${endpoint}?${params.toString()}`, {
-    signal,
-  })
+  async function requestPositions(requestParams: URLSearchParams) {
+    const response = await fetch(`${DATA_API_URL}${endpoint}?${requestParams.toString()}`, { signal })
 
-  if (!response.ok) {
-    const errorBody = await response.json().catch(() => null)
-    const errorMessage = errorBody?.error || 'Server error occurred. Please try again later.'
-    throw new Error(errorMessage)
+    if (!response.ok) {
+      const errorBody = await response.json().catch(() => null)
+      const errorMessage = errorBody?.error || 'Server error occurred. Please try again later.'
+      throw new Error(errorMessage)
+    }
+
+    const result = await response.json()
+    if (!Array.isArray(result)) {
+      throw new TypeError('Unexpected response from data service.')
+    }
+
+    return result.map((item: DataApiPosition) => mapDataApiPosition(item, status))
   }
 
-  const result = await response.json()
-  if (!Array.isArray(result)) {
-    throw new TypeError('Unexpected response from data service.')
+  try {
+    return await requestPositions(params)
   }
+  catch (error) {
+    const message = error instanceof Error ? error.message.toLowerCase() : ''
+    const shouldRetry = (message.includes('sortby') || message.includes('sortdirection') || message.includes('unknown_field'))
+      && (params.has('sortBy') || params.has('sortDirection'))
+    if (!shouldRetry) {
+      throw error
+    }
 
-  return result.map((item: DataApiPosition) => mapDataApiPosition(item, status))
+    const fallbackParams = new URLSearchParams(params.toString())
+    fallbackParams.delete('sortBy')
+    fallbackParams.delete('sortDirection')
+    return requestPositions(fallbackParams)
+  }
 }
 
 interface PublicPositionsListProps {
@@ -524,13 +697,14 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     hasNextPage,
     refetch,
   } = useInfiniteQuery<PublicPosition[]>({
-    queryKey: ['user-positions', userAddress, marketStatusFilter, minAmountFilter, debouncedSearchQuery],
+    queryKey: ['user-positions', userAddress, marketStatusFilter, minAmountFilter, debouncedSearchQuery, sortBy],
     queryFn: ({ pageParam = 0, signal }) =>
       fetchUserPositions({
         pageParam: pageParam as unknown as number,
         userAddress,
         status: marketStatusFilter,
         minAmountFilter,
+        sortBy,
         searchQuery: debouncedSearchQuery,
         signal,
       }),
@@ -551,8 +725,13 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     [data?.pages],
   )
 
+  const visiblePositions = useMemo(
+    () => positions.filter(position => matchesPositionsSearchQuery(position, debouncedSearchQuery)),
+    [debouncedSearchQuery, positions],
+  )
+
   const sortedPositions = useMemo(() => {
-    const list = [...positions]
+    const list = [...visiblePositions]
 
     list.sort((a, b) => {
       switch (sortBy) {
@@ -571,9 +750,9 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         case 'endingSoon':
           return (a.timestamp ?? 0) - (b.timestamp ?? 0)
         case 'payout':
-          return getValue(b) - getValue(a)
+          return (b.size ?? 0) - (a.size ?? 0)
         case 'latestPrice':
-          return (b.curPrice ?? 0) - (a.curPrice ?? 0)
+          return getLatestPrice(b) - getLatestPrice(a)
         case 'avgCost':
           return (b.avgPrice ?? 0) - (a.avgPrice ?? 0)
         default:
@@ -582,7 +761,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     })
 
     return list
-  }, [positions, sortBy])
+  }, [sortBy, visiblePositions])
 
   const loading = status === 'pending'
   const hasInitialError = status === 'error'
@@ -621,7 +800,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-  }, [debouncedSearchQuery, minAmountFilter, marketStatusFilter])
+  }, [debouncedSearchQuery, minAmountFilter, marketStatusFilter, sortBy])
 
   useEffect(() => {
     if (!hasNextPage || !loadMoreRef.current) {
@@ -815,16 +994,16 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
   ])
 
   const totals = useMemo(() => {
-    const trade = positions.reduce((sum, position) => {
+    const trade = visiblePositions.reduce((sum, position) => {
       const tradeValue = (position.size ?? 0) * (position.avgPrice ?? 0)
       return sum + tradeValue
     }, 0)
-    const value = positions.reduce((sum, position) => sum + (position.currentValue ?? 0), 0)
-    const toWin = positions.reduce((sum, position) => sum + (position.size ?? 0), 0)
+    const value = visiblePositions.reduce((sum, position) => sum + (position.currentValue ?? 0), 0)
+    const toWin = visiblePositions.reduce((sum, position) => sum + (position.size ?? 0), 0)
     const diff = value - trade
     const pct = trade > 0 ? (diff / trade) * 100 : 0
     return { trade, value, diff, pct, toWin }
-  }, [positions])
+  }, [visiblePositions])
 
   const shareCardPayload = useMemo(() => {
     if (!sharePosition) {
@@ -981,12 +1160,10 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     return sortedPositions.map((position, index) => {
       const imageSrc = position.icon ? `https://gateway.irys.xyz/${position.icon}` : null
       const avgPrice = position.avgPrice ?? 0
-      const nowPrice = Number.isFinite(position.curPrice) && position.curPrice !== undefined
-        ? position.curPrice!
-        : avgPrice
+      const nowPrice = getLatestPrice(position)
       const shares = position.size ?? 0
       const tradeValue = shares * avgPrice
-      const currentValue = Number.isFinite(position.currentValue) ? Number(position.currentValue) : 0
+      const currentValue = getValue(position)
       const toWinValue = shares
       const pnlDiff = currentValue - tradeValue
       const pnlPct = tradeValue > 0 ? (pnlDiff / tradeValue) * 100 : 0
@@ -1072,7 +1249,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
           </div>
 
           <div className="text-right text-sm font-semibold text-foreground">
-            {formatCurrencyValue(toWinValue)}
+            {formatCurrencyValue(currentValue)}
             <div className={cn('text-xs', pnlDiff >= 0 ? 'text-yes' : 'text-no')}>
               {`${pnlDiff >= 0 ? '+' : '-'}${formatCurrency(Math.abs(pnlDiff))}`}
               {' '}
@@ -1229,13 +1406,13 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
             />
           )}
 
-          {!loading && positions.length === 0 && !hasInitialError && (
+          {!loading && visiblePositions.length === 0 && !hasInitialError && (
             <div className="py-12 text-center text-sm text-muted-foreground">
               {marketStatusFilter === 'active' ? 'No positions found.' : 'No closed positions found.'}
             </div>
           )}
 
-          {!loading && positions.length > 0 && (
+          {!loading && visiblePositions.length > 0 && (
             <div className="space-y-0">
               {renderRows()}
 

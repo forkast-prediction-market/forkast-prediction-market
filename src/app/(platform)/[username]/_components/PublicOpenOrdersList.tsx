@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useDebounce } from '@/hooks/useDebounce'
 import { MICRO_UNIT } from '@/lib/constants'
 import { formatCurrency } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -17,6 +18,8 @@ import { cn } from '@/lib/utils'
 interface PublicOpenOrdersListProps {
   userAddress: string
 }
+
+type OpenOrdersSort = 'market' | 'filled' | 'total' | 'date' | 'resolving'
 
 function formatCents(price?: number) {
   return `${Math.round((price ?? 0) * 100)}¢`
@@ -48,6 +51,80 @@ function formatExpirationLabel(order: PublicUserOpenOrder) {
   })
 }
 
+function matchesSearchQuery(order: PublicUserOpenOrder, searchQuery: string) {
+  const trimmed = searchQuery.trim().toLowerCase()
+  if (!trimmed) {
+    return true
+  }
+
+  const marketTitle = order.market.title?.toLowerCase() ?? ''
+  const eventTitle = order.market.event_title?.toLowerCase() ?? ''
+  const outcomeText = order.outcome.text?.toLowerCase() ?? ''
+  const orderId = order.id?.toLowerCase() ?? ''
+  return (
+    marketTitle.includes(trimmed)
+    || eventTitle.includes(trimmed)
+    || outcomeText.includes(trimmed)
+    || orderId.includes(trimmed)
+  )
+}
+
+function resolveOpenOrdersSearchParams(searchQuery: string) {
+  const trimmed = searchQuery.trim()
+  if (!trimmed) {
+    return {}
+  }
+
+  const upper = trimmed.toUpperCase()
+  const isUlid = /^[0-9A-HJKMNP-TV-Z]{26}$/.test(upper)
+  if (isUlid) {
+    return { id: trimmed }
+  }
+
+  const normalized = trimmed.toLowerCase()
+  if (normalized.startsWith('0x')) {
+    if (normalized.includes(':')) {
+      return { assetId: trimmed }
+    }
+    if (normalized.length === 66) {
+      return { market: trimmed }
+    }
+  }
+
+  return {}
+}
+
+function getOrderTotalShares(order: PublicUserOpenOrder) {
+  return order.side === 'buy'
+    ? microToUnit(order.taker_amount)
+    : microToUnit(order.maker_amount)
+}
+
+function getOrderFilledShares(order: PublicUserOpenOrder) {
+  return microToUnit(order.size_matched)
+}
+
+function getOrderCreatedAtMs(order: PublicUserOpenOrder) {
+  const parsed = Date.parse(order.created_at)
+  return Number.isFinite(parsed) ? parsed : 0
+}
+
+function getOrderExpirationSeconds(order: PublicUserOpenOrder) {
+  if (order.type === 'GTC') {
+    return Number.POSITIVE_INFINITY
+  }
+
+  const rawExpiration = typeof order.expiration === 'number'
+    ? order.expiration
+    : Number(order.expiration)
+
+  if (!Number.isFinite(rawExpiration) || rawExpiration <= 0) {
+    return Number.POSITIVE_INFINITY
+  }
+
+  return rawExpiration
+}
+
 type PublicUserOpenOrder = UserOpenOrder & {
   market: UserOpenOrder['market'] & {
     icon_url?: string
@@ -58,15 +135,26 @@ type PublicUserOpenOrder = UserOpenOrder & {
 
 async function fetchOpenOrders({
   pageParam,
+  filters,
   signal,
 }: {
   pageParam: number
+  filters?: { id?: string, market?: string, assetId?: string }
   signal?: AbortSignal
 }): Promise<PublicUserOpenOrder[]> {
   const params = new URLSearchParams({
     limit: '50',
     offset: pageParam.toString(),
   })
+  if (filters?.id) {
+    params.set('id', filters.id)
+  }
+  if (filters?.market) {
+    params.set('market', filters.market)
+  }
+  if (filters?.assetId) {
+    params.set('asset_id', filters.assetId)
+  }
 
   const response = await fetch(`/api/open-orders?${params.toString()}`, { signal })
   if (!response.ok) {
@@ -79,9 +167,17 @@ async function fetchOpenOrders({
 
 export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersListProps) {
   const [searchQuery, setSearchQuery] = useState('')
-  const [sortBy, setSortBy] = useState('market')
+  const debouncedSearchQuery = useDebounce(searchQuery, 300)
+  const [sortBy, setSortBy] = useState<OpenOrdersSort>('market')
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const rowGridClass = 'grid grid-cols-[minmax(0,2.2fr)_repeat(6,minmax(0,1fr))_auto] items-center gap-4'
+  const apiSearchFilters = useMemo(
+    () => resolveOpenOrdersSearchParams(debouncedSearchQuery),
+    [debouncedSearchQuery],
+  )
+  const apiSearchKey = useMemo(() => (
+    `${apiSearchFilters.id ?? ''}|${apiSearchFilters.market ?? ''}|${apiSearchFilters.assetId ?? ''}`
+  ), [apiSearchFilters])
 
   const {
     status,
@@ -90,8 +186,12 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery<PublicUserOpenOrder[]>({
-    queryKey: ['public-open-orders', userAddress],
-    queryFn: ({ pageParam = 0, signal }) => fetchOpenOrders({ pageParam: pageParam as number, signal }),
+    queryKey: ['public-open-orders', userAddress, apiSearchKey],
+    queryFn: ({ pageParam = 0, signal }) => fetchOpenOrders({
+      pageParam: pageParam as number,
+      filters: apiSearchFilters,
+      signal,
+    }),
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length === 50) {
         return allPages.reduce((total, page) => total + page.length, 0)
@@ -105,6 +205,31 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
   })
 
   const orders = useMemo(() => data?.pages.flat() ?? [], [data?.pages])
+  const visibleOrders = useMemo(() => {
+    const filtered = orders.filter(order => matchesSearchQuery(order, searchQuery))
+    const sorted = [...filtered]
+
+    sorted.sort((a, b) => {
+      if (sortBy === 'market') {
+        return (a.market.title || '').localeCompare(b.market.title || '', undefined, { sensitivity: 'base' })
+      }
+      if (sortBy === 'filled') {
+        return getOrderFilledShares(b) - getOrderFilledShares(a)
+      }
+      if (sortBy === 'total') {
+        return getOrderTotalShares(b) - getOrderTotalShares(a)
+      }
+      if (sortBy === 'date') {
+        return getOrderCreatedAtMs(b) - getOrderCreatedAtMs(a)
+      }
+      if (sortBy === 'resolving') {
+        return getOrderExpirationSeconds(a) - getOrderExpirationSeconds(b)
+      }
+      return 0
+    })
+
+    return sorted
+  }, [orders, searchQuery, sortBy])
 
   useEffect(() => {
     if (!hasNextPage || !loadMoreRef.current) {
@@ -123,11 +248,9 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
   }, [fetchNextPage, hasNextPage, isFetchingNextPage])
 
   function renderRows() {
-    return orders.map((order) => {
-      const totalShares = order.side === 'buy'
-        ? microToUnit(order.taker_amount)
-        : microToUnit(order.maker_amount)
-      const filledShares = microToUnit(order.size_matched)
+    return visibleOrders.map((order) => {
+      const totalShares = getOrderTotalShares(order)
+      const filledShares = getOrderFilledShares(order)
       const totalValue = order.side === 'buy'
         ? microToUnit(order.maker_amount)
         : microToUnit(order.taker_amount)
@@ -232,7 +355,9 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
     })
   }
 
-  const emptyText = userAddress ? 'No open orders found.' : 'Connect to view your open orders.'
+  const emptyText = userAddress
+    ? (searchQuery.trim() ? 'No open orders match your search.' : 'No open orders found.')
+    : 'Connect to view your open orders.'
   const loading = status === 'pending'
 
   return (
@@ -250,7 +375,7 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
             />
           </div>
 
-          <Select value={sortBy} onValueChange={value => setSortBy(value)}>
+          <Select value={sortBy} onValueChange={value => setSortBy(value as OpenOrdersSort)}>
             <SelectTrigger className="w-48 justify-start gap-2 pr-3 [&>svg:last-of-type]:hidden">
               <ArrowDownNarrowWideIcon className="size-4 text-muted-foreground" />
               <SelectValue />
@@ -294,13 +419,13 @@ export default function PublicOpenOrdersList({ userAddress }: PublicOpenOrdersLi
             </div>
           )}
 
-          {!loading && orders.length === 0 && (
+          {!loading && visibleOrders.length === 0 && (
             <div className="py-12 text-center text-sm text-muted-foreground">
               {emptyText}
             </div>
           )}
 
-          {!loading && orders.length > 0 && (
+          {!loading && visibleOrders.length > 0 && (
             <div className="space-y-0">
               {renderRows()}
               {(isFetchingNextPage) && (
