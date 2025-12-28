@@ -39,7 +39,7 @@ const shareCard = {
   toWin: '$2.04',
 }
 
-const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Forkast'
+const siteName = process.env.NEXT_PUBLIC_SITE_NAME!
 const siteLogoSvg = process.env.NEXT_PUBLIC_SITE_LOGO_SVG ?? ''
 
 export default function EventPositionsHistory() {

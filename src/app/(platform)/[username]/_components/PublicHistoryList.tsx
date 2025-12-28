@@ -17,7 +17,6 @@ import {
   UnfoldHorizontalIcon,
 } from 'lucide-react'
 import Image from 'next/image'
-
 import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -139,6 +138,35 @@ function activityIcon(variant: ActivityVariant) {
   }
 }
 
+function formatCsvNumber(value: number) {
+  if (!Number.isFinite(value)) {
+    return ''
+  }
+  return value.toFixed(6).replace(/\.?0+$/, '')
+}
+
+function formatCsvValue(value: string | number | null | undefined) {
+  const text = value == null ? '' : String(value)
+  return `"${text.replace(/"/g, '""')}"`
+}
+
+const WEEKDAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const
+const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'] as const
+
+function formatExportFilename(siteName: string, date: Date) {
+  const weekday = WEEKDAY_LABELS[date.getDay()] ?? 'Sun'
+  const month = MONTH_LABELS[date.getMonth()] ?? 'Jan'
+  const day = String(date.getDate()).padStart(2, '0')
+  const year = date.getFullYear()
+  const hour = String(date.getHours()).padStart(2, '0')
+  const minute = String(date.getMinutes()).padStart(2, '0')
+  const second = String(date.getSeconds()).padStart(2, '0')
+  const offsetMinutes = Math.abs(date.getTimezoneOffset())
+  const offsetHours = String(Math.floor(offsetMinutes / 60)).padStart(2, '0')
+  const offsetRemainder = String(offsetMinutes % 60).padStart(2, '0')
+  return `${siteName}_Transaction_History_${weekday}_${month}_${day}_${year}_${hour}_${minute}_${second}_GMT_${offsetHours}${offsetRemainder}`
+}
+
 export default function PublicHistoryList({ userAddress }: PublicHistoryListProps) {
   const rowGridClass = 'grid grid-cols-[minmax(9rem,auto)_minmax(0,2.6fr)_minmax(0,1fr)_auto] items-center gap-3'
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
@@ -178,10 +206,67 @@ export default function PublicHistoryList({ userAddress }: PublicHistoryListProp
     () => data?.pages.flat() ?? [],
     [data?.pages],
   )
+  const visibleActivities = activities
 
   const isLoading = status === 'pending'
   const hasError = status === 'error'
   const hasNoData = !isLoading && activities.length === 0
+
+  function handleExportCsv() {
+    if (visibleActivities.length === 0) {
+      return
+    }
+
+    const headers = [
+      'marketName',
+      'action',
+      'usdcAmount',
+      'tokenAmount',
+      'tokenName',
+      'timestamp',
+      'hash',
+    ]
+
+    const rows = visibleActivities.map((activity) => {
+      const variant = resolveVariant(activity)
+      const action = variant.charAt(0).toUpperCase() + variant.slice(1)
+      const marketName = variant === 'deposit'
+        ? 'Deposited funds'
+        : variant === 'withdraw'
+          ? 'Withdrew funds'
+          : activity.market.title
+      const usdcAmount = formatCsvNumber(Math.abs(Number(activity.total_value)) / MICRO_UNIT)
+      const tokenAmount = (variant === 'deposit' || variant === 'withdraw')
+        ? ''
+        : formatCsvNumber(Math.abs(Number(activity.amount)) / MICRO_UNIT)
+      const tokenName = (variant === 'buy' || variant === 'sell' || variant === 'trade')
+        ? (activity.outcome?.text ?? '')
+        : ''
+      const timestampMs = activity.created_at ? new Date(activity.created_at).getTime() : Number.NaN
+      const timestamp = Number.isFinite(timestampMs)
+        ? Math.floor(timestampMs / 1000).toString()
+        : ''
+      const hash = activity.tx_hash ?? ''
+
+      return [marketName, action, usdcAmount, tokenAmount, tokenName, timestamp, hash]
+    })
+
+    const csvContent = [
+      headers.map(formatCsvValue).join(','),
+      ...rows.map(row => row.map(formatCsvValue).join(',')),
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    const siteName = process.env.NEXT_PUBLIC_SITE_NAME!
+    link.download = formatExportFilename(siteName, new Date())
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
 
   useEffect(() => {
     if (!hasNextPage || !loadMoreRef.current) {
@@ -382,6 +467,8 @@ export default function PublicHistoryList({ userAddress }: PublicHistoryListProp
               variant="outline"
               size="icon"
               className="rounded-lg"
+              onClick={handleExportCsv}
+              disabled={visibleActivities.length === 0}
             >
               <DownloadIcon className="size-4" />
             </Button>

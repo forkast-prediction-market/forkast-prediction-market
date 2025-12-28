@@ -123,7 +123,7 @@ function WalletReceiveView({
   onCopy: () => void
   copied: boolean
 }) {
-  const siteLabel = siteName ?? process.env.NEXT_PUBLIC_SITE_NAME ?? 'Forkast'
+  const siteLabel = siteName ?? process.env.NEXT_PUBLIC_SITE_NAME!
 
   return (
     <div className="space-y-4">
@@ -423,7 +423,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
   } = props
 
   const [copied, setCopied] = useState(false)
-  const siteLabel = siteName ?? process.env.NEXT_PUBLIC_SITE_NAME ?? 'Forkast'
+  const siteLabel = siteName ?? process.env.NEXT_PUBLIC_SITE_NAME!
   const formattedBalance = walletBalance && walletBalance !== ''
     ? walletBalance
     : '0.00'

@@ -34,7 +34,7 @@ const wonMarket = {
 
 export default function PortfolioMarketsWonCard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME ?? 'Forkast'
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME!
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
