@@ -27,7 +27,21 @@ export default function HeaderMenu() {
 
   useEffect(() => {
     if (session?.user) {
-      useUser.setState({ ...session.user, image: session.user.image! })
+      useUser.setState((previous) => {
+        if (!previous) {
+          return { ...session.user, image: session.user.image ?? '' }
+        }
+
+        return {
+          ...previous,
+          ...session.user,
+          image: session.user.image ?? previous.image ?? '',
+          settings: {
+            ...(previous.settings ?? {}),
+            ...(session.user.settings ?? {}),
+          },
+        }
+      })
     }
     else {
       useUser.setState(null)

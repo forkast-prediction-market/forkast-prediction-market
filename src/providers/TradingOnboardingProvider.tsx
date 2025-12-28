@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react'
 import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
 import type { ProxyWalletStatus, User } from '@/types'
-import { createContext, use, useCallback, useEffect, useMemo, useState } from 'react'
+import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { hashTypedData, UserRejectedRequestError } from 'viem'
 import { useSignMessage, useSignTypedData } from 'wagmi'
 import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
@@ -91,6 +91,31 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
   const tradingReady
     = (hasTradingAuth && hasDeployedProxyWallet && hasTokenApprovals)
       || localStepsComplete
+  const previousUserIdRef = useRef<string | null>(null)
+
+  useEffect(() => {
+    const nextUserId = user?.id ?? null
+    if (previousUserIdRef.current === nextUserId) {
+      return
+    }
+
+    previousUserIdRef.current = nextUserId
+    setProxyWalletError(null)
+    setTradingAuthError(null)
+    setTokenApprovalError(null)
+    setShouldShowFundAfterProxy(false)
+
+    if (!nextUserId) {
+      setProxyStep('idle')
+      setTradingAuthStep('idle')
+      setApprovalsStep('idle')
+      return
+    }
+
+    setProxyStep(hasDeployedProxyWallet ? 'completed' : isProxyWalletDeploying ? 'deploying' : 'idle')
+    setTradingAuthStep(hasTradingAuth ? 'completed' : 'idle')
+    setApprovalsStep(hasTokenApprovals ? 'completed' : 'idle')
+  }, [hasDeployedProxyWallet, hasTokenApprovals, hasTradingAuth, isProxyWalletDeploying, user?.id])
 
   useEffect(() => {
     if (hasDeployedProxyWallet) {

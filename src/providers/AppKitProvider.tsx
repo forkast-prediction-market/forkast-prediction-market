@@ -110,7 +110,21 @@ function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
           authClient.getSession().then((session) => {
             const user = session?.data?.user
             if (user) {
-              useUser.setState({ ...user, image: user.image! })
+              useUser.setState((previous) => {
+                if (!previous) {
+                  return { ...user, image: user.image ?? '' }
+                }
+
+                return {
+                  ...previous,
+                  ...user,
+                  image: user.image ?? previous.image ?? '',
+                  settings: {
+                    ...(previous.settings ?? {}),
+                    ...(user.settings ?? {}),
+                  },
+                }
+              })
             }
           }).catch(() => {})
         },
