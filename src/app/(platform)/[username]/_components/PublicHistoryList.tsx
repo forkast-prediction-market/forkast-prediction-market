@@ -161,10 +161,12 @@ function formatExportFilename(siteName: string, date: Date) {
   const hour = String(date.getHours()).padStart(2, '0')
   const minute = String(date.getMinutes()).padStart(2, '0')
   const second = String(date.getSeconds()).padStart(2, '0')
-  const offsetMinutes = Math.abs(date.getTimezoneOffset())
+  const rawOffsetMinutes = date.getTimezoneOffset()
+  const offsetMinutes = Math.abs(rawOffsetMinutes)
   const offsetHours = String(Math.floor(offsetMinutes / 60)).padStart(2, '0')
   const offsetRemainder = String(offsetMinutes % 60).padStart(2, '0')
-  return `${siteName}_Transaction_History_${weekday}_${month}_${day}_${year}_${hour}_${minute}_${second}_GMT_${offsetHours}${offsetRemainder}`
+  const offsetSign = rawOffsetMinutes <= 0 ? '+' : '-'
+  return `${siteName}_Transaction_History_${weekday}_${month}_${day}_${year}_${hour}_${minute}_${second}_GMT_${offsetSign}${offsetHours}${offsetRemainder}.csv`
 }
 
 export default function PublicHistoryList({ userAddress }: PublicHistoryListProps) {
