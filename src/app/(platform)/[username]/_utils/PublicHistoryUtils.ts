@@ -1,4 +1,4 @@
-import type { ActivityVariant, HistorySort, HistoryTypeFilter } from '@/app/(platform)/[username]/_types'
+import type { ActivityVariant, HistorySort, HistoryTypeFilter } from '@/app/(platform)/[username]/_types/PublicHistoryTypes'
 import type { ActivityOrder } from '@/types'
 import {
   ArrowDownToLineIcon,

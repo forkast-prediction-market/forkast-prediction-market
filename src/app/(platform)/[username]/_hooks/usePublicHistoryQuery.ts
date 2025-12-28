@@ -1,8 +1,8 @@
-import type { HistorySort, HistoryTypeFilter } from '@/app/(platform)/[username]/_types'
+import type { HistorySort, HistoryTypeFilter } from '@/app/(platform)/[username]/_types/PublicHistoryTypes'
 import type { DataApiActivity } from '@/lib/data-api/user'
 import type { ActivityOrder } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { resolveHistorySort, resolveHistoryTypeParams } from '@/app/(platform)/[username]/_utils'
+import { resolveHistorySort, resolveHistoryTypeParams } from '@/app/(platform)/[username]/_utils/PublicHistoryUtils'
 import { mapDataApiActivityToActivityOrder } from '@/lib/data-api/user'
 
 const DATA_API_URL = process.env.DATA_URL!

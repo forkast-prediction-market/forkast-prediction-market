@@ -1,9 +1,9 @@
 'use client'
 
-import type { HistorySort, HistoryTypeFilter } from '@/app/(platform)/[username]/_types'
+import type { HistorySort, HistoryTypeFilter } from '@/app/(platform)/[username]/_types/PublicHistoryTypes'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { usePublicHistoryQuery } from '@/app/(platform)/[username]/_hooks/usePublicHistoryQuery'
-import { buildHistoryCsv, getActivityTimestampMs, matchesSearchQuery, matchesTypeFilter, toNumeric } from '@/app/(platform)/[username]/_utils'
+import { buildHistoryCsv, getActivityTimestampMs, matchesSearchQuery, matchesTypeFilter, toNumeric } from '@/app/(platform)/[username]/_utils/PublicHistoryUtils'
 import PublicHistoryFilters from './PublicHistoryFilters'
 import PublicHistoryTable from './PublicHistoryTable'
 
