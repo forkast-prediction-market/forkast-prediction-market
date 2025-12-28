@@ -3,6 +3,7 @@
 import type { AppKit } from '@reown/appkit'
 import type { SIWECreateMessageArgs, SIWESession, SIWEVerifyMessageArgs } from '@reown/appkit-siwe'
 import type { ReactNode } from 'react'
+import type { User } from '@/types'
 import { createSIWEConfig, formatMessage, getAddressFromMessage } from '@reown/appkit-siwe'
 import { createAppKit, useAppKitTheme } from '@reown/appkit/react'
 import { generateRandomString } from 'better-auth/crypto'
@@ -110,6 +111,7 @@ function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
           authClient.getSession().then((session) => {
             const user = session?.data?.user
             if (user) {
+              const sessionSettings = (user as Partial<User>).settings
               useUser.setState((previous) => {
                 if (!previous) {
                   return { ...user, image: user.image ?? '' }
@@ -121,7 +123,7 @@ function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
                   image: user.image ?? previous.image ?? '',
                   settings: {
                     ...(previous.settings ?? {}),
-                    ...(user.settings ?? {}),
+                    ...(sessionSettings ?? {}),
                   },
                 }
               })
