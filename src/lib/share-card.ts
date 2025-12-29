@@ -50,8 +50,16 @@ function getOutcomeVariant(position: ShareCardPosition, outcomeLabel: string): S
   if (position.outcomeIndex === OUTCOME_INDEX.NO) {
     return 'no'
   }
-  const label = outcomeLabel.toLowerCase()
-  return label.includes('no') ? 'no' : 'yes'
+  if (position.outcomeIndex === OUTCOME_INDEX.YES) {
+    return 'yes'
+  }
+  if (/\bno\b/i.test(outcomeLabel)) {
+    return 'no'
+  }
+  if (/\byes\b/i.test(outcomeLabel)) {
+    return 'yes'
+  }
+  return 'yes'
 }
 
 function resolveShareImageUrl(icon?: string | null): string | undefined {

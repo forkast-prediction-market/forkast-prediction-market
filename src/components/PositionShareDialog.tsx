@@ -160,7 +160,9 @@ export function PositionShareDialog({ open, onOpenChange, payload, title = 'Shil
       window.open(shareUrl.toString(), '_blank', 'noopener,noreferrer')
     }
     finally {
-      setIsSharingOnX(false)
+      window.setTimeout(() => {
+        setIsSharingOnX(false)
+      }, 200)
     }
   }, [payload])
 

@@ -270,52 +270,64 @@ export default function PortfolioMarketsWonCardClient({ data }: PortfolioMarkets
         </div>
 
         <div className="max-h-[45vh] space-y-2 overflow-y-auto pr-1 text-left">
-          {markets.map(market => (
-            <Link
-              key={market.conditionId}
-              href={market.eventSlug ? `/event/${market.eventSlug}` : '#'}
-              className={
-                'flex w-full items-center gap-4 rounded-md p-4 transition-colors '
-                + 'hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring '
-                + 'focus-visible:ring-offset-2 focus-visible:ring-offset-background '
-                + 'focus-visible:outline-none dark:hover:bg-muted/20'
-              }
-            >
-              <div className="relative size-14 overflow-hidden rounded-md">
-                {market.imageUrl
-                  ? (
-                      <Image
-                        src={market.imageUrl}
-                        alt={market.title}
-                        fill
-                        sizes="56px"
-                        className="object-cover"
-                      />
+          {markets.map((market) => {
+            const href = market.eventSlug ? `/event/${market.eventSlug}` : null
+            const itemClassName = [
+              'flex w-full items-center gap-4 rounded-md p-4 transition-colors',
+              href
+                ? 'hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background focus-visible:outline-none dark:hover:bg-muted/20'
+                : 'cursor-default',
+            ].join(' ')
+            const content = (
+              <>
+                <div className="relative size-14 overflow-hidden rounded-md">
+                  {market.imageUrl
+                    ? (
+                        <Image
+                          src={market.imageUrl}
+                          alt={market.title}
+                          fill
+                          sizes="56px"
+                          className="object-cover"
+                        />
+                      )
+                    : (
+                        <div className="grid size-full place-items-center text-[10px] text-muted-foreground">
+                          No image
+                        </div>
+                      )}
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-semibold text-foreground">{market.title}</p>
+                  <p className="text-xs text-muted-foreground">
+                    Invested
+                    {' '}
+                    {formatCurrency(market.invested)}
+                    {' '}
+                    • Won
+                    {' '}
+                    {formatCurrency(market.proceeds)}
+                    {' '}
+                    (
+                    {formatSignedPercent(market.returnPercent, 0)}
                     )
-                  : (
-                      <div className="grid size-full place-items-center text-[10px] text-muted-foreground">
-                        No image
-                      </div>
-                    )}
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-semibold text-foreground">{market.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  Invested
-                  {' '}
-                  {formatCurrency(market.invested)}
-                  {' '}
-                  • Won
-                  {' '}
-                  {formatCurrency(market.proceeds)}
-                  {' '}
-                  (
-                  {formatSignedPercent(market.returnPercent, 0)}
-                  )
-                </p>
-              </div>
-            </Link>
-          ))}
+                  </p>
+                </div>
+              </>
+            )
+
+            return href
+              ? (
+                  <Link key={market.conditionId} href={href} className={itemClassName}>
+                    {content}
+                  </Link>
+                )
+              : (
+                  <div key={market.conditionId} className={itemClassName} aria-disabled="true">
+                    {content}
+                  </div>
+                )
+          })}
         </div>
 
         <Button className="h-11 w-full" onClick={handleClaimAll} disabled={isSubmitting}>
