@@ -1,6 +1,6 @@
-import type { OrderBookSummariesResponse } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
 import type { MarketDetailTab } from '@/app/(platform)/event/[slug]/_hooks/useMarketDetailController'
 import type { SharesByCondition } from '@/app/(platform)/event/[slug]/_hooks/useUserShareBalances'
+import type { OrderBookSummariesResponse } from '@/app/(platform)/event/[slug]/_types/EventOrderBookTypes'
 import type { DataApiActivity } from '@/lib/data-api/user'
 import type { Event } from '@/types'
 import { useQuery } from '@tanstack/react-query'
