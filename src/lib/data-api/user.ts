@@ -123,13 +123,34 @@ function sanitizePrice(value?: number | null): number {
 }
 
 function buildActivityId(activity: DataApiActivity, slugFallback: string): string {
-  const base = activity.transactionHash
-    || activity.conditionId
-    || activity.asset
-    || slugFallback
-    || 'activity'
+  type BaseSource = 'transactionHash' | 'conditionId' | 'asset' | 'slug' | 'fallback'
+
+  let baseSource: BaseSource = 'fallback'
+  let base = activity.transactionHash
+  if (base) {
+    baseSource = 'transactionHash'
+  }
+  else if (activity.conditionId) {
+    base = activity.conditionId
+    baseSource = 'conditionId'
+  }
+  else if (activity.asset) {
+    base = activity.asset
+    baseSource = 'asset'
+  }
+  else if (slugFallback) {
+    base = slugFallback
+    baseSource = 'slug'
+  }
+  else {
+    base = 'activity'
+  }
+
   const parts = [base]
-  function append(value?: string | number | null) {
+  function append(value?: string | number | null, source?: BaseSource) {
+    if (source && source === baseSource) {
+      return
+    }
     if (value === null || value === undefined) {
       return
     }
@@ -140,8 +161,8 @@ function buildActivityId(activity: DataApiActivity, slugFallback: string): strin
     parts.push(text)
   }
 
-  append(activity.conditionId)
-  append(activity.asset)
+  append(activity.conditionId, 'conditionId')
+  append(activity.asset, 'asset')
   append(activity.outcomeIndex ?? activity.outcome)
   append(activity.side)
   append(activity.price)

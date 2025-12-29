@@ -239,7 +239,7 @@ function buildClaimData(
     aggregates.set(conditionId, aggregate)
   }
 
-  const markets: PortfolioClaimMarket[] = Array.from(aggregates.values()).map((aggregate) => {
+  const claimMarkets: PortfolioClaimMarket[] = Array.from(aggregates.values()).map((aggregate) => {
     const outcomeIndices = Array.from(aggregate.outcomeIndices)
     const outcomeLabels = Array.from(aggregate.outcomeLabels)
     const outcomeIndex = outcomeIndices.length === 1 ? outcomeIndices[0] : undefined
@@ -270,23 +270,23 @@ function buildClaimData(
     }
   })
 
-  markets.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0))
+  claimMarkets.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0))
 
-  const totalInvested = markets.reduce((sum, market) => sum + (market.invested || 0), 0)
-  const totalProceeds = markets.reduce((sum, market) => sum + (market.proceeds || 0), 0)
+  const totalInvested = claimMarkets.reduce((sum, market) => sum + (market.invested || 0), 0)
+  const totalProceeds = claimMarkets.reduce((sum, market) => sum + (market.proceeds || 0), 0)
   const totalReturnPercent = totalInvested > 0
     ? ((totalProceeds - totalInvested) / totalInvested) * 100
     : 0
 
   return {
     summary: {
-      marketsWon: markets.length,
+      marketsWon: claimMarkets.length,
       totalProceeds,
       totalInvested,
       totalReturnPercent,
-      latestMarket: markets[0],
+      latestMarket: claimMarkets[0],
     },
-    markets,
+    markets: claimMarkets,
   }
 }
 
