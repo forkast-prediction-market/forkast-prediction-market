@@ -155,6 +155,8 @@ export async function GET(request: Request) {
   const siteLogoSvg = process.env.NEXT_PUBLIC_SITE_LOGO_SVG ?? ''
   const siteLogoSrc = siteLogoSvg ? buildSvgDataUri(siteLogoSvg) : ''
   const hasUserBadge = Boolean(payload.userName || payload.userImage)
+  const dividerDots = Array.from({ length: 32 })
+  const horizontalDots = Array.from({ length: 40 })
 
   const response = new ImageResponse(
     (
@@ -307,9 +309,10 @@ export async function GET(request: Request) {
                 style={{
                   display: 'flex',
                   fontSize: '48px',
-                  fontWeight: 800,
+                  fontWeight: 900,
                   color: '#0f172a',
                   lineHeight: 1.2,
+                  textShadow: '0 0 1px #0f172a, 0 0 2px #0f172a, 0 0 3px #0f172a',
                 }}
               >
                 {payload.title}
@@ -317,11 +320,26 @@ export async function GET(request: Request) {
             </div>
             <div
               style={{
-                width: '2px',
-                backgroundColor: '#e2e8f0',
+                width: '8px',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'space-between',
                 alignSelf: 'stretch',
               }}
-            />
+            >
+              {dividerDots.map((_, index) => (
+                <div
+                  key={`divider-dot-${index}`}
+                  style={{
+                    width: '2px',
+                    height: '6px',
+                    borderRadius: '999px',
+                    backgroundColor: '#e2e8f0',
+                  }}
+                />
+              ))}
+            </div>
             <div
               style={{
                 display: 'flex',
@@ -348,6 +366,7 @@ export async function GET(request: Request) {
                     fontSize: '52px',
                     fontWeight: 900,
                     letterSpacing: '0.02em',
+                    textShadow: `0 0 1px ${accent}, 0 0 2px ${accent}, 0 0 3px ${accent}`,
                   }}
                 >
                   {`Bought ${outcomeLabel}`}
@@ -370,7 +389,7 @@ export async function GET(request: Request) {
                     }}
                   >
                     <div style={{ display: 'flex', fontSize: '32px', color: '#64748b' }}>Cost</div>
-                    <div style={{ display: 'flex', fontSize: '32px', fontWeight: 700, color: '#0f172a' }}>
+                    <div style={{ display: 'flex', fontSize: '32px', fontWeight: 900, color: '#0f172a' }}>
                       {payload.cost}
                     </div>
                   </div>
@@ -383,7 +402,7 @@ export async function GET(request: Request) {
                     }}
                   >
                     <div style={{ display: 'flex', fontSize: '32px', color: '#64748b' }}>Odds</div>
-                    <div style={{ display: 'flex', fontSize: '32px', fontWeight: 700, color: '#0f172a' }}>
+                    <div style={{ display: 'flex', fontSize: '32px', fontWeight: 900, color: '#0f172a' }}>
                       {payload.odds}
                     </div>
                   </div>
@@ -394,10 +413,23 @@ export async function GET(request: Request) {
                   style={{
                     display: 'flex',
                     width: '100%',
-                    height: '2px',
-                    backgroundColor: '#e2e8f0',
+                    height: '8px',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                   }}
-                />
+                >
+                  {horizontalDots.map((_, index) => (
+                    <div
+                      key={`horizontal-dot-${index}`}
+                      style={{
+                        width: '6px',
+                        height: '2px',
+                        borderRadius: '999px',
+                        backgroundColor: '#e2e8f0',
+                      }}
+                    />
+                  ))}
+                </div>
                 <div
                   style={{
                     display: 'flex',
@@ -436,9 +468,12 @@ export async function GET(request: Request) {
               style={{
                 width: '64px',
                 height: '64px',
+                filter: 'brightness(0) invert(1)',
               }}
             />
-            <div style={{ color: '#fff', fontSize: '64px' }}>{process.env.NEXT_PUBLIC_SITE_NAME}</div>
+            <div style={{ color: '#fff', fontSize: '64px', fontWeight: 900 }}>
+              {process.env.NEXT_PUBLIC_SITE_NAME}
+            </div>
           </div>
         )}
       </div>

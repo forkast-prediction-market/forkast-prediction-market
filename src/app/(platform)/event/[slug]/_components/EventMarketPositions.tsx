@@ -3,7 +3,8 @@
 import type { Event, UserPosition } from '@/types'
 import { useQuery } from '@tanstack/react-query'
 import { AlertCircleIcon, ShareIcon } from 'lucide-react'
-import { useCallback, useEffect, useMemo } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { PositionShareDialog } from '@/components/PositionShareDialog'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -11,6 +12,7 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { fetchUserPositionsForMarket } from '@/lib/data-api/user'
 import { formatAmountInputValue, formatCentsLabel, formatCurrency, formatPercent, fromMicro, sharesFormatter } from '@/lib/formatters'
+import { buildShareCardPayload } from '@/lib/share-card'
 import { getUserPublicAddress } from '@/lib/user-address'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
@@ -30,12 +32,38 @@ function toNumber(value: unknown) {
 
 const POSITIONS_GRID_TEMPLATE = 'minmax(120px,1fr) repeat(4, minmax(80px,1fr)) minmax(150px,auto)'
 
+function buildShareCardPosition(position: UserPosition) {
+  const outcomeText = position.outcome_text
+    || (position.outcome_index === 1 ? 'No' : 'Yes')
+  const quantity = toNumber(position.size)
+    ?? (typeof position.total_shares === 'number' ? position.total_shares : 0)
+  const avgPrice = toNumber(position.avgPrice)
+    ?? Number(fromMicro(String(position.average_position ?? 0), 6))
+  const totalValue = toNumber(position.currentValue)
+    ?? Number(fromMicro(String(position.total_position_value ?? 0), 2))
+  const currentPrice = quantity > 0 ? totalValue / quantity : avgPrice
+  const eventSlug = position.market.event?.slug || position.market.slug
+
+  return {
+    title: position.market.title,
+    outcome: outcomeText,
+    outcomeIndex: typeof position.outcome_index === 'number' ? position.outcome_index : undefined,
+    avgPrice: Number.isFinite(avgPrice) ? avgPrice : 0,
+    curPrice: Number.isFinite(currentPrice) ? currentPrice : avgPrice,
+    size: Number.isFinite(quantity) ? quantity : 0,
+    icon: position.market.icon_url,
+    eventSlug,
+  }
+}
+
 function MarketPositionRow({
   position,
   onSell,
+  onShare,
 }: {
   position: UserPosition
   onSell: (position: UserPosition) => void
+  onShare: (position: UserPosition) => void
 }) {
   const outcomeText = position.outcome_text
     || (position.outcome_index === 1 ? 'No' : 'Yes')
@@ -218,6 +246,7 @@ function MarketPositionRow({
             'size-8 rounded-md border border-border/70 bg-transparent text-foreground',
             'hover:bg-muted/30 dark:border-white/30 dark:text-white dark:hover:bg-white/10',
           )}
+          onClick={() => onShare(position)}
         >
           <ShareIcon className="size-4" />
         </Button>
@@ -265,6 +294,8 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
   const positions = useMemo(() => data ?? [], [data])
   const loading = status === 'pending' && Boolean(user?.proxy_wallet_address)
   const hasInitialError = status === 'error' && Boolean(user?.proxy_wallet_address)
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
+  const [sharePosition, setSharePosition] = useState<UserPosition | null>(null)
 
   const aggregatedShares = useMemo(() => {
     const map: Record<string, Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>> = {}
@@ -342,6 +373,28 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
     }
   }, [isMobile, market, orderInputRef, setIsMobileOrderPanelOpen, setOrderAmount, setOrderMarket, setOrderOutcome, setOrderSide])
 
+  const shareCardPayload = useMemo(() => {
+    if (!sharePosition) {
+      return null
+    }
+    return buildShareCardPayload(buildShareCardPosition(sharePosition), {
+      userName: user?.username || undefined,
+      userImage: user?.image || undefined,
+    })
+  }, [sharePosition, user?.image, user?.username])
+
+  const handleShareOpenChange = useCallback((open: boolean) => {
+    setIsShareDialogOpen(open)
+    if (!open) {
+      setSharePosition(null)
+    }
+  }, [])
+
+  const handleShareClick = useCallback((positionItem: UserPosition) => {
+    setSharePosition(positionItem)
+    setIsShareDialogOpen(true)
+  }, [])
+
   if (!userAddress) {
     return <></>
   }
@@ -398,11 +451,17 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
                 key={`${position.outcome_text}-${position.last_activity_at}`}
                 position={position}
                 onSell={handleSell}
+                onShare={handleShareClick}
               />
             ))}
           </div>
         </div>
       </div>
+      <PositionShareDialog
+        open={isShareDialogOpen}
+        onOpenChange={handleShareOpenChange}
+        payload={shareCardPayload}
+      />
     </section>
   )
 }

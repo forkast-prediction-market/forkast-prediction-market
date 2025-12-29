@@ -7,8 +7,6 @@ import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowDownNarrowWideIcon,
   ArrowRightIcon,
-  CopyIcon,
-  Loader2Icon,
   MergeIcon,
   SearchIcon,
   ShareIcon,
@@ -21,19 +19,18 @@ import { hashTypedData } from 'viem'
 import { useSignMessage } from 'wagmi'
 import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
 import { fetchUserOpenOrders } from '@/app/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
+import { PositionShareDialog } from '@/components/PositionShareDialog'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { useDebounce } from '@/hooks/useDebounce'
-import { useIsMobile } from '@/hooks/useIsMobile'
 import { defaultNetwork } from '@/lib/appkit'
 import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE, MICRO_UNIT, OUTCOME_INDEX } from '@/lib/constants'
 import { ZERO_COLLECTION_ID } from '@/lib/contracts'
-import { formatCentsLabel, formatCurrency, formatPercent, toMicro } from '@/lib/formatters'
+import { formatCentsLabel, formatCurrency, toMicro } from '@/lib/formatters'
 import { aggregateSafeTransactions, buildMergePositionTransaction, getSafeTxTypedData, packSafeSignature } from '@/lib/safe/transactions'
+import { buildShareCardPayload } from '@/lib/share-card'
 import { cn } from '@/lib/utils'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useUser } from '@/stores/useUser'
@@ -53,84 +50,8 @@ type SortOption
     | 'latestPrice'
     | 'avgCost'
 
-type ShareCardVariant = 'yes' | 'no'
-
-interface ShareCardPayload {
-  title: string
-  outcome: string
-  avgPrice: string
-  odds: string
-  cost: string
-  invested: string
-  toWin: string
-  imageUrl?: string
-  userName?: string
-  userImage?: string
-  variant: ShareCardVariant
-  eventSlug: string
-}
-
 function formatCurrencyValue(value?: number) {
   return Number.isFinite(value) ? formatCurrency(value ?? 0) : '—'
-}
-
-function getOutcomeLabel(position: PublicPosition) {
-  if (position.outcome && position.outcome.trim()) {
-    return position.outcome
-  }
-  return position.outcomeIndex === OUTCOME_INDEX.NO ? 'No' : 'Yes'
-}
-
-function getOutcomeVariant(position: PublicPosition): ShareCardVariant {
-  if (position.outcomeIndex === OUTCOME_INDEX.NO) {
-    return 'no'
-  }
-  const label = getOutcomeLabel(position).toLowerCase()
-  return label.includes('no') ? 'no' : 'yes'
-}
-
-function buildShareCardPayload(position: PublicPosition): ShareCardPayload {
-  const avgPrice = position.avgPrice ?? 0
-  const shares = position.size ?? 0
-  const tradeValue = shares * avgPrice
-  const toWinValue = shares
-  const nowPrice = Number.isFinite(position.curPrice) && position.curPrice !== undefined
-    ? position.curPrice!
-    : avgPrice
-  const outcome = getOutcomeLabel(position)
-  const imageUrl = position.icon ? `https://gateway.irys.xyz/${position.icon}` : undefined
-
-  return {
-    title: position.title || 'Untitled market',
-    outcome,
-    avgPrice: formatCentsLabel(avgPrice, { fallback: '—' }),
-    odds: formatPercent(nowPrice * 100, { digits: 0 }),
-    cost: formatCurrencyValue(tradeValue),
-    invested: formatCurrencyValue(tradeValue),
-    toWin: formatCurrencyValue(toWinValue),
-    imageUrl,
-    variant: getOutcomeVariant(position),
-    eventSlug: position.eventSlug || position.slug,
-  }
-}
-
-function buildShareCardUrl(payload: ShareCardPayload) {
-  const encodedPayload = encodeSharePayload(payload)
-  const params = new URLSearchParams({
-    position: encodedPayload,
-  })
-  return `/api/og?${params.toString()}`
-}
-
-function encodeSharePayload(payload: ShareCardPayload) {
-  const json = JSON.stringify(payload)
-  const bytes = new TextEncoder().encode(json)
-  let binary = ''
-  bytes.forEach((byte) => {
-    binary += String.fromCharCode(byte)
-  })
-  const base64 = btoa(binary)
-  return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '')
 }
 
 function getTradeValue(position: PublicPosition) {
@@ -649,7 +570,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
   const { ensureTradingReady } = useTradingOnboarding()
   const user = useUser()
   const { signMessageAsync } = useSignMessage()
-  const isMobile = useIsMobile()
 
   const marketStatusFilter: 'active' | 'closed' = 'active'
   const [searchQuery, setSearchQuery] = useState('')
@@ -663,10 +583,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
   const [isMergeProcessing, setIsMergeProcessing] = useState(false)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const [sharePosition, setSharePosition] = useState<PublicPosition | null>(null)
-  const [shareCardStatus, setShareCardStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle')
-  const [shareCardBlob, setShareCardBlob] = useState<Blob | null>(null)
-  const [isCopyingShareImage, setIsCopyingShareImage] = useState(false)
-  const [isSharingOnX, setIsSharingOnX] = useState(false)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
   const handleSearchChange = useCallback((query: string) => {
@@ -1009,68 +925,16 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     if (!sharePosition) {
       return null
     }
-    const payload = buildShareCardPayload(sharePosition)
-    return {
-      ...payload,
+    return buildShareCardPayload(sharePosition, {
       userName: user?.username || undefined,
       userImage: user?.image || undefined,
-    }
+    })
   }, [sharePosition, user?.image, user?.username])
-
-  const shareCardUrl = useMemo(() => {
-    if (!shareCardPayload) {
-      return ''
-    }
-    return buildShareCardUrl(shareCardPayload)
-  }, [shareCardPayload])
-
-  useEffect(() => {
-    if (!isShareDialogOpen || !shareCardUrl) {
-      return
-    }
-    setShareCardStatus('loading')
-  }, [isShareDialogOpen, shareCardUrl])
-
-  useEffect(() => {
-    if (!shareCardUrl || shareCardStatus !== 'ready') {
-      setShareCardBlob(null)
-      return
-    }
-
-    let isCancelled = false
-
-    fetch(shareCardUrl, { cache: 'no-store' })
-      .then(async (response) => {
-        if (!response.ok) {
-          throw new Error('Share card fetch failed.')
-        }
-        return await response.blob()
-      })
-      .then((blob) => {
-        if (!isCancelled) {
-          setShareCardBlob(blob)
-        }
-      })
-      .catch((error) => {
-        if (!isCancelled) {
-          console.warn('Failed to preload share card image.', error)
-          setShareCardBlob(null)
-        }
-      })
-
-    return () => {
-      isCancelled = true
-    }
-  }, [shareCardStatus, shareCardUrl])
 
   const handleShareOpenChange = useCallback((open: boolean) => {
     setIsShareDialogOpen(open)
     if (!open) {
       setSharePosition(null)
-      setShareCardStatus('idle')
-      setShareCardBlob(null)
-      setIsCopyingShareImage(false)
-      setIsSharingOnX(false)
     }
   }, [])
 
@@ -1078,83 +942,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     setSharePosition(position)
     setIsShareDialogOpen(true)
   }, [])
-
-  const handleShareCardLoaded = useCallback(() => {
-    setShareCardStatus('ready')
-  }, [])
-
-  const handleShareCardError = useCallback(() => {
-    setShareCardStatus('error')
-    toast.error('Unable to generate a share card right now.')
-  }, [])
-
-  const handleCopyShareImage = useCallback(async () => {
-    if (!shareCardUrl) {
-      return
-    }
-
-    setIsCopyingShareImage(true)
-    try {
-      if (!shareCardBlob) {
-        toast.info('Share card is still preparing. Try again in a moment.')
-        return
-      }
-
-      const blob = shareCardBlob.type ? shareCardBlob : new Blob([shareCardBlob], { type: 'image/png' })
-      const filename = 'position.png'
-
-      if (typeof window !== 'undefined' && window.isSecureContext && 'ClipboardItem' in window) {
-        try {
-          const clipboardItem = new ClipboardItem({ [blob.type || 'image/png']: blob })
-          await navigator.clipboard.write([clipboardItem])
-          toast.success('Share card copied to clipboard.')
-          return
-        }
-        catch (error) {
-          console.warn('Clipboard write failed, falling back to download.', error)
-        }
-      }
-
-      const objectUrl = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = objectUrl
-      link.download = filename
-      document.body.appendChild(link)
-      link.click()
-      link.remove()
-      URL.revokeObjectURL(objectUrl)
-      toast.success('Share card downloaded.')
-    }
-    catch (error) {
-      console.error('Failed to copy share card image.', error)
-      toast.error('Could not copy the share card image.')
-    }
-    finally {
-      setIsCopyingShareImage(false)
-    }
-  }, [shareCardBlob, shareCardUrl])
-
-  const handleShareOnX = useCallback(() => {
-    if (!shareCardPayload || !shareCardUrl) {
-      return
-    }
-
-    setIsSharingOnX(true)
-    try {
-      const outcomeLabel = shareCardPayload.outcome.toUpperCase()
-      const shareText = `Bought ${outcomeLabel} on "${shareCardPayload.title}".`
-      const baseUrl = window.location.origin
-      const shareCardAbsoluteUrl = new URL(shareCardUrl, baseUrl).toString()
-
-      const shareUrl = new URL('https://x.com/intent/tweet')
-      shareUrl.searchParams.set('text', shareText)
-      shareUrl.searchParams.set('url', shareCardAbsoluteUrl)
-      window.open(shareUrl.toString(), '_blank', 'noopener,noreferrer')
-    }
-    finally {
-      setIsSharingOnX(false)
-    }
-  }, [shareCardPayload, shareCardUrl])
 
   function renderRows() {
     return sortedPositions.map((position, index) => {
@@ -1279,83 +1066,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     })
   }
 
-  const isShareReady = shareCardStatus === 'ready'
-  const shareDialogBody = (
-    <div className="space-y-4">
-      <div className={`
-        relative flex min-h-55 items-center justify-center rounded-lg border border-border/60 bg-muted/30 p-3
-      `}
-      >
-        {shareCardUrl && (
-          // eslint-disable-next-line next/no-img-element
-          <img
-            key={shareCardUrl}
-            src={shareCardUrl}
-            alt={`${shareCardPayload?.title ?? 'Position'} share card`}
-            className={cn(
-              'w-full max-w-md rounded-md shadow transition-opacity',
-              isShareReady ? 'opacity-100' : 'opacity-0',
-            )}
-            onLoad={handleShareCardLoaded}
-            onError={handleShareCardError}
-          />
-        )}
-        {!isShareReady && (
-          <div className={`
-            absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-muted-foreground
-          `}
-          >
-            {shareCardStatus === 'error'
-              ? (
-                  <span>Unable to generate share card.</span>
-                )
-              : (
-                  <>
-                    <Loader2Icon className="size-5 animate-spin" />
-                    <span>Generating share card...</span>
-                  </>
-                )}
-          </div>
-        )}
-      </div>
-      <div className="flex flex-col gap-3 sm:flex-row">
-        <Button
-          variant="outline"
-          className="flex-1"
-          onClick={handleCopyShareImage}
-          disabled={!isShareReady || isCopyingShareImage || isSharingOnX}
-        >
-          {isCopyingShareImage
-            ? <Loader2Icon className="size-4 animate-spin" />
-            : <CopyIcon className="size-4" />}
-          {isCopyingShareImage ? 'Copying...' : 'Copy image'}
-        </Button>
-        <Button
-          className="flex-1"
-          onClick={handleShareOnX}
-          disabled={!isShareReady || isCopyingShareImage || isSharingOnX}
-        >
-          {isSharingOnX
-            ? <Loader2Icon className="size-4 animate-spin" />
-            : (
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 251 256"
-                  className="size-4"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M149.079 108.399L242.33 0h-22.098l-80.97 94.12L74.59 0H0l97.796 142.328L0 256h22.1l85.507-99.395L175.905 256h74.59L149.073 108.399zM118.81 143.58l-9.909-14.172l-78.84-112.773h33.943l63.625 91.011l9.909 14.173l82.705 118.3H186.3l-67.49-96.533z"
-                    fill="currentColor"
-                  />
-                </svg>
-              )}
-          {isSharingOnX ? 'Opening...' : 'Share'}
-        </Button>
-      </div>
-    </div>
-  )
-
   return (
     <div className="space-y-3 pb-0">
       <PositionsFilterControls
@@ -1471,30 +1181,11 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         isProcessing={isMergeProcessing}
         onConfirm={handleMergeAll}
       />
-
-      {isMobile
-        ? (
-            <Drawer open={isShareDialogOpen} onOpenChange={handleShareOpenChange}>
-              <DrawerContent className="max-h-[90vh] w-full border-border/70 bg-background">
-                <DrawerHeader className="text-center sm:text-center">
-                  <DrawerTitle className="text-xl font-semibold">Shill your bag</DrawerTitle>
-                </DrawerHeader>
-                <div className="space-y-4 px-4 pb-6">
-                  {shareDialogBody}
-                </div>
-              </DrawerContent>
-            </Drawer>
-          )
-        : (
-            <Dialog open={isShareDialogOpen} onOpenChange={handleShareOpenChange}>
-              <DialogContent className="max-w-md space-y-4">
-                <DialogHeader className="text-center sm:text-center">
-                  <DialogTitle className="text-xl font-semibold">Shill your bag</DialogTitle>
-                </DialogHeader>
-                {shareDialogBody}
-              </DialogContent>
-            </Dialog>
-          )}
+      <PositionShareDialog
+        open={isShareDialogOpen}
+        onOpenChange={handleShareOpenChange}
+        payload={shareCardPayload}
+      />
     </div>
   )
 }
