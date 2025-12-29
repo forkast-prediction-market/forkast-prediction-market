@@ -27,7 +27,7 @@ export default async function PortfolioLayout({ children }: LayoutProps<'/portfo
           variant="portfolio"
         />
 
-        <PortfolioMarketsWonCard />
+        <PortfolioMarketsWonCard proxyWalletAddress={publicAddress} />
 
         {children}
       </div>

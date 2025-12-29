@@ -83,6 +83,18 @@ const conditionalTokensAbi = [
     ],
     outputs: [],
   },
+  {
+    name: 'redeemPositions',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'collateralToken', type: 'address' },
+      { name: 'parentCollectionId', type: 'bytes32' },
+      { name: 'conditionId', type: 'bytes32' },
+      { name: 'indexSets', type: 'uint256[]' },
+    ],
+    outputs: [],
+  },
 ] as const
 
 interface SafeTxMessage {
@@ -211,6 +223,14 @@ interface ConditionalPositionArgs {
   amount: string
 }
 
+interface ConditionalRedeemArgs {
+  contract?: `0x${string}`
+  collateralToken?: `0x${string}`
+  parentCollectionId?: `0x${string}`
+  conditionId: `0x${string}`
+  indexSets: Array<string | number | bigint>
+}
+
 function normalizePartition(values: Array<string | number | bigint>): bigint[] {
   return values.map(value => BigInt(value))
 }
@@ -246,6 +266,26 @@ export function buildMergePositionTransaction(args: ConditionalPositionArgs): Sa
       args.conditionId,
       normalizePartition(args.partition),
       BigInt(args.amount),
+    ],
+  })
+
+  return {
+    to: (args.contract ?? CONDITIONAL_TOKENS_CONTRACT) as `0x${string}`,
+    value: '0',
+    data,
+    operation: SafeOperationType.Call,
+  }
+}
+
+export function buildRedeemPositionTransaction(args: ConditionalRedeemArgs): SafeTransaction {
+  const data = encodeFunctionData({
+    abi: conditionalTokensAbi,
+    functionName: 'redeemPositions',
+    args: [
+      (args.collateralToken ?? COLLATERAL_TOKEN_ADDRESS) as `0x${string}`,
+      (args.parentCollectionId ?? ZERO_COLLECTION_ID) as `0x${string}`,
+      args.conditionId,
+      normalizePartition(args.indexSets),
     ],
   })
 

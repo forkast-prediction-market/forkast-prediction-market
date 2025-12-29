@@ -1,155 +1,323 @@
-'use client'
+import type { PortfolioClaimMarket, PortfolioMarketsWonData } from './PortfolioMarketsWonCardClient'
+import type { DataApiPosition } from '@/lib/data-api/user'
+import { inArray } from 'drizzle-orm'
+import { markets } from '@/lib/db/schema/events/tables'
+import { db } from '@/lib/drizzle'
+import { getSupabaseImageUrl } from '@/lib/supabase'
+import { normalizeAddress } from '@/lib/wallet'
+import PortfolioMarketsWonCardClient from './PortfolioMarketsWonCardClient'
 
-import { DialogTitle } from '@radix-ui/react-dialog'
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
-import { BanknoteArrowDownIcon, CircleCheckIcon } from 'lucide-react'
-import Image from 'next/image'
-import Link from 'next/link'
-import { Fragment, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogTrigger,
-} from '@/components/ui/dialog'
+const DATA_API_URL = process.env.DATA_URL
+const DEFAULT_INDEX_SETS = [1, 2]
 
-const proceedsDisplay = '$2.04'
-
-const stats = [
-  { label: 'Markets won', value: '1' },
-  { label: 'Total return', value: '104.17%' },
-  { label: 'Proceeds', value: proceedsDisplay },
-]
-
-const wonMarket = {
-  image: '/images/how-it-works/1.webp',
-  title: 'New US sanctions on Brazilian Supreme Court Justices by September 30?',
-  invested: '$1.00',
-  proceedsSummary: proceedsDisplay,
-  proceedsDetail: '$2.04',
-  percentReturn: '+104%',
+interface PortfolioMarketsWonCardProps {
+  proxyWalletAddress?: string | null
 }
 
-export default function PortfolioMarketsWonCard() {
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME!
+interface MarketMetadata {
+  title?: string
+  slug?: string
+  eventSlug?: string
+  iconUrl?: string
+}
 
-  return (
-    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <Card className="border border-border/60 bg-transparent">
-        <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4 md:flex-nowrap md:gap-6 md:p-6">
-          <div className="flex flex-wrap items-center gap-4 md:flex-nowrap md:gap-6">
-            <div className="relative size-12 overflow-hidden rounded-md border border-border/60">
-              <Image
-                src={wonMarket.image}
-                alt={wonMarket.title}
-                fill
-                sizes="48px"
-                className="object-cover"
-              />
-            </div>
+interface MarketAggregate {
+  conditionId: string
+  title: string
+  eventSlug?: string
+  imageUrl?: string
+  shares: number
+  invested: number
+  proceeds: number
+  latestTimestamp: number
+  outcomeIndices: Set<number>
+  outcomeLabels: Set<string>
+}
 
-            <div className="flex flex-wrap items-center gap-4 md:gap-8">
-              {stats.map((stat, index) => (
-                <Fragment key={stat.label}>
-                  <div className="flex min-w-27.5 flex-col justify-center text-sm">
-                    <span className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                      {stat.label}
-                    </span>
-                    <span className="text-lg font-semibold text-foreground">
-                      {stat.value}
-                    </span>
-                  </div>
-                  {index < stats.length - 1 && (
-                    <span
-                      aria-hidden="true"
-                      className="mx-2 hidden h-10 w-px rounded-full bg-border/60 md:block"
-                    />
-                  )}
-                </Fragment>
-              ))}
-            </div>
-          </div>
+function pickString(...values: Array<string | null | undefined>): string | undefined {
+  for (const value of values) {
+    if (typeof value !== 'string') {
+      continue
+    }
+    const trimmed = value.trim()
+    if (trimmed) {
+      return trimmed
+    }
+  }
+  return undefined
+}
 
-          <DialogTrigger asChild>
-            <Button className="h-11 shrink-0 px-6">
-              <BanknoteArrowDownIcon className="size-4" />
-              Claim
-            </Button>
-          </DialogTrigger>
-        </CardContent>
-      </Card>
+function toNumber(value: unknown): number {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : 0
+  }
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+  return 0
+}
 
-      <DialogContent className="max-w-md space-y-6 text-center sm:p-8">
-        <VisuallyHidden>
-          <DialogTitle>You Won</DialogTitle>
-        </VisuallyHidden>
+function resolveDataApiIcon(icon?: string | null): string | undefined {
+  const trimmed = typeof icon === 'string' ? icon.trim() : ''
+  if (!trimmed) {
+    return undefined
+  }
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('/')) {
+    return trimmed
+  }
+  return `https://gateway.irys.xyz/${trimmed}`
+}
 
-        <div className="flex justify-center">
-          <div className="flex size-16 items-center justify-center rounded-full bg-yes/15">
-            <CircleCheckIcon className="size-14 text-yes" />
-          </div>
-        </div>
+function resolveInvested(position: DataApiPosition, size: number): number {
+  const totalBought = toNumber(position.totalBought)
+  if (totalBought > 0) {
+    return totalBought
+  }
+  const initialValue = toNumber(position.initialValue)
+  if (initialValue > 0) {
+    return initialValue
+  }
+  const avgPrice = toNumber(position.avgPrice)
+  if (size > 0 && avgPrice > 0) {
+    return size * avgPrice
+  }
+  return 0
+}
 
-        <div className="space-y-2">
-          <p className="text-2xl font-semibold text-foreground dark:text-white">
-            You won
-            {' '}
-            {wonMarket.proceedsSummary}
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Great job predicting the future on
-            {' '}
-            {siteName}
-            !
-          </p>
-        </div>
+function resolveProceeds(position: DataApiPosition, size: number): number {
+  const currentValue = toNumber(position.currentValue)
+  if (currentValue > 0) {
+    return currentValue
+  }
+  return size > 0 ? size : 0
+}
 
-        <Link
-          href="#"
-          className={`
-            flex w-full items-center gap-4 rounded-md p-4 transition-colors
-            hover:bg-muted/40
-            focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
-            focus-visible:ring-offset-background focus-visible:outline-none
-            dark:hover:bg-muted/20
-          `}
-        >
-          <div className="relative size-14 overflow-hidden rounded-md">
-            <Image
-              src={wonMarket.image}
-              alt={wonMarket.title}
-              fill
-              sizes="56px"
-              className="object-cover"
-            />
-          </div>
-          <div className="text-left">
-            <p className="text-sm font-semibold text-foreground">{wonMarket.title}</p>
-            <p className="text-xs text-muted-foreground">
-              Invested
-              {' '}
-              {wonMarket.invested}
-              {' '}
-              • Won
-              {' '}
-              {wonMarket.proceedsDetail}
-              {' '}
-              (
-              {wonMarket.percentReturn}
-              )
-            </p>
-          </div>
-        </Link>
+async function fetchDataApiPositions(address: string): Promise<DataApiPosition[]> {
+  if (!DATA_API_URL) {
+    return []
+  }
 
-        <DialogClose asChild>
-          <Button className="h-11 w-full">
-            Claim proceeds
-          </Button>
-        </DialogClose>
-      </DialogContent>
-    </Dialog>
-  )
+  const limit = 500
+  let offset = 0
+  const results: DataApiPosition[] = []
+
+  while (true) {
+    const params = new URLSearchParams({
+      user: address,
+      limit: limit.toString(),
+      offset: offset.toString(),
+      sizeThreshold: '0',
+    })
+
+    const response = await fetch(`${DATA_API_URL}/positions?${params.toString()}`, { cache: 'no-store' })
+    if (!response.ok) {
+      break
+    }
+
+    const page = await response.json().catch(() => null)
+    if (!Array.isArray(page)) {
+      break
+    }
+
+    results.push(...page)
+
+    if (page.length < limit) {
+      break
+    }
+
+    offset += page.length
+  }
+
+  return results
+}
+
+async function fetchMarketMetadata(conditionIds: string[]): Promise<Map<string, MarketMetadata>> {
+  if (!conditionIds.length) {
+    return new Map()
+  }
+
+  const rows = await db.query.markets.findMany({
+    where: inArray(markets.condition_id, conditionIds),
+    columns: {
+      condition_id: true,
+      title: true,
+      slug: true,
+      icon_url: true,
+    },
+    with: {
+      event: {
+        columns: {
+          slug: true,
+          icon_url: true,
+        },
+      },
+    },
+  })
+
+  const metadata = new Map<string, MarketMetadata>()
+
+  for (const row of rows) {
+    const iconUrl = row.icon_url
+      ? getSupabaseImageUrl(row.icon_url)
+      : row.event?.icon_url
+        ? getSupabaseImageUrl(row.event.icon_url)
+        : undefined
+
+    metadata.set(row.condition_id, {
+      title: pickString(row.title ?? undefined),
+      slug: pickString(row.slug ?? undefined),
+      eventSlug: pickString(row.event?.slug ?? undefined),
+      iconUrl,
+    })
+  }
+
+  return metadata
+}
+
+function buildClaimData(
+  positions: DataApiPosition[],
+  metadata: Map<string, MarketMetadata>,
+): PortfolioMarketsWonData {
+  const aggregates = new Map<string, MarketAggregate>()
+
+  for (const position of positions) {
+    if (!position.redeemable) {
+      continue
+    }
+
+    const conditionId = pickString(position.conditionId)
+    if (!conditionId) {
+      continue
+    }
+
+    const size = Math.max(0, toNumber(position.size))
+    if (size <= 0) {
+      continue
+    }
+
+    const meta = metadata.get(conditionId)
+    const title = pickString(meta?.title, position.title) ?? 'Untitled market'
+    const eventSlug = pickString(meta?.eventSlug, position.eventSlug, position.slug, meta?.slug)
+    const imageUrl = meta?.iconUrl ?? resolveDataApiIcon(position.icon)
+    const invested = resolveInvested(position, size)
+    const proceeds = resolveProceeds(position, size)
+    const timestamp = toNumber(position.timestamp)
+    const outcomeIndex = typeof position.outcomeIndex === 'number'
+      ? position.outcomeIndex
+      : undefined
+    const outcomeLabel = pickString(position.outcome)
+
+    const aggregate = aggregates.get(conditionId) ?? {
+      conditionId,
+      title,
+      eventSlug,
+      imageUrl,
+      shares: 0,
+      invested: 0,
+      proceeds: 0,
+      latestTimestamp: 0,
+      outcomeIndices: new Set<number>(),
+      outcomeLabels: new Set<string>(),
+    }
+
+    aggregate.title = pickString(aggregate.title, title) ?? 'Untitled market'
+    aggregate.eventSlug = pickString(aggregate.eventSlug, eventSlug)
+    aggregate.imageUrl = aggregate.imageUrl ?? imageUrl
+    aggregate.shares += size
+    aggregate.invested += invested
+    aggregate.proceeds += proceeds
+    aggregate.latestTimestamp = Math.max(aggregate.latestTimestamp, timestamp)
+
+    if (typeof outcomeIndex === 'number') {
+      aggregate.outcomeIndices.add(outcomeIndex)
+    }
+    if (outcomeLabel) {
+      aggregate.outcomeLabels.add(outcomeLabel)
+    }
+
+    aggregates.set(conditionId, aggregate)
+  }
+
+  const markets: PortfolioClaimMarket[] = Array.from(aggregates.values()).map((aggregate) => {
+    const outcomeIndices = Array.from(aggregate.outcomeIndices)
+    const outcomeLabels = Array.from(aggregate.outcomeLabels)
+    const outcomeIndex = outcomeIndices.length === 1 ? outcomeIndices[0] : undefined
+    const outcome = outcomeLabels.length > 0 ? outcomeLabels.join(' / ') : undefined
+    const indexSets = outcomeIndices.length
+      ? outcomeIndices.map(index => 2 ** index)
+      : DEFAULT_INDEX_SETS
+
+    const invested = aggregate.invested
+    const proceeds = aggregate.proceeds
+    const returnPercent = invested > 0
+      ? ((proceeds - invested) / invested) * 100
+      : 0
+
+    return {
+      conditionId: aggregate.conditionId,
+      title: aggregate.title,
+      eventSlug: aggregate.eventSlug,
+      imageUrl: aggregate.imageUrl,
+      shares: aggregate.shares,
+      invested,
+      proceeds,
+      returnPercent,
+      timestamp: aggregate.latestTimestamp || undefined,
+      outcomeIndex,
+      outcome,
+      indexSets,
+    }
+  })
+
+  markets.sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0))
+
+  const totalInvested = markets.reduce((sum, market) => sum + (market.invested || 0), 0)
+  const totalProceeds = markets.reduce((sum, market) => sum + (market.proceeds || 0), 0)
+  const totalReturnPercent = totalInvested > 0
+    ? ((totalProceeds - totalInvested) / totalInvested) * 100
+    : 0
+
+  return {
+    summary: {
+      marketsWon: markets.length,
+      totalProceeds,
+      totalInvested,
+      totalReturnPercent,
+      latestMarket: markets[0],
+    },
+    markets,
+  }
+}
+
+export default async function PortfolioMarketsWonCard({ proxyWalletAddress }: PortfolioMarketsWonCardProps) {
+  const normalized = normalizeAddress(proxyWalletAddress) ?? null
+  if (!normalized) {
+    return null
+  }
+
+  const positions = await fetchDataApiPositions(normalized)
+  if (!positions.length) {
+    return null
+  }
+
+  const redeemablePositions = positions.filter(position => position.redeemable && toNumber(position.size) > 0)
+  if (!redeemablePositions.length) {
+    return null
+  }
+
+  const conditionIds = Array.from(new Set(
+    redeemablePositions
+      .map(position => pickString(position.conditionId))
+      .filter((value): value is string => Boolean(value)),
+  ))
+
+  const metadata = await fetchMarketMetadata(conditionIds)
+  const data = buildClaimData(redeemablePositions, metadata)
+
+  if (!data.markets.length) {
+    return null
+  }
+
+  return <PortfolioMarketsWonCardClient data={data} />
 }
