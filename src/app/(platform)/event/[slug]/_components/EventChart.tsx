@@ -1,12 +1,9 @@
 'use client'
 
-import type { MarketQuote } from '@/app/(platform)/event/[slug]/_hooks/useEventMidPrices'
 import type { TimeRange } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
+import type { EventChartProps } from '@/app/(platform)/event/[slug]/_types/EventChartTypes'
 import type { PredictionChartCursorSnapshot, SeriesConfig } from '@/components/PredictionChart'
-import type { Event } from '@/types'
-import { ShuffleIcon, TriangleIcon } from 'lucide-react'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
-import { AnimatedCounter } from 'react-animated-counter'
 import {
   useEventOutcomeChanceChanges,
   useEventOutcomeChances,
@@ -23,188 +20,23 @@ import {
   TIME_RANGES,
   useEventPriceHistory,
 } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
-import PredictionChart from '@/components/PredictionChart'
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+  areNumberMapsEqual,
+  areQuoteMapsEqual,
+  buildChartSeries,
+  buildMarketSignature,
+  computeChanceChanges,
+  filterChartDataForSeries,
+  getMaxSeriesCount,
+  getOutcomeLabelForMarket,
+  getTopMarketIds,
+} from '@/app/(platform)/event/[slug]/_utils/EventChartUtils'
+import PredictionChart from '@/components/PredictionChart'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { buildChanceByMarket } from '@/lib/market-chance'
-import { cn, sanitizeSvg } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
-
-interface EventChartProps {
-  event: Event
-  isMobile: boolean
-}
-
-const CHART_COLORS = ['#FF6600', '#2D9CDB', '#4E6377', '#FDC500']
-const MAX_SERIES = 4
-const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000
-
-function areNumberMapsEqual(a: Record<string, number>, b: Record<string, number>) {
-  const aKeys = Object.keys(a)
-  const bKeys = Object.keys(b)
-  if (aKeys.length !== bKeys.length) {
-    return false
-  }
-  return aKeys.every(key => Object.is(a[key], b[key]))
-}
-
-function areQuoteMapsEqual(a: Record<string, MarketQuote>, b: Record<string, MarketQuote>) {
-  const aKeys = Object.keys(a)
-  const bKeys = Object.keys(b)
-  if (aKeys.length !== bKeys.length) {
-    return false
-  }
-  return aKeys.every((key) => {
-    const aQuote = a[key]
-    const bQuote = b[key]
-    if (!aQuote || !bQuote) {
-      return false
-    }
-    return Object.is(aQuote.bid, bQuote.bid)
-      && Object.is(aQuote.ask, bQuote.ask)
-      && Object.is(aQuote.mid, bQuote.mid)
-  })
-}
-
-function buildMarketSignature(event: Event) {
-  return event.markets
-    .map((market) => {
-      const outcomeSignature = market.outcomes
-        .map(outcome => `${outcome.id}:${outcome.updated_at}:${outcome.token_id}`)
-        .join(',')
-      return `${market.condition_id}:${market.updated_at}:${outcomeSignature}`
-    })
-    .join('|')
-}
-
-function computeChanceChanges(
-  points: Array<Record<string, number | Date> & { date: Date }>,
-  currentOverrides: Record<string, number> = {},
-) {
-  if (!points.length) {
-    return {}
-  }
-
-  const latestPoint = points[points.length - 1]
-  const targetTime = latestPoint.date.getTime() - TWELVE_HOURS_MS
-  let baselinePoint = points[0]
-
-  for (let index = points.length - 1; index >= 0; index -= 1) {
-    const currentPoint = points[index]
-    if (currentPoint.date.getTime() <= targetTime) {
-      baselinePoint = currentPoint
-      break
-    }
-  }
-
-  const changes: Record<string, number> = {}
-
-  Object.entries(latestPoint).forEach(([key, value]) => {
-    if (key === 'date') {
-      return
-    }
-
-    const overrideValue = currentOverrides[key]
-    const resolvedCurrent = typeof overrideValue === 'number' && Number.isFinite(overrideValue)
-      ? overrideValue
-      : value
-    if (typeof resolvedCurrent !== 'number' || !Number.isFinite(resolvedCurrent)) {
-      return
-    }
-
-    const baselineValue = baselinePoint[key]
-    const numericBaseline = typeof baselineValue === 'number' && Number.isFinite(baselineValue)
-      ? baselineValue
-      : resolvedCurrent
-
-    changes[key] = resolvedCurrent - numericBaseline
-  })
-
-  return changes
-}
-
-function filterChartDataForSeries(
-  points: Array<Record<string, number | Date> & { date: Date }>,
-  seriesKeys: string[],
-) {
-  if (!points.length || !seriesKeys.length) {
-    return []
-  }
-
-  return points.map((point) => {
-    const filtered: Record<string, number | Date> & { date: Date } = { date: point.date }
-    seriesKeys.forEach((key) => {
-      if (typeof point[key] === 'number') {
-        filtered[key] = point[key]
-      }
-    })
-    return filtered
-  })
-}
-
-function getTopMarketIds(chances: Record<string, number>, limit: number) {
-  return Object.entries(chances)
-    .filter(([, value]) => Number.isFinite(value))
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, limit)
-    .map(([key]) => key)
-}
-
-function isDefaultMarketLabel(label?: string | null) {
-  if (!label) {
-    return true
-  }
-  return /^(?:outcome|token)\s*\d+$/i.test(label.trim())
-}
-
-function deriveSeriesName(market: Event['markets'][number]) {
-  const outcomeLabel = market.outcomes?.[0]?.outcome_text?.trim()
-  const shortTitle = market.short_title?.trim()
-
-  if (shortTitle && !isDefaultMarketLabel(shortTitle)) {
-    return shortTitle
-  }
-
-  if (outcomeLabel) {
-    return outcomeLabel
-  }
-
-  return market.title
-}
-
-function getOutcomeLabelForMarket(
-  market: Event['markets'][number] | undefined,
-  outcomeIndex: typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO,
-) {
-  const outcome = market?.outcomes.find(item => item.outcome_index === outcomeIndex)
-  const label = outcome?.outcome_text?.trim()
-
-  if (label) {
-    return label
-  }
-
-  return outcomeIndex === OUTCOME_INDEX.YES ? 'Yes' : 'No'
-}
-
-function buildChartSeries(event: Event, marketIds: string[]) {
-  return marketIds
-    .map((conditionId, index) => {
-      const market = event.markets.find(current => current.condition_id === conditionId)
-      if (!market) {
-        return null
-      }
-      return {
-        key: conditionId,
-        name: deriveSeriesName(market),
-        color: CHART_COLORS[index % CHART_COLORS.length],
-      }
-    })
-    .filter((entry): entry is { key: string, name: string, color: string } => entry !== null)
-}
+import EventChartControls from './EventChartControls'
+import EventChartHeader from './EventChartHeader'
 
 function EventChartComponent({ event, isMobile }: EventChartProps) {
   const isSingleMarket = useIsSingleMarket()
@@ -317,7 +149,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   }, [currentMarketQuotes, marketQuotesByMarket, updateMarketQuotes])
 
   const topMarketIds = useMemo(
-    () => getTopMarketIds(latestSnapshot, MAX_SERIES),
+    () => getTopMarketIds(latestSnapshot, getMaxSeriesCount()),
     [latestSnapshot],
   )
 
@@ -330,7 +162,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     () => event.markets
       .map(market => market.condition_id)
       .filter((conditionId): conditionId is string => Boolean(conditionId))
-      .slice(0, MAX_SERIES),
+      .slice(0, getMaxSeriesCount()),
     [event.markets],
   )
 
@@ -519,112 +351,16 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   }
   return (
     <div className="grid gap-4">
-      {isSingleMarket && (
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-          <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
-            <div
-              className="flex flex-col gap-1 font-bold tabular-nums"
-              style={{ color: primarySeriesColor }}
-            >
-              {activeOutcomeIndex === OUTCOME_INDEX.NO && activeOutcomeLabel && (
-                <span className="text-xs leading-none">
-                  {activeOutcomeLabel}
-                </span>
-              )}
-              <div className="inline-flex items-baseline gap-0">
-                {typeof yesChanceValue === 'number'
-                  ? (
-                      <AnimatedCounter
-                        value={yesChanceValue}
-                        color="currentColor"
-                        fontSize="24px"
-                        includeCommas={false}
-                        includeDecimals={false}
-                        incrementColor="currentColor"
-                        decrementColor="currentColor"
-                        digitStyles={{
-                          fontWeight: 800,
-                          letterSpacing: '-0.02em',
-                          lineHeight: '1',
-                          display: 'inline-block',
-                        }}
-                        containerStyles={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          flexDirection: 'row-reverse',
-                          gap: '0.05em',
-                          lineHeight: '1',
-                        }}
-                      />
-                    )
-                  : (
-                      <span className="text-2xl leading-none font-extrabold">--</span>
-                    )}
-                <span className="text-2xl leading-none font-extrabold">
-                  % chance
-                </span>
-              </div>
-            </div>
-
-            {(() => {
-              if (
-                effectiveBaselineYesChance === null
-                || effectiveCurrentYesChance === null
-                || !Number.isFinite(effectiveBaselineYesChance)
-                || !Number.isFinite(effectiveCurrentYesChance)
-              ) {
-                return null
-              }
-
-              const rawChange = effectiveCurrentYesChance - effectiveBaselineYesChance
-              const roundedChange = Math.round(rawChange)
-
-              if (roundedChange === 0) {
-                return null
-              }
-
-              const isPositive = roundedChange > 0
-              const magnitude = Math.abs(roundedChange)
-              const colorClass = isPositive ? 'text-yes' : 'text-no'
-
-              return (
-                <div className={`flex items-center gap-1 tabular-nums ${colorClass}`}>
-                  <TriangleIcon
-                    className="size-3.5"
-                    fill="currentColor"
-                    stroke="none"
-                    style={{ transform: isPositive ? 'rotate(0deg)' : 'rotate(180deg)' }}
-                  />
-                  <span className="text-xs font-semibold">
-                    {magnitude}
-                    %
-                  </span>
-                </div>
-              )
-            })()}
-          </div>
-
-          {(watermark.iconSvg || watermark.label) && (
-            <div className="flex items-center gap-1 self-start text-muted-foreground opacity-50 select-none">
-              {watermark.iconSvg
-                ? (
-                    <div
-                      className="size-6 **:fill-current **:stroke-current"
-                      dangerouslySetInnerHTML={{ __html: sanitizeSvg(watermark.iconSvg) }}
-                    />
-                  )
-                : null}
-              {watermark.label
-                ? (
-                    <span className="text-xl font-medium">
-                      {watermark.label}
-                    </span>
-                  )
-                : null}
-            </div>
-          )}
-        </div>
-      )}
+      <EventChartHeader
+        isSingleMarket={isSingleMarket}
+        activeOutcomeIndex={activeOutcomeIndex}
+        activeOutcomeLabel={activeOutcomeLabel}
+        primarySeriesColor={primarySeriesColor}
+        yesChanceValue={yesChanceValue}
+        effectiveBaselineYesChance={effectiveBaselineYesChance}
+        effectiveCurrentYesChance={effectiveCurrentYesChance}
+        watermark={watermark}
+      />
 
       <div>
         <PredictionChart
@@ -640,76 +376,21 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
           showLegend={!isSingleMarket}
           watermark={isSingleMarket ? undefined : watermark}
         />
-        {hasChartData && (
-          <div className="relative mt-3 flex flex-wrap items-center justify-between gap-3">
-            <div
-              ref={timeRangeContainerRef}
-              className="relative flex flex-wrap items-center gap-2 text-xs font-semibold"
-            >
-              <div
-                className={cn(
-                  'absolute inset-y-0 rounded-md bg-muted',
-                  timeRangeIndicatorReady ? 'opacity-100 transition-all duration-300' : 'opacity-0 transition-none',
-                )}
-                style={{
-                  width: `${timeRangeIndicator.width}px`,
-                  left: `${timeRangeIndicator.left}px`,
-                }}
-                aria-hidden={!timeRangeIndicatorReady}
-              />
-              {TIME_RANGES.map(range => (
-                <button
-                  key={range}
-                  type="button"
-                  className={cn(
-                    'relative z-10 rounded-md px-3 py-2 transition-colors',
-                    activeTimeRange === range
-                      ? 'bg-muted text-foreground'
-                      : 'text-muted-foreground hover:text-foreground',
-                  )}
-                  data-range={range}
-                  onClick={() => setActiveTimeRange(range)}
-                >
-                  {range}
-                </button>
-              ))}
-            </div>
-
-            {isSingleMarket && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    className={`
-                      flex items-center justify-center rounded-md px-3 py-2 text-xs font-semibold text-muted-foreground
-                      transition-colors
-                      hover:bg-muted/70 hover:text-foreground
-                    `}
-                    onClick={() => {
-                      setActiveOutcomeIndex(oppositeOutcomeIndex)
-                      setCursorSnapshot(null)
-                    }}
-                    aria-label={`switch to ${oppositeOutcomeLabel}`}
-                  >
-                    <ShuffleIcon className="size-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="left"
-                  sideOffset={8}
-                  hideArrow
-                  className={`
-                    border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground shadow-xl
-                  `}
-                >
-                  switch to
-                  {' '}
-                  {oppositeOutcomeLabel}
-                </TooltipContent>
-              </Tooltip>
-            )}
-          </div>
-        )}
+        <EventChartControls
+          hasChartData={hasChartData}
+          timeRanges={TIME_RANGES}
+          activeTimeRange={activeTimeRange}
+          onTimeRangeChange={setActiveTimeRange}
+          timeRangeContainerRef={timeRangeContainerRef}
+          timeRangeIndicator={timeRangeIndicator}
+          timeRangeIndicatorReady={timeRangeIndicatorReady}
+          isSingleMarket={isSingleMarket}
+          oppositeOutcomeLabel={oppositeOutcomeLabel}
+          onShuffle={() => {
+            setActiveOutcomeIndex(oppositeOutcomeIndex)
+            setCursorSnapshot(null)
+          }}
+        />
       </div>
     </div>
   )
