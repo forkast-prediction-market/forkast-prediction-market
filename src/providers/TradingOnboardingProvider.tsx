@@ -2,15 +2,13 @@
 
 import type { ReactNode } from 'react'
 import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
-import type { ProxyWalletStatus, User } from '@/types'
+import type { User } from '@/types'
 import { createContext, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { hashTypedData, UserRejectedRequestError } from 'viem'
 import { useSignMessage, useSignTypedData } from 'wagmi'
 import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
 import { saveProxyWalletSignature } from '@/app/(platform)/_actions/proxy-wallet'
 import { generateTradingAuthAction } from '@/app/(platform)/_actions/trading-auth'
-import { EnableTradingDialog, FundAccountDialog, TradeRequirementsDialog } from '@/components/trading/TradingDialogs'
-import { WalletFlow } from '@/components/trading/WalletFlow'
 import { useAppKit } from '@/hooks/useAppKit'
 import { defaultNetwork } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
@@ -37,6 +35,8 @@ import {
   TRADING_AUTH_PRIMARY_TYPE,
   TRADING_AUTH_TYPES,
 } from '@/lib/trading-auth/client'
+import { useProxyWalletPolling } from '@/providers/_hooks/useProxyWalletPolling'
+import TradingOnboardingDialogs from '@/providers/TradingOnboardingDialogs'
 import { useUser } from '@/stores/useUser'
 
 interface TradingOnboardingContextValue {
@@ -179,105 +179,13 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     void refreshSessionUserState()
   }, [enableModalOpen, refreshSessionUserState, tradeModalOpen])
 
-  useEffect(() => {
-    if (!user?.id) {
-      return
-    }
-
-    const needsSync = !hasProxyWalletAddress || !hasDeployedProxyWallet
-    if (!needsSync) {
-      return
-    }
-
-    let cancelled = false
-    let timeoutId: ReturnType<typeof setTimeout> | null = null
-
-    function shouldContinuePolling() {
-      const current = useUser.getState()
-      return Boolean(current && (!current.proxy_wallet_address || current.proxy_wallet_status !== 'deployed'))
-    }
-
-    function scheduleRetry(delay: number) {
-      if (!cancelled && shouldContinuePolling()) {
-        timeoutId = setTimeout(fetchProxyDetails, delay)
-      }
-    }
-
-    function fetchProxyDetails() {
-      fetch('/api/user/proxy')
-        .then(async (response) => {
-          if (!response.ok) {
-            return null
-          }
-          return await response.json() as {
-            proxy_wallet_address?: string | null
-            proxy_wallet_signature?: string | null
-            proxy_wallet_signed_at?: string | null
-            proxy_wallet_status?: string | null
-            proxy_wallet_tx_hash?: string | null
-          }
-        })
-        .then((data) => {
-          if (cancelled) {
-            return
-          }
-
-          if (!data) {
-            scheduleRetry(10000)
-            return
-          }
-
-          useUser.setState((previous) => {
-            if (!previous) {
-              return previous
-            }
-
-            const nextAddress = data.proxy_wallet_address ?? previous.proxy_wallet_address
-            const nextSignature = data.proxy_wallet_signature ?? previous.proxy_wallet_signature
-            const nextSignedAt = data.proxy_wallet_signed_at ?? previous.proxy_wallet_signed_at
-            const nextStatus = (data.proxy_wallet_status as ProxyWalletStatus | null | undefined) ?? previous.proxy_wallet_status
-            const nextTxHash = data.proxy_wallet_tx_hash ?? previous.proxy_wallet_tx_hash
-
-            const nothingChanged = (
-              nextAddress === previous.proxy_wallet_address
-              && nextSignature === previous.proxy_wallet_signature
-              && nextSignedAt === previous.proxy_wallet_signed_at
-              && nextStatus === previous.proxy_wallet_status
-              && nextTxHash === previous.proxy_wallet_tx_hash
-            )
-
-            if (nothingChanged) {
-              return previous
-            }
-
-            return {
-              ...previous,
-              proxy_wallet_address: nextAddress,
-              proxy_wallet_signature: nextSignature,
-              proxy_wallet_signed_at: nextSignedAt,
-              proxy_wallet_status: nextStatus,
-              proxy_wallet_tx_hash: nextTxHash,
-            }
-          })
-
-          if (!cancelled && data.proxy_wallet_address && data.proxy_wallet_status !== 'deployed') {
-            timeoutId = setTimeout(fetchProxyDetails, 6000)
-          }
-        })
-        .catch(() => {
-          scheduleRetry(10000)
-        })
-    }
-
-    fetchProxyDetails()
-
-    return () => {
-      cancelled = true
-      if (timeoutId) {
-        clearTimeout(timeoutId)
-      }
-    }
-  }, [hasDeployedProxyWallet, hasProxyWalletAddress, user?.id, user?.proxy_wallet_address, user?.proxy_wallet_status])
+  useProxyWalletPolling({
+    userId: user?.id,
+    proxyWalletAddress: user?.proxy_wallet_address,
+    proxyWalletStatus: user?.proxy_wallet_status,
+    hasDeployedProxyWallet,
+    hasProxyWalletAddress,
+  })
 
   const resetPendingFundState = useCallback(() => {
     setShouldShowFundAfterProxy(false)
@@ -654,9 +562,9 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     <TradingOnboardingContext value={contextValue}>
       {children}
 
-      <EnableTradingDialog
-        open={enableModalOpen}
-        onOpenChange={(next) => {
+      <TradingOnboardingDialogs
+        enableModalOpen={enableModalOpen}
+        onEnableOpenChange={(next) => {
           setEnableModalOpen(next)
           if (!next) {
             resetPendingFundState()
@@ -673,38 +581,18 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
         onProxyAction={handleProxyWalletSignature}
         onTradingAuthAction={handleTradingAuthSignature}
         onApprovalsAction={handleApproveTokens}
-      />
-
-      <FundAccountDialog
-        open={fundModalOpen}
-        onOpenChange={closeFundModal}
-        onDeposit={() => {
+        fundModalOpen={fundModalOpen}
+        onFundOpenChange={closeFundModal}
+        onFundDeposit={() => {
           closeFundModal(false)
           openWalletModal()
         }}
-        onSkip={() => closeFundModal(false)}
-      />
-
-      <TradeRequirementsDialog
-        open={tradeModalOpen}
-        onOpenChange={setTradeModalOpen}
-        proxyStep={proxyStep}
-        tradingAuthStep={tradingAuthStep}
-        approvalsStep={approvalsStep}
-        hasTradingAuth={hasTradingAuth}
-        hasDeployedProxyWallet={hasDeployedProxyWallet}
-        proxyWalletError={proxyWalletError}
-        tradingAuthError={tradingAuthError}
-        tokenApprovalError={tokenApprovalError}
-        onProxyAction={handleProxyWalletSignature}
-        onTradingAuthAction={handleTradingAuthSignature}
-        onApprovalsAction={handleApproveTokens}
-      />
-
-      <WalletFlow
-        depositOpen={depositModalOpen}
+        onFundSkip={() => closeFundModal(false)}
+        tradeModalOpen={tradeModalOpen}
+        onTradeOpenChange={setTradeModalOpen}
+        depositModalOpen={depositModalOpen}
         onDepositOpenChange={setDepositModalOpen}
-        withdrawOpen={withdrawModalOpen}
+        withdrawModalOpen={withdrawModalOpen}
         onWithdrawOpenChange={setWithdrawModalOpen}
         user={user}
         meldUrl={meldUrl}
