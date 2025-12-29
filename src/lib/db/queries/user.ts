@@ -83,16 +83,18 @@ export const UserRepository = {
 
   async updateUserNotificationSettings(currentUser: User, preferences: any) {
     return await runQuery(async () => {
-      const settingsPayload: any = currentUser?.settings ?? {}
-
-      const mergedSettings = {
-        ...settingsPayload,
-        notifications: preferences,
-      }
-
       const result = await db
         .update(users)
-        .set({ settings: mergedSettings })
+        .set({
+          settings: sql`
+            jsonb_set(
+              coalesce(${users.settings}, '{}'::jsonb),
+              '{notifications}',
+              to_jsonb(${preferences}),
+              true
+            )
+          `,
+        })
         .where(eq(users.id, currentUser.id))
         .returning({ id: users.id })
 
@@ -108,16 +110,20 @@ export const UserRepository = {
 
   async updateUserTradingSettings(currentUser: User, preferences: { market_order_type: MarketOrderType }) {
     return await runQuery(async () => {
-      const settingsPayload: any = currentUser?.settings ?? {}
-
-      const mergedSettings = {
-        ...settingsPayload,
-        trading: preferences,
-      }
+      const marketOrderType = preferences.market_order_type
 
       const result = await db
         .update(users)
-        .set({ settings: mergedSettings })
+        .set({
+          settings: sql`
+            jsonb_set(
+              coalesce(${users.settings}, '{}'::jsonb),
+              '{trading,market_order_type}',
+              to_jsonb(${marketOrderType}),
+              true
+            )
+          `,
+        })
         .where(eq(users.id, currentUser.id))
         .returning({ id: users.id })
 
