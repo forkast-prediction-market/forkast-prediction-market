@@ -340,33 +340,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     }, {})
   }, [openOrders])
 
-  const lockedBuyCollateral = useMemo(() => {
-    if (!openOrders.length) {
-      return 0
-    }
-
-    return openOrders.reduce((acc, order) => {
-      if (order.side !== 'buy') {
-        return acc
-      }
-
-      const makerAmountMicro = BigInt(Math.max(0, Math.trunc(order.maker_amount || 0)))
-      const takerAmountMicro = BigInt(Math.max(0, Math.trunc(order.taker_amount || 0)))
-      const filledMicro = BigInt(Math.max(0, Math.trunc(order.size_matched || 0)))
-      if (makerAmountMicro === 0n || takerAmountMicro === 0n) {
-        return acc + (Number(makerAmountMicro) / MICRO_UNIT)
-      }
-
-      const filledRatio = filledMicro >= takerAmountMicro
-        ? BigInt(MICRO_UNIT)
-        : (filledMicro * BigInt(MICRO_UNIT)) / takerAmountMicro
-
-      const remainingMaker = makerAmountMicro - ((makerAmountMicro * filledRatio) / BigInt(MICRO_UNIT))
-      return acc + (Number(remainingMaker) / MICRO_UNIT)
-    }, 0)
-  }, [openOrders])
-
-  const availableBalanceForOrders = Math.max(0, balance.raw - lockedBuyCollateral)
+  const availableBalanceForOrders = Math.max(0, balance.raw)
 
   const mergedSharesByCondition = useMemo(() => {
     const merged: Record<string, Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>> = {}
