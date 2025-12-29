@@ -110,7 +110,13 @@ async function fetchDataApiPositions(address: string): Promise<DataApiPosition[]
       sizeThreshold: '0',
     })
 
-    const response = await fetch(`${DATA_API_URL}/positions?${params.toString()}`, { cache: 'no-store' })
+    let response: Response
+    try {
+      response = await fetch(`${DATA_API_URL}/positions?${params.toString()}`, { cache: 'no-store' })
+    }
+    catch {
+      break
+    }
     if (!response.ok) {
       break
     }
