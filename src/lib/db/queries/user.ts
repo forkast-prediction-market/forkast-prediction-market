@@ -90,7 +90,7 @@ export const UserRepository = {
             jsonb_set(
               coalesce(${users.settings}, '{}'::jsonb),
               '{notifications}',
-              to_jsonb(${preferences}),
+              (${preferences}::jsonb),
               true
             )
           `,
@@ -119,7 +119,7 @@ export const UserRepository = {
             jsonb_set(
               coalesce(${users.settings}, '{}'::jsonb),
               '{trading,market_order_type}',
-              to_jsonb(${marketOrderType}),
+              to_jsonb(${marketOrderType}::text),
               true
             )
           `,

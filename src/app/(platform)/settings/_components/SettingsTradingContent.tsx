@@ -6,7 +6,6 @@ import { startTransition, useOptimistic, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { updateTradingSettingsAction } from '@/app/(platform)/settings/_actions/update-trading-settings'
 import { InputError } from '@/components/ui/input-error'
-import { Label } from '@/components/ui/label'
 import { CLOB_ORDER_TYPE } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
@@ -96,60 +95,49 @@ export default function SettingsTradingContent({ user }: { user: User }) {
       <Form ref={formRef} action={() => {}} className="grid gap-6">
         <input type="hidden" name="market_order_type" value={optimisticOrderType} />
 
-        <div className="rounded-lg border p-6">
-          <div className="grid gap-4">
-            <div className="grid gap-1">
-              <Label className="text-base font-semibold">Market Order Type</Label>
-              <p className="text-sm text-muted-foreground">
-                Choose how your market orders are executed
-              </p>
-            </div>
+        <div className="grid gap-3">
+          {ORDER_TYPE_OPTIONS.map((option) => {
+            const isSelected = optimisticOrderType === option.value
 
-            <div className="grid gap-3">
-              {ORDER_TYPE_OPTIONS.map((option) => {
-                const isSelected = optimisticOrderType === option.value
-
-                return (
-                  <label
-                    key={option.value}
+            return (
+              <label
+                key={option.value}
+                className={cn(
+                  'flex cursor-pointer flex-col gap-2 rounded-md border p-4 transition-colors',
+                  isSelected ? 'border-primary/80 bg-primary/5' : 'border-border hover:border-primary/60',
+                )}
+              >
+                <input
+                  type="radio"
+                  name="market-order-type-radio"
+                  value={option.value}
+                  checked={isSelected}
+                  onChange={() => handleOptionChange(option.value)}
+                  className="sr-only"
+                />
+                <div className="flex items-center gap-2">
+                  <div
+                    aria-hidden="true"
                     className={cn(
-                      'flex cursor-pointer flex-col gap-2 rounded-md border p-4 transition-colors',
-                      isSelected ? 'border-primary/80 bg-primary/5' : 'border-border hover:border-primary/60',
+                      'flex size-4 items-center justify-center rounded-full border transition-colors',
+                      isSelected ? 'border-primary bg-primary' : 'border-muted-foreground/40',
                     )}
                   >
-                    <input
-                      type="radio"
-                      name="market-order-type-radio"
-                      value={option.value}
-                      checked={isSelected}
-                      onChange={() => handleOptionChange(option.value)}
-                      className="sr-only"
+                    <div
+                      className={cn(
+                        'size-2 rounded-full bg-background transition-opacity',
+                        isSelected ? 'opacity-100' : 'opacity-0',
+                      )}
                     />
-                    <div className="flex items-center gap-2">
-                      <div
-                        aria-hidden="true"
-                        className={cn(
-                          'flex size-4 items-center justify-center rounded-full border transition-colors',
-                          isSelected ? 'border-primary bg-primary' : 'border-muted-foreground/40',
-                        )}
-                      >
-                        <div
-                          className={cn(
-                            'size-2 rounded-full bg-background transition-opacity',
-                            isSelected ? 'opacity-100' : 'opacity-0',
-                          )}
-                        />
-                      </div>
-                      <span className="text-sm font-medium">{option.title}</span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {option.description}
-                    </p>
-                  </label>
-                )
-              })}
-            </div>
-          </div>
+                  </div>
+                  <span className="text-sm font-medium">{option.title}</span>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {option.description}
+                </p>
+              </label>
+            )
+          })}
         </div>
       </Form>
     </div>
