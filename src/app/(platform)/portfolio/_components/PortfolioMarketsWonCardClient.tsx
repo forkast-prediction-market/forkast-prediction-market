@@ -1,5 +1,6 @@
 'use client'
 
+import type { Route } from 'next'
 import { DialogTitle } from '@radix-ui/react-dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import { useQueryClient } from '@tanstack/react-query'
@@ -271,7 +272,7 @@ export default function PortfolioMarketsWonCardClient({ data }: PortfolioMarkets
 
         <div className="max-h-[45vh] space-y-2 overflow-y-auto pr-1 text-left">
           {markets.map((market) => {
-            const href = market.eventSlug ? `/event/${market.eventSlug}` : null
+            const href = market.eventSlug ? (`/event/${market.eventSlug}` as Route) : null
             const itemClassName = [
               'flex w-full items-center gap-4 rounded-md p-4 transition-colors',
               href
