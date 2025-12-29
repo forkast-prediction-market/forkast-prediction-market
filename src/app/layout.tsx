@@ -7,6 +7,9 @@ import { openSauceOne } from '@/lib/fonts'
 import { IS_TEST_MODE } from '@/lib/network'
 import './globals.css'
 
+const siteLogoSvg = process.env.NEXT_PUBLIC_SITE_LOGO_SVG
+const siteIcon = siteLogoSvg ? `data:image/svg+xml;utf8,${encodeURIComponent(siteLogoSvg)}` : '/favicon.ico'
+
 export const metadata: Metadata = {
   title: {
     template: `${process.env.NEXT_PUBLIC_SITE_NAME} | %s`,
@@ -14,6 +17,9 @@ export const metadata: Metadata = {
   },
   description: process.env.NEXT_PUBLIC_SITE_DESCRIPTION,
   applicationName: process.env.NEXT_PUBLIC_SITE_NAME,
+  icons: {
+    icon: siteIcon,
+  },
 }
 
 export const viewport: Viewport = {
