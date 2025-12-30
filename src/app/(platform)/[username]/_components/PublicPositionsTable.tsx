@@ -87,9 +87,9 @@ export default function PublicPositionsTable({
 
         {!isLoading && positions.length > 0 && (
           <div className="space-y-0">
-            {positions.map((position, index) => (
+            {positions.map(position => (
               <PublicPositionsRow
-                key={`${position.id}-${index}`}
+                key={position.id}
                 position={position}
                 rowGridClass={rowGridClass}
                 onShareClick={onShareClick}
