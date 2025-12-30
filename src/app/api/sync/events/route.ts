@@ -22,7 +22,6 @@ interface SubgraphCondition {
   resolved: boolean
   arweaveHash: string | null
   creator: string | null
-  owner?: string | null
   creationTimestamp: string
   updatedAt: string
 }
@@ -179,7 +178,7 @@ async function syncMarkets(): Promise<SyncStats> {
       }
 
       if (!condition.creator) {
-        console.error(`⚠️ Skipping condition ${condition.id} - missing creator/owner field`)
+        console.error(`⚠️ Skipping condition ${condition.id} - missing creator field`)
         cursor = conditionCursor
         continue
       }
@@ -294,7 +293,6 @@ async function fetchPnLConditionsPage(afterCursor: SyncCursor | null): Promise<{
         resolved
         arweaveHash
         creator
-        owner
         creationTimestamp
         updatedAt
       }
@@ -320,13 +318,10 @@ async function fetchPnLConditionsPage(afterCursor: SyncCursor | null): Promise<{
 
   const rawConditions: SubgraphCondition[] = result.data.conditions || []
 
-  const normalizedConditions: SubgraphCondition[] = rawConditions.map((condition) => {
-    const owner = condition.owner ?? condition.creator
-    return {
-      ...condition,
-      creator: owner ? owner.toLowerCase() : owner,
-    }
-  })
+  const normalizedConditions: SubgraphCondition[] = rawConditions.map(condition => ({
+    ...condition,
+    creator: condition.creator ? condition.creator.toLowerCase() : condition.creator,
+  }))
 
   return { conditions: normalizedConditions }
 }
