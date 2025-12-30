@@ -1,0 +1,134 @@
+import type { PublicPosition } from './PublicPositionItem'
+import { ArrowRightIcon, ShareIcon } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { formatCurrencyValue, getLatestPrice, getValue } from '@/app/(platform)/[username]/_utils/PublicPositionsUtils'
+import { Button } from '@/components/ui/button'
+import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
+import { cn } from '@/lib/utils'
+
+interface PublicPositionsRowProps {
+  position: PublicPosition
+  rowGridClass: string
+  onShareClick: (position: PublicPosition) => void
+}
+
+export default function PublicPositionsRow({ position, rowGridClass, onShareClick }: PublicPositionsRowProps) {
+  const imageSrc = position.icon ? `https://gateway.irys.xyz/${position.icon}` : null
+  const avgPrice = position.avgPrice ?? 0
+  const nowPrice = getLatestPrice(position)
+  const shares = position.size ?? 0
+  const tradeValue = shares * avgPrice
+  const currentValue = getValue(position)
+  const toWinValue = shares
+  const pnlDiff = currentValue - tradeValue
+  const pnlPct = tradeValue > 0 ? (pnlDiff / tradeValue) * 100 : 0
+  const outcomeLabel = position.outcome ?? '—'
+  const outcomeColor = outcomeLabel.toLowerCase().includes('yes') ? 'bg-yes/15 text-yes' : 'bg-no/15 text-no'
+  const eventSlug = position.eventSlug || position.slug
+
+  return (
+    <div
+      className={cn(
+        rowGridClass,
+        `
+          border-b border-border/60 px-2 py-3 transition-colors
+          first:border-t first:border-border/60
+          last:border-b-0
+          hover:bg-muted/50
+          sm:px-3
+        `,
+      )}
+    >
+      <div className="flex min-w-0 items-start gap-3">
+        <Link
+          href={`/event/${eventSlug}`}
+          className="relative size-12 shrink-0 overflow-hidden rounded bg-muted"
+        >
+          {imageSrc
+            ? (
+                <Image
+                  src={imageSrc}
+                  alt={position.title}
+                  fill
+                  sizes="48px"
+                  className="object-cover"
+                />
+              )
+            : (
+                <div className="grid size-full place-items-center text-2xs text-muted-foreground">No image</div>
+              )}
+        </Link>
+        <div className="min-w-0 space-y-1">
+          <Link
+            href={`/event/${eventSlug}`}
+            className={`
+              block max-w-[64ch] truncate text-sm font-semibold text-foreground no-underline
+              hover:no-underline
+            `}
+            title={position.title}
+          >
+            {position.title}
+          </Link>
+          <div className="flex flex-wrap items-center gap-1.5 text-2xs">
+            <span className={cn('inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-2xs font-semibold', outcomeColor)}>
+              {outcomeLabel}
+              {' '}
+              {formatCentsLabel(avgPrice, { fallback: '—' })}
+            </span>
+            {Number.isFinite(position.size) && (
+              <span className="text-muted-foreground">
+                {(position.size ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                {' '}
+                shares
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="text-left text-sm text-foreground">
+        <div className="flex items-center gap-1">
+          <span className="text-muted-foreground">{formatCentsLabel(avgPrice, { fallback: '—' })}</span>
+          <ArrowRightIcon className="size-3 text-muted-foreground" />
+          <span className="text-foreground">{formatCentsLabel(nowPrice, { fallback: '—' })}</span>
+        </div>
+      </div>
+
+      <div className="text-center text-sm font-semibold text-muted-foreground">
+        {formatCurrencyValue(tradeValue)}
+      </div>
+
+      <div className="text-center text-sm font-semibold text-muted-foreground">
+        {formatCurrencyValue(toWinValue)}
+      </div>
+
+      <div className="text-right text-sm font-semibold text-foreground">
+        {formatCurrencyValue(currentValue)}
+        <div className={cn('text-xs', pnlDiff >= 0 ? 'text-yes' : 'text-no')}>
+          {`${pnlDiff >= 0 ? '+' : '-'}${formatCurrency(Math.abs(pnlDiff))}`}
+          {' '}
+          (
+          {Math.abs(pnlPct).toLocaleString(undefined, {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 2,
+          })}
+          %)
+        </div>
+      </div>
+
+      <div className="flex justify-end gap-2">
+        <Button size="sm">Sell</Button>
+        <Button
+          size="icon"
+          variant="outline"
+          className="rounded-lg"
+          onClick={() => onShareClick(position)}
+          aria-label={`Share ${position.title}`}
+        >
+          <ShareIcon className="size-4" />
+        </Button>
+      </div>
+    </div>
+  )
+}

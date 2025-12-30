@@ -208,7 +208,7 @@ export default function PortfolioMarketsWonCardClient({ data }: PortfolioMarkets
                     />
                   )
                 : (
-                    <div className="grid size-full place-items-center text-[10px] text-muted-foreground">
+                    <div className="grid size-full place-items-center text-2xs text-muted-foreground">
                       No image
                     </div>
                   )}
@@ -293,7 +293,7 @@ export default function PortfolioMarketsWonCardClient({ data }: PortfolioMarkets
                         />
                       )
                     : (
-                        <div className="grid size-full place-items-center text-[10px] text-muted-foreground">
+                        <div className="grid size-full place-items-center text-2xs text-muted-foreground">
                           No image
                         </div>
                       )}

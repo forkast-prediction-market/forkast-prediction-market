@@ -1,0 +1,126 @@
+import type { PublicUserOpenOrder } from '@/app/(platform)/[username]/_types/PublicOpenOrdersTypes'
+import { XIcon } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { formatCurrency } from '@/lib/formatters'
+import { cn } from '@/lib/utils'
+import {
+  formatCents,
+  formatExpirationLabel,
+  getOrderFilledShares,
+  getOrderTotalShares,
+  microToUnit,
+} from '../_utils/PublicOpenOrdersUtils'
+
+interface PublicOpenOrdersRowProps {
+  order: PublicUserOpenOrder
+  rowGridClass: string
+}
+
+export default function PublicOpenOrdersRow({ order, rowGridClass }: PublicOpenOrdersRowProps) {
+  const totalShares = getOrderTotalShares(order)
+  const filledShares = getOrderFilledShares(order)
+  const totalValue = order.side === 'buy'
+    ? microToUnit(order.maker_amount)
+    : microToUnit(order.taker_amount)
+  const filledLabel = `${filledShares.toLocaleString(undefined, { maximumFractionDigits: 3 })} / ${totalShares.toLocaleString(undefined, { maximumFractionDigits: 3 })}`
+  const outcomeText = order.outcome.text || (order.outcome.index === 0 ? 'Yes' : 'No')
+  const outcomeIsYes = order.outcome.index === 0
+  const outcomeColor = outcomeIsYes ? 'bg-yes/15 text-yes' : 'bg-no/15 text-no'
+  const priceLabel = formatCents(order.price)
+  const expirationLabel = formatExpirationLabel(order)
+  const marketIcon = order.market.icon_url || undefined
+  const eventSlug = order.market.event_slug || order.market.slug
+
+  return (
+    <div
+      className={cn(
+        rowGridClass,
+        `
+          border-b border-border/60 px-2 py-3 transition-colors
+          first:border-t first:border-border/60
+          hover:bg-muted/50
+          sm:px-3
+        `,
+        'last:border-b-0',
+      )}
+    >
+      <div className="flex min-w-0 items-start gap-3">
+        <Link
+          href={`/event/${eventSlug}`}
+          className="relative size-12 shrink-0 overflow-hidden rounded bg-muted"
+        >
+          {marketIcon
+            ? (
+                <Image
+                  src={marketIcon}
+                  alt={order.market.title}
+                  fill
+                  sizes="48px"
+                  className="object-cover"
+                />
+              )
+            : (
+                <div className="grid size-full place-items-center text-2xs text-muted-foreground">
+                  No image
+                </div>
+              )}
+        </Link>
+        <div className="min-w-0 space-y-1">
+          <Link
+            href={`/event/${eventSlug}`}
+            className="line-clamp-2 block text-sm font-semibold text-foreground no-underline hover:no-underline"
+            title={order.market.title}
+          >
+            {order.market.title}
+          </Link>
+        </div>
+      </div>
+
+      <div className="text-center text-sm font-semibold text-foreground">
+        {order.side === 'buy' ? 'Buy' : 'Sell'}
+      </div>
+
+      <div className="text-left text-sm font-semibold">
+        <span className={cn('inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-sm font-semibold md:text-sm', outcomeColor)}>
+          {outcomeText}
+        </span>
+      </div>
+
+      <div className="text-center text-sm font-semibold text-foreground">
+        {priceLabel}
+      </div>
+
+      <div className="text-center text-sm font-semibold text-foreground">
+        {filledLabel}
+      </div>
+
+      <div className="text-center text-sm font-semibold text-foreground">
+        {formatCurrency(totalValue)}
+      </div>
+
+      <div className="text-left text-xs font-medium text-muted-foreground">
+        {expirationLabel}
+      </div>
+
+      <div className="flex justify-end">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="rounded-lg"
+              aria-label="Cancel"
+            >
+              <XIcon className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Cancel</TooltipContent>
+        </Tooltip>
+      </div>
+    </div>
+  )
+}

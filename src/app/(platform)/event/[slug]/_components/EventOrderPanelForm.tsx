@@ -1,6 +1,6 @@
 import type { Event } from '@/types'
 import { useAppKitAccount } from '@reown/appkit/react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQueryClient } from '@tanstack/react-query'
 import { TriangleAlertIcon } from 'lucide-react'
 import Form from 'next/form'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -17,13 +17,17 @@ import EventOrderPanelSubmitButton from '@/app/(platform)/event/[slug]/_componen
 import EventOrderPanelTermsDisclaimer from '@/app/(platform)/event/[slug]/_components/EventOrderPanelTermsDisclaimer'
 import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components/EventOrderPanelUserShares'
 import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
-import { buildUserOpenOrdersQueryKey, useUserOpenOrdersQuery } from '@/app/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
+import { useEventOrderPanelOpenOrders } from '@/app/(platform)/event/[slug]/_hooks/useEventOrderPanelOpenOrders'
+import { useEventOrderPanelPositions } from '@/app/(platform)/event/[slug]/_hooks/useEventOrderPanelPositions'
 import { useUserShareBalances } from '@/app/(platform)/event/[slug]/_hooks/useUserShareBalances'
+import {
+  calculateMarketFill,
+  normalizeBookLevels,
+} from '@/app/(platform)/event/[slug]/_utils/EventOrderPanelUtils'
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { SAFE_BALANCE_QUERY_KEY, useBalance } from '@/hooks/useBalance'
-import { CLOB_ORDER_TYPE, getExchangeEip712Domain, MICRO_UNIT, ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
-import { fetchUserPositionsForMarket } from '@/lib/data-api/user'
+import { CLOB_ORDER_TYPE, getExchangeEip712Domain, ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel, formatCurrency, toCents } from '@/lib/formatters'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
 import { signOrderPayload } from '@/lib/orders/signing'
@@ -38,135 +42,6 @@ import { useUser } from '@/stores/useUser'
 interface EventOrderPanelFormProps {
   isMobile: boolean
   event: Event
-}
-
-function normalizeShares(value?: number) {
-  if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
-    return 0
-  }
-
-  return value > 100_000 ? value / MICRO_UNIT : value
-}
-
-interface NormalizedBookLevel {
-  priceCents: number
-  priceDollars: number
-  size: number
-}
-
-const MAX_LIMIT_PRICE = 99.9
-const PRICE_EPSILON = 1e-8
-
-function getRoundedCents(rawPrice: number, side: 'ask' | 'bid') {
-  const cents = rawPrice * 100
-  if (!Number.isFinite(cents)) {
-    return 0
-  }
-
-  const scaled = cents * 10
-  const roundedScaled = side === 'bid'
-    ? Math.floor(scaled + PRICE_EPSILON)
-    : Math.ceil(scaled - PRICE_EPSILON)
-
-  const normalized = Math.max(0, Math.min(roundedScaled / 10, MAX_LIMIT_PRICE))
-  return Number(normalized.toFixed(1))
-}
-
-function normalizeBookLevels(levels: { price?: string, size?: string }[] | undefined, side: 'ask' | 'bid'): NormalizedBookLevel[] {
-  if (!levels?.length) {
-    return []
-  }
-
-  const parsed = levels
-    .map((entry) => {
-      const price = Number(entry.price)
-      const size = Number(entry.size)
-      if (!Number.isFinite(price) || !Number.isFinite(size) || price <= 0 || size <= 0) {
-        return null
-      }
-
-      const priceCents = getRoundedCents(price, side)
-      const priceDollars = priceCents / 100
-      if (priceCents <= 0 || priceDollars <= 0) {
-        return null
-      }
-
-      return {
-        priceCents,
-        priceDollars,
-        size: Number(size.toFixed(2)),
-      }
-    })
-    .filter((entry): entry is NormalizedBookLevel => entry !== null)
-
-  return parsed.sort((a, b) => (side === 'ask' ? a.priceDollars - b.priceDollars : b.priceDollars - a.priceDollars))
-}
-
-function calculateMarketFill(
-  side: typeof ORDER_SIDE.BUY | typeof ORDER_SIDE.SELL,
-  value: number,
-  bids: NormalizedBookLevel[],
-  asks: NormalizedBookLevel[],
-) {
-  const levels = side === ORDER_SIDE.SELL ? bids : asks
-  if (!levels.length || value <= 0) {
-    return {
-      avgPriceCents: null as number | null,
-      limitPriceCents: null as number | null,
-      filledShares: 0,
-      totalCost: 0,
-    }
-  }
-
-  let remainingShares = side === ORDER_SIDE.SELL ? value : 0
-  let remainingBudget = side === ORDER_SIDE.BUY ? value : 0
-  let filledShares = 0
-  let totalCost = 0
-  let limitPriceCents: number | null = null
-
-  for (const level of levels) {
-    if (side === ORDER_SIDE.SELL && remainingShares <= 0) {
-      break
-    }
-    if (side === ORDER_SIDE.BUY && remainingBudget <= 0) {
-      break
-    }
-
-    if (side === ORDER_SIDE.SELL) {
-      const fill = Math.min(level.size, remainingShares)
-      if (fill <= 0) {
-        continue
-      }
-      const cost = fill * level.priceDollars
-      filledShares = Number((filledShares + fill).toFixed(4))
-      totalCost = Number((totalCost + cost).toFixed(4))
-      remainingShares = Math.max(0, Number((remainingShares - fill).toFixed(4)))
-      limitPriceCents = level.priceCents
-    }
-    else {
-      const maxSharesAtLevel = level.priceDollars > 0 ? remainingBudget / level.priceDollars : 0
-      const fill = Math.min(level.size, maxSharesAtLevel)
-      if (fill <= 0) {
-        continue
-      }
-      const cost = fill * level.priceDollars
-      filledShares = Number((filledShares + fill).toFixed(4))
-      totalCost = Number((totalCost + cost).toFixed(4))
-      remainingBudget = Math.max(0, Number((remainingBudget - cost).toFixed(4)))
-      limitPriceCents = level.priceCents
-    }
-  }
-
-  const avgPriceCents = filledShares > 0
-    ? Number(((totalCost / filledShares) * 100).toFixed(1))
-    : null
-
-  return {
-    avgPriceCents,
-    limitPriceCents,
-    filledShares: Number(filledShares.toFixed(4)),
-    totalCost: Number(totalCost.toFixed(4)),
-  }
 }
 
 export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanelFormProps) {
@@ -225,15 +100,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const makerAddress = proxyWalletAddress ?? userAddress ?? null
   const signatureType = proxyWalletAddress ? 2 : 0
   const { sharesByCondition } = useUserShareBalances({ event, ownerAddress: makerAddress })
-  const openOrdersQueryKey = useMemo(
-    () => buildUserOpenOrdersQueryKey(user?.id, event.slug, state.market?.condition_id),
-    [event.slug, state.market?.condition_id, user?.id],
-  )
-  const openOrdersQuery = useUserOpenOrdersQuery({
+  const { openOrdersQueryKey, openSellSharesByCondition } = useEventOrderPanelOpenOrders({
     userId: user?.id,
     eventSlug: event.slug,
     conditionId: state.market?.condition_id,
-    enabled: Boolean(user?.id && state.market?.condition_id),
   })
   const isNegRiskEnabled = Boolean(event.enable_neg_risk)
   const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskEnabled), [isNegRiskEnabled])
@@ -243,59 +113,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     return Math.floor(now.getTime() / 1000)
   }, [])
   const [showLimitMinimumWarning, setShowLimitMinimumWarning] = useState(false)
-  const positionsQuery = useQuery({
-    queryKey: ['order-panel-user-positions', makerAddress, state.market?.condition_id],
-    enabled: Boolean(makerAddress && state.market?.condition_id),
-    staleTime: 1000 * 30,
-    gcTime: 1000 * 60 * 5,
-    refetchInterval: makerAddress ? 15_000 : false,
-    refetchIntervalInBackground: true,
-    queryFn: ({ signal }) =>
-      fetchUserPositionsForMarket({
-        pageParam: 0,
-        userAddress: makerAddress!,
-        conditionId: state.market?.condition_id,
-        status: 'active',
-        signal,
-      }),
+  const { aggregatedPositionShares } = useEventOrderPanelPositions({
+    makerAddress,
+    conditionId: state.market?.condition_id,
   })
-  const aggregatedPositionShares = useMemo(() => {
-    if (!positionsQuery.data?.length) {
-      return null
-    }
-
-    return positionsQuery.data.reduce<Record<string, Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>>>((acc, position) => {
-      const conditionId = position.market?.condition_id
-      const quantity = typeof position.total_shares === 'number' ? position.total_shares : 0
-      if (!conditionId || quantity <= 0) {
-        return acc
-      }
-
-      const normalizedOutcome = position.outcome_text?.toLowerCase()
-      const explicitOutcomeIndex = typeof position.outcome_index === 'number' ? position.outcome_index : undefined
-      const resolvedOutcomeIndex = explicitOutcomeIndex != null
-        ? explicitOutcomeIndex
-        : normalizedOutcome === 'no'
-          ? OUTCOME_INDEX.NO
-          : OUTCOME_INDEX.YES
-
-      if (!acc[conditionId]) {
-        acc[conditionId] = {
-          [OUTCOME_INDEX.YES]: 0,
-          [OUTCOME_INDEX.NO]: 0,
-        }
-      }
-
-      const bucket = resolvedOutcomeIndex === OUTCOME_INDEX.NO ? OUTCOME_INDEX.NO : OUTCOME_INDEX.YES
-      acc[conditionId][bucket] += quantity
-      return acc
-    }, {})
-  }, [positionsQuery.data])
-
-  const openOrders = useMemo(
-    () => openOrdersQuery.data?.pages?.flatMap(page => page) ?? [],
-    [openOrdersQuery.data],
-  )
 
   const normalizedOrderBook = useMemo(() => {
     const summary = outcomeTokenId ? orderBookSummaryQuery.data?.[outcomeTokenId] : undefined
@@ -304,41 +125,6 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       asks: normalizeBookLevels(summary?.asks, 'ask'),
     }
   }, [orderBookSummaryQuery.data, outcomeTokenId])
-
-  const openSellSharesByCondition = useMemo(() => {
-    if (!openOrders.length) {
-      return {}
-    }
-
-    return openOrders.reduce<Record<string, Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>>>((acc, order) => {
-      if (order.side !== 'sell' || !order.market?.condition_id) {
-        return acc
-      }
-
-      const conditionId = order.market.condition_id
-      const outcomeIndex = order.outcome?.index === OUTCOME_INDEX.NO ? OUTCOME_INDEX.NO : OUTCOME_INDEX.YES
-      const totalShares = Math.max(
-        normalizeShares(order.maker_amount),
-        normalizeShares(order.taker_amount),
-      )
-      const filledShares = Math.max(normalizeShares(order.size_matched), 0)
-      const remainingShares = Math.max(totalShares - Math.min(filledShares, totalShares), 0)
-
-      if (remainingShares <= 0) {
-        return acc
-      }
-
-      if (!acc[conditionId]) {
-        acc[conditionId] = {
-          [OUTCOME_INDEX.YES]: 0,
-          [OUTCOME_INDEX.NO]: 0,
-        }
-      }
-
-      acc[conditionId][outcomeIndex] += remainingShares
-      return acc
-    }, {})
-  }, [openOrders])
 
   const availableBalanceForOrders = Math.max(0, balance.raw)
 

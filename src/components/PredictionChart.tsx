@@ -1,6 +1,7 @@
 'use client'
 
-import type { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react'
+import type { ReactElement } from 'react'
+import type { DataPoint, PredictionChartCursorSnapshot, PredictionChartProps, SeriesConfig } from '@/types/PredictionChartTypes'
 import { AxisBottom, AxisRight } from '@visx/axis'
 import { curveLinear } from '@visx/curve'
 import { localPoint } from '@visx/event'
@@ -10,48 +11,28 @@ import { LinePath } from '@visx/shape'
 import { useTooltip } from '@visx/tooltip'
 import { bisector } from 'd3-array'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { sanitizeSvg } from '@/lib/utils'
+import PredictionChartHeader from '@/components/PredictionChartHeader'
+import PredictionChartTooltipOverlay from '@/components/PredictionChartTooltipOverlay'
+import {
+  arePointsEqual,
+  calculateYAxisBounds,
+  clamp01,
+  DEFAULT_X_AXIS_TICKS,
+  INITIAL_REVEAL_DURATION,
+  INTERACTION_BASE_REVEAL_DURATION,
+  interpolateSeriesPoint,
+  runRevealAnimation,
+  snapTimestampToInterval,
+  stopRevealAnimation,
+  TOOLTIP_LABEL_GAP,
+  TOOLTIP_LABEL_HEIGHT,
+} from '@/lib/prediction-chart'
 
-interface DataPoint {
-  date: Date
-  [key: string]: number | Date
-}
-
-export interface SeriesConfig {
-  key: string
-  name: string
-  color: string
-}
-
-interface PredictionChartProps {
-  data?: DataPoint[]
-  series?: SeriesConfig[]
-  width?: number
-  height?: number
-  margin?: { top: number, right: number, bottom: number, left: number }
-  dataSignature?: string | number
-  onCursorDataChange?: (snapshot: PredictionChartCursorSnapshot | null) => void
-  cursorStepMs?: number
-  xAxisTickCount?: number
-  legendContent?: ReactNode
-  showLegend?: boolean
-  watermark?: {
-    iconSvg?: string | null
-    label?: string | null
-  }
-}
+export type { PredictionChartCursorSnapshot, SeriesConfig }
 
 const bisectDate = bisector<DataPoint, Date>(d => d.date).left
 
-export interface PredictionChartCursorSnapshot {
-  date: Date
-  values: Record<string, number>
-}
-
 const defaultMargin = { top: 30, right: 60, bottom: 40, left: 0 }
-const TOOLTIP_LABEL_HEIGHT = 20
-const TOOLTIP_LABEL_GAP = 6
-const TOOLTIP_LABEL_MAX_WIDTH = 160
 const FUTURE_LINE_COLOR_DARK = '#2C3F4F'
 const FUTURE_LINE_COLOR_LIGHT = '#99A6B5'
 const FUTURE_LINE_OPACITY_DARK = 0.55
@@ -62,246 +43,6 @@ const GRID_LINE_OPACITY_DARK = 0.7
 const GRID_LINE_OPACITY_LIGHT = 0.35
 const MIDLINE_OPACITY_DARK = 0.8
 const MIDLINE_OPACITY_LIGHT = 0.45
-const INITIAL_REVEAL_DURATION = 1400
-const INTERACTION_BASE_REVEAL_DURATION = 1100
-const DEFAULT_Y_AXIS_MAX = 100
-const DATA_POINT_EPSILON = 0.0001
-const DEFAULT_X_AXIS_TICKS = 6
-
-function clamp01(value: number) {
-  if (value < 0) {
-    return 0
-  }
-
-  if (value > 1) {
-    return 1
-  }
-
-  return value
-}
-
-function easeOutCubic(t: number) {
-  return 1 - (1 - t) ** 3
-}
-
-function snapTimestampToInterval(valueMs: number, stepMs?: number, offsetMs = 0) {
-  if (!stepMs || !Number.isFinite(stepMs) || stepMs <= 0) {
-    return valueMs
-  }
-
-  const relative = valueMs - offsetMs
-  const snappedRelative = Math.round(relative / stepMs) * stepMs
-  return offsetMs + snappedRelative
-}
-
-function arePointsEqual(a: DataPoint, b: DataPoint) {
-  const keys = new Set([...Object.keys(a), ...Object.keys(b)])
-  keys.delete('date')
-
-  for (const key of keys) {
-    const aValue = a[key]
-    const bValue = b[key]
-
-    if (typeof aValue === 'number' || typeof bValue === 'number') {
-      const numericA = typeof aValue === 'number' ? aValue : 0
-      const numericB = typeof bValue === 'number' ? bValue : 0
-      if (Math.abs(numericA - numericB) > DATA_POINT_EPSILON) {
-        return false
-      }
-      continue
-    }
-
-    if (aValue !== bValue) {
-      return false
-    }
-  }
-
-  return true
-}
-
-interface RevealAnimationOptions {
-  from: number
-  to: number
-  duration?: number
-  frameRef: MutableRefObject<number | null>
-  setProgress: Dispatch<SetStateAction<number>>
-}
-
-function stopRevealAnimation(frameRef: MutableRefObject<number | null>) {
-  if (frameRef.current !== null) {
-    cancelAnimationFrame(frameRef.current)
-    frameRef.current = null
-  }
-}
-
-function runRevealAnimation({
-  from,
-  to,
-  duration = INTERACTION_BASE_REVEAL_DURATION,
-  frameRef,
-  setProgress,
-}: RevealAnimationOptions) {
-  const clampedFrom = clamp01(from)
-  const clampedTo = clamp01(to)
-
-  stopRevealAnimation(frameRef)
-
-  if (clampedFrom === clampedTo) {
-    setProgress(clampedTo)
-    return
-  }
-
-  let startTimestamp: number | null = null
-
-  function step(timestamp: number) {
-    if (startTimestamp === null) {
-      startTimestamp = timestamp
-    }
-
-    const elapsed = timestamp - startTimestamp
-    const progress = clamp01(duration === 0 ? 1 : elapsed / duration)
-    const nextValue = clampedFrom + (clampedTo - clampedFrom) * easeOutCubic(progress)
-
-    setProgress(nextValue)
-
-    if (progress < 1) {
-      frameRef.current = requestAnimationFrame(step)
-    }
-    else {
-      frameRef.current = null
-    }
-  }
-
-  setProgress(clampedFrom)
-  frameRef.current = requestAnimationFrame(step)
-}
-
-function interpolateSeriesPoint(
-  targetDate: Date,
-  previousPoint: DataPoint | null,
-  nextPoint: DataPoint | null,
-  series: SeriesConfig[],
-): DataPoint | null {
-  if (!previousPoint && !nextPoint) {
-    return null
-  }
-
-  const targetTime = targetDate.getTime()
-
-  if (nextPoint && targetTime === nextPoint.date.getTime()) {
-    return nextPoint
-  }
-
-  if (previousPoint && targetTime === previousPoint.date.getTime()) {
-    return previousPoint
-  }
-
-  if (!previousPoint || !nextPoint) {
-    return previousPoint ?? nextPoint ?? null
-  }
-
-  const prevTime = previousPoint.date.getTime()
-  const nextTime = nextPoint.date.getTime()
-  const denominator = nextTime - prevTime
-
-  if (denominator === 0) {
-    return previousPoint
-  }
-
-  const ratio = (targetTime - prevTime) / denominator
-  const interpolated: DataPoint = { date: targetDate }
-
-  series.forEach((seriesItem) => {
-    const prevValue = previousPoint[seriesItem.key]
-    const nextValue = nextPoint[seriesItem.key]
-
-    if (typeof prevValue === 'number' && typeof nextValue === 'number') {
-      interpolated[seriesItem.key] = prevValue + (nextValue - prevValue) * ratio
-    }
-    else if (typeof prevValue === 'number') {
-      interpolated[seriesItem.key] = prevValue
-    }
-    else if (typeof nextValue === 'number') {
-      interpolated[seriesItem.key] = nextValue
-    }
-  })
-
-  return interpolated
-}
-
-function collectSeriesValues(data: DataPoint[], series: SeriesConfig[]) {
-  const values: number[] = []
-  data.forEach((point) => {
-    series.forEach((seriesItem) => {
-      const value = point[seriesItem.key]
-      if (typeof value === 'number' && Number.isFinite(value)) {
-        values.push(value)
-      }
-    })
-  })
-  return values
-}
-
-function calculateYAxisBounds(
-  data: DataPoint[],
-  series: SeriesConfig[],
-  minTicks = 3,
-) {
-  const values = collectSeriesValues(data, series)
-
-  if (!values.length) {
-    return {
-      min: 0,
-      max: DEFAULT_Y_AXIS_MAX,
-      ticks: [0, 25, 50, 75, 100],
-    }
-  }
-
-  let dataMin = Math.max(0, Math.min(100, Math.min(...values)))
-  let dataMax = Math.max(0, Math.min(100, Math.max(...values)))
-
-  if (dataMax - dataMin < 1) {
-    dataMax = Math.min(100, dataMax + 2.5)
-    dataMin = Math.max(0, dataMin - 2.5)
-  }
-
-  const rawSpan = Math.max(5, dataMax - dataMin)
-  const rawStep = rawSpan / Math.max(1, minTicks - 1)
-  const step = Math.min(
-    50,
-    Math.max(5, Math.ceil(rawStep / 5) * 5),
-  )
-
-  let axisMin = Math.max(0, Math.floor(dataMin / step) * step)
-  let axisMax = Math.min(100, Math.ceil(dataMax / step) * step)
-
-  function tickCount() {
-    return Math.floor((axisMax - axisMin) / step) + 1
-  }
-
-  while (tickCount() < minTicks) {
-    if (axisMin > 0) {
-      axisMin = Math.max(0, axisMin - step)
-    }
-    else if (axisMax < 100) {
-      axisMax = Math.min(100, axisMax + step)
-    }
-    else {
-      break
-    }
-  }
-
-  const ticks: number[] = []
-  for (let value = axisMin; value <= axisMax + 1e-6; value += step) {
-    ticks.push(Number(value.toFixed(2)))
-  }
-
-  return {
-    min: axisMin,
-    max: axisMax,
-    ticks,
-  }
-}
 
 export function PredictionChart({
   data: providedData,
@@ -316,7 +57,7 @@ export function PredictionChart({
   legendContent,
   showLegend = true,
   watermark,
-}: PredictionChartProps): React.ReactElement {
+}: PredictionChartProps): ReactElement {
   const [data, setData] = useState<DataPoint[]>([])
   const [series, setSeries] = useState<SeriesConfig[]>([])
   const [isClient, setIsClient] = useState(false)
@@ -335,7 +76,6 @@ export function PredictionChart({
   const shouldRenderWatermark = Boolean(
     watermark && (watermark.iconSvg || watermark.label),
   )
-  const shouldRenderHeader = shouldRenderLegend || shouldRenderWatermark
   const emitCursorDataChange = useCallback(
     (point: DataPoint | null) => {
       if (!onCursorDataChange) {
@@ -691,8 +431,7 @@ export function PredictionChart({
     nice: true,
   })
 
-  const tooltipActive
-    = tooltipOpen && tooltipData && tooltipLeft !== undefined
+  const tooltipActive = Boolean(tooltipOpen && tooltipData && tooltipLeft !== undefined)
   const clampedTooltipX = tooltipActive
     ? Math.max(0, Math.min(tooltipLeft as number, innerWidth))
     : innerWidth
@@ -907,33 +646,12 @@ export function PredictionChart({
 
   return (
     <div className="flex w-full flex-col gap-4">
-      {shouldRenderHeader && (
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex-1">
-            {shouldRenderLegend ? legendContent : null}
-          </div>
-
-          {shouldRenderWatermark && (
-            <div className="flex items-center gap-1 self-end text-muted-foreground opacity-50 select-none lg:self-auto">
-              {watermark?.iconSvg
-                ? (
-                    <div
-                      className="size-6 **:fill-current **:stroke-current"
-                      dangerouslySetInnerHTML={{ __html: sanitizeSvg(watermark.iconSvg) }}
-                    />
-                  )
-                : null}
-              {watermark?.label
-                ? (
-                    <span className="text-xl font-medium">
-                      {watermark.label}
-                    </span>
-                  )
-                : null}
-            </div>
-          )}
-        </div>
-      )}
+      <PredictionChartHeader
+        shouldRenderLegend={shouldRenderLegend}
+        legendContent={legendContent}
+        shouldRenderWatermark={shouldRenderWatermark}
+        watermark={watermark}
+      />
 
       <div className="relative w-full">
         <svg
@@ -1121,107 +839,14 @@ export function PredictionChart({
           </Group>
         </svg>
 
-        {tooltipActive && positionedTooltipEntries.length > 0 && tooltipData && (
-          <div className="pointer-events-none absolute inset-0 z-0">
-            <div
-              className="absolute text-xs font-medium text-muted-foreground"
-              style={{
-                top: Math.max(0, margin.top - 36),
-                left: (() => {
-                  const dateLabelMaxWidth = 180
-                  const pointerX = margin.left + clampedTooltipX
-                  const offset = 6
-                  const chartLeft = margin.left + 4
-                  const chartRight = margin.left + innerWidth - 4
-                  const preferRight = pointerX + offset + dateLabelMaxWidth <= chartRight
-                  const anchorRightSide = preferRight
-                    ? pointerX + offset
-                    : pointerX - offset
-
-                  if (preferRight) {
-                    return Math.min(
-                      Math.max(anchorRightSide, chartLeft),
-                      chartRight - dateLabelMaxWidth,
-                    )
-                  }
-
-                  const minLeftForLeftAnchor = chartLeft + dateLabelMaxWidth
-                  return Math.min(
-                    Math.max(anchorRightSide, minLeftForLeftAnchor),
-                    chartRight,
-                  )
-                })(),
-                maxWidth: '180px',
-                whiteSpace: 'nowrap',
-                transform: (() => {
-                  const pointerX = margin.left + clampedTooltipX
-                  const chartRight = margin.left + innerWidth - 4
-                  const preferRight = pointerX + 6 + 180 <= chartRight
-                  return preferRight ? 'translateX(0)' : 'translateX(-100%)'
-                })(),
-              }}
-            >
-              {tooltipData.date.toLocaleString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit',
-              })}
-            </div>
-
-            {(() => {
-              const pointerX = margin.left + clampedTooltipX
-              const chartLeft = margin.left + 4
-              const chartRight = margin.left + innerWidth - 4
-              const anchorOffset = 6 // match date label offset and flip point
-              const anchorBoundaryWidth = 180 // match date label flip threshold
-              const labelMaxWidth = TOOLTIP_LABEL_MAX_WIDTH
-
-              const preferRight = pointerX + anchorOffset + anchorBoundaryWidth <= chartRight
-              const anchor = preferRight
-                ? pointerX + anchorOffset
-                : pointerX - anchorOffset
-
-              const resolvedLeft = preferRight
-                ? Math.min(
-                    Math.max(anchor, chartLeft),
-                    chartRight - labelMaxWidth,
-                  )
-                : Math.min(
-                    Math.max(anchor, chartLeft + labelMaxWidth),
-                    chartRight,
-                  )
-
-              const translateX = preferRight ? '0' : '-100%'
-
-              return positionedTooltipEntries.map(entry => (
-                <div
-                  key={`${entry.key}-label`}
-                  className={`
-                    absolute inline-flex h-5 w-fit items-center gap-1 rounded px-1.5 py-0.5 text-2xs leading-5
-                    font-semibold text-white
-                  `}
-                  style={{
-                    top: entry.top,
-                    left: resolvedLeft,
-                    maxWidth: `${TOOLTIP_LABEL_MAX_WIDTH}px`,
-                    transform: `translateX(${translateX})`,
-                    backgroundColor: entry.color,
-                  }}
-                >
-                  <span className="max-w-30 truncate capitalize">
-                    {entry.name}
-                  </span>
-                  <span className="tabular-nums">
-                    {entry.value.toFixed(1)}
-                    %
-                  </span>
-                </div>
-              ))
-            })()}
-          </div>
-        )}
+        <PredictionChartTooltipOverlay
+          tooltipActive={tooltipActive}
+          tooltipData={tooltipData ?? null}
+          positionedTooltipEntries={positionedTooltipEntries}
+          margin={margin}
+          innerWidth={innerWidth}
+          clampedTooltipX={clampedTooltipX}
+        />
       </div>
     </div>
   )
