@@ -108,7 +108,6 @@ export function useMergePositionsAction({
       const nonceResult = await getSafeNonceAction()
       if (nonceResult.error || !nonceResult.nonce) {
         toast.error(nonceResult.error ?? DEFAULT_ERROR_MESSAGE)
-        setIsMergeProcessing(false)
         return
       }
 
@@ -148,7 +147,6 @@ export function useMergePositionsAction({
 
       if (response?.error) {
         toast.error(response.error)
-        setIsMergeProcessing(false)
         return
       }
 
@@ -157,7 +155,6 @@ export function useMergePositionsAction({
       })
 
       onSuccess?.()
-      setIsMergeProcessing(false)
 
       void queryClient.invalidateQueries({ queryKey: ['user-positions'] })
       void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
