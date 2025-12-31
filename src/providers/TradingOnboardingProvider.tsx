@@ -463,7 +463,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       }
       setApprovalsStep('idle')
     }
-  }, [refreshSessionUserState, signMessageAsync, tradingAuthSatisfied, user])
+  }, [affiliateMetadata, refreshSessionUserState, signMessageAsync, tradingAuthSatisfied, user])
 
   const ensureTradingReady = useCallback(() => {
     if (!user) {

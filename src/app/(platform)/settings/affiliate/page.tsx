@@ -32,7 +32,9 @@ export default async function AffiliateSettingsPage() {
       const usdcTotal = sumFeeTotalsByToken(feeTotals, '0')
       totalAffiliateFees = baseUnitsToNumber(usdcTotal, 6)
     }
-    catch {}
+    catch (error) {
+      console.warn('Failed to load affiliate fee totals', error)
+    }
   }
 
   const tradeFeeBps = Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '100', 10)

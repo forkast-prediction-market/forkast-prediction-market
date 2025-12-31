@@ -58,7 +58,7 @@ export async function fetchFeeReceiverTotals({
   })
 
   if (!response.ok) {
-    return []
+    throw new Error(`Data API request failed: ${endpoint} (${response.status})`)
   }
 
   return response.json() as Promise<FeeReceiverTotal[]>

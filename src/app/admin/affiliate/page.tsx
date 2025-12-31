@@ -84,6 +84,7 @@ export default async function AdminSettingsPage() {
 
     feeTotals.forEach((result, idx) => {
       if (result.status !== 'fulfilled') {
+        console.warn('Failed to load affiliate fee totals', result.reason)
         return
       }
       const usdcTotal = sumFeeTotalsByToken(result.value, '0')
