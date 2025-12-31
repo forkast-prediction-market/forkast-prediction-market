@@ -2,6 +2,7 @@
 
 import type { Metadata } from 'next'
 import SettingsAffiliateContent from '@/app/(platform)/settings/_components/SettingsAffiliateContent'
+import { baseUnitsToNumber, fetchFeeReceiverTotals, sumFeeTotalsByToken } from '@/lib/data-api/fees'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
 import { SettingsRepository } from '@/lib/db/queries/settings'
 import { UserRepository } from '@/lib/db/queries/user'
@@ -18,6 +19,21 @@ export default async function AffiliateSettingsPage() {
   const affiliateSettings = allSettings?.affiliate
   const { data: statsData } = await AffiliateRepository.getUserAffiliateStats(user.id)
   const { data: referralsData } = await AffiliateRepository.listReferralsByAffiliate(user.id)
+  let totalAffiliateFees = 0
+
+  const receiverAddress = user.proxy_wallet_address ?? user.address
+
+  if (receiverAddress) {
+    try {
+      const feeTotals = await fetchFeeReceiverTotals({
+        endpoint: 'affiliates',
+        address: receiverAddress,
+      })
+      const usdcTotal = sumFeeTotalsByToken(feeTotals, '0')
+      totalAffiliateFees = baseUnitsToNumber(usdcTotal, 6)
+    }
+    catch {}
+  }
 
   const tradeFeeBps = Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '100', 10)
   const affiliateShareBps = Number.parseInt(affiliateSettings?.affiliate_share_bps?.value || '5000', 10)
@@ -37,7 +53,7 @@ export default async function AffiliateSettingsPage() {
           total_referrals: Number(statsData?.total_referrals ?? 0),
           active_referrals: Number(statsData?.active_referrals ?? 0),
           volume: Number(statsData?.volume ?? 0),
-          total_affiliate_fees: Number(statsData?.total_affiliate_fees ?? 0),
+          total_affiliate_fees: totalAffiliateFees,
         },
         recentReferrals: (referralsData ?? []).map((referral: any) => {
           const userInfo = (Array.isArray(referral.users) ? referral.users[0] : referral.users) as {

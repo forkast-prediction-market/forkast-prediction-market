@@ -40,15 +40,12 @@ interface AffiliateStats {
   total_referrals: number
   active_referrals: number
   volume: number
-  total_affiliate_fees: number
-  total_fork_fees: number
 }
 
 interface AffiliateOverview {
   affiliate_user_id: string
   total_referrals: number
   volume: number
-  total_affiliate_fees: number
 }
 
 interface AffiliateProfile {
@@ -84,8 +81,6 @@ function convertAffiliateStats(rawData: any): AffiliateStats {
     total_referrals: convertToNumber(rawData.total_referrals),
     active_referrals: convertToNumber(rawData.active_referrals),
     volume: convertToNumber(rawData.volume),
-    total_affiliate_fees: convertToNumber(rawData.total_affiliate_fees),
-    total_fork_fees: convertToNumber(rawData.total_fork_fees),
   }
 }
 
@@ -94,7 +89,6 @@ function convertAffiliateOverview(rawData: any[]): AffiliateOverview[] {
     affiliate_user_id: item.affiliate_user_id,
     total_referrals: convertToNumber(item.total_referrals),
     volume: convertToNumber(item.volume),
-    total_affiliate_fees: convertToNumber(item.total_affiliate_fees),
   }))
 }
 
@@ -305,8 +299,6 @@ export const AffiliateRepository = {
           total_referrals: 0,
           active_referrals: 0,
           volume: 0,
-          total_affiliate_fees: 0,
-          total_fork_fees: 0,
         }
         return { data: fallback, error: null }
       }

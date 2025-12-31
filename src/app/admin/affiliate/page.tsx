@@ -2,8 +2,10 @@
 
 import AdminAffiliateOverview from '@/app/admin/_components/AdminAffiliateOverview'
 import AdminAffiliateSettingsForm from '@/app/admin/_components/AdminAffiliateSettingsForm'
+import { baseUnitsToNumber, fetchFeeReceiverTotals, sumFeeTotalsByToken } from '@/lib/data-api/fees'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
 import { SettingsRepository } from '@/lib/db/queries/settings'
+import { fetchMaxExchangeBaseFeeRate } from '@/lib/exchange'
 import { usdFormatter } from '@/lib/formatters'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
@@ -11,7 +13,6 @@ interface AffiliateOverviewRow {
   affiliate_user_id: string
   total_referrals: number | null
   volume: number | null
-  total_affiliate_fees: number | null
 }
 
 interface AffiliateProfile {
@@ -39,6 +40,7 @@ export default async function AdminSettingsPage() {
   const { data: allSettings } = await SettingsRepository.getSettings()
   const affiliateSettings = allSettings?.affiliate
   const { data: overviewData } = await AffiliateRepository.listAffiliateOverview()
+  const exchangeBaseFeeBps = await fetchMaxExchangeBaseFeeRate()
 
   const overview = (overviewData ?? []) as AffiliateOverviewRow[]
   const userIds = overview.map(row => row.affiliate_user_id)
@@ -64,11 +66,40 @@ export default async function AdminSettingsPage() {
   }
 
   const profileMap = new Map<string, AffiliateProfile>(profiles.map(profile => [profile.id, profile]))
+  const feeTotalsByAddress = new Map<string, number>()
+
+  if (profiles.length > 0) {
+    const uniqueReceivers = Array.from(
+      new Set(
+        profiles
+          .map(profile => profile.proxy_wallet_address || profile.address || '')
+          .map(address => address.trim())
+          .filter(Boolean),
+      ),
+    )
+
+    const feeTotals = await Promise.allSettled(
+      uniqueReceivers.map(address => fetchFeeReceiverTotals({ endpoint: 'affiliates', address })),
+    )
+
+    feeTotals.forEach((result, idx) => {
+      if (result.status !== 'fulfilled') {
+        return
+      }
+      const usdcTotal = sumFeeTotalsByToken(result.value, '0')
+      feeTotalsByAddress.set(
+        uniqueReceivers[idx].toLowerCase(),
+        baseUnitsToNumber(usdcTotal, 6),
+      )
+    })
+  }
 
   const rows: RowSummary[] = overview.map((item) => {
     const profile = profileMap.get(item.affiliate_user_id)
 
     const profileAddress = profile?.proxy_wallet_address ?? ''
+    const receiverAddress = (profile?.proxy_wallet_address || profile?.address || '').toLowerCase()
+    const onchainFees = receiverAddress ? feeTotalsByAddress.get(receiverAddress) : undefined
 
     return {
       id: item.affiliate_user_id,
@@ -79,7 +110,7 @@ export default async function AdminSettingsPage() {
       affiliate_code: profile?.affiliate_code ?? null,
       total_referrals: Number(item.total_referrals ?? 0),
       volume: Number(item.volume ?? 0),
-      total_affiliate_fees: Number(item.total_affiliate_fees ?? 0),
+      total_affiliate_fees: onchainFees ?? 0,
     }
   })
 
@@ -96,6 +127,7 @@ export default async function AdminSettingsPage() {
         <AdminAffiliateSettingsForm
           tradeFeeBps={Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '100', 10)}
           affiliateShareBps={Number.parseInt(affiliateSettings?.affiliate_share_bps?.value || '5000', 10)}
+          minTradeFeeBps={exchangeBaseFeeBps ?? 0}
           updatedAtLabel={updatedAtLabel}
         />
         <div className="grid gap-4 rounded-lg border p-6">

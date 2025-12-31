@@ -16,12 +16,19 @@ const initialState = {
 interface AdminAffiliateSettingsFormProps {
   tradeFeeBps: number
   affiliateShareBps: number
+  minTradeFeeBps?: number
   updatedAtLabel?: string
 }
 
-export default function AdminAffiliateSettingsForm({ tradeFeeBps, affiliateShareBps, updatedAtLabel }: AdminAffiliateSettingsFormProps) {
+export default function AdminAffiliateSettingsForm({
+  tradeFeeBps,
+  affiliateShareBps,
+  minTradeFeeBps = 0,
+  updatedAtLabel,
+}: AdminAffiliateSettingsFormProps) {
   const [state, formAction, isPending] = useActionState(updateForkSettingsAction, initialState)
   const wasPendingRef = useRef(isPending)
+  const minTradeFeePercent = (minTradeFeeBps / 100).toFixed(2)
 
   useEffect(() => {
     const transitionedToIdle = wasPendingRef.current && !isPending
@@ -60,13 +67,16 @@ export default function AdminAffiliateSettingsForm({ tradeFeeBps, affiliateShare
             name="trade_fee_percent"
             type="number"
             step="0.01"
-            min="0"
+            min={minTradeFeePercent}
             max="9"
             defaultValue={(tradeFeeBps / 100).toFixed(2)}
             disabled={isPending}
           />
           <p className="text-xs text-muted-foreground">
-            Extra fee over Forkast (max 9%)
+            Minimum
+            {' '}
+            {minTradeFeePercent}
+            % (onchain base fee)
           </p>
         </div>
         <div className="grid gap-2">
