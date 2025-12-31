@@ -33,14 +33,14 @@ export const CAP_MICRO = 990_000n
 export const FLOOR_MICRO = 10_000n
 
 export const EIP712_DOMAIN = {
-  name: 'Forkast CTF Exchange',
+  name: 'CTF Exchange',
   version: '1',
   chainId: defaultNetwork.id,
   verifyingContract: CTF_EXCHANGE_ADDRESS,
 } as const
 
 export const NEG_RISK_EIP712_DOMAIN = {
-  name: 'Forkast CTF Exchange',
+  name: 'CTF Exchange',
   version: '1',
   chainId: defaultNetwork.id,
   verifyingContract: NEG_RISK_CTF_EXCHANGE_ADDRESS,
@@ -60,9 +60,6 @@ export const EIP712_TYPES = {
     { name: 'feeRateBps', type: 'uint256' },
     { name: 'side', type: 'uint8' },
     { name: 'signatureType', type: 'uint8' },
-    { name: 'referrer', type: 'address' },
-    { name: 'affiliate', type: 'address' },
-    { name: 'affiliatePercentage', type: 'uint256' },
   ],
 }
 

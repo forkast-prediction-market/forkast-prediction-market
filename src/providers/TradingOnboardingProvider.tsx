@@ -9,6 +9,7 @@ import { useSignMessage, useSignTypedData } from 'wagmi'
 import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
 import { saveProxyWalletSignature } from '@/app/(platform)/_actions/proxy-wallet'
 import { generateTradingAuthAction } from '@/app/(platform)/_actions/trading-auth'
+import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { defaultNetwork } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
@@ -26,6 +27,7 @@ import {
 import {
   aggregateSafeTransactions,
   buildApproveTokenTransactions,
+  buildSetReferralTransactions,
   getSafeTxTypedData,
   packSafeSignature,
 } from '@/lib/safe/transactions'
@@ -55,6 +57,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
   const { open } = useAppKit()
   const { signTypedDataAsync } = useSignTypedData()
   const { signMessageAsync } = useSignMessage()
+  const affiliateMetadata = useAffiliateOrderMetadata()
   const [enableModalOpen, setEnableModalOpen] = useState(false)
   const [fundModalOpen, setFundModalOpen] = useState(false)
   const [tradeModalOpen, setTradeModalOpen] = useState(false)
@@ -384,6 +387,13 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
           NEG_RISK_CTF_EXCHANGE_ADDRESS as `0x${string}`,
         ],
       })
+      transactions.push(
+        ...buildSetReferralTransactions({
+          referrer: affiliateMetadata.referrerAddress,
+          affiliate: affiliateMetadata.affiliateAddress,
+          affiliateSharePercent: affiliateMetadata.affiliateSharePercent,
+        }),
+      )
       const aggregated = aggregateSafeTransactions(transactions)
       const typedData = getSafeTxTypedData({
         chainId: defaultNetwork.id,

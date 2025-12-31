@@ -97,6 +97,20 @@ const conditionalTokensAbi = [
   },
 ] as const
 
+const exchangeReferralAbi = [
+  {
+    name: 'setReferral',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'referrer', type: 'address' },
+      { name: 'affiliate', type: 'address' },
+      { name: 'affiliatePercentage', type: 'uint256' },
+    ],
+    outputs: [],
+  },
+] as const
+
 interface SafeTxMessage {
   to: `0x${string}`
   value: bigint
@@ -192,6 +206,38 @@ export function buildApproveTokenTransactions(options?: ApproveOptions): SafeTra
   }
 
   return transactions
+}
+
+interface ReferralOptions {
+  referrer: `0x${string}`
+  affiliate?: `0x${string}`
+  affiliateSharePercent?: number
+  exchanges?: `0x${string}`[]
+}
+
+export function buildSetReferralTransactions(options: ReferralOptions): SafeTransaction[] {
+  const referrer = options.referrer
+  if (!referrer || referrer === zeroAddress) {
+    return []
+  }
+
+  const affiliate = options.affiliate ?? zeroAddress
+  const sharePercent = Math.max(0, Math.min(100, Math.trunc(options.affiliateSharePercent ?? 0)))
+  const affiliatePercentage = affiliate === zeroAddress ? 0n : BigInt(sharePercent)
+  const exchanges = options.exchanges?.length
+    ? options.exchanges
+    : [CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS]
+
+  return exchanges.map(exchange => ({
+    to: exchange,
+    value: '0',
+    data: encodeFunctionData({
+      abi: exchangeReferralAbi,
+      functionName: 'setReferral',
+      args: [referrer, affiliate, affiliatePercentage],
+    }),
+    operation: SafeOperationType.Call,
+  }))
 }
 
 export function buildSendErc20Transaction(params: {
