@@ -93,18 +93,19 @@ async function fetchOutcomePrices(tokenIds: string[]): Promise<Map<string, Outco
       continue
     }
 
-    for (const tokenId of batch) {
-      const tokenData = await fetchPriceBatch(endpoint, [tokenId])
-      applyPriceBatch(tokenData, priceMap, missingTokenIds)
+    const tokenResults = await Promise.allSettled(
+      batch.map(tokenId => fetchPriceBatch(endpoint, [tokenId])),
+    )
+
+    for (const result of tokenResults) {
+      if (result.status === 'fulfilled') {
+        applyPriceBatch(result.value, priceMap, missingTokenIds)
+      }
     }
   }
 
-  // No fallback to last trades for chance display; keep missing tokens at defaults below.
-
-  for (const tokenId of uniqueTokenIds) {
-    if (!priceMap.has(tokenId)) {
-      priceMap.set(tokenId, { buy: 0.5, sell: 0.5 })
-    }
+  for (const tokenId of missingTokenIds) {
+    priceMap.set(tokenId, { buy: 0.5, sell: 0.5 })
   }
 
   return priceMap
