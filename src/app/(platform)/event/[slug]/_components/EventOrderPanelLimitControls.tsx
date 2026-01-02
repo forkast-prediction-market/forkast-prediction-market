@@ -284,22 +284,20 @@ export default function EventOrderPanelLimitControls({
             )
           : (
               <div className="ml-auto flex h-8 w-1/2 justify-end gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  type="button"
-                  onClick={() => updateLimitShares(limitSharesNumber - 10)}
-                >
-                  -10
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  type="button"
-                  onClick={() => updateLimitShares(limitSharesNumber + 10)}
-                >
-                  +10
-                </Button>
+                {[-100, -10, 10, 100].map((step) => {
+                  const label = step > 0 ? `+${step}` : `${step}`
+                  return (
+                    <Button
+                      key={label}
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={() => updateLimitShares(limitSharesNumber + step)}
+                    >
+                      {label}
+                    </Button>
+                  )
+                })}
               </div>
             )}
       </div>
