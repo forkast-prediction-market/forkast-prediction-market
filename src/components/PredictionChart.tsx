@@ -784,12 +784,21 @@ export function PredictionChart({
               tickFormat={formatAxisTick}
               stroke="transparent"
               tickStroke="transparent"
-              tickLabelProps={{
-                fill: 'var(--muted-foreground)',
-                fontSize: 11,
-                fontFamily: 'Arial, sans-serif',
-                textAnchor: 'middle',
-                dy: '0.6em',
+              tickLabelProps={(_value, index, values) => {
+                const lastIndex = Array.isArray(values) ? values.length - 1 : -1
+                const textAnchor = index === 0
+                  ? 'start'
+                  : index === lastIndex
+                    ? 'end'
+                    : 'middle'
+
+                return {
+                  fill: 'var(--muted-foreground)',
+                  fontSize: 11,
+                  fontFamily: 'Arial, sans-serif',
+                  textAnchor,
+                  dy: '0.6em',
+                }
               }}
               numTicks={xAxisTickCount}
               tickLength={0}

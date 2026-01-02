@@ -37,6 +37,7 @@ import { buildChanceByMarket } from '@/lib/market-chance'
 import { useIsSingleMarket } from '@/stores/useOrder'
 import EventChartControls from './EventChartControls'
 import EventChartHeader from './EventChartHeader'
+import EventChartLayout from './EventChartLayout'
 
 function EventChartComponent({ event, isMobile }: EventChartProps) {
   const isSingleMarket = useIsSingleMarket()
@@ -350,19 +351,20 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     return null
   }
   return (
-    <div className="grid gap-4">
-      <EventChartHeader
-        isSingleMarket={isSingleMarket}
-        activeOutcomeIndex={activeOutcomeIndex}
-        activeOutcomeLabel={activeOutcomeLabel}
-        primarySeriesColor={primarySeriesColor}
-        yesChanceValue={yesChanceValue}
-        effectiveBaselineYesChance={effectiveBaselineYesChance}
-        effectiveCurrentYesChance={effectiveCurrentYesChance}
-        watermark={watermark}
-      />
-
-      <div>
+    <EventChartLayout
+      header={(
+        <EventChartHeader
+          isSingleMarket={isSingleMarket}
+          activeOutcomeIndex={activeOutcomeIndex}
+          activeOutcomeLabel={activeOutcomeLabel}
+          primarySeriesColor={primarySeriesColor}
+          yesChanceValue={yesChanceValue}
+          effectiveBaselineYesChance={effectiveBaselineYesChance}
+          effectiveCurrentYesChance={effectiveCurrentYesChance}
+          watermark={watermark}
+        />
+      )}
+      chart={(
         <PredictionChart
           data={chartData}
           series={legendSeries}
@@ -376,6 +378,8 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
           showLegend={!isSingleMarket}
           watermark={isSingleMarket ? undefined : watermark}
         />
+      )}
+      controls={(
         <EventChartControls
           hasChartData={hasChartData}
           timeRanges={TIME_RANGES}
@@ -391,8 +395,8 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
             setCursorSnapshot(null)
           }}
         />
-      </div>
-    </div>
+      )}
+    />
   )
 }
 

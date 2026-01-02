@@ -1,9 +1,12 @@
 'use client'
 
 import type { TimeRange } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
+import type { PredictionChartCursorSnapshot } from '@/components/PredictionChart'
 import type { Market, Outcome } from '@/types'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import EventChartControls from '@/app/(platform)/event/[slug]/_components/EventChartControls'
+import EventChartHeader from '@/app/(platform)/event/[slug]/_components/EventChartHeader'
+import EventChartLayout from '@/app/(platform)/event/[slug]/_components/EventChartLayout'
 import {
   buildMarketTargets,
   TIME_RANGES,
@@ -23,6 +26,7 @@ interface MarketOutcomeGraphProps {
 export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventCreatedAt, isMobile }: MarketOutcomeGraphProps) {
   const [activeTimeRange, setActiveTimeRange] = useState<TimeRange>('ALL')
   const [activeOutcomeIndex, setActiveOutcomeIndex] = useState(outcome.outcome_index)
+  const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
   const timeRangeContainerRef = useRef<HTMLDivElement | null>(null)
   const [timeRangeIndicator, setTimeRangeIndicator] = useState({ width: 0, left: 0 })
   const [timeRangeIndicatorReady, setTimeRangeIndicatorReady] = useState(false)
@@ -31,7 +35,12 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
 
   useEffect(() => {
     setActiveOutcomeIndex(outcome.outcome_index)
+    setCursorSnapshot(null)
   }, [outcome.id, outcome.outcome_index])
+
+  useEffect(() => {
+    setCursorSnapshot(null)
+  }, [activeTimeRange, activeOutcomeIndex])
 
   useEffect(() => {
     const container = timeRangeContainerRef.current
@@ -91,10 +100,56 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
     [market.condition_id, activeOutcomeIndex, activeTimeRange],
   )
   const hasChartData = chartData.length > 0
+  const watermark = useMemo(
+    () => ({
+      iconSvg: process.env.NEXT_PUBLIC_SITE_LOGO_SVG,
+      label: process.env.NEXT_PUBLIC_SITE_NAME,
+    }),
+    [],
+  )
+
+  const hoveredValue = cursorSnapshot?.values?.value
+  const latestValue = useMemo(() => {
+    for (let index = chartData.length - 1; index >= 0; index -= 1) {
+      const value = chartData[index]?.value
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        return value
+      }
+    }
+    return null
+  }, [chartData])
+  const resolvedValue = typeof hoveredValue === 'number' && Number.isFinite(hoveredValue)
+    ? hoveredValue
+    : latestValue
+  const baselineValue = useMemo(() => {
+    for (const point of chartData) {
+      if (typeof point.value === 'number' && Number.isFinite(point.value)) {
+        return point.value
+      }
+    }
+    return null
+  }, [chartData])
+  const currentValue = typeof hoveredValue === 'number' && Number.isFinite(hoveredValue)
+    ? hoveredValue
+    : latestValue
 
   return (
-    <div className="flex flex-col gap-3">
-      {hasChartData
+    <EventChartLayout
+      header={hasChartData
+        ? (
+            <EventChartHeader
+              isSingleMarket
+              activeOutcomeIndex={activeOutcome.outcome_index as typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO}
+              activeOutcomeLabel={activeOutcome.outcome_text}
+              primarySeriesColor={series[0]?.color ?? '#2D9CDB'}
+              yesChanceValue={typeof resolvedValue === 'number' ? resolvedValue : null}
+              effectiveBaselineYesChance={typeof baselineValue === 'number' ? baselineValue : null}
+              effectiveCurrentYesChance={typeof currentValue === 'number' ? currentValue : null}
+              watermark={watermark}
+            />
+          )
+        : null}
+      chart={hasChartData
         ? (
             <PredictionChart
               data={chartData}
@@ -103,13 +158,11 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
               height={260}
               margin={{ top: 20, right: 40, bottom: 48, left: 0 }}
               dataSignature={chartSignature}
+              onCursorDataChange={setCursorSnapshot}
               xAxisTickCount={isMobile ? 3 : 6}
               legendContent={null}
               showLegend={false}
-              watermark={{
-                iconSvg: process.env.NEXT_PUBLIC_SITE_LOGO_SVG,
-                label: process.env.NEXT_PUBLIC_SITE_NAME,
-              }}
+              watermark={undefined}
             />
           )
         : (
@@ -117,24 +170,25 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
               Price history is unavailable for this outcome.
             </div>
           )}
-
-      {hasChartData && (
-        <div className="pb-2">
-          <EventChartControls
-            hasChartData
-            timeRanges={TIME_RANGES}
-            activeTimeRange={activeTimeRange}
-            onTimeRangeChange={setActiveTimeRange}
-            timeRangeContainerRef={timeRangeContainerRef}
-            timeRangeIndicator={timeRangeIndicator}
-            timeRangeIndicatorReady={timeRangeIndicatorReady}
-            isSingleMarket={showOutcomeSwitch}
-            oppositeOutcomeLabel={oppositeOutcome.outcome_text}
-            onShuffle={() => setActiveOutcomeIndex(oppositeOutcome.outcome_index)}
-          />
-        </div>
-      )}
-    </div>
+      controls={hasChartData
+        ? (
+            <div className="pb-2">
+              <EventChartControls
+                hasChartData
+                timeRanges={TIME_RANGES}
+                activeTimeRange={activeTimeRange}
+                onTimeRangeChange={setActiveTimeRange}
+                timeRangeContainerRef={timeRangeContainerRef}
+                timeRangeIndicator={timeRangeIndicator}
+                timeRangeIndicatorReady={timeRangeIndicatorReady}
+                isSingleMarket={showOutcomeSwitch}
+                oppositeOutcomeLabel={oppositeOutcome.outcome_text}
+                onShuffle={() => setActiveOutcomeIndex(oppositeOutcome.outcome_index)}
+              />
+            </div>
+          )
+        : null}
+    />
   )
 }
 
