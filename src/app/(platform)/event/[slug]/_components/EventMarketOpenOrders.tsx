@@ -458,8 +458,8 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
     return null
   }
 
-  return (
-    <section className="overflow-hidden rounded-xl border border-border/60 bg-background/80">
+  const content = (
+    <>
       {isSingleMarket && (
         <div className="p-4">
           <h3 className="text-lg font-semibold text-foreground">Open Orders</h3>
@@ -511,13 +511,16 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
       </div>
 
       {hasOrders && isFetchingNextPage && (
-        <div className="border-t border-border/60 px-4 py-3 text-center text-xs text-muted-foreground">
+        <div className={cn(isSingleMarket ? 'border-t border-border/60' : '', `
+          px-4 py-3 text-center text-xs text-muted-foreground
+        `)}
+        >
           Loading more open orders...
         </div>
       )}
 
       {infiniteScrollError && (
-        <div className="border-t border-border/60 px-4 py-3">
+        <div className={cn(isSingleMarket ? 'border-t border-border/60' : '', 'px-4 py-3')}>
           <Alert variant="destructive">
             <AlertCircleIcon />
             <AlertTitle>Could not load more open orders</AlertTitle>
@@ -543,6 +546,18 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
           </Alert>
         </div>
       )}
-    </section>
+    </>
   )
+
+  return isSingleMarket
+    ? (
+        <section className="overflow-hidden rounded-xl border border-border/60 bg-background/80">
+          {content}
+        </section>
+      )
+    : (
+        <div>
+          {content}
+        </div>
+      )
 }

@@ -107,12 +107,14 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
   }
 
   if (hasInitialError) {
-    return (
-      <section className="rounded-xl border border-border/60 bg-background/80">
-        <div className="px-4 py-4">
-          <h3 className="text-lg font-semibold text-foreground">History</h3>
-        </div>
-        <div className="border-t border-border/60 px-4 py-4">
+    const content = (
+      <>
+        {isSingleMarket && (
+          <div className="px-4 py-4">
+            <h3 className="text-lg font-semibold text-foreground">History</h3>
+          </div>
+        )}
+        <div className={cn(isSingleMarket ? 'border-t border-border/60' : '', 'px-4 py-4')}>
           <Alert variant="destructive">
             <AlertCircleIcon />
             <AlertTitle>Failed to load activity</AlertTitle>
@@ -129,8 +131,20 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
             </AlertDescription>
           </Alert>
         </div>
-      </section>
+      </>
     )
+
+    return isSingleMarket
+      ? (
+          <section className="rounded-xl border border-border/60 bg-background/80">
+            {content}
+          </section>
+        )
+      : (
+          <div>
+            {content}
+          </div>
+        )
   }
 
   if (isLoadingInitial || activities.length === 0) {
@@ -138,22 +152,20 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
       isSingleMarket
         ? <></>
         : (
-            <div className={cn(
-              'flex min-h-16 items-center justify-center rounded border border-dashed border-border px-4 text-center',
-              'text-sm text-muted-foreground',
-            )}
-            >
+            <div className="text-sm text-muted-foreground">
               No activity for this outcome.
             </div>
           )
     )
   }
 
-  return (
-    <section className="overflow-hidden rounded-xl border border-border/60 bg-background/80">
-      <div className="px-4 py-4">
-        <h3 className="text-lg font-semibold text-foreground">History</h3>
-      </div>
+  const content = (
+    <>
+      {isSingleMarket && (
+        <div className="px-4 py-4">
+          <h3 className="text-lg font-semibold text-foreground">History</h3>
+        </div>
+      )}
       <div className="divide-y divide-border">
         {activities.map((activity) => {
           const sharesValue = Number.parseFloat(fromMicro(activity.amount, 4))
@@ -226,14 +238,17 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
       </div>
 
       {isFetchingNextPage && (
-        <div className="border-t border-border/60 px-4 py-3 text-center text-xs text-muted-foreground">
+        <div className={cn(isSingleMarket ? 'border-t border-border/60' : '', `
+          px-4 py-3 text-center text-xs text-muted-foreground
+        `)}
+        >
           <Loader2Icon className="mr-2 inline size-4 animate-spin align-middle" />
           Loading more history...
         </div>
       )}
 
       {infiniteScrollError && (
-        <div className="border-t border-border/60 px-4 py-3">
+        <div className={cn(isSingleMarket ? 'border-t border-border/60' : '', 'px-4 py-3')}>
           <Alert variant="destructive">
             <AlertCircleIcon />
             <AlertTitle>Failed to load more activity</AlertTitle>
@@ -253,6 +268,18 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
       )}
 
       <div ref={loadMoreRef} className="h-1 w-full" aria-hidden />
-    </section>
+    </>
   )
+
+  return isSingleMarket
+    ? (
+        <section className="overflow-hidden rounded-xl border border-border/60 bg-background/80">
+          {content}
+        </section>
+      )
+    : (
+        <div>
+          {content}
+        </div>
+      )
 }

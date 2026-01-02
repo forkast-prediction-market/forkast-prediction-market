@@ -24,8 +24,6 @@ import { cn } from '@/lib/utils'
 import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
 
-const MARKET_DETAIL_PANEL_CLASS = 'rounded-lg border border-border bg-muted/20 p-4 min-h-20 mb-4'
-
 interface EventMarketsProps {
   event: Event
   isMobile: boolean
@@ -407,47 +405,35 @@ function MarketDetailTabs({
         )}
 
         {selectedTab === 'graph' && activeOutcomeForMarket && (
-          <div className={MARKET_DETAIL_PANEL_CLASS}>
-            <MarketOutcomeGraph
-              market={market}
-              outcome={activeOutcomeForMarket}
-              allMarkets={event.markets}
-              eventCreatedAt={event.created_at}
-              isMobile={isMobile}
-            />
-          </div>
+          <MarketOutcomeGraph
+            market={market}
+            outcome={activeOutcomeForMarket}
+            allMarkets={event.markets}
+            eventCreatedAt={event.created_at}
+            isMobile={isMobile}
+          />
         )}
 
         {selectedTab === 'positions' && (
-          <div className={MARKET_DETAIL_PANEL_CLASS}>
-            <EventMarketPositions market={market} />
-          </div>
+          <EventMarketPositions market={market} />
         )}
 
         {selectedTab === 'openOrders' && (
-          <div className={MARKET_DETAIL_PANEL_CLASS}>
-            <EventMarketOpenOrders market={market} eventSlug={event.slug} />
-          </div>
+          <EventMarketOpenOrders market={market} eventSlug={event.slug} />
         )}
 
         {selectedTab === 'history' && (
-          <div className={MARKET_DETAIL_PANEL_CLASS}>
-            <EventMarketHistory market={market} />
-          </div>
+          <EventMarketHistory market={market} />
         )}
 
         {selectedTab === 'resolution' && (
-          <div className={MARKET_DETAIL_PANEL_CLASS}>
-            <div className="flex min-h-16 items-center justify-center rounded border border-dashed border-border">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={event => event.stopPropagation()}
-              >
-                Propose resolution
-              </Button>
-            </div>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={event => event.stopPropagation()}
+          >
+            Propose resolution
+          </Button>
         )}
       </div>
     </div>
