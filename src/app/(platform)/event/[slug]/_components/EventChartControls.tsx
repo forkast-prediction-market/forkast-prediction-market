@@ -55,7 +55,7 @@ export default function EventChartControls({
             key={range}
             type="button"
             className={cn(
-              'relative z-10 rounded-md px-3 py-2 transition-colors',
+              'relative rounded-md px-3 py-2 transition-colors',
               activeTimeRange === range
                 ? 'text-foreground'
                 : 'text-muted-foreground hover:bg-muted/70 hover:text-foreground',
