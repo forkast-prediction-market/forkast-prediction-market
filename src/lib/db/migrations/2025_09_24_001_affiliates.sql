@@ -30,11 +30,9 @@ CREATE POLICY "service_role_all_affiliate_referrals" ON "affiliate_referrals" AS
 CREATE OR REPLACE FUNCTION get_affiliate_stats(target_user_id CHAR(26))
   RETURNS TABLE
           (
-            total_referrals      BIGINT,
-            active_referrals     BIGINT,
-            volume               NUMERIC,
-            total_affiliate_fees NUMERIC,
-            total_fork_fees      NUMERIC
+            total_referrals  BIGINT,
+            active_referrals BIGINT,
+            volume           NUMERIC
           )
   LANGUAGE SQL
   STABLE
@@ -48,39 +46,30 @@ SELECT COALESCE((SELECT COUNT(*) FROM affiliate_referrals ar WHERE ar.affiliate_
                  WHERE o.affiliate_user_id = target_user_id), 0) AS active_referrals,
        COALESCE((SELECT SUM(o.maker_amount)
                  FROM orders o
-                 WHERE o.affiliate_user_id = target_user_id), 0) AS volume,
-       COALESCE((SELECT SUM(o.affiliate_percentage)
-                 FROM orders o
-                 WHERE o.affiliate_user_id = target_user_id), 0) AS total_affiliate_fees,
-       COALESCE((SELECT SUM(o.affiliate_percentage)
-                 FROM orders o
-                 WHERE o.affiliate_user_id = target_user_id), 0) AS total_fork_fees;
+                 WHERE o.affiliate_user_id = target_user_id), 0) AS volume;
 $$;
 
 CREATE OR REPLACE FUNCTION get_affiliate_overview()
   RETURNS TABLE
           (
-            affiliate_user_id    CHAR(26),
-            total_referrals      BIGINT,
-            volume               NUMERIC,
-            total_affiliate_fees NUMERIC
+            affiliate_user_id CHAR(26),
+            total_referrals   BIGINT,
+            volume            NUMERIC
           )
   LANGUAGE SQL
   STABLE
   SET search_path = public
 AS
 $$
-SELECT u.id                                  AS affiliate_user_id,
-       COALESCE(ar.count_referrals, 0)       AS total_referrals,
-       COALESCE(ord.volume, 0)               AS volume,
-       COALESCE(ord.total_affiliate_fees, 0) AS total_affiliate_fees
+SELECT u.id                            AS affiliate_user_id,
+       COALESCE(ar.count_referrals, 0) AS total_referrals,
+       COALESCE(ord.volume, 0)         AS volume
 FROM users u
        LEFT JOIN (SELECT affiliate_user_id, COUNT(*) AS count_referrals
                   FROM affiliate_referrals
                   GROUP BY affiliate_user_id) ar ON ar.affiliate_user_id = u.id
        LEFT JOIN (SELECT affiliate_user_id,
-                         SUM(maker_amount)         AS volume,
-                         SUM(affiliate_percentage) AS total_affiliate_fees
+                         SUM(maker_amount) AS volume
                   FROM orders
                   WHERE affiliate_user_id IS NOT NULL
                   GROUP BY affiliate_user_id) ord ON ord.affiliate_user_id = u.id

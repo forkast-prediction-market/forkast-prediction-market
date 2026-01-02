@@ -26,7 +26,7 @@ export default async function AffiliateSettingsPage() {
   if (receiverAddress) {
     try {
       const feeTotals = await fetchFeeReceiverTotals({
-        endpoint: 'affiliates',
+        endpoint: 'referrers',
         address: receiverAddress,
       })
       const usdcTotal = sumFeeTotalsByToken(feeTotals, '0')

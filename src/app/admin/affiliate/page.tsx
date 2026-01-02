@@ -79,7 +79,7 @@ export default async function AdminSettingsPage() {
     )
 
     const feeTotals = await Promise.allSettled(
-      uniqueReceivers.map(address => fetchFeeReceiverTotals({ endpoint: 'affiliates', address })),
+      uniqueReceivers.map(address => fetchFeeReceiverTotals({ endpoint: 'referrers', address })),
     )
 
     feeTotals.forEach((result, idx) => {

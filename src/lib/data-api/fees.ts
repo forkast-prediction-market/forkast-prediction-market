@@ -7,7 +7,7 @@ export interface FeeReceiverTotal {
 }
 
 interface FeeReceiverTotalsParams {
-  endpoint: 'referrers' | 'affiliates'
+  endpoint: 'referrers'
   address: string
   exchange?: string
   tokenId?: string
