@@ -92,44 +92,48 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   )
   const hasChartData = chartData.length > 0
 
-  if (!hasChartData) {
-    return (
-      <div className="flex min-h-16 items-center justify-center px-4 text-center text-sm text-muted-foreground">
-        Price history is unavailable for this outcome.
-      </div>
-    )
-  }
-
   return (
     <div className="flex flex-col gap-3">
-      <PredictionChart
-        data={chartData}
-        series={series}
-        width={chartWidth}
-        height={260}
-        margin={{ top: 20, right: 40, bottom: 48, left: 0 }}
-        dataSignature={chartSignature}
-        xAxisTickCount={isMobile ? 3 : 6}
-        legendContent={null}
-        showLegend={false}
-        watermark={{
-          iconSvg: process.env.NEXT_PUBLIC_SITE_LOGO_SVG,
-          label: process.env.NEXT_PUBLIC_SITE_NAME,
-        }}
-      />
+      {hasChartData
+        ? (
+            <PredictionChart
+              data={chartData}
+              series={series}
+              width={chartWidth}
+              height={260}
+              margin={{ top: 20, right: 40, bottom: 48, left: 0 }}
+              dataSignature={chartSignature}
+              xAxisTickCount={isMobile ? 3 : 6}
+              legendContent={null}
+              showLegend={false}
+              watermark={{
+                iconSvg: process.env.NEXT_PUBLIC_SITE_LOGO_SVG,
+                label: process.env.NEXT_PUBLIC_SITE_NAME,
+              }}
+            />
+          )
+        : (
+            <div className="flex min-h-16 items-center justify-center px-4 text-center text-sm text-muted-foreground">
+              Price history is unavailable for this outcome.
+            </div>
+          )}
 
-      <EventChartControls
-        hasChartData={hasChartData}
-        timeRanges={TIME_RANGES}
-        activeTimeRange={activeTimeRange}
-        onTimeRangeChange={setActiveTimeRange}
-        timeRangeContainerRef={timeRangeContainerRef}
-        timeRangeIndicator={timeRangeIndicator}
-        timeRangeIndicatorReady={timeRangeIndicatorReady}
-        isSingleMarket={showOutcomeSwitch}
-        oppositeOutcomeLabel={oppositeOutcome.outcome_text}
-        onShuffle={() => setActiveOutcomeIndex(oppositeOutcome.outcome_index)}
-      />
+      {hasChartData && (
+        <div className="pb-2">
+          <EventChartControls
+            hasChartData
+            timeRanges={TIME_RANGES}
+            activeTimeRange={activeTimeRange}
+            onTimeRangeChange={setActiveTimeRange}
+            timeRangeContainerRef={timeRangeContainerRef}
+            timeRangeIndicator={timeRangeIndicator}
+            timeRangeIndicatorReady={timeRangeIndicatorReady}
+            isSingleMarket={showOutcomeSwitch}
+            oppositeOutcomeLabel={oppositeOutcome.outcome_text}
+            onShuffle={() => setActiveOutcomeIndex(oppositeOutcome.outcome_index)}
+          />
+        </div>
+      )}
     </div>
   )
 }

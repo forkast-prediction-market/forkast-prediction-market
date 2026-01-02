@@ -212,7 +212,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                 className={cn(
                   'overflow-hidden transition-all duration-500 ease-in-out',
                   isExpanded
-                    ? 'max-h-96 translate-y-0 opacity-100'
+                    ? 'max-h-[640px] translate-y-0 opacity-100'
                     : 'pointer-events-none max-h-0 -translate-y-2 opacity-0',
                 )}
                 aria-hidden={!isExpanded}
