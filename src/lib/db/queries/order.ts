@@ -10,15 +10,12 @@ export const OrderRepository = {
     maker: string
     signer: string
     taker: string
-    referrer: string
-    affiliate: string
     token_id: string
     maker_amount: bigint
     taker_amount: bigint
     expiration: bigint
     nonce: bigint
     fee_rate_bps: number
-    affiliate_percentage: number
     side: OrderSide
     signature_type: number
     signature: string
