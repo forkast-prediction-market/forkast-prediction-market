@@ -15,7 +15,6 @@ const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
 
 type PriceApiResponse = Record<string, { BUY?: string, SELL?: string } | undefined>
 interface OutcomePrices { buy: number, sell: number }
-interface LastTradePriceEntry { token_id?: string, price?: string }
 const MAX_PRICE_BATCH = 500
 
 async function fetchPriceBatch(endpoint: string, tokenIds: string[]): Promise<PriceApiResponse | null> {
@@ -100,14 +99,7 @@ async function fetchOutcomePrices(tokenIds: string[]): Promise<Map<string, Outco
     }
   }
 
-  if (missingTokenIds.size > 0) {
-    const fallbackMap = await fetchOutcomePricesFromLastTrades(Array.from(missingTokenIds))
-    fallbackMap.forEach((prices, tokenId) => {
-      if (!priceMap.has(tokenId)) {
-        priceMap.set(tokenId, prices)
-      }
-    })
-  }
+  // No fallback to last trades for chance display; keep missing tokens at defaults below.
 
   for (const tokenId of uniqueTokenIds) {
     if (!priceMap.has(tokenId)) {
@@ -116,51 +108,6 @@ async function fetchOutcomePrices(tokenIds: string[]): Promise<Map<string, Outco
   }
 
   return priceMap
-}
-
-async function fetchOutcomePricesFromLastTrades(tokenIds: string[]): Promise<Map<string, OutcomePrices>> {
-  const endpoint = `${process.env.CLOB_URL!}/last-trades-prices`
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
-      body: JSON.stringify(tokenIds.map(tokenId => ({ token_id: tokenId }))),
-      cache: 'no-store',
-    })
-
-    if (!response.ok) {
-      return new Map(tokenIds.map(tokenId => [tokenId, { buy: 0.5, sell: 0.5 }]))
-    }
-
-    const data = await response.json() as LastTradePriceEntry[]
-    const priceMap = new Map<string, OutcomePrices>()
-
-    data?.forEach((entry) => {
-      if (!entry?.token_id || entry.price == null) {
-        return
-      }
-      const parsed = Number(entry.price)
-      if (!Number.isFinite(parsed)) {
-        return
-      }
-      priceMap.set(entry.token_id, { buy: parsed, sell: parsed })
-    })
-
-    tokenIds.forEach((tokenId) => {
-      if (!priceMap.has(tokenId)) {
-        priceMap.set(tokenId, { buy: 0.5, sell: 0.5 })
-      }
-    })
-
-    return priceMap
-  }
-  catch (error) {
-    console.error('Failed to fetch outcome prices from last trades.', error)
-    return new Map(tokenIds.map(tokenId => [tokenId, { buy: 0.5, sell: 0.5 }]))
-  }
 }
 
 interface ListEventsProps {
