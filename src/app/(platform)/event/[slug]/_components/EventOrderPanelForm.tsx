@@ -551,9 +551,6 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       expirationTimestamp: state.limitExpirationEnabled
         ? (customExpirationTimestamp ?? endOfDayTimestamp)
         : undefined,
-      referrerAddress: affiliateMetadata.referrerAddress,
-      affiliateAddress: affiliateMetadata.affiliateAddress,
-      affiliateSharePercent: affiliateMetadata.affiliateSharePercent,
       feeRateBps: affiliateMetadata.tradeFeeBps,
     })
 

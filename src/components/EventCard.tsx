@@ -171,9 +171,6 @@ export default function EventCard({ event }: EventCardProps) {
       marketPriceCents: typeof selectedOutcome.outcome.buy_price === 'number'
         ? selectedOutcome.outcome.buy_price * 100
         : undefined,
-      referrerAddress: affiliateMetadata.referrerAddress,
-      affiliateAddress: affiliateMetadata.affiliateAddress,
-      affiliateSharePercent: affiliateMetadata.affiliateSharePercent,
       feeRateBps: affiliateMetadata.tradeFeeBps,
     })
 

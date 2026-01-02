@@ -4,8 +4,9 @@ import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
 import EventOrderPanelForm from '@/app/(platform)/event/[slug]/_components/EventOrderPanelForm'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
+import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel } from '@/lib/formatters'
-import { useIsSingleMarket, useNoPrice, useOrder, useYesPrice } from '@/stores/useOrder'
+import { useIsSingleMarket, useOrder, useOutcomeTopOfBookPrice } from '@/stores/useOrder'
 
 interface EventMobileOrderPanelProps {
   event: Event
@@ -14,8 +15,8 @@ interface EventMobileOrderPanelProps {
 export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelProps) {
   const state = useOrder()
   const isSingleMarket = useIsSingleMarket()
-  const yesPrice = useYesPrice()
-  const noPrice = useNoPrice()
+  const yesPrice = useOutcomeTopOfBookPrice(OUTCOME_INDEX.YES, ORDER_SIDE.BUY)
+  const noPrice = useOutcomeTopOfBookPrice(OUTCOME_INDEX.NO, ORDER_SIDE.BUY)
 
   return (
     <Drawer

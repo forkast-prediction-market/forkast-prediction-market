@@ -328,15 +328,12 @@ export interface BlockchainOrder {
   maker: Address
   signer: Address
   taker: Address
-  referrer: Address
-  affiliate: Address
   token_id: bigint
   maker_amount: bigint
   taker_amount: bigint
   expiration: bigint
   nonce: bigint
   fee_rate_bps: bigint
-  affiliate_percentage: bigint
   side: number
   signature_type: number
 }

@@ -17,9 +17,6 @@ export interface CalculateOrderAmountsArgs {
 export interface BuildOrderPayloadArgs extends CalculateOrderAmountsArgs {
   userAddress: `0x${string}`
   outcome: Outcome
-  referrerAddress?: `0x${string}`
-  affiliateAddress?: `0x${string}`
-  affiliateSharePercent?: number
   makerAddress?: `0x${string}`
   signatureType?: number
   feeRateBps?: number
@@ -40,7 +37,6 @@ const DEFAULT_ORDER_FIELDS = {
   expiration: 0n,
   nonce: 0n,
   fee_rate_bps: 200n,
-  affiliate_percentage: 0n,
   signature_type: 0,
 } as const
 
@@ -111,9 +107,6 @@ export function calculateOrderAmounts({
 export function buildOrderPayload({
   userAddress,
   outcome,
-  referrerAddress,
-  affiliateAddress,
-  affiliateSharePercent,
   makerAddress,
   signatureType,
   feeRateBps,
@@ -122,12 +115,6 @@ export function buildOrderPayload({
 }: BuildOrderPayloadArgs): BlockchainOrder {
   const { makerAmount, takerAmount } = calculateOrderAmounts(rest)
   const salt = generateOrderSalt()
-  const normalizedReferrer = normalizeAddress(referrerAddress)
-  const normalizedAffiliate = normalizeAddress(affiliateAddress)
-  const fallbackReferrer = normalizeAddress(process.env.NEXT_PUBLIC_FEE_RECIPIENT_WALLET) ?? ZERO_ADDRESS
-  const affiliatePercentageValue = normalizedAffiliate && normalizedAffiliate !== ZERO_ADDRESS
-    ? BigInt(Math.max(0, Math.trunc(affiliateSharePercent ?? 0)))
-    : 0n
   const maker = makerAddress ?? userAddress
   const signatureTypeValue = typeof signatureType === 'number' ? signatureType : DEFAULT_ORDER_FIELDS.signature_type
   const feeRateBpsValue = typeof feeRateBps === 'number' && Number.isFinite(feeRateBps)
@@ -143,30 +130,14 @@ export function buildOrderPayload({
     maker,
     signer: userAddress,
     taker: ZERO_ADDRESS,
-    referrer: normalizedReferrer ?? fallbackReferrer,
-    affiliate: normalizedAffiliate ?? ZERO_ADDRESS,
     token_id: BigInt(outcome.token_id),
     maker_amount: makerAmount,
     taker_amount: takerAmount,
     expiration: expirationValue,
     side: rest.side,
     fee_rate_bps: feeRateBpsValue,
-    affiliate_percentage: affiliatePercentageValue,
     signature_type: signatureTypeValue,
   }
-}
-
-function normalizeAddress(address?: string | null): `0x${string}` | null {
-  if (typeof address !== 'string') {
-    return null
-  }
-
-  const trimmed = address.trim()
-  if (!/^0x[0-9a-fA-F]{40}$/.test(trimmed)) {
-    return null
-  }
-
-  return trimmed as `0x${string}`
 }
 
 function serializeOrder(order: BlockchainOrder) {
@@ -179,7 +150,6 @@ function serializeOrder(order: BlockchainOrder) {
     expiration: order.expiration.toString(),
     nonce: order.nonce.toString(),
     fee_rate_bps: order.fee_rate_bps.toString(),
-    affiliate_percentage: order.affiliate_percentage.toString(),
   }
 }
 

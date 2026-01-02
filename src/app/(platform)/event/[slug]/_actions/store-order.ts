@@ -6,7 +6,7 @@ import { z } from 'zod'
 import { defaultNetwork } from '@/lib/appkit'
 import { cacheTags } from '@/lib/cache-tags'
 import { CLOB_ORDER_TYPE, ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
-import { CONDITIONAL_TOKENS_CONTRACT } from '@/lib/contracts'
+import { CONDITIONAL_TOKENS_CONTRACT, ZERO_ADDRESS } from '@/lib/contracts'
 import { OrderRepository } from '@/lib/db/queries/order'
 import { UserRepository } from '@/lib/db/queries/user'
 import { buildClobHmacSignature } from '@/lib/hmac'
@@ -20,15 +20,12 @@ const StoreOrderSchema = z.object({
   maker: z.string(),
   signer: z.string(),
   taker: z.string(),
-  referrer: z.string(),
-  affiliate: z.string(),
   token_id: z.string(),
   maker_amount: z.string(),
   taker_amount: z.string(),
   expiration: z.string(),
   nonce: z.string(),
   fee_rate_bps: z.string(),
-  affiliate_percentage: z.string(),
   side: z.union([z.literal(0), z.literal(1)]),
   signature_type: z.number(),
   signature: z.string(),
@@ -44,6 +41,7 @@ type StoreOrderInput = z.infer<typeof StoreOrderSchema>
 
 const DEFAULT_ERROR_MESSAGE = 'Something went wrong while processing your order. Please try again.'
 const RPC_TRANSPORT = http(defaultNetwork.rpcUrls.default.http[0])
+const DEFAULT_REFERRER = ZERO_ADDRESS
 
 let conditionalTokensClient: ReturnType<typeof createPublicClient> | null = null
 
@@ -199,7 +197,9 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       taker_amount: BigInt(validated.data.taker_amount),
       nonce: BigInt(validated.data.nonce),
       fee_rate_bps: Number(validated.data.fee_rate_bps),
-      affiliate_percentage: Number(validated.data.affiliate_percentage),
+      affiliate_percentage: 0,
+      referrer: DEFAULT_REFERRER,
+      affiliate: ZERO_ADDRESS,
       expiration: BigInt(validated.data.expiration),
       user_id: user.id,
       affiliate_user_id: user.referred_by_user_id,

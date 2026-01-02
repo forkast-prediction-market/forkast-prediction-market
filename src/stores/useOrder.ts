@@ -4,7 +4,8 @@ import type { RefObject } from 'react'
 import type { Event, Market, OrderSide, OrderType, Outcome } from '@/types'
 import { useEffect, useMemo, useRef } from 'react'
 import { create } from 'zustand'
-import { useMarketYesPrices } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
+import { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_hooks/useOrderBookSummaries'
+import { normalizeBookLevels } from '@/app/(platform)/event/[slug]/_utils/EventOrderPanelUtils'
 import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { toCents } from '@/lib/formatters'
 
@@ -98,65 +99,46 @@ export const useOrder = create<OrderState>()((set, _, store) => ({
   })),
 }))
 
-function clampNormalizedPrice(value: unknown) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
-    return null
-  }
-  if (value < 0) {
-    return 0
-  }
-  if (value > 1) {
-    return 1
-  }
-  return value
+function getTopOfBookPrice(
+  summary: { bids?: { price?: string, size?: string }[], asks?: { price?: string, size?: string }[] } | undefined,
+  side: 'ask' | 'bid',
+) {
+  const levels = normalizeBookLevels(side === 'ask' ? summary?.asks : summary?.bids, side)
+  return levels[0]?.priceDollars ?? null
+}
+
+export function useOutcomeTopOfBookPrice(
+  outcomeIndex: typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO,
+  sideOverride?: OrderSide,
+) {
+  const market = useOrder(state => state.market)
+  const orderSide = useOrder(state => state.side)
+  const outcome = market?.outcomes.find(current => current.outcome_index === outcomeIndex)
+    ?? market?.outcomes[outcomeIndex]
+  const tokenId = outcome?.token_id ? String(outcome.token_id) : null
+  const { data: orderBookSummaries } = useOrderBookSummaries(
+    tokenId ? [tokenId] : [],
+    { enabled: Boolean(tokenId) },
+  )
+
+  return useMemo(() => {
+    if (!tokenId) {
+      return null
+    }
+
+    const summary = orderBookSummaries?.[tokenId]
+    const resolvedSide = sideOverride ?? orderSide
+    const bookSide = resolvedSide === ORDER_SIDE.BUY ? 'ask' : 'bid'
+    return getTopOfBookPrice(summary, bookSide)
+  }, [orderBookSummaries, orderSide, sideOverride, tokenId])
 }
 
 export function useYesPrice() {
-  const yesPriceByMarket = useMarketYesPrices()
-  const market = useOrder(state => state.market)
-
-  return useMemo(() => {
-    if (!market) {
-      return null
-    }
-
-    const override = clampNormalizedPrice(yesPriceByMarket[market.condition_id])
-    if (override !== null) {
-      return override
-    }
-
-    const yesOutcome = market.outcomes.find(outcome => outcome.outcome_index === OUTCOME_INDEX.YES)
-      ?? market.outcomes[0]
-    const fallbackPrice = clampNormalizedPrice(yesOutcome?.buy_price)
-    return fallbackPrice ?? null
-  }, [market, yesPriceByMarket])
+  return useOutcomeTopOfBookPrice(OUTCOME_INDEX.YES)
 }
 
 export function useNoPrice() {
-  const yesPriceByMarket = useMarketYesPrices()
-  const market = useOrder(state => state.market)
-
-  return useMemo(() => {
-    if (!market) {
-      return null
-    }
-
-    const override = clampNormalizedPrice(yesPriceByMarket[market.condition_id])
-    if (override !== null) {
-      return Math.max(0, Math.min(1, 1 - override))
-    }
-
-    const yesOutcome = market.outcomes.find(outcome => outcome.outcome_index === OUTCOME_INDEX.YES)
-      ?? market.outcomes[0]
-    const yesFallback = clampNormalizedPrice(yesOutcome?.buy_price)
-    if (yesFallback !== null) {
-      return Math.max(0, Math.min(1, 1 - yesFallback))
-    }
-
-    const noOutcome = market.outcomes.find(outcome => outcome.outcome_index === OUTCOME_INDEX.NO)
-    const fallbackPrice = clampNormalizedPrice(noOutcome?.buy_price)
-    return fallbackPrice ?? null
-  }, [market, yesPriceByMarket])
+  return useOutcomeTopOfBookPrice(OUTCOME_INDEX.NO)
 }
 
 export function useIsSingleMarket() {
