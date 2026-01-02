@@ -306,13 +306,17 @@ function MarketDetailTabs({
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   })
-  const hasHistory = useMemo(() => (historyPreview?.length ?? 0) > 0, [historyPreview?.length])
+  const hasHistory = useMemo(
+    () => (historyPreview ?? []).some(activity =>
+      activity.type?.toLowerCase() === 'trade'
+      && activity.conditionId === market.condition_id),
+    [historyPreview, market.condition_id],
+  )
 
   const visibleTabs = useMemo(() => {
     const tabs: Array<{ id: MarketDetailTab, label: string }> = [
       { id: 'orderBook', label: 'Order Book' },
       { id: 'graph', label: 'Graph' },
-      { id: 'resolution', label: 'Resolution' },
     ]
 
     if (hasOpenOrders) {
@@ -324,6 +328,7 @@ function MarketDetailTabs({
     if (hasHistory) {
       tabs.push({ id: 'history', label: 'History' })
     }
+    tabs.push({ id: 'resolution', label: 'Resolution' })
     return tabs
   }, [hasHistory, hasOpenOrders, hasPositions])
 
@@ -430,6 +435,7 @@ function MarketDetailTabs({
           <Button
             variant="outline"
             size="sm"
+            className="mb-3"
             onClick={event => event.stopPropagation()}
           >
             Propose resolution
