@@ -414,7 +414,7 @@ async function processCondition(market: SubgraphCondition) {
   console.log(`Processed condition: ${market.id}`)
 }
 
-function normalizeEventEndDate(rawValue: unknown): string | null {
+function normalizeTimestamp(rawValue: unknown): string | null {
   if (typeof rawValue === 'string') {
     const trimmed = rawValue.trim()
     if (trimmed) {
@@ -442,7 +442,7 @@ async function processEvent(eventData: any, creatorAddress: string) {
     throw new Error(`Invalid event data: ${JSON.stringify(eventData)}`)
   }
 
-  const normalizedEndDate = normalizeEventEndDate(eventData.end_time)
+  const normalizedEndDate = normalizeTimestamp(eventData.end_time)
   const enableNegRiskFlag = normalizeBooleanField(eventData.enable_neg_risk)
   const negRiskAugmentedFlag = normalizeBooleanField(eventData.neg_risk_augmented)
   const eventNegRiskFlag = normalizeBooleanField(eventData.neg_risk)
@@ -582,7 +582,9 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
   const metadataVersion = normalizeStringField(metadata.version)
   const metadataSchema = normalizeStringField(metadata.schema)
 
-  const marketData = {
+  const normalizedMarketEndTime = normalizeTimestamp(metadata.end_time)
+
+  const marketData: Record<string, any> = {
     condition_id: market.id,
     event_id: eventId,
     is_resolved: market.resolved,
@@ -605,6 +607,10 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
     metadata_schema: metadataSchema ?? null,
     created_at: createdAtIso,
     updated_at: updatedAtIso,
+  }
+
+  if (normalizedMarketEndTime) {
+    marketData.end_time = normalizedMarketEndTime
   }
 
   const { error } = await supabaseAdmin.from('markets').upsert(marketData)

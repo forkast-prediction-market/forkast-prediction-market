@@ -94,6 +94,7 @@ export const markets = pgTable(
     metadata: text(),
     volume_24h: numeric({ precision: 20, scale: 6 }).default('0').notNull(),
     volume: numeric({ precision: 20, scale: 6 }).default('0').notNull(),
+    end_time: timestamp({ withTimezone: true }),
     created_at: timestamp({ withTimezone: true }).defaultNow().notNull(),
     updated_at: timestamp({ withTimezone: true }).defaultNow().notNull(),
   },

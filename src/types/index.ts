@@ -56,6 +56,7 @@ export interface Market {
   metadata?: any
   volume_24h: number
   volume: number
+  end_time?: string | null
   created_at: string
   updated_at: string
   price: number

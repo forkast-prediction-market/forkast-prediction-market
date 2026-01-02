@@ -9,3 +9,7 @@ WHERE "group" = 'affiliate'
 INSERT INTO settings ("group", key, value)
 VALUES ('affiliate', 'trade_fee_bps', '200')
 ON CONFLICT ("group", key) DO NOTHING;
+
+-- Store market-level end time from Arweave metadata
+ALTER TABLE markets
+ADD COLUMN IF NOT EXISTS end_time TIMESTAMPTZ;
