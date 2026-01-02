@@ -66,8 +66,8 @@ export default function EventChartHeader({
   })()
 
   return (
-    <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-end">
+    <div className="flex flex-row items-end justify-between gap-3">
+      <div className="flex flex-row items-end gap-3">
         <div
           className="flex flex-col gap-1 font-bold tabular-nums"
           style={{ color: primarySeriesColor }}
