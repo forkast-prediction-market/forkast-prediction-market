@@ -31,7 +31,7 @@ import { isUserRejectedRequestError, normalizeAddress } from '@/lib/wallet'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useUser } from '@/stores/useUser'
 
-export default function EventCard({ event }: EventCardProps) {
+export default function EventCard({ event, priceOverridesByMarket = {} }: EventCardProps) {
   const { openCardId, setOpenCardId } = use(OpenCardContext)
   const [isLoading, setIsLoading] = useState(false)
   const [selectedOutcome, setSelectedOutcome] = useState<SelectedOutcome | null>(null)
@@ -69,8 +69,8 @@ export default function EventCard({ event }: EventCardProps) {
   const selectedTokenId = selectedOutcome?.outcome.token_id ?? null
 
   const chanceByMarket = useMemo(
-    () => buildChanceByMarket(event.markets),
-    [event.markets],
+    () => buildChanceByMarket(event.markets, priceOverridesByMarket),
+    [event.markets, priceOverridesByMarket],
   )
 
   function getDisplayChance(marketId: string) {

@@ -6,6 +6,8 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import EventsEmptyState from '@/app/(platform)/event/[slug]/_components/EventsEmptyState'
+import { useEventMarketQuotes } from '@/app/(platform)/event/[slug]/_hooks/useEventMidPrices'
+import { buildMarketTargets } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import EventCard from '@/components/EventCard'
 import EventCardSkeleton from '@/components/EventCardSkeleton'
 import EventsGridSkeleton from '@/components/EventsGridSkeleton'
@@ -134,6 +136,20 @@ export default function EventsGrid({
     })
   }, [allEvents, filters.hideSports, filters.hideCrypto, filters.hideEarnings])
 
+  const marketTargets = useMemo(
+    () => visibleEvents.flatMap(event => buildMarketTargets(event.markets)),
+    [visibleEvents],
+  )
+  const marketQuotesByMarket = useEventMarketQuotes(marketTargets)
+  const priceOverridesByMarket = useMemo(
+    () => Object.fromEntries(
+      Object.entries(marketQuotesByMarket)
+        .map(([conditionId, quote]) => [conditionId, quote.mid])
+        .filter(([, value]) => typeof value === 'number' && Number.isFinite(value)),
+    ),
+    [marketQuotesByMarket],
+  )
+
   const columns = useColumns()
 
   useEffect(() => {
@@ -232,7 +248,13 @@ export default function EventsGrid({
               }}
             >
               <div className={cn('grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4', { 'opacity-80': isFetching })}>
-                {rowEvents.map(event => <EventCard key={event.id} event={event} />)}
+                {rowEvents.map(event => (
+                  <EventCard
+                    key={event.id}
+                    event={event}
+                    priceOverridesByMarket={priceOverridesByMarket}
+                  />
+                ))}
                 {isFetchingNextPage && <EventCardSkeleton />}
               </div>
             </div>

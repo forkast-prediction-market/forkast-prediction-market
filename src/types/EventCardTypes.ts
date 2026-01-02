@@ -2,6 +2,7 @@ import type { Event, Market, Outcome } from '@/types'
 
 export interface EventCardProps {
   event: Event
+  priceOverridesByMarket?: Record<string, number>
 }
 
 export interface SelectedOutcome {
