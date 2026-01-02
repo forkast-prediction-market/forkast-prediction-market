@@ -25,6 +25,10 @@ interface EventOrderPanelInputProps {
 
 const BUY_CHIPS_DESKTOP = ['+$5', '+$25', '+$100']
 const BUY_CHIPS_MOBILE = ['+$1', '+$20', '+$100']
+const QUICK_BUTTON_CLASS = `
+  h-8 rounded-md bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors
+  hover:bg-muted/80
+`
 
 export default function EventOrderPanelInput({
   isMobile,
@@ -90,19 +94,16 @@ export default function EventOrderPanelInput({
   }
 
   function renderActionButtons() {
-    const baseClasses = 'h-7 px-3 rounded-lg border text-2xs transition-all duration-200 ease-in-out'
-
     if (side === ORDER_SIDE.SELL) {
       const isDisabled = availableShares <= 0
       return ['25%', '50%', '75%'].map(percentage => (
         <button
           type="button"
           key={percentage}
-          className={`${baseClasses} ${
-            isDisabled
-              ? 'cursor-not-allowed opacity-50'
-              : 'hover:bg-white/10 dark:hover:bg-white/5'
-          }`}
+          className={cn(
+            QUICK_BUTTON_CLASS,
+            isDisabled && 'cursor-not-allowed opacity-50',
+          )}
           disabled={isDisabled}
           onClick={() => {
             if (isDisabled) {
@@ -125,7 +126,7 @@ export default function EventOrderPanelInput({
       <button
         type="button"
         key={chip}
-        className={`${baseClasses} hover:border-border hover:bg-white/10 dark:hover:bg-white/5`}
+        className={QUICK_BUTTON_CLASS}
         onClick={() => {
           const chipValue = Number.parseInt(chip.substring(2), 10)
           const newValue = amountNumber + chipValue
@@ -243,10 +244,8 @@ export default function EventOrderPanelInput({
         <button
           type="button"
           className={cn(
-            'h-7 rounded-lg border px-3 text-2xs font-semibold transition-all duration-200 ease-in-out',
-            side === ORDER_SIDE.SELL && availableShares <= 0
-              ? 'cursor-not-allowed opacity-50'
-              : 'hover:border-border hover:bg-white/10 dark:hover:bg-white/5',
+            QUICK_BUTTON_CLASS,
+            side === ORDER_SIDE.SELL && availableShares <= 0 && 'cursor-not-allowed opacity-50',
           )}
           disabled={side === ORDER_SIDE.SELL && availableShares <= 0}
           onClick={() => {

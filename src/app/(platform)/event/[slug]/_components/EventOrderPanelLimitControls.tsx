@@ -30,6 +30,11 @@ import { formatAmountInputValue, formatCurrency } from '@/lib/formatters'
 import { MIN_LIMIT_ORDER_SHARES } from '@/lib/orders/validation'
 import { cn } from '@/lib/utils'
 
+const QUICK_BUTTON_CLASS = `
+  h-8 rounded-md bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors
+  hover:bg-muted/80
+`
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max)
 }
@@ -258,10 +263,7 @@ export default function EventOrderPanelLimitControls({
                   <button
                     type="button"
                     key={label}
-                    className={`
-                      rounded-md bg-muted px-3 py-1 text-xs font-semibold text-muted-foreground transition-colors
-                      hover:bg-muted/80
-                    `}
+                    className={QUICK_BUTTON_CLASS}
                     onClick={() => {
                       if (availableShares <= 0) {
                         return
@@ -287,15 +289,14 @@ export default function EventOrderPanelLimitControls({
                 {[-100, -10, 10, 100].map((step) => {
                   const label = step > 0 ? `+${step}` : `${step}`
                   return (
-                    <Button
+                    <button
                       key={label}
-                      size="sm"
-                      variant="outline"
                       type="button"
+                      className={QUICK_BUTTON_CLASS}
                       onClick={() => updateLimitShares(limitSharesNumber + step)}
                     >
                       {label}
-                    </Button>
+                    </button>
                   )
                 })}
               </div>
