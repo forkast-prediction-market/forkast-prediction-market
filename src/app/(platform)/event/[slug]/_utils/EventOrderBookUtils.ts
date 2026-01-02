@@ -250,6 +250,6 @@ export function formatOrderBookPrice(value: number | null | undefined) {
     return formatCentsLabel(null)
   }
 
-  const normalized = value < 1 ? value / 100 : value
+  const normalized = value <= 1 ? value / 100 : value
   return formatCentsLabel(normalized)
 }
