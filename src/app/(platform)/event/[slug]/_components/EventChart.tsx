@@ -98,8 +98,8 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     [event.markets, midPricesByMarket],
   )
   const chanceChangeByMarket = useMemo(
-    () => computeChanceChanges(yesPriceHistory.normalizedHistory, midChanceByMarket),
-    [yesPriceHistory.normalizedHistory, midChanceByMarket],
+    () => computeChanceChanges(yesPriceHistory.normalizedHistory),
+    [yesPriceHistory.normalizedHistory],
   )
 
   const chartHistory = isSingleMarket && activeOutcomeIndex === OUTCOME_INDEX.NO
@@ -114,13 +114,13 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   )
 
   useEffect(() => {
-    if (Object.keys(midChanceByMarket).length > 0) {
-      if (areNumberMapsEqual(midChanceByMarket, currentOutcomeChances)) {
+    if (Object.keys(yesPriceHistory.latestSnapshot).length > 0) {
+      if (areNumberMapsEqual(yesPriceHistory.latestSnapshot, currentOutcomeChances)) {
         return
       }
-      updateOutcomeChances(midChanceByMarket)
+      updateOutcomeChances(yesPriceHistory.latestSnapshot)
     }
-  }, [currentOutcomeChances, midChanceByMarket, updateOutcomeChances])
+  }, [currentOutcomeChances, yesPriceHistory.latestSnapshot, updateOutcomeChances])
 
   useEffect(() => {
     if (Object.keys(yesPriceHistory.latestRawPrices).length > 0) {
