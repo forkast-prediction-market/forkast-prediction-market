@@ -129,9 +129,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
     }
     return null
   }, [chartData])
-  const currentValue = typeof hoveredValue === 'number' && Number.isFinite(hoveredValue)
-    ? hoveredValue
-    : latestValue
+  const currentValue = resolvedValue
 
   return (
     <EventChartLayout
