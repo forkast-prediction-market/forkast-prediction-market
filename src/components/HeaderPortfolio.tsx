@@ -35,7 +35,7 @@ export default function HeaderPortfolio() {
           <div className="text-xs font-medium text-muted-foreground">Portfolio</div>
           <div className="text-sm font-semibold text-yes">
             {isLoadingValue
-              ? <Skeleton className="h-4 w-16" />
+              ? <Skeleton className="h-5 w-12" />
               : (
                   <>
                     $
@@ -55,7 +55,7 @@ export default function HeaderPortfolio() {
           <div className="text-xs font-medium text-muted-foreground">Cash</div>
           <div className="text-sm font-semibold text-yes">
             {isLoadingValue
-              ? <Skeleton className="h-4 w-16" />
+              ? <Skeleton className="h-5 w-12" />
               : (
                   <>
                     $
