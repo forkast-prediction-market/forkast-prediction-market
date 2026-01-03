@@ -52,7 +52,8 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
   const makerAddress = proxyWalletAddress ?? null
   const signatureType = proxyWalletAddress ? 2 : 0
   const canSell = Boolean(
-    user?.proxy_wallet_address
+    hasDeployedProxyWallet
+    && user?.proxy_wallet_address
     && user.proxy_wallet_address.toLowerCase() === userAddress.toLowerCase(),
   )
 
@@ -464,7 +465,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         return
       }
 
-      const avgSellPriceLabel = formatCentsLabel(marketPriceCents / 100, { fallback: '—' })
+      const avgSellPriceLabel = formatCentsLabel(marketPriceCents, { fallback: '—' })
       handleOrderSuccessFeedback({
         side: ORDER_SIDE.SELL,
         amountInput: effectiveShares,

@@ -31,6 +31,10 @@ export async function GET(
   }
   catch (error) {
     console.error('Failed to load market metadata.', error)
+    const message = error instanceof Error ? error.message : ''
+    if (message.includes('Event not found')) {
+      return NextResponse.json({ error: 'Event not found.' }, { status: 404 })
+    }
     return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
   }
 }
