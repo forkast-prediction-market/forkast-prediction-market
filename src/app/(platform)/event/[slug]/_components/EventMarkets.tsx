@@ -18,10 +18,12 @@ import { useEventMarketRows } from '@/app/(platform)/event/[slug]/_hooks/useEven
 import { useMarketDetailController } from '@/app/(platform)/event/[slug]/_hooks/useMarketDetailController'
 import { useUserOpenOrdersQuery } from '@/app/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
 import { useUserShareBalances } from '@/app/(platform)/event/[slug]/_hooks/useUserShareBalances'
+import { calculateMarketFill, normalizeBookLevels } from '@/app/(platform)/event/[slug]/_utils/EventOrderPanelUtils'
+import CashOutModal from '@/components/CashOutModal'
 import { Button } from '@/components/ui/button'
-import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
+import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { fetchUserActivityData, fetchUserPositionsForMarket } from '@/lib/data-api/user'
-import { fromMicro } from '@/lib/formatters'
+import { formatAmountInputValue, fromMicro } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
@@ -39,14 +41,26 @@ function toNumber(value: unknown) {
   return Number.isFinite(numeric) ? numeric : null
 }
 
+interface CashOutModalPayload {
+  market: Event['markets'][number]
+  outcomeLabel: string
+  outcomeIndex: typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO
+  shares: number
+  filledShares: number
+  avgPriceCents: number | null
+  receiveAmount: number | null
+}
+
 export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   const selectedMarketId = useOrder(state => state.market?.condition_id)
   const selectedOutcome = useOrder(state => state.outcome)
   const setMarket = useOrder(state => state.setMarket)
   const setOutcome = useOrder(state => state.setOutcome)
   const setSide = useOrder(state => state.setSide)
+  const setType = useOrder(state => state.setType)
   const setIsMobileOrderPanelOpen = useOrder(state => state.setIsMobileOrderPanelOpen)
   const setUserShares = useOrder(state => state.setUserShares)
+  const setAmount = useOrder(state => state.setAmount)
   const inputRef = useOrder(state => state.inputRef)
   const user = useUser()
   const isSingleMarket = useIsSingleMarket()
@@ -99,6 +113,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
     return '' as `0x${string}`
   }, [user])
   const { sharesByCondition } = useUserShareBalances({ event, ownerAddress })
+  const [cashOutPayload, setCashOutPayload] = useState<CashOutModalPayload | null>(null)
   const { data: userPositions } = useQuery<UserPosition[]>({
     queryKey: ['event-user-positions', ownerAddress, event.id],
     enabled: Boolean(ownerAddress),
@@ -193,6 +208,60 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
     }, {})
   }, [event.markets, userPositions])
 
+  const handleCashOut = useCallback(async (market: Event['markets'][number], tag: MarketPositionTag) => {
+    const outcome = market.outcomes.find(item => item.outcome_index === tag.outcomeIndex)
+      ?? market.outcomes[tag.outcomeIndex]
+    if (!outcome) {
+      return
+    }
+
+    const tokenId = outcome.token_id ? String(outcome.token_id) : null
+    let summary = tokenId ? orderBookSummaries?.[tokenId] : undefined
+    if (!summary && tokenId) {
+      try {
+        const result = await orderBookQuery.refetch()
+        summary = result.data?.[tokenId]
+      }
+      catch {
+        summary = undefined
+      }
+    }
+    const bids = normalizeBookLevels(summary?.bids, 'bid')
+    const asks = normalizeBookLevels(summary?.asks, 'ask')
+    const fill = calculateMarketFill(ORDER_SIDE.SELL, tag.shares, bids, asks)
+
+    setType(ORDER_TYPE.MARKET)
+    setSide(ORDER_SIDE.SELL)
+    setMarket(market)
+    setOutcome(outcome)
+    setAmount(formatAmountInputValue(tag.shares))
+    if (isMobile) {
+      setIsMobileOrderPanelOpen(true)
+    }
+
+    setCashOutPayload({
+      market,
+      outcomeLabel: tag.label,
+      outcomeIndex: tag.outcomeIndex,
+      shares: tag.shares,
+      filledShares: fill.filledShares,
+      avgPriceCents: fill.avgPriceCents,
+      receiveAmount: fill.totalCost > 0 ? fill.totalCost : null,
+    })
+  }, [isMobile, orderBookQuery, orderBookSummaries, setAmount, setIsMobileOrderPanelOpen, setMarket, setOutcome, setSide, setType])
+
+  const handleCashOutModalChange = useCallback((open: boolean) => {
+    if (!open) {
+      setCashOutPayload(null)
+    }
+  }, [])
+
+  const handleCashOutSubmit = useCallback(() => {
+    setCashOutPayload(null)
+    const form = document.getElementById('event-order-form') as HTMLFormElement | null
+    form?.requestSubmit()
+  }, [])
+
   useEffect(() => {
     if (ownerAddress && Object.keys(sharesByCondition).length > 0) {
       setUserShares(sharesByCondition)
@@ -248,106 +317,126 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   }
 
   return (
-    <div className="-mx-4 overflow-hidden bg-background lg:mx-0">
-      <div className="relative hidden items-center rounded-t-lg px-4 py-3 lg:flex">
-        <span className="pointer-events-none absolute inset-x-4 bottom-0 block border-b border-border/90" />
-        <div className="w-2/5">
-          <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            OUTCOMES
-          </span>
-        </div>
-        <div className="flex w-1/5 items-center justify-center gap-1">
-          <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-            % CHANCE
-          </span>
-          <button
-            type="button"
-            className={cn(
-              `
-                inline-flex items-center justify-center rounded-sm border border-transparent text-muted-foreground
-                transition-colors
-                focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none
-              `,
-              'hover:bg-muted/80 hover:text-foreground',
-              'p-0.5',
-            )}
-            aria-label="Refresh chance data"
-            title="Refresh"
-            onClick={handleChanceRefresh}
-            disabled={isChanceRefreshDisabled}
-          >
-            <RefreshCwIcon
+    <>
+      <div className="-mx-4 overflow-hidden bg-background lg:mx-0">
+        <div className="relative hidden items-center rounded-t-lg px-4 py-3 lg:flex">
+          <span className="pointer-events-none absolute inset-x-4 bottom-0 block border-b border-border/90" />
+          <div className="w-2/5">
+            <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              OUTCOMES
+            </span>
+          </div>
+          <div className="flex w-1/5 items-center justify-center gap-1">
+            <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+              % CHANCE
+            </span>
+            <button
+              type="button"
               className={cn(
-                'size-3',
-                isManualChanceRefreshing && 'animate-spin',
+                `
+                  inline-flex items-center justify-center rounded-sm border border-transparent text-muted-foreground
+                  transition-colors
+                  focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none
+                `,
+                'hover:bg-muted/80 hover:text-foreground',
+                'p-0.5',
               )}
-            />
-          </button>
+              aria-label="Refresh chance data"
+              title="Refresh"
+              onClick={handleChanceRefresh}
+              disabled={isChanceRefreshDisabled}
+            >
+              <RefreshCwIcon
+                className={cn(
+                  'size-3',
+                  isManualChanceRefreshing && 'animate-spin',
+                )}
+              />
+            </button>
+          </div>
         </div>
+
+        {marketRows
+          .map((row, index, orderedMarkets) => {
+            const { market } = row
+            const isExpanded = expandedMarketId === market.condition_id
+            const activeOutcomeForMarket = selectedOutcome && selectedOutcome.condition_id === market.condition_id
+              ? selectedOutcome
+              : market.outcomes[0]
+            const chanceHighlightKey = `${market.condition_id}-${chancePulseToken}`
+            const activeOutcomeIndex = selectedOutcome && selectedOutcome.condition_id === market.condition_id
+              ? selectedOutcome.outcome_index
+              : null
+            const positionTags = positionTagsByCondition[market.condition_id] ?? []
+
+            return (
+              <div key={market.condition_id} className="transition-colors">
+                <EventMarketCard
+                  row={row}
+                  showMarketIcon={Boolean(event.show_market_icons)}
+                  isExpanded={isExpanded}
+                  isActiveMarket={selectedMarketId === market.condition_id}
+                  activeOutcomeIndex={activeOutcomeIndex}
+                  onToggle={() => handleToggle(market)}
+                  onBuy={(cardMarket, outcomeIndex, source) => handleBuy(cardMarket, outcomeIndex, source)}
+                  chanceHighlightKey={chanceHighlightKey}
+                  positionTags={positionTags}
+                  onCashOut={handleCashOut}
+                />
+
+                <div
+                  className={cn(
+                    'overflow-hidden transition-all duration-500 ease-in-out',
+                    isExpanded
+                      ? 'max-h-160 translate-y-0 opacity-100'
+                      : 'pointer-events-none max-h-0 -translate-y-2 opacity-0',
+                  )}
+                  aria-hidden={!isExpanded}
+                >
+                  <MarketDetailTabs
+                    market={market}
+                    event={event}
+                    isMobile={isMobile}
+                    activeOutcomeForMarket={activeOutcomeForMarket}
+                    tabController={{
+                      selected: getSelectedDetailTab(market.condition_id),
+                      select: tabId => selectDetailTab(market.condition_id, tabId),
+                    }}
+                    orderBookData={{
+                      summaries: orderBookSummaries,
+                      isLoading: shouldShowOrderBookLoader,
+                      refetch: orderBookQuery.refetch,
+                      isRefetching: orderBookQuery.isRefetching,
+                    }}
+                    sharesByCondition={sharesByCondition}
+                  />
+                </div>
+
+                {index !== orderedMarkets.length - 1 && (
+                  <div className="mx-2 border-b border-border" />
+                )}
+              </div>
+            )
+          })}
       </div>
 
-      {marketRows
-        .map((row, index, orderedMarkets) => {
-          const { market } = row
-          const isExpanded = expandedMarketId === market.condition_id
-          const activeOutcomeForMarket = selectedOutcome && selectedOutcome.condition_id === market.condition_id
-            ? selectedOutcome
-            : market.outcomes[0]
-          const chanceHighlightKey = `${market.condition_id}-${chancePulseToken}`
-          const activeOutcomeIndex = selectedOutcome && selectedOutcome.condition_id === market.condition_id
-            ? selectedOutcome.outcome_index
-            : null
-          const positionTags = positionTagsByCondition[market.condition_id] ?? []
-
-          return (
-            <div key={market.condition_id} className="transition-colors">
-              <EventMarketCard
-                row={row}
-                showMarketIcon={Boolean(event.show_market_icons)}
-                isExpanded={isExpanded}
-                isActiveMarket={selectedMarketId === market.condition_id}
-                activeOutcomeIndex={activeOutcomeIndex}
-                onToggle={() => handleToggle(market)}
-                onBuy={(cardMarket, outcomeIndex, source) => handleBuy(cardMarket, outcomeIndex, source)}
-                chanceHighlightKey={chanceHighlightKey}
-                positionTags={positionTags}
-              />
-
-              <div
-                className={cn(
-                  'overflow-hidden transition-all duration-500 ease-in-out',
-                  isExpanded
-                    ? 'max-h-160 translate-y-0 opacity-100'
-                    : 'pointer-events-none max-h-0 -translate-y-2 opacity-0',
-                )}
-                aria-hidden={!isExpanded}
-              >
-                <MarketDetailTabs
-                  market={market}
-                  event={event}
-                  isMobile={isMobile}
-                  activeOutcomeForMarket={activeOutcomeForMarket}
-                  tabController={{
-                    selected: getSelectedDetailTab(market.condition_id),
-                    select: tabId => selectDetailTab(market.condition_id, tabId),
-                  }}
-                  orderBookData={{
-                    summaries: orderBookSummaries,
-                    isLoading: shouldShowOrderBookLoader,
-                    refetch: orderBookQuery.refetch,
-                    isRefetching: orderBookQuery.isRefetching,
-                  }}
-                  sharesByCondition={sharesByCondition}
-                />
-              </div>
-
-              {index !== orderedMarkets.length - 1 && (
-                <div className="mx-2 border-b border-border" />
-              )}
-            </div>
-          )
-        })}
-    </div>
+      {cashOutPayload && (
+        <CashOutModal
+          open={Boolean(cashOutPayload)}
+          onOpenChange={handleCashOutModalChange}
+          outcomeLabel={cashOutPayload.outcomeLabel}
+          outcomeShortLabel={cashOutPayload.market.short_title || cashOutPayload.market.title}
+          outcomeIconUrl={cashOutPayload.market.icon_url}
+          fallbackIconUrl={event.icon_url}
+          shares={cashOutPayload.shares}
+          filledShares={cashOutPayload.filledShares}
+          avgPriceCents={cashOutPayload.avgPriceCents}
+          receiveAmount={cashOutPayload.receiveAmount}
+          onCashOut={handleCashOutSubmit}
+          onEditOrder={() => setCashOutPayload(null)}
+        />
+      )}
+    </>
   )
 }
 

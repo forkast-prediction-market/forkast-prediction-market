@@ -269,7 +269,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
   const sellAmountValue = state.side === ORDER_SIDE.SELL ? sellOrderSnapshot.totalValue : 0
 
-  const avgSellPriceLabel = formatCentsLabel(sellOrderSnapshot.priceCents, { fallback: '—' })
+  const avgSellPriceDollars = Number.isFinite(sellOrderSnapshot.priceCents)
+    ? sellOrderSnapshot.priceCents / 100
+    : null
+  const avgSellPriceLabel = formatCentsLabel(avgSellPriceDollars, { fallback: '—' })
   const outcomeFallbackBuyPriceCents = typeof state.outcome?.buy_price === 'number'
     ? Number((state.outcome.buy_price * 100).toFixed(1))
     : null
@@ -327,7 +330,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     return { payout, cost, profit, changePct, multiplier }
   }, [amountNumber, currentBuyPriceCents, isLimitOrder, marketBuyFill, state.limitPrice, state.limitShares, state.side])
 
-  const avgBuyPriceLabel = formatCentsLabel(currentBuyPriceCents ?? undefined, { fallback: '—' })
+  const avgBuyPriceDollars = typeof currentBuyPriceCents === 'number' && Number.isFinite(currentBuyPriceCents)
+    ? currentBuyPriceCents / 100
+    : null
+  const avgBuyPriceLabel = formatCentsLabel(avgBuyPriceDollars, { fallback: '—' })
   const avgBuyPriceCentsValue = typeof currentBuyPriceCents === 'number' && Number.isFinite(currentBuyPriceCents)
     ? currentBuyPriceCents
     : null
@@ -668,6 +674,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   return (
     <Form
       action={onSubmit}
+      id="event-order-form"
       className={cn({
         'rounded-lg border lg:w-85': !isMobile,
       }, 'w-full p-4 shadow-xl/5')}
