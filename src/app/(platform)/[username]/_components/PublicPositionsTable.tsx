@@ -21,6 +21,7 @@ interface PublicPositionsTableProps {
   onRetry: () => void
   onRefreshPage: () => void
   onShareClick: (position: PublicPosition) => void
+  onSellClick?: (position: PublicPosition) => void
   loadMoreRef: RefObject<HTMLDivElement | null>
 }
 
@@ -37,6 +38,7 @@ export default function PublicPositionsTable({
   onRetry,
   onRefreshPage,
   onShareClick,
+  onSellClick,
   loadMoreRef,
 }: PublicPositionsTableProps) {
   return (
@@ -93,6 +95,7 @@ export default function PublicPositionsTable({
                 position={position}
                 rowGridClass={rowGridClass}
                 onShareClick={onShareClick}
+                onSellClick={onSellClick}
               />
             ))}
 

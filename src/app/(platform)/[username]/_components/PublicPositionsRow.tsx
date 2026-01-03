@@ -11,9 +11,15 @@ interface PublicPositionsRowProps {
   position: PublicPosition
   rowGridClass: string
   onShareClick: (position: PublicPosition) => void
+  onSellClick?: (position: PublicPosition) => void
 }
 
-export default function PublicPositionsRow({ position, rowGridClass, onShareClick }: PublicPositionsRowProps) {
+export default function PublicPositionsRow({
+  position,
+  rowGridClass,
+  onShareClick,
+  onSellClick,
+}: PublicPositionsRowProps) {
   const imageSrc = position.icon ? `https://gateway.irys.xyz/${position.icon}` : null
   const avgPrice = position.avgPrice ?? 0
   const nowPrice = getLatestPrice(position)
@@ -118,7 +124,9 @@ export default function PublicPositionsRow({ position, rowGridClass, onShareClic
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button size="sm">Sell</Button>
+        <Button size="sm" onClick={() => onSellClick?.(position)} disabled={!onSellClick}>
+          Sell
+        </Button>
         <Button
           size="icon"
           variant="outline"

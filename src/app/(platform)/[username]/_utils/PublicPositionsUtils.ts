@@ -271,6 +271,8 @@ export function mapDataApiPosition(position: DataApiPosition, status: 'active' |
     eventSlug,
     icon: position.icon,
     conditionId: position.conditionId,
+    asset: position.asset,
+    oppositeAsset: position.oppositeAsset,
     avgPrice: Number.isFinite(avgPriceValue) ? avgPriceValue : 0,
     currentValue: normalizedValue,
     curPrice: Number.isFinite(derivedCurPrice) ? derivedCurPrice : undefined,

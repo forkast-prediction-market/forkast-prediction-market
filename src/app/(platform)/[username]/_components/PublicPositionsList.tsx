@@ -7,10 +7,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSignMessage } from 'wagmi'
 import { useMergePositionsAction } from '@/app/(platform)/[username]/_hooks/useMergePositionsAction'
 import { usePublicPositionsQuery } from '@/app/(platform)/[username]/_hooks/usePublicPositionsQuery'
-import { buildMergeableMarkets, calculatePositionsTotals, matchesPositionsSearchQuery, sortPositions } from '@/app/(platform)/[username]/_utils/PublicPositionsUtils'
+import { buildMergeableMarkets, calculatePositionsTotals, getOutcomeLabel, matchesPositionsSearchQuery, sortPositions } from '@/app/(platform)/[username]/_utils/PublicPositionsUtils'
+import { calculateMarketFill, normalizeBookLevels } from '@/app/(platform)/event/[slug]/_utils/EventOrderPanelUtils'
 import { PositionShareDialog } from '@/components/PositionShareDialog'
+import SellPositionModal from '@/components/SellPositionModal'
 import { useDebounce } from '@/hooks/useDebounce'
-import { OUTCOME_INDEX } from '@/lib/constants'
+import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
+import { fetchOrderBookSummary } from '@/lib/event-card-orderbook'
 import { buildShareCardPayload } from '@/lib/share-card'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useUser } from '@/stores/useUser'
@@ -40,7 +43,15 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
   const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const [sharePosition, setSharePosition] = useState<PublicPosition | null>(null)
+  const [sellModalPayload, setSellModalPayload] = useState<{
+    position: PublicPosition
+    shares: number
+    filledShares: number | null
+    avgPriceCents: number | null
+    receiveAmount: number | null
+  } | null>(null)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  const sellRequestIdRef = useRef(0)
 
   const handleSearchChange = useCallback((query: string) => {
     setInfiniteScrollError(null)
@@ -156,6 +167,61 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     setIsShareDialogOpen(true)
   }, [])
 
+  const handleSellClick = useCallback(async (position: PublicPosition) => {
+    const shares = typeof position.size === 'number' ? position.size : 0
+    if (!shares) {
+      return
+    }
+
+    const requestId = sellRequestIdRef.current + 1
+    sellRequestIdRef.current = requestId
+
+    setSellModalPayload({
+      position,
+      shares,
+      filledShares: null,
+      avgPriceCents: null,
+      receiveAmount: null,
+    })
+
+    const tokenId = position.asset || position.oppositeAsset
+    if (!tokenId) {
+      return
+    }
+
+    try {
+      const summary = await fetchOrderBookSummary(tokenId)
+      if (sellRequestIdRef.current !== requestId) {
+        return
+      }
+
+      const bids = normalizeBookLevels(summary?.bids, 'bid')
+      const asks = normalizeBookLevels(summary?.asks, 'ask')
+      const fill = calculateMarketFill(ORDER_SIDE.SELL, shares, bids, asks)
+
+      setSellModalPayload((current) => {
+        if (!current || current.position.id !== position.id || sellRequestIdRef.current !== requestId) {
+          return current
+        }
+        return {
+          ...current,
+          filledShares: fill.filledShares,
+          avgPriceCents: fill.avgPriceCents,
+          receiveAmount: fill.totalCost > 0 ? fill.totalCost : null,
+        }
+      })
+    }
+    catch (error) {
+      console.error('Failed to load order book for sell preview.', error)
+    }
+  }, [])
+
+  const handleSellModalChange = useCallback((open: boolean) => {
+    if (!open) {
+      setSellModalPayload(null)
+    }
+  }, [])
+
   useEffect(() => {
     setInfiniteScrollError(null)
     setIsLoadingMore(false)
@@ -235,6 +301,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         onRetry={retryInitialLoad}
         onRefreshPage={() => window.location.reload()}
         onShareClick={handleShareClick}
+        onSellClick={handleSellClick}
         loadMoreRef={loadMoreRef}
       />
 
@@ -265,6 +332,27 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         onOpenChange={handleShareOpenChange}
         payload={shareCardPayload}
       />
+
+      {sellModalPayload && (
+        <SellPositionModal
+          open={Boolean(sellModalPayload)}
+          onOpenChange={handleSellModalChange}
+          outcomeLabel={getOutcomeLabel(sellModalPayload.position)}
+          outcomeShortLabel={sellModalPayload.position.title}
+          outcomeIconUrl={sellModalPayload.position.icon
+            ? `https://gateway.irys.xyz/${sellModalPayload.position.icon}`
+            : undefined}
+          fallbackIconUrl={sellModalPayload.position.icon
+            ? `https://gateway.irys.xyz/${sellModalPayload.position.icon}`
+            : undefined}
+          shares={sellModalPayload.shares}
+          filledShares={sellModalPayload.filledShares}
+          avgPriceCents={sellModalPayload.avgPriceCents}
+          receiveAmount={sellModalPayload.receiveAmount}
+          onCashOut={() => setSellModalPayload(null)}
+          onEditOrder={() => setSellModalPayload(null)}
+        />
+      )}
     </div>
   )
 }
