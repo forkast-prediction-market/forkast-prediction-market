@@ -465,7 +465,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         return
       }
 
-      const avgSellPriceLabel = formatCentsLabel(marketPriceCents, { fallback: '—' })
+      const avgSellPriceLabel = formatCentsLabel(marketPriceCents / 100, { fallback: '—' })
       handleOrderSuccessFeedback({
         side: ORDER_SIDE.SELL,
         amountInput: effectiveShares,
