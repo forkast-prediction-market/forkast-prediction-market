@@ -539,6 +539,10 @@ export const EventRepository = {
           }>
         } | null
       }
+      interface EventMarketMetadataRow {
+        enable_neg_risk: boolean | null
+        markets?: MarketMetadataRow[]
+      }
 
       const eventResult = await db.query.events.findFirst({
         where: eq(events.slug, slug),
@@ -572,7 +576,7 @@ export const EventRepository = {
             },
           },
         },
-      }) as { markets?: MarketMetadataRow[] } | undefined
+      }) as EventMarketMetadataRow | undefined
 
       if (!eventResult) {
         throw new Error('Event not found')
