@@ -42,23 +42,6 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
     setCursorSnapshot(null)
   }, [activeTimeRange, activeOutcomeIndex])
 
-  useEffect(() => {
-    const container = timeRangeContainerRef.current
-    if (!container) {
-      return
-    }
-    const target = container.querySelector<HTMLButtonElement>(`button[data-range="${activeTimeRange}"]`)
-    if (!target) {
-      return
-    }
-    const { offsetLeft, offsetWidth } = target
-    setTimeRangeIndicator({
-      width: offsetWidth,
-      left: offsetLeft,
-    })
-    setTimeRangeIndicatorReady(offsetWidth > 0)
-  }, [activeTimeRange])
-
   const activeOutcome = useMemo(
     () => market.outcomes.find(item => item.outcome_index === activeOutcomeIndex) ?? outcome,
     [market.outcomes, activeOutcomeIndex, outcome],
@@ -108,6 +91,26 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
     }),
     [],
   )
+
+  useEffect(() => {
+    if (!hasChartData) {
+      return
+    }
+    const container = timeRangeContainerRef.current
+    if (!container) {
+      return
+    }
+    const target = container.querySelector<HTMLButtonElement>(`button[data-range="${activeTimeRange}"]`)
+    if (!target) {
+      return
+    }
+    const { offsetLeft, offsetWidth } = target
+    setTimeRangeIndicator({
+      width: offsetWidth,
+      left: offsetLeft,
+    })
+    setTimeRangeIndicatorReady(offsetWidth > 0)
+  }, [activeTimeRange, hasChartData])
 
   const hoveredValue = cursorSnapshot?.values?.value
   const latestValue = useMemo(() => {

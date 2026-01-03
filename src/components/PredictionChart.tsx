@@ -124,8 +124,18 @@ export function PredictionChart({
       return { start: 0, end: 0 }
     }
 
-    const dataStart = Math.min(...data.map(point => point.date.getTime()))
-    const dataEnd = Math.max(...data.map(point => point.date.getTime()))
+    let dataStart = data[0].date.getTime()
+    let dataEnd = dataStart
+
+    for (let index = 1; index < data.length; index += 1) {
+      const value = data[index].date.getTime()
+      if (value < dataStart) {
+        dataStart = value
+      }
+      if (value > dataEnd) {
+        dataEnd = value
+      }
+    }
     const leadingStart = leadingGapStart instanceof Date ? leadingGapStart.getTime() : Number.NaN
     const start = Number.isFinite(leadingStart) ? Math.min(dataStart, leadingStart) : dataStart
 
@@ -494,7 +504,7 @@ export function PredictionChart({
     && effectiveTooltipData === lastDataPoint
   const showEndpointMarkers = Boolean(lastDataPoint)
     && (!tooltipActive || isTooltipAtLastPoint)
-    && mutedPoints.length === 0
+    && (mutedPoints.length === 0 || shouldSplitByCursor)
   const totalDurationHours = data.length > 1
     ? (data[data.length - 1].date.valueOf() - data[0].date.valueOf()) / 36e5
     : 0
