@@ -261,6 +261,10 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     }
 
     if (!tokenId) {
+      if (sellRequestIdRef.current === requestId) {
+        setSellModalPayload(null)
+        handleOrderErrorFeedback('Sell unavailable', 'Market data is unavailable.')
+      }
       return
     }
 
@@ -289,6 +293,9 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     }
     catch (error) {
       console.error('Failed to load order book for sell preview.', error)
+      if (sellRequestIdRef.current === requestId) {
+        handleOrderErrorFeedback('Order book unavailable', 'Please try again in a moment.')
+      }
     }
   }, [resolveOutcomeIndex])
 
@@ -621,9 +628,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
           outcomeLabel={getOutcomeLabel(sellModalPayload.position)}
           outcomeShortLabel={sellModalPayload.position.title}
           outcomeIconUrl={sellModalPayload.position.icon
-            ? `https://gateway.irys.xyz/${sellModalPayload.position.icon}`
-            : undefined}
-          fallbackIconUrl={sellModalPayload.position.icon
             ? `https://gateway.irys.xyz/${sellModalPayload.position.icon}`
             : undefined}
           shares={sellModalPayload.shares}
