@@ -530,6 +530,7 @@ export const EventRepository = {
         slug: string
         is_active: boolean | null
         is_resolved: boolean | null
+        neg_risk: boolean | null
         condition: {
           outcomes: Array<{
             token_id: string
