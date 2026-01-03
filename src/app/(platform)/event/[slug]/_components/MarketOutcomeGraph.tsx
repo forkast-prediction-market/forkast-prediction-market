@@ -86,6 +86,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
     () => buildChartData(normalizedHistory, market.condition_id, activeOutcomeIndex),
     [normalizedHistory, market.condition_id, activeOutcomeIndex],
   )
+  const leadingGapStart = normalizedHistory[0]?.date ?? null
 
   const series = useMemo(
     () => [{
@@ -158,6 +159,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
               dataSignature={chartSignature}
               onCursorDataChange={setCursorSnapshot}
               xAxisTickCount={isMobile ? 3 : 6}
+              leadingGapStart={leadingGapStart}
               legendContent={null}
               showLegend={false}
               watermark={undefined}

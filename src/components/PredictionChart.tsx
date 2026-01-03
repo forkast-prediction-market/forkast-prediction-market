@@ -54,6 +54,7 @@ export function PredictionChart({
   onCursorDataChange,
   cursorStepMs,
   xAxisTickCount = DEFAULT_X_AXIS_TICKS,
+  leadingGapStart = null,
   legendContent,
   showLegend = true,
   watermark,
@@ -115,6 +116,18 @@ export function PredictionChart({
     () => calculateYAxisBounds(data, series),
     [data, series],
   )
+  const domainBounds = useMemo(() => {
+    if (!data.length) {
+      return { start: 0, end: 0 }
+    }
+
+    const dataStart = Math.min(...data.map(point => point.date.getTime()))
+    const dataEnd = Math.max(...data.map(point => point.date.getTime()))
+    const leadingStart = leadingGapStart instanceof Date ? leadingGapStart.getTime() : Number.NaN
+    const start = Number.isFinite(leadingStart) ? Math.min(dataStart, leadingStart) : dataStart
+
+    return { start, end: dataEnd }
+  }, [data, leadingGapStart])
 
   const handleTooltip = useCallback(
     (
@@ -127,8 +140,8 @@ export function PredictionChart({
       const { x } = localPoint(event) || { x: 0 }
       const innerWidth = width - margin.left - margin.right
       const innerHeight = height - margin.top - margin.bottom
-      const domainStart = Math.min(...data.map(d => d.date.getTime()))
-      const domainEnd = Math.max(...data.map(d => d.date.getTime()))
+      const domainStart = domainBounds.start
+      const domainEnd = domainBounds.end
 
       const xScale = scaleTime<number>({
         range: [0, innerWidth],
@@ -174,6 +187,7 @@ export function PredictionChart({
       height,
       margin,
       cursorStepMs,
+      domainBounds,
       revealAnimationFrameRef,
       emitCursorDataChange,
       yAxisMin,
@@ -419,10 +433,7 @@ export function PredictionChart({
 
   const xScale = scaleTime<number>({
     range: [0, innerWidth],
-    domain: [
-      Math.min(...data.map(d => d.date.getTime())),
-      Math.max(...data.map(d => d.date.getTime())),
-    ],
+    domain: [domainBounds.start, domainBounds.end],
   })
 
   const yScale = scaleLinear<number>({
@@ -438,6 +449,11 @@ export function PredictionChart({
   const cursorDate = tooltipActive
     ? xScale.invert(clampedTooltipX)
     : null
+  const domainSpan = Math.max(1, domainBounds.end - domainBounds.start)
+  const revealTime = domainBounds.start + domainSpan * clamp01(revealProgress)
+  const dashedSplitTime = tooltipActive && cursorDate
+    ? cursorDate.getTime()
+    : revealTime
   const insertionIndex = cursorDate ? bisectDate(data, cursorDate) : data.length
   const previousPoint = insertionIndex > 0 ? data[insertionIndex - 1] : null
   const nextPoint = insertionIndex < data.length ? data[insertionIndex] : null
@@ -643,6 +659,7 @@ export function PredictionChart({
   const midlineOpacity = isDarkMode
     ? MIDLINE_OPACITY_DARK
     : MIDLINE_OPACITY_LIGHT
+  const leadingGapStartMs = leadingGapStart instanceof Date ? leadingGapStart.getTime() : Number.NaN
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -691,9 +708,70 @@ export function PredictionChart({
 
             {series.map((seriesItem) => {
               const seriesColor = seriesItem.color
+              const firstPoint = data.find((point) => {
+                const value = point[seriesItem.key]
+                return typeof value === 'number' && Number.isFinite(value)
+              })
+              const firstPointTime = firstPoint?.date.getTime()
+              const hasLeadingGap = Number.isFinite(leadingGapStartMs)
+                && typeof firstPointTime === 'number'
+                && Number.isFinite(firstPointTime)
+                && leadingGapStartMs < firstPointTime
+              let dashedColoredPoints: DataPoint[] | null = null
+              let dashedMutedPoints: DataPoint[] | null = null
+
+              if (hasLeadingGap && firstPoint) {
+                const firstValue = firstPoint[seriesItem.key] as number
+                const startPoint: DataPoint = { date: new Date(leadingGapStartMs), [seriesItem.key]: firstValue }
+                const endPoint: DataPoint = { date: firstPoint.date, [seriesItem.key]: firstValue }
+
+                if (dashedSplitTime <= leadingGapStartMs) {
+                  dashedMutedPoints = [startPoint, endPoint]
+                }
+                else if (dashedSplitTime >= firstPointTime) {
+                  dashedColoredPoints = [startPoint, endPoint]
+                }
+                else {
+                  const cursorPoint: DataPoint = { date: new Date(dashedSplitTime), [seriesItem.key]: firstValue }
+                  dashedColoredPoints = [startPoint, cursorPoint]
+                  dashedMutedPoints = [cursorPoint, endPoint]
+                }
+              }
 
               return (
                 <g key={seriesItem.key}>
+                  {dashedMutedPoints && (
+                    <LinePath<DataPoint>
+                      data={dashedMutedPoints}
+                      x={d => xScale(getDate(d))}
+                      y={d => yScale(d[seriesItem.key] as number)}
+                      stroke={futureLineColor}
+                      strokeWidth={1.4}
+                      strokeDasharray="2 6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeOpacity={futureLineOpacity}
+                      curve={curveLinear}
+                      fill="transparent"
+                    />
+                  )}
+
+                  {dashedColoredPoints && (
+                    <LinePath<DataPoint>
+                      data={dashedColoredPoints}
+                      x={d => xScale(getDate(d))}
+                      y={d => yScale(d[seriesItem.key] as number)}
+                      stroke={seriesColor}
+                      strokeWidth={1.4}
+                      strokeDasharray="2 6"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeOpacity={0.9}
+                      curve={curveLinear}
+                      fill="transparent"
+                    />
+                  )}
+
                   {tooltipActive && mutedPoints.length > 1 && (
                     <LinePath<DataPoint>
                       data={mutedPoints}
