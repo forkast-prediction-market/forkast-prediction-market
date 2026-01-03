@@ -8,8 +8,9 @@ function normalizeId(value?: string | null) {
 
 export async function GET(
   request: Request,
-  { params }: { params: { slug: string } },
+  { params }: { params: Promise<{ slug: string }> },
 ) {
+  const { slug } = await params
   const { searchParams } = new URL(request.url)
   const conditionId = searchParams.get('conditionId')?.trim()
 
@@ -18,7 +19,7 @@ export async function GET(
   }
 
   try {
-    const { data, error } = await EventRepository.getEventMarketMetadata(params.slug)
+    const { data, error } = await EventRepository.getEventMarketMetadata(slug)
     if (error) {
       throw error
     }
