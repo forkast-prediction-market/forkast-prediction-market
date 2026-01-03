@@ -1,8 +1,9 @@
+import type { MarketPositionTag } from '@/app/(platform)/event/[slug]/_components/EventMarketCard'
 import type { MarketDetailTab } from '@/app/(platform)/event/[slug]/_hooks/useMarketDetailController'
 import type { SharesByCondition } from '@/app/(platform)/event/[slug]/_hooks/useUserShareBalances'
 import type { OrderBookSummariesResponse } from '@/app/(platform)/event/[slug]/_types/EventOrderBookTypes'
 import type { DataApiActivity } from '@/lib/data-api/user'
-import type { Event } from '@/types'
+import type { Event, UserPosition } from '@/types'
 import { useQuery } from '@tanstack/react-query'
 import { RefreshCwIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -19,7 +20,8 @@ import { useUserOpenOrdersQuery } from '@/app/(platform)/event/[slug]/_hooks/use
 import { useUserShareBalances } from '@/app/(platform)/event/[slug]/_hooks/useUserShareBalances'
 import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
-import { fetchUserActivityData } from '@/lib/data-api/user'
+import { fetchUserActivityData, fetchUserPositionsForMarket } from '@/lib/data-api/user'
+import { fromMicro } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
@@ -27,6 +29,14 @@ import { useUser } from '@/stores/useUser'
 interface EventMarketsProps {
   event: Event
   isMobile: boolean
+}
+
+function toNumber(value: unknown) {
+  if (value === null || value === undefined) {
+    return null
+  }
+  const numeric = Number(value)
+  return Number.isFinite(numeric) ? numeric : null
 }
 
 export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
@@ -89,6 +99,99 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
     return '' as `0x${string}`
   }, [user])
   const { sharesByCondition } = useUserShareBalances({ event, ownerAddress })
+  const { data: userPositions } = useQuery<UserPosition[]>({
+    queryKey: ['event-user-positions', ownerAddress, event.id],
+    enabled: Boolean(ownerAddress),
+    staleTime: 1000 * 30,
+    gcTime: 1000 * 60 * 10,
+    refetchInterval: ownerAddress ? 15_000 : false,
+    refetchIntervalInBackground: true,
+    queryFn: ({ signal }) =>
+      fetchUserPositionsForMarket({
+        pageParam: 0,
+        userAddress: ownerAddress,
+        status: 'active',
+        signal,
+      }),
+  })
+  const positionTagsByCondition = useMemo(() => {
+    if (!userPositions?.length) {
+      return {}
+    }
+
+    const validConditionIds = new Set(event.markets.map(market => market.condition_id))
+    const aggregated: Record<
+      string,
+      Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, {
+        outcomeIndex: typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO
+        label: string
+        shares: number
+        totalCost: number | null
+      }>
+    > = {}
+
+    userPositions.forEach((position) => {
+      const conditionId = position.market?.condition_id
+      if (!conditionId || !validConditionIds.has(conditionId)) {
+        return
+      }
+
+      const quantity = typeof position.total_shares === 'number'
+        ? position.total_shares
+        : (typeof position.size === 'number' ? position.size : 0)
+      if (!quantity || quantity <= 0) {
+        return
+      }
+
+      const normalizedOutcome = position.outcome_text?.toLowerCase()
+      const explicitOutcomeIndex = typeof position.outcome_index === 'number' ? position.outcome_index : undefined
+      const resolvedOutcomeIndex = explicitOutcomeIndex != null
+        ? explicitOutcomeIndex
+        : normalizedOutcome === 'no'
+          ? OUTCOME_INDEX.NO
+          : OUTCOME_INDEX.YES
+      const outcomeLabel = position.outcome_text || (resolvedOutcomeIndex === OUTCOME_INDEX.NO ? 'No' : 'Yes')
+      const avgPrice = toNumber(position.avgPrice)
+        ?? Number(fromMicro(String(position.average_position ?? 0), 6))
+      const normalizedAvgPrice = Number.isFinite(avgPrice) ? avgPrice : null
+
+      if (!aggregated[conditionId]) {
+        aggregated[conditionId] = {
+          [OUTCOME_INDEX.YES]: { outcomeIndex: OUTCOME_INDEX.YES, label: 'Yes', shares: 0, totalCost: null },
+          [OUTCOME_INDEX.NO]: { outcomeIndex: OUTCOME_INDEX.NO, label: 'No', shares: 0, totalCost: null },
+        }
+      }
+
+      const bucket = resolvedOutcomeIndex === OUTCOME_INDEX.NO ? OUTCOME_INDEX.NO : OUTCOME_INDEX.YES
+      const entry = aggregated[conditionId][bucket]
+      entry.shares += quantity
+      entry.label = outcomeLabel
+      if (typeof normalizedAvgPrice === 'number') {
+        const contribution = normalizedAvgPrice * quantity
+        entry.totalCost = (entry.totalCost ?? 0) + contribution
+      }
+    })
+
+    return Object.entries(aggregated).reduce<Record<string, MarketPositionTag[]>>((acc, [conditionId, entries]) => {
+      const tags = [entries[OUTCOME_INDEX.YES], entries[OUTCOME_INDEX.NO]]
+        .map((entry) => {
+          const avgPrice = entry.shares > 0 && typeof entry.totalCost === 'number'
+            ? entry.totalCost / entry.shares
+            : null
+          return {
+            outcomeIndex: entry.outcomeIndex,
+            label: entry.label,
+            shares: entry.shares,
+            avgPrice,
+          }
+        })
+        .filter(tag => tag.shares > 0)
+      if (tags.length > 0) {
+        acc[conditionId] = tags
+      }
+      return acc
+    }, {})
+  }, [event.markets, userPositions])
 
   useEffect(() => {
     if (ownerAddress && Object.keys(sharesByCondition).length > 0) {
@@ -194,6 +297,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
           const activeOutcomeIndex = selectedOutcome && selectedOutcome.condition_id === market.condition_id
             ? selectedOutcome.outcome_index
             : null
+          const positionTags = positionTagsByCondition[market.condition_id] ?? []
 
           return (
             <div key={market.condition_id} className="transition-colors">
@@ -206,6 +310,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                 onToggle={() => handleToggle(market)}
                 onBuy={(cardMarket, outcomeIndex, source) => handleBuy(cardMarket, outcomeIndex, source)}
                 chanceHighlightKey={chanceHighlightKey}
+                positionTags={positionTags}
               />
 
               <div

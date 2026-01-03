@@ -2,13 +2,21 @@
 
 import type { EventMarketRow } from '@/app/(platform)/event/[slug]/_hooks/useEventMarketRows'
 import { useQuery } from '@tanstack/react-query'
+import { XIcon } from 'lucide-react'
 import Image from 'next/image'
 import { memo, useMemo } from 'react'
 import EventMarketChance from '@/app/(platform)/event/[slug]/_components/EventMarketChance'
 import { Button } from '@/components/ui/button'
 import { OUTCOME_INDEX } from '@/lib/constants'
-import { formatCentsLabel } from '@/lib/formatters'
+import { formatCentsLabel, sharesFormatter } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
+
+export interface MarketPositionTag {
+  outcomeIndex: typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO
+  label: string
+  shares: number
+  avgPrice: number | null
+}
 
 interface EventMarketCardProps {
   row: EventMarketRow
@@ -19,6 +27,7 @@ interface EventMarketCardProps {
   onToggle: () => void
   onBuy: (market: EventMarketRow['market'], outcomeIndex: number, source: 'mobile' | 'desktop') => void
   chanceHighlightKey: string
+  positionTags?: MarketPositionTag[]
 }
 
 function EventMarketCardComponent({
@@ -30,10 +39,14 @@ function EventMarketCardComponent({
   onToggle,
   onBuy,
   chanceHighlightKey,
+  positionTags = [],
 }: EventMarketCardProps) {
   const { market, yesOutcome, noOutcome, yesPriceValue, noPriceValue, chanceMeta } = row
   const yesOutcomeText = yesOutcome?.outcome_text ?? 'Yes'
   const noOutcomeText = noOutcome?.outcome_text ?? 'No'
+  const resolvedPositionTags = positionTags.filter(tag => tag.shares > 0)
+  const shouldShowTags = resolvedPositionTags.length > 0
+  const shouldShowIcon = showMarketIcon && Boolean(market.icon_url)
   const volumeRequestPayload = useMemo(() => {
     const tokenIds = [yesOutcome?.token_id, noOutcome?.token_id].filter(Boolean) as string[]
     if (!market.condition_id || tokenIds.length < 2) {
@@ -107,37 +120,44 @@ function EventMarketCardComponent({
       }}
     >
       <div className="w-full lg:hidden">
-        <div className="mb-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {showMarketIcon && market.icon_url && (
-              <Image
-                src={market.icon_url}
-                alt={market.title}
-                width={42}
-                height={42}
-                className="shrink-0 rounded-md"
-              />
-            )}
-            <div>
-              <div className="text-sm font-bold">
-                {market.title}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                $
-                {resolvedVolume?.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }) || '0.00'}
-                {' '}
-                Vol.
+        <div className="mb-3 flex flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-start gap-3">
+              {shouldShowIcon && (
+                <Image
+                  src={market.icon_url}
+                  alt={market.title}
+                  width={42}
+                  height={42}
+                  className="shrink-0 rounded-md"
+                />
+              )}
+              <div>
+                <div className="text-sm font-bold">
+                  {market.title}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  $
+                  {resolvedVolume?.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }) || '0.00'}
+                  {' '}
+                  Vol.
+                </div>
               </div>
             </div>
+            <EventMarketChance
+              chanceMeta={chanceMeta}
+              layout="mobile"
+              highlightKey={chanceHighlightKey}
+            />
           </div>
-          <EventMarketChance
-            chanceMeta={chanceMeta}
-            layout="mobile"
-            highlightKey={chanceHighlightKey}
-          />
+          {shouldShowTags && (
+            <div className={cn('flex', shouldShowIcon && 'pl-[54px]')}>
+              <PositionTags tags={resolvedPositionTags} />
+            </div>
+          )}
         </div>
 
         <div className="flex gap-2">
@@ -187,30 +207,37 @@ function EventMarketCardComponent({
       </div>
 
       <div className="hidden w-full items-center lg:flex">
-        <div className="flex w-2/5 items-center gap-3">
-          {showMarketIcon && market.icon_url && (
-            <Image
-              src={market.icon_url}
-              alt={market.title}
-              width={42}
-              height={42}
-              className="shrink-0 rounded-md"
-            />
-          )}
-          <div>
-            <div className="font-bold">
-              {market.title}
-            </div>
-            <div className="text-xs text-muted-foreground">
-              $
-              {resolvedVolume?.toLocaleString('en-US', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }) || '0.00'}
-              {' '}
-              Vol.
+        <div className="flex w-2/5 flex-col gap-2">
+          <div className="flex items-start gap-3">
+            {shouldShowIcon && (
+              <Image
+                src={market.icon_url}
+                alt={market.title}
+                width={42}
+                height={42}
+                className="shrink-0 rounded-md"
+              />
+            )}
+            <div>
+              <div className="font-bold">
+                {market.title}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                $
+                {resolvedVolume?.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                }) || '0.00'}
+                {' '}
+                Vol.
+              </div>
             </div>
           </div>
+          {shouldShowTags && (
+            <div className={cn('flex', shouldShowIcon && 'pl-[54px]')}>
+              <PositionTags tags={resolvedPositionTags} />
+            </div>
+          )}
         </div>
 
         <div className="flex w-1/5 justify-center">
@@ -274,3 +301,45 @@ function EventMarketCardComponent({
 const EventMarketCard = memo(EventMarketCardComponent)
 
 export default EventMarketCard
+
+function PositionTags({ tags }: { tags: MarketPositionTag[] }) {
+  return (
+    <div className="flex flex-wrap gap-1">
+      {tags.map((tag) => {
+        const isYes = tag.outcomeIndex === OUTCOME_INDEX.YES
+        const label = tag.label || (isYes ? 'Yes' : 'No')
+        const sharesLabel = sharesFormatter.format(tag.shares)
+        const avgPriceLabel = formatCentsLabel(tag.avgPrice, { fallback: '—' })
+
+        return (
+          <div
+            key={`${tag.outcomeIndex}-${label}`}
+            className={cn(
+              'group inline-flex items-center rounded-sm px-2 py-0.5 text-xs font-semibold transition-all',
+              isYes ? 'bg-yes/15 text-yes-foreground' : 'bg-no/15 text-no-foreground',
+            )}
+          >
+            <span className="whitespace-nowrap">
+              {label}
+              {' '}
+              {sharesLabel}
+              {' '}
+              •
+              {' '}
+              {avgPriceLabel}
+            </span>
+            <span
+              className={cn(
+                'ml-1 inline-flex w-0 items-center justify-center overflow-hidden opacity-0',
+                'transition-all duration-200 group-hover:w-3 group-hover:opacity-100',
+              )}
+              aria-hidden="true"
+            >
+              <XIcon className="size-3" />
+            </span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
