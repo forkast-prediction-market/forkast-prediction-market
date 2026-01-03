@@ -19,8 +19,6 @@ export interface PublicPosition {
   mergeable?: boolean
   outcomeIndex?: number
   oppositeOutcome?: string
-  asset?: string
-  oppositeAsset?: string
   size?: number
   curPrice?: number
 }

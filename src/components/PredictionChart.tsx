@@ -10,7 +10,7 @@ import { scaleLinear, scaleTime } from '@visx/scale'
 import { LinePath } from '@visx/shape'
 import { useTooltip } from '@visx/tooltip'
 import { bisector } from 'd3-array'
-import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import PredictionChartHeader from '@/components/PredictionChartHeader'
 import PredictionChartTooltipOverlay from '@/components/PredictionChartTooltipOverlay'
 import {
@@ -54,7 +54,6 @@ export function PredictionChart({
   onCursorDataChange,
   cursorStepMs,
   xAxisTickCount = DEFAULT_X_AXIS_TICKS,
-  leadingGapStart = null,
   legendContent,
   showLegend = true,
   watermark,
@@ -73,9 +72,6 @@ export function PredictionChart({
   const hasPointerInteractionRef = useRef(false)
   const lastCursorProgressRef = useRef(0)
   const normalizedSignature = dataSignature ?? '__default__'
-  const clipId = useId().replace(/:/g, '')
-  const leftClipId = `${clipId}-left`
-  const rightClipId = `${clipId}-right`
   const shouldRenderLegend = showLegend && Boolean(legendContent)
   const shouldRenderWatermark = Boolean(
     watermark && (watermark.iconSvg || watermark.label),
@@ -119,61 +115,6 @@ export function PredictionChart({
     () => calculateYAxisBounds(data, series),
     [data, series],
   )
-  const domainBounds = useMemo(() => {
-    if (!data.length) {
-      return { start: 0, end: 0 }
-    }
-
-    let dataStart = data[0].date.getTime()
-    let dataEnd = dataStart
-
-    for (let index = 1; index < data.length; index += 1) {
-      const value = data[index].date.getTime()
-      if (value < dataStart) {
-        dataStart = value
-      }
-      if (value > dataEnd) {
-        dataEnd = value
-      }
-    }
-    const leadingStart = leadingGapStart instanceof Date ? leadingGapStart.getTime() : Number.NaN
-    const start = Number.isFinite(leadingStart) ? Math.min(dataStart, leadingStart) : dataStart
-
-    return { start, end: dataEnd }
-  }, [data, leadingGapStart])
-
-  const getClampedCursorPoint = useCallback(
-    (targetDate: Date) => {
-      if (!data.length) {
-        return null
-      }
-
-      const firstPoint = data[0]
-      const lastPoint = data[data.length - 1]
-      const targetTime = targetDate.getTime()
-      const firstTime = firstPoint.date.getTime()
-      const lastTime = lastPoint.date.getTime()
-
-      if (!Number.isFinite(targetTime) || !Number.isFinite(firstTime) || !Number.isFinite(lastTime)) {
-        return null
-      }
-
-      if (targetTime <= firstTime) {
-        return { ...firstPoint, date: targetDate }
-      }
-
-      if (targetTime >= lastTime) {
-        return { ...lastPoint, date: targetDate }
-      }
-
-      const index = bisectDate(data, targetDate)
-      const previousPoint = data[index - 1] ?? null
-      const nextPoint = data[index] ?? null
-
-      return interpolateSeriesPoint(targetDate, previousPoint, nextPoint, series)
-    },
-    [data, series],
-  )
 
   const handleTooltip = useCallback(
     (
@@ -186,8 +127,8 @@ export function PredictionChart({
       const { x } = localPoint(event) || { x: 0 }
       const innerWidth = width - margin.left - margin.right
       const innerHeight = height - margin.top - margin.bottom
-      const domainStart = domainBounds.start
-      const domainEnd = domainBounds.end
+      const domainStart = Math.min(...data.map(d => d.date.getTime()))
+      const domainEnd = Math.max(...data.map(d => d.date.getTime()))
 
       const xScale = scaleTime<number>({
         range: [0, innerWidth],
@@ -210,8 +151,11 @@ export function PredictionChart({
       lastCursorProgressRef.current = clamp01((targetTime - domainStart) / domainSpan)
       hasPointerInteractionRef.current = true
       stopRevealAnimation(revealAnimationFrameRef)
-      const cursorPoint = getClampedCursorPoint(targetDate)
-      const tooltipPoint = cursorPoint ?? data[0]
+      const index = bisectDate(data, targetDate, 1)
+      const d0 = data[index - 1] ?? null
+      const d1 = data[index] ?? null
+      const resolvedPoint = interpolateSeriesPoint(targetDate, d0, d1, series)
+      const tooltipPoint = resolvedPoint ?? d0 ?? d1 ?? data[0]
       const tooltipLeftPosition = xScale(targetDate)
 
       showTooltip({
@@ -220,7 +164,7 @@ export function PredictionChart({
         tooltipTop: yScale((tooltipPoint[series[0].key] as number) || 0),
       })
 
-      emitCursorDataChange(cursorPoint ?? tooltipPoint ?? null)
+      emitCursorDataChange(resolvedPoint ?? tooltipPoint ?? null)
     },
     [
       showTooltip,
@@ -230,9 +174,7 @@ export function PredictionChart({
       height,
       margin,
       cursorStepMs,
-      domainBounds,
       revealAnimationFrameRef,
-      getClampedCursorPoint,
       emitCursorDataChange,
       yAxisMin,
       yAxisMax,
@@ -462,43 +404,6 @@ export function PredictionChart({
     return () => observer.disconnect()
   }, [])
 
-  const firstFinitePointBySeries = useMemo(() => {
-    const result: Record<string, DataPoint | null> = {}
-
-    if (!data.length || !series.length) {
-      return result
-    }
-
-    series.forEach((seriesItem) => {
-      result[seriesItem.key] = null
-    })
-
-    let remaining = series.length
-
-    for (const point of data) {
-      if (remaining === 0) {
-        break
-      }
-
-      for (const seriesItem of series) {
-        if (result[seriesItem.key]) {
-          continue
-        }
-
-        const value = point[seriesItem.key]
-        if (typeof value === 'number' && Number.isFinite(value)) {
-          result[seriesItem.key] = point
-          remaining -= 1
-          if (remaining === 0) {
-            break
-          }
-        }
-      }
-    }
-
-    return result
-  }, [data, series])
-
   if (!isClient || data.length === 0 || series.length === 0) {
     return (
       <div className="relative h-full w-full">
@@ -514,7 +419,10 @@ export function PredictionChart({
 
   const xScale = scaleTime<number>({
     range: [0, innerWidth],
-    domain: [domainBounds.start, domainBounds.end],
+    domain: [
+      Math.min(...data.map(d => d.date.getTime())),
+      Math.max(...data.map(d => d.date.getTime())),
+    ],
   })
 
   const yScale = scaleLinear<number>({
@@ -530,25 +438,61 @@ export function PredictionChart({
   const cursorDate = tooltipActive
     ? xScale.invert(clampedTooltipX)
     : null
-  const shouldSplitByCursor = Boolean(tooltipActive && cursorDate)
-  const leftClipWidth = shouldSplitByCursor ? clampedTooltipX : innerWidth
-  const rightClipWidth = shouldSplitByCursor ? Math.max(0, innerWidth - clampedTooltipX) : 0
-  const domainSpan = Math.max(1, domainBounds.end - domainBounds.start)
-  const revealTime = domainBounds.start + domainSpan * clamp01(revealProgress)
-  const dashedSplitTime = tooltipActive && cursorDate
-    ? cursorDate.getTime()
-    : revealTime
-  const cursorPoint = shouldSplitByCursor && cursorDate
-    ? getClampedCursorPoint(cursorDate)
-    : null
-  const effectiveTooltipData = cursorPoint ?? tooltipData ?? null
+  const insertionIndex = cursorDate ? bisectDate(data, cursorDate) : data.length
+  const previousPoint = insertionIndex > 0 ? data[insertionIndex - 1] : null
+  const nextPoint = insertionIndex < data.length ? data[insertionIndex] : null
+
+  let cursorPoint: DataPoint | null = null
+  if (tooltipActive && cursorDate) {
+    cursorPoint = interpolateSeriesPoint(cursorDate, previousPoint, nextPoint, series)
+  }
 
   let coloredPoints: DataPoint[] = data
   let mutedPoints: DataPoint[] = []
 
-  if (shouldSplitByCursor) {
-    coloredPoints = data
-    mutedPoints = data
+  if (tooltipActive) {
+    coloredPoints = data.slice(0, insertionIndex)
+    mutedPoints = data.slice(insertionIndex)
+
+    if (cursorPoint) {
+      const cursorTime = cursorPoint.date.getTime()
+
+      if (
+        coloredPoints.length === 0
+        || coloredPoints[coloredPoints.length - 1].date.getTime() !== cursorTime
+      ) {
+        coloredPoints = [...coloredPoints, cursorPoint]
+      }
+      else {
+        coloredPoints = [
+          ...coloredPoints.slice(0, coloredPoints.length - 1),
+          cursorPoint,
+        ]
+      }
+
+      if (
+        mutedPoints.length === 0
+        || mutedPoints[0].date.getTime() !== cursorTime
+      ) {
+        mutedPoints = [cursorPoint, ...mutedPoints]
+      }
+      else {
+        mutedPoints = [
+          cursorPoint,
+          ...mutedPoints.slice(1),
+        ]
+      }
+    }
+    else if (cursorDate && mutedPoints.length > 0) {
+      const firstMutedTime = mutedPoints[0].date.getTime()
+      if (cursorDate.getTime() >= firstMutedTime) {
+        coloredPoints = [...coloredPoints, mutedPoints[0]]
+      }
+    }
+
+    if (coloredPoints.length === 0 && data.length > 0) {
+      coloredPoints = [data[0]]
+    }
   }
   else if (data.length > 0) {
     const totalSegments = Math.max(1, data.length - 1)
@@ -566,11 +510,10 @@ export function PredictionChart({
   const lastDataPoint = data.length > 0 ? data[data.length - 1] : null
   const isTooltipAtLastPoint = tooltipActive
     && lastDataPoint !== null
-    && effectiveTooltipData !== null
-    && effectiveTooltipData.date.getTime() === lastDataPoint.date.getTime()
+    && tooltipData === lastDataPoint
   const showEndpointMarkers = Boolean(lastDataPoint)
     && (!tooltipActive || isTooltipAtLastPoint)
-    && (mutedPoints.length === 0 || shouldSplitByCursor)
+    && mutedPoints.length === 0
   const totalDurationHours = data.length > 1
     ? (data[data.length - 1].date.valueOf() - data[0].date.valueOf()) / 36e5
     : 0
@@ -608,10 +551,10 @@ export function PredictionChart({
   }
   type PositionedTooltipEntry = TooltipEntry & { top: number }
 
-  const tooltipEntries: TooltipEntry[] = tooltipActive && effectiveTooltipData
+  const tooltipEntries: TooltipEntry[] = tooltipActive && tooltipData
     ? series
         .map((seriesItem) => {
-          const value = effectiveTooltipData[seriesItem.key]
+          const value = tooltipData[seriesItem.key]
           if (typeof value !== 'number') {
             return null
           }
@@ -700,8 +643,6 @@ export function PredictionChart({
   const midlineOpacity = isDarkMode
     ? MIDLINE_OPACITY_DARK
     : MIDLINE_OPACITY_LIGHT
-  const leadingGapStartMs = leadingGapStart instanceof Date ? leadingGapStart.getTime() : Number.NaN
-  const clipPadding = 2
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -720,24 +661,6 @@ export function PredictionChart({
           preserveAspectRatio="none"
           style={{ overflow: 'visible' }}
         >
-          <defs>
-            <clipPath id={leftClipId} clipPathUnits="userSpaceOnUse">
-              <rect
-                x={0}
-                y={-clipPadding}
-                width={leftClipWidth}
-                height={innerHeight + clipPadding * 2}
-              />
-            </clipPath>
-            <clipPath id={rightClipId} clipPathUnits="userSpaceOnUse">
-              <rect
-                x={leftClipWidth}
-                y={-clipPadding}
-                width={rightClipWidth}
-                height={innerHeight + clipPadding * 2}
-              />
-            </clipPath>
-          </defs>
           <Group left={margin.left} top={margin.top}>
             {yAxisTicks.map(value => (
               <line
@@ -768,43 +691,17 @@ export function PredictionChart({
 
             {series.map((seriesItem) => {
               const seriesColor = seriesItem.color
-              const firstPoint = firstFinitePointBySeries[seriesItem.key] ?? null
-              const firstPointTime = firstPoint?.date.getTime()
-              const hasLeadingGap = Number.isFinite(leadingGapStartMs)
-                && typeof firstPointTime === 'number'
-                && Number.isFinite(firstPointTime)
-                && leadingGapStartMs < firstPointTime
-              let dashedColoredPoints: DataPoint[] | null = null
-              let dashedMutedPoints: DataPoint[] | null = null
-
-              if (hasLeadingGap && firstPoint) {
-                const firstValue = firstPoint[seriesItem.key] as number
-                const startPoint: DataPoint = { date: new Date(leadingGapStartMs), [seriesItem.key]: firstValue }
-                const endPoint: DataPoint = { date: firstPoint.date, [seriesItem.key]: firstValue }
-
-                if (dashedSplitTime <= leadingGapStartMs) {
-                  dashedMutedPoints = [startPoint, endPoint]
-                }
-                else if (dashedSplitTime >= firstPointTime) {
-                  dashedColoredPoints = [startPoint, endPoint]
-                }
-                else {
-                  const splitPoint: DataPoint = { date: new Date(dashedSplitTime), [seriesItem.key]: firstValue }
-                  dashedColoredPoints = [startPoint, splitPoint]
-                  dashedMutedPoints = [splitPoint, endPoint]
-                }
-              }
 
               return (
                 <g key={seriesItem.key}>
-                  {dashedMutedPoints && (
+                  {tooltipActive && mutedPoints.length > 1 && (
                     <LinePath<DataPoint>
-                      data={dashedMutedPoints}
+                      data={mutedPoints}
                       x={d => xScale(getDate(d))}
-                      y={d => yScale(d[seriesItem.key] as number)}
+                      y={d => yScale((d[seriesItem.key] as number) || 0)}
                       stroke={futureLineColor}
-                      strokeWidth={1.4}
-                      strokeDasharray="2 4"
+                      strokeWidth={1.75}
+                      strokeDasharray="1 1"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeOpacity={futureLineOpacity}
@@ -813,90 +710,21 @@ export function PredictionChart({
                     />
                   )}
 
-                  {dashedColoredPoints && (
+                  {coloredPoints.length > 1 && (
                     <LinePath<DataPoint>
-                      data={dashedColoredPoints}
+                      data={coloredPoints}
                       x={d => xScale(getDate(d))}
-                      y={d => yScale(d[seriesItem.key] as number)}
+                      y={d => yScale((d[seriesItem.key] as number) || 0)}
                       stroke={seriesColor}
-                      strokeWidth={1.4}
-                      strokeDasharray="2 4"
+                      strokeWidth={1.75}
+                      strokeOpacity={1}
+                      strokeDasharray="1 1"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      strokeOpacity={0.9}
                       curve={curveLinear}
                       fill="transparent"
                     />
                   )}
-
-                  {shouldSplitByCursor
-                    ? (
-                        <>
-                          <LinePath<DataPoint>
-                            data={data}
-                            x={d => xScale(getDate(d))}
-                            y={d => yScale((d[seriesItem.key] as number) || 0)}
-                            stroke={futureLineColor}
-                            strokeWidth={1.75}
-                            strokeDasharray="1 1"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeOpacity={futureLineOpacity}
-                            curve={curveLinear}
-                            fill="transparent"
-                            clipPath={`url(#${rightClipId})`}
-                          />
-                          <LinePath<DataPoint>
-                            data={data}
-                            x={d => xScale(getDate(d))}
-                            y={d => yScale((d[seriesItem.key] as number) || 0)}
-                            stroke={seriesColor}
-                            strokeWidth={1.75}
-                            strokeOpacity={1}
-                            strokeDasharray="1 1"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            curve={curveLinear}
-                            fill="transparent"
-                            clipPath={`url(#${leftClipId})`}
-                          />
-                        </>
-                      )
-                    : (
-                        <>
-                          {mutedPoints.length > 1 && (
-                            <LinePath<DataPoint>
-                              data={mutedPoints}
-                              x={d => xScale(getDate(d))}
-                              y={d => yScale((d[seriesItem.key] as number) || 0)}
-                              stroke={futureLineColor}
-                              strokeWidth={1.75}
-                              strokeDasharray="1 1"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeOpacity={futureLineOpacity}
-                              curve={curveLinear}
-                              fill="transparent"
-                            />
-                          )}
-
-                          {coloredPoints.length > 1 && (
-                            <LinePath<DataPoint>
-                              data={coloredPoints}
-                              x={d => xScale(getDate(d))}
-                              y={d => yScale((d[seriesItem.key] as number) || 0)}
-                              stroke={seriesColor}
-                              strokeWidth={1.75}
-                              strokeOpacity={1}
-                              strokeDasharray="1 1"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              curve={curveLinear}
-                              fill="transparent"
-                            />
-                          )}
-                        </>
-                      )}
                 </g>
               )
             })}
@@ -956,21 +784,12 @@ export function PredictionChart({
               tickFormat={formatAxisTick}
               stroke="transparent"
               tickStroke="transparent"
-              tickLabelProps={(_value, index, values) => {
-                const lastIndex = Array.isArray(values) ? values.length - 1 : -1
-                const textAnchor = index === 0
-                  ? 'start'
-                  : index === lastIndex
-                    ? 'end'
-                    : 'middle'
-
-                return {
-                  fill: 'var(--muted-foreground)',
-                  fontSize: 11,
-                  fontFamily: 'Arial, sans-serif',
-                  textAnchor,
-                  dy: '0.6em',
-                }
+              tickLabelProps={{
+                fill: 'var(--muted-foreground)',
+                fontSize: 11,
+                fontFamily: 'Arial, sans-serif',
+                textAnchor: 'middle',
+                dy: '0.6em',
               }}
               numTicks={xAxisTickCount}
               tickLength={0}
@@ -1022,7 +841,7 @@ export function PredictionChart({
 
         <PredictionChartTooltipOverlay
           tooltipActive={tooltipActive}
-          tooltipData={effectiveTooltipData}
+          tooltipData={tooltipData ?? null}
           positionedTooltipEntries={positionedTooltipEntries}
           margin={margin}
           innerWidth={innerWidth}

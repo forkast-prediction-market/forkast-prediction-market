@@ -420,8 +420,10 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
     return null
   }
 
-  const content = (
-    <>
+  return (
+    <section
+      className="overflow-hidden rounded-xl border border-border/60 bg-background/80"
+    >
       {isSingleMarket && (
         <div className="p-4">
           <h3 className="text-lg font-semibold text-foreground">Positions</h3>
@@ -460,18 +462,6 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
         onOpenChange={handleShareOpenChange}
         payload={shareCardPayload}
       />
-    </>
+    </section>
   )
-
-  return isSingleMarket
-    ? (
-        <section className="overflow-hidden rounded-xl border border-border/60 bg-background/80">
-          {content}
-        </section>
-      )
-    : (
-        <div>
-          {content}
-        </div>
-      )
 }

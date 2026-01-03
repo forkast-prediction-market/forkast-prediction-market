@@ -1,19 +1,15 @@
 'use client'
 
 import type { TimeRange } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
-import type { PredictionChartCursorSnapshot } from '@/components/PredictionChart'
 import type { Market, Outcome } from '@/types'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import EventChartControls from '@/app/(platform)/event/[slug]/_components/EventChartControls'
-import EventChartHeader from '@/app/(platform)/event/[slug]/_components/EventChartHeader'
-import EventChartLayout from '@/app/(platform)/event/[slug]/_components/EventChartLayout'
+import { useMemo, useState } from 'react'
 import {
   buildMarketTargets,
   TIME_RANGES,
   useEventPriceHistory,
 } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import PredictionChart from '@/components/PredictionChart'
-import { OUTCOME_INDEX } from '@/lib/constants'
+import { cn } from '@/lib/utils'
 
 interface MarketOutcomeGraphProps {
   market: Market
@@ -25,36 +21,8 @@ interface MarketOutcomeGraphProps {
 
 export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventCreatedAt, isMobile }: MarketOutcomeGraphProps) {
   const [activeTimeRange, setActiveTimeRange] = useState<TimeRange>('ALL')
-  const [activeOutcomeIndex, setActiveOutcomeIndex] = useState(outcome.outcome_index)
-  const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
-  const timeRangeContainerRef = useRef<HTMLDivElement | null>(null)
-  const [timeRangeIndicator, setTimeRangeIndicator] = useState({ width: 0, left: 0 })
-  const [timeRangeIndicatorReady, setTimeRangeIndicatorReady] = useState(false)
   const marketTargets = useMemo(() => buildMarketTargets(allMarkets), [allMarkets])
   const chartWidth = isMobile ? 400 : 900
-
-  useEffect(() => {
-    setActiveOutcomeIndex(outcome.outcome_index)
-    setCursorSnapshot(null)
-  }, [outcome.id, outcome.outcome_index])
-
-  useEffect(() => {
-    setCursorSnapshot(null)
-  }, [activeTimeRange, activeOutcomeIndex])
-
-  const activeOutcome = useMemo(
-    () => market.outcomes.find(item => item.outcome_index === activeOutcomeIndex) ?? outcome,
-    [market.outcomes, activeOutcomeIndex, outcome],
-  )
-  const oppositeOutcomeIndex = activeOutcomeIndex === OUTCOME_INDEX.YES
-    ? OUTCOME_INDEX.NO
-    : OUTCOME_INDEX.YES
-  const oppositeOutcome = useMemo(
-    () => market.outcomes.find(item => item.outcome_index === oppositeOutcomeIndex) ?? activeOutcome,
-    [market.outcomes, oppositeOutcomeIndex, activeOutcome],
-  )
-  const showOutcomeSwitch = market.outcomes.length > 1
-    && oppositeOutcome.outcome_index !== activeOutcome.outcome_index
 
   const {
     normalizedHistory,
@@ -66,132 +34,71 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   })
 
   const chartData = useMemo(
-    () => buildChartData(normalizedHistory, market.condition_id, activeOutcomeIndex),
-    [normalizedHistory, market.condition_id, activeOutcomeIndex],
+    () => buildChartData(normalizedHistory, market.condition_id, outcome.outcome_index),
+    [normalizedHistory, market.condition_id, outcome.outcome_index],
   )
-  const leadingGapStart = normalizedHistory[0]?.date ?? null
 
   const series = useMemo(
     () => [{
       key: 'value',
-      name: activeOutcome.outcome_text,
-      color: activeOutcome.outcome_index === OUTCOME_INDEX.NO ? '#FF6600' : '#2D9CDB',
+      name: outcome.outcome_text,
+      color: '#2D9CDB',
     }],
-    [activeOutcome.outcome_index, activeOutcome.outcome_text],
+    [outcome.outcome_text],
   )
   const chartSignature = useMemo(
-    () => `${market.condition_id}:${activeOutcomeIndex}:${activeTimeRange}`,
-    [market.condition_id, activeOutcomeIndex, activeTimeRange],
-  )
-  const hasChartData = chartData.length > 0
-  const watermark = useMemo(
-    () => ({
-      iconSvg: process.env.NEXT_PUBLIC_SITE_LOGO_SVG,
-      label: process.env.NEXT_PUBLIC_SITE_NAME,
-    }),
-    [],
+    () => `${market.condition_id}:${outcome.id}:${activeTimeRange}`,
+    [market.condition_id, outcome.id, activeTimeRange],
   )
 
-  useEffect(() => {
-    if (!hasChartData) {
-      return
-    }
-    const container = timeRangeContainerRef.current
-    if (!container) {
-      return
-    }
-    const target = container.querySelector<HTMLButtonElement>(`button[data-range="${activeTimeRange}"]`)
-    if (!target) {
-      return
-    }
-    const { offsetLeft, offsetWidth } = target
-    setTimeRangeIndicator({
-      width: offsetWidth,
-      left: offsetLeft,
-    })
-    setTimeRangeIndicatorReady(offsetWidth > 0)
-  }, [activeTimeRange, hasChartData])
-
-  const hoveredValue = cursorSnapshot?.values?.value
-  const latestValue = useMemo(() => {
-    for (let index = chartData.length - 1; index >= 0; index -= 1) {
-      const value = chartData[index]?.value
-      if (typeof value === 'number' && Number.isFinite(value)) {
-        return value
-      }
-    }
-    return null
-  }, [chartData])
-  const resolvedValue = typeof hoveredValue === 'number' && Number.isFinite(hoveredValue)
-    ? hoveredValue
-    : latestValue
-  const baselineValue = useMemo(() => {
-    for (const point of chartData) {
-      if (typeof point.value === 'number' && Number.isFinite(point.value)) {
-        return point.value
-      }
-    }
-    return null
-  }, [chartData])
-  const currentValue = resolvedValue
+  if (chartData.length === 0) {
+    return (
+      <div className={`
+        flex min-h-16 items-center justify-center rounded border border-dashed border-border px-4 text-center text-sm
+        text-muted-foreground
+      `}
+      >
+        Price history is unavailable for this outcome.
+      </div>
+    )
+  }
 
   return (
-    <EventChartLayout
-      header={hasChartData
-        ? (
-            <EventChartHeader
-              isSingleMarket
-              activeOutcomeIndex={activeOutcome.outcome_index as typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO}
-              activeOutcomeLabel={activeOutcome.outcome_text}
-              primarySeriesColor={series[0]?.color ?? '#2D9CDB'}
-              yesChanceValue={typeof resolvedValue === 'number' ? resolvedValue : null}
-              effectiveBaselineYesChance={typeof baselineValue === 'number' ? baselineValue : null}
-              effectiveCurrentYesChance={typeof currentValue === 'number' ? currentValue : null}
-              watermark={watermark}
-            />
-          )
-        : null}
-      chart={hasChartData
-        ? (
-            <PredictionChart
-              data={chartData}
-              series={series}
-              width={chartWidth}
-              height={260}
-              margin={{ top: 20, right: 40, bottom: 48, left: 0 }}
-              dataSignature={chartSignature}
-              onCursorDataChange={setCursorSnapshot}
-              xAxisTickCount={isMobile ? 3 : 6}
-              leadingGapStart={leadingGapStart}
-              legendContent={null}
-              showLegend={false}
-              watermark={undefined}
-            />
-          )
-        : (
-            <div className="flex min-h-16 items-center justify-center px-4 text-center text-sm text-muted-foreground">
-              Price history is unavailable for this outcome.
-            </div>
-          )}
-      controls={hasChartData
-        ? (
-            <div className="pb-2">
-              <EventChartControls
-                hasChartData
-                timeRanges={TIME_RANGES}
-                activeTimeRange={activeTimeRange}
-                onTimeRangeChange={setActiveTimeRange}
-                timeRangeContainerRef={timeRangeContainerRef}
-                timeRangeIndicator={timeRangeIndicator}
-                timeRangeIndicatorReady={timeRangeIndicatorReady}
-                showOutcomeSwitch={showOutcomeSwitch}
-                oppositeOutcomeLabel={oppositeOutcome.outcome_text}
-                onShuffle={() => setActiveOutcomeIndex(oppositeOutcome.outcome_index)}
-              />
-            </div>
-          )
-        : null}
-    />
+    <div className="flex flex-col gap-3">
+      <PredictionChart
+        data={chartData}
+        series={series}
+        width={chartWidth}
+        height={260}
+        margin={{ top: 20, right: 40, bottom: 48, left: 0 }}
+        dataSignature={chartSignature}
+        xAxisTickCount={isMobile ? 3 : 6}
+        legendContent={null}
+        showLegend={false}
+        watermark={{
+          iconSvg: process.env.NEXT_PUBLIC_SITE_LOGO_SVG,
+          label: process.env.NEXT_PUBLIC_SITE_NAME,
+        }}
+      />
+
+      <div className="flex flex-wrap justify-center gap-2 text-2xs font-semibold">
+        {TIME_RANGES.map(range => (
+          <button
+            key={range}
+            type="button"
+            className={cn(
+              'rounded-md px-3 py-1 transition-colors',
+              activeTimeRange === range
+                ? 'bg-muted text-foreground'
+                : 'bg-transparent text-muted-foreground hover:bg-muted/70 hover:text-foreground',
+            )}
+            onClick={() => setActiveTimeRange(range)}
+          >
+            {range}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -210,9 +117,7 @@ function buildChartData(
       if (typeof value !== 'number' || !Number.isFinite(value)) {
         return null
       }
-      const resolvedValue = outcomeIndex === OUTCOME_INDEX.YES
-        ? value
-        : Math.max(0, 100 - value)
+      const resolvedValue = outcomeIndex === 0 ? value : Math.max(0, 100 - value)
       return {
         date: point.date,
         value: resolvedValue,
