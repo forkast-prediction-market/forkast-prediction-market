@@ -25,6 +25,7 @@ export default function HeaderMenu() {
   const { data: session } = useSession()
   const isMobile = useIsMobile()
   const { startDepositFlow } = useTradingOnboarding()
+  const user = useUser()
 
   useEffect(() => {
     if (session?.user) {
@@ -50,7 +51,10 @@ export default function HeaderMenu() {
     }
   }, [session?.user])
 
-  if (!isMounted || status === 'connecting' || !isReady) {
+  const isAuthenticated = Boolean(user) || isConnected
+  const showSkeleton = !user && (!isMounted || status === 'connecting' || !isReady)
+
+  if (showSkeleton) {
     return (
       <div className="flex gap-2">
         <Skeleton className="hidden h-9 w-20 lg:block" />
@@ -64,7 +68,7 @@ export default function HeaderMenu() {
 
   return (
     <>
-      {isConnected && (
+      {isAuthenticated && (
         <>
           {!isMobile && <HeaderPortfolio />}
           {!isMobile && (
@@ -77,7 +81,7 @@ export default function HeaderMenu() {
         </>
       )}
 
-      {!isConnected && (
+      {!isAuthenticated && (
         <>
           <Button
             size="sm"
