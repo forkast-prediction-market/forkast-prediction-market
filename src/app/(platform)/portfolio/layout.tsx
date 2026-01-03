@@ -1,11 +1,9 @@
-import { Suspense } from 'react'
-import PortfolioLayoutContent from '@/app/(platform)/portfolio/_components/PortfolioLayoutContent'
-import PortfolioLayoutSkeleton from '@/app/(platform)/portfolio/_components/PortfolioLayoutSkeleton'
-
 export default function PortfolioLayout({ children }: LayoutProps<'/portfolio'>) {
   return (
-    <Suspense fallback={<PortfolioLayoutSkeleton />}>
-      <PortfolioLayoutContent>{children}</PortfolioLayoutContent>
-    </Suspense>
+    <main className="container py-8">
+      <div className="mx-auto grid max-w-6xl gap-6">
+        {children}
+      </div>
+    </main>
   )
 }
