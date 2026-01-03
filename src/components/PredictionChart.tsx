@@ -790,7 +790,7 @@ export function PredictionChart({
                       )
                     : (
                         <>
-                          {tooltipActive && mutedPoints.length > 1 && (
+                          {mutedPoints.length > 1 && (
                             <LinePath<DataPoint>
                               data={mutedPoints}
                               x={d => xScale(getDate(d))}
