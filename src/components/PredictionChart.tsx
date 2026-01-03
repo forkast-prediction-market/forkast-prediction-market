@@ -460,6 +460,13 @@ export function PredictionChart({
   const dashedSplitTime = tooltipActive && cursorDate
     ? cursorDate.getTime()
     : revealTime
+  const insertionIndex = cursorDate ? bisectDate(data, cursorDate) : data.length
+  const previousPoint = insertionIndex > 0 ? data[insertionIndex - 1] : null
+  const nextPoint = insertionIndex < data.length ? data[insertionIndex] : null
+  const cursorPoint = shouldSplitByCursor && cursorDate
+    ? interpolateSeriesPoint(cursorDate, previousPoint, nextPoint, series)
+    : null
+  const effectiveTooltipData = cursorPoint ?? tooltipData ?? null
 
   let coloredPoints: DataPoint[] = data
   let mutedPoints: DataPoint[] = []
@@ -484,7 +491,7 @@ export function PredictionChart({
   const lastDataPoint = data.length > 0 ? data[data.length - 1] : null
   const isTooltipAtLastPoint = tooltipActive
     && lastDataPoint !== null
-    && tooltipData === lastDataPoint
+    && effectiveTooltipData === lastDataPoint
   const showEndpointMarkers = Boolean(lastDataPoint)
     && (!tooltipActive || isTooltipAtLastPoint)
     && mutedPoints.length === 0
@@ -525,10 +532,10 @@ export function PredictionChart({
   }
   type PositionedTooltipEntry = TooltipEntry & { top: number }
 
-  const tooltipEntries: TooltipEntry[] = tooltipActive && tooltipData
+  const tooltipEntries: TooltipEntry[] = tooltipActive && effectiveTooltipData
     ? series
         .map((seriesItem) => {
-          const value = tooltipData[seriesItem.key]
+          const value = effectiveTooltipData[seriesItem.key]
           if (typeof value !== 'number') {
             return null
           }
@@ -941,7 +948,7 @@ export function PredictionChart({
 
         <PredictionChartTooltipOverlay
           tooltipActive={tooltipActive}
-          tooltipData={tooltipData ?? null}
+          tooltipData={effectiveTooltipData}
           positionedTooltipEntries={positionedTooltipEntries}
           margin={margin}
           innerWidth={innerWidth}
