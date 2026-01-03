@@ -8,7 +8,7 @@ import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 
-interface CashOutModalProps {
+interface SellPositionModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   outcomeLabel: string
@@ -23,7 +23,7 @@ interface CashOutModalProps {
   onEditOrder: () => void
 }
 
-export default function CashOutModal({
+export default function SellPositionModal({
   open,
   onOpenChange,
   outcomeLabel,
@@ -36,7 +36,7 @@ export default function CashOutModal({
   receiveAmount,
   onCashOut,
   onEditOrder,
-}: CashOutModalProps) {
+}: SellPositionModalProps) {
   const isMobile = useIsMobile()
   const iconUrl = outcomeIconUrl || fallbackIconUrl || ''
   const safeShares = Number.isFinite(shares) ? shares : 0

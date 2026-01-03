@@ -19,7 +19,7 @@ import { useMarketDetailController } from '@/app/(platform)/event/[slug]/_hooks/
 import { useUserOpenOrdersQuery } from '@/app/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
 import { useUserShareBalances } from '@/app/(platform)/event/[slug]/_hooks/useUserShareBalances'
 import { calculateMarketFill, normalizeBookLevels } from '@/app/(platform)/event/[slug]/_utils/EventOrderPanelUtils'
-import CashOutModal from '@/components/CashOutModal'
+import SellPositionModal from '@/components/SellPositionModal'
 import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { fetchUserActivityData, fetchUserPositionsForMarket } from '@/lib/data-api/user'
@@ -421,7 +421,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
       </div>
 
       {cashOutPayload && (
-        <CashOutModal
+        <SellPositionModal
           open={Boolean(cashOutPayload)}
           onOpenChange={handleCashOutModalChange}
           outcomeLabel={cashOutPayload.outcomeLabel}
