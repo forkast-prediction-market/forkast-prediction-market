@@ -10,7 +10,7 @@ import { scaleLinear, scaleTime } from '@visx/scale'
 import { LinePath } from '@visx/shape'
 import { useTooltip } from '@visx/tooltip'
 import { bisector } from 'd3-array'
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import PredictionChartHeader from '@/components/PredictionChartHeader'
 import PredictionChartTooltipOverlay from '@/components/PredictionChartTooltipOverlay'
 import {
@@ -73,6 +73,9 @@ export function PredictionChart({
   const hasPointerInteractionRef = useRef(false)
   const lastCursorProgressRef = useRef(0)
   const normalizedSignature = dataSignature ?? '__default__'
+  const clipId = useId().replace(/:/g, '')
+  const leftClipId = `${clipId}-left`
+  const rightClipId = `${clipId}-right`
   const shouldRenderLegend = showLegend && Boolean(legendContent)
   const shouldRenderWatermark = Boolean(
     watermark && (watermark.iconSvg || watermark.label),
@@ -449,66 +452,21 @@ export function PredictionChart({
   const cursorDate = tooltipActive
     ? xScale.invert(clampedTooltipX)
     : null
+  const shouldSplitByCursor = Boolean(tooltipActive && cursorDate)
+  const leftClipWidth = shouldSplitByCursor ? clampedTooltipX : innerWidth
+  const rightClipWidth = shouldSplitByCursor ? Math.max(0, innerWidth - clampedTooltipX) : 0
   const domainSpan = Math.max(1, domainBounds.end - domainBounds.start)
   const revealTime = domainBounds.start + domainSpan * clamp01(revealProgress)
   const dashedSplitTime = tooltipActive && cursorDate
     ? cursorDate.getTime()
     : revealTime
-  const insertionIndex = cursorDate ? bisectDate(data, cursorDate) : data.length
-  const previousPoint = insertionIndex > 0 ? data[insertionIndex - 1] : null
-  const nextPoint = insertionIndex < data.length ? data[insertionIndex] : null
-
-  let cursorPoint: DataPoint | null = null
-  if (tooltipActive && cursorDate) {
-    cursorPoint = interpolateSeriesPoint(cursorDate, previousPoint, nextPoint, series)
-  }
 
   let coloredPoints: DataPoint[] = data
   let mutedPoints: DataPoint[] = []
 
-  if (tooltipActive) {
-    coloredPoints = data.slice(0, insertionIndex)
-    mutedPoints = data.slice(insertionIndex)
-
-    if (cursorPoint) {
-      const cursorTime = cursorPoint.date.getTime()
-
-      if (
-        coloredPoints.length === 0
-        || coloredPoints[coloredPoints.length - 1].date.getTime() !== cursorTime
-      ) {
-        coloredPoints = [...coloredPoints, cursorPoint]
-      }
-      else {
-        coloredPoints = [
-          ...coloredPoints.slice(0, coloredPoints.length - 1),
-          cursorPoint,
-        ]
-      }
-
-      if (
-        mutedPoints.length === 0
-        || mutedPoints[0].date.getTime() !== cursorTime
-      ) {
-        mutedPoints = [cursorPoint, ...mutedPoints]
-      }
-      else {
-        mutedPoints = [
-          cursorPoint,
-          ...mutedPoints.slice(1),
-        ]
-      }
-    }
-    else if (cursorDate && mutedPoints.length > 0) {
-      const firstMutedTime = mutedPoints[0].date.getTime()
-      if (cursorDate.getTime() >= firstMutedTime) {
-        coloredPoints = [...coloredPoints, mutedPoints[0]]
-      }
-    }
-
-    if (coloredPoints.length === 0 && data.length > 0) {
-      coloredPoints = [data[0]]
-    }
+  if (shouldSplitByCursor) {
+    coloredPoints = data
+    mutedPoints = data
   }
   else if (data.length > 0) {
     const totalSegments = Math.max(1, data.length - 1)
@@ -678,6 +636,24 @@ export function PredictionChart({
           preserveAspectRatio="none"
           style={{ overflow: 'visible' }}
         >
+          <defs>
+            <clipPath id={leftClipId} clipPathUnits="userSpaceOnUse">
+              <rect
+                x={0}
+                y={0}
+                width={leftClipWidth}
+                height={innerHeight}
+              />
+            </clipPath>
+            <clipPath id={rightClipId} clipPathUnits="userSpaceOnUse">
+              <rect
+                x={leftClipWidth}
+                y={0}
+                width={rightClipWidth}
+                height={innerHeight}
+              />
+            </clipPath>
+          </defs>
           <Group left={margin.left} top={margin.top}>
             {yAxisTicks.map(value => (
               <line
@@ -772,37 +748,74 @@ export function PredictionChart({
                     />
                   )}
 
-                  {tooltipActive && mutedPoints.length > 1 && (
-                    <LinePath<DataPoint>
-                      data={mutedPoints}
-                      x={d => xScale(getDate(d))}
-                      y={d => yScale((d[seriesItem.key] as number) || 0)}
-                      stroke={futureLineColor}
-                      strokeWidth={1.75}
-                      strokeDasharray="1 1"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeOpacity={futureLineOpacity}
-                      curve={curveLinear}
-                      fill="transparent"
-                    />
-                  )}
+                  {shouldSplitByCursor
+                    ? (
+                        <>
+                          <LinePath<DataPoint>
+                            data={data}
+                            x={d => xScale(getDate(d))}
+                            y={d => yScale((d[seriesItem.key] as number) || 0)}
+                            stroke={futureLineColor}
+                            strokeWidth={1.75}
+                            strokeDasharray="1 1"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeOpacity={futureLineOpacity}
+                            curve={curveLinear}
+                            fill="transparent"
+                            clipPath={`url(#${rightClipId})`}
+                          />
+                          <LinePath<DataPoint>
+                            data={data}
+                            x={d => xScale(getDate(d))}
+                            y={d => yScale((d[seriesItem.key] as number) || 0)}
+                            stroke={seriesColor}
+                            strokeWidth={1.75}
+                            strokeOpacity={1}
+                            strokeDasharray="1 1"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            curve={curveLinear}
+                            fill="transparent"
+                            clipPath={`url(#${leftClipId})`}
+                          />
+                        </>
+                      )
+                    : (
+                        <>
+                          {tooltipActive && mutedPoints.length > 1 && (
+                            <LinePath<DataPoint>
+                              data={mutedPoints}
+                              x={d => xScale(getDate(d))}
+                              y={d => yScale((d[seriesItem.key] as number) || 0)}
+                              stroke={futureLineColor}
+                              strokeWidth={1.75}
+                              strokeDasharray="1 1"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeOpacity={futureLineOpacity}
+                              curve={curveLinear}
+                              fill="transparent"
+                            />
+                          )}
 
-                  {coloredPoints.length > 1 && (
-                    <LinePath<DataPoint>
-                      data={coloredPoints}
-                      x={d => xScale(getDate(d))}
-                      y={d => yScale((d[seriesItem.key] as number) || 0)}
-                      stroke={seriesColor}
-                      strokeWidth={1.75}
-                      strokeOpacity={1}
-                      strokeDasharray="1 1"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      curve={curveLinear}
-                      fill="transparent"
-                    />
-                  )}
+                          {coloredPoints.length > 1 && (
+                            <LinePath<DataPoint>
+                              data={coloredPoints}
+                              x={d => xScale(getDate(d))}
+                              y={d => yScale((d[seriesItem.key] as number) || 0)}
+                              stroke={seriesColor}
+                              strokeWidth={1.75}
+                              strokeOpacity={1}
+                              strokeDasharray="1 1"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              curve={curveLinear}
+                              fill="transparent"
+                            />
+                          )}
+                        </>
+                      )}
                 </g>
               )
             })}
