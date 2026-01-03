@@ -12,7 +12,7 @@ interface EventChartControlsProps {
   timeRangeContainerRef: RefObject<HTMLDivElement | null>
   timeRangeIndicator: { width: number, left: number }
   timeRangeIndicatorReady: boolean
-  isSingleMarket: boolean
+  showOutcomeSwitch: boolean
   oppositeOutcomeLabel: string
   onShuffle: () => void
 }
@@ -25,7 +25,7 @@ export default function EventChartControls({
   timeRangeContainerRef,
   timeRangeIndicator,
   timeRangeIndicatorReady,
-  isSingleMarket,
+  showOutcomeSwitch,
   oppositeOutcomeLabel,
   onShuffle,
 }: EventChartControlsProps) {
@@ -68,7 +68,7 @@ export default function EventChartControls({
         ))}
       </div>
 
-      {isSingleMarket && (
+      {showOutcomeSwitch && (
         <Tooltip>
           <TooltipTrigger asChild>
             <button

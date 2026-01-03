@@ -386,7 +386,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
           timeRangeContainerRef={timeRangeContainerRef}
           timeRangeIndicator={timeRangeIndicator}
           timeRangeIndicatorReady={timeRangeIndicatorReady}
-          isSingleMarket={isSingleMarket}
+          showOutcomeSwitch={isSingleMarket}
           oppositeOutcomeLabel={oppositeOutcomeLabel}
           onShuffle={() => {
             setActiveOutcomeIndex(oppositeOutcomeIndex)

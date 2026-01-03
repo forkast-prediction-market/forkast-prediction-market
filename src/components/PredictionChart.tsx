@@ -142,6 +142,39 @@ export function PredictionChart({
     return { start, end: dataEnd }
   }, [data, leadingGapStart])
 
+  const getClampedCursorPoint = useCallback(
+    (targetDate: Date) => {
+      if (!data.length) {
+        return null
+      }
+
+      const firstPoint = data[0]
+      const lastPoint = data[data.length - 1]
+      const targetTime = targetDate.getTime()
+      const firstTime = firstPoint.date.getTime()
+      const lastTime = lastPoint.date.getTime()
+
+      if (!Number.isFinite(targetTime) || !Number.isFinite(firstTime) || !Number.isFinite(lastTime)) {
+        return null
+      }
+
+      if (targetTime <= firstTime) {
+        return { ...firstPoint, date: targetDate }
+      }
+
+      if (targetTime >= lastTime) {
+        return { ...lastPoint, date: targetDate }
+      }
+
+      const index = bisectDate(data, targetDate)
+      const previousPoint = data[index - 1] ?? null
+      const nextPoint = data[index] ?? null
+
+      return interpolateSeriesPoint(targetDate, previousPoint, nextPoint, series)
+    },
+    [data, series],
+  )
+
   const handleTooltip = useCallback(
     (
       event: React.TouchEvent<SVGRectElement> | React.MouseEvent<SVGRectElement>,
@@ -177,11 +210,8 @@ export function PredictionChart({
       lastCursorProgressRef.current = clamp01((targetTime - domainStart) / domainSpan)
       hasPointerInteractionRef.current = true
       stopRevealAnimation(revealAnimationFrameRef)
-      const index = bisectDate(data, targetDate, 1)
-      const d0 = data[index - 1] ?? null
-      const d1 = data[index] ?? null
-      const resolvedPoint = interpolateSeriesPoint(targetDate, d0, d1, series)
-      const tooltipPoint = resolvedPoint ?? d0 ?? d1 ?? data[0]
+      const cursorPoint = getClampedCursorPoint(targetDate)
+      const tooltipPoint = cursorPoint ?? data[0]
       const tooltipLeftPosition = xScale(targetDate)
 
       showTooltip({
@@ -190,7 +220,7 @@ export function PredictionChart({
         tooltipTop: yScale((tooltipPoint[series[0].key] as number) || 0),
       })
 
-      emitCursorDataChange(resolvedPoint ?? tooltipPoint ?? null)
+      emitCursorDataChange(cursorPoint ?? tooltipPoint ?? null)
     },
     [
       showTooltip,
@@ -202,6 +232,7 @@ export function PredictionChart({
       cursorStepMs,
       domainBounds,
       revealAnimationFrameRef,
+      getClampedCursorPoint,
       emitCursorDataChange,
       yAxisMin,
       yAxisMax,
@@ -470,11 +501,8 @@ export function PredictionChart({
   const dashedSplitTime = tooltipActive && cursorDate
     ? cursorDate.getTime()
     : revealTime
-  const insertionIndex = cursorDate ? bisectDate(data, cursorDate) : data.length
-  const previousPoint = insertionIndex > 0 ? data[insertionIndex - 1] : null
-  const nextPoint = insertionIndex < data.length ? data[insertionIndex] : null
   const cursorPoint = shouldSplitByCursor && cursorDate
-    ? interpolateSeriesPoint(cursorDate, previousPoint, nextPoint, series)
+    ? getClampedCursorPoint(cursorDate)
     : null
   const effectiveTooltipData = cursorPoint ?? tooltipData ?? null
 
@@ -725,9 +753,9 @@ export function PredictionChart({
                   dashedColoredPoints = [startPoint, endPoint]
                 }
                 else {
-                  const cursorPoint: DataPoint = { date: new Date(dashedSplitTime), [seriesItem.key]: firstValue }
-                  dashedColoredPoints = [startPoint, cursorPoint]
-                  dashedMutedPoints = [cursorPoint, endPoint]
+                  const splitPoint: DataPoint = { date: new Date(dashedSplitTime), [seriesItem.key]: firstValue }
+                  dashedColoredPoints = [startPoint, splitPoint]
+                  dashedMutedPoints = [splitPoint, endPoint]
                 }
               }
 
@@ -740,7 +768,7 @@ export function PredictionChart({
                       y={d => yScale(d[seriesItem.key] as number)}
                       stroke={futureLineColor}
                       strokeWidth={1.4}
-                      strokeDasharray="2 6"
+                      strokeDasharray="2 4"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeOpacity={futureLineOpacity}
@@ -756,7 +784,7 @@ export function PredictionChart({
                       y={d => yScale(d[seriesItem.key] as number)}
                       stroke={seriesColor}
                       strokeWidth={1.4}
-                      strokeDasharray="2 6"
+                      strokeDasharray="2 4"
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeOpacity={0.9}

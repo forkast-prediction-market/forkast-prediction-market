@@ -184,7 +184,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
                 timeRangeContainerRef={timeRangeContainerRef}
                 timeRangeIndicator={timeRangeIndicator}
                 timeRangeIndicatorReady={timeRangeIndicatorReady}
-                isSingleMarket={showOutcomeSwitch}
+                showOutcomeSwitch={showOutcomeSwitch}
                 oppositeOutcomeLabel={oppositeOutcome.outcome_text}
                 onShuffle={() => setActiveOutcomeIndex(oppositeOutcome.outcome_index)}
               />
