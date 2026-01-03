@@ -462,6 +462,43 @@ export function PredictionChart({
     return () => observer.disconnect()
   }, [])
 
+  const firstFinitePointBySeries = useMemo(() => {
+    const result: Record<string, DataPoint | null> = {}
+
+    if (!data.length || !series.length) {
+      return result
+    }
+
+    series.forEach((seriesItem) => {
+      result[seriesItem.key] = null
+    })
+
+    let remaining = series.length
+
+    for (const point of data) {
+      if (remaining === 0) {
+        break
+      }
+
+      for (const seriesItem of series) {
+        if (result[seriesItem.key]) {
+          continue
+        }
+
+        const value = point[seriesItem.key]
+        if (typeof value === 'number' && Number.isFinite(value)) {
+          result[seriesItem.key] = point
+          remaining -= 1
+          if (remaining === 0) {
+            break
+          }
+        }
+      }
+    }
+
+    return result
+  }, [data, series])
+
   if (!isClient || data.length === 0 || series.length === 0) {
     return (
       <div className="relative h-full w-full">
@@ -664,6 +701,7 @@ export function PredictionChart({
     ? MIDLINE_OPACITY_DARK
     : MIDLINE_OPACITY_LIGHT
   const leadingGapStartMs = leadingGapStart instanceof Date ? leadingGapStart.getTime() : Number.NaN
+  const clipPadding = 2
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -686,17 +724,17 @@ export function PredictionChart({
             <clipPath id={leftClipId} clipPathUnits="userSpaceOnUse">
               <rect
                 x={0}
-                y={0}
+                y={-clipPadding}
                 width={leftClipWidth}
-                height={innerHeight}
+                height={innerHeight + clipPadding * 2}
               />
             </clipPath>
             <clipPath id={rightClipId} clipPathUnits="userSpaceOnUse">
               <rect
                 x={leftClipWidth}
-                y={0}
+                y={-clipPadding}
                 width={rightClipWidth}
-                height={innerHeight}
+                height={innerHeight + clipPadding * 2}
               />
             </clipPath>
           </defs>
@@ -730,10 +768,7 @@ export function PredictionChart({
 
             {series.map((seriesItem) => {
               const seriesColor = seriesItem.color
-              const firstPoint = data.find((point) => {
-                const value = point[seriesItem.key]
-                return typeof value === 'number' && Number.isFinite(value)
-              })
+              const firstPoint = firstFinitePointBySeries[seriesItem.key] ?? null
               const firstPointTime = firstPoint?.date.getTime()
               const hasLeadingGap = Number.isFinite(leadingGapStartMs)
                 && typeof firstPointTime === 'number'
