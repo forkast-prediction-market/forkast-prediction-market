@@ -12,6 +12,8 @@ interface EventMarketChanceProps {
 
 export default function EventMarketChance({ chanceMeta, layout, highlightKey }: EventMarketChanceProps) {
   const chanceChangeColorClass = chanceMeta.isChanceChangePositive ? 'text-yes' : 'text-no'
+  const shouldReserveDelta = layout === 'desktop'
+  const shouldRenderDelta = chanceMeta.shouldShowChanceChange || shouldReserveDelta
 
   const baseClass = layout === 'mobile'
     ? 'text-lg font-bold'
@@ -30,17 +32,27 @@ export default function EventMarketChance({ chanceMeta, layout, highlightKey }: 
           baseClass,
           chanceMeta.isSubOnePercent ? 'text-muted-foreground' : 'text-foreground',
           'motion-safe:animate-[pulse_0.8s_ease-out] motion-reduce:animate-none',
+          'inline-block w-[4ch] text-right tabular-nums',
         )}
       >
         {chanceMeta.chanceDisplay}
       </span>
-      {chanceMeta.shouldShowChanceChange && (
-        <div className={cn('flex items-center gap-1 text-xs font-semibold', chanceChangeColorClass)}>
+      {shouldRenderDelta && (
+        <div
+          className={cn(
+            'flex items-center justify-end gap-0.5 text-xs font-semibold',
+            chanceChangeColorClass,
+            !chanceMeta.shouldShowChanceChange && 'invisible',
+            layout === 'desktop' && 'w-[5.5ch]',
+          )}
+        >
           <TriangleIcon
             className={cn('size-3 fill-current', chanceMeta.isChanceChangePositive ? '' : 'rotate-180')}
             fill="currentColor"
           />
-          <span>{chanceMeta.chanceChangeLabel}</span>
+          <span className="inline-block tabular-nums">
+            {chanceMeta.chanceChangeLabel}
+          </span>
         </div>
       )}
     </div>
