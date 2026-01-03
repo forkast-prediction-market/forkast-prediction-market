@@ -330,6 +330,30 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       return
     }
 
+    const {
+      position,
+      shares,
+      tokenId,
+      isNegRisk,
+      limitPriceCents,
+      avgPriceCents,
+      receiveAmount,
+      filledShares,
+    } = sellModalPayload
+    const eventSlug = position.eventSlug || position.slug
+    const marketPriceCents = typeof limitPriceCents === 'number' && Number.isFinite(limitPriceCents)
+      ? limitPriceCents
+      : (typeof avgPriceCents === 'number' && Number.isFinite(avgPriceCents) ? avgPriceCents : null)
+
+    if (!marketPriceCents || (filledShares ?? 0) <= 0) {
+      if (eventSlug) {
+        handleEditOrder()
+        return
+      }
+      handleOrderErrorFeedback('Trade failed', 'No liquidity for this market order.')
+      return
+    }
+
     if (!ensureTradingReady()) {
       return
     }
@@ -349,9 +373,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       return
     }
 
-    const { position, shares, tokenId, isNegRisk, limitPriceCents, avgPriceCents, receiveAmount, filledShares } = sellModalPayload
     const conditionId = position.conditionId ?? null
-    const eventSlug = position.eventSlug || position.slug
     if (!tokenId || !conditionId || !eventSlug) {
       handleOrderErrorFeedback('Trade failed', 'Market data is unavailable.')
       return
@@ -360,14 +382,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     const effectiveShares = formatAmountInputValue(shares)
     if (!effectiveShares) {
       handleOrderErrorFeedback('Trade failed', 'Invalid share amount.')
-      return
-    }
-
-    const marketPriceCents = typeof limitPriceCents === 'number' && Number.isFinite(limitPriceCents)
-      ? limitPriceCents
-      : (typeof avgPriceCents === 'number' && Number.isFinite(avgPriceCents) ? avgPriceCents : null)
-    if (!marketPriceCents || (filledShares ?? 0) <= 0) {
-      handleOrderErrorFeedback('Trade failed', 'No liquidity for this market order.')
       return
     }
 
@@ -475,6 +489,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     close,
     embeddedWalletInfo,
     ensureTradingReady,
+    handleEditOrder,
     openTradeRequirements,
     isCashOutSubmitting,
     isConnected,
