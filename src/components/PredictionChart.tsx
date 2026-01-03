@@ -529,7 +529,8 @@ export function PredictionChart({
   const lastDataPoint = data.length > 0 ? data[data.length - 1] : null
   const isTooltipAtLastPoint = tooltipActive
     && lastDataPoint !== null
-    && effectiveTooltipData === lastDataPoint
+    && effectiveTooltipData !== null
+    && effectiveTooltipData.date.getTime() === lastDataPoint.date.getTime()
   const showEndpointMarkers = Boolean(lastDataPoint)
     && (!tooltipActive || isTooltipAtLastPoint)
     && (mutedPoints.length === 0 || shouldSplitByCursor)
