@@ -2,6 +2,7 @@
 
 import type { Event, User } from '@/types'
 import { ArrowUpIcon } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import EventChart from '@/app/(platform)/event/[slug]/_components/EventChart'
 import EventHeader from '@/app/(platform)/event/[slug]/_components/EventHeader'
@@ -20,6 +21,8 @@ import EventSingleMarketOrderBook from '@/app/(platform)/event/[slug]/_component
 import EventTabs from '@/app/(platform)/event/[slug]/_components/EventTabs'
 import { Teleport } from '@/components/Teleport'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
+import { formatAmountInputValue } from '@/lib/formatters'
 import { useOrder, useSyncLimitPriceWithOutcome } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
 
@@ -33,12 +36,19 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
   const setEvent = useOrder(state => state.setEvent)
   const setMarket = useOrder(state => state.setMarket)
   const setOutcome = useOrder(state => state.setOutcome)
+  const setSide = useOrder(state => state.setSide)
+  const setType = useOrder(state => state.setType)
+  const setAmount = useOrder(state => state.setAmount)
+  const setLimitShares = useOrder(state => state.setLimitShares)
+  const setIsMobileOrderPanelOpen = useOrder(state => state.setIsMobileOrderPanelOpen)
   const currentEventId = useOrder(state => state.event?.id)
   const isMobile = useIsMobile()
+  const searchParams = useSearchParams()
   const clientUser = useUser()
   const prevUserId = useRef<string | null>(null)
   const contentRef = useRef<HTMLDivElement | null>(null)
   const eventMarketsRef = useRef<HTMLDivElement | null>(null)
+  const appliedOrderParamsRef = useRef<string | null>(null)
   const currentUser = clientUser ?? user
   const [showBackToTop, setShowBackToTop] = useState(false)
   const [backToTopBounds, setBackToTopBounds] = useState<{ left: number, width: number } | null>(null)
@@ -76,6 +86,92 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
       setOutcome(defaultOutcome)
     }
   }, [currentEventId, event, setMarket, setOutcome])
+
+  useEffect(() => {
+    const paramsKey = searchParams.toString()
+    if (!paramsKey) {
+      return
+    }
+
+    const sideParam = searchParams.get('side')?.trim()
+    const orderTypeParam = searchParams.get('orderType')?.trim()
+    const outcomeIndexParam = searchParams.get('outcomeIndex')?.trim()
+    const sharesParam = searchParams.get('shares')?.trim()
+    const conditionIdParam = searchParams.get('conditionId')?.trim()
+
+    if (!sideParam && !orderTypeParam && !outcomeIndexParam && !sharesParam && !conditionIdParam) {
+      return
+    }
+
+    const appliedKey = `${event.id}:${paramsKey}`
+    if (appliedOrderParamsRef.current === appliedKey) {
+      return
+    }
+    appliedOrderParamsRef.current = appliedKey
+
+    const market = conditionIdParam
+      ? event.markets.find(item => item.condition_id === conditionIdParam)
+      : event.markets[0]
+    if (!market) {
+      return
+    }
+
+    setMarket(market)
+
+    const parsedOutcomeIndex = Number.parseInt(outcomeIndexParam ?? '', 10)
+    const resolvedOutcomeIndex = Number.isFinite(parsedOutcomeIndex)
+      ? parsedOutcomeIndex
+      : null
+    if (resolvedOutcomeIndex !== null) {
+      const targetOutcome = market.outcomes.find(outcome => outcome.outcome_index === resolvedOutcomeIndex)
+        ?? market.outcomes[resolvedOutcomeIndex]
+      if (targetOutcome) {
+        setOutcome(targetOutcome)
+      }
+    }
+
+    const normalizedSide = sideParam?.toUpperCase()
+    if (normalizedSide === 'SELL') {
+      setSide(ORDER_SIDE.SELL)
+    }
+    else if (normalizedSide === 'BUY') {
+      setSide(ORDER_SIDE.BUY)
+    }
+
+    const normalizedOrderType = orderTypeParam?.toUpperCase()
+    if (normalizedOrderType === 'LIMIT') {
+      setType(ORDER_TYPE.LIMIT)
+    }
+    else if (normalizedOrderType === 'MARKET') {
+      setType(ORDER_TYPE.MARKET)
+    }
+
+    const parsedShares = sharesParam ? Number.parseFloat(sharesParam) : Number.NaN
+    if (Number.isFinite(parsedShares) && parsedShares > 0) {
+      const sharesValue = formatAmountInputValue(parsedShares)
+      if (normalizedOrderType === 'LIMIT') {
+        setLimitShares(sharesValue)
+      }
+      else if (normalizedSide === 'SELL') {
+        setAmount(sharesValue)
+      }
+    }
+
+    if (isMobile) {
+      setIsMobileOrderPanelOpen(true)
+    }
+  }, [
+    event,
+    isMobile,
+    searchParams,
+    setAmount,
+    setIsMobileOrderPanelOpen,
+    setLimitShares,
+    setMarket,
+    setOutcome,
+    setSide,
+    setType,
+  ])
 
   useEffect(() => {
     if (isMobile) {

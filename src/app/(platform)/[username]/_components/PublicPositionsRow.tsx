@@ -124,7 +124,12 @@ export default function PublicPositionsRow({
       </div>
 
       <div className="flex justify-end gap-2">
-        <Button size="sm" onClick={() => onSellClick?.(position)} disabled={!onSellClick}>
+        <Button
+          size="sm"
+          className="w-24"
+          onClick={() => onSellClick?.(position)}
+          disabled={!onSellClick}
+        >
           Sell
         </Button>
         <Button

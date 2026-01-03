@@ -2,19 +2,29 @@
 
 import type { PublicPosition } from './PublicPositionItem'
 import type { SortOption } from '@/app/(platform)/[username]/_types/PublicPositionsTypes'
+import { useAppKitAccount } from '@reown/appkit/react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSignMessage } from 'wagmi'
+import { useSignMessage, useSignTypedData } from 'wagmi'
 import { useMergePositionsAction } from '@/app/(platform)/[username]/_hooks/useMergePositionsAction'
 import { usePublicPositionsQuery } from '@/app/(platform)/[username]/_hooks/usePublicPositionsQuery'
 import { buildMergeableMarkets, calculatePositionsTotals, getOutcomeLabel, matchesPositionsSearchQuery, sortPositions } from '@/app/(platform)/[username]/_utils/PublicPositionsUtils'
+import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
 import { calculateMarketFill, normalizeBookLevels } from '@/app/(platform)/event/[slug]/_utils/EventOrderPanelUtils'
 import { PositionShareDialog } from '@/components/PositionShareDialog'
 import SellPositionModal from '@/components/SellPositionModal'
+import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
+import { useAppKit } from '@/hooks/useAppKit'
 import { useDebounce } from '@/hooks/useDebounce'
-import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
+import { getExchangeEip712Domain, ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { fetchOrderBookSummary } from '@/lib/event-card-orderbook'
+import { formatAmountInputValue, formatCentsLabel } from '@/lib/formatters'
+import { buildOrderPayload, submitOrder } from '@/lib/orders'
+import { signOrderPayload } from '@/lib/orders/signing'
 import { buildShareCardPayload } from '@/lib/share-card'
+import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
+import { isUserRejectedRequestError, normalizeAddress } from '@/lib/wallet'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useUser } from '@/stores/useUser'
 import { MergePositionsDialog } from './MergePositionsDialog'
@@ -28,9 +38,23 @@ interface PublicPositionsListProps {
 export default function PublicPositionsList({ userAddress }: PublicPositionsListProps) {
   const rowGridClass = 'grid grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] items-center gap-4'
   const queryClient = useQueryClient()
-  const { ensureTradingReady } = useTradingOnboarding()
+  const router = useRouter()
+  const { open, close } = useAppKit()
+  const { isConnected, embeddedWalletInfo } = useAppKitAccount()
+  const { signTypedDataAsync } = useSignTypedData()
+  const { ensureTradingReady, openTradeRequirements } = useTradingOnboarding()
+  const affiliateMetadata = useAffiliateOrderMetadata()
   const user = useUser()
   const { signMessageAsync } = useSignMessage()
+  const hasDeployedProxyWallet = Boolean(user?.proxy_wallet_address && user?.proxy_wallet_status === 'deployed')
+  const proxyWalletAddress = hasDeployedProxyWallet ? normalizeAddress(user?.proxy_wallet_address) : null
+  const userAddressNormalized = normalizeAddress(user?.address)
+  const makerAddress = proxyWalletAddress ?? null
+  const signatureType = proxyWalletAddress ? 2 : 0
+  const canSell = Boolean(
+    user?.proxy_wallet_address
+    && user.proxy_wallet_address.toLowerCase() === userAddress.toLowerCase(),
+  )
 
   const marketStatusFilter: 'active' | 'closed' = 'active'
   const [searchQuery, setSearchQuery] = useState('')
@@ -48,8 +72,12 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     shares: number
     filledShares: number | null
     avgPriceCents: number | null
+    limitPriceCents: number | null
     receiveAmount: number | null
+    tokenId: string | null
+    isNegRisk: boolean
   } | null>(null)
+  const [isCashOutSubmitting, setIsCashOutSubmitting] = useState(false)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const sellRequestIdRef = useRef(0)
 
@@ -167,6 +195,16 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     setIsShareDialogOpen(true)
   }, [])
 
+  const resolveOutcomeIndex = useCallback((position: PublicPosition) => {
+    if (typeof position.outcomeIndex === 'number') {
+      return position.outcomeIndex
+    }
+
+    return getOutcomeLabel(position).toLowerCase().includes('no')
+      ? OUTCOME_INDEX.NO
+      : OUTCOME_INDEX.YES
+  }, [])
+
   const handleSellClick = useCallback(async (position: PublicPosition) => {
     const shares = typeof position.size === 'number' ? position.size : 0
     if (!shares) {
@@ -175,16 +213,53 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
 
     const requestId = sellRequestIdRef.current + 1
     sellRequestIdRef.current = requestId
+    const resolvedOutcomeIndex = resolveOutcomeIndex(position)
 
     setSellModalPayload({
       position,
       shares,
       filledShares: null,
       avgPriceCents: null,
+      limitPriceCents: null,
       receiveAmount: null,
+      tokenId: position.asset ?? null,
+      isNegRisk: false,
     })
 
-    const tokenId = position.asset || position.oppositeAsset
+    const eventSlug = position.eventSlug || position.slug
+    let tokenId = position.asset ?? null
+    let isNegRisk = false
+
+    if (eventSlug && position.conditionId) {
+      try {
+        const response = await fetch(
+          `/api/events/${encodeURIComponent(eventSlug)}/market-metadata?conditionId=${encodeURIComponent(position.conditionId)}`,
+        )
+        if (response.ok) {
+          const payload = await response.json()
+          const outcomes = payload?.data?.outcomes ?? []
+          isNegRisk = Boolean(payload?.data?.event_enable_neg_risk || payload?.data?.neg_risk)
+          const matchedOutcome = outcomes.find((outcome: { outcome_index?: number }) =>
+            outcome.outcome_index === resolvedOutcomeIndex,
+          )
+          tokenId = matchedOutcome?.token_id ?? tokenId
+          setSellModalPayload((current) => {
+            if (!current || current.position.id !== position.id || sellRequestIdRef.current !== requestId) {
+              return current
+            }
+            return {
+              ...current,
+              tokenId,
+              isNegRisk,
+            }
+          })
+        }
+      }
+      catch (error) {
+        console.error('Failed to resolve token id for sell preview.', error)
+      }
+    }
+
     if (!tokenId) {
       return
     }
@@ -207,6 +282,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
           ...current,
           filledShares: fill.filledShares,
           avgPriceCents: fill.avgPriceCents,
+          limitPriceCents: fill.limitPriceCents ?? null,
           receiveAmount: fill.totalCost > 0 ? fill.totalCost : null,
         }
       })
@@ -214,13 +290,203 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     catch (error) {
       console.error('Failed to load order book for sell preview.', error)
     }
-  }, [])
+  }, [resolveOutcomeIndex])
 
   const handleSellModalChange = useCallback((open: boolean) => {
     if (!open) {
       setSellModalPayload(null)
     }
   }, [])
+
+  const handleEditOrder = useCallback(() => {
+    if (!sellModalPayload) {
+      return
+    }
+
+    const { position, shares } = sellModalPayload
+    const eventSlug = position.eventSlug || position.slug
+    if (!eventSlug) {
+      setSellModalPayload(null)
+      return
+    }
+
+    const resolvedOutcomeIndex = resolveOutcomeIndex(position)
+
+    const params = new URLSearchParams()
+    params.set('side', 'SELL')
+    params.set('orderType', 'Market')
+    params.set('outcomeIndex', resolvedOutcomeIndex.toString())
+    params.set('shares', formatAmountInputValue(shares))
+    if (position.conditionId) {
+      params.set('conditionId', position.conditionId)
+    }
+
+    setSellModalPayload(null)
+    router.push(`/event/${eventSlug}?${params.toString()}`)
+  }, [resolveOutcomeIndex, router, sellModalPayload])
+
+  const handleCashOut = useCallback(async () => {
+    if (!sellModalPayload || isCashOutSubmitting) {
+      return
+    }
+
+    if (!ensureTradingReady()) {
+      return
+    }
+
+    if (!isConnected) {
+      handleValidationError('NOT_CONNECTED', { openWalletModal: open })
+      return
+    }
+
+    if (!user) {
+      handleValidationError('MISSING_USER', { openWalletModal: open })
+      return
+    }
+
+    if (!userAddressNormalized || !makerAddress) {
+      handleOrderErrorFeedback('Trade failed', 'Wallet not ready for trading.')
+      return
+    }
+
+    const { position, shares, tokenId, isNegRisk, limitPriceCents, avgPriceCents, receiveAmount, filledShares } = sellModalPayload
+    const conditionId = position.conditionId ?? null
+    const eventSlug = position.eventSlug || position.slug
+    if (!tokenId || !conditionId || !eventSlug) {
+      handleOrderErrorFeedback('Trade failed', 'Market data is unavailable.')
+      return
+    }
+
+    const effectiveShares = formatAmountInputValue(shares)
+    if (!effectiveShares) {
+      handleOrderErrorFeedback('Trade failed', 'Invalid share amount.')
+      return
+    }
+
+    const marketPriceCents = typeof limitPriceCents === 'number' && Number.isFinite(limitPriceCents)
+      ? limitPriceCents
+      : (typeof avgPriceCents === 'number' && Number.isFinite(avgPriceCents) ? avgPriceCents : null)
+    if (!marketPriceCents || (filledShares ?? 0) <= 0) {
+      handleOrderErrorFeedback('Trade failed', 'No liquidity for this market order.')
+      return
+    }
+
+    const outcomeIndex = resolveOutcomeIndex(position)
+    const outcomeText = getOutcomeLabel(position)
+    const timestamp = new Date().toISOString()
+
+    const outcomePayload = {
+      id: `portfolio-${tokenId}`,
+      condition_id: conditionId,
+      outcome_text: outcomeText,
+      outcome_index: outcomeIndex,
+      token_id: tokenId,
+      is_winning_outcome: false,
+      created_at: timestamp,
+      updated_at: timestamp,
+    }
+
+    const orderDomain = getExchangeEip712Domain(isNegRisk)
+    const payload = buildOrderPayload({
+      userAddress: userAddressNormalized,
+      makerAddress,
+      signatureType,
+      outcome: outcomePayload,
+      side: ORDER_SIDE.SELL,
+      orderType: ORDER_TYPE.MARKET,
+      amount: effectiveShares,
+      limitPrice: '0',
+      limitShares: '0',
+      marketPriceCents,
+      feeRateBps: affiliateMetadata.tradeFeeBps,
+    })
+
+    let signature: string
+    try {
+      signature = await signOrderPayload({
+        payload,
+        domain: orderDomain,
+        signTypedDataAsync,
+        openAppKit: open,
+        closeAppKit: close,
+        embeddedWalletInfo,
+        onWalletApprovalPrompt: notifyWalletApprovalPrompt,
+      })
+    }
+    catch (error) {
+      if (isUserRejectedRequestError(error)) {
+        handleOrderCancelledFeedback()
+        return
+      }
+      handleOrderErrorFeedback('Trade failed', 'We could not sign your order. Please try again.')
+      return
+    }
+
+    setIsCashOutSubmitting(true)
+    try {
+      const result = await submitOrder({
+        order: payload,
+        signature,
+        orderType: ORDER_TYPE.MARKET,
+        conditionId,
+        slug: eventSlug,
+      })
+
+      if (result?.error) {
+        if (isTradingAuthRequiredError(result.error)) {
+          openTradeRequirements()
+          handleOrderErrorFeedback('Trade failed', 'Complete trading setup to continue.')
+        }
+        else {
+          handleOrderErrorFeedback('Trade failed', result.error)
+        }
+        return
+      }
+
+      const avgSellPriceLabel = formatCentsLabel(marketPriceCents / 100, { fallback: '—' })
+      handleOrderSuccessFeedback({
+        side: ORDER_SIDE.SELL,
+        amountInput: effectiveShares,
+        sellSharesLabel: effectiveShares,
+        isLimitOrder: false,
+        outcomeText,
+        eventTitle: position.title,
+        marketImage: position.icon ? `https://gateway.irys.xyz/${position.icon}` : undefined,
+        marketTitle: position.title,
+        sellAmountValue: receiveAmount ?? 0,
+        avgSellPrice: avgSellPriceLabel,
+        queryClient,
+        outcomeIndex,
+        lastMouseEvent: null,
+      })
+
+      void queryClient.invalidateQueries({ queryKey: ['user-positions'] })
+      void queryClient.invalidateQueries({ queryKey: ['portfolio-value'] })
+      setSellModalPayload(null)
+    }
+    catch {
+      handleOrderErrorFeedback('Trade failed', 'An unexpected error occurred. Please try again.')
+    }
+    finally {
+      setIsCashOutSubmitting(false)
+    }
+  }, [
+    affiliateMetadata.tradeFeeBps,
+    close,
+    embeddedWalletInfo,
+    ensureTradingReady,
+    openTradeRequirements,
+    isCashOutSubmitting,
+    isConnected,
+    makerAddress,
+    open,
+    queryClient,
+    resolveOutcomeIndex,
+    sellModalPayload,
+    signTypedDataAsync,
+    user,
+    userAddressNormalized,
+  ])
 
   useEffect(() => {
     setInfiniteScrollError(null)
@@ -301,7 +567,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         onRetry={retryInitialLoad}
         onRefreshPage={() => window.location.reload()}
         onShareClick={handleShareClick}
-        onSellClick={handleSellClick}
+        onSellClick={canSell ? handleSellClick : undefined}
         loadMoreRef={loadMoreRef}
       />
 
@@ -349,8 +615,8 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
           filledShares={sellModalPayload.filledShares}
           avgPriceCents={sellModalPayload.avgPriceCents}
           receiveAmount={sellModalPayload.receiveAmount}
-          onCashOut={() => setSellModalPayload(null)}
-          onEditOrder={() => setSellModalPayload(null)}
+          onCashOut={handleCashOut}
+          onEditOrder={handleEditOrder}
         />
       )}
     </div>
