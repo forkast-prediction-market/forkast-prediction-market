@@ -26,6 +26,7 @@ interface RelatedEvent {
   slug: string
   title: string
   icon_url: string
+  chance: number | null
 }
 
 interface UseRelatedEventsParams {
@@ -336,7 +337,7 @@ export default function EventRelated({ event }: EventRelatedProps) {
                     <li key={relatedEvent.id}>
                       <Link
                         href={`/event/${relatedEvent.slug}`}
-                        className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-border"
+                        className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
                       >
                         <Image
                           src={relatedEvent.icon_url}
@@ -345,7 +346,19 @@ export default function EventRelated({ event }: EventRelatedProps) {
                           height={42}
                           className="shrink-0 rounded-sm object-cover"
                         />
-                        <strong className="text-sm">{relatedEvent.title}</strong>
+                        <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
+                          <strong className="line-clamp-2 text-sm font-medium text-foreground">
+                            {relatedEvent.title}
+                          </strong>
+                          <span className={`
+                            min-w-[52px] text-right text-xl leading-none font-semibold text-foreground tabular-nums
+                          `}
+                          >
+                            {Number.isFinite(relatedEvent.chance)
+                              ? `${Math.round(relatedEvent.chance ?? 0)}%`
+                              : '—'}
+                          </span>
+                        </div>
                       </Link>
                     </li>
                   ))}

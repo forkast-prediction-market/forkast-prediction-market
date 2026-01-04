@@ -152,6 +152,7 @@ interface RelatedEvent {
   title: string
   icon_url: string
   common_tags_count: number
+  chance: number | null
 }
 
 function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<string, OutcomePrices>): Event {
@@ -700,6 +701,18 @@ export const EventRepository = {
             columns: {
               icon_url: true,
             },
+            with: {
+              condition: {
+                with: {
+                  outcomes: {
+                    columns: {
+                      token_id: true,
+                      outcome_index: true,
+                    },
+                  },
+                },
+              },
+            },
           },
         },
         limit: 50,
@@ -718,12 +731,19 @@ export const EventRepository = {
           const eventTagIds = event.eventTags.map(et => et.tag_id)
           const commonTagsCount = eventTagIds.filter(tagId => selectedTagIds.includes(tagId)).length
 
+          const market = event.markets[0]
+          const outcomes = market?.condition?.outcomes ?? []
+          const yesOutcome = outcomes.find(outcome => Number(outcome.outcome_index) === OUTCOME_INDEX.YES)
+            ?? outcomes[0]
+          const yesTokenId = yesOutcome?.token_id
+
           return {
             id: event.id,
             slug: event.slug,
             title: event.title,
             icon_url: event.markets[0]?.icon_url || '',
             common_tags_count: commonTagsCount,
+            yes_token_id: yesTokenId,
           }
         })
         .filter(event => event.common_tags_count > 0)
@@ -734,16 +754,29 @@ export const EventRepository = {
         return { data: [], error: null }
       }
 
-      const transformedResults = results
-        .map(row => ({
+      const topResults = results
+        .filter(event => event.common_tags_count > 0)
+        .slice(0, 3)
+
+      const tokenIds = topResults
+        .map(event => event.yes_token_id)
+        .filter((tokenId): tokenId is string => Boolean(tokenId))
+      const priceMap = await fetchOutcomePrices(tokenIds)
+
+      const transformedResults = topResults.map((row) => {
+        const price = row.yes_token_id ? priceMap.get(row.yes_token_id) : undefined
+        const midPrice = price ? (price.buy + price.sell) / 2 : null
+        const chance = midPrice != null ? midPrice * 100 : null
+
+        return {
           id: String(row.id),
           slug: String(row.slug),
           title: String(row.title),
           icon_url: getSupabaseImageUrl(String(row.icon_url || '')),
           common_tags_count: Number(row.common_tags_count),
-        }))
-        .filter(event => event.common_tags_count > 0)
-        .slice(0, 3)
+          chance,
+        }
+      })
 
       return { data: transformedResults, error: null }
     })
