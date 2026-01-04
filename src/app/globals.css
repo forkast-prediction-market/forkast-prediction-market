@@ -148,6 +148,15 @@
   w3m-modal.open {
     z-index: 999;
   }
+
+  :root:has(w3m-modal.open) body {
+    pointer-events: auto !important;
+  }
+
+  :root:has(w3m-modal.open) [data-slot='dialog-overlay'],
+  :root:has(w3m-modal.open) [data-slot='dialog-content'] {
+    pointer-events: none;
+  }
 }
 
 @utility container {

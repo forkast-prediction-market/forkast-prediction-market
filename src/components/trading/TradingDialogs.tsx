@@ -229,7 +229,7 @@ function TradingRequirementStep({
           <p className="text-base font-semibold text-foreground">{title}</p>
           <p className="text-sm text-muted-foreground">{description}</p>
           {!isComplete && error && (
-            <p className="mt-2 text-sm text-destructive">{error}</p>
+            <p className="mt-2 text-sm break-all text-destructive">{error}</p>
           )}
         </div>
 
