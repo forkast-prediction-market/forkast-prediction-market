@@ -6,12 +6,14 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useWindowVirtualizer } from '@tanstack/react-virtual'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import EventsEmptyState from '@/app/(platform)/event/[slug]/_components/EventsEmptyState'
+import { useEventLastTrades } from '@/app/(platform)/event/[slug]/_hooks/useEventLastTrades'
 import { useEventMarketQuotes } from '@/app/(platform)/event/[slug]/_hooks/useEventMidPrices'
 import { buildMarketTargets } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import EventCard from '@/components/EventCard'
 import EventCardSkeleton from '@/components/EventCardSkeleton'
 import EventsGridSkeleton from '@/components/EventsGridSkeleton'
 import { useColumns } from '@/hooks/useColumns'
+import { resolveDisplayPrice } from '@/lib/market-chance'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 
@@ -141,14 +143,29 @@ export default function EventsGrid({
     [visibleEvents],
   )
   const marketQuotesByMarket = useEventMarketQuotes(marketTargets)
-  const priceOverridesByMarket = useMemo(
-    () => Object.fromEntries(
-      Object.entries(marketQuotesByMarket)
-        .map(([conditionId, quote]) => [conditionId, quote.mid])
-        .filter(([, value]) => typeof value === 'number' && Number.isFinite(value)),
-    ),
-    [marketQuotesByMarket],
-  )
+  const lastTradesByMarket = useEventLastTrades(marketTargets)
+  const priceOverridesByMarket = useMemo(() => {
+    const marketIds = new Set([
+      ...Object.keys(marketQuotesByMarket),
+      ...Object.keys(lastTradesByMarket),
+    ])
+
+    const entries: Array<[string, number]> = []
+    marketIds.forEach((conditionId) => {
+      const quote = marketQuotesByMarket[conditionId]
+      const lastTrade = lastTradesByMarket[conditionId]
+      const displayPrice = resolveDisplayPrice({
+        bid: quote?.bid ?? null,
+        ask: quote?.ask ?? null,
+        lastTrade,
+      })
+      if (displayPrice != null) {
+        entries.push([conditionId, displayPrice])
+      }
+    })
+
+    return Object.fromEntries(entries)
+  }, [lastTradesByMarket, marketQuotesByMarket])
 
   const columns = useColumns()
 

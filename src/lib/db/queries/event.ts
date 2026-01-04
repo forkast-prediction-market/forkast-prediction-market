@@ -9,6 +9,7 @@ import { comments } from '@/lib/db/schema/comments/tables'
 import { event_tags, events, markets, tags } from '@/lib/db/schema/events/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
+import { resolveDisplayPrice } from '@/lib/market-chance'
 import { getSupabaseImageUrl } from '@/lib/supabase'
 
 const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
@@ -16,6 +17,29 @@ const HIDE_FROM_NEW_TAG_SLUG = 'hide-from-new'
 type PriceApiResponse = Record<string, { BUY?: string, SELL?: string } | undefined>
 interface OutcomePrices { buy: number, sell: number }
 const MAX_PRICE_BATCH = 500
+
+interface LastTradePriceEntry {
+  token_id: string
+  price: string
+  side: 'BUY' | 'SELL'
+}
+
+function normalizeTradePrice(value: string | undefined) {
+  if (!value) {
+    return null
+  }
+  const parsed = Number(value)
+  if (!Number.isFinite(parsed)) {
+    return null
+  }
+  if (parsed < 0) {
+    return 0
+  }
+  if (parsed > 1) {
+    return 1
+  }
+  return parsed
+}
 
 async function fetchPriceBatch(endpoint: string, tokenIds: string[]): Promise<PriceApiResponse | null> {
   try {
@@ -41,6 +65,46 @@ async function fetchPriceBatch(endpoint: string, tokenIds: string[]): Promise<Pr
     console.error('Failed to fetch outcome prices batch from CLOB.', error)
     return null
   }
+}
+
+async function fetchLastTradePrices(tokenIds: string[]): Promise<Map<string, number>> {
+  const uniqueTokenIds = Array.from(new Set(tokenIds.filter(Boolean)))
+
+  if (!uniqueTokenIds.length) {
+    return new Map()
+  }
+
+  const endpoint = `${process.env.CLOB_URL!}/last-trades-prices`
+  const lastTradeMap = new Map<string, number>()
+
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+      body: JSON.stringify(uniqueTokenIds.map(tokenId => ({ token_id: tokenId }))),
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      return lastTradeMap
+    }
+
+    const payload = await response.json() as LastTradePriceEntry[]
+    payload.forEach((entry) => {
+      const normalized = normalizeTradePrice(entry?.price)
+      if (normalized != null && entry?.token_id) {
+        lastTradeMap.set(entry.token_id, normalized)
+      }
+    })
+  }
+  catch {
+    return lastTradeMap
+  }
+
+  return lastTradeMap
 }
 
 function applyPriceBatch(
@@ -766,11 +830,17 @@ export const EventRepository = {
         .map(event => event.yes_token_id)
         .filter((tokenId): tokenId is string => Boolean(tokenId))
       const priceMap = await fetchOutcomePrices(tokenIds)
+      const lastTradesByToken = await fetchLastTradePrices(tokenIds)
 
       const transformedResults = topResults.map((row) => {
         const price = row.yes_token_id ? priceMap.get(row.yes_token_id) : undefined
-        const midPrice = price ? (price.buy + price.sell) / 2 : null
-        const chance = midPrice != null ? midPrice * 100 : null
+        const lastTrade = row.yes_token_id ? lastTradesByToken.get(row.yes_token_id) : null
+        const displayPrice = resolveDisplayPrice({
+          bid: price?.sell ?? null,
+          ask: price?.buy ?? null,
+          lastTrade,
+        })
+        const chance = displayPrice != null ? displayPrice * 100 : null
 
         return {
           id: String(row.id),
