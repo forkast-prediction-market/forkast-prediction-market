@@ -613,17 +613,11 @@ function MarketDetailTabs({
           />
         )}
 
-        {selectedTab === 'positions' && (
-          <EventMarketPositions market={market} />
-        )}
+        {selectedTab === 'positions' && <EventMarketPositions market={market} />}
 
-        {selectedTab === 'openOrders' && (
-          <EventMarketOpenOrders market={market} eventSlug={event.slug} />
-        )}
+        {selectedTab === 'openOrders' && <EventMarketOpenOrders market={market} eventSlug={event.slug} />}
 
-        {selectedTab === 'history' && (
-          <EventMarketHistory market={market} />
-        )}
+        {selectedTab === 'history' && <EventMarketHistory market={market} />}
 
         {selectedTab === 'resolution' && (
           <Button

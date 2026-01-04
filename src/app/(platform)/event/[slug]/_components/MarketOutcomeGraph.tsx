@@ -127,7 +127,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
     : latestValue
   const baselineValue = useMemo(() => {
     for (const point of chartData) {
-      if (typeof point.value === 'number' && Number.isFinite(point.value)) {
+      if (Number.isFinite(point.value)) {
         return point.value
       }
     }

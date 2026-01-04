@@ -11,7 +11,7 @@ import { fetchPortfolioSnapshot } from '@/lib/portfolio'
 export async function generateMetadata({ params }: PageProps<'/[username]'>): Promise<Metadata> {
   const { username } = await params
 
-  const isUsername = username.startsWith('@')
+  const isUsername = !username.startsWith('0x')
   const displayName = isUsername ? username : truncateAddress(username)
 
   return {
