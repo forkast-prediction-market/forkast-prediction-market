@@ -86,11 +86,8 @@ function normalizeShares(value?: number | null): number {
 
   const numeric = Number(value)
   const abs = Math.abs(numeric)
-  if (abs > 1e4) {
+  if (abs >= MICRO_UNIT) {
     return numeric / MICRO_UNIT
-  }
-  if (abs > 1e3) {
-    return numeric / 1e3
   }
 
   return numeric
@@ -103,7 +100,7 @@ function normalizeUsd(value?: number | null): number {
 
   const numeric = Number(value)
   const abs = Math.abs(numeric)
-  if (abs > 1e4) {
+  if (abs >= MICRO_UNIT) {
     return numeric / MICRO_UNIT
   }
 
@@ -209,19 +206,13 @@ export function mapDataApiActivityToActivityOrder(activity: DataApiActivity): Ac
     ? activity.timestamp * 1000
     : Date.now()
   const isSplit = activity.type?.toLowerCase() === 'split'
-  let normalizedUsd = normalizeUsd(activity.usdcSize)
+  const normalizedUsd = normalizeUsd(activity.usdcSize)
   let normalizedPrice = sanitizePrice(normalizeValue(activity.price))
   if (normalizedPrice < 0) {
     normalizedPrice = 0
   }
 
   let baseSize = normalizeShares(activity.size)
-  if (baseSize > 10_000) {
-    baseSize = baseSize / MICRO_UNIT
-  }
-  if (normalizedUsd > 10_000) {
-    normalizedUsd = normalizedUsd / MICRO_UNIT
-  }
 
   const price = isSplit ? 0.5 : normalizedPrice
   const canDeriveFromUsd = normalizedUsd > 0 && price > 0
