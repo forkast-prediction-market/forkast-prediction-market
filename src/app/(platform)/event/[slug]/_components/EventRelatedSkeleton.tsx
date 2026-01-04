@@ -1,7 +1,7 @@
 export default function EventRelatedSkeleton() {
   return (
-    <div className="animate-pulse rounded-lg border bg-card p-4">
-      <div className="flex items-start gap-2">
+    <div className="animate-pulse">
+      <div className="flex items-start gap-2 p-2">
         <div className="size-8 rounded bg-muted"></div>
         <div className="flex flex-1 items-start justify-between gap-3">
           <div className="flex-1 space-y-2">
