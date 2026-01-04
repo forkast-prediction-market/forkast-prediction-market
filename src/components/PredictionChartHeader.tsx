@@ -25,18 +25,22 @@ export default function PredictionChartHeader({
       </div>
 
       {shouldRenderWatermark && (
-        <div className="flex items-center gap-1 self-end text-muted-foreground opacity-50 select-none lg:self-auto">
+        <div className={`
+          flex items-center gap-1 self-end text-xl text-muted-foreground opacity-50 select-none
+          lg:self-auto
+        `}
+        >
           {watermark?.iconSvg
             ? (
                 <div
-                  className="size-6 **:fill-current **:stroke-current"
+                  className="h-[1em] w-[1em] **:fill-current **:stroke-current"
                   dangerouslySetInnerHTML={{ __html: sanitizeSvg(watermark.iconSvg) }}
                 />
               )
             : null}
           {watermark?.label
             ? (
-                <span className="text-xl font-medium">
+                <span className="font-semibold">
                   {watermark.label}
                 </span>
               )

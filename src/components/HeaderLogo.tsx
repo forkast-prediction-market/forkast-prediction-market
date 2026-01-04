@@ -9,13 +9,20 @@ export default async function HeaderLogo() {
   return (
     <Link
       href="/"
-      className="flex shrink-0 items-center gap-2 font-semibold text-foreground transition-opacity hover:opacity-80"
+      className={`
+        flex shrink-0 items-center gap-2 text-2xl font-semibold text-foreground transition-opacity
+        hover:opacity-80
+      `}
     >
       <div
-        className="size-6 text-primary"
+        className={`
+          h-[1em] w-[1em] text-current
+          [&_svg]:h-[1em] [&_svg]:w-[1em]
+          [&_svg_*]:fill-current [&_svg_*]:stroke-current
+        `}
         dangerouslySetInnerHTML={{ __html: sanitizedLogoSvg! }}
       />
-      <span className="text-2xl font-bold">{siteName}</span>
+      <span className="font-bold">{siteName}</span>
     </Link>
   )
 }

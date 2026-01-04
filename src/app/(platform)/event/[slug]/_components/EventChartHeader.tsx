@@ -116,18 +116,18 @@ export default function EventChartHeader({
       </div>
 
       {(watermark.iconSvg || watermark.label) && (
-        <div className="flex items-center gap-1 self-start text-muted-foreground opacity-50 select-none">
+        <div className="flex items-center gap-1 self-start text-xl text-muted-foreground opacity-50 select-none">
           {watermark.iconSvg
             ? (
                 <div
-                  className="size-6 **:fill-current **:stroke-current"
+                  className="h-[1em] w-[1em] **:fill-current **:stroke-current"
                   dangerouslySetInnerHTML={{ __html: sanitizeSvg(watermark.iconSvg) }}
                 />
               )
             : null}
           {watermark.label
             ? (
-                <span className="text-xl font-medium">
+                <span className="font-semibold">
                   {watermark.label}
                 </span>
               )
