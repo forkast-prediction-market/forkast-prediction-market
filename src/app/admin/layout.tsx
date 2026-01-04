@@ -1,5 +1,3 @@
-'use cache'
-
 import type { Metadata } from 'next'
 import AdminHeader from '@/app/admin/_components/AdminHeader'
 import AdminSidebar from '@/app/admin/_components/AdminSidebar'

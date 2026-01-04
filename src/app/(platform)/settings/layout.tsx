@@ -1,5 +1,3 @@
-'use cache'
-
 import type { Metadata } from 'next'
 import SettingsSidebar from '@/app/(platform)/settings/_components/SettingsSidebar'
 

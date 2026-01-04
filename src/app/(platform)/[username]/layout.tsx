@@ -1,5 +1,3 @@
-'use cache'
-
 export default async function PublicProfileLayout({ children }: LayoutProps<'/[username]'>) {
   return (
     <main className="container py-8">

@@ -1,5 +1,3 @@
-'use cache'
-
 import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from 'react'
 import TestModeBanner from '@/components/TestModeBanner'

@@ -1,7 +1,7 @@
 import EventsGridSkeleton from '@/components/EventsGridSkeleton'
 import { Skeleton } from '@/components/ui/skeleton'
 
-export default function PlatformLayoutSkeleton() {
+export default function Loading() {
   return (
     <>
       <nav className="sticky top-14 z-10 border-b bg-background">

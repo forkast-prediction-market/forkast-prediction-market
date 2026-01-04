@@ -24,15 +24,6 @@ export default function HeaderPortfolio() {
     ? (balance?.raw ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : '0.00'
 
-  if (isLoadingValue) {
-    return (
-      <div className="flex gap-2">
-        <Skeleton className="h-9 w-20 lg:block" />
-        <Skeleton className="h-9 w-20 lg:block" />
-      </div>
-    )
-  }
-
   return (
     <div className="grid grid-cols-2">
       <Button
@@ -43,8 +34,14 @@ export default function HeaderPortfolio() {
         <Link href="/portfolio">
           <div className="text-xs font-medium text-muted-foreground">Portfolio</div>
           <div className="text-sm font-semibold text-yes">
-            $
-            {formattedPortfolioValue}
+            {isLoadingValue
+              ? <Skeleton className="h-5 w-12" />
+              : (
+                  <>
+                    $
+                    {formattedPortfolioValue}
+                  </>
+                )}
           </div>
         </Link>
       </Button>
@@ -57,8 +54,14 @@ export default function HeaderPortfolio() {
         <Link href="/portfolio">
           <div className="text-xs font-medium text-muted-foreground">Cash</div>
           <div className="text-sm font-semibold text-yes">
-            $
-            {formattedCashValue}
+            {isLoadingValue
+              ? <Skeleton className="h-5 w-12" />
+              : (
+                  <>
+                    $
+                    {formattedCashValue}
+                  </>
+                )}
           </div>
         </Link>
       </Button>

@@ -269,7 +269,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
   const sellAmountValue = state.side === ORDER_SIDE.SELL ? sellOrderSnapshot.totalValue : 0
 
-  const avgSellPriceDollars = Number.isFinite(sellOrderSnapshot.priceCents) && sellOrderSnapshot.priceCents > 0
+  const avgSellPriceDollars = Number.isFinite(sellOrderSnapshot.priceCents)
     ? sellOrderSnapshot.priceCents / 100
     : null
   const avgSellPriceLabel = formatCentsLabel(avgSellPriceDollars, { fallback: '—' })
@@ -330,12 +330,13 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     return { payout, cost, profit, changePct, multiplier }
   }, [amountNumber, currentBuyPriceCents, isLimitOrder, marketBuyFill, state.limitPrice, state.limitShares, state.side])
 
-  const avgBuyPriceCents = typeof currentBuyPriceCents === 'number' && Number.isFinite(currentBuyPriceCents) && currentBuyPriceCents > 0
+  const avgBuyPriceDollars = typeof currentBuyPriceCents === 'number' && Number.isFinite(currentBuyPriceCents)
+    ? currentBuyPriceCents / 100
+    : null
+  const avgBuyPriceLabel = formatCentsLabel(avgBuyPriceDollars, { fallback: '—' })
+  const avgBuyPriceCentsValue = typeof currentBuyPriceCents === 'number' && Number.isFinite(currentBuyPriceCents)
     ? currentBuyPriceCents
     : null
-  const avgBuyPriceDollars = avgBuyPriceCents != null ? avgBuyPriceCents / 100 : null
-  const avgBuyPriceLabel = formatCentsLabel(avgBuyPriceDollars, { fallback: '—' })
-  const avgBuyPriceCentsValue = avgBuyPriceCents
   const avgSellPriceCentsValue = Number.isFinite(sellOrderSnapshot.priceCents) && sellOrderSnapshot.priceCents > 0
     ? sellOrderSnapshot.priceCents
     : null

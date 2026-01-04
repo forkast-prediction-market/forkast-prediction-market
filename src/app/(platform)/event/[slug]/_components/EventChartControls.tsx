@@ -81,7 +81,7 @@ export default function EventChartControls({
                 `
               }
               onClick={onShuffle}
-              aria-label={`switch to ${oppositeOutcomeLabel}`}
+              aria-label={`Switch to ${oppositeOutcomeLabel}`}
             >
               <ShuffleIcon className="size-4" />
             </button>
@@ -92,7 +92,7 @@ export default function EventChartControls({
             hideArrow
             className="border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground shadow-xl"
           >
-            switch to
+            Switch to
             {' '}
             {oppositeOutcomeLabel}
           </TooltipContent>

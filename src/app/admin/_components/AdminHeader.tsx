@@ -1,5 +1,3 @@
-'use cache'
-
 import HeaderDropdownUserMenuAuth from '@/components/HeaderDropdownUserMenuAuth'
 import HeaderLogo from '@/components/HeaderLogo'
 
