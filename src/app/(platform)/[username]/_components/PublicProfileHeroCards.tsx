@@ -478,8 +478,67 @@ function ProfitLossCard({
   const deltaValue = displayValue - startValue
   const isDeltaPositive = deltaValue > 0
   const isDeltaNegative = deltaValue < 0
-  const gainTotal = Math.max(displayValue, 0)
-  const lossTotal = Math.min(displayValue, 0)
+  const [gainTotal, lossTotal] = useMemo(() => {
+    if (!chartData.length) {
+      return [0, 0]
+    }
+
+    const targetTime = (cursorDate ?? endDate).getTime()
+    const firstPoint = chartData[0]
+    const firstTime = firstPoint.date.getTime()
+
+    if (targetTime < firstTime) {
+      return [0, 0]
+    }
+
+    let gain = 0
+    let loss = 0
+    let prevValue = 0
+    let prevTime = firstTime
+
+    const initialDelta = firstPoint.value - prevValue
+    if (initialDelta >= 0) {
+      gain += initialDelta
+    }
+    else {
+      loss += Math.abs(initialDelta)
+    }
+    prevValue = firstPoint.value
+
+    for (let index = 1; index < chartData.length; index += 1) {
+      const point = chartData[index]
+      const pointTime = point.date.getTime()
+
+      if (pointTime <= targetTime) {
+        const delta = point.value - prevValue
+        if (delta >= 0) {
+          gain += delta
+        }
+        else {
+          loss += Math.abs(delta)
+        }
+        prevValue = point.value
+        prevTime = pointTime
+        continue
+      }
+
+      if (targetTime > prevTime) {
+        const span = pointTime - prevTime
+        const ratio = span === 0 ? 0 : (targetTime - prevTime) / span
+        const interpolatedValue = prevValue + (point.value - prevValue) * ratio
+        const delta = interpolatedValue - prevValue
+        if (delta >= 0) {
+          gain += delta
+        }
+        else {
+          loss += Math.abs(delta)
+        }
+      }
+      break
+    }
+
+    return [gain, loss]
+  }, [chartData, cursorDate, endDate])
   const timeframeLabel = ({
     'ALL': 'All-Time',
     '1D': 'Past Day',
