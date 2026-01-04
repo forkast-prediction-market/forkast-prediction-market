@@ -478,8 +478,8 @@ function ProfitLossCard({
   const deltaValue = displayValue - startValue
   const isDeltaPositive = deltaValue > 0
   const isDeltaNegative = deltaValue < 0
-  const gainTotal = startValue
-  const lossTotal = displayValue - gainTotal
+  const gainTotal = Math.max(displayValue, 0)
+  const lossTotal = Math.min(displayValue, 0)
   const timeframeLabel = ({
     'ALL': 'All-Time',
     '1D': 'Past Day',
@@ -591,7 +591,7 @@ function ProfitLossCard({
                       <div className="flex items-center justify-between">
                         <span>Loss</span>
                         <span>
-                          {lossTotal < 0 ? '-' : '+'}
+                          -
                           {formatCurrency(Math.abs(lossTotal))}
                         </span>
                       </div>
