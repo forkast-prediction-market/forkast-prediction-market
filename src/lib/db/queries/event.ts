@@ -130,7 +130,11 @@ type EventWithTags = typeof events.$inferSelect & {
 }
 
 type EventWithTagsAndMarkets = EventWithTags & {
-  markets: (typeof markets.$inferSelect)[]
+  markets: (typeof markets.$inferSelect & {
+    condition?: typeof conditions.$inferSelect & {
+      outcomes: (typeof outcomes.$inferSelect)[]
+    }
+  })[]
 }
 
 type DrizzleEventResult = typeof events.$inferSelect & {
