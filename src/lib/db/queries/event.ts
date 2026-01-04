@@ -100,8 +100,7 @@ async function fetchLastTradePrices(tokenIds: string[]): Promise<Map<string, num
       }
     })
   }
-  catch (error) {
-    console.error('Failed to fetch last trades prices', error)
+  catch {
     return lastTradeMap
   }
 
