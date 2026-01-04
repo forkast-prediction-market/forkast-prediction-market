@@ -423,6 +423,8 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       feeRateBps: affiliateMetadata.tradeFeeBps,
     })
 
+    setIsCashOutSubmitting(true)
+
     let signature: string
     try {
       signature = await signOrderPayload({
@@ -436,6 +438,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       })
     }
     catch (error) {
+      setIsCashOutSubmitting(false)
       if (isUserRejectedRequestError(error)) {
         handleOrderCancelledFeedback()
         return
@@ -443,8 +446,6 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       handleOrderErrorFeedback('Trade failed', 'We could not sign your order. Please try again.')
       return
     }
-
-    setIsCashOutSubmitting(true)
     try {
       const result = await submitOrder({
         order: payload,
