@@ -2,7 +2,7 @@
 
 import type { MouseEvent as ReactMouseEvent, ReactNode, TouchEvent as ReactTouchEvent } from 'react'
 import type { PortfolioSnapshot } from '@/lib/portfolio'
-import { curveLinear } from '@visx/curve'
+import { curveMonotoneX } from '@visx/curve'
 import { localPoint } from '@visx/event'
 import { Group } from '@visx/group'
 import { scaleLinear, scaleTime } from '@visx/scale'
@@ -397,9 +397,12 @@ function ProfitLossCard({
 
   const chartWidth = 360
   const chartHeight = 110
-  const margin = { top: 8, right: 8, bottom: 8, left: 8 }
+  const margin = { top: 8, right: 0, bottom: 8, left: 0 }
   const innerWidth = chartWidth - margin.left - margin.right
   const innerHeight = chartHeight - margin.top - margin.bottom
+  const linePadding = Math.round(innerHeight * 0.35)
+  const lineTop = linePadding
+  const lineBottom = innerHeight - linePadding
   const [minValue, maxValue] = useMemo(() => {
     if (!chartData.length) {
       return [0, 0]
@@ -429,11 +432,11 @@ function ProfitLossCard({
   )
   const yScale = useMemo(
     () => scaleLinear<number>({
-      range: [innerHeight, 0],
+      range: [lineBottom, lineTop],
       domain: [paddedMin, paddedMax],
       nice: false,
     }),
-    [innerHeight, paddedMax, paddedMin],
+    [lineBottom, lineTop, paddedMax, paddedMin],
   )
 
   const clampedCursorX = cursorX == null ? null : Math.max(0, Math.min(cursorX, innerWidth))
@@ -477,41 +480,17 @@ function ProfitLossCard({
   const isDeltaNegative = deltaValue < 0
   const gainTotal = startValue
   const lossTotal = displayValue - gainTotal
-  const splitSeries = useMemo(() => {
-    if (!cursorDate || chartData.length < 2) {
-      return null
-    }
-    const left: PnlPoint[] = []
-    const right: PnlPoint[] = []
-    const targetTime = cursorDate.getTime()
-
-    for (const point of chartData) {
-      if (point.date.getTime() <= targetTime) {
-        left.push(point)
-      }
-      if (point.date.getTime() >= targetTime) {
-        right.push(point)
-      }
-    }
-
-    const splitPoint = { date: cursorDate, value: cursorValue }
-
-    if (!left.length) {
-      left.push(chartData[0])
-    }
-    if (!right.length) {
-      right.push(chartData[chartData.length - 1])
-    }
-
-    if (left[left.length - 1].date.getTime() !== targetTime) {
-      left.push(splitPoint)
-    }
-    if (right[0].date.getTime() !== targetTime) {
-      right.unshift(splitPoint)
-    }
-
-    return { left, right }
-  }, [chartData, cursorDate, cursorValue])
+  const timeframeLabel = ({
+    'ALL': 'All-Time',
+    '1D': 'Past Day',
+    '1W': 'Past Week',
+    '1M': 'Past Month',
+  } as const)[activeTimeframe] || 'All-Time'
+  const hoverDateLabel = cursorDate
+    ? `${cursorDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} ${
+      cursorDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    }`
+    : null
 
   const handlePointerMove = useCallback((event: ReactTouchEvent<SVGRectElement> | ReactMouseEvent<SVGRectElement>) => {
     const point = localPoint(event)
@@ -630,12 +609,7 @@ function ProfitLossCard({
               </p>
             </div>
             <p className="text-sm text-muted-foreground">
-              {({
-                'ALL': 'All-Time',
-                '1D': 'Past Day',
-                '1W': 'Past Week',
-                '1M': 'Past Month',
-              } as const)[activeTimeframe] || 'All-Time'}
+              {hoverDateLabel ?? timeframeLabel}
             </p>
           </div>
 
@@ -662,11 +636,25 @@ function ProfitLossCard({
             preserveAspectRatio="none"
           >
             <defs>
-              <linearGradient id={lineGradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+              <linearGradient
+                id={lineGradientId}
+                x1="0"
+                y1={lineTop}
+                x2="0"
+                y2={lineBottom}
+                gradientUnits="userSpaceOnUse"
+              >
                 <stop offset="0%" stopColor="#7dd3fc" />
                 <stop offset="100%" stopColor="#a855f7" />
               </linearGradient>
-              <linearGradient id={areaGradientId} x1="0%" y1="0%" x2="100%" y2="0%">
+              <linearGradient
+                id={areaGradientId}
+                x1="0"
+                y1={lineTop}
+                x2="0"
+                y2={lineBottom}
+                gradientUnits="userSpaceOnUse"
+              >
                 <stop offset="0%" stopColor="#7dd3fc" stopOpacity={0.35} />
                 <stop offset="100%" stopColor="#a855f7" stopOpacity={0.35} />
               </linearGradient>
@@ -694,41 +682,29 @@ function ProfitLossCard({
                 stroke="none"
                 fill={`url(#${areaGradientId})`}
                 mask={`url(#${areaMaskId})`}
-                curve={curveLinear}
+                curve={curveMonotoneX}
               />
 
-              {!splitSeries
-                ? (
-                    <LinePath
-                      data={chartData}
-                      x={d => xScale(d.date)}
-                      y={d => yScale(d.value)}
-                      stroke={`url(#${lineGradientId})`}
-                      strokeWidth={2}
-                      curve={curveLinear}
-                    />
-                  )
-                : (
-                    <>
-                      <LinePath
-                        data={splitSeries.left}
-                        x={d => xScale(d.date)}
-                        y={d => yScale(d.value)}
-                        stroke={`url(#${lineGradientId})`}
-                        strokeWidth={2}
-                        curve={curveLinear}
-                      />
-                      <LinePath
-                        data={splitSeries.right}
-                        x={d => xScale(d.date)}
-                        y={d => yScale(d.value)}
-                        stroke="var(--muted-foreground)"
-                        strokeWidth={2}
-                        strokeOpacity={0.35}
-                        curve={curveLinear}
-                      />
-                    </>
-                  )}
+              <LinePath
+                data={chartData}
+                x={d => xScale(d.date)}
+                y={d => yScale(d.value)}
+                stroke={`url(#${lineGradientId})`}
+                strokeWidth={2}
+                curve={curveMonotoneX}
+              />
+
+              {clampedCursorX != null && (
+                <line
+                  x1={clampedCursorX}
+                  x2={clampedCursorX}
+                  y1={0}
+                  y2={innerHeight}
+                  stroke="white"
+                  strokeWidth={1}
+                  strokeOpacity={0.7}
+                />
+              )}
 
               <rect
                 x={0}
