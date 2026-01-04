@@ -93,7 +93,7 @@ function ProfileOverviewCard({
 
   return (
     <Card className="relative h-full overflow-hidden border border-border bg-background">
-      <CardContent className="relative flex h-full flex-col gap-2.5 p-3 sm:p-4">
+      <CardContent className="relative flex h-full flex-col gap-2 p-3 sm:p-4">
         {isReady
           ? (
               <>
@@ -396,11 +396,11 @@ function ProfitLossCard({
   const endValue = chartData[chartData.length - 1]?.value ?? fallbackRange.endValue
 
   const chartWidth = 360
-  const chartHeight = 110
-  const margin = { top: 8, right: 0, bottom: 8, left: 0 }
+  const chartHeight = 80
+  const margin = { top: 0, right: 0, bottom: 0, left: 0 }
   const innerWidth = chartWidth - margin.left - margin.right
   const innerHeight = chartHeight - margin.top - margin.bottom
-  const linePadding = Math.round(innerHeight * 0.35)
+  const linePadding = Math.round(innerHeight * 0.22)
   const lineTop = linePadding
   const lineBottom = innerHeight - linePadding
   const [minValue, maxValue] = useMemo(() => {
@@ -628,7 +628,7 @@ function ProfitLossCard({
           </div>
         </div>
 
-        <div className="relative mt-auto h-24 w-full overflow-hidden sm:h-28">
+        <div className="relative mt-auto h-12 w-full overflow-hidden sm:h-18">
           <svg
             width="100%"
             height="100%"
@@ -655,11 +655,11 @@ function ProfitLossCard({
                 y2={lineBottom}
                 gradientUnits="userSpaceOnUse"
               >
-                <stop offset="0%" stopColor="#7dd3fc" stopOpacity={0.35} />
-                <stop offset="100%" stopColor="#a855f7" stopOpacity={0.35} />
+                <stop offset="0%" stopColor="#7dd3fc" stopOpacity={0.25} />
+                <stop offset="100%" stopColor="#a855f7" stopOpacity={0.25} />
               </linearGradient>
               <linearGradient id={areaFadeId} x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#ffffff" stopOpacity={0.75} />
+                <stop offset="0%" stopColor="#ffffff" stopOpacity={0.6} />
                 <stop offset="100%" stopColor="#ffffff" stopOpacity={0} />
               </linearGradient>
               <mask id={areaMaskId} maskUnits="userSpaceOnUse">
@@ -678,6 +678,7 @@ function ProfitLossCard({
                 data={chartData}
                 x={d => xScale(d.date)}
                 y={d => yScale(d.value)}
+                y0={innerHeight}
                 yScale={yScale}
                 stroke="none"
                 fill={`url(#${areaGradientId})`}
