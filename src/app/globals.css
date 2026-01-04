@@ -149,12 +149,19 @@
     z-index: 999;
   }
 
-  :root:has(w3m-modal.open) body {
+  :root:has(w3m-modal.open) body,
+  .appkit-modal-open body {
     pointer-events: auto !important;
   }
 
   :root:has(w3m-modal.open) [data-slot='dialog-overlay'],
-  :root:has(w3m-modal.open) [data-slot='dialog-content'] {
+  :root:has(w3m-modal.open) [data-slot='dialog-content'],
+  :root:has(w3m-modal.open) [data-slot='drawer-overlay'],
+  :root:has(w3m-modal.open) [data-slot='drawer-content'],
+  .appkit-modal-open [data-slot='dialog-overlay'],
+  .appkit-modal-open [data-slot='dialog-content'],
+  .appkit-modal-open [data-slot='drawer-overlay'],
+  .appkit-modal-open [data-slot='drawer-content'] {
     pointer-events: none;
   }
 }
