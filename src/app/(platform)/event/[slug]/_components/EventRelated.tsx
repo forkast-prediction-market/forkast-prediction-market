@@ -337,13 +337,14 @@ export default function EventRelated({ event }: EventRelatedProps) {
                     <li key={relatedEvent.id}>
                       <Link
                         href={`/event/${relatedEvent.slug}`}
-                        className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/50"
+                        className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-muted/80"
                       >
                         <Image
                           src={relatedEvent.icon_url}
                           alt={relatedEvent.title}
                           width={42}
                           height={42}
+                          quality={100}
                           className="shrink-0 rounded-sm object-cover"
                         />
                         <div className="flex min-w-0 flex-1 items-center justify-between gap-3">
