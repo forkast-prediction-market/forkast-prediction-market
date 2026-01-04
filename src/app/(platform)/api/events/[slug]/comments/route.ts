@@ -14,6 +14,9 @@ export async function GET(
     const { searchParams } = new URL(request.url)
     const limit = Number.parseInt(searchParams.get('limit') || '20')
     const offset = Number.parseInt(searchParams.get('offset') || '0')
+    const sortParam = searchParams.get('sortBy') || 'newest'
+    const normalizedSort = sortParam.toLowerCase().replace(/\s+/g, '_')
+    const sortBy = normalizedSort === 'most_liked' ? 'most_liked' : 'newest'
 
     const { data: event, error: eventError } = await EventRepository.getIdBySlug(slug)
     if (!event || eventError) {
@@ -23,7 +26,12 @@ export async function GET(
     const user = await UserRepository.getCurrentUser()
     const currentUserId = user?.id
 
-    const { data: comments, error: rootCommentsError } = await CommentRepository.getEventComments(event.id, limit, offset)
+    const { data: comments, error: rootCommentsError } = await CommentRepository.getEventComments(
+      event.id,
+      limit,
+      offset,
+      sortBy,
+    )
     if (rootCommentsError) {
       return NextResponse.json({ error: DEFAULT_ERROR_MESSAGE }, { status: 500 })
     }

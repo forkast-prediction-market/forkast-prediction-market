@@ -1,7 +1,6 @@
 'use client'
 
 import type { Comment, User } from '@/types'
-import { ShieldIcon } from 'lucide-react'
 import Form from 'next/form'
 import { useActionState, useEffect, useRef } from 'react'
 import { storeCommentAction } from '@/app/(platform)/event/[slug]/_actions/store-comment'
@@ -75,10 +74,6 @@ export default function EventCommentForm({ eventId, user, onCommentAddedAction }
 
       {state.error && <InputError message={state.error} />}
 
-      <div className="flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs text-muted-foreground">
-        <ShieldIcon className="size-3" />
-        Beware of external links, they may be phishing attacks.
-      </div>
     </div>
   )
 }

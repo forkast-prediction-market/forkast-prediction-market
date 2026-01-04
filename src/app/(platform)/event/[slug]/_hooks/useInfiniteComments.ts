@@ -8,9 +8,11 @@ import { storeCommentAction } from '@/app/(platform)/event/[slug]/_actions/store
 export async function fetchComments({
   pageParam = 0,
   eventSlug,
+  sortBy,
 }: {
   pageParam: number
   eventSlug: string
+  sortBy: 'newest' | 'most_liked'
 }): Promise<Comment[]> {
   const limit = 20
   const offset = pageParam * limit
@@ -18,6 +20,7 @@ export async function fetchComments({
   const url = new URL(`/api/events/${eventSlug}/comments`, window.location.origin)
   url.searchParams.set('limit', limit.toString())
   url.searchParams.set('offset', offset.toString())
+  url.searchParams.set('sortBy', sortBy)
 
   const response = await fetch(url.toString())
 
@@ -28,7 +31,7 @@ export async function fetchComments({
   return await response.json()
 }
 
-export function useInfiniteComments(eventSlug: string) {
+export function useInfiniteComments(eventSlug: string, sortBy: 'newest' | 'most_liked') {
   const queryClient = useQueryClient()
   const [infiniteScrollError, setInfiniteScrollError] = useState<Error | null>(null)
   const [loadingRepliesForComment, setLoadingRepliesForComment] = useState<string | null>(null)
@@ -42,8 +45,8 @@ export function useInfiniteComments(eventSlug: string) {
     isFetchingNextPage,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ['event-comments', eventSlug],
-    queryFn: ({ pageParam = 0 }) => fetchComments({ pageParam, eventSlug }),
+    queryKey: ['event-comments', eventSlug, sortBy],
+    queryFn: ({ pageParam = 0 }) => fetchComments({ pageParam, eventSlug, sortBy }),
     getNextPageParam: (lastPage, allPages) => {
       const pageSize = 20
       if (lastPage.length < pageSize) {

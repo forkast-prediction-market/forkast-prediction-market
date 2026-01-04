@@ -6,11 +6,20 @@ import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
 
 export const CommentRepository = {
-  async getEventComments(eventId: string, limit: number = 20, offset: number = 0) {
+  async getEventComments(
+    eventId: string,
+    limit: number = 20,
+    offset: number = 0,
+    sortBy: 'newest' | 'most_liked' = 'newest',
+  ) {
     'use cache'
     cacheTag(cacheTags.eventComments(eventId))
 
     return await runQuery(async () => {
+      const orderByFields = sortBy === 'most_liked'
+        ? [desc(v_comments_with_user.likes_count), desc(v_comments_with_user.created_at)]
+        : [desc(v_comments_with_user.created_at)]
+
       const result = await db
         .select()
         .from(v_comments_with_user)
@@ -18,7 +27,7 @@ export const CommentRepository = {
           eq(v_comments_with_user.event_id, eventId),
           isNull(v_comments_with_user.parent_comment_id),
         ))
-        .orderBy(desc(v_comments_with_user.created_at))
+        .orderBy(...orderByFields)
         .limit(limit)
         .offset(offset)
 

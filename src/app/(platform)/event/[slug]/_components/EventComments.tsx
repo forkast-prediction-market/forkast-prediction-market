@@ -1,12 +1,19 @@
 'use client'
 
 import type { Event, User } from '@/types'
-import { AlertCircleIcon } from 'lucide-react'
+import { AlertCircleIcon, ShieldIcon } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { useInfiniteComments } from '@/app/(platform)/event/[slug]/_hooks/useInfiniteComments'
 import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import EventCommentForm from './EventCommentForm'
 import EventCommentItem from './EventCommentItem'
 
@@ -21,6 +28,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
   const [expandedComments, setExpandedComments] = useState<Set<string>>(() => new Set())
   const [isInitialized, setIsInitialized] = useState(false)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
+  const [sortBy, setSortBy] = useState<'newest' | 'most_liked'>('newest')
 
   const {
     comments,
@@ -40,7 +48,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     isLoadingRepliesForComment,
     loadRepliesError,
     retryLoadReplies,
-  } = useInfiniteComments(event.slug)
+  } = useInfiniteComments(event.slug, sortBy)
 
   useEffect(() => {
     function handleScroll() {
@@ -135,6 +143,24 @@ export default function EventComments({ event, user }: EventCommentsProps) {
         user={user}
         onCommentAddedAction={() => refetch()}
       />
+      <div className="mt-2 flex items-center justify-between gap-3">
+        <Select value={sortBy} onValueChange={value => setSortBy(value as 'newest' | 'most_liked')}>
+          <SelectTrigger size="default" className="h-9 px-3 text-sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="newest">Newest</SelectItem>
+            <SelectItem value="most_liked">Most liked</SelectItem>
+          </SelectContent>
+        </Select>
+        <div className={`
+          ml-auto inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm text-muted-foreground
+        `}
+        >
+          <ShieldIcon className="size-3" />
+          Beware of external links
+        </div>
+      </div>
 
       <div className="mt-6">
         {status === 'pending'
