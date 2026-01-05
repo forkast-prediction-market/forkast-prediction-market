@@ -7,38 +7,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { fetchProfileLinkStats } from '@/lib/data-api/profile-link-stats'
-import { formatCurrency, formatTimeAgo, formatVolume } from '@/lib/formatters'
+import {
+  formatCompactCount,
+  formatCompactCurrency,
+  formatTimeAgo,
+  formatVolume,
+} from '@/lib/formatters'
 import { cn } from '@/lib/utils'
-
-const COMPACT_THRESHOLD = 100_000
-
-function formatCompactCount(value: number) {
-  if (!Number.isFinite(value)) {
-    return '—'
-  }
-
-  const abs = Math.abs(value)
-  if (abs >= COMPACT_THRESHOLD) {
-    const compact = Math.round(abs / 1_000).toLocaleString('en-US')
-    return `${value < 0 ? '-' : ''}${compact}k`
-  }
-
-  return new Intl.NumberFormat('en-US').format(value)
-}
-
-function formatCompactCurrency(value: number) {
-  if (!Number.isFinite(value)) {
-    return '—'
-  }
-
-  const abs = Math.abs(value)
-  if (abs >= COMPACT_THRESHOLD) {
-    const compact = Math.round(abs / 1_000).toLocaleString('en-US')
-    return `${value < 0 ? '-' : ''}$${compact}k`
-  }
-
-  return formatCurrency(value)
-}
 
 interface ProfileLinkProps {
   user: {
