@@ -1,9 +1,12 @@
 'use client'
 
 import type { ReactNode } from 'react'
+import type { ProfileForCards } from '@/components/ProfileOverviewCard'
+import type { PortfolioSnapshot } from '@/lib/portfolio'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import ProfileOverviewCard from '@/components/ProfileOverviewCard'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { fetchProfileLinkStats } from '@/lib/data-api/profile-link-stats'
@@ -100,6 +103,50 @@ export default function ProfileLink({
     ? (stats.profitLoss >= 0 ? 'text-yes' : 'text-no')
     : 'text-muted-foreground'
   const volumeLabel = stats?.volume != null ? formatVolume(stats.volume) : '—'
+  const tooltipProfile = useMemo<ProfileForCards>(() => ({
+    username: user.username,
+    avatarUrl: user.image,
+    portfolioAddress: null,
+  }), [user.image, user.username])
+  const tooltipSnapshot = useMemo<PortfolioSnapshot>(() => ({
+    positionsValue: 0,
+    profitLoss: stats?.profitLoss ?? 0,
+    predictions: stats?.positions ?? 0,
+    biggestWin: 0,
+  }), [stats?.positions, stats?.profitLoss])
+
+  const tooltipActions = (
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-2.5">
+        {[
+          { label: 'Positions', value: positionsLabel, valueClassName: 'text-foreground' },
+          { label: 'Profit/Loss', value: profitLossLabel, valueClassName: profitLossClass },
+          { label: 'Volume', value: volumeLabel, valueClassName: 'text-foreground' },
+        ].map((stat, index) => (
+          <div
+            key={stat.label}
+            className={cn(
+              'space-y-1 rounded-lg bg-background/40 p-2 shadow-sm',
+              index > 0 && 'border-l border-border/50',
+            )}
+          >
+            <p className="text-sm font-medium text-muted-foreground">
+              {stat.label}
+            </p>
+            <p className={cn('text-xl font-semibold tracking-tight', stat.valueClassName)}>
+              {stat.value}
+            </p>
+          </div>
+        ))}
+      </div>
+      {!hasLoaded && isLoading && (
+        <p className="text-xs text-muted-foreground">Loading stats...</p>
+      )}
+      {hasLoaded && !stats && (
+        <p className="text-xs text-muted-foreground">Stats unavailable</p>
+      )}
+    </div>
+  )
 
   return (
     <Tooltip onOpenChange={setIsOpen}>
@@ -169,41 +216,16 @@ export default function ProfileLink({
       <TooltipContent
         side="top"
         align="start"
+        sideOffset={8}
         hideArrow
-        className="w-64 rounded-lg border border-border bg-popover p-4 text-sm text-popover-foreground shadow-lg"
+        className="border-none bg-transparent p-0 text-popover-foreground shadow-none"
       >
-        <div className="flex items-center gap-2">
-          <Image
-            src={user.image}
-            alt={user.username}
-            width={28}
-            height={28}
-            className="rounded-full"
-          />
-          <span className="truncate text-sm font-semibold">{user.username}</span>
-        </div>
-        <div className="mt-3 grid grid-cols-3 gap-3">
-          <div className="space-y-1 text-xs">
-            <p className="text-muted-foreground">Positions</p>
-            <p className="text-sm font-semibold tabular-nums">{positionsLabel}</p>
-          </div>
-          <div className="space-y-1 text-xs">
-            <p className="text-muted-foreground">Profit/Loss</p>
-            <p className={cn('text-sm font-semibold tabular-nums', profitLossClass)}>
-              {profitLossLabel}
-            </p>
-          </div>
-          <div className="space-y-1 text-xs">
-            <p className="text-muted-foreground">Volume</p>
-            <p className="text-sm font-semibold tabular-nums">{volumeLabel}</p>
-          </div>
-        </div>
-        {!hasLoaded && isLoading && (
-          <p className="mt-3 text-xs text-muted-foreground">Loading stats...</p>
-        )}
-        {hasLoaded && !stats && (
-          <p className="mt-3 text-xs text-muted-foreground">Stats unavailable</p>
-        )}
+        <ProfileOverviewCard
+          profile={tooltipProfile}
+          snapshot={tooltipSnapshot}
+          actions={tooltipActions}
+          useDefaultUserWallet={false}
+        />
       </TooltipContent>
     </Tooltip>
   )

@@ -1,32 +1,20 @@
 'use client'
 
 import type { MouseEvent as ReactMouseEvent, ReactNode, TouchEvent as ReactTouchEvent } from 'react'
+import type { ProfileForCards } from '@/components/ProfileOverviewCard'
 import type { PortfolioSnapshot } from '@/lib/portfolio'
 import { curveMonotoneX } from '@visx/curve'
 import { localPoint } from '@visx/event'
 import { Group } from '@visx/group'
 import { scaleLinear, scaleTime } from '@visx/scale'
 import { AreaClosed, LinePath } from '@visx/shape'
-import { CheckIcon, CircleHelpIcon, EyeIcon, FocusIcon, MinusIcon, TriangleIcon } from 'lucide-react'
-import Image from 'next/image'
+import { CircleHelpIcon, MinusIcon, TriangleIcon } from 'lucide-react'
 import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { Button } from '@/components/ui/button'
+import ProfileOverviewCard from '@/components/ProfileOverviewCard'
 import { Card, CardContent } from '@/components/ui/card'
-import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { useBalance } from '@/hooks/useBalance'
-import { useClipboard } from '@/hooks/useClipboard'
-import { usePortfolioValue } from '@/hooks/usePortfolioValue'
 import { formatCurrency } from '@/lib/formatters'
 import { cn, sanitizeSvg } from '@/lib/utils'
-
-interface ProfileForCards {
-  username: string
-  avatarUrl: string
-  joinedAt?: string
-  viewsCount?: number
-  portfolioAddress?: string | null
-}
 
 interface PnlPoint {
   date: Date
@@ -42,215 +30,6 @@ interface PublicProfileHeroCardsProps {
   platformLogoSvg?: string
   actions?: ReactNode
   variant?: 'public' | 'portfolio'
-}
-
-function ProfileOverviewCard({
-  profile,
-  snapshot,
-  actions,
-  variant = 'public',
-}: {
-  profile: ProfileForCards
-  snapshot: PortfolioSnapshot
-  actions?: ReactNode
-  variant?: 'public' | 'portfolio'
-}) {
-  const { copied, copy } = useClipboard()
-  const { value: livePositionsValue, isLoading } = usePortfolioValue(profile.portfolioAddress)
-  const hasLiveValue = Boolean(profile.portfolioAddress) && !isLoading
-  const positionsValue = hasLiveValue ? livePositionsValue ?? snapshot.positionsValue : snapshot.positionsValue
-  const { balance, isLoadingBalance } = useBalance()
-  const shouldWaitForBalance = variant === 'portfolio'
-  const isInitialLoading = shouldWaitForBalance ? isLoadingBalance || isLoading : isLoading
-  const [hasLoaded, setHasLoaded] = useState(!isInitialLoading)
-  useEffect(() => {
-    if (!isInitialLoading) {
-      setHasLoaded(true)
-    }
-  }, [isInitialLoading])
-  const isReady = hasLoaded
-  const totalPortfolioValue = (positionsValue ?? 0) + (balance?.raw ?? 0)
-  const formattedTotalValue = formatCurrency(totalPortfolioValue)
-  const formattedCashValue = Number.isFinite(balance?.raw)
-    ? (balance?.raw ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : '0.00'
-  const joinedText = useMemo(() => {
-    if (!profile.joinedAt) {
-      return null
-    }
-    const date = new Date(profile.joinedAt)
-    if (Number.isNaN(date.getTime())) {
-      return null
-    }
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-  }, [profile.joinedAt])
-
-  const stats = [
-    { label: 'Positions Value', value: formatCurrency(positionsValue) },
-    { label: 'Biggest Win', value: formatCurrency(snapshot.biggestWin) },
-    { label: 'Predictions', value: snapshot.predictions ? snapshot.predictions.toLocaleString('en-US') : '0' },
-  ]
-
-  return (
-    <Card className="relative h-full overflow-hidden border border-border bg-background">
-      <CardContent className="relative flex h-full flex-col gap-2 p-3 sm:p-4">
-        {isReady
-          ? (
-              <>
-                {variant === 'portfolio'
-                  ? (
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 flex-col gap-1">
-                          <span className="text-sm font-semibold tracking-wide text-muted-foreground">Portfolio</span>
-                          <p className="text-3xl leading-tight font-bold text-foreground sm:text-4xl">
-                            {formattedTotalValue}
-                          </p>
-                          <div
-                            className={cn(
-                              'flex items-center gap-2 text-sm font-semibold',
-                              snapshot.profitLoss > 0
-                                ? 'text-yes'
-                                : snapshot.profitLoss < 0
-                                  ? 'text-no'
-                                  : 'text-muted-foreground',
-                            )}
-                          >
-                            <span>
-                              {snapshot.profitLoss >= 0 ? '+' : '-'}
-                              {formatCurrency(Math.abs(snapshot.profitLoss))}
-                            </span>
-                            <span>
-                              (
-                              {positionsValue > 0
-                                ? `${((snapshot.profitLoss / positionsValue) * 100).toFixed(2)}%`
-                                : '0.00%'}
-                              )
-                            </span>
-                            <span className="text-muted-foreground">Today</span>
-                          </div>
-                        </div>
-
-                        <div
-                          className={`
-                            flex shrink-0 items-center gap-2 rounded-full border border-border/60 bg-card/70 px-3 py-2
-                            shadow-sm
-                          `}
-                        >
-                          <div className="relative size-6">
-                            <Image src="/images/trade/money.svg" alt="Cash" fill sizes="24px" className="object-contain" />
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-extrabold text-foreground">
-                              $
-                              {formattedCashValue}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    )
-                  : (
-                      <div className="flex items-start justify-between gap-3 sm:gap-4">
-                        <div className="flex min-w-0 flex-1 items-start gap-3">
-                          <div
-                            className={`
-                              relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full
-                              border border-border/60 bg-muted/40
-                            `}
-                          >
-                            {profile.avatarUrl
-                              ? (
-                                  <Image
-                                    src={profile.avatarUrl}
-                                    alt={`${profile.username} avatar`}
-                                    fill
-                                    className="object-cover"
-                                  />
-                                )
-                              : (
-                                  <span className="text-lg font-semibold text-muted-foreground uppercase">
-                                    {profile.username.slice(0, 2)}
-                                  </span>
-                                )}
-                          </div>
-                          <div className="min-w-0 flex-1 space-y-1">
-                            <p className="truncate text-lg leading-tight font-semibold sm:text-xl" title={profile.username}>
-                              {profile.username}
-                            </p>
-                            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                              {joinedText && (
-                                <span className="inline-flex items-center gap-1">
-                                  Joined
-                                  {' '}
-                                  {joinedText}
-                                </span>
-                              )}
-                              {typeof profile.viewsCount === 'number' && (
-                                <>
-                                  <span aria-hidden className="text-muted-foreground/50">•</span>
-                                  <span className="inline-flex items-center gap-1">
-                                    <EyeIcon className="size-4" />
-                                    {profile.viewsCount.toLocaleString('en-US')}
-                                    {' '}
-                                    views
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-
-                        {profile.portfolioAddress && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className={`
-                              size-9 rounded-full border border-border/60 bg-background/60 text-muted-foreground
-                              shadow-sm transition-colors
-                              hover:bg-background
-                            `}
-                            onClick={() => profile.portfolioAddress && copy(profile.portfolioAddress)}
-                            aria-label="Copy portfolio address"
-                          >
-                            {copied ? <CheckIcon className="size-4 text-yes" /> : <FocusIcon className="size-4" />}
-                          </Button>
-                        )}
-                      </div>
-                    )}
-
-                <div className="mt-auto pt-1">
-                  {actions ?? (
-                    <div className="grid grid-cols-3 gap-2.5">
-                      {stats.map((stat, index) => (
-                        <div
-                          key={stat.label}
-                          className={cn(
-                            'space-y-1 rounded-lg bg-background/40 p-2 shadow-sm',
-                            index > 0 && 'border-l border-border/50',
-                          )}
-                        >
-                          <p className="text-sm font-medium text-muted-foreground">
-                            {stat.label}
-                          </p>
-                          <p className="text-xl font-semibold tracking-tight text-foreground">
-                            {stat.value}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
-            )
-          : (
-              <div className="space-y-3">
-                <Skeleton className="h-5 w-24" />
-                <Skeleton className="h-8 w-32" />
-                <Skeleton className="h-4 w-28" />
-              </div>
-            )}
-      </CardContent>
-    </Card>
-  )
 }
 
 function ProfitLossCard({

@@ -11,12 +11,22 @@ interface PortfolioValueResult {
   isFetching: boolean
 }
 
-export function usePortfolioValue(walletAddress?: string | null): PortfolioValueResult {
+interface PortfolioValueOptions {
+  useDefaultUser?: boolean
+}
+
+export function usePortfolioValue(
+  walletAddress?: string | null,
+  options: PortfolioValueOptions = {},
+): PortfolioValueResult {
   const user = useUser()
   const userProxyWallet = user?.proxy_wallet_status === 'deployed' && user?.proxy_wallet_address
     ? normalizeAddress(user.proxy_wallet_address)
     : null
-  const targetWallet = walletAddress ? normalizeAddress(walletAddress) : userProxyWallet
+  const useDefaultUser = options.useDefaultUser ?? true
+  const targetWallet = walletAddress
+    ? normalizeAddress(walletAddress)
+    : (useDefaultUser ? userProxyWallet : null)
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: ['portfolio-value', targetWallet],

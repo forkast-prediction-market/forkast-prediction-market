@@ -29,7 +29,11 @@ const INITIAL_STATE: Balance = {
   symbol: 'USDC',
 }
 
-export function useBalance() {
+interface UseBalanceOptions {
+  enabled?: boolean
+}
+
+export function useBalance(options: UseBalanceOptions = {}) {
   const { isConnected } = useAppKitAccount()
   const user = useUser()
 
@@ -61,7 +65,7 @@ export function useBalance() {
     ? normalizeAddress(user.proxy_wallet_address) as Address | null
     : null
 
-  const isQueryEnabled = Boolean(isConnected && proxyWalletAddress)
+  const isQueryEnabled = Boolean(isConnected && proxyWalletAddress && (options.enabled ?? true))
 
   const {
     data,
