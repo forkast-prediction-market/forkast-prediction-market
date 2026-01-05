@@ -18,6 +18,7 @@ import {
 
 } from '@/lib/constants'
 import { CONDITIONAL_TOKENS_CONTRACT, CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS } from '@/lib/contracts'
+import { fetchReferralLocked } from '@/lib/exchange'
 import {
   getSafeProxyDomain,
   SAFE_PROXY_CREATE_PROXY_MESSAGE,
@@ -357,6 +358,20 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
     }
   }, [refreshSessionUserState, signTypedDataAsync, user])
 
+  const resolveReferralExchanges = useCallback(async (safeAddress: `0x${string}`) => {
+    const exchanges = [
+      CTF_EXCHANGE_ADDRESS as `0x${string}`,
+      NEG_RISK_CTF_EXCHANGE_ADDRESS as `0x${string}`,
+    ]
+    const results = await Promise.all(
+      exchanges.map(exchange => fetchReferralLocked(exchange, safeAddress)),
+    )
+    if (results.includes(null)) {
+      console.warn('Failed to read referral status; skipping locked/unknown exchanges.')
+    }
+    return exchanges.filter((_, index) => results[index] === false)
+  }, [])
+
   const handleApproveTokens = useCallback(async () => {
     if (!user?.proxy_wallet_address) {
       setTokenApprovalError('Deploy your proxy wallet first.')
@@ -379,6 +394,9 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
         return
       }
 
+      const referralExchanges = await resolveReferralExchanges(
+        user.proxy_wallet_address as `0x${string}`,
+      )
       const transactions = buildApproveTokenTransactions({
         spenders: [
           CONDITIONAL_TOKENS_CONTRACT as `0x${string}`,
@@ -395,6 +413,7 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
           referrer: affiliateMetadata.referrerAddress,
           affiliate: affiliateMetadata.affiliateAddress,
           affiliateSharePercent: affiliateMetadata.affiliateSharePercent,
+          exchanges: referralExchanges,
         }),
       )
       const aggregated = aggregateSafeTransactions(transactions)
@@ -466,7 +485,14 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
       }
       setApprovalsStep('idle')
     }
-  }, [affiliateMetadata, refreshSessionUserState, signMessageAsync, tradingAuthSatisfied, user])
+  }, [
+    affiliateMetadata,
+    refreshSessionUserState,
+    resolveReferralExchanges,
+    signMessageAsync,
+    tradingAuthSatisfied,
+    user,
+  ])
 
   const ensureTradingReady = useCallback(() => {
     if (!user) {

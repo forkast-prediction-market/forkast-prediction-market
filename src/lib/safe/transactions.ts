@@ -224,9 +224,7 @@ export function buildSetReferralTransactions(options: ReferralOptions): SafeTran
   const affiliate = options.affiliate ?? zeroAddress
   const sharePercent = Math.max(0, Math.min(100, Math.trunc(options.affiliateSharePercent ?? 0)))
   const affiliatePercentage = affiliate === zeroAddress ? 0n : BigInt(sharePercent)
-  const exchanges = options.exchanges?.length
-    ? options.exchanges
-    : [CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS]
+  const exchanges = options.exchanges ?? [CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS]
 
   return exchanges.map(exchange => ({
     to: exchange,
