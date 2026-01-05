@@ -19,7 +19,7 @@ Include the market identifier, outcome ID, side (`buy` or `sell`), order type, s
 
 ```http
 POST /v1/orders HTTP/1.1
-Host: api.forkast.market
+Host: api.kuest.market
 Authorization: Bearer YOUR_KEY
 Content-Type: application/json
 
@@ -37,10 +37,10 @@ Content-Type: application/json
   <Tab>
 
 ```ts
-import { createTradingClient } from '@forkast/sdk'
+import { createTradingClient } from '@kuest/sdk'
 
 const client = createTradingClient({
-  apiKey: process.env.FORKAST_API_KEY!,
+  apiKey: process.env.KUEST_API_KEY!,
 })
 
 await client.placeOrder({

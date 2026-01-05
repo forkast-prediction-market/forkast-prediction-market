@@ -1,6 +1,6 @@
-Forkast Modified MIT License (with Custom Commons Clause)
+Kuest Modified MIT License (with Custom Commons Clause)
 
-Copyright (c) 2025 Forkast contributors
+Copyright (c) 2025 Kuest contributors
 
 This software is licensed under the terms of the MIT License,
 with an additional Commons Clause restriction described below.
@@ -18,12 +18,12 @@ COMMONS CLAUSE — CUSTOM RESTRICTION
 
 Notwithstanding the permissions granted above, you may not host, operate, or offer
 the Software, or any modified version thereof, as a prediction market or orderbook
-service without maintaining the original Forkast on-chain contracts and orderbook modules.
+service without maintaining the original Kuest on-chain contracts and orderbook modules.
 
 This restriction exists solely to protect users from malicious forks or scams that
 could mislead them by altering core trading logic or contract behavior.
 
-You are free to build forks, frontends, agents, or businesses *on top of* Forkast,
+You are free to build forks, frontends, agents, or businesses *on top of* Kuest,
 as long as the underlying contracts and orderbook remain authentic.
 
 DISCLAIMER

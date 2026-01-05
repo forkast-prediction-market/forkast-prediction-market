@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   sync:
-    if: github.repository != 'forkast-prediction-market/forkast-prediction-market'
+    if: github.repository != 'kuestcom/prediction-market'
     runs-on: ubuntu-latest
 
     steps:
@@ -27,7 +27,7 @@ jobs:
 
       - name: Sync with upstream
         run: |
-          git remote get-url upstream || git remote add upstream https://github.com/forkast-prediction-market/forkast-prediction-market.git
+          git remote get-url upstream || git remote add upstream https://github.com/kuestcom/prediction-market.git
           git fetch upstream
           UPSTREAM_HASH=$(git rev-parse upstream/main)
           LOCAL_HASH=$(git rev-parse HEAD)

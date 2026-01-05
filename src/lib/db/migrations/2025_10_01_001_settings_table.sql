@@ -46,7 +46,7 @@ EXECUTE FUNCTION set_updated_at();
 
 -- Insert default affiliate settings
 INSERT INTO settings ("group", key, value)
-VALUES ('affiliate', 'trade_fee_bps', '100'),       -- 1.00% trading fee
+VALUES ('affiliate', 'trade_fee_bps', '200'),       -- 2.00% trading fee
        ('affiliate', 'affiliate_share_bps', '5000') -- 50% of trading fees go to affiliates
 ON CONFLICT ("group", key) DO NOTHING;
 

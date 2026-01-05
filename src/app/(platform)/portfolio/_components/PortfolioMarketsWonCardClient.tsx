@@ -77,7 +77,7 @@ export default function PortfolioMarketsWonCardClient({ data }: PortfolioMarkets
   const router = useRouter()
 
   const latestMarket = summary.latestMarket ?? markets[0]
-  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'Forkast'
+  const siteName = process.env.NEXT_PUBLIC_SITE_NAME || 'Kuest'
 
   const stats = useMemo(
     () => [

@@ -19,7 +19,7 @@ import {
 import { ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 
-const ORDER_TYPE_STORAGE_KEY = 'forkast:order-panel-type'
+const ORDER_TYPE_STORAGE_KEY = 'kuest:order-panel-type'
 
 interface EventOrderPanelBuySellTabsProps {
   side: OrderSide

@@ -51,10 +51,10 @@ export async function saveProxyWalletSignature({ signature }: SaveProxyWalletSig
           address: currentUser.address,
         }
       : {
-          key: process.env.FORKAST_API_KEY ?? '',
-          secret: process.env.FORKAST_API_SECRET ?? '',
-          passphrase: process.env.FORKAST_PASSPHRASE ?? '',
-          address: process.env.FORKAST_ADDRESS ?? '',
+          key: process.env.KUEST_API_KEY ?? '',
+          secret: process.env.KUEST_API_SECRET ?? '',
+          passphrase: process.env.KUEST_PASSPHRASE ?? '',
+          address: process.env.KUEST_ADDRESS ?? '',
         }
 
     if (!relayerAuth.key || !relayerAuth.secret || !relayerAuth.passphrase || !relayerAuth.address) {
@@ -160,11 +160,11 @@ async function triggerSafeProxyDeployment({
     headers: {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-      'FORKAST_ADDRESS': auth.address,
-      'FORKAST_API_KEY': auth.key,
-      'FORKAST_PASSPHRASE': auth.passphrase,
-      'FORKAST_TIMESTAMP': timestamp.toString(),
-      'FORKAST_SIGNATURE': hmacSignature,
+      'KUEST_ADDRESS': auth.address,
+      'KUEST_API_KEY': auth.key,
+      'KUEST_PASSPHRASE': auth.passphrase,
+      'KUEST_TIMESTAMP': timestamp.toString(),
+      'KUEST_SIGNATURE': hmacSignature,
     },
     body,
     signal: AbortSignal.timeout(15_000),

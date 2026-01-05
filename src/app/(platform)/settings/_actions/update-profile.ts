@@ -103,7 +103,7 @@ async function uploadImage(user: any, image: File) {
     .toBuffer()
 
   const { error } = await supabaseAdmin.storage
-    .from('forkast-assets')
+    .from('kuest-assets')
     .upload(fileName, resizedBuffer, {
       contentType: 'image/jpeg',
       cacheControl: '31536000',

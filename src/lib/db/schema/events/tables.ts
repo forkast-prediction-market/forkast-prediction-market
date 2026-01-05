@@ -103,13 +103,12 @@ export const markets = pgTable(
 export const outcomes = pgTable(
   'outcomes',
   {
-    id: char({ length: 26 }).primaryKey().default(sql`generate_ulid()`),
     condition_id: text()
       .notNull()
       .references(() => conditions.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
     outcome_text: text().notNull(),
     outcome_index: smallint().notNull(),
-    token_id: text().notNull().unique(),
+    token_id: text().notNull().primaryKey(),
     is_winning_outcome: boolean().default(false),
     payout_value: numeric({ precision: 20, scale: 6 }),
     current_price: numeric({ precision: 8, scale: 4 }),

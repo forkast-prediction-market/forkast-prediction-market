@@ -1,4 +1,4 @@
-# Contributing to Forkast
+# Contributing to Kuest
 
 Thank you for your interest in contributing! We welcome all forms of contribution including bug reports, feature requests, documentation improvements, and code contributions.
 
@@ -57,4 +57,4 @@ Be respectful and inclusive. Harassment and discrimination are not tolerated.
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the Forkast Modified MIT License (with Custom Commons Clause), as described in [`LICENSE`](LICENSE).
+By contributing, you agree that your contributions will be licensed under the Kuest Modified MIT License (with Custom Commons Clause), as described in [`LICENSE`](LICENSE).

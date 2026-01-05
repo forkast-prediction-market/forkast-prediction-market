@@ -93,6 +93,7 @@ CREATE TABLE markets
   volume_24h            DECIMAL(20, 6)       DEFAULT 0,
   volume                DECIMAL(20, 6)       DEFAULT 0,
   -- Timestamps
+  end_time              TIMESTAMPTZ,
   created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   -- Constraints
@@ -103,11 +104,10 @@ CREATE TABLE markets
 
 CREATE TABLE outcomes
 (
-  id                 CHAR(26) PRIMARY KEY DEFAULT generate_ulid(),
   condition_id       CHAR(66)    NOT NULL REFERENCES conditions (id) ON DELETE CASCADE ON UPDATE CASCADE,
   outcome_text       TEXT        NOT NULL,
   outcome_index      SMALLINT    NOT NULL,               -- 0, 1, 2... outcome order
-  token_id           TEXT        NOT NULL,               -- ERC1155 token ID for this outcome
+  token_id           TEXT PRIMARY KEY,                   -- ERC1155 token ID for this outcome
   -- Resolution data
   is_winning_outcome BOOLEAN              DEFAULT FALSE, -- When resolved
   payout_value       DECIMAL(20, 6),                     -- Final payout value
@@ -118,7 +118,6 @@ CREATE TABLE outcomes
   updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   -- Constraints
   UNIQUE (condition_id, outcome_index),
-  UNIQUE (token_id),
   CHECK (outcome_index >= 0),
   CHECK (current_price IS NULL OR (current_price >= 0.0001 AND current_price <= 0.9999)),
   CHECK (payout_value IS NULL OR payout_value >= 0)

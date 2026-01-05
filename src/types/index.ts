@@ -66,7 +66,6 @@ export interface Market {
 }
 
 export interface Outcome {
-  id: string
   condition_id: string
   outcome_text: string
   outcome_index: number

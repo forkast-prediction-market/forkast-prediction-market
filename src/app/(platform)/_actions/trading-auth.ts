@@ -76,10 +76,10 @@ export async function generateTradingAuthAction(input: z.input<typeof GenerateTr
   const headers = {
     'Accept': 'application/json',
     'Content-Type': 'application/json',
-    'FORKAST_ADDRESS': user.address,
-    'FORKAST_SIGNATURE': parsed.data.signature,
-    'FORKAST_TIMESTAMP': parsed.data.timestamp,
-    'FORKAST_NONCE': parsed.data.nonce,
+    'KUEST_ADDRESS': user.address,
+    'KUEST_SIGNATURE': parsed.data.signature,
+    'KUEST_TIMESTAMP': parsed.data.timestamp,
+    'KUEST_NONCE': parsed.data.nonce,
   }
 
   try {

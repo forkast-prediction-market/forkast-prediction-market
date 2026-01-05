@@ -36,7 +36,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   useEffect(() => {
     setActiveOutcomeIndex(outcome.outcome_index)
     setCursorSnapshot(null)
-  }, [outcome.id, outcome.outcome_index])
+  }, [outcome.token_id, outcome.outcome_index])
 
   useEffect(() => {
     setCursorSnapshot(null)

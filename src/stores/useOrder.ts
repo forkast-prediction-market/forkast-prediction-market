@@ -158,7 +158,7 @@ export function useSyncLimitPriceWithOutcome() {
   const syncKey = useOrder(state => [
     state.event?.id ?? 'no-event',
     state.market?.condition_id ?? 'no-market',
-    state.outcome?.id ?? 'no-outcome',
+    state.outcome?.token_id ?? 'no-outcome',
   ].join(':'))
   const setLimitPrice = useOrder(state => state.setLimitPrice)
   const yesPrice = useYesPrice()

@@ -13,5 +13,5 @@ export function getSupabaseImageUrl(iconPath: string | null): string {
     return 'https://avatar.vercel.sh/creator.png'
   }
 
-  return `${supabaseUrl}/storage/v1/object/public/forkast-assets/${iconPath}`
+  return `${supabaseUrl}/storage/v1/object/public/kuest-assets/${iconPath}`
 }

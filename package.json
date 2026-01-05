@@ -1,10 +1,10 @@
 {
-  "name": "forkast",
+  "name": "kuest",
   "private": true,
   "description": "Launch Your Own Decentralized Prediction Market in Minutes.",
   "repository": {
     "type": "git",
-    "url": "https://github.com/forkast-prediction-market/forkast-prediction-market.git"
+    "url": "https://github.com/kuestcom/prediction-market.git"
   },
   "scripts": {
     "dev": "next dev",

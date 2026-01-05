@@ -12,7 +12,7 @@ test.describe('desktop and mobile', () => {
   })
 
   test('has title', async ({ page }) => {
-    await expect(page).toHaveTitle('Forkast | Decentralized Prediction Markets')
+    await expect(page).toHaveTitle('Kuest | Decentralized Prediction Markets')
   })
 
   test('shows appkit modal with log in button', async ({ page }) => {

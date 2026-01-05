@@ -37,10 +37,10 @@ const config: NextConfig = {
         : process.env.VERCEL_URL
           ? `https://${process.env.VERCEL_URL}`
           : 'http://localhost:3000',
-    CLOB_URL: 'https://clob.forka.st',
-    RELAYER_URL: 'https://relayer.forka.st',
-    DATA_URL: 'https://data-api.forka.st',
-    USER_PNL_URL: 'https://user-pnl-api.forka.st',
+    CLOB_URL: 'https://clob.kuest.com',
+    RELAYER_URL: 'https://relayer.kuest.com',
+    DATA_URL: 'https://data-api.kuest.com',
+    USER_PNL_URL: 'https://user-pnl-api.kuest.com',
   },
 }
 

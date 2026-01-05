@@ -279,7 +279,7 @@ function ProfitLossCard({
   const logoSvg = sanitizeSvg(platformLogoSvg || '')
     .replace(/fill="url\([^"]+\)"/gi, 'fill="currentColor"')
   const pnlAddress = portfolioAddress
-  const pnlBaseUrl = process.env.USER_PNL_URL ?? 'https://user-pnl-api.forka.st'
+  const pnlBaseUrl = process.env.USER_PNL_URL ?? 'https://user-pnl-api.kuest.com'
 
   useEffect(() => {
     if (!pnlAddress || !pnlBaseUrl) {

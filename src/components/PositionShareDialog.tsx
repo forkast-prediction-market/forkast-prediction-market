@@ -150,7 +150,7 @@ export function PositionShareDialog({ open, onOpenChange, payload, title = 'Shil
       const baseUrl = window.location.origin
       const profileUrl = `${baseUrl}/@${encodeURIComponent(username)}`
       const shareText = [
-        'I just put my money where my mouth is on @forka_st.',
+        'I just put my money where my mouth is on @kuest.',
         '',
         `Trade against me: ${profileUrl}`,
       ].join('\n')

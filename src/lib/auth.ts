@@ -61,7 +61,7 @@ export const auth = betterAuth({
         },
       },
       domain: process.env.VERCEL_PROJECT_PRODUCTION_URL ?? 'localhost:3000',
-      emailDomainName: process.env.VERCEL_PROJECT_PRODUCTION_URL ?? 'forka.st',
+      emailDomainName: process.env.VERCEL_PROJECT_PRODUCTION_URL ?? 'kuest.com',
       anonymous: true,
       getNonce: async () => generateRandomString(32),
       verifyMessage: async ({ message, signature, address }) => {

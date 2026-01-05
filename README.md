@@ -1,8 +1,10 @@
 # 🚀 Launch Your Decentralized Prediction Market in Minutes
 
-[![License: Forkast MIT+Commons](https://img.shields.io/badge/License-Forkast--MIT--Commons-blue.svg)](./LICENSE) [![CI](https://github.com/forkast-prediction-market/forkast-prediction-market/actions/workflows/ci.yml/badge.svg)](https://github.com/forkast-prediction-market/forkast-prediction-market/actions/workflows/ci.yml)
+> **🚨 Big Announcement (05 Jan 2026): Forkast is now Kuest.** This repo has been reset for clean redeploys — expect to redeploy from scratch, reset the DB, and update your env vars, URLs, and docs.
 
-[![Forkast Banner](https://i.imgur.com/G9wM4Na.png)](https://forka.st)
+[![License: Kuest MIT+Commons](https://img.shields.io/badge/License-Kuest--MIT--Commons-blue.svg)](./LICENSE) [![CI](https://github.com/kuestcom/prediction-market/actions/workflows/ci.yml/badge.svg)](https://github.com/kuestcom/prediction-market/actions/workflows/ci.yml)
+
+[![Kuest Banner](https://i.imgur.com/G9wM4Na.png)](https://kuest.com)
 
 Open-source project to launch and monetize Web3 prediction markets, inspired by Polymarket, but with full transparency and control.
 
@@ -48,7 +50,7 @@ Complete Step 3 (Supabase) and Step 4 (environment) first, then redeploy from yo
 
    1. **Download** the `.env.example` file from this repository
    2. **Edit** it with your configuration:
-      - **Forkast CLOB Ordersbook**: Connect your wallet at [auth.forka.st](https://auth.forka.st), sign to verify ownership, and copy the API key, secret, and passphrase
+      - **Kuest CLOB Ordersbook**: Connect your wallet at [auth.kuest.com](https://auth.kuest.com), sign to verify ownership, and copy the API key, secret, and passphrase
       - **Reown AppKit**: Get Project ID at [dashboard.reown.com](https://dashboard.reown.com)
       - **Better Auth**: Generate secret at [better-auth.com](https://www.better-auth.com/docs/installation#set-environment-variables)
       - **CRON_SECRET**: Create a random secret of at least 16 characters
@@ -63,7 +65,7 @@ Complete Step 3 (Supabase) and Step 4 (environment) first, then redeploy from yo
 
 ### 6. Sync Your Fork (via GitHub Actions)
 
-In your forked Forkast repository:
+In your forked Kuest repository:
 1. Go to **Settings** → **Actions** → **General**
 2. Select **"Allow all actions and reusable workflows"**
 3. Click **Save** - This enables automatic sync with the main repository
@@ -90,23 +92,23 @@ In your forked Forkast repository:
 
 ## ⚠️ Disclaimer
 
-Forkast is provided "as is" and should be used at your own risk. Review the [Modified MIT License with Commons Clause](./LICENSE) before deploying production forks: running derivatives that alter the core on-chain contracts or orderbook modules may fall outside the permitted use. Always verify smart contracts and comply with relevant regulations in your jurisdiction.
+Kuest is provided "as is" and should be used at your own risk. Review the [Modified MIT License with Commons Clause](./LICENSE) before deploying production forks: running derivatives that alter the core on-chain contracts or orderbook modules may fall outside the permitted use. Always verify smart contracts and comply with relevant regulations in your jurisdiction.
 
 ## 🔗 Links
 
 <div align="center">
 
-**📚 [Documentation](https://forka.st/docs/users)** •
-**🚀 [Live Demo](https://forka.st)** •
-**🗺️ [Roadmap](https://github.com/orgs/forkast-prediction-market/discussions/51)** •
-**💬 [Discussions](https://github.com/orgs/forkast-prediction-market/discussions)**
+**📚 [Documentation](https://kuest.com/docs/users)** •
+**🚀 [Live Demo](https://kuest.com)** •
+**🗺️ [Roadmap](https://github.com/orgs/kuestcom/discussions/51)** •
+**💬 [Discussions](https://github.com/orgs/kuestcom/discussions)**
 
 **📱 [Discord](https://discord.gg/vSSnkJvypS)** •
-**🐦 [X (Follow us)](https://x.com/forka_st)** •
-**🐛 [Issues](https://github.com/forkast-prediction-market/forkast-prediction-market/issues)** •
-**⭐ [Contribute](https://github.com/forkast-prediction-market/forkast-prediction-market/blob/main/CONTRIBUTING.md)**
+**🐦 [X (Follow us)](https://x.com/kuest)** •
+**🐛 [Issues](https://github.com/kuestcom/prediction-market/issues)** •
+**⭐ [Contribute](https://github.com/kuestcom/prediction-market/blob/main/CONTRIBUTING.md)**
 
 ---
 *🚧 This project is under active development.
-Developers and contributors are welcome to join and help build Forkast into a fully decentralized ecosystem.*
+Developers and contributors are welcome to join and help build Kuest into a fully decentralized ecosystem.*
 </div>

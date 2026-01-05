@@ -747,7 +747,7 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
     const imageBuffer = await response.arrayBuffer()
 
     const { error } = await supabaseAdmin.storage
-      .from('forkast-assets')
+      .from('kuest-assets')
       .upload(storagePath, imageBuffer, {
         contentType: 'image/jpeg',
         cacheControl: '31536000',
