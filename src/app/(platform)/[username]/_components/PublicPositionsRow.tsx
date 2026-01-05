@@ -128,8 +128,7 @@ export default function PublicPositionsRow({
           <Button
             size="sm"
             className="w-24"
-            onClick={() => onSellClick?.(position)}
-            disabled={!onSellClick}
+            onClick={() => onSellClick(position)}
           >
             Sell
           </Button>

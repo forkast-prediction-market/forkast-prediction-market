@@ -506,6 +506,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     queryClient,
     resolveOutcomeIndex,
     sellModalPayload,
+    signatureType,
     signTypedDataAsync,
     user,
     userAddressNormalized,
