@@ -97,6 +97,7 @@ export function formatVolume(volume: number): string {
 }
 
 const COMPACT_THRESHOLD = 100_000
+const COMPACT_MILLION = 1_000_000
 
 export function formatCompactCount(value: number) {
   if (!Number.isFinite(value)) {
@@ -104,12 +105,19 @@ export function formatCompactCount(value: number) {
   }
 
   const abs = Math.abs(value)
+  if (abs >= COMPACT_MILLION) {
+    const compact = (abs / COMPACT_MILLION).toFixed(1).replace(/\.0$/, '')
+    return `${value < 0 ? '-' : ''}${compact}M`
+  }
   if (abs >= COMPACT_THRESHOLD) {
     const compact = Math.round(abs / 1_000).toLocaleString(DEFAULT_LOCALE)
     return `${value < 0 ? '-' : ''}${compact}k`
   }
 
-  return new Intl.NumberFormat(DEFAULT_LOCALE).format(value)
+  return new Intl.NumberFormat(DEFAULT_LOCALE, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value)
 }
 
 export function formatCompactCurrency(value: number) {
@@ -118,6 +126,10 @@ export function formatCompactCurrency(value: number) {
   }
 
   const abs = Math.abs(value)
+  if (abs >= COMPACT_MILLION) {
+    const compact = (abs / COMPACT_MILLION).toFixed(1).replace(/\.0$/, '')
+    return `${value < 0 ? '-' : ''}$${compact}M`
+  }
   if (abs >= COMPACT_THRESHOLD) {
     const compact = Math.round(abs / 1_000).toLocaleString(DEFAULT_LOCALE)
     return `${value < 0 ? '-' : ''}$${compact}k`

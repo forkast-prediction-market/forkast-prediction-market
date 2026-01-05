@@ -11,7 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useBalance } from '@/hooks/useBalance'
 import { useClipboard } from '@/hooks/useClipboard'
 import { usePortfolioValue } from '@/hooks/usePortfolioValue'
-import { formatCurrency } from '@/lib/formatters'
+import { formatCompactCount, formatCompactCurrency, formatCurrency } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
 export interface ProfileForCards {
@@ -28,6 +28,7 @@ interface ProfileOverviewCardProps {
   actions?: ReactNode
   variant?: 'public' | 'portfolio'
   useDefaultUserWallet?: boolean
+  enableLiveValue?: boolean
 }
 
 export default function ProfileOverviewCard({
@@ -36,13 +37,15 @@ export default function ProfileOverviewCard({
   actions,
   variant = 'public',
   useDefaultUserWallet = true,
+  enableLiveValue = true,
 }: ProfileOverviewCardProps) {
   const { copied, copy } = useClipboard()
+  const liveWalletAddress = enableLiveValue ? profile.portfolioAddress : null
   const { value: livePositionsValue, isLoading } = usePortfolioValue(
-    profile.portfolioAddress,
+    liveWalletAddress,
     { useDefaultUser: useDefaultUserWallet },
   )
-  const hasLiveValue = Boolean(profile.portfolioAddress) && !isLoading
+  const hasLiveValue = Boolean(liveWalletAddress) && !isLoading
   const positionsValue = hasLiveValue ? livePositionsValue ?? snapshot.positionsValue : snapshot.positionsValue
   const { balance, isLoadingBalance } = useBalance({ enabled: variant === 'portfolio' })
   const shouldWaitForBalance = variant === 'portfolio'
@@ -57,10 +60,8 @@ export default function ProfileOverviewCard({
 
   const isReady = hasLoaded
   const totalPortfolioValue = (positionsValue ?? 0) + (balance?.raw ?? 0)
-  const formattedTotalValue = formatCurrency(totalPortfolioValue)
-  const formattedCashValue = Number.isFinite(balance?.raw)
-    ? (balance?.raw ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-    : '0.00'
+  const formattedTotalValue = formatCompactCurrency(totalPortfolioValue)
+  const formattedCashValue = formatCompactCurrency(balance?.raw ?? 0).replace('$', '')
   const joinedText = useMemo(() => {
     if (!profile.joinedAt) {
       return null
@@ -72,10 +73,18 @@ export default function ProfileOverviewCard({
     return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
   }, [profile.joinedAt])
 
+  const positionsValueLabel = Math.abs(positionsValue) >= 100_000
+    ? formatCompactCurrency(positionsValue)
+    : formatCurrency(positionsValue, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+
+  const biggestWinLabel = Math.abs(snapshot.biggestWin) >= 100_000
+    ? formatCompactCurrency(snapshot.biggestWin)
+    : formatCurrency(snapshot.biggestWin, { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+
   const stats = [
-    { label: 'Positions Value', value: formatCurrency(positionsValue) },
-    { label: 'Biggest Win', value: formatCurrency(snapshot.biggestWin) },
-    { label: 'Predictions', value: snapshot.predictions ? snapshot.predictions.toLocaleString('en-US') : '0' },
+    { label: 'Positions Value', value: positionsValueLabel },
+    { label: 'Biggest Win', value: biggestWinLabel },
+    { label: 'Predictions', value: formatCompactCount(snapshot.predictions) },
   ]
 
   return (
@@ -104,7 +113,7 @@ export default function ProfileOverviewCard({
                           >
                             <span>
                               {snapshot.profitLoss >= 0 ? '+' : '-'}
-                              {formatCurrency(Math.abs(snapshot.profitLoss))}
+                              {formatCompactCurrency(Math.abs(snapshot.profitLoss))}
                             </span>
                             <span>
                               (
@@ -177,7 +186,7 @@ export default function ProfileOverviewCard({
                                   <span aria-hidden className="text-muted-foreground/50">•</span>
                                   <span className="inline-flex items-center gap-1">
                                     <EyeIcon className="size-4" />
-                                    {profile.viewsCount.toLocaleString('en-US')}
+                                    {formatCompactCount(profile.viewsCount)}
                                     {' '}
                                     views
                                   </span>
@@ -212,14 +221,14 @@ export default function ProfileOverviewCard({
                         <div
                           key={stat.label}
                           className={cn(
-                            'space-y-1 rounded-lg bg-background/40 p-2 shadow-sm',
+                            'flex h-full flex-col rounded-lg bg-background/40 p-2 shadow-sm',
                             index > 0 && 'border-l border-border/50',
                           )}
                         >
                           <p className="text-sm font-medium text-muted-foreground">
                             {stat.label}
                           </p>
-                          <p className="text-xl font-semibold tracking-tight text-foreground">
+                          <p className="mt-auto text-xl font-semibold tracking-tight text-foreground">
                             {stat.value}
                           </p>
                         </div>

@@ -4,6 +4,8 @@ export interface ProfileLinkStats {
   positions: number
   profitLoss: number
   volume: number | null
+  positionsValue: number
+  biggestWin: number
 }
 
 const DATA_API_URL = process.env.DATA_URL!
@@ -55,6 +57,22 @@ function parseTradedCount(body: unknown): number {
 
   if (typeof body === 'object' && 'traded' in body) {
     return toNumber((body as { traded?: unknown }).traded) ?? 0
+  }
+
+  return toNumber(body) ?? 0
+}
+
+function parsePortfolioValue(body: unknown): number {
+  if (!body) {
+    return 0
+  }
+
+  if (Array.isArray(body)) {
+    return toNumber(body[0]?.value ?? body[0]) ?? 0
+  }
+
+  if (typeof body === 'object' && body !== null && 'value' in body) {
+    return toNumber((body as { value?: unknown }).value) ?? 0
   }
 
   return toNumber(body) ?? 0
@@ -138,9 +156,11 @@ export async function fetchProfileLinkStats(
         sortBy: 'TIMESTAMP',
         sortDirection: 'DESC',
       })
+      const valueUrl = `${DATA_API_URL}/value?user=${encodeURIComponent(address)}`
       const tradedUrl = `${DATA_API_URL}/traded?user=${encodeURIComponent(address)}`
 
-      const [activePositionsResult, closedPositionsResult, tradedResult] = await Promise.allSettled([
+      const [valueResult, activePositionsResult, closedPositionsResult, tradedResult] = await Promise.allSettled([
+        fetchJson(valueUrl, signal),
         fetchJson(`${DATA_API_URL}/positions?${activeParams.toString()}`, signal),
         fetchJson(`${DATA_API_URL}/closed-positions?${closedParams.toString()}`, signal),
         fetchJson(tradedUrl, signal),
@@ -164,6 +184,10 @@ export async function fetchProfileLinkStats(
         ? parseTradedVolume(tradedResult.value)
         : null
 
+      const positionsValue = valueResult.status === 'fulfilled'
+        ? parsePortfolioValue(valueResult.value)
+        : 0
+
       const positions = tradedCount || (activePositions.length + closedPositions.length)
 
       const profitLossActive = activePositions.reduce(
@@ -174,11 +198,17 @@ export async function fetchProfileLinkStats(
         (total, position) => total + (toNumber((position as any).realizedPnl) ?? 0),
         0,
       )
+      const biggestWin = closedPositions.reduce((max, position) => {
+        const realized = toNumber((position as any).realizedPnl) ?? 0
+        return realized > max ? realized : max
+      }, 0)
 
       return {
         positions,
         profitLoss: profitLossActive + profitLossClosed,
         volume,
+        positionsValue,
+        biggestWin,
       }
     }
     catch (error) {
@@ -189,6 +219,10 @@ export async function fetchProfileLinkStats(
 
   statsCache.set(cacheKey, { promise: request, expiresAt: now + CACHE_TTL_MS })
   const result = await request
+  if (signal?.aborted) {
+    statsCache.delete(cacheKey)
+    return null
+  }
   statsCache.set(cacheKey, { value: result, expiresAt: Date.now() + CACHE_TTL_MS })
   return result
 }

@@ -10,12 +10,7 @@ import ProfileOverviewCard from '@/components/ProfileOverviewCard'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { fetchProfileLinkStats } from '@/lib/data-api/profile-link-stats'
-import {
-  formatCompactCount,
-  formatCompactCurrency,
-  formatTimeAgo,
-  formatVolume,
-} from '@/lib/formatters'
+import { formatTimeAgo } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
 interface ProfileLinkProps {
@@ -43,7 +38,6 @@ export default function ProfileLink({
   usernameClassName,
 }: ProfileLinkProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [stats, setStats] = useState<Awaited<ReturnType<typeof fetchProfileLinkStats>>>(null)
   const [hasLoaded, setHasLoaded] = useState(false)
 
@@ -63,7 +57,6 @@ export default function ProfileLink({
   useEffect(() => {
     setStats(null)
     setHasLoaded(false)
-    setIsLoading(false)
   }, [statsAddress])
 
   useEffect(() => {
@@ -78,7 +71,6 @@ export default function ProfileLink({
 
     const controller = new AbortController()
     let isActive = true
-    setIsLoading(true)
 
     fetchProfileLinkStats(statsAddress, controller.signal)
       .then((result) => {
@@ -95,12 +87,6 @@ export default function ProfileLink({
         setStats(null)
         setHasLoaded(true)
       })
-      .finally(() => {
-        if (!isActive || controller.signal.aborted) {
-          return
-        }
-        setIsLoading(false)
-      })
 
     return () => {
       isActive = false
@@ -108,58 +94,17 @@ export default function ProfileLink({
     }
   }, [hasLoaded, isOpen, statsAddress])
 
-  const positionsLabel = stats
-    ? formatCompactCount(stats.positions)
-    : '—'
-  const profitLossLabel = stats ? formatCompactCurrency(stats.profitLoss) : '—'
-  const profitLossClass = stats
-    ? (stats.profitLoss >= 0 ? 'text-yes' : 'text-no')
-    : 'text-muted-foreground'
-  const volumeLabel = stats?.volume != null ? formatVolume(stats.volume) : '—'
   const tooltipProfile = useMemo<ProfileForCards>(() => ({
     username: user.username,
     avatarUrl: user.image,
-    portfolioAddress: null,
-  }), [user.image, user.username])
+    portfolioAddress: statsAddress,
+  }), [statsAddress, user.image, user.username])
   const tooltipSnapshot = useMemo<PortfolioSnapshot>(() => ({
-    positionsValue: 0,
+    positionsValue: stats?.positionsValue ?? 0,
     profitLoss: stats?.profitLoss ?? 0,
     predictions: stats?.positions ?? 0,
-    biggestWin: 0,
-  }), [stats?.positions, stats?.profitLoss])
-
-  const tooltipActions = (
-    <div className="space-y-2">
-      <div className="grid grid-cols-3 gap-2.5">
-        {[
-          { label: 'Positions', value: positionsLabel, valueClassName: 'text-foreground' },
-          { label: 'Profit/Loss', value: profitLossLabel, valueClassName: profitLossClass },
-          { label: 'Volume', value: volumeLabel, valueClassName: 'text-foreground' },
-        ].map((stat, index) => (
-          <div
-            key={stat.label}
-            className={cn(
-              'space-y-1 rounded-lg bg-background/40 p-2 shadow-sm',
-              index > 0 && 'border-l border-border/50',
-            )}
-          >
-            <p className="text-sm font-medium text-muted-foreground">
-              {stat.label}
-            </p>
-            <p className={cn('text-xl font-semibold tracking-tight', stat.valueClassName)}>
-              {stat.value}
-            </p>
-          </div>
-        ))}
-      </div>
-      {!hasLoaded && isLoading && (
-        <p className="text-xs text-muted-foreground">Loading stats...</p>
-      )}
-      {hasLoaded && !stats && (
-        <p className="text-xs text-muted-foreground">Stats unavailable</p>
-      )}
-    </div>
-  )
+    biggestWin: stats?.biggestWin ?? 0,
+  }), [stats?.positions, stats?.positionsValue, stats?.profitLoss, stats?.biggestWin])
 
   return (
     <Tooltip onOpenChange={setIsOpen}>
@@ -215,7 +160,7 @@ export default function ProfileLink({
             </div>
           </TooltipTrigger>
           {children
-            ? <div className="pl-[44px]">{children}</div>
+            ? <div className="pl-11">{children}</div>
             : null}
         </div>
         {trailing
@@ -231,13 +176,13 @@ export default function ProfileLink({
         align="start"
         sideOffset={8}
         hideArrow
-        className="border-none bg-transparent p-0 text-popover-foreground shadow-none"
+        className="max-w-80 border-none bg-transparent p-0 text-popover-foreground shadow-none"
       >
         <ProfileOverviewCard
           profile={tooltipProfile}
           snapshot={tooltipSnapshot}
-          actions={tooltipActions}
           useDefaultUserWallet={false}
+          enableLiveValue={false}
         />
       </TooltipContent>
     </Tooltip>
