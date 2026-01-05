@@ -6,9 +6,34 @@ export interface ProfileLinkStats {
   volume: number | null
 }
 
-const DATA_API_URL = process.env.DATA_URL ?? ''
+const DATA_API_URL = process.env.DATA_URL!
 
-const statsCache = new Map<string, Promise<ProfileLinkStats | null> | ProfileLinkStats | null>()
+const CACHE_TTL_MS = 5 * 60 * 1000
+const CACHE_MAX_ENTRIES = 200
+
+interface CacheEntry {
+  value?: ProfileLinkStats | null
+  promise?: Promise<ProfileLinkStats | null>
+  expiresAt: number
+}
+
+const statsCache = new Map<string, CacheEntry>()
+
+function pruneCache(now: number) {
+  for (const [key, entry] of statsCache.entries()) {
+    if (entry.expiresAt <= now) {
+      statsCache.delete(key)
+    }
+  }
+
+  while (statsCache.size > CACHE_MAX_ENTRIES) {
+    const oldestKey = statsCache.keys().next().value
+    if (!oldestKey) {
+      break
+    }
+    statsCache.delete(oldestKey)
+  }
+}
 
 function toNumber(value: unknown): number | null {
   if (typeof value === 'number') {
@@ -82,9 +107,19 @@ export async function fetchProfileLinkStats(
   }
 
   const cacheKey = address.toLowerCase()
+  const now = Date.now()
+  pruneCache(now)
   const cached = statsCache.get(cacheKey)
   if (cached) {
-    return cached instanceof Promise ? await cached : cached
+    if (cached.expiresAt <= now) {
+      statsCache.delete(cacheKey)
+    }
+    else if (cached.promise) {
+      return await cached.promise
+    }
+    else if ('value' in cached) {
+      return cached.value ?? null
+    }
   }
 
   const request = (async () => {
@@ -152,8 +187,8 @@ export async function fetchProfileLinkStats(
     }
   })()
 
-  statsCache.set(cacheKey, request)
+  statsCache.set(cacheKey, { promise: request, expiresAt: now + CACHE_TTL_MS })
   const result = await request
-  statsCache.set(cacheKey, result)
+  statsCache.set(cacheKey, { value: result, expiresAt: Date.now() + CACHE_TTL_MS })
   return result
 }

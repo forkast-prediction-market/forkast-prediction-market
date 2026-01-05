@@ -150,6 +150,7 @@ export default function ProfileOverviewCard({
                                     src={profile.avatarUrl}
                                     alt={`${profile.username} avatar`}
                                     fill
+                                    sizes="48px"
                                     className="object-cover"
                                   />
                                 )

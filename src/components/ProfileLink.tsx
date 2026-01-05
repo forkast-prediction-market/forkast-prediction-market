@@ -77,22 +77,35 @@ export default function ProfileLink({
     }
 
     const controller = new AbortController()
+    let isActive = true
     setIsLoading(true)
 
     fetchProfileLinkStats(statsAddress, controller.signal)
       .then((result) => {
+        if (!isActive || controller.signal.aborted) {
+          return
+        }
         setStats(result)
         setHasLoaded(true)
       })
-      .catch(() => {
+      .catch((error) => {
+        if (!isActive || controller.signal.aborted || error?.name === 'AbortError') {
+          return
+        }
         setStats(null)
         setHasLoaded(true)
       })
       .finally(() => {
+        if (!isActive || controller.signal.aborted) {
+          return
+        }
         setIsLoading(false)
       })
 
-    return () => controller.abort()
+    return () => {
+      isActive = false
+      controller.abort()
+    }
   }, [hasLoaded, isOpen, statsAddress])
 
   const positionsLabel = stats
