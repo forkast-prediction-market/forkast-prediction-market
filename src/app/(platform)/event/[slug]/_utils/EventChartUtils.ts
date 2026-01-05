@@ -40,7 +40,7 @@ export function buildMarketSignature(event: Event) {
   return event.markets
     .map((market) => {
       const outcomeSignature = market.outcomes
-        .map(outcome => `${outcome.token_id}:${outcome.updated_at}:${outcome.token_id}`)
+        .map(outcome => `${outcome.token_id}:${outcome.updated_at}`)
         .join(',')
       return `${market.condition_id}:${market.updated_at}:${outcomeSignature}`
     })
