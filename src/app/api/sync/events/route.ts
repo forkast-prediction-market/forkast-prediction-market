@@ -26,6 +26,11 @@ interface SubgraphCondition {
   updatedAt: string
 }
 
+interface MarketTimestamps {
+  createdAtIso: string
+  updatedAtIso: string
+}
+
 interface SyncStats {
   fetchedCount: number
   processedCount: number
@@ -327,7 +332,8 @@ async function fetchPnLConditionsPage(afterCursor: SyncCursor | null): Promise<{
 }
 
 async function processMarket(market: SubgraphCondition) {
-  await processCondition(market)
+  const timestamps = getMarketTimestamps(market)
+  await processCondition(market, timestamps)
   if (!market.arweaveHash) {
     throw new Error(`Market ${market.id} missing required arweaveHash field`)
   }
@@ -335,8 +341,9 @@ async function processMarket(market: SubgraphCondition) {
   const eventId = await processEvent(
     metadata.event,
     market.creator!,
+    timestamps.createdAtIso,
   )
-  return await processMarketData(market, metadata, eventId)
+  return await processMarketData(market, metadata, eventId, timestamps)
 }
 
 async function fetchMetadata(arweaveHash: string) {
@@ -359,7 +366,7 @@ async function fetchMetadata(arweaveHash: string) {
   return metadata
 }
 
-async function processCondition(market: SubgraphCondition) {
+async function processCondition(market: SubgraphCondition, timestamps: MarketTimestamps) {
   if (!market.oracle) {
     throw new Error(`Market ${market.id} missing required oracle field`)
   }
@@ -376,26 +383,6 @@ async function processCondition(market: SubgraphCondition) {
     throw new Error(`Market ${market.id} missing required arweaveHash field`)
   }
 
-  if (!market.creationTimestamp) {
-    throw new Error(`Market ${market.id} missing required creationTimestamp field`)
-  }
-
-  if (!market.updatedAt) {
-    throw new Error(`Market ${market.id} missing required updatedAt field`)
-  }
-
-  const creationTimestamp = Number(market.creationTimestamp)
-  if (Number.isNaN(creationTimestamp)) {
-    throw new TypeError(`Market ${market.id} has invalid creationTimestamp: ${market.creationTimestamp}`)
-  }
-  const createdAtIso = new Date(creationTimestamp * 1000).toISOString()
-
-  const updatedAtTimestamp = Number(market.updatedAt)
-  if (Number.isNaN(updatedAtTimestamp)) {
-    throw new TypeError(`Market ${market.id} has invalid updatedAt: ${market.updatedAt}`)
-  }
-  const updatedAtIso = new Date(updatedAtTimestamp * 1000).toISOString()
-
   const { error } = await supabaseAdmin.from('conditions').upsert({
     id: market.id,
     oracle: market.oracle,
@@ -403,8 +390,8 @@ async function processCondition(market: SubgraphCondition) {
     resolved: market.resolved,
     arweave_hash: market.arweaveHash,
     creator: market.creator!,
-    created_at: createdAtIso,
-    updated_at: updatedAtIso,
+    created_at: timestamps.createdAtIso,
+    updated_at: timestamps.updatedAtIso,
   })
 
   if (error) {
@@ -437,7 +424,7 @@ function normalizeTimestamp(rawValue: unknown): string | null {
   return null
 }
 
-async function processEvent(eventData: any, creatorAddress: string) {
+async function processEvent(eventData: any, creatorAddress: string, createdAtIso: string) {
   if (!eventData || !eventData.slug || !eventData.title) {
     throw new Error(`Invalid event data: ${JSON.stringify(eventData)}`)
   }
@@ -450,7 +437,7 @@ async function processEvent(eventData: any, creatorAddress: string) {
 
   const { data: existingEvent } = await supabaseAdmin
     .from('events')
-    .select('id, end_date')
+    .select('id, end_date, created_at')
     .eq('slug', eventData.slug)
     .maybeSingle()
 
@@ -460,6 +447,13 @@ async function processEvent(eventData: any, creatorAddress: string) {
       neg_risk_augmented: negRiskAugmentedFlag,
       neg_risk: eventNegRiskFlag,
       neg_risk_market_id: eventNegRiskMarketId ?? null,
+    }
+
+    const existingCreatedAtMs = Date.parse(existingEvent.created_at)
+    const incomingCreatedAtMs = Date.parse(createdAtIso)
+    if (!Number.isNaN(incomingCreatedAtMs)
+      && (Number.isNaN(existingCreatedAtMs) || incomingCreatedAtMs < existingCreatedAtMs)) {
+      updatePayload.created_at = createdAtIso
     }
 
     if (normalizedEndDate && normalizedEndDate !== existingEvent.end_date) {
@@ -500,6 +494,7 @@ async function processEvent(eventData: any, creatorAddress: string) {
       neg_risk_market_id: eventNegRiskMarketId ?? null,
       rules: eventData.rules || null,
       end_date: normalizedEndDate,
+      created_at: createdAtIso,
     })
     .select('id')
     .single()
@@ -521,7 +516,12 @@ async function processEvent(eventData: any, creatorAddress: string) {
   return newEvent.id
 }
 
-async function processMarketData(market: SubgraphCondition, metadata: any, eventId: string) {
+async function processMarketData(
+  market: SubgraphCondition,
+  metadata: any,
+  eventId: string,
+  timestamps: MarketTimestamps,
+) {
   if (!eventId) {
     throw new Error(`Invalid eventId: ${eventId}. Event must be created first.`)
   }
@@ -543,26 +543,6 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
   if (metadata.icon) {
     iconUrl = await downloadAndSaveImage(metadata.icon, `markets/icons/${metadata.slug}.jpg`)
   }
-
-  if (!market.creationTimestamp) {
-    throw new Error(`Market ${market.id} missing required creationTimestamp field`)
-  }
-
-  if (!market.updatedAt) {
-    throw new Error(`Market ${market.id} missing required updatedAt field`)
-  }
-
-  const creationTimestamp = Number(market.creationTimestamp)
-  if (Number.isNaN(creationTimestamp)) {
-    throw new TypeError(`Market ${market.id} has invalid creationTimestamp: ${market.creationTimestamp}`)
-  }
-  const createdAtIso = new Date(creationTimestamp * 1000).toISOString()
-
-  const updatedAtTimestamp = Number(market.updatedAt)
-  if (Number.isNaN(updatedAtTimestamp)) {
-    throw new TypeError(`Market ${market.id} has invalid updatedAt: ${market.updatedAt}`)
-  }
-  const updatedAtIso = new Date(updatedAtTimestamp * 1000).toISOString()
 
   console.log(`${marketAlreadyExists ? 'Updating' : 'Creating'} market ${market.id} with eventId: ${eventId}`)
 
@@ -605,8 +585,8 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
     neg_risk_request_id: negRiskRequestId ?? null,
     metadata_version: metadataVersion ?? null,
     metadata_schema: metadataSchema ?? null,
-    created_at: createdAtIso,
-    updated_at: updatedAtIso,
+    created_at: timestamps.createdAtIso,
+    updated_at: timestamps.updatedAtIso,
   }
 
   if (normalizedMarketEndTime) {
@@ -629,6 +609,30 @@ async function processMarketData(market: SubgraphCondition, metadata: any, event
 async function updateEventStatusesFromMarketsBatch(eventIds: string[]) {
   for (const eventId of eventIds) {
     await updateEventStatusFromMarkets(eventId)
+  }
+}
+
+function requireSubgraphTimestampIso(
+  rawValue: string | null | undefined,
+  fieldName: 'creationTimestamp' | 'updatedAt',
+  marketId: string,
+) {
+  if (!rawValue) {
+    throw new Error(`Market ${marketId} missing required ${fieldName} field`)
+  }
+
+  const timestamp = Number(rawValue)
+  if (Number.isNaN(timestamp)) {
+    throw new TypeError(`Market ${marketId} has invalid ${fieldName}: ${rawValue}`)
+  }
+
+  return new Date(timestamp * 1000).toISOString()
+}
+
+function getMarketTimestamps(market: SubgraphCondition): MarketTimestamps {
+  return {
+    createdAtIso: requireSubgraphTimestampIso(market.creationTimestamp, 'creationTimestamp', market.id),
+    updatedAtIso: requireSubgraphTimestampIso(market.updatedAt, 'updatedAt', market.id),
   }
 }
 
