@@ -28,7 +28,7 @@ function parseTradedCount(body: unknown): number {
     return 0
   }
 
-  if (typeof body === 'object' && body !== null && 'traded' in body) {
+  if (typeof body === 'object' && 'traded' in body) {
     return toNumber((body as { traded?: unknown }).traded) ?? 0
   }
 
@@ -40,7 +40,7 @@ function parseTradedVolume(body: unknown): number | null {
     return null
   }
 
-  if (typeof body === 'object' && body !== null) {
+  if (typeof body === 'object') {
     const candidate = body as {
       volume?: unknown
       total_volume?: unknown

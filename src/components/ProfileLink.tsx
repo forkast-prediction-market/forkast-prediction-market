@@ -103,66 +103,69 @@ export default function ProfileLink({
 
   return (
     <Tooltip onOpenChange={setIsOpen}>
-      <TooltipTrigger asChild>
-        <div
-          className={cn(
-            'flex gap-3 py-2',
-            children ? 'items-start' : 'items-center',
-          )}
-        >
-          <Link href={profileHref} className="relative shrink-0">
-            <Image
-              src={user.image}
-              alt={user.username}
-              width={32}
-              height={32}
-              className="rounded-full"
-            />
-            {position && (
-              <Badge
-                variant="secondary"
-                style={{ backgroundColor: medalColor, color: medalTextColor }}
-                className={`
-                  absolute top-0 -right-2 size-5 rounded-full px-1 font-mono text-muted-foreground tabular-nums
-                `}
-              >
-                {position}
-              </Badge>
-            )}
-
-          </Link>
-          <div className="flex min-w-0 flex-1 items-center gap-3">
-            <div className="min-w-0 flex-1">
-              <div
-                className={cn(
-                  'flex min-w-0 items-center gap-1',
-                  usernameMaxWidthClassName ?? 'max-w-32 lg:max-w-64',
+      <div
+        className={cn(
+          'flex gap-3 py-2',
+          children ? 'items-start' : 'items-center',
+        )}
+      >
+        <div className="min-w-0 flex-1">
+          <TooltipTrigger asChild>
+            <div className="inline-flex min-w-0 items-center gap-3">
+              <Link href={profileHref} className="relative shrink-0">
+                <Image
+                  src={user.image}
+                  alt={user.username}
+                  width={32}
+                  height={32}
+                  className="rounded-full"
+                />
+                {position && (
+                  <Badge
+                    variant="secondary"
+                    style={{ backgroundColor: medalColor, color: medalTextColor }}
+                    className={`
+                      absolute top-0 -right-2 size-5 rounded-full px-1 font-mono text-muted-foreground tabular-nums
+                    `}
+                  >
+                    {position}
+                  </Badge>
                 )}
-              >
-                <Link
-                  href={profileHref}
-                  className={cn('truncate text-sm font-medium', usernameClassName)}
+              </Link>
+              <div className="min-w-0">
+                <div
+                  className={cn(
+                    'flex min-w-0 items-center gap-1',
+                    usernameMaxWidthClassName ?? 'max-w-32 lg:max-w-64',
+                  )}
                 >
-                  {user.username}
-                </Link>
-                {date && (
-                  <span className="text-xs whitespace-nowrap text-muted-foreground">
-                    {formatTimeAgo(date)}
-                  </span>
-                )}
+                  <Link
+                    href={profileHref}
+                    className={cn('truncate text-sm font-medium', usernameClassName)}
+                  >
+                    {user.username}
+                  </Link>
+                  {date && (
+                    <span className="text-xs whitespace-nowrap text-muted-foreground">
+                      {formatTimeAgo(date)}
+                    </span>
+                  )}
+                </div>
               </div>
-              {children}
             </div>
-            {trailing
-              ? (
-                  <div className="ml-2 flex shrink-0 items-center text-right">
-                    {trailing}
-                  </div>
-                )
-              : null}
-          </div>
+          </TooltipTrigger>
+          {children
+            ? <div className="pl-[44px]">{children}</div>
+            : null}
         </div>
-      </TooltipTrigger>
+        {trailing
+          ? (
+              <div className="ml-2 flex shrink-0 items-center text-right">
+                {trailing}
+              </div>
+            )
+          : null}
+      </div>
       <TooltipContent
         side="top"
         align="start"
