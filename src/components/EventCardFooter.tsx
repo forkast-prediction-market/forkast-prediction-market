@@ -21,7 +21,7 @@ export default function EventCardFooter({
   }
 
   return (
-    <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+    <div className="mt-0 flex items-center justify-between gap-2 text-xs leading-tight text-muted-foreground">
       <div className="flex items-center gap-2">
         {hasRecentMarket
           ? <NewBadge />

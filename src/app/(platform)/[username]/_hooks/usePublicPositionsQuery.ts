@@ -136,6 +136,7 @@ export function usePublicPositionsQuery({
     initialPageParam: 0,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
+    refetchInterval: 60_000,
     enabled: Boolean(userAddress),
   })
 }

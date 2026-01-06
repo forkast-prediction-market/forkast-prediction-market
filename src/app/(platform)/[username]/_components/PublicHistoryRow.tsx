@@ -81,9 +81,9 @@ export default function PublicHistoryRow({ activity, rowGridClass }: PublicHisto
             >
               {activity.market.title}
             </Link>
-            <div className="flex flex-wrap items-center gap-1.5 text-2xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
               {(variant === 'buy' || variant === 'sell') && (
-                <span className={cn('inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-2xs font-semibold', outcomeColor)}>
+                <span className={cn('inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs font-semibold', outcomeColor)}>
                   {outcomeText}
                   {' '}
                   {priceText}

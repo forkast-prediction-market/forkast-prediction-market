@@ -60,8 +60,12 @@ export default function ProfileOverviewCard({
 
   const isReady = hasLoaded
   const totalPortfolioValue = (positionsValue ?? 0) + (balance?.raw ?? 0)
-  const formattedTotalValue = formatCompactCurrency(totalPortfolioValue)
-  const formattedCashValue = formatCompactCurrency(balance?.raw ?? 0).replace('$', '')
+  const formattedTotalValue = variant === 'portfolio'
+    ? formatCurrency(totalPortfolioValue, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : formatCompactCurrency(totalPortfolioValue)
+  const formattedCashValue = variant === 'portfolio'
+    ? formatCurrency(balance?.raw ?? 0, { minimumFractionDigits: 2, maximumFractionDigits: 2, includeSymbol: false })
+    : formatCompactCurrency(balance?.raw ?? 0).replace('$', '')
   const joinedText = useMemo(() => {
     if (!profile.joinedAt) {
       return null

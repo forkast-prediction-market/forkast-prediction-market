@@ -24,7 +24,7 @@ function normalizeSharesFromBalance(balance: bigint): number {
   }
 
   const decimalValue = Number(balance) / MICRO_UNIT
-  return Math.max(0, Math.floor(decimalValue * 10_000) / 10_000)
+  return Math.max(0, Math.floor(decimalValue * MICRO_UNIT) / MICRO_UNIT)
 }
 
 export function useUserShareBalances({ event, ownerAddress }: UseUserShareBalancesOptions) {

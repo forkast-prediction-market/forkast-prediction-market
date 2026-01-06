@@ -265,7 +265,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
         `
       }
     >
-      <CardContent className="flex h-full flex-col p-3">
+      <CardContent className="flex h-full flex-col px-3 pt-3 pb-1">
         <EventCardHeader
           event={event}
           isInTradingMode={isInTradingMode}
@@ -296,7 +296,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
                 />
               )
             : (
-                <>
+                <div className="mt-auto">
                   {!isSingleMarket && (
                     <EventCardMarketsList
                       event={event}
@@ -316,7 +316,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
                       onToggle={onToggle}
                     />
                   )}
-                </>
+                </div>
               )}
         </div>
 

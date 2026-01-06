@@ -71,11 +71,11 @@ export function MergePositionsDialog({
         {isSuccess
           ? (
               <div className="flex flex-col items-center gap-4 py-4 text-center">
-                <div className="grid size-16 place-items-center rounded-full bg-primary">
+                <div className="grid size-16 place-items-center rounded-full bg-emerald-500">
                   <CheckIcon className="size-8 text-white" />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Merge confirmed. It can take a few minutes for positions to update.
+                  You successfully merged all your eligible positions.
                 </p>
               </div>
             )
