@@ -1,5 +1,5 @@
 import type { PublicPosition } from '@/app/(platform)/[username]/_components/PublicPositionItem'
-import type { SortOption } from '@/app/(platform)/[username]/_types/PublicPositionsTypes'
+import type { SortDirection, SortOption } from '@/app/(platform)/[username]/_types/PublicPositionsTypes'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { isClientOnlySort, mapDataApiPosition, resolvePositionsSearchParams, resolvePositionsSortParams } from '@/app/(platform)/[username]/_utils/PublicPositionsUtils'
 
@@ -11,6 +11,7 @@ async function fetchUserPositions({
   status,
   minAmountFilter,
   sortBy,
+  sortDirection,
   searchQuery,
   signal,
 }: {
@@ -19,11 +20,12 @@ async function fetchUserPositions({
   status: 'active' | 'closed'
   minAmountFilter: string
   sortBy: SortOption
+  sortDirection: SortDirection
   searchQuery?: string
   signal?: AbortSignal
 }): Promise<PublicPosition[]> {
   const endpoint = status === 'active' ? '/positions' : '/closed-positions'
-  const { sortBy: apiSortBy, sortDirection } = resolvePositionsSortParams(sortBy)
+  const { sortBy: apiSortBy, sortDirection: apiSortDirection } = resolvePositionsSortParams(sortBy, sortDirection)
   const { market, title } = resolvePositionsSearchParams(searchQuery ?? '')
   const shouldApplySort = status === 'active' && !isClientOnlySort(sortBy)
   const params = new URLSearchParams({
@@ -41,7 +43,7 @@ async function fetchUserPositions({
     }
     if (shouldApplySort) {
       params.set('sortBy', apiSortBy)
-      params.set('sortDirection', sortDirection)
+      params.set('sortDirection', apiSortDirection)
     }
     if (market) {
       params.set('market', market)
@@ -102,16 +104,18 @@ export function usePublicPositionsQuery({
   status,
   minAmountFilter,
   sortBy,
+  sortDirection,
   searchQuery,
 }: {
   userAddress: string
   status: 'active' | 'closed'
   minAmountFilter: string
   sortBy: SortOption
+  sortDirection: SortDirection
   searchQuery: string
 }) {
   return useInfiniteQuery<PublicPosition[]>({
-    queryKey: ['user-positions', userAddress, status, minAmountFilter, searchQuery, sortBy],
+    queryKey: ['user-positions', userAddress, status, minAmountFilter, searchQuery, sortBy, sortDirection],
     queryFn: ({ pageParam = 0, signal }) =>
       fetchUserPositions({
         pageParam: pageParam as unknown as number,
@@ -119,6 +123,7 @@ export function usePublicPositionsQuery({
         status,
         minAmountFilter,
         sortBy,
+        sortDirection,
         searchQuery,
         signal,
       }),

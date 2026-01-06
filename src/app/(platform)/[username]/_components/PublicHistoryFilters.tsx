@@ -41,7 +41,16 @@ export default function PublicHistoryFilters({
 
         <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
           <Select value={typeFilter} onValueChange={value => onTypeChange(value as HistoryTypeFilter)}>
-            <SelectTrigger className="w-28 justify-start gap-2 [&>svg:last-of-type]:hidden">
+            <SelectTrigger
+              className={
+                `
+                  w-auto justify-start gap-2 bg-transparent shadow-none
+                  hover:bg-transparent
+                  dark:bg-transparent dark:hover:bg-transparent
+                  [&>svg:last-of-type]:hidden
+                `
+              }
+            >
               <ListFilterIcon className="size-4 text-muted-foreground" />
               <SelectValue />
             </SelectTrigger>
@@ -55,7 +64,16 @@ export default function PublicHistoryFilters({
           </Select>
 
           <Select value={sortFilter} onValueChange={value => onSortChange(value as HistorySort)}>
-            <SelectTrigger className="w-32 justify-start gap-2 pr-3 [&>svg:last-of-type]:hidden">
+            <SelectTrigger
+              className={
+                `
+                  w-auto justify-start gap-2 bg-transparent pr-3 shadow-none
+                  hover:bg-transparent
+                  dark:bg-transparent dark:hover:bg-transparent
+                  [&>svg:last-of-type]:hidden
+                `
+              }
+            >
               <ArrowDownNarrowWideIcon className="size-4 text-muted-foreground" />
               <SelectValue />
             </SelectTrigger>
@@ -71,7 +89,11 @@ export default function PublicHistoryFilters({
             type="button"
             variant="outline"
             size="icon"
-            className="rounded-lg"
+            className={`
+              rounded-lg bg-transparent shadow-none
+              hover:bg-transparent
+              dark:bg-transparent dark:hover:bg-transparent
+            `}
             onClick={onExport}
             disabled={disableExport}
           >

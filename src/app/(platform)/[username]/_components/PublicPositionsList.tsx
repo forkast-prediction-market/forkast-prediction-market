@@ -1,7 +1,8 @@
 'use client'
 
+import type { MergeableMarket } from './MergePositionsDialog'
 import type { PublicPosition } from './PublicPositionItem'
-import type { SortOption } from '@/app/(platform)/[username]/_types/PublicPositionsTypes'
+import type { SortDirection, SortOption } from '@/app/(platform)/[username]/_types/PublicPositionsTypes'
 import { useAppKitAccount } from '@reown/appkit/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useRouter } from 'next/navigation'
@@ -9,7 +10,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSignMessage, useSignTypedData } from 'wagmi'
 import { useMergePositionsAction } from '@/app/(platform)/[username]/_hooks/useMergePositionsAction'
 import { usePublicPositionsQuery } from '@/app/(platform)/[username]/_hooks/usePublicPositionsQuery'
-import { buildMergeableMarkets, calculatePositionsTotals, getOutcomeLabel, matchesPositionsSearchQuery, sortPositions } from '@/app/(platform)/[username]/_utils/PublicPositionsUtils'
+import {
+  buildMergeableMarkets,
+  calculatePositionsTotals,
+  fetchLockedSharesByCondition,
+  getDefaultSortDirection,
+  getOutcomeLabel,
+  matchesPositionsSearchQuery,
+  sortPositions,
+} from '@/app/(platform)/[username]/_utils/PublicPositionsUtils'
 import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
 import { calculateMarketFill, normalizeBookLevels } from '@/app/(platform)/event/[slug]/_utils/EventOrderPanelUtils'
 import { PositionShareDialog } from '@/components/PositionShareDialog'
@@ -36,7 +45,6 @@ interface PublicPositionsListProps {
 }
 
 export default function PublicPositionsList({ userAddress }: PublicPositionsListProps) {
-  const rowGridClass = 'grid grid-cols-[minmax(0,2.2fr)_repeat(4,minmax(0,1fr))_auto] items-center gap-4'
   const queryClient = useQueryClient()
   const router = useRouter()
   const { open, close } = useAppKit()
@@ -61,13 +69,16 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
   const [searchQuery, setSearchQuery] = useState('')
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const [sortBy, setSortBy] = useState<SortOption>('currentValue')
+  const [sortDirection, setSortDirection] = useState<SortDirection>(() => getDefaultSortDirection('currentValue'))
   const minAmountFilter = 'All'
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [retryCount, setRetryCount] = useState(0)
   const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false)
+  const [mergeSuccess, setMergeSuccess] = useState(false)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const [sharePosition, setSharePosition] = useState<PublicPosition | null>(null)
+  const [availableMergeableMarkets, setAvailableMergeableMarkets] = useState<MergeableMarket[]>([])
   const [sellModalPayload, setSellModalPayload] = useState<{
     position: PublicPosition
     shares: number
@@ -91,6 +102,19 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
 
   const handleSortChange = useCallback((value: SortOption) => {
     setSortBy(value)
+    setSortDirection(getDefaultSortDirection(value))
+  }, [])
+
+  const handleHeaderSortToggle = useCallback((value: SortOption) => {
+    setSortBy((currentSort) => {
+      if (currentSort === value) {
+        setSortDirection(currentDirection => (currentDirection === 'asc' ? 'desc' : 'asc'))
+        return currentSort
+      }
+
+      setSortDirection(getDefaultSortDirection(value))
+      return value
+    })
   }, [])
 
   useEffect(() => {
@@ -114,6 +138,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     status: marketStatusFilter,
     minAmountFilter,
     sortBy,
+    sortDirection,
     searchQuery: debouncedSearchQuery,
   })
 
@@ -122,14 +147,48 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     [data?.pages],
   )
 
+  const positionsWithIcons = useMemo(() => {
+    if (positions.length === 0) {
+      return positions
+    }
+
+    const iconByCondition = new Map<string, string>()
+    positions.forEach((position) => {
+      if (position.conditionId && position.icon) {
+        iconByCondition.set(position.conditionId, position.icon)
+      }
+    })
+
+    if (iconByCondition.size === 0) {
+      return positions
+    }
+
+    let hasFallbacks = false
+    const updatedPositions = positions.map((position) => {
+      if (position.icon || !position.conditionId) {
+        return position
+      }
+
+      const fallbackIcon = iconByCondition.get(position.conditionId)
+      if (!fallbackIcon) {
+        return position
+      }
+
+      hasFallbacks = true
+      return { ...position, icon: fallbackIcon }
+    })
+
+    return hasFallbacks ? updatedPositions : positions
+  }, [positions])
+
   const visiblePositions = useMemo(
-    () => positions.filter(position => matchesPositionsSearchQuery(position, debouncedSearchQuery)),
-    [debouncedSearchQuery, positions],
+    () => positionsWithIcons.filter(position => matchesPositionsSearchQuery(position, debouncedSearchQuery)),
+    [debouncedSearchQuery, positionsWithIcons],
   )
 
   const sortedPositions = useMemo(
-    () => sortPositions(visiblePositions, sortBy),
-    [sortBy, visiblePositions],
+    () => sortPositions(visiblePositions, sortBy, sortDirection),
+    [sortBy, sortDirection, visiblePositions],
   )
 
   const loading = status === 'pending'
@@ -137,41 +196,115 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
 
   const isSearchActive = debouncedSearchQuery.trim().length > 0
   const mergeableMarkets = useMemo(
-    () => buildMergeableMarkets(positions),
-    [positions],
+    () => buildMergeableMarkets(positionsWithIcons),
+    [positionsWithIcons],
   )
   const positionsByCondition = useMemo(() => {
-    const map: Record<string, Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>> = {}
+    const map: Record<string, Record<string, number>> = {}
 
-    positions
+    positionsWithIcons
       .filter(position => position.status === 'active' && position.conditionId)
       .forEach((position) => {
         const conditionId = position.conditionId as string
-        const outcomeIndex = position.outcomeIndex === OUTCOME_INDEX.NO ? OUTCOME_INDEX.NO : OUTCOME_INDEX.YES
+        const assetKey = typeof position.asset === 'string' ? position.asset.trim() : ''
+        if (!assetKey) {
+          return
+        }
         const size = typeof position.size === 'number' ? position.size : 0
         if (!map[conditionId]) {
-          map[conditionId] = {
-            [OUTCOME_INDEX.YES]: 0,
-            [OUTCOME_INDEX.NO]: 0,
-          }
+          map[conditionId] = {}
         }
-        map[conditionId][outcomeIndex] += size
+        map[conditionId][assetKey] = (map[conditionId][assetKey] ?? 0) + size
       })
 
     return map
-  }, [positions])
-  const hasMergeableMarkets = mergeableMarkets.length > 0
+  }, [positionsWithIcons])
 
-  const { isMergeProcessing, handleMergeAll } = useMergePositionsAction({
-    mergeableMarkets,
+  useEffect(() => {
+    let cancelled = false
+
+    if (!canSell || mergeableMarkets.length === 0) {
+      setAvailableMergeableMarkets([])
+      return () => {
+        cancelled = true
+      }
+    }
+
+    fetchLockedSharesByCondition(mergeableMarkets)
+      .then((lockedSharesByCondition) => {
+        if (cancelled) {
+          return
+        }
+
+        const eligible = mergeableMarkets
+          .map((market) => {
+            const conditionId = market.conditionId
+            if (!conditionId || !Array.isArray(market.outcomeAssets) || market.outcomeAssets.length !== 2) {
+              return null
+            }
+
+            const positionShares = positionsByCondition[conditionId]
+            if (!positionShares) {
+              return null
+            }
+
+            const [firstOutcome, secondOutcome] = market.outcomeAssets
+            const locked = lockedSharesByCondition[conditionId] ?? {}
+            const availableFirst = Math.max(
+              0,
+              (positionShares[firstOutcome] ?? 0) - (locked[firstOutcome] ?? 0),
+            )
+            const availableSecond = Math.max(
+              0,
+              (positionShares[secondOutcome] ?? 0) - (locked[secondOutcome] ?? 0),
+            )
+            const safeMergeAmount = Math.min(market.mergeAmount, availableFirst, availableSecond)
+
+            if (!Number.isFinite(safeMergeAmount) || safeMergeAmount <= 0) {
+              return null
+            }
+
+            return {
+              ...market,
+              mergeAmount: safeMergeAmount,
+            }
+          })
+          .filter((entry): entry is MergeableMarket => Boolean(entry))
+
+        setAvailableMergeableMarkets(eligible)
+      })
+      .catch((error) => {
+        if (cancelled) {
+          return
+        }
+        console.error('Failed to check merge availability.', error)
+        setAvailableMergeableMarkets([])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [canSell, mergeableMarkets, positionsByCondition])
+
+  const hasMergeableMarkets = availableMergeableMarkets.length > 0
+
+  const { isMergeProcessing, mergeBatchCount, handleMergeAll } = useMergePositionsAction({
+    mergeableMarkets: availableMergeableMarkets,
     positionsByCondition,
     hasMergeableMarkets,
     user,
     ensureTradingReady,
     queryClient,
     signMessageAsync,
-    onSuccess: () => setIsMergeDialogOpen(false),
+    onSuccess: () => setMergeSuccess(true),
   })
+
+  const handleMergeDialogChange = useCallback((open: boolean) => {
+    setIsMergeDialogOpen(open)
+    if (!open) {
+      setMergeSuccess(false)
+    }
+  }, [])
 
   const shareCardPayload = useMemo(() => {
     if (!sharePosition) {
@@ -519,7 +652,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     }
-  }, [debouncedSearchQuery, minAmountFilter, marketStatusFilter, sortBy])
+  }, [debouncedSearchQuery, minAmountFilter, marketStatusFilter, sortBy, sortDirection])
 
   useEffect(() => {
     if (!hasNextPage || !loadMoreRef.current) {
@@ -575,11 +708,13 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         onSearchChange={handleSearchChange}
         onSortChange={handleSortChange}
         showMergeButton={hasMergeableMarkets && marketStatusFilter === 'active'}
-        onMergeClick={() => setIsMergeDialogOpen(true)}
+        onMergeClick={() => {
+          setMergeSuccess(false)
+          setIsMergeDialogOpen(true)
+        }}
       />
 
       <PublicPositionsTable
-        rowGridClass={rowGridClass}
         positions={sortedPositions}
         totals={totals}
         isLoading={loading}
@@ -588,6 +723,9 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
         searchQuery={debouncedSearchQuery}
         retryCount={retryCount}
         marketStatusFilter={marketStatusFilter}
+        sortBy={sortBy}
+        sortDirection={sortDirection}
+        onSortHeaderClick={handleHeaderSortToggle}
         onRetry={retryInitialLoad}
         onRefreshPage={() => window.location.reload()}
         onShareClick={handleShareClick}
@@ -611,9 +749,11 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
 
       <MergePositionsDialog
         open={isMergeDialogOpen}
-        onOpenChange={setIsMergeDialogOpen}
-        markets={mergeableMarkets}
+        onOpenChange={handleMergeDialogChange}
+        markets={availableMergeableMarkets}
         isProcessing={isMergeProcessing}
+        mergeCount={mergeBatchCount}
+        isSuccess={mergeSuccess}
         onConfirm={handleMergeAll}
       />
 

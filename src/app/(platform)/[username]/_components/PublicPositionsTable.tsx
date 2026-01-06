@@ -1,6 +1,7 @@
 import type { RefObject } from 'react'
 import type { PublicPosition } from './PublicPositionItem'
-import type { PositionsTotals } from '@/app/(platform)/[username]/_types/PublicPositionsTypes'
+import type { PositionsTotals, SortDirection, SortOption } from '@/app/(platform)/[username]/_types/PublicPositionsTypes'
+import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
 import { formatCurrencyValue } from '@/app/(platform)/[username]/_utils/PublicPositionsUtils'
 import { formatCurrency } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -8,8 +9,40 @@ import PublicPositionsError from './PublicPositionsError'
 import PublicPositionsLoadingState from './PublicPositionsLoadingState'
 import PublicPositionsRow from './PublicPositionsRow'
 
+interface SortHeaderButtonProps {
+  label: string
+  sortKey: SortOption
+  sortBy: SortOption
+  sortDirection: SortDirection
+  onSortHeaderClick: (value: SortOption) => void
+}
+
+function SortHeaderButton({
+  label,
+  sortKey,
+  sortBy,
+  sortDirection,
+  onSortHeaderClick,
+}: SortHeaderButtonProps) {
+  const isActive = sortBy === sortKey
+  const Icon = sortDirection === 'asc' ? ChevronUpIcon : ChevronDownIcon
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSortHeaderClick(sortKey)}
+      className={cn(
+        'inline-flex items-center gap-1 rounded-md px-2 py-1 transition-colors hover:bg-muted/70 hover:shadow-sm',
+        isActive && 'text-foreground',
+      )}
+    >
+      <span>{label}</span>
+      {isActive && <Icon className="size-3" aria-hidden />}
+    </button>
+  )
+}
+
 interface PublicPositionsTableProps {
-  rowGridClass: string
   positions: PublicPosition[]
   totals: PositionsTotals
   isLoading: boolean
@@ -18,6 +51,9 @@ interface PublicPositionsTableProps {
   searchQuery: string
   retryCount: number
   marketStatusFilter: 'active' | 'closed'
+  sortBy: SortOption
+  sortDirection: SortDirection
+  onSortHeaderClick: (value: SortOption) => void
   onRetry: () => void
   onRefreshPage: () => void
   onShareClick: (position: PublicPosition) => void
@@ -26,7 +62,6 @@ interface PublicPositionsTableProps {
 }
 
 export default function PublicPositionsTable({
-  rowGridClass,
   positions,
   totals,
   isLoading,
@@ -35,102 +70,140 @@ export default function PublicPositionsTable({
   searchQuery,
   retryCount,
   marketStatusFilter,
+  sortBy,
+  sortDirection,
+  onSortHeaderClick,
   onRetry,
   onRefreshPage,
   onShareClick,
   onSellClick,
   loadMoreRef,
 }: PublicPositionsTableProps) {
+  const hasPositions = positions.length > 0
+
   return (
     <div className="overflow-x-auto">
-      <div className="min-w-180">
-        <div
-          className={cn(
-            rowGridClass,
-            'px-2 pt-2 pb-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:px-3',
-          )}
-        >
-          <div className="pl-15 text-left">Market</div>
-          <div className="text-left">Avg → Now</div>
-          <div className="text-center">Trade</div>
-          <div className="text-center">To win</div>
-          <div className="text-right">Value</div>
-          <div className="flex justify-end">
-            <div className="w-24" aria-hidden />
-          </div>
-        </div>
-
-        {hasInitialError && (
-          <PublicPositionsError
-            isSearchActive={isSearchActive}
-            searchQuery={searchQuery}
-            retryCount={retryCount}
-            isLoading={isLoading}
-            onRetry={onRetry}
-            onRefreshPage={onRefreshPage}
-          />
-        )}
-
-        {isLoading && (
-          <PublicPositionsLoadingState
-            skeletonCount={5}
-            isSearchActive={isSearchActive}
-            searchQuery={searchQuery}
-            marketStatusFilter={marketStatusFilter}
-            retryCount={retryCount}
-          />
-        )}
-
-        {!isLoading && positions.length === 0 && !hasInitialError && (
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            {marketStatusFilter === 'active' ? 'No positions found.' : 'No closed positions found.'}
-          </div>
-        )}
-
-        {!isLoading && positions.length > 0 && (
-          <div className="space-y-0">
-            {positions.map(position => (
-              <PublicPositionsRow
-                key={position.id}
-                position={position}
-                rowGridClass={rowGridClass}
-                onShareClick={onShareClick}
-                onSellClick={onSellClick}
+      <table className="w-full min-w-180 border-collapse">
+        <thead>
+          <tr className="border-b border-border/80 text-xs font-semibold tracking-wide text-muted-foreground uppercase">
+            <th className="px-2 pt-2 pb-3 text-left sm:px-3">
+              <SortHeaderButton
+                label="Market"
+                sortKey="alpha"
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                onSortHeaderClick={onSortHeaderClick}
               />
-            ))}
+            </th>
+            <th className="px-2 pt-2 pb-3 text-center sm:px-3">
+              <SortHeaderButton
+                label="Avg → Now"
+                sortKey="latestPrice"
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                onSortHeaderClick={onSortHeaderClick}
+              />
+            </th>
+            <th className="px-2 pt-2 pb-3 text-center sm:px-3">
+              <SortHeaderButton
+                label="Trade"
+                sortKey="trade"
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                onSortHeaderClick={onSortHeaderClick}
+              />
+            </th>
+            <th className="px-2 pt-2 pb-3 text-center sm:px-3">
+              <SortHeaderButton
+                label="To win"
+                sortKey="payout"
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                onSortHeaderClick={onSortHeaderClick}
+              />
+            </th>
+            <th className="px-2 pt-2 pb-3 text-center sm:px-3">
+              <SortHeaderButton
+                label="Value"
+                sortKey="currentValue"
+                sortBy={sortBy}
+                sortDirection={sortDirection}
+                onSortHeaderClick={onSortHeaderClick}
+              />
+            </th>
+            <th className="px-2 pt-2 pb-3 text-right sm:px-3">
+              <span className="sr-only">Actions</span>
+            </th>
+          </tr>
+        </thead>
 
-            <div
-              className={cn(
-                rowGridClass,
-                'border-b border-border/80 px-2 py-3 sm:px-3',
-              )}
-            >
-              <div className="pl-15 text-sm font-semibold text-foreground">Total</div>
-              <div className="text-sm text-muted-foreground" />
-              <div className="text-center text-sm font-semibold text-foreground">
-                {formatCurrencyValue(totals.trade)}
-              </div>
-              <div className="text-center text-sm font-semibold text-foreground">
-                {formatCurrencyValue(totals.toWin)}
-              </div>
-              <div className="text-right text-sm font-semibold text-foreground">
-                {formatCurrencyValue(totals.value)}
-                <div className={cn('text-xs', totals.diff >= 0 ? 'text-yes' : 'text-no')}>
-                  {`${totals.diff >= 0 ? '+' : ''}${formatCurrency(Math.abs(totals.diff))}`}
-                  {' '}
-                  (
-                  {totals.pct.toFixed(2)}
-                  %)
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <div className="w-24" aria-hidden />
-              </div>
-            </div>
-            <div ref={loadMoreRef} className="h-0" />
-          </div>
+        {hasPositions && (
+          <>
+            <tbody className="divide-y divide-border/60">
+              {positions.map(position => (
+                <PublicPositionsRow
+                  key={position.id}
+                  position={position}
+                  onShareClick={onShareClick}
+                  onSellClick={onSellClick}
+                />
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t border-border/80">
+                <td className="px-2 py-3 text-left text-sm font-semibold text-foreground sm:px-3">Total</td>
+                <td className="px-2 py-3 text-center text-sm text-muted-foreground sm:px-3" />
+                <td className="px-2 py-3 text-center text-sm font-semibold text-foreground tabular-nums sm:px-3">
+                  {formatCurrencyValue(totals.trade)}
+                </td>
+                <td className="px-2 py-3 text-center text-sm font-semibold text-foreground tabular-nums sm:px-3">
+                  {formatCurrencyValue(totals.toWin)}
+                </td>
+                <td className="px-2 py-3 text-right text-sm font-semibold text-foreground tabular-nums sm:px-3">
+                  {formatCurrencyValue(totals.value)}
+                  <div className={cn('text-xs', totals.diff >= 0 ? 'text-yes' : 'text-no')}>
+                    {`${totals.diff >= 0 ? '+' : ''}${formatCurrency(Math.abs(totals.diff))}`}
+                    {' '}
+                    (
+                    {totals.pct.toFixed(2)}
+                    %)
+                  </div>
+                </td>
+                <td className="px-2 py-3 sm:px-3" />
+              </tr>
+            </tfoot>
+          </>
         )}
-      </div>
+      </table>
+
+      {hasInitialError && (
+        <PublicPositionsError
+          isSearchActive={isSearchActive}
+          searchQuery={searchQuery}
+          retryCount={retryCount}
+          isLoading={isLoading}
+          onRetry={onRetry}
+          onRefreshPage={onRefreshPage}
+        />
+      )}
+
+      {isLoading && (
+        <PublicPositionsLoadingState
+          skeletonCount={5}
+          isSearchActive={isSearchActive}
+          searchQuery={searchQuery}
+          marketStatusFilter={marketStatusFilter}
+          retryCount={retryCount}
+        />
+      )}
+
+      {!isLoading && !hasPositions && !hasInitialError && (
+        <div className="py-12 text-center text-sm text-muted-foreground">
+          {marketStatusFilter === 'active' ? 'No positions found.' : 'No closed positions found.'}
+        </div>
+      )}
+
+      <div ref={loadMoreRef} className="h-0" />
     </div>
   )
 }

@@ -31,7 +31,16 @@ export default function PublicOpenOrdersFilters({
         </div>
 
         <Select value={sortBy} onValueChange={value => onSortChange(value as OpenOrdersSort)}>
-          <SelectTrigger className="w-48 justify-start gap-2 pr-3 [&>svg:last-of-type]:hidden">
+          <SelectTrigger
+            className={
+              `
+                w-auto justify-start gap-2 bg-transparent pr-3 shadow-none
+                hover:bg-transparent
+                dark:bg-transparent dark:hover:bg-transparent
+                [&>svg:last-of-type]:hidden
+              `
+            }
+          >
             <ArrowDownNarrowWideIcon className="size-4 text-muted-foreground" />
             <SelectValue />
           </SelectTrigger>

@@ -9,7 +9,7 @@ import { hashTypedData } from 'viem'
 import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { defaultNetwork } from '@/lib/appkit'
-import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE, OUTCOME_INDEX } from '@/lib/constants'
+import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { ZERO_COLLECTION_ID } from '@/lib/contracts'
 import { toMicro } from '@/lib/formatters'
 import { aggregateSafeTransactions, buildMergePositionTransaction, getSafeTxTypedData, packSafeSignature } from '@/lib/safe/transactions'
@@ -37,75 +37,94 @@ export function useMergePositionsAction({
   onSuccess,
 }: UseMergePositionsActionOptions) {
   const [isMergeProcessing, setIsMergeProcessing] = useState(false)
+  const [mergeBatchCount, setMergeBatchCount] = useState(0)
 
   const handleMergeAll = useCallback(async () => {
     if (!hasMergeableMarkets) {
       toast.info('No mergeable positions available right now.')
+      setMergeBatchCount(0)
       return
     }
 
     if (!ensureTradingReady()) {
+      setMergeBatchCount(0)
       return
     }
 
     if (!user?.proxy_wallet_address || !user?.address) {
       toast.error('Deploy your proxy wallet before merging shares.')
+      setMergeBatchCount(0)
       return
     }
-
-    const lockedSharesByCondition = await fetchLockedSharesByCondition(mergeableMarkets)
-
-    const preparedMerges = mergeableMarkets
-      .filter(market => market.mergeAmount > 0 && market.conditionId)
-      .map((market) => {
-        const conditionId = market.conditionId as string
-        const positionShares = positionsByCondition[conditionId]
-        if (!positionShares) {
-          return null
-        }
-
-        const locked = lockedSharesByCondition[conditionId] ?? {
-          [OUTCOME_INDEX.YES]: 0,
-          [OUTCOME_INDEX.NO]: 0,
-        }
-        const availableYes = Math.max(0, positionShares[OUTCOME_INDEX.YES] - locked[OUTCOME_INDEX.YES])
-        const availableNo = Math.max(0, positionShares[OUTCOME_INDEX.NO] - locked[OUTCOME_INDEX.NO])
-        const safeMergeAmount = Math.min(market.mergeAmount, availableYes, availableNo)
-
-        if (!Number.isFinite(safeMergeAmount) || safeMergeAmount <= 0) {
-          return null
-        }
-
-        return {
-          conditionId,
-          mergeAmount: safeMergeAmount,
-        }
-      })
-      .filter((entry): entry is { conditionId: string, mergeAmount: number } => Boolean(entry))
-
-    if (preparedMerges.length === 0) {
-      toast.info('No eligible pairs to merge.')
-      return
-    }
-
-    const transactions = preparedMerges.map(entry =>
-      buildMergePositionTransaction({
-        conditionId: entry.conditionId as `0x${string}`,
-        partition: [...DEFAULT_CONDITION_PARTITION],
-        amount: toMicro(entry.mergeAmount),
-        parentCollectionId: ZERO_COLLECTION_ID,
-      }),
-    )
-
-    if (transactions.length === 0) {
-      toast.info('No eligible pairs to merge.')
-      return
-    }
-
-    setIsMergeProcessing(true)
 
     try {
-      const nonceResult = await getSafeNonceAction()
+      setIsMergeProcessing(true)
+
+      const [lockedSharesByCondition, nonceResult] = await Promise.all([
+        fetchLockedSharesByCondition(mergeableMarkets),
+        getSafeNonceAction(),
+      ])
+
+      const preparedMerges = mergeableMarkets
+        .filter(market =>
+          market.mergeAmount > 0
+          && market.conditionId
+          && Array.isArray(market.outcomeAssets)
+          && market.outcomeAssets.length === 2,
+        )
+        .map((market) => {
+          const conditionId = market.conditionId as string
+          const positionShares = positionsByCondition[conditionId]
+          if (!positionShares) {
+            return null
+          }
+
+          const [firstOutcome, secondOutcome] = market.outcomeAssets
+          const locked = lockedSharesByCondition[conditionId] ?? {}
+          const availableFirst = Math.max(
+            0,
+            (positionShares[firstOutcome] ?? 0) - (locked[firstOutcome] ?? 0),
+          )
+          const availableSecond = Math.max(
+            0,
+            (positionShares[secondOutcome] ?? 0) - (locked[secondOutcome] ?? 0),
+          )
+          const safeMergeAmount = Math.min(market.mergeAmount, availableFirst, availableSecond)
+
+          if (!Number.isFinite(safeMergeAmount) || safeMergeAmount <= 0) {
+            return null
+          }
+
+          return {
+            conditionId,
+            mergeAmount: safeMergeAmount,
+          }
+        })
+        .filter((entry): entry is { conditionId: string, mergeAmount: number } => Boolean(entry))
+
+      if (preparedMerges.length === 0) {
+        toast.info('No eligible pairs to merge.')
+        setMergeBatchCount(0)
+        return
+      }
+
+      const transactions = preparedMerges.map(entry =>
+        buildMergePositionTransaction({
+          conditionId: entry.conditionId as `0x${string}`,
+          partition: [...DEFAULT_CONDITION_PARTITION],
+          amount: toMicro(entry.mergeAmount),
+          parentCollectionId: ZERO_COLLECTION_ID,
+        }),
+      )
+
+      if (transactions.length === 0) {
+        toast.info('No eligible pairs to merge.')
+        setMergeBatchCount(0)
+        return
+      }
+
+      setMergeBatchCount(preparedMerges.length)
+
       if (nonceResult.error || !nonceResult.nonce) {
         toast.error(nonceResult.error ?? DEFAULT_ERROR_MESSAGE)
         return
@@ -150,10 +169,6 @@ export function useMergePositionsAction({
         return
       }
 
-      toast.success('Merge submitted', {
-        description: 'We sent a merge transaction for your eligible positions.',
-      })
-
       onSuccess?.()
 
       void queryClient.invalidateQueries({ queryKey: ['user-positions'] })
@@ -173,6 +188,7 @@ export function useMergePositionsAction({
     }
     finally {
       setIsMergeProcessing(false)
+      setMergeBatchCount(0)
     }
   }, [
     ensureTradingReady,
@@ -188,6 +204,7 @@ export function useMergePositionsAction({
 
   return {
     isMergeProcessing,
+    mergeBatchCount,
     handleMergeAll,
   }
 }

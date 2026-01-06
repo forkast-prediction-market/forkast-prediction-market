@@ -3,6 +3,7 @@ import { ArrowDownNarrowWideIcon, MergeIcon, SearchIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface PublicPositionsFiltersProps {
   searchQuery: string
@@ -37,7 +38,16 @@ export default function PublicPositionsFilters({
 
         <div className="flex items-center gap-2">
           <Select value={sortBy} onValueChange={value => onSortChange(value as SortOption)}>
-            <SelectTrigger className="w-48 justify-start gap-2 pr-3 [&>svg:last-of-type]:hidden">
+            <SelectTrigger
+              className={
+                `
+                  w-auto justify-start gap-2 bg-transparent pr-3 shadow-none
+                  hover:bg-transparent
+                  dark:bg-transparent dark:hover:bg-transparent
+                  [&>svg:last-of-type]:hidden
+                `
+              }
+            >
               <ArrowDownNarrowWideIcon className="size-4 text-muted-foreground" />
               <SelectValue />
             </SelectTrigger>
@@ -56,16 +66,27 @@ export default function PublicPositionsFilters({
           </Select>
 
           {showMergeButton && (
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="shrink-0 rounded-lg"
-              onClick={onMergeClick}
-              aria-label="Merge positions"
-            >
-              <MergeIcon className="size-4 rotate-90" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className={
+                    `
+                      shrink-0 rounded-lg bg-transparent shadow-none
+                      hover:bg-muted/70
+                      dark:bg-transparent dark:hover:bg-muted/70
+                    `
+                  }
+                  onClick={onMergeClick}
+                  aria-label="Merge positions"
+                >
+                  <MergeIcon className="size-4 rotate-90" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Merge</TooltipContent>
+            </Tooltip>
           )}
         </div>
       </div>

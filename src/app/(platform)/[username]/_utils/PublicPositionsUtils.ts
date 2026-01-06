@@ -1,6 +1,6 @@
 import type { MergeableMarket } from '../_components/MergePositionsDialog'
 import type { PublicPosition } from '../_components/PublicPositionItem'
-import type { ConditionShares, PositionsTotals, ShareCardPayload, ShareCardVariant, SortOption } from '../_types/PublicPositionsTypes'
+import type { ConditionShares, PositionsTotals, ShareCardPayload, ShareCardVariant, SortDirection, SortOption } from '../_types/PublicPositionsTypes'
 import { fetchUserOpenOrders } from '@/app/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
 import { MICRO_UNIT, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel, formatCurrency, formatPercent } from '@/lib/formatters'
@@ -26,7 +26,8 @@ export interface DataApiPosition {
   icon?: string
   eventSlug?: string
   outcome?: string
-  outcomeIndex?: number
+  outcomeIndex?: number | string | null
+  outcome_index?: number | string | null
   oppositeOutcome?: string
   oppositeAsset?: string
   timestamp?: number
@@ -163,29 +164,47 @@ export function parseNumber(value?: number | string | null) {
   return Number.NaN
 }
 
-export function resolvePositionsSortParams(sortBy: SortOption) {
+export const DEFAULT_SORT_DIRECTION: Record<SortOption, SortDirection> = {
+  currentValue: 'desc',
+  trade: 'desc',
+  pnlPercent: 'desc',
+  pnlValue: 'desc',
+  shares: 'desc',
+  alpha: 'asc',
+  endingSoon: 'asc',
+  payout: 'desc',
+  latestPrice: 'desc',
+  avgCost: 'desc',
+}
+
+export function getDefaultSortDirection(sortBy: SortOption): SortDirection {
+  return DEFAULT_SORT_DIRECTION[sortBy]
+}
+
+export function resolvePositionsSortParams(sortBy: SortOption, sortDirection?: SortDirection) {
+  const resolvedDirection = (sortDirection ?? DEFAULT_SORT_DIRECTION[sortBy]) === 'asc' ? 'ASC' : 'DESC'
   switch (sortBy) {
     case 'alpha':
-      return { sortBy: 'TITLE', sortDirection: 'ASC' as const }
+      return { sortBy: 'TITLE', sortDirection: resolvedDirection }
     case 'endingSoon':
-      return { sortBy: 'RESOLVING', sortDirection: 'ASC' as const }
+      return { sortBy: 'RESOLVING', sortDirection: resolvedDirection }
     case 'shares':
-      return { sortBy: 'TOKENS', sortDirection: 'DESC' as const }
+      return { sortBy: 'TOKENS', sortDirection: resolvedDirection }
     case 'trade':
-      return { sortBy: 'INITIAL', sortDirection: 'DESC' as const }
+      return { sortBy: 'INITIAL', sortDirection: resolvedDirection }
     case 'pnlPercent':
-      return { sortBy: 'PERCENTPNL', sortDirection: 'DESC' as const }
+      return { sortBy: 'PERCENTPNL', sortDirection: resolvedDirection }
     case 'pnlValue':
-      return { sortBy: 'CASHPNL', sortDirection: 'DESC' as const }
+      return { sortBy: 'CASHPNL', sortDirection: resolvedDirection }
     case 'latestPrice':
-      return { sortBy: 'PRICE', sortDirection: 'DESC' as const }
+      return { sortBy: 'PRICE', sortDirection: resolvedDirection }
     case 'avgCost':
-      return { sortBy: 'AVGPRICE', sortDirection: 'DESC' as const }
+      return { sortBy: 'AVGPRICE', sortDirection: resolvedDirection }
     case 'payout':
-      return { sortBy: 'TOKENS', sortDirection: 'DESC' as const }
+      return { sortBy: 'TOKENS', sortDirection: resolvedDirection }
     case 'currentValue':
     default:
-      return { sortBy: 'CURRENT', sortDirection: 'DESC' as const }
+      return { sortBy: 'CURRENT', sortDirection: resolvedDirection }
   }
 }
 
@@ -242,6 +261,8 @@ export function mapDataApiPosition(position: DataApiPosition, status: 'active' |
   const currentValueRaw = parseNumber(position.currentValue)
   const realizedValueRaw = parseNumber(position.realizedPnl)
   const curPriceRaw = parseNumber(position.curPrice)
+  const outcomeIndexValue = parseNumber(position.outcomeIndex ?? position.outcome_index)
+  const outcomeIndex = Number.isFinite(outcomeIndexValue) ? outcomeIndexValue : undefined
 
   let derivedCurrentValue = Number.isFinite(currentValueRaw) ? currentValueRaw : Number.NaN
   if (!Number.isFinite(derivedCurrentValue)) {
@@ -265,7 +286,7 @@ export function mapDataApiPosition(position: DataApiPosition, status: 'active' |
         : (Number.isFinite(avgPriceValue) ? avgPriceValue : Number.NaN)
 
   return {
-    id: `${position.conditionId || slug}-${position.outcomeIndex ?? 0}-${status}`,
+    id: `${position.conditionId || slug}-${outcomeIndex ?? 0}-${status}`,
     title: position.title || 'Untitled market',
     slug,
     eventSlug,
@@ -279,16 +300,21 @@ export function mapDataApiPosition(position: DataApiPosition, status: 'active' |
     timestamp: timestampMs,
     status,
     outcome: position.outcome,
-    outcomeIndex: position.outcomeIndex,
+    outcomeIndex,
     oppositeOutcome: position.oppositeOutcome,
-    mergeable: Boolean(position.mergeable),
+    mergeable: position.mergeable,
     size: Number.isFinite(sizeValue) ? sizeValue : undefined,
   }
 }
 
+function normalizeAsset(value?: string | null) {
+  const trimmed = typeof value === 'string' ? value.trim() : ''
+  return trimmed.length > 0 ? trimmed : null
+}
+
 export function buildMergeableMarkets(positions: PublicPosition[]): MergeableMarket[] {
   const activeMergeable = positions.filter(
-    position => position.status === 'active' && position.mergeable && position.conditionId,
+    position => position.status === 'active' && position.conditionId && normalizeAsset(position.asset),
   )
 
   const grouped = new Map<string, PublicPosition[]>()
@@ -302,41 +328,58 @@ export function buildMergeableMarkets(positions: PublicPosition[]): MergeableMar
   const markets: MergeableMarket[] = []
 
   grouped.forEach((groupPositions, conditionId) => {
-    const outcomes = new Map<string, PublicPosition>()
+    const assets = new Map<string, PublicPosition>()
 
     groupPositions.forEach((position) => {
-      const outcomeKey = typeof position.outcomeIndex === 'number'
-        ? position.outcomeIndex.toString()
-        : position.outcome ?? 'unknown'
+      const assetKey = normalizeAsset(position.asset)
+      if (!assetKey) {
+        return
+      }
 
-      const existing = outcomes.get(outcomeKey)
+      const existing = assets.get(assetKey)
       if (!existing || (position.size ?? 0) > (existing.size ?? 0)) {
-        outcomes.set(outcomeKey, position)
+        assets.set(assetKey, position)
       }
     })
 
-    if (outcomes.size < 2) {
+    if (assets.size !== 2) {
       return
     }
 
-    const outcomePositions = Array.from(outcomes.values())
-    const mergeableAmount = Math.min(
-      ...outcomePositions
-        .map(position => position.size ?? 0)
-        .filter(amount => amount > 0),
-    )
+    let outcomeAssets: [string, string] | null = null
+    for (const position of assets.values()) {
+      const assetKey = normalizeAsset(position.asset)
+      const oppositeKey = normalizeAsset(position.oppositeAsset)
+      if (assetKey && oppositeKey && assets.has(oppositeKey)) {
+        outcomeAssets = [assetKey, oppositeKey]
+        break
+      }
+    }
+
+    if (!outcomeAssets) {
+      const assetKeys = Array.from(assets.keys()).sort()
+      if (assetKeys.length === 2) {
+        outcomeAssets = [assetKeys[0], assetKeys[1]]
+      }
+    }
+
+    if (!outcomeAssets) {
+      return
+    }
+
+    const firstPosition = assets.get(outcomeAssets[0])
+    const secondPosition = assets.get(outcomeAssets[1])
+    if (!firstPosition || !secondPosition) {
+      return
+    }
+
+    const mergeableAmount = Math.min(firstPosition.size ?? 0, secondPosition.size ?? 0)
 
     if (!Number.isFinite(mergeableAmount) || mergeableAmount <= 0) {
       return
     }
 
-    const displayValue = Math.min(
-      ...outcomePositions
-        .map(position => position.currentValue ?? position.size ?? 0)
-        .filter(amount => amount > 0),
-    )
-
-    const sample = outcomePositions[0]
+    const sample = firstPosition.icon ? firstPosition : secondPosition
 
     markets.push({
       conditionId,
@@ -344,7 +387,7 @@ export function buildMergeableMarkets(positions: PublicPosition[]): MergeableMar
       title: sample.title,
       icon: sample.icon,
       mergeAmount: mergeableAmount,
-      displayValue: Number.isFinite(displayValue) && displayValue > 0 ? displayValue : mergeableAmount,
+      outcomeAssets,
     })
   })
 
@@ -359,6 +402,32 @@ export function normalizeOrderShares(value: number) {
   return numeric > 100_000 ? numeric / MICRO_UNIT : numeric
 }
 
+async function fetchMarketOutcomeAssetMap(eventSlug: string, conditionId: string): Promise<Record<number, string>> {
+  const response = await fetch(
+    `/api/events/${encodeURIComponent(eventSlug)}/market-metadata?conditionId=${encodeURIComponent(conditionId)}`,
+    { cache: 'no-store' },
+  )
+
+  if (!response.ok) {
+    throw new Error('Failed to fetch market metadata')
+  }
+
+  const payload = await response.json().catch(() => null)
+  const outcomes = payload?.data?.outcomes ?? []
+  const outcomeMap: Record<number, string> = {}
+
+  outcomes.forEach((outcome: { token_id?: string, outcome_index?: number | string | null }) => {
+    const outcomeIndex = parseNumber(outcome?.outcome_index ?? null)
+    const tokenId = normalizeAsset(outcome?.token_id)
+    if (!Number.isFinite(outcomeIndex) || !tokenId) {
+      return
+    }
+    outcomeMap[outcomeIndex] = tokenId
+  })
+
+  return outcomeMap
+}
+
 export async function fetchLockedSharesByCondition(markets: MergeableMarket[]): Promise<Record<string, ConditionShares>> {
   const uniqueKeys = Array.from(new Map(
     markets
@@ -370,6 +439,14 @@ export async function fetchLockedSharesByCondition(markets: MergeableMarket[]): 
 
   await Promise.all(uniqueKeys.map(async ({ eventSlug, conditionId }) => {
     try {
+      let outcomeAssetMap: Record<number, string> = {}
+      try {
+        outcomeAssetMap = await fetchMarketOutcomeAssetMap(eventSlug, conditionId)
+      }
+      catch (error) {
+        console.error('Failed to fetch market metadata for mergeable lock calculation.', error)
+      }
+
       const openOrders = await fetchUserOpenOrders({
         pageParam: 0,
         eventSlug,
@@ -391,12 +468,18 @@ export async function fetchLockedSharesByCondition(markets: MergeableMarket[]): 
           return
         }
 
-        const outcomeIndex = order.outcome?.index === OUTCOME_INDEX.NO ? OUTCOME_INDEX.NO : OUTCOME_INDEX.YES
-        const bucket = lockedByCondition[conditionId] ?? {
-          [OUTCOME_INDEX.YES]: 0,
-          [OUTCOME_INDEX.NO]: 0,
+        const outcomeIndexValue = parseNumber(order.outcome?.index as number | string | null | undefined)
+        if (!Number.isFinite(outcomeIndexValue)) {
+          return
         }
-        bucket[outcomeIndex] += remainingShares
+
+        const assetKey = outcomeAssetMap[outcomeIndexValue]
+        if (!assetKey) {
+          return
+        }
+
+        const bucket = lockedByCondition[conditionId] ?? {}
+        bucket[assetKey] = (bucket[assetKey] ?? 0) + remainingShares
         lockedByCondition[conditionId] = bucket
       })
     }
@@ -408,34 +491,53 @@ export async function fetchLockedSharesByCondition(markets: MergeableMarket[]): 
   return lockedByCondition
 }
 
-export function sortPositions(positions: PublicPosition[], sortBy: SortOption) {
+export function sortPositions(
+  positions: PublicPosition[],
+  sortBy: SortOption,
+  sortDirection: SortDirection = DEFAULT_SORT_DIRECTION[sortBy],
+) {
   const list = [...positions]
+  const multiplier = sortDirection === 'asc' ? 1 : -1
 
   list.sort((a, b) => {
+    let result = 0
     switch (sortBy) {
       case 'currentValue':
-        return getValue(b) - getValue(a)
+        result = getValue(a) - getValue(b)
+        break
       case 'trade':
-        return getTradeValue(b) - getTradeValue(a)
+        result = getTradeValue(a) - getTradeValue(b)
+        break
       case 'pnlPercent':
-        return getPnlPercent(b) - getPnlPercent(a)
+        result = getPnlPercent(a) - getPnlPercent(b)
+        break
       case 'pnlValue':
-        return getPnlValue(b) - getPnlValue(a)
+        result = getPnlValue(a) - getPnlValue(b)
+        break
       case 'shares':
-        return (b.size ?? 0) - (a.size ?? 0)
+        result = (a.size ?? 0) - (b.size ?? 0)
+        break
       case 'alpha':
-        return a.title.localeCompare(b.title)
+        result = a.title.localeCompare(b.title)
+        break
       case 'endingSoon':
-        return (a.timestamp ?? 0) - (b.timestamp ?? 0)
+        result = (a.timestamp ?? 0) - (b.timestamp ?? 0)
+        break
       case 'payout':
-        return (b.size ?? 0) - (a.size ?? 0)
+        result = (a.size ?? 0) - (b.size ?? 0)
+        break
       case 'latestPrice':
-        return getLatestPrice(b) - getLatestPrice(a)
+        result = getLatestPrice(a) - getLatestPrice(b)
+        break
       case 'avgCost':
-        return (b.avgPrice ?? 0) - (a.avgPrice ?? 0)
+        result = (a.avgPrice ?? 0) - (b.avgPrice ?? 0)
+        break
       default:
-        return 0
+        result = 0
+        break
     }
+
+    return result * multiplier
   })
 
   return list

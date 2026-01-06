@@ -1,5 +1,3 @@
-import type { OUTCOME_INDEX } from '@/lib/constants'
-
 export type SortOption
   = | 'currentValue'
     | 'trade'
@@ -11,6 +9,8 @@ export type SortOption
     | 'payout'
     | 'latestPrice'
     | 'avgCost'
+
+export type SortDirection = 'asc' | 'desc'
 
 export type ShareCardVariant = 'yes' | 'no'
 
@@ -37,4 +37,4 @@ export interface PositionsTotals {
   toWin: number
 }
 
-export type ConditionShares = Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>
+export type ConditionShares = Record<string, number>
