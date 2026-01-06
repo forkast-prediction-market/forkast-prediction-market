@@ -32,6 +32,7 @@ import {
   getTopMarketIds,
 } from '@/app/(platform)/event/[slug]/_utils/EventChartUtils'
 import PredictionChart from '@/components/PredictionChart'
+import { useWindowSize } from '@/hooks/useWindowSize'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { resolveDisplayPrice } from '@/lib/market-chance'
 import { useIsSingleMarket } from '@/stores/useOrder'
@@ -233,6 +234,9 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     return `${event.id}:${activeTimeRange}:${activeOutcomeIndex}:${seriesKeys}`
   }, [event.id, activeTimeRange, activeOutcomeIndex, effectiveSeries])
 
+  const { width: windowWidth } = useWindowSize()
+  const chartWidth = Math.min(windowWidth || 900, 900)
+
   const legendEntries = useMemo<Array<SeriesConfig & { value: number | null }>>(
     () => legendSeries.map((seriesItem) => {
       const hoveredValue = cursorSnapshot?.values?.[seriesItem.key]
@@ -247,7 +251,6 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     [legendSeries, cursorSnapshot, currentOutcomeChances, latestSnapshot],
   )
 
-  const chartWidth = isMobile ? 400 : 900
   const leadingMarket = legendSeries[0]
   const hoveredYesChance = leadingMarket
     ? cursorSnapshot?.values?.[leadingMarket.key]

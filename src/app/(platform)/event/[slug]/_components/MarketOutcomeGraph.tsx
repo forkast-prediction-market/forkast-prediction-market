@@ -13,6 +13,7 @@ import {
   useEventPriceHistory,
 } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import PredictionChart from '@/components/PredictionChart'
+import { useWindowSize } from '@/hooks/useWindowSize'
 import { OUTCOME_INDEX } from '@/lib/constants'
 
 interface MarketOutcomeGraphProps {
@@ -31,8 +32,8 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   const [timeRangeIndicator, setTimeRangeIndicator] = useState({ width: 0, left: 0 })
   const [timeRangeIndicatorReady, setTimeRangeIndicatorReady] = useState(false)
   const marketTargets = useMemo(() => buildMarketTargets(allMarkets), [allMarkets])
-  const chartWidth = isMobile ? 400 : 900
-
+  const { width: windowWidth } = useWindowSize()
+  const chartWidth = Math.min(windowWidth || 900, 900)
   useEffect(() => {
     setActiveOutcomeIndex(outcome.outcome_index)
     setCursorSnapshot(null)
