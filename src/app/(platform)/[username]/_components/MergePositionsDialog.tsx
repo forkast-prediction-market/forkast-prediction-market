@@ -44,7 +44,7 @@ export function MergePositionsDialog({
   onConfirm,
 }: MergePositionsDialogProps) {
   const totalValue = markets.reduce((total, market) => total + (market.mergeAmount || 0), 0)
-  const totalCount = mergeCount > 0 ? mergeCount : markets.length
+  const totalCount = markets.length
   const progressCount = mergeCount > 0 ? mergeCount : 0
   const actionLabel = isSuccess
     ? 'Done'
