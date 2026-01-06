@@ -117,12 +117,6 @@ export function useMergePositionsAction({
         }),
       )
 
-      if (transactions.length === 0) {
-        toast.info('No eligible pairs to merge.')
-        setMergeBatchCount(0)
-        return
-      }
-
       setMergeBatchCount(preparedMerges.length)
 
       if (nonceResult.error || !nonceResult.nonce) {

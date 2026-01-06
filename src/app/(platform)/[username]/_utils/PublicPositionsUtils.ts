@@ -435,16 +435,27 @@ export async function fetchLockedSharesByCondition(markets: MergeableMarket[]): 
       .map(market => [`${market.eventSlug}:${market.conditionId}`, { eventSlug: market.eventSlug!, conditionId: market.conditionId }]),
   ).values())
 
+  const expectedAssetsByCondition = new Map<string, [string, string]>()
+  markets.forEach((market) => {
+    if (market.conditionId && Array.isArray(market.outcomeAssets) && market.outcomeAssets.length === 2) {
+      expectedAssetsByCondition.set(market.conditionId, market.outcomeAssets)
+    }
+  })
+
   const lockedByCondition: Record<string, ConditionShares> = {}
 
   await Promise.all(uniqueKeys.map(async ({ eventSlug, conditionId }) => {
     try {
-      let outcomeAssetMap: Record<number, string> = {}
-      try {
-        outcomeAssetMap = await fetchMarketOutcomeAssetMap(eventSlug, conditionId)
+      const outcomeAssetMap = await fetchMarketOutcomeAssetMap(eventSlug, conditionId)
+      const expectedAssets = expectedAssetsByCondition.get(conditionId)
+      if (!expectedAssets) {
+        throw new Error(`Missing outcome assets for condition ${conditionId}`)
       }
-      catch (error) {
-        console.error('Failed to fetch market metadata for mergeable lock calculation.', error)
+
+      const availableAssets = new Set(Object.values(outcomeAssetMap))
+      const hasAllAssets = expectedAssets.every(asset => availableAssets.has(asset))
+      if (!hasAllAssets) {
+        throw new Error(`Incomplete outcome asset mapping for condition ${conditionId}`)
       }
 
       const openOrders = await fetchUserOpenOrders({
@@ -485,6 +496,7 @@ export async function fetchLockedSharesByCondition(markets: MergeableMarket[]): 
     }
     catch (error) {
       console.error('Failed to fetch open orders for mergeable lock calculation.', error)
+      throw error
     }
   }))
 
