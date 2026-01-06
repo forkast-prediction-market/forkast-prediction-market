@@ -47,7 +47,12 @@ export function formatShares(amount: string | number | undefined) {
   if (!Number.isFinite(numeric) || numeric <= 0) {
     return null
   }
-  return `${numeric.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${numeric === 1 ? 'share' : 'shares'}`
+  const useExtraPrecision = Math.abs(numeric) < 0.01
+  const formatted = numeric.toLocaleString(undefined, {
+    minimumFractionDigits: useExtraPrecision ? 4 : 0,
+    maximumFractionDigits: useExtraPrecision ? 4 : 2,
+  })
+  return `${formatted} ${numeric === 1 ? 'share' : 'shares'}`
 }
 
 export function formatPriceCents(price?: string | number) {

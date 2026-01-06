@@ -43,6 +43,13 @@ export function MergePositionsDialog({
   onOpenChange,
   onConfirm,
 }: MergePositionsDialogProps) {
+  function formatMergeValue(value: number) {
+    const safeValue = Number.isFinite(value) ? value : 0
+    if (safeValue !== 0 && Math.abs(safeValue) < 0.01) {
+      return formatCurrency(safeValue, { minimumFractionDigits: 4, maximumFractionDigits: 4 })
+    }
+    return formatCurrency(safeValue)
+  }
   const totalValue = markets.reduce((total, market) => total + (market.mergeAmount || 0), 0)
   const totalCount = markets.length
   const progressCount = mergeCount > 0 ? mergeCount : 0
@@ -59,7 +66,7 @@ export function MergePositionsDialog({
           <DialogTitle className="text-center text-2xl font-bold">
             Merge
             {' '}
-            {formatCurrency(totalValue || 0)}
+            {formatMergeValue(totalValue || 0)}
             {' '}
             in positions
           </DialogTitle>
@@ -114,7 +121,7 @@ export function MergePositionsDialog({
                       <p className="text-sm text-muted-foreground">
                         Value
                         {' '}
-                        {formatCurrency(market.mergeAmount || 0)}
+                        {formatMergeValue(market.mergeAmount || 0)}
                       </p>
                     </div>
                   </Link>
