@@ -4,9 +4,8 @@ import type { InfiniteData } from '@tanstack/react-query'
 import type { ActivityOrder, Event } from '@/types'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertCircleIcon, ExternalLinkIcon, Loader2Icon } from 'lucide-react'
-import Image from 'next/image'
-import Link from 'next/link'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import ProfileLink from '@/components/ProfileLink'
 import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
@@ -285,80 +284,70 @@ export default function EventActivity({ event }: EventActivityProps) {
               const outcomeColorClass = (activity.outcome.text || '').toLowerCase() === 'yes'
                 ? 'text-yes'
                 : 'text-no'
-              const displayUsername = activity.user.username
+              const rawUsername = activity.user.username
                 || activity.user.address
                 || 'trader'
+              const normalizedUsername = rawUsername.startsWith('@')
+                ? rawUsername.slice(1)
+                : rawUsername
               const displayImage = activity.user.image
-                || `https://avatar.vercel.sh/${activity.user.address || displayUsername}.png`
-              const profileSlug = displayUsername.startsWith('@') ? displayUsername : `@${displayUsername}`
-              const profileHref: `/${string}` = `/${profileSlug}`
+                || `https://avatar.vercel.sh/${activity.user.address || normalizedUsername}.png`
 
               return (
                 <div
                   key={activity.id}
-                  className={cn(`
-                    flex items-center justify-between gap-3 px-3 py-2.5 text-sm leading-tight text-foreground
-                    sm:px-4
-                  `)}
                 >
-                  <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <Link href={profileHref} className="shrink-0">
-                      <Image
-                        src={displayImage}
-                        alt={displayUsername}
-                        width={32}
-                        height={32}
-                        className="size-8 rounded-full object-cover"
-                      />
-                    </Link>
-                    <div className={`
-                      flex min-w-0 flex-wrap items-center gap-1 text-foreground
-                      sm:flex-nowrap sm:overflow-hidden sm:text-ellipsis sm:whitespace-nowrap
-                    `}
-                    >
-                      <Link
-                        href={profileHref}
-                        className="max-w-35 shrink-0 truncate font-semibold text-foreground"
-                        title={displayUsername}
-                      >
-                        {displayUsername}
-                      </Link>
-                      <span className="text-foreground">
-                        {activity.side === 'buy' ? 'bought' : 'sold'}
-                      </span>
-                      <span className={cn('font-semibold', outcomeColorClass)}>
-                        {amountLabel}
-                        {activity.outcome.text ? ` ${activity.outcome.text}` : ''}
-                      </span>
-                      <span className="text-foreground">
-                        at
-                      </span>
-                      <span className="font-semibold text-foreground">
-                        {priceLabel}
-                      </span>
-                      <span className="text-muted-foreground">
-                        (
-                        {valueLabel}
-                        )
-                      </span>
-                    </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                    <span className="whitespace-nowrap">
-                      {timeAgoLabel}
-                    </span>
-                    {txUrl && (
-                      <a
-                        href={txUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        aria-label="View transaction on Polygonscan"
-                        className="transition-colors hover:text-foreground"
-                      >
-                        <ExternalLinkIcon className="size-3.5" />
-                      </a>
+                  <ProfileLink
+                    user={{
+                      image: displayImage,
+                      username: normalizedUsername,
+                      address: activity.user.address,
+                    }}
+                    layout="inline"
+                    usernameClassName="font-semibold text-foreground"
+                    usernameMaxWidthClassName="max-w-35"
+                    containerClassName="px-3 py-2.5 text-sm leading-tight text-foreground sm:px-4"
+                    trailing={(
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span className="whitespace-nowrap">
+                          {timeAgoLabel}
+                        </span>
+                        {txUrl && (
+                          <a
+                            href={txUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="View transaction on Polygonscan"
+                            className="transition-colors hover:text-foreground"
+                          >
+                            <ExternalLinkIcon className="size-3.5" />
+                          </a>
+                        )}
+                      </div>
                     )}
-                  </div>
+                    inlineContent={(
+                      <>
+                        <span className="text-foreground">
+                          {activity.side === 'buy' ? 'bought' : 'sold'}
+                        </span>
+                        <span className={cn('font-semibold', outcomeColorClass)}>
+                          {amountLabel}
+                          {activity.outcome.text ? ` ${activity.outcome.text}` : ''}
+                        </span>
+                        <span className="text-foreground">
+                          at
+                        </span>
+                        <span className="font-semibold text-foreground">
+                          {priceLabel}
+                        </span>
+                        <span className="text-muted-foreground">
+                          (
+                          {valueLabel}
+                          )
+                        </span>
+                      </>
+                    )}
+                  />
                 </div>
               )
             })}

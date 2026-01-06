@@ -20,26 +20,38 @@ interface ProfileLinkProps {
     image: string
     username: string
   }
+  layout?: 'default' | 'inline'
   position?: number
   date?: string
   children?: ReactNode
+  inlineContent?: ReactNode
   trailing?: ReactNode
+  containerClassName?: string
   usernameMaxWidthClassName?: string
   usernameClassName?: string
 }
 
 export default function ProfileLink({
   user,
+  layout = 'default',
   position,
   date,
   children,
+  inlineContent,
   trailing,
+  containerClassName,
   usernameMaxWidthClassName,
   usernameClassName,
 }: ProfileLinkProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [stats, setStats] = useState<Awaited<ReturnType<typeof fetchProfileLinkStats>>>(null)
   const [hasLoaded, setHasLoaded] = useState(false)
+  const isInline = layout === 'inline'
+  const inlineBody = inlineContent ?? children
+  const inlineRowClassName = `
+    flex min-w-0 flex-wrap items-center gap-1 text-foreground
+    sm:flex-nowrap sm:overflow-hidden sm:text-ellipsis sm:whitespace-nowrap
+  `
 
   const medalColor = {
     1: '#FFD700',
@@ -110,8 +122,10 @@ export default function ProfileLink({
     <Tooltip onOpenChange={setIsOpen}>
       <div
         className={cn(
-          'flex gap-3 py-2',
-          children ? 'items-start' : 'items-center',
+          'flex gap-3',
+          isInline ? 'items-center justify-between' : children ? 'items-start' : 'items-center',
+          isInline ? null : 'py-2',
+          containerClassName,
         )}
       >
         <div className="min-w-0 flex-1">
@@ -138,28 +152,52 @@ export default function ProfileLink({
                 )}
               </Link>
               <div className="min-w-0">
-                <div
-                  className={cn(
-                    'flex min-w-0 items-center gap-1',
-                    usernameMaxWidthClassName ?? 'max-w-32 lg:max-w-64',
-                  )}
-                >
-                  <Link
-                    href={profileHref}
-                    className={cn('truncate text-sm font-medium', usernameClassName)}
-                  >
-                    {user.username}
-                  </Link>
-                  {date && (
-                    <span className="text-xs whitespace-nowrap text-muted-foreground">
-                      {formatTimeAgo(date)}
-                    </span>
-                  )}
-                </div>
+                {isInline
+                  ? (
+                      <div className={inlineRowClassName}>
+                        <Link
+                          href={profileHref}
+                          title={user.username}
+                          className={cn(
+                            'shrink-0 truncate text-sm font-medium',
+                            usernameClassName,
+                            usernameMaxWidthClassName ?? 'max-w-32 lg:max-w-64',
+                          )}
+                        >
+                          {user.username}
+                        </Link>
+                        {date && (
+                          <span className="text-xs whitespace-nowrap text-muted-foreground">
+                            {formatTimeAgo(date)}
+                          </span>
+                        )}
+                        {inlineBody ?? null}
+                      </div>
+                    )
+                  : (
+                      <div
+                        className={cn(
+                          'flex min-w-0 items-center gap-1',
+                          usernameMaxWidthClassName ?? 'max-w-32 lg:max-w-64',
+                        )}
+                      >
+                        <Link
+                          href={profileHref}
+                          className={cn('truncate text-sm font-medium', usernameClassName)}
+                        >
+                          {user.username}
+                        </Link>
+                        {date && (
+                          <span className="text-xs whitespace-nowrap text-muted-foreground">
+                            {formatTimeAgo(date)}
+                          </span>
+                        )}
+                      </div>
+                    )}
               </div>
             </div>
           </TooltipTrigger>
-          {children
+          {!isInline && children
             ? <div className="pl-11">{children}</div>
             : null}
         </div>
