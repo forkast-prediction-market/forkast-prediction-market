@@ -19,21 +19,21 @@ export default function EventCardMarketsList({
       {event.markets.map(market => (
         <div
           key={market.condition_id}
-          className="flex items-center justify-between text-xs"
+          className="flex items-center justify-between"
         >
-          <span
-            className="truncate dark:text-white"
+          <p
+            className="truncate text-[13px] font-medium dark:text-white"
             title={market.short_title || market.title}
           >
             {market.short_title || market.title}
-          </span>
+          </p>
           <div className="ml-2 flex items-center gap-2">
             {(() => {
               const displayChance = Math.round(getDisplayChance(market.condition_id))
               const oppositeChance = Math.max(0, Math.min(100, 100 - displayChance))
               return (
                 <>
-                  <span className="text-2xs font-bold text-slate-900 dark:text-white">
+                  <span className="text-xs font-bold text-slate-900 dark:text-white">
                     {displayChance}
                     %
                   </span>
@@ -47,7 +47,7 @@ export default function EventCardMarketsList({
                       }}
                       title={`${market.outcomes[0].outcome_text}: ${displayChance}%`}
                       variant="yes"
-                      className="group h-auto w-10 px-2 py-1 text-2xs"
+                      className="group h-auto w-11 px-2 py-1 text-xs"
                     >
                       <span className="truncate group-hover:hidden">
                         {market.outcomes[0].outcome_text}
@@ -67,7 +67,7 @@ export default function EventCardMarketsList({
                       title={`${market.outcomes[1].outcome_text}: ${oppositeChance}%`}
                       variant="no"
                       size="sm"
-                      className="group h-auto w-10 px-2 py-1 text-2xs"
+                      className="group h-auto w-11 px-2 py-1 text-xs"
                     >
                       <span className="truncate group-hover:hidden">
                         {market.outcomes[1].outcome_text}
