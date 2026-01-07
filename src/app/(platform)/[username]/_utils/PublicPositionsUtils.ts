@@ -458,13 +458,13 @@ export async function fetchLockedSharesByCondition(markets: MergeableMarket[]): 
         throw new Error(`Incomplete outcome asset mapping for condition ${conditionId}`)
       }
 
-      const openOrders = await fetchUserOpenOrders({
-        pageParam: 0,
+      const openOrdersPage = await fetchUserOpenOrders({
+        pageParam: 'MA==',
         eventSlug,
         conditionId,
       })
 
-      openOrders.forEach((order) => {
+      openOrdersPage.data.forEach((order) => {
         if (order.side !== 'sell') {
           return
         }

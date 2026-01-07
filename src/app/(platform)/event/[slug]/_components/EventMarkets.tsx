@@ -484,7 +484,7 @@ function MarketDetailTabs({
   })
   const hasOpenOrders = useMemo(() => {
     const pages = openOrdersData?.pages ?? []
-    return pages.some(page => page.length > 0)
+    return pages.some(page => page.data.length > 0)
   }, [openOrdersData?.pages])
 
   const { data: historyPreview } = useQuery<DataApiActivity[]>({

@@ -24,7 +24,7 @@ export function useEventOrderPanelOpenOrders({
   })
 
   const openOrders = useMemo(
-    () => openOrdersQuery.data?.pages?.flatMap(page => page) ?? [],
+    () => openOrdersQuery.data?.pages?.flatMap(page => page.data) ?? [],
     [openOrdersQuery.data],
   )
 
