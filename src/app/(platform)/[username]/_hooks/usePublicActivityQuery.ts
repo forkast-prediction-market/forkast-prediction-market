@@ -63,7 +63,7 @@ export function usePublicActivityQuery({
   sortFilter: ActivitySort
 }) {
   return useInfiniteQuery<ActivityOrder[]>({
-    queryKey: ['user-history', userAddress, typeFilter, sortFilter],
+    queryKey: ['user-activity', userAddress, typeFilter, sortFilter],
     queryFn: ({ pageParam = 0, signal }) => fetchUserActivity({
       pageParam: pageParam as number,
       userAddress,

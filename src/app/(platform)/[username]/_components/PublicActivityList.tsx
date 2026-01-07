@@ -132,7 +132,16 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
         infiniteScrollError={infiniteScrollError}
         onRetryLoadMore={() => {
           setInfiniteScrollError(null)
-          void fetchNextPage()
+          setIsLoadingMore(true)
+          fetchNextPage()
+            .catch((error) => {
+              if (error.name !== 'AbortError') {
+                setInfiniteScrollError(error.message || 'Failed to load more activity.')
+              }
+            })
+            .finally(() => {
+              setIsLoadingMore(false)
+            })
         }}
         loadMoreRef={loadMoreRef}
       />
