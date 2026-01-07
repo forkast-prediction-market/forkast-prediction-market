@@ -461,7 +461,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
       )}
 
       <div className="max-w-full min-w-0 overflow-x-auto px-2">
-        <table className="w-full min-w-[140%] table-fixed border-collapse sm:min-w-lg sm:table-auto">
+        <table className="w-full max-w-full table-fixed border-collapse max-sm:min-w-[140%] sm:min-w-full">
           <colgroup>
             <col style={{ width: '10%' }} />
             <col style={{ width: '20%' }} />
