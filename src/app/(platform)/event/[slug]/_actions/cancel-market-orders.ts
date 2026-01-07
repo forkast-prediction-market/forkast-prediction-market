@@ -95,7 +95,7 @@ export async function cancelMarketOrdersAction(payload: { market?: string, asset
       return { cancelled: [], notCanceled: {}, error: message || CANCEL_MARKET_ORDERS_ERROR }
     }
 
-    if (!responsePayload || !Array.isArray(responsePayload.cancelled) || typeof responsePayload.notCanceled !== 'object') {
+    if (!responsePayload || !Array.isArray(responsePayload.cancelled) || responsePayload.notCanceled === null || typeof responsePayload.notCanceled !== 'object' || Array.isArray(responsePayload.notCanceled)) {
       return { cancelled: [], notCanceled: {}, error: CANCEL_MARKET_ORDERS_ERROR }
     }
 
