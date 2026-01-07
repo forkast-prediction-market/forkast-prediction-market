@@ -63,7 +63,10 @@ export default function EventOrderBook({
     conditionId: market.condition_id,
     enabled: Boolean(user?.id),
   })
-  const userOpenOrders = useMemo(() => userOpenOrdersData?.pages.flat() ?? [], [userOpenOrdersData?.pages])
+  const userOpenOrders = useMemo(
+    () => userOpenOrdersData?.pages.flatMap(page => page.data) ?? [],
+    [userOpenOrdersData?.pages],
+  )
   const userOrdersByLevel = useMemo(() => {
     const map = new Map<string, OrderBookUserOrder>()
     userOpenOrders.forEach((order) => {

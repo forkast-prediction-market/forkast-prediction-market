@@ -51,7 +51,7 @@ export default function PortfolioOpenOrdersList({ userAddress }: PortfolioOpenOr
     apiSearchFilters,
   })
 
-  const orders = useMemo(() => data?.pages.flat() ?? [], [data?.pages])
+  const orders = useMemo(() => data?.pages.flatMap(page => page.data) ?? [], [data?.pages])
   const visibleOrders = useMemo(() => {
     const filtered = orders.filter(order => matchesOpenOrdersSearchQuery(order, searchQuery))
     return sortOpenOrders(filtered, sortBy)
@@ -67,12 +67,15 @@ export default function PortfolioOpenOrdersList({ userAddress }: PortfolioOpenOr
       return
     }
 
-    queryClient.setQueryData<InfiniteData<PortfolioUserOpenOrder[]>>(openOrdersQueryKey, (current) => {
+    queryClient.setQueryData<InfiniteData<{ data: PortfolioUserOpenOrder[], next_cursor: string }>>(openOrdersQueryKey, (current) => {
       if (!current) {
         return current
       }
 
-      const updatedPages = current.pages.map(page => page.filter(item => !orderIds.includes(item.id)))
+      const updatedPages = current.pages.map(page => ({
+        ...page,
+        data: page.data.filter(item => !orderIds.includes(item.id)),
+      }))
       return { ...current, pages: updatedPages }
     })
   }, [openOrdersQueryKey, queryClient])

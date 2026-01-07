@@ -232,28 +232,27 @@ function MarketPositionRow({
         <div className="flex items-center justify-end gap-2 sm:flex-nowrap">
           <Button
             type="button"
-            variant="ghost"
-            className={cn(
-              'h-8 rounded-md border border-border/70 bg-transparent px-3 text-xs font-semibold',
-              'hover:bg-muted/30 dark:border-white/30 dark:text-white dark:hover:bg-white/10',
-            )}
+            variant="outline"
+            size="sm"
+            aria-label="Sell position"
             onClick={() => onSell(position)}
           >
             Sell
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            aria-label={`Share ${outcomeButtonLabel} position`}
-            className={cn(
-              'size-8 rounded-md border border-border/70 bg-transparent text-foreground',
-              'hover:bg-muted/30 dark:border-white/30 dark:text-white dark:hover:bg-white/10',
-            )}
-            onClick={() => onShare(position)}
-          >
-            <ShareIcon className="size-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                aria-label={`Share ${outcomeButtonLabel} position`}
+                onClick={() => onShare(position)}
+              >
+                <ShareIcon className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Share</TooltipContent>
+          </Tooltip>
         </div>
       </td>
     </tr>

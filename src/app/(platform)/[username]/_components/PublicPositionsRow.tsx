@@ -4,6 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { formatCurrencyValue, getLatestPrice, getValue } from '@/app/(platform)/[username]/_utils/PublicPositionsUtils'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
@@ -131,19 +132,19 @@ export default function PublicPositionsRow({
               Sell
             </Button>
           )}
-          <Button
-            size="icon"
-            variant="outline"
-            className={`
-              rounded-lg bg-transparent shadow-none
-              hover:bg-transparent
-              dark:bg-transparent dark:hover:bg-transparent
-            `}
-            onClick={() => onShareClick(position)}
-            aria-label={`Share ${position.title}`}
-          >
-            <ShareIcon className="size-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onShareClick(position)}
+                aria-label={`Share ${position.title}`}
+              >
+                <ShareIcon className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Share</TooltipContent>
+          </Tooltip>
         </div>
       </td>
     </tr>

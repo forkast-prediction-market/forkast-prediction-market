@@ -42,7 +42,7 @@ export async function GET(
     }
 
     if (!user) {
-      return NextResponse.json({ data: [] })
+      return NextResponse.json({ data: [], next_cursor: 'LTE=' })
     }
 
     if (!CLOB_URL) {
@@ -52,22 +52,19 @@ export async function GET(
 
     const tradingAuth = await getUserTradingAuthSecrets(user.id)
     if (!tradingAuth?.clob) {
-      return NextResponse.json({ data: [] })
+      return NextResponse.json({ data: [], next_cursor: 'LTE=' })
     }
 
     const { searchParams } = new URL(request.url)
-    const limit = Number.parseInt(searchParams.get('limit') || '50', 10)
-    const offset = Number.parseInt(searchParams.get('offset') || '0', 10)
     const conditionIdParam = searchParams.get('conditionId')
-    const validatedLimit = Number.isNaN(limit) ? 50 : Math.min(Math.max(1, limit), 100)
-    const validatedOffset = Number.isNaN(offset) ? 0 : Math.max(0, offset)
+    const nextCursor = searchParams.get('next_cursor')?.trim() || undefined
     const conditionId = conditionIdParam && conditionIdParam.trim().length > 0
       ? conditionIdParam.trim()
       : undefined
 
     const { data: marketMetadata, error: marketError } = await EventRepository.getEventMarketMetadata(slug)
     if (marketError || !marketMetadata || marketMetadata.length === 0) {
-      return NextResponse.json({ data: [] })
+      return NextResponse.json({ data: [], next_cursor: 'LTE=' })
     }
 
     const targetMarkets = conditionId
@@ -75,30 +72,22 @@ export async function GET(
       : marketMetadata
 
     if (!targetMarkets.length) {
-      return NextResponse.json({ data: [] })
+      return NextResponse.json({ data: [], next_cursor: 'LTE=' })
     }
 
     const { marketMap, outcomeMap } = buildMarketLookups(targetMarkets)
 
-    const clobOrders = await fetchClobOpenOrders({
+    const { data: clobOrders, next_cursor } = await fetchClobOpenOrders({
       market: conditionId,
       userAddress: user.address,
       auth: tradingAuth.clob,
+      nextCursor,
     })
 
     const normalizedOrders = clobOrders
       .map(order => mapClobOrder(order, marketMap, outcomeMap))
       .filter((order): order is UserOpenOrder => Boolean(order))
-
-    const sortedOrders = normalizedOrders.sort((a, b) => {
-      const aTime = Date.parse(a.created_at)
-      const bTime = Date.parse(b.created_at)
-      return (Number.isFinite(bTime) ? bTime : 0) - (Number.isFinite(aTime) ? aTime : 0)
-    })
-
-    const paginatedOrders = sortedOrders.slice(validatedOffset, validatedOffset + validatedLimit)
-
-    return NextResponse.json({ data: paginatedOrders })
+    return NextResponse.json({ data: normalizedOrders, next_cursor })
   }
   catch (error) {
     console.error('API Error:', error)
@@ -152,11 +141,13 @@ async function fetchClobOpenOrders({
   market,
   auth,
   userAddress,
+  nextCursor,
 }: {
   market?: string
   auth: { key: string, secret: string, passphrase: string }
   userAddress: string
-}): Promise<ClobOpenOrder[]> {
+  nextCursor?: string
+}): Promise<{ data: ClobOpenOrder[], next_cursor: string }> {
   if (!CLOB_URL) {
     throw new Error('CLOB_URL is not configured.')
   }
@@ -164,6 +155,9 @@ async function fetchClobOpenOrders({
   const searchParams = new URLSearchParams()
   if (market) {
     searchParams.set('market', market)
+  }
+  if (nextCursor) {
+    searchParams.set('next_cursor', nextCursor)
   }
 
   const path = '/data/orders'
@@ -194,11 +188,7 @@ async function fetchClobOpenOrders({
   }
 
   const result = await response.json().catch(() => null)
-  if (!Array.isArray(result)) {
-    return []
-  }
-
-  return result as ClobOpenOrder[]
+  return normalizeClobOpenOrdersResponse(result)
 }
 
 function mapClobOrder(
@@ -297,4 +287,22 @@ function clampNumber(value: number, min: number, max: number) {
     return min
   }
   return Math.min(Math.max(value, min), max)
+}
+
+function normalizeClobOpenOrdersResponse(result: unknown) {
+  if (Array.isArray(result)) {
+    return { data: result as ClobOpenOrder[], next_cursor: 'LTE=' }
+  }
+
+  if (result && typeof result === 'object') {
+    const data = Array.isArray((result as { data?: unknown }).data)
+      ? (result as { data: ClobOpenOrder[] }).data
+      : []
+    const next_cursor = typeof (result as { next_cursor?: unknown }).next_cursor === 'string'
+      ? (result as { next_cursor: string }).next_cursor
+      : 'LTE='
+    return { data, next_cursor }
+  }
+
+  return { data: [], next_cursor: 'LTE=' }
 }

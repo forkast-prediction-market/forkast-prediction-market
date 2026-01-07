@@ -33,12 +33,6 @@ interface OpenOrderRowProps {
 type SortDirection = 'asc' | 'desc'
 type SortColumn = 'side' | 'outcome' | 'price' | 'filled' | 'total' | 'expiration'
 
-const CANCEL_ICON_BUTTON_CLASS = `
-  inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-border/70 bg-transparent text-foreground
-  transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
-  dark:border-white/30 dark:text-white dark:hover:bg-white/10
-`
-
 function getOrderSortValue(order: UserOpenOrder, column: SortColumn) {
   switch (column) {
     case 'side':
@@ -223,18 +217,19 @@ function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
         <div className="flex justify-end">
           <Tooltip>
             <TooltipTrigger asChild>
-              <button
+              <Button
                 type="button"
                 aria-label={`Cancel ${sideLabel} order for ${outcomeLabel}`}
-                className={cn(CANCEL_ICON_BUTTON_CLASS, isCancelling && 'cursor-not-allowed opacity-60')}
+                variant="outline"
+                size="icon"
                 disabled={isCancelling}
                 onClick={() => onCancel(order)}
               >
                 <XIcon className="size-4" />
-              </button>
+              </Button>
             </TooltipTrigger>
-            <TooltipContent side="top" sideOffset={8} className="border border-border bg-background text-foreground" hideArrow>
-              Cancel order
+            <TooltipContent side="top" sideOffset={8}>
+              Cancel
             </TooltipContent>
           </Tooltip>
         </div>
@@ -276,7 +271,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
     conditionId: market.condition_id,
   })
 
-  const orders = useMemo(() => data?.pages.flat() ?? [], [data?.pages])
+  const orders = useMemo(() => data?.pages.flatMap(page => page.data) ?? [], [data?.pages])
   const sortedOrders = useMemo(() => sortOrders(orders, sortState), [orders, sortState])
   const hasOrders = sortedOrders.length > 0
 
@@ -285,12 +280,15 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
       return
     }
 
-    queryClient.setQueryData<InfiniteData<UserOpenOrder[]>>(openOrdersQueryKey, (current) => {
+    queryClient.setQueryData<InfiniteData<{ data: UserOpenOrder[], next_cursor: string }>>(openOrdersQueryKey, (current) => {
       if (!current) {
         return current
       }
 
-      const updatedPages = current.pages.map(page => page.filter(item => !orderIds.includes(item.id)))
+      const updatedPages = current.pages.map(page => ({
+        ...page,
+        data: page.data.filter(item => !orderIds.includes(item.id)),
+      }))
       return { ...current, pages: updatedPages }
     })
   }, [openOrdersQueryKey, queryClient])
@@ -511,7 +509,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
                 <button
                   type="button"
                   className={`
-                    text-2xs font-semibold tracking-wide whitespace-nowrap text-destructive uppercase transition-opacity
+                    text-2xs font-semibold tracking-wide whitespace-nowrap text-destructive transition-opacity
                     disabled:opacity-40
                   `}
                   onClick={handleCancelAll}

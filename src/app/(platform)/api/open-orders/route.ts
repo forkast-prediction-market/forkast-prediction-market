@@ -34,7 +34,7 @@ export async function GET(request: Request) {
   try {
     const user = await UserRepository.getCurrentUser()
     if (!user) {
-      return NextResponse.json({ data: [] })
+      return NextResponse.json({ data: [], next_cursor: 'LTE=' })
     }
 
     if (!CLOB_URL) {
@@ -44,25 +44,23 @@ export async function GET(request: Request) {
 
     const tradingAuth = await getUserTradingAuthSecrets(user.id)
     if (!tradingAuth?.clob) {
-      return NextResponse.json({ data: [] })
+      return NextResponse.json({ data: [], next_cursor: 'LTE=' })
     }
 
     const { searchParams } = new URL(request.url)
-    const limit = Number.parseInt(searchParams.get('limit') || '50', 10)
-    const offset = Number.parseInt(searchParams.get('offset') || '0', 10)
     const idFilter = searchParams.get('id')?.trim() || undefined
     const marketFilter = searchParams.get('market')?.trim() || undefined
     const assetIdFilter = searchParams.get('asset_id')?.trim() || undefined
-    const validatedLimit = Number.isNaN(limit) ? 50 : Math.min(Math.max(1, limit), 100)
-    const validatedOffset = Number.isNaN(offset) ? 0 : Math.max(0, offset)
+    const nextCursor = searchParams.get('next_cursor')?.trim() || undefined
 
-    const clobOrders = await fetchClobOpenOrders({
+    const { data: clobOrders, next_cursor } = await fetchClobOpenOrders({
       auth: tradingAuth.clob,
       userAddress: user.address,
       makerAddress: user.proxy_wallet_address as string,
       id: idFilter,
       market: marketFilter,
       assetId: assetIdFilter,
+      nextCursor,
     })
 
     const conditionIds = Array.from(
@@ -83,16 +81,7 @@ export async function GET(request: Request) {
     const normalizedOrders = clobOrders
       .map(order => mapClobOrder(order, marketMap, outcomeMap))
       .filter((order): order is UserOpenOrder => Boolean(order))
-
-    const sortedOrders = normalizedOrders.sort((a, b) => {
-      const aTime = Date.parse(a.created_at)
-      const bTime = Date.parse(b.created_at)
-      return (Number.isFinite(bTime) ? bTime : 0) - (Number.isFinite(aTime) ? aTime : 0)
-    })
-
-    const paginatedOrders = sortedOrders.slice(validatedOffset, validatedOffset + validatedLimit)
-
-    return NextResponse.json({ data: paginatedOrders })
+    return NextResponse.json({ data: normalizedOrders, next_cursor })
   }
   catch (error) {
     console.error('API Error:', error)
@@ -107,6 +96,7 @@ async function fetchClobOpenOrders({
   id,
   market,
   assetId,
+  nextCursor,
 }: {
   auth: { key: string, secret: string, passphrase: string }
   userAddress: string
@@ -114,7 +104,8 @@ async function fetchClobOpenOrders({
   id?: string
   market?: string
   assetId?: string
-}): Promise<ClobOpenOrder[]> {
+  nextCursor?: string
+}): Promise<{ data: ClobOpenOrder[], next_cursor: string }> {
   const params = new URLSearchParams()
   if (makerAddress) {
     params.set('maker', makerAddress)
@@ -127,6 +118,9 @@ async function fetchClobOpenOrders({
   }
   if (assetId) {
     params.set('asset_id', assetId)
+  }
+  if (nextCursor) {
+    params.set('next_cursor', nextCursor)
   }
   const path = params.toString() ? `/data/orders?${params.toString()}` : '/data/orders'
   const timestamp = Math.floor(Date.now() / 1000)
@@ -153,11 +147,7 @@ async function fetchClobOpenOrders({
   }
 
   const result = await response.json().catch(() => null)
-  if (!Array.isArray(result)) {
-    return []
-  }
-
-  return result as ClobOpenOrder[]
+  return normalizeClobOpenOrdersResponse(result)
 }
 
 async function fetchMarketMetadata(conditionIds: string[]) {
@@ -364,4 +354,22 @@ function clampNumber(value: number, min: number, max: number) {
     return min
   }
   return Math.min(Math.max(value, min), max)
+}
+
+function normalizeClobOpenOrdersResponse(result: unknown) {
+  if (Array.isArray(result)) {
+    return { data: result as ClobOpenOrder[], next_cursor: 'LTE=' }
+  }
+
+  if (result && typeof result === 'object') {
+    const data = Array.isArray((result as { data?: unknown }).data)
+      ? (result as { data: ClobOpenOrder[] }).data
+      : []
+    const next_cursor = typeof (result as { next_cursor?: unknown }).next_cursor === 'string'
+      ? (result as { next_cursor: string }).next_cursor
+      : 'LTE='
+    return { data, next_cursor }
+  }
+
+  return { data: [], next_cursor: 'LTE=' }
 }

@@ -2,10 +2,15 @@ import type { UserOpenOrder } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
 
 interface FetchUserOpenOrdersParams {
-  pageParam: number
+  pageParam: string
   eventSlug: string
   conditionId: string
   signal?: AbortSignal
+}
+
+interface OpenOrdersPage {
+  data: UserOpenOrder[]
+  next_cursor: string
 }
 
 interface UseUserOpenOrdersArgs {
@@ -25,23 +30,23 @@ export function useUserOpenOrdersQuery({
   conditionId,
   enabled = true,
 }: UseUserOpenOrdersArgs) {
-  return useInfiniteQuery({
+  return useInfiniteQuery<OpenOrdersPage>({
     queryKey: buildUserOpenOrdersQueryKey(userId, eventSlug, conditionId),
-    queryFn: ({ pageParam = 0, signal }) =>
+    queryFn: ({ pageParam = 'MA==', signal }) =>
       fetchUserOpenOrders({
-        pageParam,
+        pageParam: pageParam as string,
         eventSlug: eventSlug ?? '',
         conditionId: conditionId ?? '',
         signal,
       }),
-    getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.length === 50) {
-        return allPages.reduce((total, page) => total + page.length, 0)
+    getNextPageParam: (lastPage) => {
+      if (lastPage?.next_cursor && lastPage.next_cursor !== 'LTE=') {
+        return lastPage.next_cursor
       }
       return undefined
     },
     enabled: Boolean(enabled && userId && eventSlug && conditionId),
-    initialPageParam: 0,
+    initialPageParam: 'MA==',
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   })
@@ -52,10 +57,9 @@ export async function fetchUserOpenOrders({
   eventSlug,
   conditionId,
   signal,
-}: FetchUserOpenOrdersParams): Promise<UserOpenOrder[]> {
+}: FetchUserOpenOrdersParams): Promise<OpenOrdersPage> {
   const params = new URLSearchParams({
-    limit: '50',
-    offset: pageParam.toString(),
+    next_cursor: pageParam,
   })
 
   if (conditionId) {
@@ -72,5 +76,11 @@ export async function fetchUserOpenOrders({
   }
 
   const payload = await response.json()
-  return payload.data ?? []
+  if (Array.isArray(payload)) {
+    return { data: payload, next_cursor: 'LTE=' }
+  }
+  return {
+    data: Array.isArray(payload?.data) ? payload.data : [],
+    next_cursor: typeof payload?.next_cursor === 'string' ? payload.next_cursor : 'LTE=',
+  }
 }
