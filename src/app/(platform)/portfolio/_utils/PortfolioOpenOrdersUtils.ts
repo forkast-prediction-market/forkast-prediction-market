@@ -1,4 +1,4 @@
-import type { OpenOrdersSort, PublicUserOpenOrder } from '@/app/(platform)/[username]/_types/PublicOpenOrdersTypes'
+import type { PortfolioOpenOrdersSort, PortfolioUserOpenOrder } from '@/app/(platform)/portfolio/_types/PortfolioOpenOrdersTypes'
 import { MICRO_UNIT } from '@/lib/constants'
 
 export function formatCents(price?: number) {
@@ -9,7 +9,7 @@ export function microToUnit(value?: number) {
   return Number.isFinite(value) ? (value ?? 0) / MICRO_UNIT : 0
 }
 
-export function formatExpirationLabel(order: PublicUserOpenOrder) {
+export function formatExpirationLabel(order: PortfolioUserOpenOrder) {
   if (order.type === 'GTC') {
     return 'Until Cancelled'
   }
@@ -31,7 +31,7 @@ export function formatExpirationLabel(order: PublicUserOpenOrder) {
   })
 }
 
-export function matchesOpenOrdersSearchQuery(order: PublicUserOpenOrder, searchQuery: string) {
+export function matchesOpenOrdersSearchQuery(order: PortfolioUserOpenOrder, searchQuery: string) {
   const trimmed = searchQuery.trim().toLowerCase()
   if (!trimmed) {
     return true
@@ -74,22 +74,22 @@ export function resolveOpenOrdersSearchParams(searchQuery: string) {
   return {}
 }
 
-export function getOrderTotalShares(order: PublicUserOpenOrder) {
+export function getOrderTotalShares(order: PortfolioUserOpenOrder) {
   return order.side === 'buy'
     ? microToUnit(order.taker_amount)
     : microToUnit(order.maker_amount)
 }
 
-export function getOrderFilledShares(order: PublicUserOpenOrder) {
+export function getOrderFilledShares(order: PortfolioUserOpenOrder) {
   return microToUnit(order.size_matched)
 }
 
-export function getOrderCreatedAtMs(order: PublicUserOpenOrder) {
+export function getOrderCreatedAtMs(order: PortfolioUserOpenOrder) {
   const parsed = Date.parse(order.created_at)
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-export function getOrderExpirationSeconds(order: PublicUserOpenOrder) {
+export function getOrderExpirationSeconds(order: PortfolioUserOpenOrder) {
   if (order.type === 'GTC') {
     return Number.POSITIVE_INFINITY
   }
@@ -105,7 +105,7 @@ export function getOrderExpirationSeconds(order: PublicUserOpenOrder) {
   return rawExpiration
 }
 
-export function sortOpenOrders(orders: PublicUserOpenOrder[], sortBy: OpenOrdersSort) {
+export function sortOpenOrders(orders: PortfolioUserOpenOrder[], sortBy: PortfolioOpenOrdersSort) {
   const sorted = [...orders]
 
   sorted.sort((a, b) => {

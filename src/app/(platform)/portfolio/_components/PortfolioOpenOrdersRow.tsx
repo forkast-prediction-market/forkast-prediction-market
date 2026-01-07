@@ -1,4 +1,4 @@
-import type { PublicUserOpenOrder } from '@/app/(platform)/[username]/_types/PublicOpenOrdersTypes'
+import type { PortfolioUserOpenOrder } from '@/app/(platform)/portfolio/_types/PortfolioOpenOrdersTypes'
 import { XIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -12,14 +12,14 @@ import {
   getOrderFilledShares,
   getOrderTotalShares,
   microToUnit,
-} from '../_utils/PublicOpenOrdersUtils'
+} from '../_utils/PortfolioOpenOrdersUtils'
 
-interface PublicOpenOrdersRowProps {
-  order: PublicUserOpenOrder
+interface PortfolioOpenOrdersRowProps {
+  order: PortfolioUserOpenOrder
   rowGridClass: string
 }
 
-export default function PublicOpenOrdersRow({ order, rowGridClass }: PublicOpenOrdersRowProps) {
+export default function PortfolioOpenOrdersRow({ order, rowGridClass }: PortfolioOpenOrdersRowProps) {
   const totalShares = getOrderTotalShares(order)
   const filledShares = getOrderFilledShares(order)
   const totalValue = order.side === 'buy'

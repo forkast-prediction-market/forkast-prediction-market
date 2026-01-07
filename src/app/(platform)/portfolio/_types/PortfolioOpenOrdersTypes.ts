@@ -1,8 +1,8 @@
 import type { UserOpenOrder } from '@/types'
 
-export type OpenOrdersSort = 'market' | 'filled' | 'total' | 'date' | 'resolving'
+export type PortfolioOpenOrdersSort = 'market' | 'filled' | 'total' | 'date' | 'resolving'
 
-export type PublicUserOpenOrder = UserOpenOrder & {
+export type PortfolioUserOpenOrder = UserOpenOrder & {
   market: UserOpenOrder['market'] & {
     icon_url?: string
     event_slug?: string

@@ -1,25 +1,25 @@
 import type { RefObject } from 'react'
-import type { PublicUserOpenOrder } from '@/app/(platform)/[username]/_types/PublicOpenOrdersTypes'
+import type { PortfolioUserOpenOrder } from '@/app/(platform)/portfolio/_types/PortfolioOpenOrdersTypes'
 import { cn } from '@/lib/utils'
-import PublicOpenOrdersRow from './PublicOpenOrdersRow'
+import PortfolioOpenOrdersRow from './PortfolioOpenOrdersRow'
 
-interface PublicOpenOrdersTableProps {
+interface PortfolioOpenOrdersTableProps {
   rowGridClass: string
-  orders: PublicUserOpenOrder[]
+  orders: PortfolioUserOpenOrder[]
   isLoading: boolean
   emptyText: string
   isFetchingNextPage: boolean
   loadMoreRef: RefObject<HTMLDivElement | null>
 }
 
-export default function PublicOpenOrdersTable({
+export default function PortfolioOpenOrdersTable({
   rowGridClass,
   orders,
   isLoading,
   emptyText,
   isFetchingNextPage,
   loadMoreRef,
-}: PublicOpenOrdersTableProps) {
+}: PortfolioOpenOrdersTableProps) {
   return (
     <div className="overflow-x-auto">
       <div className="min-w-180">
@@ -58,7 +58,7 @@ export default function PublicOpenOrdersTable({
         {!isLoading && orders.length > 0 && (
           <div className="space-y-0">
             {orders.map(order => (
-              <PublicOpenOrdersRow key={order.id} order={order} rowGridClass={rowGridClass} />
+              <PortfolioOpenOrdersRow key={order.id} order={order} rowGridClass={rowGridClass} />
             ))}
             {isFetchingNextPage && (
               <div className="py-3 text-center text-xs text-muted-foreground">Loading more...</div>

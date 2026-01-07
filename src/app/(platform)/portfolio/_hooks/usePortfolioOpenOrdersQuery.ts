@@ -1,4 +1,4 @@
-import type { PublicUserOpenOrder } from '@/app/(platform)/[username]/_types/PublicOpenOrdersTypes'
+import type { PortfolioUserOpenOrder } from '@/app/(platform)/portfolio/_types/PortfolioOpenOrdersTypes'
 import { useInfiniteQuery } from '@tanstack/react-query'
 
 async function fetchOpenOrders({
@@ -9,7 +9,7 @@ async function fetchOpenOrders({
   pageParam: number
   filters?: { id?: string, market?: string, assetId?: string }
   signal?: AbortSignal
-}): Promise<PublicUserOpenOrder[]> {
+}): Promise<PortfolioUserOpenOrder[]> {
   const params = new URLSearchParams({
     limit: '50',
     offset: pageParam.toString(),
@@ -33,7 +33,7 @@ async function fetchOpenOrders({
   return payload.data ?? []
 }
 
-export function usePublicOpenOrdersQuery({
+export function usePortfolioOpenOrdersQuery({
   userAddress,
   apiSearchKey,
   apiSearchFilters,
@@ -42,7 +42,7 @@ export function usePublicOpenOrdersQuery({
   apiSearchKey: string
   apiSearchFilters: { id?: string, market?: string, assetId?: string }
 }) {
-  return useInfiniteQuery<PublicUserOpenOrder[]>({
+  return useInfiniteQuery<PortfolioUserOpenOrder[]>({
     queryKey: ['public-open-orders', userAddress, apiSearchKey],
     queryFn: ({ pageParam = 0, signal }) => fetchOpenOrders({
       pageParam: pageParam as number,

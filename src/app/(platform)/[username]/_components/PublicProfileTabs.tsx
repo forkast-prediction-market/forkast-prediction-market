@@ -2,8 +2,8 @@
 
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import PublicHistoryList from '@/app/(platform)/[username]/_components/PublicHistoryList'
-import PublicOpenOrdersList from '@/app/(platform)/[username]/_components/PublicOpenOrdersList'
 import PublicPositionsList from '@/app/(platform)/[username]/_components/PublicPositionsList'
+import PortfolioOpenOrdersList from '@/app/(platform)/portfolio/_components/PortfolioOpenOrdersList'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 
@@ -99,7 +99,7 @@ export default function PublicProfileTabs({ userAddress }: PublicProfileTabsProp
 
       <div className="space-y-4 px-0 pt-4 pb-0 sm:px-0">
         {activeTab === 'positions' && <PublicPositionsList userAddress={userAddress} />}
-        {activeTab === 'openOrders' && <PublicOpenOrdersList userAddress={userAddress} />}
+        {activeTab === 'openOrders' && <PortfolioOpenOrdersList userAddress={userAddress} />}
         {activeTab === 'history' && <PublicHistoryList userAddress={userAddress} />}
       </div>
     </div>

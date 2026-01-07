@@ -1,21 +1,24 @@
-import type { OpenOrdersSort } from '@/app/(platform)/[username]/_types/PublicOpenOrdersTypes'
+import type { ReactNode } from 'react'
+import type { PortfolioOpenOrdersSort } from '@/app/(platform)/portfolio/_types/PortfolioOpenOrdersTypes'
 import { ArrowDownNarrowWideIcon, SearchIcon } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-interface PublicOpenOrdersFiltersProps {
+interface PortfolioOpenOrdersFiltersProps {
   searchQuery: string
   onSearchChange: (value: string) => void
-  sortBy: OpenOrdersSort
-  onSortChange: (value: OpenOrdersSort) => void
+  sortBy: PortfolioOpenOrdersSort
+  onSortChange: (value: PortfolioOpenOrdersSort) => void
+  action?: ReactNode
 }
 
-export default function PublicOpenOrdersFilters({
+export default function PortfolioOpenOrdersFilters({
   searchQuery,
   onSearchChange,
   sortBy,
   onSortChange,
-}: PublicOpenOrdersFiltersProps) {
+  action,
+}: PortfolioOpenOrdersFiltersProps) {
   return (
     <div className="space-y-3 px-2 pt-2 sm:px-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -30,7 +33,7 @@ export default function PublicOpenOrdersFilters({
           />
         </div>
 
-        <Select value={sortBy} onValueChange={value => onSortChange(value as OpenOrdersSort)}>
+        <Select value={sortBy} onValueChange={value => onSortChange(value as PortfolioOpenOrdersSort)}>
           <SelectTrigger
             className={
               `
@@ -52,6 +55,7 @@ export default function PublicOpenOrdersFilters({
             <SelectItem value="resolving">Resolving Soonest</SelectItem>
           </SelectContent>
         </Select>
+        {action}
       </div>
     </div>
   )
