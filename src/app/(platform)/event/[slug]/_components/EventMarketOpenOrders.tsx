@@ -379,7 +379,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
       const failedCount = failedIds.length
 
       if (failedCount === 0) {
-        toast.success('All open orders for this market was cancelled.')
+        toast.success('All open orders for this market were cancelled.')
       }
       else {
         toast.error(`Could not cancel ${failedCount} order${failedCount > 1 ? 's' : ''}.`)
