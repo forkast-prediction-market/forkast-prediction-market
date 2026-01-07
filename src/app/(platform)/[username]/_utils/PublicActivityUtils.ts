@@ -1,4 +1,4 @@
-import type { ActivityVariant, HistorySort, HistoryTypeFilter } from '@/app/(platform)/[username]/_types/PublicHistoryTypes'
+import type { ActivitySort, ActivityTypeFilter, ActivityVariant } from '@/app/(platform)/[username]/_types/PublicActivityTypes'
 import type { ActivityOrder } from '@/types'
 import {
   ArrowDownToLineIcon,
@@ -11,7 +11,7 @@ import {
 } from 'lucide-react'
 import { MICRO_UNIT } from '@/lib/constants'
 
-export function resolveHistorySort(sortFilter: HistorySort) {
+export function resolveActivitySort(sortFilter: ActivitySort) {
   if (sortFilter === 'oldest') {
     return { sortBy: 'TIMESTAMP', sortDirection: 'ASC' as const }
   }
@@ -24,7 +24,7 @@ export function resolveHistorySort(sortFilter: HistorySort) {
   return { sortBy: 'TIMESTAMP', sortDirection: 'DESC' as const }
 }
 
-export function resolveHistoryTypeParams(typeFilter: HistoryTypeFilter) {
+export function resolveActivityTypeParams(typeFilter: ActivityTypeFilter) {
   switch (typeFilter) {
     case 'trades':
       return { type: 'TRADE' }
@@ -138,7 +138,7 @@ export function getActivityTimestampMs(activity: ActivityOrder) {
   return Number.isFinite(parsed) ? parsed : 0
 }
 
-export function matchesTypeFilter(activity: ActivityOrder, typeFilter: HistoryTypeFilter) {
+export function matchesTypeFilter(activity: ActivityOrder, typeFilter: ActivityTypeFilter) {
   if (typeFilter === 'all') {
     return true
   }
@@ -190,7 +190,7 @@ export function formatExportFilename(siteName: string, date: Date) {
   return `${siteName}_Transaction_History_${weekday}_${month}_${day}_${year}_${hour}_${minute}_${second}_GMT_${offsetSign}${offsetHours}${offsetRemainder}.csv`
 }
 
-export function buildHistoryCsv(activities: ActivityOrder[], siteName: string) {
+export function buildActivityCsv(activities: ActivityOrder[], siteName: string) {
   const headers = [
     'marketName',
     'action',

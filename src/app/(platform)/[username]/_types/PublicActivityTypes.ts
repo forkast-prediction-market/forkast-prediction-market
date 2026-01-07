@@ -1,10 +1,10 @@
 import type { ActivityOrder } from '@/types'
 
-export type HistoryTypeFilter = 'all' | 'trades' | 'buy' | 'merge' | 'redeem'
-export type HistorySort = 'newest' | 'oldest' | 'value' | 'shares'
+export type ActivityTypeFilter = 'all' | 'trades' | 'buy' | 'merge' | 'redeem'
+export type ActivitySort = 'newest' | 'oldest' | 'value' | 'shares'
 export type ActivityVariant = 'split' | 'merge' | 'redeem' | 'deposit' | 'withdraw' | 'sell' | 'buy' | 'trade'
 
-export interface PublicHistoryRowProps {
+export interface PublicActivityRowProps {
   activity: ActivityOrder
   rowGridClass: string
 }

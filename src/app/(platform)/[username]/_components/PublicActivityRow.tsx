@@ -1,13 +1,13 @@
-import type { PublicHistoryRowProps } from '@/app/(platform)/[username]/_types/PublicHistoryTypes'
+import type { PublicActivityRowProps } from '@/app/(platform)/[username]/_types/PublicActivityTypes'
 import { CircleDollarSignIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { activityIcon, formatPriceCents, formatShares, resolveVariant } from '@/app/(platform)/[username]/_utils/PublicHistoryUtils'
+import { activityIcon, formatPriceCents, formatShares, resolveVariant } from '@/app/(platform)/[username]/_utils/PublicActivityUtils'
 import { MICRO_UNIT } from '@/lib/constants'
 import { formatCurrency, formatTimeAgo } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
-export default function PublicHistoryRow({ activity, rowGridClass }: PublicHistoryRowProps) {
+export default function PublicActivityRow({ activity, rowGridClass }: PublicActivityRowProps) {
   const variant = resolveVariant(activity)
   const { Icon, label, className } = activityIcon(variant)
   const sharesText = formatShares(activity.amount)

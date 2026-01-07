@@ -1,9 +1,9 @@
 import type { RefObject } from 'react'
 import type { ActivityOrder } from '@/types'
 import { cn } from '@/lib/utils'
-import PublicHistoryRow from './PublicHistoryRow'
+import PublicActivityRow from './PublicActivityRow'
 
-interface PublicHistoryTableProps {
+interface PublicActivityTableProps {
   activities: ActivityOrder[]
   rowGridClass: string
   isLoading: boolean
@@ -16,7 +16,7 @@ interface PublicHistoryTableProps {
   loadMoreRef: RefObject<HTMLDivElement | null>
 }
 
-export default function PublicHistoryTable({
+export default function PublicActivityTable({
   activities,
   rowGridClass,
   isLoading,
@@ -27,7 +27,7 @@ export default function PublicHistoryTable({
   infiniteScrollError,
   onRetryLoadMore,
   loadMoreRef,
-}: PublicHistoryTableProps) {
+}: PublicActivityTableProps) {
   const hasNoData = !isLoading && activities.length === 0
 
   return (
@@ -74,14 +74,14 @@ export default function PublicHistoryTable({
 
         {hasNoData && !hasError && (
           <div className="py-12 text-center text-sm text-muted-foreground">
-            No history found.
+            No activity found.
           </div>
         )}
 
         {!isLoading && !hasError && activities.length > 0 && (
           <div>
             {activities.map(activity => (
-              <PublicHistoryRow
+              <PublicActivityRow
                 key={activity.id}
                 activity={activity}
                 rowGridClass={rowGridClass}

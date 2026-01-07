@@ -1,13 +1,13 @@
-import type { HistorySort, HistoryTypeFilter } from '@/app/(platform)/[username]/_types/PublicHistoryTypes'
+import type { ActivitySort, ActivityTypeFilter } from '@/app/(platform)/[username]/_types/PublicActivityTypes'
 import type { DataApiActivity } from '@/lib/data-api/user'
 import type { ActivityOrder } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { resolveHistorySort, resolveHistoryTypeParams } from '@/app/(platform)/[username]/_utils/PublicHistoryUtils'
+import { resolveActivitySort, resolveActivityTypeParams } from '@/app/(platform)/[username]/_utils/PublicActivityUtils'
 import { mapDataApiActivityToActivityOrder } from '@/lib/data-api/user'
 
 const DATA_API_URL = process.env.DATA_URL!
 
-async function fetchUserHistory({
+async function fetchUserActivity({
   pageParam,
   userAddress,
   typeFilter,
@@ -16,12 +16,12 @@ async function fetchUserHistory({
 }: {
   pageParam: number
   userAddress: string
-  typeFilter: HistoryTypeFilter
-  sortFilter: HistorySort
+  typeFilter: ActivityTypeFilter
+  sortFilter: ActivitySort
   signal?: AbortSignal
 }): Promise<ActivityOrder[]> {
-  const { sortBy, sortDirection } = resolveHistorySort(sortFilter)
-  const { type, side } = resolveHistoryTypeParams(typeFilter)
+  const { sortBy, sortDirection } = resolveActivitySort(sortFilter)
+  const { type, side } = resolveActivityTypeParams(typeFilter)
 
   const params = new URLSearchParams({
     user: userAddress,
@@ -53,18 +53,18 @@ async function fetchUserHistory({
   return (result as DataApiActivity[]).map(mapDataApiActivityToActivityOrder)
 }
 
-export function usePublicHistoryQuery({
+export function usePublicActivityQuery({
   userAddress,
   typeFilter,
   sortFilter,
 }: {
   userAddress: string
-  typeFilter: HistoryTypeFilter
-  sortFilter: HistorySort
+  typeFilter: ActivityTypeFilter
+  sortFilter: ActivitySort
 }) {
   return useInfiniteQuery<ActivityOrder[]>({
     queryKey: ['user-history', userAddress, typeFilter, sortFilter],
-    queryFn: ({ pageParam = 0, signal }) => fetchUserHistory({
+    queryFn: ({ pageParam = 0, signal }) => fetchUserActivity({
       pageParam: pageParam as number,
       userAddress,
       typeFilter,

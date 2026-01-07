@@ -1,21 +1,21 @@
-import type { HistorySort, HistoryTypeFilter } from '@/app/(platform)/[username]/_types/PublicHistoryTypes'
+import type { ActivitySort, ActivityTypeFilter } from '@/app/(platform)/[username]/_types/PublicActivityTypes'
 import { ArrowDownNarrowWideIcon, DownloadIcon, ListFilterIcon, SearchIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 
-interface PublicHistoryFiltersProps {
+interface PublicActivityFiltersProps {
   searchQuery: string
   onSearchChange: (value: string) => void
-  typeFilter: HistoryTypeFilter
-  onTypeChange: (value: HistoryTypeFilter) => void
-  sortFilter: HistorySort
-  onSortChange: (value: HistorySort) => void
+  typeFilter: ActivityTypeFilter
+  onTypeChange: (value: ActivityTypeFilter) => void
+  sortFilter: ActivitySort
+  onSortChange: (value: ActivitySort) => void
   onExport: () => void
   disableExport: boolean
 }
 
-export default function PublicHistoryFilters({
+export default function PublicActivityFilters({
   searchQuery,
   onSearchChange,
   typeFilter,
@@ -24,7 +24,7 @@ export default function PublicHistoryFilters({
   onSortChange,
   onExport,
   disableExport,
-}: PublicHistoryFiltersProps) {
+}: PublicActivityFiltersProps) {
   return (
     <div className="space-y-3 px-2 pt-2 sm:px-3">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
@@ -40,7 +40,7 @@ export default function PublicHistoryFilters({
         </div>
 
         <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
-          <Select value={typeFilter} onValueChange={value => onTypeChange(value as HistoryTypeFilter)}>
+          <Select value={typeFilter} onValueChange={value => onTypeChange(value as ActivityTypeFilter)}>
             <SelectTrigger
               className={
                 `
@@ -63,7 +63,7 @@ export default function PublicHistoryFilters({
             </SelectContent>
           </Select>
 
-          <Select value={sortFilter} onValueChange={value => onSortChange(value as HistorySort)}>
+          <Select value={sortFilter} onValueChange={value => onSortChange(value as ActivitySort)}>
             <SelectTrigger
               className={
                 `

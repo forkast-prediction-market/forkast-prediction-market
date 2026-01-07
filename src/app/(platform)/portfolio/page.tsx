@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import PublicProfileHeroCards from '@/app/(platform)/[username]/_components/PublicProfileHeroCards'
-import PublicProfileTabs from '@/app/(platform)/[username]/_components/PublicProfileTabs'
 import PortfolioMarketsWonCard from '@/app/(platform)/portfolio/_components/PortfolioMarketsWonCard'
+import PortfolioTabs from '@/app/(platform)/portfolio/_components/PortfolioTabs'
 import PortfolioWalletActions from '@/app/(platform)/portfolio/_components/PortfolioWalletActions'
 import { UserRepository } from '@/lib/db/queries/user'
 import { fetchPortfolioSnapshot } from '@/lib/portfolio'
@@ -33,7 +33,7 @@ export default async function PortfolioPage() {
 
       <PortfolioMarketsWonCard proxyWalletAddress={publicAddress} />
 
-      <PublicProfileTabs userAddress={userAddress} />
+      <PortfolioTabs userAddress={userAddress} />
     </>
   )
 }

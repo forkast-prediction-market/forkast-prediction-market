@@ -3,20 +3,22 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import PublicActivityList from '@/app/(platform)/[username]/_components/PublicActivityList'
 import PublicPositionsList from '@/app/(platform)/[username]/_components/PublicPositionsList'
+import PortfolioOpenOrdersList from '@/app/(platform)/portfolio/_components/PortfolioOpenOrdersList'
 import { cn } from '@/lib/utils'
 
-type TabType = 'positions' | 'activity'
+type TabType = 'positions' | 'openOrders' | 'activity'
 
 const baseTabs = [
   { id: 'positions' as const, label: 'Positions' },
+  { id: 'openOrders' as const, label: 'Open Orders' },
   { id: 'activity' as const, label: 'Activity' },
 ]
 
-interface PublicProfileTabsProps {
+interface PortfolioTabsProps {
   userAddress: string
 }
 
-export default function PublicProfileTabs({ userAddress }: PublicProfileTabsProps) {
+export default function PortfolioTabs({ userAddress }: PortfolioTabsProps) {
   const [activeTab, setActiveTab] = useState<TabType>('positions')
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([])
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })
@@ -81,6 +83,7 @@ export default function PublicProfileTabs({ userAddress }: PublicProfileTabsProp
 
       <div className="space-y-4 px-0 pt-4 pb-0 sm:px-0">
         {activeTab === 'positions' && <PublicPositionsList userAddress={userAddress} />}
+        {activeTab === 'openOrders' && <PortfolioOpenOrdersList userAddress={userAddress} />}
         {activeTab === 'activity' && <PublicActivityList userAddress={userAddress} />}
       </div>
     </div>

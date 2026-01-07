@@ -1,67 +1,79 @@
 'use client'
 
-import type { PublicActivity } from '@/types'
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertCircleIcon, RefreshCwIcon } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { PublicActivityItem } from '@/app/(platform)/[username]/_components/PublicActivityItem'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { fetchUserActivityData, mapDataApiActivityToPublicActivity } from '@/lib/data-api/user'
-import { cn } from '@/lib/utils'
-import PublicActivityEmpty from './PublicActivityEmpty'
-import PublicActivityError from './PublicActivityError'
-import { ActivitySkeletonRows } from './PublicActivitySkeleton'
+import type { ActivitySort, ActivityTypeFilter } from '@/app/(platform)/[username]/_types/PublicActivityTypes'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { usePublicActivityQuery } from '@/app/(platform)/[username]/_hooks/usePublicActivityQuery'
+import { buildActivityCsv, getActivityTimestampMs, matchesSearchQuery, matchesTypeFilter, toNumeric } from '@/app/(platform)/[username]/_utils/PublicActivityUtils'
+import PublicActivityFilters from './PublicActivityFilters'
+import PublicActivityTable from './PublicActivityTable'
 
 interface PublicActivityListProps {
   userAddress: string
 }
 
 export default function PublicActivityList({ userAddress }: PublicActivityListProps) {
-  const queryClient = useQueryClient()
+  const rowGridClass = 'grid grid-cols-[minmax(9rem,auto)_minmax(0,2.6fr)_minmax(0,1fr)_auto] items-center gap-3'
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [typeFilter, setTypeFilter] = useState<ActivityTypeFilter>('all')
+  const [sortFilter, setSortFilter] = useState<ActivitySort>('newest')
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
-  const [retryCount, setRetryCount] = useState(0)
-
-  useEffect(() => {
-    queueMicrotask(() => {
-      setInfiniteScrollError(null)
-      setIsLoadingMore(false)
-      setRetryCount(0)
-    })
-  }, [userAddress])
 
   const {
     status,
     data,
-    isFetchingNextPage,
     fetchNextPage,
     hasNextPage,
+    isFetchingNextPage,
     refetch,
-  } = useInfiniteQuery<PublicActivity[]>({
-    queryKey: ['user-activity', userAddress],
-    queryFn: ({ pageParam = 0, signal }) =>
-      fetchUserActivityData({
-        pageParam: pageParam as unknown as number,
-        userAddress,
-        signal,
-      }).then(activities => activities.map(mapDataApiActivityToPublicActivity)),
-    getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.length === 50) {
-        return allPages.reduce((total, page) => total + page.length, 0)
-      }
-      return undefined
-    },
-    initialPageParam: 0,
-    staleTime: 1000 * 60 * 5,
-    gcTime: 1000 * 60 * 10,
-    enabled: Boolean(userAddress),
-  })
+  } = usePublicActivityQuery({ userAddress, typeFilter, sortFilter })
 
-  const activities = data?.pages.flat() ?? []
-  const loading = status === 'pending'
-  const hasInitialError = status === 'error'
+  const activities = useMemo(
+    () => data?.pages.flat() ?? [],
+    [data?.pages],
+  )
+  const visibleActivities = useMemo(() => {
+    const filtered = activities
+      .filter(activity => matchesSearchQuery(activity, searchQuery))
+      .filter(activity => matchesTypeFilter(activity, typeFilter))
+
+    const sorted = [...filtered]
+    sorted.sort((a, b) => {
+      if (sortFilter === 'oldest') {
+        return getActivityTimestampMs(a) - getActivityTimestampMs(b)
+      }
+      if (sortFilter === 'value') {
+        return Math.abs(toNumeric(b.total_value)) - Math.abs(toNumeric(a.total_value))
+      }
+      if (sortFilter === 'shares') {
+        return Math.abs(toNumeric(b.amount)) - Math.abs(toNumeric(a.amount))
+      }
+      return getActivityTimestampMs(b) - getActivityTimestampMs(a)
+    })
+
+    return sorted
+  }, [activities, searchQuery, sortFilter, typeFilter])
+
+  const isLoading = status === 'pending'
+  const hasError = status === 'error'
+  function handleExportCsv() {
+    if (visibleActivities.length === 0) {
+      return
+    }
+
+    const siteName = process.env.NEXT_PUBLIC_SITE_NAME!
+    const { csvContent, filename } = buildActivityCsv(visibleActivities, siteName)
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+  }
 
   useEffect(() => {
     if (!hasNextPage || !loadMoreRef.current) {
@@ -72,18 +84,15 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
       const [entry] = entries
       if (entry?.isIntersecting && !isFetchingNextPage && !isLoadingMore && !infiniteScrollError) {
         setIsLoadingMore(true)
-        setInfiniteScrollError(null)
-
         fetchNextPage()
           .then(() => {
             setIsLoadingMore(false)
-            setRetryCount(0)
+            setInfiniteScrollError(null)
           })
           .catch((error) => {
             setIsLoadingMore(false)
             if (error.name !== 'AbortError') {
-              const errorMessage = error.message || 'Failed to load more activity'
-              setInfiniteScrollError(errorMessage)
+              setInfiniteScrollError(error.message || 'Failed to load more activity.')
             }
           })
       }
@@ -94,147 +103,39 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
     return () => observer.disconnect()
   }, [fetchNextPage, hasNextPage, infiniteScrollError, isFetchingNextPage, isLoadingMore])
 
-  const retryInfiniteScroll = useCallback(() => {
-    setInfiniteScrollError(null)
-    setIsLoadingMore(true)
-    setRetryCount(prev => prev + 1)
-
-    fetchNextPage()
-      .then(() => {
-        setIsLoadingMore(false)
-        setRetryCount(0)
-      })
-      .catch((error) => {
-        setIsLoadingMore(false)
-        if (error.name !== 'AbortError') {
-          setInfiniteScrollError('Failed to load more activity')
-        }
-      })
-  }, [fetchNextPage])
-
-  const retryInitialLoad = useCallback(() => {
-    setRetryCount(prev => prev + 1)
+  useEffect(() => {
     setInfiniteScrollError(null)
     setIsLoadingMore(false)
-    void refetch()
-  }, [refetch])
-
-  if (hasInitialError) {
-    return (
-      <div className="grid gap-6">
-        <PublicActivityError
-          retryCount={retryCount}
-          isLoading={loading}
-          onRetry={retryInitialLoad}
-        />
-      </div>
-    )
-  }
+  }, [searchQuery, sortFilter, typeFilter, userAddress])
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3 pb-0">
+      <PublicActivityFilters
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        typeFilter={typeFilter}
+        onTypeChange={setTypeFilter}
+        sortFilter={sortFilter}
+        onSortChange={setSortFilter}
+        onExport={handleExportCsv}
+        disableExport={visibleActivities.length === 0}
+      />
 
-      <div className={`
-        mb-2 flex items-center gap-3 px-3 py-2 text-xs font-medium tracking-wide text-muted-foreground uppercase
-        sm:gap-4 sm:px-5
-      `}
-      >
-        <div className="w-12 sm:w-16">Type</div>
-        <div className="flex-1">Market</div>
-        <div className="text-right">Amount</div>
-      </div>
-
-      {loading && (
-        <div className="overflow-hidden rounded-lg border border-border">
-          <ActivitySkeletonRows />
-          <div className="p-4 text-center">
-            <div className="space-y-2">
-              <div className="text-sm text-muted-foreground">
-                {retryCount > 0 ? 'Retrying...' : 'Loading activity...'}
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
-
-      {!loading && activities.length === 0 && <PublicActivityEmpty />}
-
-      {!loading && activities.length > 0 && (
-        <div className="overflow-hidden rounded-lg border border-border">
-          <div className="divide-y divide-border/70">
-            {activities.map(activity => (
-              <PublicActivityItem key={activity.id} item={activity} />
-            ))}
-          </div>
-
-          {(isFetchingNextPage || isLoadingMore) && (
-            <div className="border-t">
-              <ActivitySkeletonRows count={3} />
-            </div>
-          )}
-
-          {!hasNextPage && activities.length > 0 && !isFetchingNextPage && !isLoadingMore && (
-            <div className="border-t bg-muted/20 p-6 text-center">
-              <div className="space-y-3">
-                <div className="text-sm font-medium text-foreground">
-                  You've reached the end
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  {`All ${activities.length} trading activit${activities.length === 1 ? 'y' : 'ies'} loaded`}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {infiniteScrollError && (
-            <div className="border-t bg-muted/30 p-4">
-              <Alert variant="destructive">
-                <AlertCircleIcon className="size-4" />
-                <AlertTitle>Failed to load more activity</AlertTitle>
-                <AlertDescription className="mt-2 space-y-3">
-                  <p className="text-sm">
-                    {retryCount > 0
-                      ? `Unable to load more data after ${retryCount} attempt${retryCount > 1 ? 's' : ''}. Please check your connection.`
-                      : 'There was a problem loading more activity data.'}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      onClick={retryInfiniteScroll}
-                      size="sm"
-                      variant="outline"
-                      className="flex items-center gap-2"
-                      disabled={isLoadingMore}
-                    >
-                      <RefreshCwIcon className={cn('size-3', isLoadingMore && 'animate-spin')} />
-                      {isLoadingMore ? 'Retrying...' : 'Try again'}
-                    </Button>
-                    {retryCount > 2 && (
-                      <Button
-                        type="button"
-                        onClick={() => {
-                          setInfiniteScrollError(null)
-                          setRetryCount(0)
-                          void queryClient.invalidateQueries({
-                            queryKey: ['user-activity', userAddress],
-                          })
-                        }}
-                        size="sm"
-                        variant="ghost"
-                      >
-                        Start over
-                      </Button>
-                    )}
-                  </div>
-                </AlertDescription>
-              </Alert>
-            </div>
-          )}
-        </div>
-      )}
-
-      <div ref={loadMoreRef} />
+      <PublicActivityTable
+        activities={visibleActivities}
+        rowGridClass={rowGridClass}
+        isLoading={isLoading}
+        hasError={hasError}
+        onRetry={() => refetch()}
+        isFetchingNextPage={isFetchingNextPage}
+        isLoadingMore={isLoadingMore}
+        infiniteScrollError={infiniteScrollError}
+        onRetryLoadMore={() => {
+          setInfiniteScrollError(null)
+          void fetchNextPage()
+        }}
+        loadMoreRef={loadMoreRef}
+      />
     </div>
   )
 }
