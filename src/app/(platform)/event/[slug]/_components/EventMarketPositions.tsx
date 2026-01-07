@@ -426,8 +426,8 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
           <h3 className="text-lg font-semibold">Positions</h3>
         </div>
       )}
-      <div className="min-w-0 overflow-x-auto">
-        <table className="w-full min-w-0 table-fixed border-collapse sm:min-w-180 sm:table-auto">
+      <div className="max-w-full min-w-0 overflow-x-auto">
+        <table className="w-full min-w-[115%] table-fixed border-collapse sm:min-w-180 sm:table-auto">
           <colgroup>
             <col style={{ width: '18%' }} />
             <col style={{ width: '10%' }} />
