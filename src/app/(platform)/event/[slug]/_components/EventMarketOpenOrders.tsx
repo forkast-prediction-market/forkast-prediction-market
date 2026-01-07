@@ -6,7 +6,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { AlertCircleIcon, ChevronDown, ChevronUp, XIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
-import { cancelMultipleOrdersAction } from '@/app/(platform)/event/[slug]/_actions/cancel-open-orders'
+import { cancelMarketOrdersAction } from '@/app/(platform)/event/[slug]/_actions/cancel-market-orders'
 import { cancelOrderAction } from '@/app/(platform)/event/[slug]/_actions/cancel-order'
 import { buildUserOpenOrdersQueryKey, useUserOpenOrdersQuery } from '@/app/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -370,20 +370,23 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
     })
 
     try {
-      const result = await cancelMultipleOrdersAction(orderIds)
-      const failedCount = result.failed.length
-      const failedSet = new Set(result.failed.map(item => item.id))
-      const succeededIds = orderIds.filter(id => !failedSet.has(id))
+      const result = await cancelMarketOrdersAction({ market: market.condition_id })
+      if (result.error) {
+        throw new Error(result.error)
+      }
+
+      const failedIds = Object.keys(result.notCanceled ?? {})
+      const failedCount = failedIds.length
 
       if (failedCount === 0) {
-        toast.success('All open orders cancelled')
+        toast.success('All open orders for this market was cancelled.')
       }
       else {
         toast.error(`Could not cancel ${failedCount} order${failedCount > 1 ? 's' : ''}.`)
       }
 
-      if (succeededIds.length) {
-        removeOrdersFromCache(succeededIds)
+      if (result.cancelled.length) {
+        removeOrdersFromCache(result.cancelled)
       }
       await queryClient.invalidateQueries({ queryKey: openOrdersQueryKey })
       void queryClient.invalidateQueries({ queryKey: ['orderbook-summary'] })
@@ -407,7 +410,15 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
       })
       setIsCancellingAll(false)
     }
-  }, [isCancellingAll, openOrdersQueryKey, queryClient, removeOrdersFromCache, scheduleOpenOrdersRefresh, sortedOrders])
+  }, [
+    isCancellingAll,
+    market.condition_id,
+    openOrdersQueryKey,
+    queryClient,
+    removeOrdersFromCache,
+    scheduleOpenOrdersRefresh,
+    sortedOrders,
+  ])
 
   useEffect(() => {
     if (!hasOrders || typeof window === 'undefined') {
