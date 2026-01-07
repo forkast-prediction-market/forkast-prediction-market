@@ -11,7 +11,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { fetchUserPositionsForMarket } from '@/lib/data-api/user'
-import { formatAmountInputValue, formatCentsLabel, formatCurrency, formatPercent, fromMicro, sharesFormatter } from '@/lib/formatters'
+import {
+  formatAmountInputValue,
+  formatCentsLabel,
+  formatCurrency,
+  formatPercent,
+  fromMicro,
+  sharesFormatter,
+} from '@/lib/formatters'
 import { buildShareCardPayload } from '@/lib/share-card'
 import { getUserPublicAddress } from '@/lib/user-address'
 import { cn } from '@/lib/utils'
@@ -139,11 +146,10 @@ function MarketPositionRow({
 
   const unrealizedLabel = formatSignedCurrency(unrealizedValue)
   const realizedLabel = formatSignedCurrency(realizedPnlValue)
-  const totalLabel = displayedReturnValue
 
   return (
     <tr className="text-2xs leading-tight text-foreground sm:text-xs">
-      <td className="px-2 py-1 sm:px-3">
+      <td className="p-2 sm:px-3">
         <span
           className={cn(
             `
@@ -156,13 +162,13 @@ function MarketPositionRow({
           {outcomeButtonLabel}
         </span>
       </td>
-      <td className="px-2 py-1 text-center text-2xs font-semibold sm:px-3 sm:text-sm">
+      <td className="p-2 text-center text-2xs font-semibold sm:px-3 sm:text-sm">
         {formattedQuantity}
       </td>
-      <td className="px-2 py-1 text-center text-2xs font-semibold sm:px-3 sm:text-sm">
+      <td className="p-2 text-center text-2xs font-semibold sm:px-3 sm:text-sm">
         {averageLabel}
       </td>
-      <td className="px-2 py-1 sm:px-3">
+      <td className="p-2 sm:px-3">
         <div className="flex flex-col leading-tight">
           <span className="text-2xs font-semibold sm:text-sm">{valueLabel}</span>
           <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
@@ -170,7 +176,7 @@ function MarketPositionRow({
           </span>
         </div>
       </td>
-      <td className="px-2 py-1 text-2xs font-semibold sm:px-3 sm:text-sm">
+      <td className="p-2 text-2xs font-semibold sm:px-3 sm:text-sm">
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
             <span className="inline-flex flex-wrap items-center gap-1">
@@ -208,7 +214,7 @@ function MarketPositionRow({
               <div className="flex items-center justify-between gap-3">
                 <span>Total</span>
                 <span className="font-semibold">
-                  {totalLabel}
+                  {displayedReturnValue}
                   {!isNeutralReturn && (
                     <span className={cn('ml-1 font-semibold', returnColorClass)}>
                       (
@@ -222,8 +228,8 @@ function MarketPositionRow({
           </TooltipContent>
         </Tooltip>
       </td>
-      <td className="px-2 py-1 sm:px-3">
-        <div className="flex flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
+      <td className="p-2 sm:px-3">
+        <div className="flex items-center justify-end gap-2 sm:flex-nowrap">
           <Button
             type="button"
             variant="ghost"
@@ -443,12 +449,12 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
                 uppercase
               `}
             >
-              <th className="px-2 py-2 text-left sm:px-3">Outcome</th>
-              <th className="px-2 py-2 text-center sm:px-3">Qty</th>
-              <th className="px-2 py-2 text-center sm:px-3">Avg</th>
-              <th className="px-2 py-2 text-left sm:px-3">Value</th>
-              <th className="px-2 py-2 text-left sm:px-3">Return</th>
-              <th className="px-2 py-2 text-right sm:px-3">
+              <th className="px-2 py-2.5 text-left sm:px-3">Outcome</th>
+              <th className="px-2 py-2.5 text-center sm:px-3">Qty</th>
+              <th className="px-2 py-2.5 text-center sm:px-3">Avg</th>
+              <th className="px-2 py-2.5 text-left sm:px-3">Value</th>
+              <th className="px-2 py-2.5 text-left sm:px-3">Return</th>
+              <th className="px-2 py-2.5 text-right sm:px-3">
                 <span className="sr-only">Actions</span>
               </th>
             </tr>
