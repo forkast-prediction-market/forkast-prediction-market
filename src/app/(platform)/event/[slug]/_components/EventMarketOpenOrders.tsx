@@ -33,10 +33,8 @@ interface OpenOrderRowProps {
 type SortDirection = 'asc' | 'desc'
 type SortColumn = 'side' | 'outcome' | 'price' | 'filled' | 'total' | 'expiration'
 
-const OPEN_ORDERS_GRID_TEMPLATE = 'minmax(60px,0.6fr) minmax(100px,1.1fr) minmax(70px,0.7fr) minmax(110px,0.8fr) minmax(120px,1fr) minmax(180px,1.2fr) minmax(72px,0.4fr)'
-
 const CANCEL_ICON_BUTTON_CLASS = `
-  inline-flex size-8 items-center justify-center rounded-md border border-border/70 bg-transparent text-foreground
+  inline-flex size-8 shrink-0 items-center justify-center rounded-md border border-border/70 bg-transparent text-foreground
   transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring
   dark:border-white/30 dark:text-white dark:hover:bg-white/10
 `
@@ -123,18 +121,19 @@ function SortHeaderButton({
       type="button"
       className={cn(
         `
-          group flex items-center gap-1 text-2xs font-semibold tracking-wide text-muted-foreground uppercase
-          transition-colors
+          group flex w-full items-center gap-2 text-2xs font-semibold tracking-wide whitespace-nowrap
+          text-muted-foreground uppercase transition-colors
         `,
         alignment === 'center' && 'justify-center',
         alignment === 'right' && 'justify-end',
+        alignment === 'left' && 'justify-start',
       )}
       onClick={() => onSort(column)}
     >
       <span>{label}</span>
       <Icon
         className={cn(
-          'size-3.5 transition-colors',
+          'size-3.5 shrink-0 transition-colors',
           isActive ? 'text-foreground' : 'text-muted-foreground/60',
         )}
       />
@@ -197,15 +196,11 @@ function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
   const outcomeLabel = order.outcome.text || (isNoOutcome ? 'No' : 'Yes')
 
   return (
-    <div
-      className="grid items-center gap-3 px-3 py-1 text-2xs leading-tight text-foreground sm:px-4 sm:text-xs"
-      style={{ gridTemplateColumns: OPEN_ORDERS_GRID_TEMPLATE }}
-    >
-      <div className="text-xs font-semibold text-muted-foreground sm:text-sm">
+    <tr className="text-2xs leading-tight text-foreground sm:text-xs">
+      <td className="px-2 py-1.5 text-xs font-semibold text-muted-foreground sm:px-3 sm:text-sm">
         {sideLabel}
-      </div>
-
-      <div className="flex items-center">
+      </td>
+      <td className="px-2 py-1.5 sm:px-3">
         <span
           className={cn(
             `
@@ -217,35 +212,34 @@ function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
         >
           {outcomeLabel}
         </span>
-      </div>
-
-      <div className="text-center text-xs font-semibold sm:text-sm">{priceLabel}</div>
-
-      <div className="text-center text-xs font-semibold sm:text-sm">{filledLabel}</div>
-
-      <div className="text-center text-xs font-semibold sm:text-sm">{totalValueLabel}</div>
-
-      <div className="text-2xs font-medium text-muted-foreground sm:text-xs">{expirationLabel}</div>
-
-      <div className="flex justify-end">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              type="button"
-              aria-label={`Cancel ${sideLabel} order for ${outcomeLabel}`}
-              className={cn(CANCEL_ICON_BUTTON_CLASS, isCancelling && 'cursor-not-allowed opacity-60')}
-              disabled={isCancelling}
-              onClick={() => onCancel(order)}
-            >
-              <XIcon className="size-4" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent side="top" sideOffset={8} className="border border-border bg-background text-foreground" hideArrow>
-            Cancel order
-          </TooltipContent>
-        </Tooltip>
-      </div>
-    </div>
+      </td>
+      <td className="px-2 py-1.5 text-center text-xs font-semibold sm:px-3 sm:text-sm">{priceLabel}</td>
+      <td className="px-2 py-1.5 text-center text-xs font-semibold sm:px-3 sm:text-sm">{filledLabel}</td>
+      <td className="px-2 py-1.5 text-center text-xs font-semibold sm:px-3 sm:text-sm">{totalValueLabel}</td>
+      <td className="px-2 py-1.5 text-2xs font-medium text-muted-foreground sm:px-3 sm:text-xs">
+        {expirationLabel}
+      </td>
+      <td className="px-2 py-1.5 sm:px-3">
+        <div className="flex justify-end">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label={`Cancel ${sideLabel} order for ${outcomeLabel}`}
+                className={cn(CANCEL_ICON_BUTTON_CLASS, isCancelling && 'cursor-not-allowed opacity-60')}
+                disabled={isCancelling}
+                onClick={() => onCancel(order)}
+              >
+                <XIcon className="size-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="top" sideOffset={8} className="border border-border bg-background text-foreground" hideArrow>
+              Cancel order
+            </TooltipContent>
+          </Tooltip>
+        </div>
+      </td>
+    </tr>
   )
 }
 
@@ -466,35 +460,58 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
         </div>
       )}
 
-      <div className="overflow-x-auto px-2">
-        <div className="min-w-0 sm:min-w-lg">
-          <div
-            className={`
-              grid h-9 items-center gap-3 border-b border-border/60 bg-background px-3 text-2xs font-semibold
-              tracking-wide text-muted-foreground uppercase
-            `}
-            style={{ gridTemplateColumns: OPEN_ORDERS_GRID_TEMPLATE }}
-          >
-            <SortHeaderButton column="side" label="Side" sortState={sortState} onSort={handleSort} />
-            <SortHeaderButton column="outcome" label="Outcome" sortState={sortState} onSort={handleSort} />
-            <SortHeaderButton column="price" label="Price" alignment="center" sortState={sortState} onSort={handleSort} />
-            <SortHeaderButton column="filled" label="Filled" alignment="center" sortState={sortState} onSort={handleSort} />
-            <SortHeaderButton column="total" label="Total" alignment="center" sortState={sortState} onSort={handleSort} />
-            <SortHeaderButton column="expiration" label="Expiration" sortState={sortState} onSort={handleSort} />
-            <button
-              type="button"
+      <div className="max-w-full min-w-0 overflow-x-auto px-2">
+        <table className="w-full min-w-[140%] table-fixed border-collapse sm:min-w-lg sm:table-auto">
+          <colgroup>
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '20%' }} />
+            <col style={{ width: '12%' }} />
+            <col style={{ width: '13%' }} />
+            <col style={{ width: '13%' }} />
+            <col style={{ width: '24%' }} />
+            <col style={{ width: '8%' }} />
+          </colgroup>
+          <thead>
+            <tr
               className={`
-                flex justify-end text-2xs font-semibold tracking-wide text-destructive uppercase transition-opacity
-                disabled:opacity-40
+                border-b border-border/60 bg-background text-2xs font-semibold tracking-wide text-muted-foreground
+                uppercase
               `}
-              onClick={handleCancelAll}
-              disabled={isCancellingAll || !hasOrders}
             >
-              {isCancellingAll ? 'Cancelling…' : 'Cancel All'}
-            </button>
-          </div>
-
-          <div className="mt-2">
+              <th className="px-2 py-3 text-left sm:px-3">
+                <SortHeaderButton column="side" label="Side" sortState={sortState} onSort={handleSort} />
+              </th>
+              <th className="px-2 py-3 text-left sm:px-3">
+                <SortHeaderButton column="outcome" label="Outcome" sortState={sortState} onSort={handleSort} />
+              </th>
+              <th className="px-2 py-3 text-center sm:px-3">
+                <SortHeaderButton column="price" label="Price" alignment="center" sortState={sortState} onSort={handleSort} />
+              </th>
+              <th className="px-2 py-3 text-center sm:px-3">
+                <SortHeaderButton column="filled" label="Filled" alignment="center" sortState={sortState} onSort={handleSort} />
+              </th>
+              <th className="px-2 py-3 text-center sm:px-3">
+                <SortHeaderButton column="total" label="Total" alignment="center" sortState={sortState} onSort={handleSort} />
+              </th>
+              <th className="px-2 py-3 text-left sm:px-3">
+                <SortHeaderButton column="expiration" label="Expiration" sortState={sortState} onSort={handleSort} />
+              </th>
+              <th className="px-2 py-3 text-right sm:px-3">
+                <button
+                  type="button"
+                  className={`
+                    text-2xs font-semibold tracking-wide whitespace-nowrap text-destructive uppercase transition-opacity
+                    disabled:opacity-40
+                  `}
+                  onClick={handleCancelAll}
+                  disabled={isCancellingAll || !hasOrders}
+                >
+                  {isCancellingAll ? 'Cancelling…' : 'Cancel All'}
+                </button>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/60">
             {sortedOrders.map(order => (
               <OpenOrderRow
                 key={order.id}
@@ -503,11 +520,11 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
                 isCancelling={pendingCancelIds.has(order.id)}
               />
             ))}
-            {hasNextPage && !infiniteScrollError && (
-              <div ref={sentinelRef} className="h-1" />
-            )}
-          </div>
-        </div>
+          </tbody>
+        </table>
+        {hasNextPage && !infiniteScrollError && (
+          <div ref={sentinelRef} className="h-1" />
+        )}
       </div>
 
       {hasOrders && isFetchingNextPage && (
@@ -551,12 +568,12 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
 
   return isSingleMarket
     ? (
-        <section className="overflow-hidden rounded-xl border border-border/60 bg-background/80">
+        <section className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-background/80">
           {content}
         </section>
       )
     : (
-        <div>
+        <div className="min-w-0">
           {content}
         </div>
       )

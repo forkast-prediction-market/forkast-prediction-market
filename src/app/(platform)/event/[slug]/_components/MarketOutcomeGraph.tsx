@@ -33,7 +33,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   const [timeRangeIndicatorReady, setTimeRangeIndicatorReady] = useState(false)
   const marketTargets = useMemo(() => buildMarketTargets(allMarkets), [allMarkets])
   const { width: windowWidth } = useWindowSize()
-  const chartWidth = isMobile ? windowWidth : Math.max((windowWidth ?? 0) * 0.55, 400)
+  const chartWidth = isMobile ? windowWidth : Math.min((windowWidth ?? 0) * 0.55, 900)
 
   useEffect(() => {
     setActiveOutcomeIndex(outcome.outcome_index)

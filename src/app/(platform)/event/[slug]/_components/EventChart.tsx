@@ -235,7 +235,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   }, [event.id, activeTimeRange, activeOutcomeIndex, effectiveSeries])
 
   const { width: windowWidth } = useWindowSize()
-  const chartWidth = isMobile ? windowWidth : Math.max((windowWidth ?? 0) * 0.55, 900)
+  const chartWidth = isMobile ? windowWidth : Math.min((windowWidth ?? 0) * 0.55, 900)
 
   const legendEntries = useMemo<Array<SeriesConfig & { value: number | null }>>(
     () => legendSeries.map((seriesItem) => {
@@ -281,8 +281,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     () => legendEntries.filter(entry => typeof entry.value === 'number' && Number.isFinite(entry.value)),
     [legendEntries],
   )
-  const showLegendValues = chartSeries.length > 0 && legendEntriesWithValues.length > 0
-  const shouldRenderLegendEntries = showLegendValues
+  const shouldRenderLegendEntries = chartSeries.length > 0 && legendEntriesWithValues.length > 0
   const cursorYesChance = typeof hoveredYesChance === 'number' && Number.isFinite(hoveredYesChance)
     ? hoveredYesChance
     : null
