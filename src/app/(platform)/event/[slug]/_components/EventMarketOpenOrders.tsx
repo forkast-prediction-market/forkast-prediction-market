@@ -467,7 +467,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
       )}
 
       <div className="overflow-x-auto px-2">
-        <div className="min-w-lg">
+        <div className="min-w-0 sm:min-w-lg">
           <div
             className={`
               grid h-9 items-center gap-3 border-b border-border/60 bg-background px-3 text-2xs font-semibold

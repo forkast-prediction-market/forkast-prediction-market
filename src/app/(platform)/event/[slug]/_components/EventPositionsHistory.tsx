@@ -51,7 +51,7 @@ export default function EventPositionsHistory() {
         </div>
 
         <div className="overflow-x-auto">
-          <div className="min-w-160">
+          <div className="min-w-0 sm:min-w-160">
             <div className={`
               grid grid-cols-[1.4fr_0.6fr_0.7fr_1.2fr_1.4fr_0.6fr] items-center gap-4 border-b border-border/40 pb-3
               text-xs font-semibold tracking-wide text-muted-foreground uppercase

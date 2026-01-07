@@ -30,8 +30,6 @@ function toNumber(value: unknown) {
   return Number.isFinite(numeric) ? numeric : null
 }
 
-const POSITIONS_GRID_TEMPLATE = 'minmax(120px,1fr) repeat(4, minmax(80px,1fr)) minmax(150px,auto)'
-
 function buildShareCardPosition(position: UserPosition) {
   const outcomeText = position.outcome_text
     || (position.outcome_index === 1 ? 'No' : 'Yes')
@@ -144,11 +142,8 @@ function MarketPositionRow({
   const totalLabel = displayedReturnValue
 
   return (
-    <div
-      className="grid items-center gap-3 px-3 py-1 text-2xs leading-tight text-foreground sm:text-xs"
-      style={{ gridTemplateColumns: POSITIONS_GRID_TEMPLATE }}
-    >
-      <div className="flex items-center">
+    <tr className="text-2xs leading-tight text-foreground sm:text-xs">
+      <td className="px-2 py-1 sm:px-3">
         <span
           className={cn(
             `
@@ -160,23 +155,25 @@ function MarketPositionRow({
         >
           {outcomeButtonLabel}
         </span>
-      </div>
-      <div className="text-center text-2xs leading-tight font-semibold sm:text-sm">
+      </td>
+      <td className="px-2 py-1 text-center text-2xs font-semibold sm:px-3 sm:text-sm">
         {formattedQuantity}
-      </div>
-      <div className="text-center text-2xs leading-tight font-semibold sm:text-sm">
+      </td>
+      <td className="px-2 py-1 text-center text-2xs font-semibold sm:px-3 sm:text-sm">
         {averageLabel}
-      </div>
-      <div className="flex flex-col leading-tight">
-        <span className="text-2xs font-semibold sm:text-sm">{valueLabel}</span>
-        <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
-          {costLabel ? `Cost ${costLabel}` : 'Cost —'}
-        </span>
-      </div>
-      <div className="flex items-center gap-1 text-2xs leading-tight font-semibold sm:text-sm">
+      </td>
+      <td className="px-2 py-1 sm:px-3">
+        <div className="flex flex-col leading-tight">
+          <span className="text-2xs font-semibold sm:text-sm">{valueLabel}</span>
+          <span className="text-2xs font-medium tracking-wide text-muted-foreground uppercase">
+            {costLabel ? `Cost ${costLabel}` : 'Cost —'}
+          </span>
+        </div>
+      </td>
+      <td className="px-2 py-1 text-2xs font-semibold sm:px-3 sm:text-sm">
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
-            <span className="inline-flex items-center gap-1">
+            <span className="inline-flex flex-wrap items-center gap-1">
               <span
                 className="inline-flex items-center"
                 style={{ borderBottom: '1px dotted currentColor', paddingBottom: '0.04rem' }}
@@ -224,34 +221,36 @@ function MarketPositionRow({
             </div>
           </TooltipContent>
         </Tooltip>
-      </div>
-      <div className="flex items-center justify-end gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          className={cn(
-            'h-8 rounded-md border border-border/70 bg-transparent px-3 text-xs font-semibold',
-            'hover:bg-muted/30 dark:border-white/30 dark:text-white dark:hover:bg-white/10',
-          )}
-          onClick={() => onSell(position)}
-        >
-          Sell
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={`Share ${outcomeButtonLabel} position`}
-          className={cn(
-            'size-8 rounded-md border border-border/70 bg-transparent text-foreground',
-            'hover:bg-muted/30 dark:border-white/30 dark:text-white dark:hover:bg-white/10',
-          )}
-          onClick={() => onShare(position)}
-        >
-          <ShareIcon className="size-4" />
-        </Button>
-      </div>
-    </div>
+      </td>
+      <td className="px-2 py-1 sm:px-3">
+        <div className="flex flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
+          <Button
+            type="button"
+            variant="ghost"
+            className={cn(
+              'h-8 rounded-md border border-border/70 bg-transparent px-3 text-xs font-semibold',
+              'hover:bg-muted/30 dark:border-white/30 dark:text-white dark:hover:bg-white/10',
+            )}
+            onClick={() => onSell(position)}
+          >
+            Sell
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={`Share ${outcomeButtonLabel} position`}
+            className={cn(
+              'size-8 rounded-md border border-border/70 bg-transparent text-foreground',
+              'hover:bg-muted/30 dark:border-white/30 dark:text-white dark:hover:bg-white/10',
+            )}
+            onClick={() => onShare(position)}
+          >
+            <ShareIcon className="size-4" />
+          </Button>
+        </div>
+      </td>
+    </tr>
   )
 }
 
@@ -427,23 +426,34 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
           <h3 className="text-lg font-semibold">Positions</h3>
         </div>
       )}
-      <div className="overflow-x-auto">
-        <div className="min-w-190 px-2 pb-2">
-          <div
-            className={`
-              grid h-9 items-center gap-3 border-b border-border/60 bg-background px-3 text-2xs font-semibold
-              tracking-wide text-muted-foreground uppercase
-            `}
-            style={{ gridTemplateColumns: POSITIONS_GRID_TEMPLATE }}
-          >
-            <span>Outcome</span>
-            <span className="text-center">Qty</span>
-            <span className="text-center">Avg</span>
-            <span>Value</span>
-            <span>Return</span>
-            <span aria-hidden="true" />
-          </div>
-          <div className="mt-2">
+      <div className="min-w-0 overflow-x-auto">
+        <table className="w-full min-w-0 table-fixed border-collapse sm:min-w-180 sm:table-auto">
+          <colgroup>
+            <col style={{ width: '18%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '22%' }} />
+            <col style={{ width: '22%' }} />
+            <col style={{ width: '18%' }} />
+          </colgroup>
+          <thead>
+            <tr
+              className={`
+                border-b border-border/60 bg-background text-2xs font-semibold tracking-wide text-muted-foreground
+                uppercase
+              `}
+            >
+              <th className="px-2 py-2 text-left sm:px-3">Outcome</th>
+              <th className="px-2 py-2 text-center sm:px-3">Qty</th>
+              <th className="px-2 py-2 text-center sm:px-3">Avg</th>
+              <th className="px-2 py-2 text-left sm:px-3">Value</th>
+              <th className="px-2 py-2 text-left sm:px-3">Return</th>
+              <th className="px-2 py-2 text-right sm:px-3">
+                <span className="sr-only">Actions</span>
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/60">
             {positions.map(position => (
               <MarketPositionRow
                 key={`${position.outcome_text}-${position.last_activity_at}`}
@@ -452,8 +462,8 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
                 onShare={handleShareClick}
               />
             ))}
-          </div>
-        </div>
+          </tbody>
+        </table>
       </div>
       <PositionShareDialog
         open={isShareDialogOpen}
@@ -465,12 +475,12 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
 
   return isSingleMarket
     ? (
-        <section className="overflow-hidden rounded-xl border border-border/60 bg-background/80">
+        <section className="min-w-0 overflow-hidden rounded-xl border border-border/60 bg-background/80">
           {content}
         </section>
       )
     : (
-        <div>
+        <div className="min-w-0">
           {content}
         </div>
       )
