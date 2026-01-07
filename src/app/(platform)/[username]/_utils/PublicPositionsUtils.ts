@@ -458,41 +458,48 @@ export async function fetchLockedSharesByCondition(markets: MergeableMarket[]): 
         throw new Error(`Incomplete outcome asset mapping for condition ${conditionId}`)
       }
 
-      const openOrdersPage = await fetchUserOpenOrders({
-        pageParam: 'MA==',
-        eventSlug,
-        conditionId,
-      })
+      const seenCursors = new Set<string>()
+      let nextCursor = 'MA=='
+      while (nextCursor && nextCursor !== 'LTE=' && !seenCursors.has(nextCursor)) {
+        seenCursors.add(nextCursor)
+        const openOrdersPage = await fetchUserOpenOrders({
+          pageParam: nextCursor,
+          eventSlug,
+          conditionId,
+        })
 
-      openOrdersPage.data.forEach((order) => {
-        if (order.side !== 'sell') {
-          return
-        }
+        openOrdersPage.data.forEach((order) => {
+          if (order.side !== 'sell') {
+            return
+          }
 
-        const totalShares = Math.max(
-          normalizeOrderShares(order.maker_amount),
-          normalizeOrderShares(order.taker_amount),
-        )
-        const filledShares = normalizeOrderShares(order.size_matched)
-        const remainingShares = Math.max(totalShares - Math.min(filledShares, totalShares), 0)
-        if (remainingShares <= 0) {
-          return
-        }
+          const totalShares = Math.max(
+            normalizeOrderShares(order.maker_amount),
+            normalizeOrderShares(order.taker_amount),
+          )
+          const filledShares = normalizeOrderShares(order.size_matched)
+          const remainingShares = Math.max(totalShares - Math.min(filledShares, totalShares), 0)
+          if (remainingShares <= 0) {
+            return
+          }
 
-        const outcomeIndexValue = parseNumber(order.outcome?.index as number | string | null | undefined)
-        if (!Number.isFinite(outcomeIndexValue)) {
-          return
-        }
+          const outcomeIndexValue = parseNumber(order.outcome?.index as number | string | null | undefined)
+          if (!Number.isFinite(outcomeIndexValue)) {
+            return
+          }
 
-        const assetKey = outcomeAssetMap[outcomeIndexValue]
-        if (!assetKey) {
-          return
-        }
+          const assetKey = outcomeAssetMap[outcomeIndexValue]
+          if (!assetKey) {
+            return
+          }
 
-        const bucket = lockedByCondition[conditionId] ?? {}
-        bucket[assetKey] = (bucket[assetKey] ?? 0) + remainingShares
-        lockedByCondition[conditionId] = bucket
-      })
+          const bucket = lockedByCondition[conditionId] ?? {}
+          bucket[assetKey] = (bucket[assetKey] ?? 0) + remainingShares
+          lockedByCondition[conditionId] = bucket
+        })
+
+        nextCursor = openOrdersPage.next_cursor
+      }
     }
     catch (error) {
       console.error('Failed to fetch open orders for mergeable lock calculation.', error)

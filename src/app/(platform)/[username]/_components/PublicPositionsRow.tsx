@@ -133,7 +133,7 @@ export default function PublicPositionsRow({
             </Button>
           )}
           <Tooltip>
-            <TooltipTrigger>
+            <TooltipTrigger asChild>
               <Button
                 size="sm"
                 variant="outline"
