@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import EventChart from '@/app/(platform)/event/[slug]/_components/EventChart'
 import EventHeader from '@/app/(platform)/event/[slug]/_components/EventHeader'
+import EventMarketChannelProvider from '@/app/(platform)/event/[slug]/_components/EventMarketChannelProvider'
 import EventMarketContext from '@/app/(platform)/event/[slug]/_components/EventMarketContext'
 import EventMarketHistory from '@/app/(platform)/event/[slug]/_components/EventMarketHistory'
 import EventMarketOpenOrders from '@/app/(platform)/event/[slug]/_components/EventMarketOpenOrders'
@@ -221,69 +222,71 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
   }
 
   return (
-    <EventOutcomeChanceProvider eventId={event.id}>
-      <OrderLimitPriceSync />
-      <div className="grid gap-3" ref={contentRef}>
-        <EventHeader event={event} />
-        <EventMetaInformation event={event} />
-        <EventChart event={event} isMobile={isMobile} />
-        <div ref={eventMarketsRef} id="event-markets">
-          <EventMarkets event={event} isMobile={isMobile} />
-        </div>
-        {event.total_markets_count === 1 && (
-          <>
-            { currentUser && <EventMarketPositions market={event.markets[0]} /> }
-            <EventSingleMarketOrderBook market={event.markets[0]} eventSlug={event.slug} />
-            { currentUser && <EventMarketOpenOrders market={event.markets[0]} eventSlug={event.slug} />}
-            { currentUser && <EventMarketHistory market={event.markets[0]} /> }
-          </>
-        )}
-        {marketContextEnabled && <EventMarketContext event={event} />}
-        <EventRules event={event} />
-        {isMobile && (
-          <>
-            <h3 className="text-lg font-semibold">Related</h3>
-            <EventRelated event={event} />
-          </>
-        )}
-        <EventTabs event={event} user={currentUser} />
-      </div>
-
-      {!isMobile && showBackToTop && backToTopBounds && (
-        <div
-          className="pointer-events-none fixed bottom-6 hidden md:flex"
-          style={{ left: `${backToTopBounds.left}px`, width: `${backToTopBounds.width}px` }}
-        >
-          <div className="grid w-full grid-cols-3 items-center px-4">
-            <div />
-            <button
-              type="button"
-              onClick={handleBackToTop}
-              className={`
-                pointer-events-auto justify-self-center rounded-full border bg-background/90 px-4 py-2 text-sm
-                font-semibold text-foreground shadow-lg backdrop-blur transition-colors
-                hover:text-muted-foreground
-              `}
-              aria-label="Back to top"
-            >
-              <span className="inline-flex items-center gap-2">
-                Back to top
-                <ArrowUpIcon className="size-4" />
-              </span>
-            </button>
+    <EventMarketChannelProvider markets={event.markets}>
+      <EventOutcomeChanceProvider eventId={event.id}>
+        <OrderLimitPriceSync />
+        <div className="grid gap-3" ref={contentRef}>
+          <EventHeader event={event} />
+          <EventMetaInformation event={event} />
+          <EventChart event={event} isMobile={isMobile} />
+          <div ref={eventMarketsRef} id="event-markets">
+            <EventMarkets event={event} isMobile={isMobile} />
           </div>
-        </div>
-      )}
-
-      {isMobile
-        ? <EventOrderPanelMobile event={event} />
-        : (
-            <Teleport to="#event-order-panel">
-              <EventOrderPanelForm event={event} isMobile={false} />
-              <EventRelated event={event} />
-            </Teleport>
+          {event.total_markets_count === 1 && (
+            <>
+              { currentUser && <EventMarketPositions market={event.markets[0]} /> }
+              <EventSingleMarketOrderBook market={event.markets[0]} eventSlug={event.slug} />
+              { currentUser && <EventMarketOpenOrders market={event.markets[0]} eventSlug={event.slug} />}
+              { currentUser && <EventMarketHistory market={event.markets[0]} /> }
+            </>
           )}
-    </EventOutcomeChanceProvider>
+          {marketContextEnabled && <EventMarketContext event={event} />}
+          <EventRules event={event} />
+          {isMobile && (
+            <>
+              <h3 className="text-lg font-semibold">Related</h3>
+              <EventRelated event={event} />
+            </>
+          )}
+          <EventTabs event={event} user={currentUser} />
+        </div>
+
+        {!isMobile && showBackToTop && backToTopBounds && (
+          <div
+            className="pointer-events-none fixed bottom-6 hidden md:flex"
+            style={{ left: `${backToTopBounds.left}px`, width: `${backToTopBounds.width}px` }}
+          >
+            <div className="grid w-full grid-cols-3 items-center px-4">
+              <div />
+              <button
+                type="button"
+                onClick={handleBackToTop}
+                className={`
+                  pointer-events-auto justify-self-center rounded-full border bg-background/90 px-4 py-2 text-sm
+                  font-semibold text-foreground shadow-lg backdrop-blur transition-colors
+                  hover:text-muted-foreground
+                `}
+                aria-label="Back to top"
+              >
+                <span className="inline-flex items-center gap-2">
+                  Back to top
+                  <ArrowUpIcon className="size-4" />
+                </span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {isMobile
+          ? <EventOrderPanelMobile event={event} />
+          : (
+              <Teleport to="#event-order-panel">
+                <EventOrderPanelForm event={event} isMobile={false} />
+                <EventRelated event={event} />
+              </Teleport>
+            )}
+      </EventOutcomeChanceProvider>
+    </EventMarketChannelProvider>
   )
 }
 

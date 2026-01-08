@@ -5,6 +5,7 @@ import type { EventChartProps } from '@/app/(platform)/event/[slug]/_types/Event
 import type { PredictionChartCursorSnapshot, SeriesConfig } from '@/components/PredictionChart'
 import type { Market } from '@/types'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { useMarketChannelSubscription } from '@/app/(platform)/event/[slug]/_components/EventMarketChannelProvider'
 import {
   useEventOutcomeChanceChanges,
   useEventOutcomeChances,
@@ -375,144 +376,51 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   useEffect(() => {
     if (!outcomeTokenIds) {
       setTradeFlowItems([])
+    }
+  }, [outcomeTokenIds])
+
+  useMarketChannelSubscription((payload) => {
+    if (!outcomeTokenIds) {
       return
     }
 
-    let isActive = true
+    if (payload?.event_type !== 'last_trade_price') {
+      return
+    }
+
     const { yesTokenId, noTokenId } = outcomeTokenIds
-    let ws: WebSocket | null = null
-    let reconnectTimeout: number | null = null
+    const assetId = payload.asset_id
+    const price = Number(payload.price)
+    const size = Number(payload.size)
+    const label = buildTradeFlowLabel(price, size)
 
-    function handleMessage(eventMessage: MessageEvent<string>) {
-      if (!isActive) {
-        return
-      }
-      let payload: any
-      try {
-        payload = JSON.parse(eventMessage.data)
-      }
-      catch {
-        return
-      }
-
-      if (payload?.event_type !== 'last_trade_price') {
-        return
-      }
-
-      const assetId = payload.asset_id
-      const price = Number(payload.price)
-      const size = Number(payload.size)
-      const label = buildTradeFlowLabel(price, size)
-
-      if (!label) {
-        return
-      }
-
-      let outcome: 'yes' | 'no' | null = null
-
-      if (assetId === yesTokenId) {
-        outcome = 'yes'
-      }
-
-      if (assetId === noTokenId) {
-        outcome = 'no'
-      }
-
-      if (!outcome) {
-        return
-      }
-
-      const createdAt = Date.now()
-      const id = String(tradeFlowIdRef.current)
-      tradeFlowIdRef.current += 1
-
-      setTradeFlowItems((prev) => {
-        const next = [{ id, label, outcome, createdAt }, ...prev]
-        return trimTradeFlowItems(pruneTradeFlowItems(next, createdAt))
-      })
+    if (!label) {
+      return
     }
 
-    function handleOpen() {
-      if (!ws) {
-        return
-      }
-      ws.send(JSON.stringify({
-        type: 'market',
-        assets_ids: [yesTokenId, noTokenId],
-        markets: [],
-        custom_feature_enabled: false,
-      }))
+    let outcome: 'yes' | 'no' | null = null
+
+    if (assetId === yesTokenId) {
+      outcome = 'yes'
     }
 
-    function handleError() {
-      if (isActive) {
-        setTradeFlowItems([])
-      }
+    if (assetId === noTokenId) {
+      outcome = 'no'
     }
 
-    function handleClose() {
-      if (isActive) {
-        setTradeFlowItems([])
-        scheduleReconnect()
-      }
+    if (!outcome) {
+      return
     }
 
-    function connect() {
-      if (!isActive || ws || document.hidden) {
-        return
-      }
-      ws = new WebSocket(`${process.env.WS_CLOB_URL}/ws/market`)
-      ws.addEventListener('open', handleOpen)
-      ws.addEventListener('message', handleMessage)
-      ws.addEventListener('error', handleError)
-      ws.addEventListener('close', handleClose)
-    }
+    const createdAt = Date.now()
+    const id = String(tradeFlowIdRef.current)
+    tradeFlowIdRef.current += 1
 
-    function clearReconnect() {
-      if (reconnectTimeout != null) {
-        window.clearTimeout(reconnectTimeout)
-        reconnectTimeout = null
-      }
-    }
-
-    function scheduleReconnect() {
-      clearReconnect()
-      reconnectTimeout = window.setTimeout(() => {
-        if (!isActive) {
-          return
-        }
-        if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
-          ws = null
-          connect()
-        }
-      }, 1500)
-    }
-
-    function handleVisibilityChange() {
-      if (!document.hidden) {
-        if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
-          ws = null
-          connect()
-        }
-      }
-    }
-
-    connect()
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      isActive = false
-      clearReconnect()
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      if (ws) {
-        ws.removeEventListener('open', handleOpen)
-        ws.removeEventListener('message', handleMessage)
-        ws.removeEventListener('error', handleError)
-        ws.removeEventListener('close', handleClose)
-        ws.close()
-      }
-    }
-  }, [outcomeTokenIds])
+    setTradeFlowItems((prev) => {
+      const next = [{ id, label, outcome, createdAt }, ...prev]
+      return trimTradeFlowItems(pruneTradeFlowItems(next, createdAt))
+    })
+  })
 
   useEffect(() => {
     if (tradeFlowItems.length === 0) {

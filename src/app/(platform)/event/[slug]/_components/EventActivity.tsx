@@ -5,6 +5,10 @@ import type { ActivityOrder, Event } from '@/types'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { AlertCircleIcon, ExternalLinkIcon, Loader2Icon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  useMarketChannelStatus,
+  useMarketChannelSubscription,
+} from '@/app/(platform)/event/[slug]/_components/EventMarketChannelProvider'
 import ProfileLink from '@/components/ProfileLink'
 import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -36,7 +40,7 @@ function getEventTokenIds(event: Event) {
 export default function EventActivity({ event }: EventActivityProps) {
   const [minAmountFilter, setMinAmountFilter] = useState('none')
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
-  const [wsStatus, setWsStatus] = useState<'connecting' | 'live' | 'offline'>('connecting')
+  const wsStatus = useMarketChannelStatus()
   const queryClient = useQueryClient()
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const isPollingRef = useRef(false)
@@ -195,129 +199,27 @@ export default function EventActivity({ event }: EventActivityProps) {
     return () => window.clearInterval(interval)
   }, [hasMarkets, refreshLatestActivity])
 
-  useEffect(() => {
+  useMarketChannelSubscription((payload) => {
     if (!hasMarkets || tokenIds.length === 0) {
-      setWsStatus('offline')
       return
     }
-
-    let isActive = true
-    let ws: WebSocket | null = null
-    let reconnectTimeout: number | null = null
-
-    function maybeRefresh() {
-      if (!isActive || document.hidden) {
-        return
-      }
-      const now = Date.now()
-      if (now - lastWsRefreshAtRef.current < wsRefreshThrottleMs) {
-        return
-      }
-      lastWsRefreshAtRef.current = now
-      void refreshLatestActivity()
+    if (payload?.event_type !== 'last_trade_price') {
+      return
     }
-
-    function handleMessage(eventMessage: MessageEvent<string>) {
-      if (!isActive) {
-        return
-      }
-      setWsStatus('live')
-      let payload: any
-      try {
-        payload = JSON.parse(eventMessage.data)
-      }
-      catch {
-        return
-      }
-
-      if (payload?.event_type === 'last_trade_price') {
-        maybeRefresh()
-      }
+    const assetId = payload?.asset_id
+    if (!tokenIds.includes(String(assetId))) {
+      return
     }
-
-    function handleOpen() {
-      setWsStatus('connecting')
-      if (!ws) {
-        return
-      }
-      ws.send(JSON.stringify({
-        type: 'market',
-        assets_ids: tokenIds,
-        markets: [],
-        custom_feature_enabled: false,
-      }))
+    if (document.hidden) {
+      return
     }
-
-    function handleError() {
-      if (isActive) {
-        setWsStatus('offline')
-      }
+    const now = Date.now()
+    if (now - lastWsRefreshAtRef.current < wsRefreshThrottleMs) {
+      return
     }
-
-    function handleClose() {
-      if (isActive) {
-        setWsStatus('offline')
-        scheduleReconnect()
-      }
-    }
-
-    function connect() {
-      if (!isActive || ws || document.hidden) {
-        return
-      }
-      setWsStatus('connecting')
-      ws = new WebSocket(`${process.env.WS_CLOB_URL}/ws/market`)
-      ws.addEventListener('open', handleOpen)
-      ws.addEventListener('message', handleMessage)
-      ws.addEventListener('error', handleError)
-      ws.addEventListener('close', handleClose)
-    }
-
-    function clearReconnect() {
-      if (reconnectTimeout != null) {
-        window.clearTimeout(reconnectTimeout)
-        reconnectTimeout = null
-      }
-    }
-
-    function scheduleReconnect() {
-      clearReconnect()
-      reconnectTimeout = window.setTimeout(() => {
-        if (!isActive) {
-          return
-        }
-        if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
-          ws = null
-          connect()
-        }
-      }, 1500)
-    }
-
-    function handleVisibilityChange() {
-      if (!document.hidden) {
-        if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
-          ws = null
-          connect()
-        }
-      }
-    }
-
-    connect()
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-
-    return () => {
-      isActive = false
-      clearReconnect()
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      if (ws) {
-        ws.removeEventListener('open', handleOpen)
-        ws.removeEventListener('message', handleMessage)
-        ws.removeEventListener('error', handleError)
-        ws.removeEventListener('close', handleClose)
-        ws.close()
-      }
-    }
-  }, [hasMarkets, refreshLatestActivity, tokenIds])
+    lastWsRefreshAtRef.current = now
+    void refreshLatestActivity()
+  })
 
   function formatTotalValue(totalValueMicro: number) {
     const totalValue = totalValueMicro / MICRO_UNIT
