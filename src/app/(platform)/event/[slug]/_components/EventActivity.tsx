@@ -199,7 +199,7 @@ export default function EventActivity({ event }: EventActivityProps) {
     return () => window.clearInterval(interval)
   }, [hasMarkets, refreshLatestActivity])
 
-  useMarketChannelSubscription((payload) => {
+  const handleMarketChannelMessage = useCallback((payload: any) => {
     if (!hasMarkets || tokenIds.length === 0) {
       return
     }
@@ -219,7 +219,9 @@ export default function EventActivity({ event }: EventActivityProps) {
     }
     lastWsRefreshAtRef.current = now
     void refreshLatestActivity()
-  })
+  }, [hasMarkets, refreshLatestActivity, tokenIds])
+
+  useMarketChannelSubscription(handleMarketChannelMessage)
 
   function formatTotalValue(totalValueMicro: number) {
     const totalValue = totalValueMicro / MICRO_UNIT

@@ -384,10 +384,10 @@ export function useMarketChannelStatus() {
 
 export function useMarketChannelSubscription(listener: MarketChannelListener) {
   const context = use(MarketChannelContext)
+  if (!context) {
+    throw new Error('useMarketChannelSubscription must be used within EventMarketChannelProvider')
+  }
   useEffect(() => {
-    if (!context) {
-      throw new Error('useMarketChannelSubscription must be used within EventMarketChannelProvider')
-    }
     return context.subscribe(listener)
   }, [context, listener])
 }
