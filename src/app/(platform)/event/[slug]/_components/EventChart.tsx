@@ -423,7 +423,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   })
 
   useEffect(() => {
-    if (tradeFlowItems.length === 0) {
+    if (!hasTradeFlowLabels) {
       return
     }
 
@@ -441,7 +441,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     return () => {
       window.clearInterval(interval)
     }
-  }, [tradeFlowItems.length])
+  }, [hasTradeFlowLabels])
 
   useEffect(() => {
     const container = timeRangeContainerRef.current
