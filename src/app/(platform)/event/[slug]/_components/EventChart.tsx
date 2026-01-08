@@ -3,6 +3,7 @@
 import type { TimeRange } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import type { EventChartProps } from '@/app/(platform)/event/[slug]/_types/EventChartTypes'
 import type { PredictionChartCursorSnapshot, SeriesConfig } from '@/components/PredictionChart'
+import type { Market } from '@/types'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import {
   useEventOutcomeChanceChanges,
@@ -34,11 +35,56 @@ import {
 import PredictionChart from '@/components/PredictionChart'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { OUTCOME_INDEX } from '@/lib/constants'
+import { formatSharePriceLabel } from '@/lib/formatters'
 import { resolveDisplayPrice } from '@/lib/market-chance'
 import { useIsSingleMarket } from '@/stores/useOrder'
 import EventChartControls from './EventChartControls'
 import EventChartHeader from './EventChartHeader'
 import EventChartLayout from './EventChartLayout'
+
+interface TradeFlowLabelItem {
+  id: string
+  label: string
+  outcome: 'yes' | 'no'
+  createdAt: number
+}
+
+const tradeFlowMaxItems = 6
+const tradeFlowTtlMs = 4000
+const tradeFlowCleanupIntervalMs = 500
+
+function getOutcomeTokenIds(market: Market | null) {
+  if (!market) {
+    return null
+  }
+  const yesOutcome = market.outcomes.find(outcome => outcome.outcome_index === OUTCOME_INDEX.YES)
+  const noOutcome = market.outcomes.find(outcome => outcome.outcome_index === OUTCOME_INDEX.NO)
+
+  if (!yesOutcome?.token_id || !noOutcome?.token_id) {
+    return null
+  }
+
+  return {
+    yesTokenId: String(yesOutcome.token_id),
+    noTokenId: String(noOutcome.token_id),
+  }
+}
+
+function buildTradeFlowLabel(price: number, size: number) {
+  const notional = price * size
+  if (!Number.isFinite(notional) || notional <= 0) {
+    return null
+  }
+  return formatSharePriceLabel(notional, { fallback: '0¢' })
+}
+
+function pruneTradeFlowItems(items: TradeFlowLabelItem[], now: number) {
+  return items.filter(item => now - item.createdAt <= tradeFlowTtlMs)
+}
+
+function trimTradeFlowItems(items: TradeFlowLabelItem[]) {
+  return items.slice(0, tradeFlowMaxItems)
+}
 
 function EventChartComponent({ event, isMobile }: EventChartProps) {
   const isSingleMarket = useIsSingleMarket()
@@ -59,6 +105,8 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   const timeRangeContainerRef = useRef<HTMLDivElement | null>(null)
   const [timeRangeIndicator, setTimeRangeIndicator] = useState({ width: 0, left: 0 })
   const [timeRangeIndicatorReady, setTimeRangeIndicatorReady] = useState(false)
+  const [tradeFlowItems, setTradeFlowItems] = useState<TradeFlowLabelItem[]>([])
+  const tradeFlowIdRef = useRef(0)
 
   useEffect(() => {
     setCursorSnapshot(null)
@@ -220,6 +268,12 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     : OUTCOME_INDEX.YES
   const oppositeOutcomeLabel = getOutcomeLabelForMarket(primaryMarket, oppositeOutcomeIndex)
   const activeOutcomeLabel = getOutcomeLabelForMarket(primaryMarket, activeOutcomeIndex)
+  const outcomeTokenIds = useMemo(
+    () => {
+      return getOutcomeTokenIds(primaryMarket)
+    },
+    [primaryMarket],
+  )
 
   const chartData = useMemo(
     () => filterChartDataForSeries(
@@ -316,6 +370,170 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   const effectiveCurrentYesChance = isHovering
     ? cursorYesChance
     : defaultCurrentYesChance
+  const hasTradeFlowLabels = tradeFlowItems.length > 0
+
+  useEffect(() => {
+    if (!outcomeTokenIds) {
+      setTradeFlowItems([])
+      return
+    }
+
+    let isActive = true
+    const { yesTokenId, noTokenId } = outcomeTokenIds
+    let ws: WebSocket | null = null
+    let reconnectTimeout: number | null = null
+
+    function handleMessage(eventMessage: MessageEvent<string>) {
+      if (!isActive) {
+        return
+      }
+      let payload: any
+      try {
+        payload = JSON.parse(eventMessage.data)
+      }
+      catch {
+        return
+      }
+
+      if (payload?.event_type !== 'last_trade_price') {
+        return
+      }
+
+      const assetId = payload.asset_id
+      const price = Number(payload.price)
+      const size = Number(payload.size)
+      const label = buildTradeFlowLabel(price, size)
+
+      if (!label) {
+        return
+      }
+
+      let outcome: 'yes' | 'no' | null = null
+
+      if (assetId === yesTokenId) {
+        outcome = 'yes'
+      }
+
+      if (assetId === noTokenId) {
+        outcome = 'no'
+      }
+
+      if (!outcome) {
+        return
+      }
+
+      const createdAt = Date.now()
+      const id = String(tradeFlowIdRef.current)
+      tradeFlowIdRef.current += 1
+
+      setTradeFlowItems((prev) => {
+        const next = [{ id, label, outcome, createdAt }, ...prev]
+        return trimTradeFlowItems(pruneTradeFlowItems(next, createdAt))
+      })
+    }
+
+    function handleOpen() {
+      if (!ws) {
+        return
+      }
+      ws.send(JSON.stringify({
+        type: 'market',
+        assets_ids: [yesTokenId, noTokenId],
+        markets: [],
+        custom_feature_enabled: false,
+      }))
+    }
+
+    function handleError() {
+      if (isActive) {
+        setTradeFlowItems([])
+      }
+    }
+
+    function handleClose() {
+      if (isActive) {
+        setTradeFlowItems([])
+        scheduleReconnect()
+      }
+    }
+
+    function connect() {
+      if (!isActive || ws || document.hidden) {
+        return
+      }
+      ws = new WebSocket(`${process.env.WS_CLOB_URL}/ws/market`)
+      ws.addEventListener('open', handleOpen)
+      ws.addEventListener('message', handleMessage)
+      ws.addEventListener('error', handleError)
+      ws.addEventListener('close', handleClose)
+    }
+
+    function clearReconnect() {
+      if (reconnectTimeout != null) {
+        window.clearTimeout(reconnectTimeout)
+        reconnectTimeout = null
+      }
+    }
+
+    function scheduleReconnect() {
+      clearReconnect()
+      reconnectTimeout = window.setTimeout(() => {
+        if (!isActive) {
+          return
+        }
+        if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+          ws = null
+          connect()
+        }
+      }, 1500)
+    }
+
+    function handleVisibilityChange() {
+      if (!document.hidden) {
+        if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+          ws = null
+          connect()
+        }
+      }
+    }
+
+    connect()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      isActive = false
+      clearReconnect()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (ws) {
+        ws.removeEventListener('open', handleOpen)
+        ws.removeEventListener('message', handleMessage)
+        ws.removeEventListener('error', handleError)
+        ws.removeEventListener('close', handleClose)
+        ws.close()
+      }
+    }
+  }, [outcomeTokenIds])
+
+  useEffect(() => {
+    if (tradeFlowItems.length === 0) {
+      return
+    }
+
+    const interval = window.setInterval(() => {
+      const now = Date.now()
+      setTradeFlowItems((prev) => {
+        const next = pruneTradeFlowItems(prev, now)
+        if (next.length === prev.length) {
+          return prev
+        }
+        return next
+      })
+    }, tradeFlowCleanupIntervalMs)
+
+    return () => {
+      window.clearInterval(interval)
+    }
+  }, [tradeFlowItems.length])
 
   useEffect(() => {
     const container = timeRangeContainerRef.current
@@ -377,19 +595,39 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
         />
       )}
       chart={(
-        <PredictionChart
-          data={chartData}
-          series={legendSeries}
-          width={chartWidth}
-          height={280}
-          margin={{ top: 30, right: 40, bottom: 52, left: 0 }}
-          dataSignature={chartSignature}
-          onCursorDataChange={setCursorSnapshot}
-          xAxisTickCount={isMobile ? 3 : 6}
-          legendContent={legendContent}
-          showLegend={!isSingleMarket}
-          watermark={isSingleMarket ? undefined : watermark}
-        />
+        <div className="relative">
+          <PredictionChart
+            data={chartData}
+            series={legendSeries}
+            width={chartWidth}
+            height={280}
+            margin={{ top: 30, right: 40, bottom: 52, left: 0 }}
+            dataSignature={chartSignature}
+            onCursorDataChange={setCursorSnapshot}
+            xAxisTickCount={isMobile ? 3 : 6}
+            legendContent={legendContent}
+            showLegend={!isSingleMarket}
+            watermark={isSingleMarket ? undefined : watermark}
+          />
+          {hasTradeFlowLabels
+            ? (
+                <div className={`
+                  pointer-events-none absolute bottom-6 left-4 flex flex-col gap-1 text-sm font-semibold tabular-nums
+                `}
+                >
+                  {tradeFlowItems.map(item => (
+                    <span
+                      key={item.id}
+                      className={item.outcome === 'yes' ? 'text-yes' : 'text-no'}
+                    >
+                      +
+                      {item.label}
+                    </span>
+                  ))}
+                </div>
+              )
+            : null}
+        </div>
       )}
       controls={(
         <EventChartControls

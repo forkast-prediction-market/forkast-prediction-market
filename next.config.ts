@@ -41,6 +41,7 @@ const config: NextConfig = {
     RELAYER_URL: 'https://relayer.kuest.com',
     DATA_URL: 'https://data-api.kuest.com',
     USER_PNL_URL: 'https://user-pnl-api.kuest.com',
+    WS_CLOB_URL: 'wss://ws-subscriptions-clob.kuest.com',
   },
 }
 

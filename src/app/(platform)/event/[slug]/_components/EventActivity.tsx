@@ -19,12 +19,29 @@ interface EventActivityProps {
   event: Event
 }
 
+function getEventTokenIds(event: Event) {
+  const tokenIds = new Set<string>()
+
+  for (const market of event.markets) {
+    for (const outcome of market.outcomes) {
+      if (outcome.token_id) {
+        tokenIds.add(String(outcome.token_id))
+      }
+    }
+  }
+
+  return Array.from(tokenIds)
+}
+
 export default function EventActivity({ event }: EventActivityProps) {
   const [minAmountFilter, setMinAmountFilter] = useState('none')
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
+  const [wsStatus, setWsStatus] = useState<'connecting' | 'live' | 'offline'>('connecting')
   const queryClient = useQueryClient()
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const isPollingRef = useRef(false)
+  const lastWsRefreshAtRef = useRef(0)
+  const wsRefreshThrottleMs = 2000
 
   useEffect(() => {
     queueMicrotask(() => setInfiniteScrollError(null))
@@ -36,6 +53,12 @@ export default function EventActivity({ event }: EventActivityProps) {
   )
   const marketKey = useMemo(() => marketIds.join(','), [marketIds])
   const hasMarkets = marketIds.length > 0
+  const tokenIds = useMemo(
+    () => {
+      return getEventTokenIds(event)
+    },
+    [event],
+  )
 
   const queryKey = useMemo(
     () => ['event-activity', event.slug, marketKey, minAmountFilter],
@@ -172,6 +195,130 @@ export default function EventActivity({ event }: EventActivityProps) {
     return () => window.clearInterval(interval)
   }, [hasMarkets, refreshLatestActivity])
 
+  useEffect(() => {
+    if (!hasMarkets || tokenIds.length === 0) {
+      setWsStatus('offline')
+      return
+    }
+
+    let isActive = true
+    let ws: WebSocket | null = null
+    let reconnectTimeout: number | null = null
+
+    function maybeRefresh() {
+      if (!isActive || document.hidden) {
+        return
+      }
+      const now = Date.now()
+      if (now - lastWsRefreshAtRef.current < wsRefreshThrottleMs) {
+        return
+      }
+      lastWsRefreshAtRef.current = now
+      void refreshLatestActivity()
+    }
+
+    function handleMessage(eventMessage: MessageEvent<string>) {
+      if (!isActive) {
+        return
+      }
+      setWsStatus('live')
+      let payload: any
+      try {
+        payload = JSON.parse(eventMessage.data)
+      }
+      catch {
+        return
+      }
+
+      if (payload?.event_type === 'last_trade_price') {
+        maybeRefresh()
+      }
+    }
+
+    function handleOpen() {
+      setWsStatus('connecting')
+      if (!ws) {
+        return
+      }
+      ws.send(JSON.stringify({
+        type: 'market',
+        assets_ids: tokenIds,
+        markets: [],
+        custom_feature_enabled: false,
+      }))
+    }
+
+    function handleError() {
+      if (isActive) {
+        setWsStatus('offline')
+      }
+    }
+
+    function handleClose() {
+      if (isActive) {
+        setWsStatus('offline')
+        scheduleReconnect()
+      }
+    }
+
+    function connect() {
+      if (!isActive || ws || document.hidden) {
+        return
+      }
+      setWsStatus('connecting')
+      ws = new WebSocket(`${process.env.WS_CLOB_URL}/ws/market`)
+      ws.addEventListener('open', handleOpen)
+      ws.addEventListener('message', handleMessage)
+      ws.addEventListener('error', handleError)
+      ws.addEventListener('close', handleClose)
+    }
+
+    function clearReconnect() {
+      if (reconnectTimeout != null) {
+        window.clearTimeout(reconnectTimeout)
+        reconnectTimeout = null
+      }
+    }
+
+    function scheduleReconnect() {
+      clearReconnect()
+      reconnectTimeout = window.setTimeout(() => {
+        if (!isActive) {
+          return
+        }
+        if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+          ws = null
+          connect()
+        }
+      }, 1500)
+    }
+
+    function handleVisibilityChange() {
+      if (!document.hidden) {
+        if (!ws || ws.readyState === WebSocket.CLOSED || ws.readyState === WebSocket.CLOSING) {
+          ws = null
+          connect()
+        }
+      }
+    }
+
+    connect()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      isActive = false
+      clearReconnect()
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      if (ws) {
+        ws.removeEventListener('open', handleOpen)
+        ws.removeEventListener('message', handleMessage)
+        ws.removeEventListener('error', handleError)
+        ws.removeEventListener('close', handleClose)
+        ws.close()
+      }
+    }
+  }, [hasMarkets, refreshLatestActivity, tokenIds])
+
   function formatTotalValue(totalValueMicro: number) {
     const totalValue = totalValueMicro / MICRO_UNIT
     return formatSharePriceLabel(totalValue, { fallback: '0¢' })
@@ -219,7 +366,7 @@ export default function EventActivity({ event }: EventActivityProps) {
 
   return (
     <div className="mt-6 grid gap-6">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-2">
         <Select value={minAmountFilter} onValueChange={setMinAmountFilter}>
           <SelectTrigger className="w-32">
             <SelectValue placeholder="Min Amount:" />
@@ -233,6 +380,24 @@ export default function EventActivity({ event }: EventActivityProps) {
             <SelectItem value="100000">$100,000</SelectItem>
           </SelectContent>
         </Select>
+        <div className="inline-flex items-center gap-2 text-xs font-semibold text-muted-foreground">
+          <span>
+            {wsStatus === 'live' ? 'Live' : wsStatus === 'connecting' ? 'Connecting' : 'Offline'}
+          </span>
+          <span className="relative flex size-2">
+            {wsStatus === 'live' && (
+              <span className="absolute inline-flex size-2 animate-ping rounded-full bg-yes opacity-75" />
+            )}
+            <span
+              className={cn(
+                'relative inline-flex size-2 rounded-full',
+                wsStatus === 'live' && 'bg-yes',
+                wsStatus === 'connecting' && 'bg-amber-500',
+                wsStatus === 'offline' && 'bg-muted-foreground/40',
+              )}
+            />
+          </span>
+        </div>
       </div>
 
       {loading && (
