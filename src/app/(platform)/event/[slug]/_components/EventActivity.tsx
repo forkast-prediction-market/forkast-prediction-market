@@ -355,6 +355,8 @@ export default function EventActivity({ event }: EventActivityProps) {
                       address: activity.user.address,
                     }}
                     layout="inline"
+                    tooltipVariant="activity"
+                    joinedAt={activity.user.created_at}
                     usernameClassName="font-semibold text-foreground"
                     usernameMaxWidthClassName="max-w-35"
                     containerClassName="px-3 py-2.5 text-sm leading-tight text-foreground sm:px-4"

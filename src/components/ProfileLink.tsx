@@ -6,6 +6,7 @@ import type { PortfolioSnapshot } from '@/lib/portfolio'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import ProfileActivityTooltipCard from '@/components/ProfileActivityTooltipCard'
 import ProfileOverviewCard from '@/components/ProfileOverviewCard'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -29,6 +30,8 @@ interface ProfileLinkProps {
   containerClassName?: string
   usernameMaxWidthClassName?: string
   usernameClassName?: string
+  joinedAt?: string | null
+  tooltipVariant?: 'default' | 'activity'
 }
 
 export default function ProfileLink({
@@ -42,6 +45,8 @@ export default function ProfileLink({
   containerClassName,
   usernameMaxWidthClassName,
   usernameClassName,
+  joinedAt,
+  tooltipVariant = 'default',
 }: ProfileLinkProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [stats, setStats] = useState<Awaited<ReturnType<typeof fetchProfileLinkStats>>>(null)
@@ -52,6 +57,13 @@ export default function ProfileLink({
     flex min-w-0 flex-wrap items-center gap-1 text-foreground
     sm:flex-nowrap sm:overflow-hidden sm:text-ellipsis sm:whitespace-nowrap
   `
+  const resolvedUsernameMaxWidth = usernameMaxWidthClassName ?? 'max-w-32 lg:max-w-64'
+  const usernameLinkClassName = cn(
+    'block truncate text-sm font-medium',
+    isInline && 'shrink-0',
+    usernameClassName,
+  )
+  const usernameWrapperClassName = cn('min-w-0', resolvedUsernameMaxWidth)
 
   const medalColor = {
     1: '#FFD700',
@@ -117,6 +129,69 @@ export default function ProfileLink({
     predictions: stats?.positions ?? 0,
     biggestWin: stats?.biggestWin ?? 0,
   }), [stats?.positions, stats?.positionsValue, stats?.profitLoss, stats?.biggestWin])
+  const isTooltipLoading = isOpen && !hasLoaded
+
+  const tooltipContent = tooltipVariant === 'activity'
+    ? (
+        <ProfileActivityTooltipCard
+          profile={{
+            username: user.username,
+            avatarUrl: user.image,
+            href: profileHref,
+            joinedAt,
+          }}
+          stats={stats}
+          isLoading={isTooltipLoading}
+        />
+      )
+    : (
+        <ProfileOverviewCard
+          profile={tooltipProfile}
+          snapshot={tooltipSnapshot}
+          useDefaultUserWallet={false}
+          enableLiveValue={false}
+        />
+      )
+
+  const dateLabel = date
+    ? (
+        <span className="text-xs whitespace-nowrap text-muted-foreground">
+          {formatTimeAgo(date)}
+        </span>
+      )
+    : null
+
+  const triggerContent = (
+    <div className="inline-flex min-w-0 items-center gap-3">
+      <Link href={profileHref} className="relative shrink-0">
+        <Image
+          src={user.image}
+          alt={user.username}
+          width={32}
+          height={32}
+          className="rounded-full"
+        />
+        {position && (
+          <Badge
+            variant="secondary"
+            style={{ backgroundColor: medalColor, color: medalTextColor }}
+            className="absolute top-0 -right-2 size-5 rounded-full px-1 font-mono text-muted-foreground tabular-nums"
+          >
+            {position}
+          </Badge>
+        )}
+      </Link>
+      <div className={usernameWrapperClassName}>
+        <Link
+          href={profileHref}
+          title={user.username}
+          className={usernameLinkClassName}
+        >
+          {user.username}
+        </Link>
+      </div>
+    </div>
+  )
 
   return (
     <Tooltip onOpenChange={setIsOpen}>
@@ -129,74 +204,24 @@ export default function ProfileLink({
         )}
       >
         <div className="min-w-0 flex-1">
-          <TooltipTrigger asChild>
-            <div className="inline-flex min-w-0 items-center gap-3">
-              <Link href={profileHref} className="relative shrink-0">
-                <Image
-                  src={user.image}
-                  alt={user.username}
-                  width={32}
-                  height={32}
-                  className="rounded-full"
-                />
-                {position && (
-                  <Badge
-                    variant="secondary"
-                    style={{ backgroundColor: medalColor, color: medalTextColor }}
-                    className={`
-                      absolute top-0 -right-2 size-5 rounded-full px-1 font-mono text-muted-foreground tabular-nums
-                    `}
-                  >
-                    {position}
-                  </Badge>
-                )}
-              </Link>
-              <div className="min-w-0">
-                {isInline
-                  ? (
-                      <div className={inlineRowClassName}>
-                        <Link
-                          href={profileHref}
-                          title={user.username}
-                          className={cn(
-                            'shrink-0 truncate text-sm font-medium',
-                            usernameClassName,
-                            usernameMaxWidthClassName ?? 'max-w-32 lg:max-w-64',
-                          )}
-                        >
-                          {user.username}
-                        </Link>
-                        {date && (
-                          <span className="text-xs whitespace-nowrap text-muted-foreground">
-                            {formatTimeAgo(date)}
-                          </span>
-                        )}
-                        {inlineBody ?? null}
-                      </div>
-                    )
-                  : (
-                      <div
-                        className={cn(
-                          'flex min-w-0 items-center gap-1',
-                          usernameMaxWidthClassName ?? 'max-w-32 lg:max-w-64',
-                        )}
-                      >
-                        <Link
-                          href={profileHref}
-                          className={cn('truncate text-sm font-medium', usernameClassName)}
-                        >
-                          {user.username}
-                        </Link>
-                        {date && (
-                          <span className="text-xs whitespace-nowrap text-muted-foreground">
-                            {formatTimeAgo(date)}
-                          </span>
-                        )}
-                      </div>
-                    )}
-              </div>
-            </div>
-          </TooltipTrigger>
+          {isInline
+            ? (
+                <div className={inlineRowClassName}>
+                  <TooltipTrigger asChild>
+                    {triggerContent}
+                  </TooltipTrigger>
+                  {dateLabel}
+                  {inlineBody ?? null}
+                </div>
+              )
+            : (
+                <div className="flex min-w-0 items-center gap-1">
+                  <TooltipTrigger asChild>
+                    {triggerContent}
+                  </TooltipTrigger>
+                  {dateLabel}
+                </div>
+              )}
           {!isInline && children
             ? <div className="pl-11">{children}</div>
             : null}
@@ -216,12 +241,7 @@ export default function ProfileLink({
         hideArrow
         className="max-w-[90vw] border-none bg-transparent p-0 text-popover-foreground shadow-none md:max-w-96"
       >
-        <ProfileOverviewCard
-          profile={tooltipProfile}
-          snapshot={tooltipSnapshot}
-          useDefaultUserWallet={false}
-          enableLiveValue={false}
-        />
+        {tooltipContent}
       </TooltipContent>
     </Tooltip>
   )

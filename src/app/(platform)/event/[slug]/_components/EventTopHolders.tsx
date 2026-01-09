@@ -189,6 +189,8 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
                     <ProfileLink
                       key={holder.user.proxy_wallet_address!}
                       user={holder.user}
+                      tooltipVariant="activity"
+                      joinedAt={holder.user.created_at}
                       usernameClassName="font-semibold text-foreground"
                       usernameMaxWidthClassName="max-w-35"
                       trailing={(
@@ -217,6 +219,8 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
                     <ProfileLink
                       key={holder.user.proxy_wallet_address!}
                       user={holder.user}
+                      tooltipVariant="activity"
+                      joinedAt={holder.user.created_at}
                       usernameClassName="font-semibold text-foreground"
                       usernameMaxWidthClassName="max-w-35"
                       trailing={(
