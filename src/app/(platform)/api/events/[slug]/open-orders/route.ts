@@ -12,18 +12,18 @@ interface ClobOpenOrder {
   id: string
   status: string
   market: string
-  originalSize: string
+  original_size: string
   outcome?: string
-  makerAddress: string
+  maker_address: string
   owner?: string
   price?: string
   side: 'BUY' | 'SELL'
-  sizeMatched?: string
-  assetId?: string
+  size_matched: string
+  asset_id: string
   expiration?: string
   type?: ClobOrderType
-  createdAt?: string
-  updatedAt?: string
+  created_at: string
+  updated_at: string
 }
 
 export async function GET(
@@ -204,10 +204,11 @@ function mapClobOrder(
   const outcomeMeta = resolveOutcome(order, outcomeMap)
   const side = order.side === 'SELL' ? 'sell' : 'buy'
   const priceValue = clampNumber(parseNumber(order.price), 0, 1)
-  const totalShares = Math.max(parseNumber(order.originalSize), 0)
-  const filledShares = Math.max(parseNumber(order.sizeMatched), 0)
+  const totalShares = Math.max(parseNumber(order.original_size), 0)
+  const filledShares = Math.max(parseNumber(order.size_matched), 0)
   const { makerAmount, takerAmount } = calculateAmounts(totalShares, priceValue, side)
   const expiry = parseNumber(order.expiration)
+  const createdAt = order.created_at
 
   return {
     id: order.id,
@@ -218,7 +219,7 @@ function mapClobOrder(
     maker_amount: makerAmount,
     taker_amount: takerAmount,
     size_matched: Math.round(filledShares * MICRO_UNIT),
-    created_at: order.createdAt || order.updatedAt || new Date().toISOString(),
+    created_at: createdAt,
     expiration: Number.isFinite(expiry) ? expiry : null,
     outcome: {
       index: outcomeMeta?.index ?? 0,
@@ -229,7 +230,7 @@ function mapClobOrder(
 }
 
 function resolveOutcome(order: ClobOpenOrder, outcomeMap: Map<string, { index: number, text: string }>) {
-  const candidates = [order.assetId, order.outcome]
+  const candidates = [order.asset_id, order.outcome]
   for (const candidate of candidates) {
     const normalized = normalizeId(candidate)
     if (!normalized) {
