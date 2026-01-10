@@ -73,6 +73,7 @@ export default function ProfileActivityTooltipCard({
   stats,
   isLoading = false,
 }: ProfileActivityTooltipCardProps) {
+  const profileHref = profile.href as any
   const joinedLabel = formatJoinedLabel(profile.joinedAt)
   const positionsValue = formatStatValue(stats?.positionsValue)
   const volumeValue = formatStatValue(stats?.volume)
@@ -103,7 +104,7 @@ export default function ProfileActivityTooltipCard({
         </div>
         <div className="min-w-0">
           <Link
-            href={profile.href}
+            href={profileHref}
             className="block truncate text-sm font-semibold text-foreground transition-colors hover:text-foreground"
             title={profile.username}
           >
