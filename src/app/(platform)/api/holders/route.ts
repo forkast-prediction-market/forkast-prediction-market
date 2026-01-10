@@ -125,7 +125,7 @@ export async function GET(request: Request) {
             username: matchedProfile?.username || holder.user.username,
             proxy_wallet_address: matchedProfile?.proxy_wallet_address ?? holder.user.proxy_wallet_address,
             image: hydratedImage,
-            created_at: matchedProfile?.created_at,
+            created_at: matchedProfile?.created_at ?? holder.user.created_at,
           },
         }
       })

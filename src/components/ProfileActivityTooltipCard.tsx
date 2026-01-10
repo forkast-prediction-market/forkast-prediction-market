@@ -28,12 +28,26 @@ function formatJoinedLabel(joinedAt?: string | null) {
   return `Joined ${parsed.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`
 }
 
-function formatStatValue(value?: number | null) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) {
+function normalizeStatValue(value?: number | string | null) {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null
+  }
+
+  if (typeof value === 'string') {
+    const parsed = Number.parseFloat(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  return null
+}
+
+function formatStatValue(value?: number | string | null) {
+  const resolvedValue = normalizeStatValue(value)
+  if (resolvedValue == null) {
     return '-'
   }
 
-  const absValue = Math.abs(value)
+  const absValue = Math.abs(resolvedValue)
   const million = 1_000_000
   const thousand = 1_000
 
