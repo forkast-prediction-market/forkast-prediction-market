@@ -1,11 +1,10 @@
 import type { Comment } from '@/types'
 import { MoreHorizontalIcon } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback } from 'react'
+import ProfileLink from '@/components/ProfileLink'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useAppKit } from '@/hooks/useAppKit'
-import { formatTimeAgo } from '@/lib/formatters'
 import EventCommentLikeForm from './EventCommentLikeForm'
 import EventCommentMenu from './EventCommentMenu'
 import EventCommentReplyForm from './EventCommentReplyForm'
@@ -75,76 +74,64 @@ export default function EventCommentReplyItem({
 
   return (
     <div className="grid gap-3">
-      <div className="flex gap-3">
-        <Link
-          href={`/@${reply.username}`}
-          className="text-sm font-medium transition-colors hover:text-foreground"
-        >
-          <Image
-            src={reply.user_avatar}
-            alt={reply.username}
-            width={24}
-            height={24}
-            className="size-6 rounded-full object-cover transition-opacity hover:opacity-80"
-          />
-        </Link>
-        <div className="flex-1">
-          <div className="mb-1 flex items-center gap-2">
+      <ProfileLink
+        user={{
+          image: reply.user_avatar,
+          username: reply.username,
+          address: reply.user_address,
+          proxy_wallet_address: reply.user_proxy_wallet_address ?? null,
+        }}
+        date={reply.created_at}
+        joinedAt={reply.user_created_at}
+        tooltipVariant="activity"
+      >
+        <div className="flex w-full flex-1 gap-3">
+          <div className="flex-1">
             <Link
-              href={`/@${reply.username}`}
-              className="text-sm font-medium transition-colors hover:text-foreground"
+              href={`/@${parentUsername}`}
+              className="text-xs text-primary transition-colors hover:text-primary/80"
             >
               @
-              {reply.username}
+              {parentUsername}
             </Link>
-            <span className="text-xs text-muted-foreground">
-              {formatTimeAgo(reply.created_at)}
-            </span>
-          </div>
-          <Link
-            href={`/@${parentUsername}`}
-            className="text-xs text-primary transition-colors hover:text-primary/80"
-          >
-            @
-            {parentUsername}
-          </Link>
-          <p className="text-sm">{reply.content}</p>
-          <div className="mt-2 flex items-center gap-3">
-            <button
-              type="button"
-              className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-              onClick={handleReplyClick}
-            >
-              Reply
-            </button>
-            <EventCommentLikeForm
-              comment={reply}
-              user={user}
-              onLikeToggled={handleLikeToggle}
-            />
-          </div>
-        </div>
-        {reply.is_owner && (
-          <div className="relative">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  type="button"
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                  aria-label="Reply options"
-                >
-                  <MoreHorizontalIcon className="size-4" />
-                </button>
-              </DropdownMenuTrigger>
-              <EventCommentMenu
+            <p className="text-sm">{reply.content}</p>
+            <div className="mt-2 flex items-center gap-3">
+              <button
+                type="button"
+                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
+                onClick={handleReplyClick}
+              >
+                Reply
+              </button>
+              <EventCommentLikeForm
                 comment={reply}
-                eventId={eventId}
-                onDelete={handleDelete}
+                user={user}
+                onLikeToggled={handleLikeToggle}
               />
-            </DropdownMenu>
+            </div>
           </div>
-        )}
-      </div>
+          {reply.is_owner && (
+            <div className="relative">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="text-muted-foreground transition-colors hover:text-foreground"
+                    aria-label="Reply options"
+                  >
+                    <MoreHorizontalIcon className="size-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <EventCommentMenu
+                  comment={reply}
+                  eventId={eventId}
+                  onDelete={handleDelete}
+                />
+              </DropdownMenu>
+            </div>
+          )}
+        </div>
+      </ProfileLink>
 
       {replyingTo === reply.id && (
         <div className="mt-3">
