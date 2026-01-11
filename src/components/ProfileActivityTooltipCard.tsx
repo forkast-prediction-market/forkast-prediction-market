@@ -105,8 +105,8 @@ export default function ProfileActivityTooltipCard({
             : 'text-foreground'
 
   return (
-    <div className="w-64 rounded-lg border border-border/60 bg-card p-3">
-      <div className="flex items-center gap-3 rounded-lg bg-background px-3 py-2">
+    <div className="w-64 rounded-lg border bg-secondary pb-3">
+      <div className="flex items-center gap-3 rounded-lg border bg-background px-3 py-2">
         <div className="relative size-14 shrink-0 overflow-hidden rounded-full bg-muted">
           <Image
             src={profile.avatarUrl}
