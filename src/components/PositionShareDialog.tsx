@@ -176,10 +176,7 @@ export function PositionShareDialog({ open, onOpenChange, payload, title = 'Shil
   const isShareReady = shareCardStatus === 'ready'
   const shareDialogBody = (
     <div className="space-y-3">
-      <div className={`
-        relative flex min-h-55 items-center justify-center rounded-lg border border-border/60 bg-muted/30 p-3
-      `}
-      >
+      <div className="relative flex min-h-55 items-center justify-center rounded-lg border bg-muted/30 p-3">
         {shareCardUrl && (
           // eslint-disable-next-line next/no-img-element
           <img
@@ -253,7 +250,7 @@ export function PositionShareDialog({ open, onOpenChange, payload, title = 'Shil
   return isMobile
     ? (
         <Drawer open={open} onOpenChange={handleOpenChange}>
-          <DrawerContent className="max-h-[90vh] w-full border-border/70 bg-background">
+          <DrawerContent className="max-h-[90vh] w-full bg-background">
             <DrawerHeader className="p-3 text-center sm:text-center">
               <DrawerTitle className="text-xl font-semibold">{title}</DrawerTitle>
             </DrawerHeader>

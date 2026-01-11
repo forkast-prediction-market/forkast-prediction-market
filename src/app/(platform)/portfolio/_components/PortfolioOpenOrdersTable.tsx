@@ -1,9 +1,8 @@
 import type { RefObject } from 'react'
 import type { PortfolioUserOpenOrder } from '@/app/(platform)/portfolio/_types/PortfolioOpenOrdersTypes'
+import { tableHeaderClass } from '@/lib/constants'
 import { cn } from '@/lib/utils'
 import PortfolioOpenOrdersRow from './PortfolioOpenOrdersRow'
-
-const tableHeaderClass = 'px-2 py-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:px-3'
 
 interface PortfolioOpenOrdersTableProps {
   rowGridClass: string
@@ -46,7 +45,7 @@ export default function PortfolioOpenOrdersTable({
         {isLoading && (
           <div className="space-y-3 px-2 sm:px-3">
             {Array.from({ length: 4 }).map((_, idx) => (
-              <div key={idx} className="h-14 rounded-lg border border-border/50 bg-muted/30" />
+              <div key={idx} className="h-14 rounded-lg border bg-muted/30" />
             ))}
           </div>
         )}

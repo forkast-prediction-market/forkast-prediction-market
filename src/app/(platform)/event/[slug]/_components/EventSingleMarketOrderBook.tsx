@@ -91,8 +91,8 @@ export default function EventSingleMarketOrderBook({ market, eventSlug }: EventS
           aria-hidden="true"
           className={cn(
             `
-              pointer-events-none flex size-8 items-center justify-center rounded-md border border-border/60
-              bg-background text-muted-foreground transition
+              pointer-events-none flex size-8 items-center justify-center rounded-md border bg-background
+              text-muted-foreground transition
             `,
             isExpanded ? 'bg-muted/50' : '',
           )}
@@ -119,10 +119,7 @@ export default function EventSingleMarketOrderBook({ market, eventSlug }: EventS
       {isExpanded && (
         <div className="border-t border-border/30">
           <div
-            className={`
-              flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-6 pt-3 pb-0 text-sm
-              font-semibold
-            `}
+            className="flex flex-wrap items-center justify-between gap-3 border-b p-3 pb-0 text-sm font-semibold"
           >
             <div className="flex flex-wrap gap-4">
               <OutcomeToggle
@@ -137,12 +134,12 @@ export default function EventSingleMarketOrderBook({ market, eventSlug }: EventS
               />
             </div>
             <div className="flex items-center gap-2">
-              <MarketChannelStatusIndicator className="flex items-center justify-end px-6 py-2" />
+              <MarketChannelStatusIndicator className="flex items-center justify-end py-2" />
               <button
                 type="button"
                 onClick={() => { void refetchOrderBook() }}
                 className={cn(
-                  `inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground transition-colors`,
+                  `inline-flex size-7 items-center justify-center rounded-sm text-muted-foreground transition-colors`,
                   'hover:bg-muted/70 hover:text-foreground',
                   'focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none',
                 )}

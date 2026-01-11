@@ -41,10 +41,7 @@ export default function TestModeBanner({
   }
 
   return (
-    <div className={`
-      fixed right-4 bottom-4 z-60 max-w-xs rounded-xl border border-border/60 bg-background text-foreground shadow-xl
-    `}
-    >
+    <div className="fixed right-4 bottom-4 z-60 max-w-xs rounded-xl border bg-background text-foreground shadow-xl">
       <div className="flex items-start gap-3 px-4 py-3">
         <div className="flex flex-col gap-2">
           <p className="text-sm leading-relaxed">

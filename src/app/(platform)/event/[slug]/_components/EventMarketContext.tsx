@@ -90,8 +90,8 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
                 aria-hidden="true"
                 className={cn(
                   `
-                    pointer-events-none flex size-8 items-center justify-center rounded-md border border-border/60
-                    bg-background text-muted-foreground transition
+                    pointer-events-none flex size-8 items-center justify-center rounded-md border bg-background
+                    text-muted-foreground transition
                   `,
                   contextExpanded ? 'bg-muted/50' : '',
                 )}
@@ -122,8 +122,8 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
                 type="button"
                 onClick={generateMarketContext}
                 className={`
-                  flex items-center gap-1 rounded-md border border-border/60 bg-background px-3 py-1 text-sm font-medium
-                  text-foreground shadow-sm transition
+                  flex items-center gap-1 rounded-md border bg-background px-3 py-1 text-sm font-medium text-foreground
+                  shadow-sm transition
                   hover:bg-muted/50
                   disabled:cursor-not-allowed disabled:opacity-50
                 `}

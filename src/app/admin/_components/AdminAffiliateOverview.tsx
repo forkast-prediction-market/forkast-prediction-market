@@ -1,6 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { tableHeaderClass } from '@/lib/constants'
 import { formatCurrency } from '@/lib/formatters'
+import { cn } from '@/lib/utils'
 
 interface AffiliateRow {
   id: string
@@ -39,12 +41,12 @@ export default function AdminAffiliateOverview({ rows }: AdminAffiliateOverviewP
 
       <div className="hidden overflow-x-auto md:block">
         <table className="min-w-full divide-y">
-          <thead className="text-xs text-muted-foreground uppercase">
+          <thead>
             <tr>
-              <th className="px-6 py-3 text-left font-medium">Affiliate</th>
-              <th className="px-6 py-3 text-right font-medium">Referrals</th>
-              <th className="px-6 py-3 text-right font-medium">Volume</th>
-              <th className="px-6 py-3 text-right font-medium">Affiliate fees</th>
+              <th className={cn(tableHeaderClass, 'px-6 text-left')}>Affiliate</th>
+              <th className={cn(tableHeaderClass, 'px-6 text-right')}>Referrals</th>
+              <th className={cn(tableHeaderClass, 'px-6 text-right')}>Volume</th>
+              <th className={cn(tableHeaderClass, 'px-6 text-right')}>Affiliate fees</th>
             </tr>
           </thead>
           <tbody>

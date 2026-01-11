@@ -9,6 +9,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { tableHeaderClass } from '@/lib/constants'
 
 interface DataTableSkeletonProps {
   columnCount?: number
@@ -41,7 +42,7 @@ export function DataTableSkeleton({
           <TableHeader>
             <TableRow>
               {Array.from({ length: columnCount }).map((_, i) => (
-                <TableHead key={`skeleton-col-${i}`} className="whitespace-nowrap">
+                <TableHead key={`skeleton-col-${i}`} className={`${tableHeaderClass} whitespace-nowrap`}>
                   <Skeleton className="h-4 w-20" />
                 </TableHead>
               ))}

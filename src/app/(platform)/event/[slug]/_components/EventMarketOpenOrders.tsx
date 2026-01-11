@@ -13,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
-import { MICRO_UNIT, OUTCOME_INDEX } from '@/lib/constants'
+import { MICRO_UNIT, OUTCOME_INDEX, tableHeaderClass } from '@/lib/constants'
 import { formatCurrency, formatSharePriceLabel, sharesFormatter } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
@@ -469,30 +469,26 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
       <div className="max-w-full min-w-0 overflow-x-auto">
         <table className="w-full max-w-full table-fixed border-collapse max-sm:min-w-[140%] sm:min-w-full">
           <thead>
-            <tr
-              className={`
-                border-b border-border/60 bg-background text-2xs font-semibold tracking-wide text-muted-foreground
-              `}
-            >
-              <th className="px-2 py-2.5 text-left sm:px-3">
+            <tr className="border-b bg-background">
+              <th className={cn(tableHeaderClass, 'text-left')}>
                 <SortHeaderButton column="side" label="Side" sortState={sortState} onSort={handleSort} />
               </th>
-              <th className="px-2 py-2.5 text-left sm:px-3">
+              <th className={cn(tableHeaderClass, 'text-left')}>
                 <SortHeaderButton column="outcome" label="Outcome" sortState={sortState} onSort={handleSort} />
               </th>
-              <th className="px-2 py-2.5 text-center sm:px-3">
+              <th className={cn(tableHeaderClass, 'text-center')}>
                 <SortHeaderButton column="price" label="Price" alignment="center" sortState={sortState} onSort={handleSort} />
               </th>
-              <th className="px-2 py-2.5 text-center sm:px-3">
+              <th className={cn(tableHeaderClass, 'text-center')}>
                 <SortHeaderButton column="filled" label="Filled" alignment="center" sortState={sortState} onSort={handleSort} />
               </th>
-              <th className="px-2 py-2.5 text-center sm:px-3">
+              <th className={cn(tableHeaderClass, 'text-center')}>
                 <SortHeaderButton column="total" label="Total" alignment="center" sortState={sortState} onSort={handleSort} />
               </th>
-              <th className="px-2 py-2.5 text-left sm:px-3">
+              <th className={cn(tableHeaderClass, 'text-left')}>
                 <SortHeaderButton column="expiration" label="Expiration" sortState={sortState} onSort={handleSort} />
               </th>
-              <th className="px-2 py-2.5 text-right sm:px-3">
+              <th className={cn(tableHeaderClass, 'text-right')}>
                 <button
                   type="button"
                   className={`
@@ -524,16 +520,13 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
       </div>
 
       {hasOrders && isFetchingNextPage && (
-        <div className={cn(isSingleMarket ? 'border-t border-border/60' : '', `
-          px-4 py-3 text-center text-xs text-muted-foreground
-        `)}
-        >
+        <div className={cn(isSingleMarket ? 'border-t' : '', `px-4 py-3 text-center text-xs text-muted-foreground`)}>
           Loading more open orders...
         </div>
       )}
 
       {infiniteScrollError && (
-        <div className={cn(isSingleMarket ? 'border-t border-border/60' : '', 'px-4 py-3')}>
+        <div className={cn(isSingleMarket ? 'border-t' : '', 'px-4 py-3')}>
           <Alert variant="destructive">
             <AlertCircleIcon />
             <AlertTitle>Could not load more open orders</AlertTitle>

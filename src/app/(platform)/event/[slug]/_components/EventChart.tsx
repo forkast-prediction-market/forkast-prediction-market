@@ -287,7 +287,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   }, [event.id, activeTimeRange, activeOutcomeIndex, effectiveSeries])
 
   const { width: windowWidth } = useWindowSize()
-  const chartWidth = isMobile ? windowWidth : Math.min((windowWidth ?? 0) * 0.55, 900)
+  const chartWidth = isMobile ? ((windowWidth || 400) * 0.84) : Math.min((windowWidth ?? 1440) * 0.55, 900)
 
   const legendEntries = useMemo<Array<SeriesConfig & { value: number | null }>>(
     () => legendSeries.map((seriesItem) => {

@@ -27,12 +27,12 @@ export default function PortfolioSummaryCard() {
   }
 
   return (
-    <Card className="border border-border/60 bg-transparent">
+    <Card className="border bg-transparent">
       <CardContent className="flex flex-col p-6">
 
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="rounded border border-border/60 p-1">
+            <div className="rounded border p-1">
               <svg
                 className="size-4 text-muted-foreground"
                 fill="none"
@@ -49,7 +49,7 @@ export default function PortfolioSummaryCard() {
             </div>
             <span className="text-sm font-medium text-muted-foreground uppercase">Portfolio</span>
           </div>
-          <div className="flex items-center gap-1 rounded border border-border/60 px-2 py-1 text-xs font-medium">
+          <div className="flex items-center gap-1 rounded border px-2 py-1 text-xs font-medium">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="12" viewBox="0 0 20 14" fill="none">
               <path d="M0 8V5.49951H20V7.74951L5.5 14.0005L0 8Z" fill="#21832D"></path>
               <path d="M12.5 -0.000488281L0 5.49951L5.5 11.6245L20 5.49951L12.5 -0.000488281Z" fill="#3AB549"></path>

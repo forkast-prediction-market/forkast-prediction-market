@@ -112,7 +112,7 @@ function Calendar({
         ),
         day: cn(
           `
-            group/day relative aspect-square h-full w-full p-0 text-center select-none
+            group/day relative aspect-square size-full p-0 text-center select-none
             [&:last-child[data-selected=true]_button]:rounded-r-md
           `,
           props.showWeekNumber

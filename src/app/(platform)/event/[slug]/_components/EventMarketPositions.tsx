@@ -9,7 +9,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
+import { ORDER_SIDE, OUTCOME_INDEX, tableHeaderClass } from '@/lib/constants'
 import { fetchUserPositionsForMarket } from '@/lib/data-api/user'
 import {
   formatAmountInputValue,
@@ -434,18 +434,13 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
       <div className="max-w-full min-w-0 overflow-x-auto">
         <table className="w-full table-fixed border-collapse max-sm:min-w-[115%] sm:min-w-full sm:table-auto">
           <thead>
-            <tr
-              className={`
-                border-b border-border/60 bg-background text-2xs font-semibold tracking-wide text-muted-foreground
-                uppercase
-              `}
-            >
-              <th className="px-2 py-2.5 text-left sm:px-3">Outcome</th>
-              <th className="px-2 py-2.5 text-center sm:px-3">Qty</th>
-              <th className="px-2 py-2.5 text-center sm:px-3">Avg</th>
-              <th className="px-2 py-2.5 text-left sm:px-3">Value</th>
-              <th className="px-2 py-2.5 text-left sm:px-3">Return</th>
-              <th className="w-28 px-2 py-2.5 text-right sm:px-3">
+            <tr className="border-b bg-background">
+              <th className={cn(tableHeaderClass, 'text-left')}>Outcome</th>
+              <th className={cn(tableHeaderClass, 'text-center')}>Qty</th>
+              <th className={cn(tableHeaderClass, 'text-center')}>Avg</th>
+              <th className={cn(tableHeaderClass, 'text-left')}>Value</th>
+              <th className={cn(tableHeaderClass, 'text-left')}>Return</th>
+              <th className={cn(tableHeaderClass, 'w-28 text-right')}>
                 <span className="sr-only">Actions</span>
               </th>
             </tr>
@@ -472,12 +467,12 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
 
   return isSingleMarket
     ? (
-        <section className="max-h-96 overflow-auto rounded-xl border">
+        <section className="min-w-0 overflow-hidden rounded-xl border">
           {content}
         </section>
       )
     : (
-        <div className="max-h-96 overflow-auto">
+        <div className="min-w-0">
           {content}
         </div>
       )

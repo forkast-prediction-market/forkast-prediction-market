@@ -114,7 +114,7 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
             <h3 className="text-lg font-semibold">History</h3>
           </div>
         )}
-        <div className={cn(isSingleMarket ? 'border-t border-border/60' : '', 'p-4')}>
+        <div className={cn(isSingleMarket ? 'border-t' : '', 'p-4')}>
           <Alert variant="destructive">
             <AlertCircleIcon />
             <AlertTitle>Failed to load activity</AlertTitle>
@@ -239,17 +239,14 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
       </div>
 
       {isFetchingNextPage && (
-        <div className={cn(isSingleMarket ? 'border-t border-border/60' : '', `
-          px-4 py-3 text-center text-xs text-muted-foreground
-        `)}
-        >
+        <div className={cn(isSingleMarket ? 'border-t' : '', `px-4 py-3 text-center text-xs text-muted-foreground`)}>
           <Loader2Icon className="mr-2 inline size-4 animate-spin align-middle" />
           Loading more history...
         </div>
       )}
 
       {infiniteScrollError && (
-        <div className={cn(isSingleMarket ? 'border-t border-border/60' : '', 'px-4 py-3')}>
+        <div className={cn(isSingleMarket ? 'border-t' : '', 'px-4 py-3')}>
           <Alert variant="destructive">
             <AlertCircleIcon />
             <AlertTitle>Failed to load more activity</AlertTitle>

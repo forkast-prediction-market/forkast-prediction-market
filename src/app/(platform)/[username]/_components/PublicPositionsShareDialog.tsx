@@ -38,9 +38,7 @@ export default function PublicPositionsShareDialog({
   const shareDialogBody = (
     <div className="space-y-4">
       <div
-        className={`
-          relative flex min-h-55 items-center justify-center rounded-lg border border-border/60 bg-muted/30 p-3
-        `}
+        className="relative flex min-h-55 items-center justify-center rounded-lg border bg-muted/30 p-3"
       >
         {shareCardUrl && (
           // eslint-disable-next-line next/no-img-element
@@ -114,7 +112,7 @@ export default function PublicPositionsShareDialog({
   if (isMobile) {
     return (
       <Drawer open={isOpen} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[90vh] w-full border-border/70 bg-background">
+        <DrawerContent className="max-h-[90vh] w-full bg-background">
           <DrawerHeader className="text-center sm:text-center">
             <DrawerTitle className="text-xl font-semibold">Shill your bag</DrawerTitle>
           </DrawerHeader>

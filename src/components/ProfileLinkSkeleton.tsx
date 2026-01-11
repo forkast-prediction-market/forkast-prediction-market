@@ -7,6 +7,7 @@ interface ProfileLinkSkeletonProps {
   showChildren?: boolean
   showTrailing?: boolean
   usernameMaxWidthClassName?: string
+  usernameMinWidthClassName?: string
   trailingWidthClassName?: string
 }
 
@@ -16,6 +17,7 @@ export default function ProfileLinkSkeleton({
   showChildren = false,
   showTrailing = false,
   usernameMaxWidthClassName,
+  usernameMinWidthClassName = 'min-w-35',
   trailingWidthClassName = 'w-12',
 }: ProfileLinkSkeletonProps) {
   return (
@@ -40,7 +42,8 @@ export default function ProfileLinkSkeleton({
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <Skeleton
             className={cn(
-              'h-3.5 max-w-60 min-w-35 flex-1',
+              'h-3.5 max-w-60 flex-1',
+              usernameMinWidthClassName,
               usernameMaxWidthClassName ?? 'max-w-32 lg:max-w-64',
             )}
           />

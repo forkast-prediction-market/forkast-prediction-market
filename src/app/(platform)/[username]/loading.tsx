@@ -4,7 +4,7 @@ export default function Loading() {
   return (
     <>
       <div className="grid gap-4 md:grid-cols-2">
-        <div className="flex h-full flex-col gap-4 rounded-lg border border-border/60 bg-background p-4">
+        <div className="flex h-full flex-col gap-4 rounded-lg border bg-background p-4">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">
               <Skeleton className="h-4 w-24" />
@@ -20,7 +20,7 @@ export default function Loading() {
           </div>
         </div>
 
-        <div className="flex h-full flex-col gap-4 rounded-lg border border-border/60 bg-background p-4">
+        <div className="flex h-full flex-col gap-4 rounded-lg border bg-background p-4">
           <div className="flex items-center justify-between gap-3">
             <Skeleton className="h-4 w-28" />
             <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export default function Loading() {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-border/60 bg-background">
+      <div className="overflow-hidden rounded-2xl border bg-background">
         <div className="relative">
           <div className="flex items-center gap-6 px-4 pt-4 sm:px-6">
             <Skeleton className="h-5 w-20" />
@@ -63,8 +63,7 @@ export default function Loading() {
             <div className="min-w-[920px]">
               <div
                 className={`
-                  grid grid-cols-[2.2fr_1fr_1fr_1fr_1fr_auto] items-center gap-3 border-b border-border/80 px-2 pb-3
-                  text-xs uppercase
+                  grid grid-cols-[2.2fr_1fr_1fr_1fr_1fr_auto] items-center gap-3 border-b px-2 pb-3 text-xs uppercase
                 `}
               >
                 <Skeleton className="h-4 w-24" />
@@ -103,10 +102,7 @@ export default function Loading() {
                 ))}
               </div>
 
-              <div className={`
-                grid grid-cols-[2.2fr_1fr_1fr_1fr_1fr_auto] items-center gap-3 border-t border-border/80 px-2 py-4
-              `}
-              >
+              <div className="grid grid-cols-[2.2fr_1fr_1fr_1fr_1fr_auto] items-center gap-3 border-t px-2 py-4">
                 <Skeleton className="h-4 w-16" />
                 <div />
                 <Skeleton className="h-4 w-14 justify-self-center" />

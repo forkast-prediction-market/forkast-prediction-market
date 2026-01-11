@@ -414,8 +414,7 @@ function ProfitLossCard({
                     sideOffset={8}
                     hideArrow
                     className={`
-                      w-56 rounded-md border border-border/60 bg-background p-3 text-left text-xs font-semibold
-                      text-foreground shadow-lg
+                      w-56 rounded-md border bg-background p-3 text-left text-xs font-semibold text-foreground shadow-lg
                     `}
                   >
                     <div className="space-y-2">

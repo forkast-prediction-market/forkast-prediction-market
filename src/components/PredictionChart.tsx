@@ -501,7 +501,7 @@ export function PredictionChart({
 
   if (!isClient || data.length === 0 || series.length === 0) {
     return (
-      <div className="relative h-full w-full">
+      <div className="relative size-full">
         <svg width="100%" height={height}>
           <rect width="100%" height={height} fill="transparent" />
         </svg>

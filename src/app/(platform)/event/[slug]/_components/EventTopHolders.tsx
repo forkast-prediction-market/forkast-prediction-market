@@ -99,41 +99,47 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
     return (
       <div className="mt-6">
         <Skeleton className="mb-4 h-4 w-32" />
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid min-w-0 grid-cols-2 gap-6">
           <div>
-            <div className="mt-1 divide-y divide-border border-t">
+            <div className="mt-1 min-w-0 divide-y divide-border border-t">
               <ProfileLinkSkeleton
                 showChildren={false}
                 showTrailing={true}
+                usernameMinWidthClassName="min-w-0"
                 usernameMaxWidthClassName="max-w-35"
               />
               <ProfileLinkSkeleton
                 showChildren={false}
                 showTrailing={true}
+                usernameMinWidthClassName="min-w-0"
                 usernameMaxWidthClassName="max-w-35"
               />
               <ProfileLinkSkeleton
                 showChildren={false}
                 showTrailing={true}
+                usernameMinWidthClassName="min-w-0"
                 usernameMaxWidthClassName="max-w-35"
               />
             </div>
           </div>
           <div>
-            <div className="mt-1 divide-y divide-border border-t">
+            <div className="mt-1 min-w-0 divide-y divide-border border-t">
               <ProfileLinkSkeleton
                 showChildren={false}
                 showTrailing={true}
+                usernameMinWidthClassName="min-w-0"
                 usernameMaxWidthClassName="max-w-35"
               />
               <ProfileLinkSkeleton
                 showChildren={false}
                 showTrailing={true}
+                usernameMinWidthClassName="min-w-0"
                 usernameMaxWidthClassName="max-w-35"
               />
               <ProfileLinkSkeleton
                 showChildren={false}
                 showTrailing={true}
+                usernameMinWidthClassName="min-w-0"
                 usernameMaxWidthClassName="max-w-35"
               />
             </div>

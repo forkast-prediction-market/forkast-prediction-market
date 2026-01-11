@@ -70,7 +70,7 @@ export default function EventRules({ event }: EventRulesProps) {
         <span
           aria-hidden="true"
           className={`
-            pointer-events-none flex size-8 items-center justify-center rounded-md border border-border/60 bg-background
+            pointer-events-none flex size-8 items-center justify-center rounded-md border bg-background
             text-muted-foreground transition
             ${rulesExpanded ? 'bg-muted/50' : ''}
           `}

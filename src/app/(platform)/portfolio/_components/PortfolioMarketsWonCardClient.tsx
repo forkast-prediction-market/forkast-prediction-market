@@ -193,10 +193,10 @@ export default function PortfolioMarketsWonCardClient({ data }: PortfolioMarkets
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-      <Card className="border border-border/60 bg-transparent">
+      <Card className="border bg-transparent">
         <CardContent className="flex flex-wrap items-center justify-between gap-4 p-4 md:flex-nowrap md:gap-6 md:p-6">
           <div className="flex flex-wrap items-center gap-4 md:flex-nowrap md:gap-6">
-            <div className="relative size-12 overflow-hidden rounded-md border border-border/60">
+            <div className="relative size-12 overflow-hidden rounded-md border">
               {latestMarket?.imageUrl
                 ? (
                     <Image

@@ -12,6 +12,7 @@ import EventMarketHistory from '@/app/(platform)/event/[slug]/_components/EventM
 import EventMarketOpenOrders from '@/app/(platform)/event/[slug]/_components/EventMarketOpenOrders'
 import EventMarketPositions from '@/app/(platform)/event/[slug]/_components/EventMarketPositions'
 import EventOrderBook, { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_components/EventOrderBook'
+import MarketChannelStatusIndicator from '@/app/(platform)/event/[slug]/_components/MarketChannelStatusIndicator'
 import MarketOutcomeGraph from '@/app/(platform)/event/[slug]/_components/MarketOutcomeGraph'
 import { useChanceRefresh } from '@/app/(platform)/event/[slug]/_hooks/useChanceRefresh'
 import { useEventMarketRows } from '@/app/(platform)/event/[slug]/_hooks/useEventMarketRows'
@@ -542,7 +543,7 @@ function MarketDetailTabs({
   return (
     <div className="pt-2">
       <div className="px-4">
-        <div className="flex items-center gap-2 border-b border-border/60">
+        <div className="flex items-center gap-2 border-b">
           <div className="scrollbar-hide flex w-0 flex-1 gap-4 overflow-x-auto">
             {visibleTabs.map((tab) => {
               const isActive = selectedTab === tab.id
@@ -567,11 +568,13 @@ function MarketDetailTabs({
             })}
           </div>
 
+          <MarketChannelStatusIndicator className="-mt-2" />
+
           <button
             type="button"
             className={cn(
               `
-                ml-auto inline-flex h-7 w-7 items-center justify-center rounded-sm text-muted-foreground
+                -mt-1 ml-auto inline-flex size-7 items-center justify-center rounded-sm text-muted-foreground
                 transition-colors
               `,
               'hover:bg-muted/70 hover:text-foreground',
@@ -592,7 +595,7 @@ function MarketDetailTabs({
         </div>
       </div>
 
-      <div className="px-4 pt-4">
+      <div className="p-4">
         {selectedTab === 'orderBook' && (
           <EventOrderBook
             market={market}

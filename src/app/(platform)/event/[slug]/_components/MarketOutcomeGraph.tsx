@@ -30,7 +30,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
   const marketTargets = useMemo(() => buildMarketTargets(allMarkets), [allMarkets])
   const { width: windowWidth } = useWindowSize()
-  const chartWidth = isMobile ? (windowWidth || 400) : Math.min((windowWidth ?? 0) * 0.55, 900)
+  const chartWidth = isMobile ? ((windowWidth || 400) * 0.84) : Math.min((windowWidth ?? 1440) * 0.55, 900)
 
   useEffect(() => {
     setActiveOutcomeIndex(outcome.outcome_index)

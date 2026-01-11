@@ -54,8 +54,7 @@ export default function ProfileLink({
   const isInline = layout === 'inline'
   const inlineBody = inlineContent ?? children
   const inlineRowClassName = `
-    flex min-w-0 flex-wrap items-center gap-1 text-foreground
-    sm:flex-nowrap sm:overflow-hidden sm:text-ellipsis sm:whitespace-nowrap
+    flex min-w-0 items-center gap-1 overflow-hidden whitespace-nowrap text-foreground
   `
   const resolvedUsernameMaxWidth = usernameMaxWidthClassName ?? 'max-w-32 lg:max-w-64'
   const usernameLinkClassName = cn(

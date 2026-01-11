@@ -73,7 +73,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
         <Badge
           variant="outline"
           className={cn(
-            'rounded-md border-border/60 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground',
+            'rounded-md bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground',
           )}
         >
           {formatVolume(totalVolume)}
@@ -86,7 +86,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
     <Link
       href={`/event/${event.slug}`}
       className={cn(
-        'group relative flex flex-col gap-4 rounded-2xl border border-border/60 bg-background p-4 transition-all',
+        'group relative flex flex-col gap-4 rounded-2xl border bg-background p-4 transition-all',
         'hover:-translate-y-0.5 hover:bg-card/50 hover:shadow-lg',
         'md:flex-row md:items-center md:gap-8 md:p-5',
       )}
@@ -114,7 +114,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
 
         <div
           className={cn(
-            'relative size-16 overflow-hidden rounded-2xl border border-border/80 bg-muted/50 transition-transform',
+            'relative size-16 overflow-hidden rounded-2xl border bg-muted/50 transition-transform',
             'duration-300 group-hover:scale-105 md:h-20 md:w-20',
           )}
         >
@@ -147,7 +147,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
             <Badge
               variant="outline"
               className={cn(
-                'rounded-md border-border/60 bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground',
+                'rounded-md bg-background/80 px-3 py-1 text-xs font-medium text-muted-foreground',
               )}
             >
               {scheduleLabel}
@@ -163,8 +163,8 @@ function MentionsListItem({ event }: MentionsListItemProps) {
                 variant="outline"
                 className={cn(
                   `
-                    cursor-pointer rounded-md border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium
-                    text-foreground transition-colors
+                    cursor-pointer rounded-md border bg-background/70 px-3 py-1 text-xs font-medium text-foreground
+                    transition-colors
                     hover:bg-card/70
                   `,
                 )}
@@ -180,7 +180,7 @@ function MentionsListItem({ event }: MentionsListItemProps) {
                     variant="outline"
                     className={cn(
                       `
-                        cursor-pointer rounded-md border border-border/60 bg-background/70 px-3 py-1 text-xs font-medium
+                        cursor-pointer rounded-md border bg-background/70 px-3 py-1 text-xs font-medium
                         text-muted-foreground transition-colors
                         hover:bg-card/70
                       `,
@@ -207,8 +207,8 @@ function MentionsListItem({ event }: MentionsListItemProps) {
                         variant="outline"
                         className={cn(
                           `
-                            cursor-pointer rounded-md border border-border/60 bg-background/80 px-2.5 py-1 text-2xs
-                            font-medium text-muted-foreground transition-colors
+                            cursor-pointer rounded-md border bg-background/80 px-2.5 py-1 text-2xs font-medium
+                            text-muted-foreground transition-colors
                             hover:bg-card/70
                           `,
                         )}

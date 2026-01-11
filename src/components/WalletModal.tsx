@@ -91,7 +91,7 @@ function WalletAddressCard({
   label?: string
 }) {
   return (
-    <div className="rounded-md border border-border/60 bg-muted/40 p-3 text-sm">
+    <div className="rounded-md border bg-muted/40 p-3 text-sm">
       <div className="flex items-center justify-between gap-3">
         <div className="space-y-1">
           <p className="text-xs font-semibold text-muted-foreground">{label}</p>
@@ -141,7 +141,7 @@ function WalletReceiveView({
         copied={copied}
         label={`Your ${siteLabel} wallet address`}
       />
-      <div className="flex justify-center rounded-lg border border-border/60 p-4">
+      <div className="flex justify-center rounded-lg border p-4">
         {walletAddress
           ? <QRCode value={walletAddress} size={200} />
           : <p className="text-sm text-destructive">Proxy wallet not ready yet.</p>}
@@ -317,8 +317,7 @@ function WalletFundMenu({
       <button
         type="button"
         className={`
-          group flex w-full items-center justify-between gap-4 rounded-lg border border-border/70 bg-card px-4 py-3
-          text-left transition
+          group flex w-full items-center justify-between gap-4 rounded-lg border bg-card px-4 py-3 text-left transition
           hover:border-primary hover:text-primary
           disabled:cursor-not-allowed disabled:opacity-50
         `}
@@ -347,7 +346,7 @@ function WalletFundMenu({
           {paymentLogos.map(logo => (
             <div
               key={logo}
-              className="relative size-6 overflow-hidden rounded-full border border-border/70 bg-background shadow-sm"
+              className="relative size-6 overflow-hidden rounded-full border bg-background shadow-sm"
             >
               <Image
                 src={logo}
@@ -364,8 +363,7 @@ function WalletFundMenu({
       <button
         type="button"
         className={`
-          group flex w-full items-center justify-between gap-4 rounded-lg border border-border/70 bg-card px-4 py-3
-          text-left transition
+          group flex w-full items-center justify-between gap-4 rounded-lg border bg-card px-4 py-3 text-left transition
           hover:border-primary hover:text-primary
           disabled:cursor-not-allowed disabled:opacity-50
         `}
@@ -389,7 +387,7 @@ function WalletFundMenu({
           {transferLogos.map(logo => (
             <div
               key={logo}
-              className="relative size-7 overflow-hidden rounded-full border border-border/70 bg-background shadow-sm"
+              className="relative size-7 overflow-hidden rounded-full border bg-background shadow-sm"
             >
               <Image
                 src={logo}
@@ -470,7 +468,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
           onOpenChange(next)
         }}
       >
-        <DrawerContent className="max-h-[90vh] w-full border-border/70 bg-background px-0">
+        <DrawerContent className="max-h-[90vh] w-full bg-background px-0">
           <DrawerHeader className="px-4 pt-4 pb-3">
             <DrawerTitle className="text-center text-2xl font-semibold text-foreground">Deposit</DrawerTitle>
             <p className="text-center text-sm text-muted-foreground">
@@ -482,7 +480,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
               {formattedBalance}
             </p>
           </DrawerHeader>
-          <div className="border-t border-border/60" />
+          <div className="border-t" />
           <div className="w-full px-4 pb-4">
             <div className="space-y-4 pt-4">
               {content}
@@ -501,7 +499,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
         onOpenChange(next)
       }}
     >
-      <DialogContent className="w-full max-w-xl border border-border/70 bg-background p-6">
+      <DialogContent className="w-full max-w-xl border bg-background p-6">
         <DialogHeader className="pb-3">
           <DialogTitle className="text-center text-2xl font-semibold text-foreground">Deposit</DialogTitle>
           <p className="text-center text-sm text-muted-foreground">
@@ -513,7 +511,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
             {formattedBalance}
           </p>
         </DialogHeader>
-        <div className="border-t border-border/60" />
+        <div className="border-t" />
         <div className="space-y-4 pt-4">
           {content}
         </div>
@@ -558,7 +556,7 @@ export function WalletWithdrawModal(props: WalletWithdrawModalProps) {
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[90vh] w-full border-border/70 bg-background px-0">
+        <DrawerContent className="max-h-[90vh] w-full bg-background px-0">
           <DrawerHeader className="px-4 pt-4 pb-2">
             <DrawerTitle className="text-center text-foreground">
               Withdraw from
@@ -566,7 +564,7 @@ export function WalletWithdrawModal(props: WalletWithdrawModalProps) {
               {siteName}
             </DrawerTitle>
           </DrawerHeader>
-          <div className="border-t border-border/60" />
+          <div className="border-t" />
           <div className="w-full px-4 pb-4">
             {content}
           </div>
@@ -577,7 +575,7 @@ export function WalletWithdrawModal(props: WalletWithdrawModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-xl border border-border/70 bg-background p-6">
+      <DialogContent className="w-full max-w-xl border bg-background p-6">
         <DialogHeader className="pb-3">
           <DialogTitle className="text-center text-foreground">
             Withdraw from
@@ -585,7 +583,7 @@ export function WalletWithdrawModal(props: WalletWithdrawModalProps) {
             {siteName}
           </DialogTitle>
         </DialogHeader>
-        <div className="border-t border-border/60" />
+        <div className="border-t" />
 
         {content}
       </DialogContent>

@@ -21,8 +21,9 @@ import {
   microToUnit,
 } from '@/app/(platform)/event/[slug]/_utils/EventOrderBookUtils'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
-import { ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
+import { ORDER_SIDE, ORDER_TYPE, tableHeaderClass } from '@/lib/constants'
 import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
+import { cn } from '@/lib/utils'
 import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useOrder } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
@@ -240,13 +241,10 @@ export default function EventOrderBook({
     <div className="relative scrollbar-hide max-h-90 overflow-y-auto">
       <div>
         <div
-          className={
-            `
-              sticky top-0 z-1 grid h-9 grid-cols-[40%_20%_20%_20%] items-center border-b border-border/60 bg-background
-              px-2 text-2xs font-semibold tracking-wide text-muted-foreground uppercase
-              sm:px-3
-            `
-          }
+          className={cn(
+            tableHeaderClass,
+            'sticky top-0 z-1 grid h-9 grid-cols-[40%_20%_20%_20%] items-center border-b bg-background',
+          )}
         >
           <div className="flex h-full items-center">
             <span>{`Trade ${outcomeLabel}`}</span>
@@ -286,7 +284,7 @@ export default function EventOrderBook({
           className={
             `
               sticky top-9 bottom-0 z-1 grid h-9 cursor-pointer grid-cols-[40%_20%_20%_20%] items-center border-y
-              border-border/60 bg-background px-2 text-xs font-medium text-muted-foreground transition-colors
+              bg-background px-2 text-xs font-medium text-muted-foreground transition-colors
               hover:bg-muted/60
               sm:px-3
               dark:hover:bg-white/10

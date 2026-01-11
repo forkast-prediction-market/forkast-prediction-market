@@ -38,12 +38,7 @@ export default function PortfolioOpenOrdersRow({ order, rowGridClass }: Portfoli
     <div
       className={cn(
         rowGridClass,
-        `
-          border-b border-border/60 px-2 py-3 transition-colors
-          first:border-t first:border-border/60
-          hover:bg-muted/50
-          sm:px-3
-        `,
+        `border-b px-2 py-3 transition-colors first:border-t first:border-border/60 hover:bg-muted/50 sm:px-3`,
         'last:border-b-0',
       )}
     >

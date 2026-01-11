@@ -99,12 +99,7 @@ export default function PublicActivityRow({ activity, rowGridClass }: PublicActi
     <div
       className={cn(
         rowGridClass,
-        `
-          border-b border-border/60 p-2 transition-colors
-          first:border-t first:border-border/60
-          hover:bg-muted/50
-          sm:px-3
-        `,
+        `border-b p-2 transition-colors first:border-t first:border-border/60 hover:bg-muted/50 sm:px-3`,
         'last:border-b-0',
       )}
     >

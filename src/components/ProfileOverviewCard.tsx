@@ -151,7 +151,7 @@ export default function ProfileOverviewCard({
                           <div
                             className={`
                               relative flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-full
-                              border border-border/60 bg-muted/40
+                              border bg-muted/40
                             `}
                           >
                             {profile.avatarUrl
@@ -202,8 +202,8 @@ export default function ProfileOverviewCard({
                             variant="ghost"
                             size="icon"
                             className={`
-                              size-9 rounded-full border border-border/60 bg-background/60 text-muted-foreground
-                              shadow-sm transition-colors
+                              size-9 rounded-full border bg-background/60 text-muted-foreground shadow-sm
+                              transition-colors
                               hover:bg-background
                             `}
                             onClick={() => profile.portfolioAddress && copy(profile.portfolioAddress)}
@@ -223,7 +223,7 @@ export default function ProfileOverviewCard({
                           key={stat.label}
                           className={cn(
                             'flex h-full flex-col rounded-lg bg-background/40 p-2 shadow-sm',
-                            index > 0 && 'border-l border-border/50',
+                            index > 0 && 'border-l',
                           )}
                         >
                           <p className="text-sm font-medium text-muted-foreground">

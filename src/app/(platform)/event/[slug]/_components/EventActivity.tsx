@@ -358,7 +358,8 @@ export default function EventActivity({ event }: EventActivityProps) {
                     tooltipVariant="activity"
                     joinedAt={activity.user.created_at}
                     usernameClassName="font-semibold text-foreground"
-                    usernameMaxWidthClassName="max-w-35"
+                    usernameMaxWidthClassName="max-w-44 sm:max-w-56"
+                    inlineNoTruncate={true}
                     containerClassName="px-3 py-2.5 text-sm leading-tight text-foreground sm:px-4"
                     trailing={(
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -382,16 +383,22 @@ export default function EventActivity({ event }: EventActivityProps) {
                       <>
                         <span className="text-foreground">
                           {activity.side === 'buy' ? 'bought' : 'sold'}
+                          {' '}
                         </span>
                         <span className={cn('font-semibold', outcomeColorClass)}>
                           {amountLabel}
+                          {' '}
                           {activity.outcome.text ? ` ${activity.outcome.text}` : ''}
+                          {' '}
+                          {' '}
                         </span>
                         <span className="text-foreground">
                           at
+                          {' '}
                         </span>
                         <span className="font-semibold text-foreground">
                           {priceLabel}
+                          {' '}
                         </span>
                         <span className="text-muted-foreground">
                           (

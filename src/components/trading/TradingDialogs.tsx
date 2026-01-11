@@ -55,7 +55,7 @@ export function EnableTradingDialog({
 }: EnableTradingDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md border border-border/70 bg-background p-8 text-center">
+      <DialogContent className="max-w-md border bg-background p-8 text-center">
         <DialogHeader className="space-y-3 text-center">
           <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <WalletIcon className="size-8" />
@@ -80,7 +80,7 @@ export function FundAccountDialog({
 }: FundAccountDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md border border-border/70 bg-background p-8 text-center">
+      <DialogContent className="max-w-md border bg-background p-8 text-center">
         <DialogHeader className="space-y-3 text-center">
           <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <CircleDollarSignIcon className="size-8" />
@@ -113,7 +113,7 @@ export function TradeRequirementsDialog({
 }: TradeRequirementsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="max-w-xl border border-border/70 bg-background p-6">
+      <DialogContent showCloseButton={false} className="max-w-xl border bg-background p-6">
         <DialogHeader className="pb-2 text-center">
           <DialogTitle className="text-center text-lg font-semibold">
             Trade on

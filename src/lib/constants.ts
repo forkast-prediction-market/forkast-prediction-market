@@ -70,3 +70,5 @@ export const POLYGON_SCAN_BASE = IS_TEST_MODE
 export function getExchangeEip712Domain(isNegRisk?: boolean) {
   return isNegRisk ? NEG_RISK_EIP712_DOMAIN : EIP712_DOMAIN
 }
+
+export const tableHeaderClass = 'px-2 py-3 text-xs font-semibold tracking-wide text-muted-foreground uppercase sm:px-3'

@@ -146,7 +146,7 @@ export default function SellPositionModal({
   if (isMobile) {
     return (
       <Drawer open={open} onOpenChange={onOpenChange}>
-        <DrawerContent className="max-h-[90vh] w-full border-border/70 bg-background px-4 pt-4 pb-6">
+        <DrawerContent className="max-h-[90vh] w-full bg-background px-4 pt-4 pb-6">
           {body}
         </DrawerContent>
       </Drawer>
@@ -155,7 +155,7 @@ export default function SellPositionModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md border-border/70 bg-background p-6">
+      <DialogContent className="max-w-md bg-background p-6">
         {body}
       </DialogContent>
     </Dialog>

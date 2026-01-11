@@ -138,7 +138,7 @@ function EventResults({ events, query, isLoading, onResultClick }: EventResultsP
                 alt={result.title}
                 width={32}
                 height={32}
-                className="h-full w-full object-cover"
+                className="size-full object-cover"
               />
             </div>
 

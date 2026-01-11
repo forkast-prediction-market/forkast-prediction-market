@@ -166,13 +166,13 @@ export default function EventOrderPanelEarnings({
                     type="button"
                     className={cn(
                       `
-                        ml-1 inline-flex h-4 w-4 items-center justify-center rounded-sm text-muted-foreground
+                        ml-1 inline-flex size-4 items-center justify-center rounded-sm text-muted-foreground
                         transition-colors
                       `,
                       'hover:text-foreground focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none',
                     )}
                   >
-                    <InfoIcon className="h-3 w-3" aria-hidden />
+                    <InfoIcon className="size-3" aria-hidden />
                   </button>
                 </TooltipTrigger>
                 <TooltipContent

@@ -19,7 +19,7 @@ export default function EventCardHeader({
 }: EventCardHeaderProps) {
   return (
     <div className="mb-3 flex items-start justify-between">
-      <Link href={`/event/${event.slug}`} className="flex flex-1 items-start gap-2 pr-2">
+      <Link href={`/event/${event.slug}`} className="flex flex-1 items-center gap-2 pr-2">
         <div
           className={`
             flex size-10 shrink-0 items-center justify-center overflow-hidden rounded bg-muted text-muted-foreground
@@ -30,14 +30,14 @@ export default function EventCardHeader({
             alt={event.creator || 'Market creator'}
             width={40}
             height={40}
-            className="h-full w-full rounded object-cover"
+            className="size-full rounded object-cover"
           />
         </div>
 
         <h3
           className={
             `
-              line-clamp-2 text-sm leading-tight font-bold transition-all duration-200
+              line-clamp-2 w-fit text-sm leading-5 font-bold text-pretty transition-all duration-200
               hover:line-clamp-none hover:text-foreground
             `
           }

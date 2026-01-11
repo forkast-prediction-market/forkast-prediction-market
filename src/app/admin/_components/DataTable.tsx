@@ -13,6 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { tableHeaderClass } from '@/lib/constants'
+import { cn } from '@/lib/utils'
 import { DataTablePagination } from './DataTablePagination'
 
 interface DataTableProps<TData, TValue> {
@@ -181,7 +183,7 @@ export function DataTable<TData, TValue>({
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                   return (
-                    <TableHead key={header.id} colSpan={header.colSpan} className="px-1 sm:px-2">
+                    <TableHead key={header.id} colSpan={header.colSpan} className={cn(tableHeaderClass, 'px-1 sm:px-2')}>
                       {header.isPlaceholder
                         ? null
                         : flexRender(

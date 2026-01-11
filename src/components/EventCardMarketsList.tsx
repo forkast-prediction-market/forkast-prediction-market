@@ -15,7 +15,7 @@ export default function EventCardMarketsList({
   onToggle,
 }: EventCardMarketsListProps) {
   return (
-    <div className="mt-auto mb-1 scrollbar-hide max-h-14 space-y-2 overflow-y-auto">
+    <div className="mb-1 scrollbar-hide max-h-16 space-y-2 overflow-y-auto">
       {event.markets.map(market => (
         <div
           key={market.condition_id}

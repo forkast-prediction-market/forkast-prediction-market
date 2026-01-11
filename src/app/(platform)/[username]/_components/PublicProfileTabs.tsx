@@ -43,7 +43,7 @@ export default function PublicProfileTabs({ userAddress }: PublicProfileTabsProp
   }, [activeTab, tabs])
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border/80">
+    <div className="overflow-hidden rounded-2xl border">
       <div className="relative">
         <div className="flex items-center gap-6 px-4 pt-4 sm:px-6">
           {tabs.map((tab, index) => (
