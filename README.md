@@ -103,7 +103,7 @@ Kuest is provided "as is" and should be used at your own risk. Review the [Modif
 **🗺️ [Roadmap](https://github.com/orgs/kuestcom/discussions/51)** •
 **💬 [Discussions](https://github.com/orgs/kuestcom/discussions)**
 
-**📱 [Discord](https://discord.gg/vSSnkJvypS)** •
+**📱 [Discord](https://discord.gg/kuest)** •
 **🐦 [X (Follow us)](https://x.com/kuest)** •
 **🐛 [Issues](https://github.com/kuestcom/prediction-market/issues)** •
 **⭐ [Contribute](https://github.com/kuestcom/prediction-market/blob/main/CONTRIBUTING.md)**
