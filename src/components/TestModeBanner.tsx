@@ -12,7 +12,7 @@ export default function TestModeBanner({
   persistKey = 'test_mode_banner_closed_session',
 }: TestModeBannerProps) {
   const [visible, setVisible] = useState<boolean | null>(null)
-  const discordUrl = 'https://discord.gg/kuest  '
+  const discordUrl = 'https://discord.gg/kuest'
   const message = (
     <>
       Test mode is
