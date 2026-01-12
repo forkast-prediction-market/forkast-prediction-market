@@ -6,7 +6,6 @@ import { commentMetricsQueryKey } from '@/app/(platform)/event/[slug]/_hooks/use
 import {
   clearCommunityAuth,
   ensureCommunityToken,
-  getCommunityApiUrl,
   loadCommunityAuth,
   parseCommunityError,
 } from '@/lib/community-auth'
@@ -25,7 +24,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
   const [infiniteScrollError, setInfiniteScrollError] = useState<Error | null>(null)
   const [loadingRepliesForComment, setLoadingRepliesForComment] = useState<string | null>(null)
   const commentsQueryKey = ['event-comments', eventSlug, sortBy, user?.address ?? null]
-  const communityApiUrl = getCommunityApiUrl()
+  const communityApiUrl = process.env.COMMUNITY_URL!
 
   const getCommunityToken = useCallback(async () => {
     if (!user?.address) {

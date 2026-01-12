@@ -14,14 +14,13 @@ import { Label } from '@/components/ui/label'
 import {
   clearCommunityAuth,
   ensureCommunityToken,
-  getCommunityApiUrl,
   parseCommunityError,
 } from '@/lib/community-auth'
 import { useUser } from '@/stores/useUser'
 
 export default function SettingsProfileContent({ user }: { user: User }) {
   const { signMessageAsync } = useSignMessage()
-  const communityApiUrl = getCommunityApiUrl()
+  const communityApiUrl = process.env.COMMUNITY_URL!
   const [errors, setErrors] = useState<Record<string, string | undefined>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [isPending, setIsPending] = useState(false)

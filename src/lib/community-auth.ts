@@ -39,10 +39,6 @@ function isExpired(expiresAt: string) {
   return timestamp <= Date.now()
 }
 
-export function getCommunityApiUrl() {
-  return process.env.NEXT_PUBLIC_COMMUNITY_URL || 'https://community.kuest.com'
-}
-
 export async function parseCommunityError(response: Response, fallback: string) {
   try {
     const body = await response.json()
@@ -100,7 +96,7 @@ export function clearCommunityAuth() {
 export async function ensureCommunityToken({
   address,
   signMessageAsync,
-  communityApiUrl = getCommunityApiUrl(),
+  communityApiUrl = process.env.COMMUNITY_URL!,
   proxyWalletAddress,
 }: {
   address: string

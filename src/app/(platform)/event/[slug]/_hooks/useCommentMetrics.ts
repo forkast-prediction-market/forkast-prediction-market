@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { getCommunityApiUrl, parseCommunityError } from '@/lib/community-auth'
+import { parseCommunityError } from '@/lib/community-auth'
 
 interface CommentMetricsResponse {
   comments_count: number
@@ -10,7 +10,7 @@ export function commentMetricsQueryKey(eventSlug: string) {
 }
 
 async function fetchCommentMetrics(eventSlug: string, signal?: AbortSignal) {
-  const communityApiUrl = getCommunityApiUrl()
+  const communityApiUrl = process.env.COMMUNITY_URL!
   const url = new URL(`${communityApiUrl}/comments/metrics`)
   url.searchParams.set('event_slug', eventSlug)
 
