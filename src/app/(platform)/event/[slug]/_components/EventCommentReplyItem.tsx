@@ -22,6 +22,7 @@ interface ReplyItemProps {
   onSetReplyText: (text: string) => void
   createReply: (parentCommentId: string, content: string) => Promise<Comment>
   isCreatingComment: boolean
+  isTogglingLikeForComment: (commentId: string) => boolean
 }
 
 export default function EventCommentReplyItem({
@@ -37,6 +38,7 @@ export default function EventCommentReplyItem({
   onSetReplyText,
   createReply,
   isCreatingComment,
+  isTogglingLikeForComment,
 }: ReplyItemProps) {
   const { open } = useAppKit()
 
@@ -101,11 +103,12 @@ export default function EventCommentReplyItem({
               >
                 Reply
               </button>
-            <EventCommentLikeForm
-              comment={reply}
-              user={user}
-              onLikeToggled={handleLikeToggle}
-            />
+              <EventCommentLikeForm
+                comment={reply}
+                user={user}
+                onLikeToggled={handleLikeToggle}
+                isSubmitting={isTogglingLikeForComment(reply.id)}
+              />
             </div>
           </div>
           {reply.is_owner && (
@@ -120,10 +123,10 @@ export default function EventCommentReplyItem({
                     <MoreHorizontalIcon className="size-4" />
                   </button>
                 </DropdownMenuTrigger>
-              <EventCommentMenu
-                comment={reply}
-                onDelete={handleDelete}
-              />
+                <EventCommentMenu
+                  comment={reply}
+                  onDelete={handleDelete}
+                />
               </DropdownMenu>
             </div>
           )}

@@ -23,6 +23,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
   const { signMessageAsync } = useSignMessage()
   const [infiniteScrollError, setInfiniteScrollError] = useState<Error | null>(null)
   const [loadingRepliesForComment, setLoadingRepliesForComment] = useState<string | null>(null)
+  const [pendingLikeIds, setPendingLikeIds] = useState<Set<string>>(() => new Set())
   const commentsQueryKey = ['event-comments', eventSlug, sortBy, user?.address ?? null]
   const communityApiUrl = process.env.COMMUNITY_URL!
 
@@ -276,11 +277,24 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
 
       return await response.json() as { likes_count: number, user_has_liked: boolean }
     },
-    onMutate: async () => {
+    onMutate: async ({ commentId }) => {
       await queryClient.cancelQueries({ queryKey: commentsQueryKey })
+      setPendingLikeIds((prev) => {
+        const next = new Set(prev)
+        next.add(commentId)
+        return next
+      })
     },
-    onSettled: () => {
+    onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({ queryKey: commentsQueryKey })
+      if (!variables?.commentId) {
+        return
+      }
+      setPendingLikeIds((prev) => {
+        const next = new Set(prev)
+        next.delete(variables.commentId)
+        return next
+      })
     },
   })
 
@@ -430,6 +444,10 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
     return loadingRepliesForComment === commentId
   }, [loadingRepliesForComment])
 
+  const isTogglingLikeForComment = useCallback((commentId: string) => {
+    return pendingLikeIds.has(commentId)
+  }, [pendingLikeIds])
+
   const retryLoadReplies = useCallback((commentId: string) => {
     loadMoreRepliesMutation.reset()
     loadMoreRepliesMutation.mutate({ commentId })
@@ -458,6 +476,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
     // Mutation states for UI feedback
     isCreatingComment: createCommentMutation.isPending,
     isTogglingLike: likeCommentMutation.isPending,
+    isTogglingLikeForComment,
     isDeletingComment: deleteCommentMutation.isPending,
     isLoadingReplies: loadMoreRepliesMutation.isPending,
     isLoadingRepliesForComment,

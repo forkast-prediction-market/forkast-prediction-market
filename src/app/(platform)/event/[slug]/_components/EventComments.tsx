@@ -45,6 +45,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     loadMoreReplies,
     createReply,
     isCreatingComment,
+    isTogglingLikeForComment,
     status,
     isLoadingRepliesForComment,
     loadRepliesError,
@@ -187,6 +188,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
                       comment={comment}
                       user={user}
                       onLikeToggle={handleLikeToggled}
+                      isTogglingLikeForComment={isTogglingLikeForComment}
                       onDelete={handleDeleteComment}
                       replyingTo={replyingTo}
                       onSetReplyingTo={setReplyingTo}

@@ -10,16 +10,21 @@ interface EventCommentLikeFormProps {
   comment: Comment
   user: User | null
   onLikeToggled: () => void
+  isSubmitting?: boolean
 }
 
 export default function EventCommentLikeForm({
   comment,
   user,
   onLikeToggled,
+  isSubmitting = false,
 }: EventCommentLikeFormProps) {
   const { open } = useAppKit()
 
   function handleClick() {
+    if (isSubmitting) {
+      return
+    }
     if (!user) {
       queueMicrotask(() => open())
       return
@@ -33,6 +38,7 @@ export default function EventCommentLikeForm({
       size="icon"
       variant="ghost"
       onClick={handleClick}
+      disabled={isSubmitting}
       aria-pressed={comment.user_has_liked}
       title={comment.user_has_liked ? 'Remove like' : 'Like'}
       className="flex size-auto items-center gap-1 p-0 text-xs text-muted-foreground"

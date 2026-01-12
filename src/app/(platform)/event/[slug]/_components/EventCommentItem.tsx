@@ -25,6 +25,7 @@ interface CommentItemProps {
   onUpdateReply: (commentId: string, replyId: string) => void
   createReply: (parentCommentId: string, content: string) => Promise<Comment>
   isCreatingComment: boolean
+  isTogglingLikeForComment: (commentId: string) => boolean
   isLoadingRepliesForComment: (commentId: string) => boolean
   loadRepliesError: Error | null
   retryLoadReplies: (commentId: string) => void
@@ -45,6 +46,7 @@ export default function EventCommentItem({
   onUpdateReply,
   createReply,
   isCreatingComment,
+  isTogglingLikeForComment,
   isLoadingRepliesForComment,
   loadRepliesError,
   retryLoadReplies,
@@ -109,6 +111,7 @@ export default function EventCommentItem({
                 comment={comment}
                 user={user}
                 onLikeToggled={handleLikeToggle}
+                isSubmitting={isTogglingLikeForComment(comment.id)}
               />
             </div>
           </div>
@@ -166,6 +169,7 @@ export default function EventCommentItem({
               onSetReplyText={onSetReplyText}
               createReply={createReply}
               isCreatingComment={isCreatingComment}
+              isTogglingLikeForComment={isTogglingLikeForComment}
 
             />
           ))}
