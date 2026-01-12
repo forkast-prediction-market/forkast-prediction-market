@@ -6,6 +6,9 @@
     "type": "git",
     "url": "https://github.com/kuestcom/prediction-market.git"
   },
+  "engines": {
+    "node": "24.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",

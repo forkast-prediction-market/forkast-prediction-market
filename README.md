@@ -24,6 +24,8 @@ Tired of centralized platforms? Want to build your own business in the DeFi spac
 
 Follow these simple steps to launch your own prediction market:
 
+**Local development prerequisite:** Node.js 24.x (see `.nvmrc`).
+
 ### 1. Fork the Repository
 
 Click the **Fork** button in the top right corner (and feel free to leave a **⭐ star**!)

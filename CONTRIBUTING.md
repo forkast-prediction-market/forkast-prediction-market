@@ -42,12 +42,13 @@ For code contributions:
 ### Development Setup
 
 1. Fork and clone the repository
-2. Install dependencies: `npm install`
-3. Create a feature branch: `git checkout -b feat/your-feature`
-4. Make your changes
-5. Run linting: `npm run lint`
-6. Commit and push to your fork
-7. Open a pull request with a clear description
+2. Use Node.js 24.x (see `.nvmrc`)
+3. Install dependencies: `npm install`
+4. Create a feature branch: `git checkout -b feat/your-feature`
+5. Make your changes
+6. Run linting: `npm run lint`
+7. Commit and push to your fork
+8. Open a pull request with a clear description
 
 ---
 
