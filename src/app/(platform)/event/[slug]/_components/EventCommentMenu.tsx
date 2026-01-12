@@ -7,19 +7,18 @@ import EventCommentDeleteForm from './EventCommentDeleteForm'
 
 interface CommentMenuProps {
   comment: Comment
-  eventId: string
   onDelete: () => void
+  isDeleting?: boolean
 }
 
-export default function EventCommentMenu({ comment, eventId, onDelete }: CommentMenuProps) {
+export default function EventCommentMenu({ comment, onDelete, isDeleting }: CommentMenuProps) {
   return (
     <DropdownMenuContent className="w-32" align="end">
       {comment.is_owner && (
         <DropdownMenuItem asChild>
           <EventCommentDeleteForm
-            commentId={comment.id}
-            eventId={eventId}
-            onDeleted={onDelete}
+            onDelete={onDelete}
+            isDeleting={isDeleting}
           />
         </DropdownMenuItem>
       )}

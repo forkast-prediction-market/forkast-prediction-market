@@ -37,6 +37,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     hasNextPage,
     isFetchingNextPage,
     refetch,
+    createComment,
     toggleCommentLike,
     deleteComment,
     toggleReplyLike,
@@ -44,11 +45,12 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     loadMoreReplies,
     createReply,
     isCreatingComment,
+    createCommentError,
     status,
     isLoadingRepliesForComment,
     loadRepliesError,
     retryLoadReplies,
-  } = useInfiniteComments(event.slug, sortBy)
+  } = useInfiniteComments(event.slug, sortBy, user)
 
   useEffect(() => {
     function handleScroll() {
@@ -92,20 +94,20 @@ export default function EventComments({ event, user }: EventCommentsProps) {
   }, [comments])
 
   const handleLikeToggled = useCallback((commentId: string) => {
-    toggleCommentLike(event.id, commentId)
-  }, [toggleCommentLike, event.id])
+    toggleCommentLike(commentId)
+  }, [toggleCommentLike])
 
   const handleDeleteReply = useCallback((commentId: string, replyId: string) => {
-    deleteReply(commentId, replyId, event.id)
-  }, [deleteReply, event.id])
+    deleteReply(commentId, replyId)
+  }, [deleteReply])
 
   const handleUpdateReply = useCallback((commentId: string, replyId: string) => {
-    toggleReplyLike(event.id, replyId)
-  }, [toggleReplyLike, event.id])
+    toggleReplyLike(replyId)
+  }, [toggleReplyLike])
 
   const handleDeleteComment = useCallback((commentId: string) => {
-    deleteComment(commentId, event.id)
-  }, [deleteComment, event.id])
+    deleteComment(commentId)
+  }, [deleteComment])
 
   const retryInfiniteScroll = useCallback(() => {
     setInfiniteScrollError(null)
@@ -139,8 +141,10 @@ export default function EventComments({ event, user }: EventCommentsProps) {
   return (
     <>
       <EventCommentForm
-        eventId={event.id}
         user={user}
+        createComment={createComment}
+        isCreatingComment={isCreatingComment}
+        error={createCommentError}
         onCommentAddedAction={() => refetch()}
       />
       <div className="mt-2 flex items-center justify-between gap-3">
@@ -183,7 +187,6 @@ export default function EventComments({ event, user }: EventCommentsProps) {
                     <EventCommentItem
                       key={comment.id}
                       comment={comment}
-                      eventId={event.id}
                       user={user}
                       onLikeToggle={handleLikeToggled}
                       onDelete={handleDeleteComment}

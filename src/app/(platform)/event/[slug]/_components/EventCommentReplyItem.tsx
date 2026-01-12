@@ -13,7 +13,6 @@ interface ReplyItemProps {
   reply: Comment
   parentUsername: string
   commentId: string
-  eventId: string
   user: any
   onLikeToggle: (commentId: string, replyId: string) => void
   onDelete: (commentId: string, replyId: string) => void
@@ -21,7 +20,7 @@ interface ReplyItemProps {
   onSetReplyingTo: (id: string | null) => void
   replyText: string
   onSetReplyText: (text: string) => void
-  createReply: (eventId: string, parentCommentId: string, content: string, user?: any) => void
+  createReply: (parentCommentId: string, content: string) => Promise<Comment>
   isCreatingComment: boolean
 }
 
@@ -29,7 +28,6 @@ export default function EventCommentReplyItem({
   reply,
   parentUsername,
   commentId,
-  eventId,
   user,
   onLikeToggle,
   onDelete,
@@ -103,11 +101,11 @@ export default function EventCommentReplyItem({
               >
                 Reply
               </button>
-              <EventCommentLikeForm
-                comment={reply}
-                user={user}
-                onLikeToggled={handleLikeToggle}
-              />
+            <EventCommentLikeForm
+              comment={reply}
+              user={user}
+              onLikeToggled={handleLikeToggle}
+            />
             </div>
           </div>
           {reply.is_owner && (
@@ -122,11 +120,10 @@ export default function EventCommentReplyItem({
                     <MoreHorizontalIcon className="size-4" />
                   </button>
                 </DropdownMenuTrigger>
-                <EventCommentMenu
-                  comment={reply}
-                  eventId={eventId}
-                  onDelete={handleDelete}
-                />
+              <EventCommentMenu
+                comment={reply}
+                onDelete={handleDelete}
+              />
               </DropdownMenu>
             </div>
           )}
@@ -137,7 +134,6 @@ export default function EventCommentReplyItem({
         <div className="mt-3">
           <EventCommentReplyForm
             user={user}
-            eventId={eventId}
             parentCommentId={commentId}
             placeholder={`Reply to ${reply.username}`}
             initialValue={replyText}

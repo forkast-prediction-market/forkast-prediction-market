@@ -1,6 +1,6 @@
 'use client'
 
-import type { User } from '@/types'
+import type { Comment, User } from '@/types'
 import Image from 'next/image'
 import { useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -8,19 +8,17 @@ import { Input } from '@/components/ui/input'
 
 interface EventCommentReplyFormProps {
   user: User | null
-  eventId: string
   parentCommentId: string
   placeholder: string
   initialValue?: string
   onCancel: () => void
   onReplyAddedAction?: () => void
-  createReply: (eventId: string, parentCommentId: string, content: string, user?: any) => void
+  createReply: (parentCommentId: string, content: string) => Promise<Comment>
   isCreatingComment: boolean
 }
 
 export default function EventCommentReplyForm({
   user,
-  eventId,
   parentCommentId,
   placeholder,
   initialValue,
@@ -38,7 +36,7 @@ export default function EventCommentReplyForm({
       return
     }
 
-    createReply(eventId, parentCommentId, content.trim(), user)
+    await createReply(parentCommentId, content.trim())
     setContent('')
     onReplyAddedAction?.()
   }
