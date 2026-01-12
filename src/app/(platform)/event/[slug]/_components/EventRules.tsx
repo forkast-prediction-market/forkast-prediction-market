@@ -54,7 +54,7 @@ export default function EventRules({ event }: EventRulesProps) {
   const resolverGradient = getResolverGradient(resolverAddress)
 
   return (
-    <div className="rounded-xl border transition-all duration-200 ease-in-out">
+    <div className="overflow-hidden rounded-xl border transition-all duration-200 ease-in-out">
       <button
         type="button"
         onClick={() => setRulesExpanded(!rulesExpanded)}
