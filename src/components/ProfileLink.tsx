@@ -49,12 +49,12 @@ export default function ProfileLink({
   const isInline = layout === 'inline'
   const inlineBody = inlineContent ?? children
   const inlineRowClassName = `
-    flex min-w-0 items-center gap-1 overflow-hidden whitespace-nowrap text-foreground
+    flex min-w-0 flex-wrap items-center gap-1 text-foreground
   `
-  const resolvedUsernameMaxWidth = usernameMaxWidthClassName ?? 'max-w-32 lg:max-w-64'
+  const resolvedUsernameMaxWidth = usernameMaxWidthClassName
+    ?? (isInline ? 'max-w-none' : 'max-w-32 lg:max-w-64')
   const usernameLinkClassName = cn(
-    'block truncate text-sm font-medium',
-    isInline && 'shrink-0',
+    isInline ? 'block text-sm font-medium' : 'block truncate text-sm font-medium',
     usernameClassName,
   )
   const usernameWrapperClassName = cn('min-w-0', resolvedUsernameMaxWidth)
@@ -167,12 +167,21 @@ export default function ProfileLink({
         <div className="min-w-0 flex-1">
           {isInline
             ? (
-                <div className={inlineRowClassName}>
-                  <TooltipTrigger asChild>
-                    {triggerContent}
-                  </TooltipTrigger>
-                  {dateLabel}
-                  {inlineBody ?? null}
+                <div className="flex min-w-0 items-start gap-2">
+                  <div className={inlineRowClassName}>
+                    <TooltipTrigger asChild>
+                      {triggerContent}
+                    </TooltipTrigger>
+                    {inlineBody ?? null}
+                  </div>
+                  {dateLabel || trailing
+                    ? (
+                        <div className="ml-auto flex shrink-0 items-center gap-2">
+                          {dateLabel}
+                          {trailing}
+                        </div>
+                      )
+                    : null}
                 </div>
               )
             : (
@@ -187,7 +196,7 @@ export default function ProfileLink({
             ? <div className="pl-11">{children}</div>
             : null}
         </div>
-        {trailing
+        {!isInline && trailing
           ? (
               <div className="ml-2 flex shrink-0 items-center text-right">
                 {trailing}
