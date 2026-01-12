@@ -1,9 +1,10 @@
 import type { Event, User } from '@/types'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import EventActivity from '@/app/(platform)/event/[slug]/_components/EventActivity'
 import EventComments from '@/app/(platform)/event/[slug]/_components/EventComments'
 import EventTabSelector from '@/app/(platform)/event/[slug]/_components/EventTabSelector'
 import EventTopHolders from '@/app/(platform)/event/[slug]/_components/EventTopHolders'
+import { useCommentMetrics } from '@/app/(platform)/event/[slug]/_hooks/useCommentMetrics'
 
 interface EventTabsProps {
   event: Event
@@ -12,13 +13,20 @@ interface EventTabsProps {
 
 export default function EventTabs({ event, user }: EventTabsProps) {
   const [activeTab, setActiveTab] = useState('comments')
+  const { data: commentMetrics } = useCommentMetrics(event.slug)
+  const commentsCount = useMemo(() => {
+    if (commentMetrics?.comments_count != null) {
+      return commentMetrics.comments_count
+    }
+    return null
+  }, [commentMetrics?.comments_count])
 
   return (
     <>
       <EventTabSelector
         activeTab={activeTab}
         setActiveTab={setActiveTab}
-        commentsCount={event.comments_count}
+        commentsCount={commentsCount}
       />
       {activeTab === 'comments' && <EventComments event={event} user={user} />}
       {activeTab === 'holders' && <EventTopHolders event={event} />}

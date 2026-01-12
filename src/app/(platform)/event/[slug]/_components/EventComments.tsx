@@ -45,7 +45,6 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     loadMoreReplies,
     createReply,
     isCreatingComment,
-    createCommentError,
     status,
     isLoadingRepliesForComment,
     loadRepliesError,
@@ -144,7 +143,6 @@ export default function EventComments({ event, user }: EventCommentsProps) {
         user={user}
         createComment={createComment}
         isCreatingComment={isCreatingComment}
-        error={createCommentError}
         onCommentAddedAction={() => refetch()}
       />
       <div className="mt-2 flex items-center justify-between gap-3">

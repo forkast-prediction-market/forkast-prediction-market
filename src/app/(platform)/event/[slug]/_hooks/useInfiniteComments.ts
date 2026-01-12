@@ -2,35 +2,18 @@ import type { Comment, User } from '@/types'
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useState } from 'react'
 import { useSignMessage } from 'wagmi'
-import { clearCommunityAuth, getCommunityApiUrl, loadCommunityAuth, storeCommunityAuth } from '@/lib/community-auth'
+import { commentMetricsQueryKey } from '@/app/(platform)/event/[slug]/_hooks/useCommentMetrics'
+import {
+  clearCommunityAuth,
+  ensureCommunityToken,
+  getCommunityApiUrl,
+  loadCommunityAuth,
+  parseCommunityError,
+} from '@/lib/community-auth'
 
 const COMMENTS_PAGE_SIZE = 20
 
 type CommentSort = 'newest' | 'most_liked'
-
-interface AuthNonceResponse {
-  nonce: string
-  message: string
-  expires_at: string
-}
-
-interface AuthVerifyResponse {
-  token: string
-  expires_at: string
-}
-
-async function parseErrorResponse(response: Response, fallback: string) {
-  try {
-    const body = await response.json()
-    if (body && typeof body.error === 'string' && body.error.trim().length > 0) {
-      return body.error
-    }
-  }
-  catch {
-    return fallback
-  }
-  return fallback
-}
 
 function resolveSort(sortBy: CommentSort) {
   return sortBy === 'most_liked' ? 'top' : 'recent'
@@ -44,55 +27,16 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
   const commentsQueryKey = ['event-comments', eventSlug, sortBy, user?.address ?? null]
   const communityApiUrl = getCommunityApiUrl()
 
-  const ensureCommunityToken = useCallback(async () => {
+  const getCommunityToken = useCallback(async () => {
     if (!user?.address) {
       throw new Error('Connect your wallet to comment')
     }
 
-    const existing = loadCommunityAuth(user.address)
-    if (existing?.token) {
-      return existing.token
-    }
-
-    const nonceResponse = await fetch(`${communityApiUrl}/auth/nonce`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ address: user.address }),
-    })
-
-    if (!nonceResponse.ok) {
-      throw new Error(await parseErrorResponse(nonceResponse, 'Failed to request auth nonce'))
-    }
-
-    const noncePayload = await nonceResponse.json() as AuthNonceResponse
-    const signature = await signMessageAsync({ message: noncePayload.message })
-
-    const verifyResponse = await fetch(`${communityApiUrl}/auth/verify`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        address: user.address,
-        signature,
-      }),
-    })
-
-    if (!verifyResponse.ok) {
-      throw new Error(await parseErrorResponse(verifyResponse, 'Failed to verify signature'))
-    }
-
-    const verifyPayload = await verifyResponse.json() as AuthVerifyResponse
-
-    storeCommunityAuth({
-      token: verifyPayload.token,
+    return await ensureCommunityToken({
       address: user.address,
-      expires_at: verifyPayload.expires_at,
+      signMessageAsync,
+      communityApiUrl,
     })
-
-    return verifyPayload.token
   }, [communityApiUrl, signMessageAsync, user?.address])
 
   const fetchCommentsPage = useCallback(async ({ pageParam = 0 }: { pageParam: number }) => {
@@ -114,7 +58,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
     const response = await fetch(url.toString(), { headers })
 
     if (!response.ok) {
-      throw new Error(await parseErrorResponse(response, 'Failed to fetch comments'))
+      throw new Error(await parseCommunityError(response, 'Failed to fetch comments'))
     }
 
     const payload = await response.json()
@@ -179,7 +123,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
         throw new Error('Comment is too long (max 2000 characters).')
       }
 
-      const token = await ensureCommunityToken()
+      const token = await getCommunityToken()
 
       const response = await fetch(`${communityApiUrl}/comments`, {
         method: 'POST',
@@ -199,7 +143,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
       }
 
       if (!response.ok) {
-        throw new Error(await parseErrorResponse(response, 'Failed to create comment.'))
+        throw new Error(await parseCommunityError(response, 'Failed to create comment.'))
       }
 
       return await response.json() as Comment
@@ -272,6 +216,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
       }
     },
     onSuccess: (newComment, variables, context) => {
+      queryClient.invalidateQueries({ queryKey: commentMetricsQueryKey(eventSlug) })
       queryClient.setQueryData(commentsQueryKey, (oldData: any) => {
         if (!oldData) {
           return oldData
@@ -306,7 +251,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
 
   const likeCommentMutation = useMutation({
     mutationFn: async ({ commentId }: { commentId: string }) => {
-      const token = await ensureCommunityToken()
+      const token = await getCommunityToken()
 
       const response = await fetch(`${communityApiUrl}/comments/${commentId}/reactions`, {
         method: 'POST',
@@ -322,7 +267,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
       }
 
       if (!response.ok) {
-        throw new Error(await parseErrorResponse(response, 'Failed to update reaction'))
+        throw new Error(await parseCommunityError(response, 'Failed to update reaction'))
       }
 
       return await response.json() as { likes_count: number, user_has_liked: boolean }
@@ -424,7 +369,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
 
   const deleteCommentMutation = useMutation({
     mutationFn: async ({ commentId }: { commentId: string }) => {
-      const token = await ensureCommunityToken()
+      const token = await getCommunityToken()
 
       const response = await fetch(`${communityApiUrl}/comments/${commentId}`, {
         method: 'DELETE',
@@ -438,7 +383,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
       }
 
       if (!response.ok) {
-        throw new Error(await parseErrorResponse(response, 'Failed to delete comment'))
+        throw new Error(await parseCommunityError(response, 'Failed to delete comment'))
       }
 
       return commentId
@@ -482,6 +427,9 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
         queryClient.setQueryData(commentsQueryKey, context.previousComments)
       }
     },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: commentMetricsQueryKey(eventSlug) })
+    },
   })
 
   const createComment = useCallback(async (content: string, parentCommentId?: string) => {
@@ -520,7 +468,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
 
       const response = await fetch(`${communityApiUrl}/comments/${commentId}/replies`, { headers })
       if (!response.ok) {
-        throw new Error(await parseErrorResponse(response, 'Failed to load replies'))
+        throw new Error(await parseCommunityError(response, 'Failed to load replies'))
       }
       return await response.json()
     },

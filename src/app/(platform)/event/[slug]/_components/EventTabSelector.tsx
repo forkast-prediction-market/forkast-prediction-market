@@ -4,17 +4,17 @@ import { cn } from '@/lib/utils'
 interface EventTabSelectorProps {
   activeTab: string
   setActiveTab: (activeTab: string) => void
-  commentsCount: number
+  commentsCount: number | null
 }
 
 export default function EventTabSelector({ activeTab, setActiveTab, commentsCount }: EventTabSelectorProps) {
   const formattedCommentsCount = useMemo(
-    () => Number(commentsCount ?? 0).toLocaleString('en-US'),
+    () => (commentsCount == null ? null : Number(commentsCount).toLocaleString('en-US')),
     [commentsCount],
   )
 
   const eventTabs = useMemo(() => ([
-    { key: 'comments', label: `Comments (${formattedCommentsCount})` },
+    { key: 'comments', label: formattedCommentsCount == null ? 'Comments' : `Comments (${formattedCommentsCount})` },
     { key: 'holders', label: 'Top Holders' },
     { key: 'activity', label: 'Activity' },
   ]), [formattedCommentsCount])

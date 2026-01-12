@@ -1,31 +1,32 @@
 'use client'
 
 import type { User } from '@/types'
-import Form from 'next/form'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useActionState, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useSignMessage } from 'wagmi'
 import { updateUserAction } from '@/app/(platform)/settings/_actions/update-profile'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
+import {
+  clearCommunityAuth,
+  ensureCommunityToken,
+  getCommunityApiUrl,
+  parseCommunityError,
+} from '@/lib/community-auth'
 import { useUser } from '@/stores/useUser'
 
 export default function SettingsProfileContent({ user }: { user: User }) {
-  const [state, formAction, isPending] = useActionState((_: any, formData: any) => updateUserAction(formData), {})
+  const { signMessageAsync } = useSignMessage()
+  const communityApiUrl = getCommunityApiUrl()
+  const [errors, setErrors] = useState<Record<string, string | undefined>>({})
+  const [formError, setFormError] = useState<string | null>(null)
+  const [isPending, setIsPending] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const prevPending = useRef(false)
   const [previewImage, setPreviewImage] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (prevPending.current && !isPending && !state.errors && !state.error) {
-      useUser.setState({ ...user })
-      toast.success('Profile updated successfully!')
-    }
-    prevPending.current = isPending
-  }, [isPending, state, user])
 
   useEffect(() => {
     return () => {
@@ -50,11 +51,108 @@ export default function SettingsProfileContent({ user }: { user: User }) {
     fileInputRef.current?.click()
   }
 
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (isPending) {
+      return
+    }
+
+    setErrors({})
+    setFormError(null)
+    setIsPending(true)
+
+    const formData = new FormData(event.currentTarget)
+    const email = (formData.get('email') as string | null)?.trim() || ''
+    const username = (formData.get('username') as string | null)?.trim() || ''
+    const imageFile = formData.get('image') as File | null
+
+    const shouldUpdateCommunity = Boolean(
+      (username && username !== user.username) || (imageFile && imageFile.size > 0),
+    )
+
+    let communityUsername = username
+    let avatarUrl: string | undefined
+
+    try {
+      if (shouldUpdateCommunity) {
+        const token = await ensureCommunityToken({
+          address: user.address,
+          signMessageAsync,
+          communityApiUrl,
+        })
+
+        const communityForm = new FormData()
+        if (username && username !== user.username) {
+          communityForm.append('username', username)
+        }
+        if (imageFile && imageFile.size > 0) {
+          communityForm.append('image', imageFile)
+        }
+
+        const response = await fetch(`${communityApiUrl}/profile`, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: communityForm,
+        })
+
+        if (response.status === 401) {
+          clearCommunityAuth()
+        }
+
+        if (!response.ok) {
+          const message = await parseCommunityError(response, 'Failed to update profile.')
+          setFormError(message)
+          toast.error(message)
+          return
+        }
+
+        const payload = await response.json() as {
+          username?: string
+          avatar_url?: string
+        }
+        communityUsername = payload.username || username
+        avatarUrl = payload.avatar_url
+      }
+
+      const localForm = new FormData()
+      localForm.set('email', email)
+      localForm.set('username', communityUsername)
+      if (avatarUrl) {
+        localForm.set('avatar_url', avatarUrl)
+      }
+
+      const result = await updateUserAction(localForm)
+      if (result.errors || result.error) {
+        setErrors(result.errors || {})
+        setFormError(result.error || null)
+        return
+      }
+
+      useUser.setState({
+        ...user,
+        email,
+        username: communityUsername,
+        image: avatarUrl ?? user.image,
+      })
+      toast.success('Profile updated successfully!')
+    }
+    catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to update profile.'
+      setFormError(message)
+      toast.error(message)
+    }
+    finally {
+      setIsPending(false)
+    }
+  }
+
   return (
     <div className="grid gap-8">
-      {state?.error && <InputError message={state.error} />}
+      {formError && <InputError message={formError} />}
 
-      <Form action={formAction} className="grid gap-6" formEncType="multipart/form-data">
+      <form onSubmit={handleSubmit} className="grid gap-6" encType="multipart/form-data">
         <div className="rounded-lg border p-6">
           <div className="flex items-center gap-4">
             <div className={`
@@ -62,12 +160,12 @@ export default function SettingsProfileContent({ user }: { user: User }) {
               to-primary/60
             `}
             >
-              {previewImage || user.image?.includes('supabase.co')
+              {previewImage || user.image
                 ? (
                     <Image
                       width={42}
                       height={42}
-                      src={previewImage || user.image || ''}
+                      src={previewImage || user.image}
                       alt="Profile"
                       className="size-full object-cover"
                     />
@@ -88,7 +186,7 @@ export default function SettingsProfileContent({ user }: { user: User }) {
               >
                 Upload
               </Button>
-              {state.errors?.image && <InputError message={state.errors.image} />}
+              {errors?.image && <InputError message={errors.image} />}
               <p className="text-xs text-muted-foreground">Max 5MB, JPG/PNG/WEBP only</p>
             </div>
           </div>
@@ -135,7 +233,7 @@ export default function SettingsProfileContent({ user }: { user: User }) {
               disabled={isPending}
               placeholder="Enter your email"
             />
-            {state.errors?.email && <InputError message={state.errors.email} />}
+            {errors?.email && <InputError message={errors.email} />}
           </div>
 
           <div className="grid gap-2">
@@ -151,7 +249,7 @@ export default function SettingsProfileContent({ user }: { user: User }) {
               disabled={isPending}
               placeholder="Enter your username"
             />
-            {state.errors?.username && <InputError message={state.errors.username} />}
+            {errors?.username && <InputError message={errors.username} />}
           </div>
         </div>
 
@@ -166,7 +264,7 @@ export default function SettingsProfileContent({ user }: { user: User }) {
             {isPending ? 'Saving...' : 'Save changes'}
           </Button>
         </div>
-      </Form>
+      </form>
     </div>
   )
 }

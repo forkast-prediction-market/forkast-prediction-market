@@ -42,6 +42,7 @@ const UpdateUserSchema = z.object({
 
       return ACCEPTED_IMAGE_TYPES.includes(file.type)
     }, { error: 'Only JPG, PNG, and WebP images are allowed' }),
+  avatar_url: z.string().url().optional(),
 })
 
 export async function updateUserAction(formData: FormData): Promise<ActionState> {
@@ -52,11 +53,16 @@ export async function updateUserAction(formData: FormData): Promise<ActionState>
     }
 
     const imageFile = formData.get('image') as File
+    const avatarUrlRaw = formData.get('avatar_url')
+    const avatarUrl = typeof avatarUrlRaw === 'string' && avatarUrlRaw.trim().length > 0
+      ? avatarUrlRaw.trim()
+      : undefined
 
     const rawData = {
       email: formData.get('email') as string,
       username: formData.get('username') as string,
       image: imageFile && imageFile.size > 0 ? imageFile : undefined,
+      avatar_url: avatarUrl,
     }
 
     const validated = UpdateUserSchema.safeParse(rawData)
@@ -71,11 +77,15 @@ export async function updateUserAction(formData: FormData): Promise<ActionState>
       return { errors }
     }
 
-    const updateData = {
-      ...validated.data,
+    const updateData: Record<string, unknown> = {
+      email: validated.data.email,
+      username: validated.data.username,
     }
 
-    if (validated.data.image && validated.data.image.size > 0) {
+    if (validated.data.avatar_url) {
+      updateData.image = validated.data.avatar_url
+    }
+    else if (validated.data.image && validated.data.image.size > 0) {
       updateData.image = await uploadImage(user, validated.data.image)
     }
 

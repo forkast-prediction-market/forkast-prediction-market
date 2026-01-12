@@ -6,6 +6,19 @@ interface StoredCommunityAuth {
   expires_at: string
 }
 
+type SignMessageFn = (args: { message: string }) => Promise<string>
+
+interface AuthNonceResponse {
+  nonce: string
+  message: string
+  expires_at: string
+}
+
+interface AuthVerifyResponse {
+  token: string
+  expires_at: string
+}
+
 function isExpired(expiresAt: string) {
   const timestamp = Date.parse(expiresAt)
   if (Number.isNaN(timestamp)) {
@@ -16,6 +29,19 @@ function isExpired(expiresAt: string) {
 
 export function getCommunityApiUrl() {
   return process.env.NEXT_PUBLIC_COMMUNITY_URL || 'https://community.kuest.com'
+}
+
+export async function parseCommunityError(response: Response, fallback: string) {
+  try {
+    const body = await response.json()
+    if (body && typeof body.error === 'string' && body.error.trim().length > 0) {
+      return body.error
+    }
+  }
+  catch {
+    return fallback
+  }
+  return fallback
 }
 
 export function loadCommunityAuth(address?: string) {
@@ -57,4 +83,59 @@ export function clearCommunityAuth() {
     return
   }
   window.localStorage.removeItem(STORAGE_KEY)
+}
+
+export async function ensureCommunityToken({
+  address,
+  signMessageAsync,
+  communityApiUrl = getCommunityApiUrl(),
+}: {
+  address: string
+  signMessageAsync: SignMessageFn
+  communityApiUrl?: string
+}) {
+  const existing = loadCommunityAuth(address)
+  if (existing?.token) {
+    return existing.token
+  }
+
+  const nonceResponse = await fetch(`${communityApiUrl}/auth/nonce`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ address }),
+  })
+
+  if (!nonceResponse.ok) {
+    throw new Error(await parseCommunityError(nonceResponse, 'Failed to request auth nonce'))
+  }
+
+  const noncePayload = await nonceResponse.json() as AuthNonceResponse
+  const signature = await signMessageAsync({ message: noncePayload.message })
+
+  const verifyResponse = await fetch(`${communityApiUrl}/auth/verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      address,
+      signature,
+    }),
+  })
+
+  if (!verifyResponse.ok) {
+    throw new Error(await parseCommunityError(verifyResponse, 'Failed to verify signature'))
+  }
+
+  const verifyPayload = await verifyResponse.json() as AuthVerifyResponse
+
+  storeCommunityAuth({
+    token: verifyPayload.token,
+    address,
+    expires_at: verifyPayload.expires_at,
+  })
+
+  return verifyPayload.token
 }

@@ -1,10 +1,10 @@
 'use client'
 
 import type { Comment, User } from '@/types'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { InputError } from '@/components/ui/input-error'
 import { useAppKit } from '@/hooks/useAppKit'
 
 interface EventCommentFormProps {
@@ -12,7 +12,6 @@ interface EventCommentFormProps {
   onCommentAddedAction: (comment: Comment) => void
   createComment: (content: string) => Promise<Comment>
   isCreatingComment: boolean
-  error: Error | null
 }
 
 export default function EventCommentForm({
@@ -20,17 +19,9 @@ export default function EventCommentForm({
   onCommentAddedAction,
   createComment,
   isCreatingComment,
-  error,
 }: EventCommentFormProps) {
   const { open } = useAppKit()
   const [content, setContent] = useState('')
-  const [localError, setLocalError] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (error) {
-      setLocalError(error.message || 'Failed to create comment.')
-    }
-  }, [error])
 
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
@@ -42,15 +33,13 @@ export default function EventCommentForm({
 
     const trimmed = content.trim()
     if (!trimmed) {
-      setLocalError('Comment content is required')
+      toast.error('Comment content is required')
       return
     }
     if (trimmed.length > 2000) {
-      setLocalError('Comment is too long (max 2000 characters).')
+      toast.error('Comment is too long (max 2000 characters).')
       return
     }
-
-    setLocalError(null)
 
     try {
       const comment = await createComment(trimmed)
@@ -59,7 +48,7 @@ export default function EventCommentForm({
     }
     catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create comment.'
-      setLocalError(message)
+      toast.error(message)
     }
   }
 
@@ -87,8 +76,6 @@ export default function EventCommentForm({
           {isCreatingComment ? 'Posting...' : user ? 'Post' : 'Connect to Post'}
         </Button>
       </form>
-
-      {localError && <InputError message={localError} />}
     </div>
   )
 }

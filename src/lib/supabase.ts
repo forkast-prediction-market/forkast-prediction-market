@@ -13,5 +13,9 @@ export function getSupabaseImageUrl(iconPath: string | null): string {
     return 'https://avatar.vercel.sh/creator.png'
   }
 
+  if (iconPath.startsWith('http://') || iconPath.startsWith('https://')) {
+    return iconPath
+  }
+
   return `${supabaseUrl}/storage/v1/object/public/kuest-assets/${iconPath}`
 }
