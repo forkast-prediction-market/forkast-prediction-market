@@ -302,7 +302,7 @@ export default function EventRelated({ event }: EventRelatedProps) {
                 variant="ghost"
                 size="sm"
                 className={cn(
-                  'relative z-10 shrink-0 px-3 whitespace-nowrap transition-none hover:bg-transparent',
+                  'relative shrink-0 px-3 whitespace-nowrap transition-none hover:bg-transparent',
                   activeTag === item.slug
                     ? 'font-medium text-foreground'
                     : 'text-muted-foreground hover:text-foreground',
