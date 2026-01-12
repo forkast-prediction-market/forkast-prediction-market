@@ -94,7 +94,6 @@ export default function EventCommentItem({
         }}
         date={comment.created_at}
         joinedAt={comment.user_created_at}
-        tooltipVariant="activity"
       >
         <div className="flex w-full flex-1 gap-3">
           <div className="flex-1">

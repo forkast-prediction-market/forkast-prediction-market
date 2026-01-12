@@ -1,13 +1,10 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import type { ProfileForCards } from '@/components/ProfileOverviewCard'
-import type { PortfolioSnapshot } from '@/lib/portfolio'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import ProfileActivityTooltipCard from '@/components/ProfileActivityTooltipCard'
-import ProfileOverviewCard from '@/components/ProfileOverviewCard'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { fetchProfileLinkStats } from '@/lib/data-api/profile-link-stats'
@@ -31,7 +28,6 @@ interface ProfileLinkProps {
   usernameMaxWidthClassName?: string
   usernameClassName?: string
   joinedAt?: string | null
-  tooltipVariant?: 'default' | 'activity'
 }
 
 export default function ProfileLink({
@@ -46,7 +42,6 @@ export default function ProfileLink({
   usernameMaxWidthClassName,
   usernameClassName,
   joinedAt,
-  tooltipVariant = 'default',
 }: ProfileLinkProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [stats, setStats] = useState<Awaited<ReturnType<typeof fetchProfileLinkStats>>>(null)
@@ -117,40 +112,7 @@ export default function ProfileLink({
     }
   }, [hasLoaded, isOpen, statsAddress])
 
-  const tooltipProfile = useMemo<ProfileForCards>(() => ({
-    username: user.username,
-    avatarUrl: user.image,
-    portfolioAddress: statsAddress,
-  }), [statsAddress, user.image, user.username])
-  const tooltipSnapshot = useMemo<PortfolioSnapshot>(() => ({
-    positionsValue: stats?.positionsValue ?? 0,
-    profitLoss: stats?.profitLoss ?? 0,
-    predictions: stats?.positions ?? 0,
-    biggestWin: stats?.biggestWin ?? 0,
-  }), [stats?.positions, stats?.positionsValue, stats?.profitLoss, stats?.biggestWin])
   const isTooltipLoading = isOpen && !hasLoaded
-
-  const tooltipContent = tooltipVariant === 'activity'
-    ? (
-        <ProfileActivityTooltipCard
-          profile={{
-            username: user.username,
-            avatarUrl: user.image,
-            href: profileHref,
-            joinedAt,
-          }}
-          stats={stats}
-          isLoading={isTooltipLoading}
-        />
-      )
-    : (
-        <ProfileOverviewCard
-          profile={tooltipProfile}
-          snapshot={tooltipSnapshot}
-          useDefaultUserWallet={false}
-          enableLiveValue={false}
-        />
-      )
 
   const dateLabel = date
     ? (
@@ -240,7 +202,16 @@ export default function ProfileLink({
         hideArrow
         className="max-w-[90vw] border-none bg-transparent p-0 text-popover-foreground shadow-none md:max-w-96"
       >
-        {tooltipContent}
+        <ProfileActivityTooltipCard
+          profile={{
+            username: user.username,
+            avatarUrl: user.image,
+            href: profileHref,
+            joinedAt,
+          }}
+          stats={stats}
+          isLoading={isTooltipLoading}
+        />
       </TooltipContent>
     </Tooltip>
   )

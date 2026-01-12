@@ -205,6 +205,7 @@ function ProfileResults({ profiles, isLoading, query, onResultClick }: ProfileRe
               username: profile.username,
               image: profile.image,
             }}
+            joinedAt={`${profile.created_at}`}
           />
         </div>
       ))}
