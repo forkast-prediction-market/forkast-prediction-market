@@ -8,7 +8,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   useMarketChannelSubscription,
 } from '@/app/(platform)/event/[slug]/_components/EventMarketChannelProvider'
-import MarketChannelStatusIndicator from '@/app/(platform)/event/[slug]/_components/MarketChannelStatusIndicator'
 import ProfileLink from '@/components/ProfileLink'
 import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -283,7 +282,6 @@ export default function EventActivity({ event }: EventActivityProps) {
             <SelectItem value="100000">$100,000</SelectItem>
           </SelectContent>
         </Select>
-        <MarketChannelStatusIndicator />
       </div>
 
       {loading && (
