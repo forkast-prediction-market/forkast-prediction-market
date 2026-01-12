@@ -54,7 +54,7 @@ export default function EventRules({ event }: EventRulesProps) {
   const resolverGradient = getResolverGradient(resolverAddress)
 
   return (
-    <div className="overflow-hidden rounded-xl border transition-all duration-200 ease-in-out">
+    <div className="rounded-xl border transition-all duration-200 ease-in-out">
       <button
         type="button"
         onClick={() => setRulesExpanded(!rulesExpanded)}
@@ -95,7 +95,7 @@ export default function EventRules({ event }: EventRulesProps) {
       </button>
 
       {rulesExpanded && (
-        <div className="border-t border-border/30 px-3 pb-3">
+        <div className="overflow-hidden border-t border-border/30 px-3 pb-3">
           <div className="space-y-2 pt-3">
             {event.rules && (
               <div className="text-sm leading-relaxed whitespace-pre-line text-muted-foreground">

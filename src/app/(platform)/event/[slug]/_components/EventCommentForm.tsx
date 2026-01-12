@@ -26,6 +26,10 @@ export default function EventCommentForm({
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault()
 
+    if (isCreatingComment) {
+      return
+    }
+
     if (!user) {
       queueMicrotask(() => open())
       return

@@ -57,6 +57,10 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
 
     const response = await fetch(url.toString(), { headers })
 
+    if (response.status === 401) {
+      clearCommunityAuth()
+    }
+
     if (!response.ok) {
       throw new Error(await parseCommunityError(response, 'Failed to fetch comments'))
     }
@@ -467,6 +471,9 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
       }
 
       const response = await fetch(`${communityApiUrl}/comments/${commentId}/replies`, { headers })
+      if (response.status === 401) {
+        clearCommunityAuth()
+      }
       if (!response.ok) {
         throw new Error(await parseCommunityError(response, 'Failed to load replies'))
       }
