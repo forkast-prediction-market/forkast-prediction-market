@@ -36,8 +36,9 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
       address: user.address,
       signMessageAsync,
       communityApiUrl,
+      proxyWalletAddress: user.proxy_wallet_address ?? null,
     })
-  }, [communityApiUrl, signMessageAsync, user?.address])
+  }, [communityApiUrl, signMessageAsync, user?.address, user?.proxy_wallet_address])
 
   const fetchCommentsPage = useCallback(async ({ pageParam = 0 }: { pageParam: number }) => {
     const offset = pageParam * COMMENTS_PAGE_SIZE

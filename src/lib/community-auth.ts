@@ -4,6 +4,7 @@ interface StoredCommunityAuth {
   token: string
   address: string
   expires_at: string
+  proxy_wallet_address?: string | null
 }
 
 type SignMessageFn = (args: { message: string }) => Promise<string>
@@ -17,6 +18,17 @@ interface AuthNonceResponse {
 interface AuthVerifyResponse {
   token: string
   expires_at: string
+}
+
+function normalizeProxyAddress(value?: string | null) {
+  if (!value) {
+    return null
+  }
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return null
+  }
+  return trimmed
 }
 
 function isExpired(expiresAt: string) {
@@ -89,14 +101,20 @@ export async function ensureCommunityToken({
   address,
   signMessageAsync,
   communityApiUrl = getCommunityApiUrl(),
+  proxyWalletAddress,
 }: {
   address: string
   signMessageAsync: SignMessageFn
   communityApiUrl?: string
+  proxyWalletAddress?: string | null
 }) {
+  const normalizedProxy = normalizeProxyAddress(proxyWalletAddress)
   const existing = loadCommunityAuth(address)
   if (existing?.token) {
-    return existing.token
+    const storedProxy = normalizeProxyAddress(existing.proxy_wallet_address)
+    if (!normalizedProxy || storedProxy === normalizedProxy) {
+      return existing.token
+    }
   }
 
   const nonceResponse = await fetch(`${communityApiUrl}/auth/nonce`, {
@@ -122,6 +140,7 @@ export async function ensureCommunityToken({
     body: JSON.stringify({
       address,
       signature,
+      proxy_wallet_address: normalizedProxy ?? undefined,
     }),
   })
 
@@ -135,6 +154,7 @@ export async function ensureCommunityToken({
     token: verifyPayload.token,
     address,
     expires_at: verifyPayload.expires_at,
+    proxy_wallet_address: normalizedProxy,
   })
 
   return verifyPayload.token

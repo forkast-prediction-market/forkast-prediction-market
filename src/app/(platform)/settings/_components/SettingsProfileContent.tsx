@@ -79,6 +79,7 @@ export default function SettingsProfileContent({ user }: { user: User }) {
           address: user.address,
           signMessageAsync,
           communityApiUrl,
+          proxyWalletAddress: user.proxy_wallet_address ?? null,
         })
 
         const communityForm = new FormData()
