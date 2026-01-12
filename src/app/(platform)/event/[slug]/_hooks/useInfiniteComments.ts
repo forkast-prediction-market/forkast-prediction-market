@@ -279,10 +279,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: commentsQueryKey })
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: commentsQueryKey })
-    },
-    onError: () => {
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: commentsQueryKey })
     },
   })
