@@ -432,7 +432,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
         </div>
       )}
       <div className="max-w-full min-w-0 overflow-x-auto">
-        <table className="w-full table-fixed border-collapse max-sm:min-w-[115%] sm:min-w-full sm:table-auto">
+        <table className="w-full min-w-full table-fixed border-collapse sm:table-auto">
           <thead>
             <tr className="border-b bg-background">
               <th className={cn(tableHeaderClass, 'text-left')}>Outcome</th>
