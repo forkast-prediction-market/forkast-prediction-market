@@ -1,6 +1,7 @@
 'use client'
 
 import type { User } from '@/types'
+import { useQueryClient } from '@tanstack/react-query'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
@@ -19,6 +20,7 @@ import {
 import { useUser } from '@/stores/useUser'
 
 export default function SettingsProfileContent({ user }: { user: User }) {
+  const queryClient = useQueryClient()
   const { signMessageAsync } = useSignMessage()
   const communityApiUrl = process.env.COMMUNITY_URL!
   const [errors, setErrors] = useState<Record<string, string | undefined>>({})
@@ -135,6 +137,12 @@ export default function SettingsProfileContent({ user }: { user: User }) {
         email,
         username: communityUsername,
         image: avatarUrl ?? user.image,
+      })
+      await queryClient.invalidateQueries({
+        predicate: (query) => {
+          const [key] = query.queryKey
+          return key === 'event-comments' || key === 'event-activity' || key === 'event-holders'
+        },
       })
       toast.success('Profile updated successfully!')
     }

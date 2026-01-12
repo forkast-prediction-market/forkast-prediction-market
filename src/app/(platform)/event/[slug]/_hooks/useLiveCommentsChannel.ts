@@ -43,13 +43,14 @@ function buildLiveComment(payload: LiveCommentPayload, user: User | null): Comme
   const userAddress = payload.userAddress ?? profile.baseAddress ?? ''
   const createdAt = payload.createdAt ?? new Date().toISOString()
   const username = profile.name || profile.pseudonym || 'Anonymous'
+  const profileImage = profile.profileImage ?? `https://avatar.vercel.sh/${payload.id}.png`
 
   return {
     id: String(payload.id),
     content: payload.body ?? '',
     user_id: userAddress,
     username,
-    user_avatar: profile.profileImage ?? '',
+    user_avatar: profileImage,
     user_address: userAddress,
     user_proxy_wallet_address: profile.proxyWallet ?? null,
     likes_count: Number(payload.reactionCount ?? 0),

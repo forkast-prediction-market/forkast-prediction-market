@@ -30,7 +30,7 @@ export default function MarketChannelStatusIndicator({ className }: MarketChanne
           </span>
         </TooltipTrigger>
         <TooltipContent collisionPadding={8}>
-          {`Real time data status: ${wsStatus}`}
+          {`Live data status: ${wsStatus}`}
         </TooltipContent>
       </Tooltip>
     </div>
