@@ -150,7 +150,7 @@ export default function ProfileActivityTooltipCard({
                   <div className="text-sm font-semibold text-foreground tabular-nums">
                     {positionsValue}
                   </div>
-                  <div className="text-2xs font-medium text-muted-foreground">
+                  <div className="text-xs font-medium text-muted-foreground">
                     Positions
                   </div>
                 </div>
@@ -158,7 +158,7 @@ export default function ProfileActivityTooltipCard({
                   <div className={cn('text-sm font-semibold tabular-nums', profitLossClassName)}>
                     {profitLossValue}
                   </div>
-                  <div className="text-2xs font-medium text-muted-foreground">
+                  <div className="text-xs font-medium text-muted-foreground">
                     Profit/loss
                   </div>
                 </div>
@@ -166,7 +166,7 @@ export default function ProfileActivityTooltipCard({
                   <div className="text-sm font-semibold text-foreground tabular-nums">
                     {volumeValue}
                   </div>
-                  <div className="text-2xs font-medium text-muted-foreground">
+                  <div className="text-xs font-medium text-muted-foreground">
                     Volume
                   </div>
                 </div>
