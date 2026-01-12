@@ -283,7 +283,7 @@ export default function EventOrderBook({
         <div
           className={
             `
-              sticky top-9 bottom-0 z-1 grid h-9 cursor-pointer grid-cols-[40%_20%_20%_20%] items-center border-y
+              sticky top-9 bottom-0 z-10 grid h-9 cursor-pointer grid-cols-[40%_20%_20%_20%] items-center border-y
               bg-background px-2 text-xs font-medium text-muted-foreground transition-colors
               hover:bg-muted/60
               sm:px-3
