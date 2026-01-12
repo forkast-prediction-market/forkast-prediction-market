@@ -1,23 +1,60 @@
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
 
 interface EventTabSelectorProps {
   activeTab: string
   setActiveTab: (activeTab: string) => void
   commentsCount: number | null
+  liveCommentsStatus: 'connecting' | 'live' | 'offline'
 }
 
-export default function EventTabSelector({ activeTab, setActiveTab, commentsCount }: EventTabSelectorProps) {
+export default function EventTabSelector({
+  activeTab,
+  setActiveTab,
+  commentsCount,
+  liveCommentsStatus,
+}: EventTabSelectorProps) {
   const formattedCommentsCount = useMemo(
     () => (commentsCount == null ? null : Number(commentsCount).toLocaleString('en-US')),
     [commentsCount],
   )
+  const commentsLabel = useMemo(() => (
+    formattedCommentsCount == null ? 'Comments' : `Comments (${formattedCommentsCount})`
+  ), [formattedCommentsCount])
 
   const eventTabs = useMemo(() => ([
-    { key: 'comments', label: formattedCommentsCount == null ? 'Comments' : `Comments (${formattedCommentsCount})` },
+    {
+      key: 'comments',
+      label: (
+        <span className="inline-flex items-center gap-2">
+          <span>{commentsLabel}</span>
+          <Tooltip>
+            <TooltipTrigger className="inline-flex">
+              <span className="relative flex size-2">
+                {liveCommentsStatus === 'live' && (
+                  <span className="absolute inline-flex size-2 animate-ping rounded-full bg-yes opacity-75" />
+                )}
+                <span
+                  className={cn(
+                    'relative inline-flex size-2 rounded-full',
+                    liveCommentsStatus === 'live' && 'bg-yes',
+                    liveCommentsStatus === 'connecting' && 'bg-amber-500',
+                    liveCommentsStatus === 'offline' && 'bg-muted-foreground/40',
+                  )}
+                />
+              </span>
+            </TooltipTrigger>
+            <TooltipContent collisionPadding={8}>
+              {`Live comments status: ${liveCommentsStatus}`}
+            </TooltipContent>
+          </Tooltip>
+        </span>
+      ),
+    },
     { key: 'holders', label: 'Top Holders' },
     { key: 'activity', label: 'Activity' },
-  ]), [formattedCommentsCount])
+  ]), [commentsLabel, liveCommentsStatus])
   const tabRefs = useRef<(HTMLLIElement | null)[]>([])
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })
   const [isInitialized, setIsInitialized] = useState(false)

@@ -5,6 +5,7 @@ import EventComments from '@/app/(platform)/event/[slug]/_components/EventCommen
 import EventTabSelector from '@/app/(platform)/event/[slug]/_components/EventTabSelector'
 import EventTopHolders from '@/app/(platform)/event/[slug]/_components/EventTopHolders'
 import { useCommentMetrics } from '@/app/(platform)/event/[slug]/_hooks/useCommentMetrics'
+import { useLiveCommentsChannel } from '@/app/(platform)/event/[slug]/_hooks/useLiveCommentsChannel'
 
 interface EventTabsProps {
   event: Event
@@ -14,6 +15,11 @@ interface EventTabsProps {
 export default function EventTabs({ event, user }: EventTabsProps) {
   const [activeTab, setActiveTab] = useState('comments')
   const { data: commentMetrics } = useCommentMetrics(event.slug)
+  const { status: liveCommentsStatus } = useLiveCommentsChannel({
+    eventSlug: event.slug,
+    user,
+    enabled: activeTab === 'comments',
+  })
   const commentsCount = useMemo(() => {
     if (commentMetrics?.comments_count != null) {
       return commentMetrics.comments_count
@@ -27,6 +33,7 @@ export default function EventTabs({ event, user }: EventTabsProps) {
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         commentsCount={commentsCount}
+        liveCommentsStatus={liveCommentsStatus}
       />
       {activeTab === 'comments' && <EventComments event={event} user={user} />}
       {activeTab === 'holders' && <EventTopHolders event={event} />}
