@@ -276,98 +276,14 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
 
       return await response.json() as { likes_count: number, user_has_liked: boolean }
     },
-    onMutate: async ({ commentId }) => {
+    onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: commentsQueryKey })
-
-      const previousComments = queryClient.getQueryData(commentsQueryKey)
-
-      queryClient.setQueryData(commentsQueryKey, (oldData: any) => {
-        if (!oldData) {
-          return oldData
-        }
-
-        const newPages = oldData.pages.map((page: Comment[]) =>
-          page.map((comment: Comment) => {
-            if (comment.id === commentId) {
-              return {
-                ...comment,
-                user_has_liked: !comment.user_has_liked,
-                likes_count: comment.user_has_liked
-                  ? comment.likes_count - 1
-                  : comment.likes_count + 1,
-              }
-            }
-
-            if (comment.recent_replies) {
-              return {
-                ...comment,
-                recent_replies: comment.recent_replies.map((reply) => {
-                  if (reply.id === commentId) {
-                    return {
-                      ...reply,
-                      user_has_liked: !reply.user_has_liked,
-                      likes_count: reply.user_has_liked
-                        ? reply.likes_count - 1
-                        : reply.likes_count + 1,
-                    }
-                  }
-                  return reply
-                }),
-              }
-            }
-            return comment
-          }),
-        )
-
-        return { ...oldData, pages: newPages }
-      })
-
-      return { previousComments }
     },
-    onError: (_err, _variables, context) => {
-      if (context?.previousComments) {
-        queryClient.setQueryData(commentsQueryKey, context.previousComments)
-      }
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: commentsQueryKey })
     },
-    onSuccess: (data, variables) => {
-      if (data) {
-        queryClient.setQueryData(commentsQueryKey, (oldData: any) => {
-          if (!oldData) {
-            return oldData
-          }
-
-          const newPages = oldData.pages.map((page: Comment[]) =>
-            page.map((comment: Comment) => {
-              if (comment.id === variables.commentId) {
-                return {
-                  ...comment,
-                  user_has_liked: data.user_has_liked,
-                  likes_count: data.likes_count,
-                }
-              }
-
-              if (comment.recent_replies) {
-                return {
-                  ...comment,
-                  recent_replies: comment.recent_replies.map((reply) => {
-                    if (reply.id === variables.commentId) {
-                      return {
-                        ...reply,
-                        user_has_liked: data.user_has_liked,
-                        likes_count: data.likes_count,
-                      }
-                    }
-                    return reply
-                  }),
-                }
-              }
-              return comment
-            }),
-          )
-
-          return { ...oldData, pages: newPages }
-        })
-      }
+    onError: () => {
+      queryClient.invalidateQueries({ queryKey: commentsQueryKey })
     },
   })
 
