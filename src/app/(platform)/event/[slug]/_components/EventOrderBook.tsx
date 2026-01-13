@@ -303,13 +303,14 @@ export default function EventOrderBook({
           )}
         >
           <div className="flex h-full items-center gap-2">
-            <span>{`Trade ${outcomeLabel}`}</span>
+            <span className="inline-flex -translate-y-[1px]">{`Trade ${outcomeLabel}`}</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
                   className={`
-                    inline-flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors
+                    inline-flex size-6 -translate-y-[1.5px] items-center justify-center rounded-sm text-muted-foreground
+                    transition-colors
                     hover:bg-muted/70 hover:text-foreground
                   `}
                   onClick={() => recenterOrderBook()}
@@ -329,13 +330,13 @@ export default function EventOrderBook({
             </Tooltip>
           </div>
           <div className="flex h-full items-center justify-center">
-            Price
+            <span className="inline-flex -translate-y-[1px]">Price</span>
           </div>
           <div className="flex h-full items-center justify-center">
-            Shares
+            <span className="inline-flex -translate-y-[1px]">Shares</span>
           </div>
           <div className="flex h-full items-center justify-center">
-            Total
+            <span className="inline-flex -translate-y-[1px]">Total</span>
           </div>
         </div>
 

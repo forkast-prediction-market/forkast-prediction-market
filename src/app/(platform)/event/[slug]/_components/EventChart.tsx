@@ -489,7 +489,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
             data={chartData}
             series={legendSeries}
             width={chartWidth}
-            height={280}
+            height={332}
             margin={{ top: 30, right: 40, bottom: 52, left: 0 }}
             dataSignature={chartSignature}
             onCursorDataChange={setCursorSnapshot}

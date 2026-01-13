@@ -114,9 +114,11 @@ export function PredictionChart({
     showTooltip,
     hideTooltip,
   } = useTooltip<DataPoint>()
+  const plotHeight = Math.max(1, height - margin.top - margin.bottom)
+  const yAxisMinTicks = Math.max(4, Math.min(7, Math.round(plotHeight / 40)))
   const { min: yAxisMin, max: yAxisMax, ticks: yAxisTicks } = useMemo(
-    () => calculateYAxisBounds(data, series),
-    [data, series],
+    () => calculateYAxisBounds(data, series, yAxisMinTicks),
+    [data, series, yAxisMinTicks],
   )
   const domainBounds = useMemo(() => {
     if (!data.length) {
@@ -699,6 +701,8 @@ export function PredictionChart({
   const midlineOpacity = isDarkMode
     ? MIDLINE_OPACITY_DARK
     : MIDLINE_OPACITY_LIGHT
+  const axisLabelColor = gridLineColor
+  const axisLabelOpacity = Math.min(1, gridLineOpacity + 0.25)
   const leadingGapStartMs = leadingGapStart instanceof Date ? leadingGapStart.getTime() : Number.NaN
   const clipPadding = 2
 
@@ -836,8 +840,7 @@ export function PredictionChart({
                             x={d => xScale(getDate(d))}
                             y={d => yScale((d[seriesItem.key] as number) || 0)}
                             stroke={futureLineColor}
-                            strokeWidth={2.4}
-                            strokeDasharray="1 1"
+                            strokeWidth={2.2}
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeOpacity={futureLineOpacity}
@@ -850,9 +853,8 @@ export function PredictionChart({
                             x={d => xScale(getDate(d))}
                             y={d => yScale((d[seriesItem.key] as number) || 0)}
                             stroke={seriesColor}
-                            strokeWidth={2.4}
+                            strokeWidth={2.2}
                             strokeOpacity={1}
-                            strokeDasharray="1 1"
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             curve={curveCatmullRom}
@@ -869,8 +871,7 @@ export function PredictionChart({
                               x={d => xScale(getDate(d))}
                               y={d => yScale((d[seriesItem.key] as number) || 0)}
                               stroke={futureLineColor}
-                              strokeWidth={2.4}
-                              strokeDasharray="1 1"
+                              strokeWidth={2.2}
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               strokeOpacity={futureLineOpacity}
@@ -885,9 +886,8 @@ export function PredictionChart({
                               x={d => xScale(getDate(d))}
                               y={d => yScale((d[seriesItem.key] as number) || 0)}
                               stroke={seriesColor}
-                              strokeWidth={2.4}
+                              strokeWidth={2.2}
                               strokeOpacity={1}
-                              strokeDasharray="1 1"
                               strokeLinecap="round"
                               strokeLinejoin="round"
                               curve={curveCatmullRom}
@@ -939,12 +939,13 @@ export function PredictionChart({
               stroke="transparent"
               tickStroke="transparent"
               tickLabelProps={{
-                fill: 'var(--muted-foreground)',
+                fill: axisLabelColor,
                 fontSize: 11,
                 fontFamily: 'Arial, sans-serif',
                 textAnchor: 'start',
                 dy: '0.33em',
                 dx: '0.5em',
+                opacity: axisLabelOpacity,
               }}
               tickLength={0}
             />
@@ -964,11 +965,12 @@ export function PredictionChart({
                     : 'middle'
 
                 return {
-                  fill: 'var(--muted-foreground)',
+                  fill: axisLabelColor,
                   fontSize: 11,
                   fontFamily: 'Arial, sans-serif',
                   textAnchor,
                   dy: '0.6em',
+                  opacity: axisLabelOpacity,
                 }
               }}
               numTicks={xAxisTickCount}
@@ -1016,6 +1018,7 @@ export function PredictionChart({
                   pointerEvents="none"
                 />
               ))}
+
           </Group>
         </svg>
 

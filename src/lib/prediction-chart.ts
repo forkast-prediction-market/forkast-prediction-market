@@ -209,14 +209,30 @@ export function calculateYAxisBounds(
   }
 
   const rawSpan = Math.max(5, dataMax - dataMin)
-  const rawStep = rawSpan / Math.max(1, minTicks - 1)
-  const step = Math.min(
-    50,
-    Math.max(5, Math.ceil(rawStep / 5) * 5),
-  )
+  const intervalCount = Math.max(1, minTicks - 1)
+  let step = 5
+  let axisMin = 0
+  let axisMax = 100
 
-  let axisMin = Math.max(0, Math.floor(dataMin / step) * step)
-  let axisMax = Math.min(100, Math.ceil(dataMax / step) * step)
+  if (rawSpan <= 30) {
+    step = Math.max(1, Math.ceil(rawSpan / intervalCount))
+    axisMax = Math.min(100, Math.ceil(dataMax))
+    axisMin = axisMax - step * intervalCount
+
+    if (axisMin < 0) {
+      axisMin = 0
+      axisMax = Math.min(100, axisMin + step * intervalCount)
+    }
+  }
+  else {
+    const rawStep = rawSpan / intervalCount
+    step = Math.min(
+      50,
+      Math.max(5, Math.ceil(rawStep / 5) * 5),
+    )
+    axisMin = Math.max(0, Math.floor(dataMin / step) * step)
+    axisMax = Math.min(100, Math.ceil(dataMax / step) * step)
+  }
 
   function tickCount() {
     return Math.floor((axisMax - axisMin) / step) + 1

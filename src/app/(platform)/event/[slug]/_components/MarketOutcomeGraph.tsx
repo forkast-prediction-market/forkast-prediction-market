@@ -137,7 +137,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
               data={chartData}
               series={series}
               width={chartWidth}
-              height={260}
+              height={318}
               margin={{ top: 20, right: 40, bottom: 48, left: 0 }}
               dataSignature={chartSignature}
               onCursorDataChange={setCursorSnapshot}
