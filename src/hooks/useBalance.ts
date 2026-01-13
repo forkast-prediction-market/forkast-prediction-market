@@ -65,7 +65,9 @@ export function useBalance(options: UseBalanceOptions = {}) {
     ? normalizeAddress(user.proxy_wallet_address) as Address | null
     : null
 
-  const isQueryEnabled = Boolean(isConnected && proxyWalletAddress && (options.enabled ?? true))
+  const isOptionsEnabled = options.enabled ?? true
+  const isAwaitingConnection = Boolean(user && isOptionsEnabled && !isConnected)
+  const isQueryEnabled = Boolean(isConnected && proxyWalletAddress && isOptionsEnabled)
 
   const {
     data,
@@ -101,7 +103,14 @@ export function useBalance(options: UseBalanceOptions = {}) {
   })
 
   const balance = isQueryEnabled && data ? data : INITIAL_STATE
-  const isLoadingBalance = isQueryEnabled ? (isLoading || (!data && isFetching)) : false
+  const isWaitingForProxy = Boolean(isConnected && isOptionsEnabled && !proxyWalletAddress)
+  const isLoadingBalance = isAwaitingConnection || isWaitingForProxy || (isQueryEnabled ? (isLoading || (!data && isFetching)) : false)
+  const isBalanceReady = isQueryEnabled ? Boolean(data) : (!isAwaitingConnection && !isWaitingForProxy)
 
-  return { balance, isLoadingBalance, refetchBalance: refetch }
+  return {
+    balance,
+    isLoadingBalance,
+    isBalanceReady,
+    refetchBalance: refetch,
+  }
 }

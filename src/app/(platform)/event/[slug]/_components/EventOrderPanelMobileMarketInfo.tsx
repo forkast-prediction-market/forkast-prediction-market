@@ -1,11 +1,13 @@
 import type { Event, Market } from '@/types'
 import Image from 'next/image'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface EventOrderPanelMobileMarketInfoProps {
   event: Event
   market: Market | null
   isSingleMarket: boolean
   balanceText: string
+  isBalanceLoading?: boolean
 }
 
 export default function EventOrderPanelMobileMarketInfo({
@@ -13,6 +15,7 @@ export default function EventOrderPanelMobileMarketInfo({
   market,
   isSingleMarket,
   balanceText,
+  isBalanceLoading = false,
 }: EventOrderPanelMobileMarketInfoProps) {
   if (!market) {
     return <></>
@@ -33,9 +36,16 @@ export default function EventOrderPanelMobileMarketInfo({
         </div>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           {!isSingleMarket && <span>{market.short_title || market.title}</span>}
-          <span>
-            Bal. $
-            {balanceText}
+          <span className="flex items-center gap-1">
+            <span>Bal.</span>
+            {isBalanceLoading
+              ? <Skeleton className="inline-block h-3 w-10 align-middle" />
+              : (
+                  <>
+                    $
+                    {balanceText}
+                  </>
+                )}
           </span>
         </div>
       </div>

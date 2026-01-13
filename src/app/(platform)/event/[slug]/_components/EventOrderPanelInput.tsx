@@ -1,5 +1,6 @@
 import type { RefObject } from 'react'
 import type { OrderSide } from '@/types'
+import { Skeleton } from '@/components/ui/skeleton'
 import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { ORDER_SIDE } from '@/lib/constants'
 import { formatAmountInputValue } from '@/lib/formatters'
@@ -18,6 +19,7 @@ interface EventOrderPanelInputProps {
   amountNumber: number
   availableShares: number
   balance: BalanceSummary
+  isBalanceLoading?: boolean
   inputRef: RefObject<HTMLInputElement | null>
   onAmountChange: (value: string) => void
   shouldShake?: boolean
@@ -37,6 +39,7 @@ export default function EventOrderPanelInput({
   amountNumber,
   availableShares,
   balance,
+  isBalanceLoading = false,
   inputRef,
   onAmountChange,
   shouldShake,
@@ -207,7 +210,13 @@ export default function EventOrderPanelInput({
                   {side === ORDER_SIDE.SELL ? 'Shares' : 'Amount'}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {side === ORDER_SIDE.SELL ? '' : `Balance $${formattedBalanceText}`}
+                  {side === ORDER_SIDE.SELL
+                    ? ''
+                    : (
+                        isBalanceLoading
+                          ? <Skeleton className="inline-block h-3 w-16 align-middle" />
+                          : `Balance $${formattedBalanceText}`
+                      )}
                 </div>
               </div>
               <div className="relative flex-1">

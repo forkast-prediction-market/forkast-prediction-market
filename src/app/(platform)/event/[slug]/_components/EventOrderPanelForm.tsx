@@ -67,7 +67,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const [shouldShakeLimitShares, setShouldShakeLimitShares] = useState(false)
   const limitSharesInputRef = useRef<HTMLInputElement | null>(null)
   const limitSharesNumber = Number.parseFloat(state.limitShares) || 0
-  const { balance } = useBalance()
+  const { balance, isLoadingBalance } = useBalance()
   const outcomeTokenId = state.outcome?.token_id ? String(state.outcome.token_id) : null
   const orderBookSummaryQuery = useOrderBookSummaries(
     outcomeTokenId ? [outcomeTokenId] : [],
@@ -686,6 +686,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
           market={state.market}
           isSingleMarket={isSingleMarket}
           balanceText={formattedBalanceText}
+          isBalanceLoading={isLoadingBalance}
         />
       )}
 
@@ -780,6 +781,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 amountNumber={amountNumber}
                 availableShares={selectedShares}
                 balance={balance}
+                isBalanceLoading={isLoadingBalance}
                 inputRef={state.inputRef}
                 onAmountChange={state.setAmount}
                 shouldShake={shouldShakeInput}
