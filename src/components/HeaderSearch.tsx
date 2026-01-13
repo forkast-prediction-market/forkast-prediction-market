@@ -1,16 +1,20 @@
 'use client'
 
-import { SearchIcon } from 'lucide-react'
+import { SearchIcon, XIcon } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { SearchResults } from '@/components/SearchResults'
 import { Input } from '@/components/ui/input'
-import { Kbd } from '@/components/ui/kbd'
 import { useSearch } from '@/hooks/useSearch'
 
 export default function HeaderSearch() {
   const searchRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const { query, handleQueryChange, results, isLoading, showResults, clearSearch, hideResults, activeTab, setActiveTab } = useSearch()
+  const showDropdown = showResults || isLoading.events || isLoading.profiles
+  const inputBaseClass = showDropdown ? 'bg-background' : 'bg-input'
+  const inputBorderClass = showDropdown ? 'border-border' : 'border-transparent'
+  const inputHoverClass = showDropdown ? 'hover:bg-background' : 'hover:bg-[color:var(--input-hover)]'
+  const inputFocusClass = 'focus:bg-background focus-visible:bg-background'
   const sitename = `${process.env.NEXT_PUBLIC_SITE_NAME || 'events and profiles'}`.toLowerCase()
 
   useEffect(() => {
@@ -67,12 +71,42 @@ export default function HeaderSearch() {
         value={query}
         onChange={e => handleQueryChange(e.target.value)}
         className={`
-          w-full border-transparent bg-input pr-12 pl-9 shadow-none transition-colors
-          hover:bg-[color:var(--input-hover)]
-          focus-visible:border-border focus-visible:bg-background focus-visible:ring-0 focus-visible:ring-offset-0
+          h-10 w-full pr-12 pl-9 shadow-none transition-colors
+          ${inputBorderClass}
+          ${inputBaseClass}
+          ${showDropdown ? 'rounded-b-none' : ''}
+          ${inputHoverClass}
+          focus-visible:border-border ${inputFocusClass} focus-visible:ring-0 focus-visible:ring-offset-0
         `}
       />
-      <Kbd className="absolute top-1/2 right-3 hidden -translate-y-1/2 sm:inline-flex">/</Kbd>
+      {query.length > 0
+        ? (
+            <button
+              type="button"
+              className={`
+                absolute top-1/2 right-2 hidden -translate-y-1/2 items-center justify-center rounded-sm p-1
+                text-muted-foreground transition-colors
+                hover:text-foreground
+                sm:inline-flex
+              `}
+              onClick={() => {
+                clearSearch()
+                inputRef.current?.focus()
+              }}
+              aria-label="Clear search"
+            >
+              <XIcon className="size-4" />
+            </button>
+          )
+        : (
+            <span className={`
+              absolute top-1/2 right-3 hidden -translate-y-1/2 font-mono text-xs text-muted-foreground
+              sm:inline-flex
+            `}
+            >
+              /
+            </span>
+          )}
       {(showResults || isLoading.events || isLoading.profiles) && (
         <SearchResults
           results={results}

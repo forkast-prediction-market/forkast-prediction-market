@@ -28,7 +28,11 @@ export function SearchResults({
 
   if ((isLoading.events && isLoading.profiles) && events.length === 0 && profiles.length === 0) {
     return (
-      <div className="absolute top-full right-0 left-0 z-50 mt-1 w-full rounded-lg border bg-background shadow-lg">
+      <div className={`
+        absolute top-full right-0 left-0 z-50 mt-0 w-full rounded-lg rounded-t-none border border-t-0 bg-background
+        shadow-lg
+      `}
+      >
         {showTabs && (
           <SearchTabs
             activeTab={activeTab}
@@ -53,7 +57,9 @@ export function SearchResults({
   return (
     <div
       data-testid="search-results"
-      className="absolute top-full right-0 left-0 z-50 mt-1 rounded-lg border bg-background shadow-lg"
+      className={`
+        absolute top-full right-0 left-0 z-50 mt-0 rounded-lg rounded-t-none border border-t-0 bg-background shadow-lg
+      `}
     >
       {showTabs && (
         <SearchTabs
@@ -124,12 +130,7 @@ function EventResults({ events, query, isLoading, onResultClick }: EventResultsP
           href={`/event/${result.slug}`}
           onClick={onResultClick}
           data-testid="search-result-item"
-          className={`
-            flex items-center justify-between p-3 transition-colors
-            first:rounded-t-lg
-            last:rounded-b-lg
-            hover:bg-accent
-          `}
+          className="flex items-center justify-between p-3 transition-colors last:rounded-b-lg hover:bg-accent"
         >
           <div className="flex min-w-0 flex-1 items-center gap-3">
             <div className="size-8 shrink-0 overflow-hidden rounded">
@@ -196,7 +197,7 @@ function ProfileResults({ profiles, isLoading, query, onResultClick }: ProfileRe
         <div
           key={profile.proxy_wallet_address}
           onClick={onResultClick}
-          className="cursor-pointer px-3 transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-accent"
+          className="cursor-pointer px-3 transition-colors last:rounded-b-lg hover:bg-accent"
         >
           <ProfileLink
             user={{
