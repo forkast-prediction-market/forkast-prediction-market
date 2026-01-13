@@ -223,19 +223,21 @@ export default function EventOrderPanelInput({
                 <div className="text-xs text-muted-foreground">
                   {side === ORDER_SIDE.SELL
                     ? null
-                    : (
-                        <button
-                          type="button"
-                          className={`
-                            cursor-pointer bg-transparent p-0 text-left transition-colors
-                            hover:text-foreground
-                          `}
-                          onClick={handleBalanceClick}
-                        >
-                          Balance $
-                          {formattedBalanceText}
-                        </button>
-                      )}
+                    : isBalanceLoading
+                      ? <Skeleton className="inline-block h-3 w-16 align-middle" />
+                      : (
+                          <button
+                            type="button"
+                            className={`
+                              cursor-pointer bg-transparent p-0 text-left transition-colors
+                              hover:text-foreground
+                            `}
+                            onClick={handleBalanceClick}
+                          >
+                            Balance $
+                            {formattedBalanceText}
+                          </button>
+                        )}
                 </div>
               </div>
               <div className="relative flex-1">
