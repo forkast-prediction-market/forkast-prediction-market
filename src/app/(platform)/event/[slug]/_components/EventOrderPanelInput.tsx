@@ -93,6 +93,17 @@ export default function EventOrderPanelInput({
     onAmountChange(formatAmountInputValue(nextValue))
   }
 
+  function handleBalanceClick() {
+    if (side === ORDER_SIDE.SELL) {
+      return
+    }
+
+    const maxBalance = Number.isFinite(balance.raw) ? balance.raw : 0
+    const limitedBalance = Math.min(maxBalance, MAX_AMOUNT_INPUT)
+    onAmountChange(formatAmountInputValue(limitedBalance, { roundingMode: 'floor' }))
+    focusInput()
+  }
+
   function renderActionButtons() {
     if (side === ORDER_SIDE.SELL) {
       const isDisabled = availableShares <= 0
@@ -207,7 +218,21 @@ export default function EventOrderPanelInput({
                   {side === ORDER_SIDE.SELL ? 'Shares' : 'Amount'}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  {side === ORDER_SIDE.SELL ? '' : `Balance $${formattedBalanceText}`}
+                  {side === ORDER_SIDE.SELL
+                    ? null
+                    : (
+                        <button
+                          type="button"
+                          className={`
+                            cursor-pointer bg-transparent p-0 text-left transition-colors
+                            hover:text-foreground
+                          `}
+                          onClick={handleBalanceClick}
+                        >
+                          Balance $
+                          {formattedBalanceText}
+                        </button>
+                      )}
                 </div>
               </div>
               <div className="relative flex-1">

@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { useBalance } from '@/hooks/useBalance'
 import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { ORDER_SIDE } from '@/lib/constants'
 import { formatAmountInputValue, formatCurrency } from '@/lib/formatters'
@@ -78,6 +79,7 @@ export default function EventOrderPanelLimitControls({
   onLimitExpirationTimestampChange,
   onAmountUpdateFromLimit,
 }: EventOrderPanelLimitControlsProps) {
+  const { balance } = useBalance()
   const limitPriceNumber = useMemo(
     () => Number.parseFloat(limitPrice) || 0,
     [limitPrice],
@@ -113,6 +115,9 @@ export default function EventOrderPanelLimitControls({
   const totalValueLabel = formatCurrency(totalValue)
   const potentialWinLabel = formatCurrency(potentialWin)
   const showMinimumSharesWarning = showLimitMinimumWarning && isLimitOrder && limitSharesNumber < MIN_LIMIT_ORDER_SHARES
+  const formattedBalanceText = Number.isFinite(balance?.raw)
+    ? (balance?.raw ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : '0.00'
   const [isExpirationModalOpen, setIsExpirationModalOpen] = useState(false)
   const [draftExpiration, setDraftExpiration] = useState<Date>(() => {
     const now = new Date()
@@ -219,9 +224,17 @@ export default function EventOrderPanelLimitControls({
   return (
     <div className="mt-4 space-y-5">
       <div className="flex items-center justify-between gap-3">
-        <span className="text-lg font-medium text-foreground">
-          Limit Price
-        </span>
+        <div className="flex flex-col">
+          <span className="text-lg font-medium text-foreground">
+            Limit Price
+          </span>
+          {isLimitOrder && side === ORDER_SIDE.BUY && (
+            <span className="text-xs text-muted-foreground">
+              Balance $
+              {formattedBalanceText}
+            </span>
+          )}
+        </div>
 
         <NumberInput
           value={limitPriceNumber}
