@@ -171,7 +171,7 @@ export default function EventOrderPanelBuySellTabs({
                 <ChevronDownIcon
                   className={cn(
                     `
-                      size-4 text-muted-foreground transition-transform
+                      size-4 text-muted-foreground transition-all
                       group-hover:rotate-180
                       group-data-[state=open]:rotate-180
                     `,
