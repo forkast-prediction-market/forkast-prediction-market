@@ -42,7 +42,7 @@ function clearAppKitLocalStorage() {
     })
   }
   catch {
-    // Ignore storage access errors (e.g. private mode, disabled storage).
+    //
   }
 }
 
