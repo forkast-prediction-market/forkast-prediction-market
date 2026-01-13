@@ -40,6 +40,7 @@ const StoreOrderSchema = z.object({
 type StoreOrderInput = z.infer<typeof StoreOrderSchema>
 
 const DEFAULT_ERROR_MESSAGE = 'Something went wrong while processing your order. Please try again.'
+const CLOB_REQUEST_TIMEOUT_MS = 20_000
 const RPC_TRANSPORT = http(defaultNetwork.rpcUrls.default.http[0])
 
 let conditionalTokensClient: ReturnType<typeof createPublicClient> | null = null
@@ -174,20 +175,22 @@ export async function storeOrderAction(payload: StoreOrderInput) {
         'KUEST_SIGNATURE': signature,
       },
       body,
-      signal: AbortSignal.timeout(5_000),
+      signal: AbortSignal.timeout(CLOB_REQUEST_TIMEOUT_MS),
     })
 
     const clobStoreOrderResponseJson = await clobStoreOrderResponse.json()
 
-    if (clobStoreOrderResponse.status !== 201) {
-      if (clobStoreOrderResponse.status === 200) {
-        return { error: clobStoreOrderResponseJson.errorMsg }
-      }
-
+    if (!clobStoreOrderResponse.ok) {
       const message = `Status ${clobStoreOrderResponse.status} (${clobStoreOrderResponse.statusText})`
       console.error('Failed to send order to CLOB.', message)
       return { error: DEFAULT_ERROR_MESSAGE }
     }
+
+    if (clobStoreOrderResponseJson?.success === false) {
+      return { error: clobStoreOrderResponseJson.errorMsg || DEFAULT_ERROR_MESSAGE }
+    }
+
+    const clobOrderId = clobStoreOrderResponseJson.orderID ?? clobStoreOrderResponseJson.orderId
 
     void OrderRepository.createOrder({
       ...validated.data,
@@ -200,7 +203,7 @@ export async function storeOrderAction(payload: StoreOrderInput) {
       user_id: user.id,
       affiliate_user_id: user.referred_by_user_id,
       type: clobOrderType,
-      clob_order_id: clobStoreOrderResponseJson.orderId,
+      clob_order_id: clobOrderId,
     })
 
     updateTag(cacheTags.activity(validated.data.slug))
