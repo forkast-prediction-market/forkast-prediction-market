@@ -28,7 +28,6 @@ export default function EventCommentDeleteForm({
       return
     }
     onDelete()
-    onOpenChange(false)
   }
 
   return (

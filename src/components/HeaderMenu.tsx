@@ -57,11 +57,11 @@ export default function HeaderMenu() {
   if (showSkeleton) {
     return (
       <div className="flex gap-1 sm:gap-2 lg:gap-4">
-        <Skeleton className="hidden h-10 w-18 lg:block" />
-        <Skeleton className="hidden h-10 w-18 lg:block" />
-        <Skeleton className="hidden h-10 w-20 lg:block" />
-        <Skeleton className="h-10 w-10" />
-        <Skeleton className="h-10 w-18" />
+        <Skeleton className="hidden h-9 w-18 lg:block" />
+        <Skeleton className="hidden h-9 w-18 lg:block" />
+        <Skeleton className="hidden h-9 w-20 lg:block" />
+        <Skeleton className="h-9 w-9" />
+        <Skeleton className="h-9 w-18" />
       </div>
     )
   }

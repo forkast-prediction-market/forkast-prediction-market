@@ -17,22 +17,19 @@ WITH desired(name, slug, display_order) AS (
     ('Climate & Science', 'climate-science', 11),
     ('Elections', 'elections', 12),
     ('Mentions', 'mentions', 13)
+),
+upserted AS (
+  INSERT INTO tags (name, slug, is_main_category, display_order, is_hidden, hide_events)
+  SELECT name, slug, TRUE, display_order, FALSE, FALSE
+  FROM desired
+  ON CONFLICT (slug) DO UPDATE
+  SET
+    name = EXCLUDED.name,
+    display_order = EXCLUDED.display_order,
+    is_main_category = TRUE
+  RETURNING slug
 )
-INSERT INTO tags (name, slug, is_main_category, display_order, is_hidden, hide_events)
-SELECT name, slug, TRUE, display_order, FALSE, FALSE
-FROM desired
-ON CONFLICT (slug) DO UPDATE
-SET
-  name = EXCLUDED.name,
-  display_order = EXCLUDED.display_order,
-  is_main_category = TRUE,
-  is_hidden = FALSE,
-  hide_events = FALSE;
-
 UPDATE tags
 SET is_main_category = FALSE
 WHERE is_main_category = TRUE
-  AND slug NOT IN (
-    'politics', 'sports', 'crypto', 'finance', 'geopolitics', 'earnings', 'tech',
-    'culture', 'world', 'economy', 'climate-science', 'elections', 'mentions'
-  );
+  AND slug NOT IN (SELECT slug FROM desired);
