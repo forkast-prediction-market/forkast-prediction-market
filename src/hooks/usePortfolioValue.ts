@@ -28,7 +28,11 @@ export function usePortfolioValue(
     ? normalizeAddress(walletAddress)
     : (useDefaultUser ? userProxyWallet : null)
 
-  const { data, isLoading, isFetching } = useQuery({
+  const {
+    data,
+    isLoading,
+    isFetching,
+  } = useQuery({
     queryKey: ['portfolio-value', targetWallet],
     enabled: Boolean(targetWallet),
     staleTime: 10_000,
@@ -56,5 +60,10 @@ export function usePortfolioValue(
 
   const isInitialLoading = isLoading && !data
 
-  return { value, text, isLoading: isInitialLoading, isFetching }
+  return {
+    value,
+    text,
+    isLoading: isInitialLoading,
+    isFetching,
+  }
 }

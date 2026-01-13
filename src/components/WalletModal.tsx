@@ -18,17 +18,20 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
   DrawerHeader,
   DrawerTitle,
 } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 
 const MELD_PAYMENT_METHODS = [
   'apple_pay',
@@ -60,6 +63,7 @@ interface WalletDepositModalProps {
   onViewChange: (view: WalletDepositView) => void
   onBuy: (url: string) => void
   walletBalance?: string | null
+  isBalanceLoading?: boolean
 }
 
 interface WalletWithdrawModalProps {
@@ -77,6 +81,7 @@ interface WalletWithdrawModalProps {
   onUseConnectedWallet?: () => void
   availableBalance?: number | null
   onMax?: () => void
+  isBalanceLoading?: boolean
 }
 
 function WalletAddressCard({
@@ -165,6 +170,7 @@ function WalletSendForm({
   onUseConnectedWallet,
   availableBalance,
   onMax,
+  isBalanceLoading = false,
 }: {
   sendTo: string
   onChangeSendTo: ChangeEventHandler<HTMLInputElement>
@@ -177,6 +183,7 @@ function WalletSendForm({
   onUseConnectedWallet?: () => void
   availableBalance?: number | null
   onMax?: () => void
+  isBalanceLoading?: boolean
 }) {
   const trimmedRecipient = sendTo.trim()
   const isRecipientAddress = /^0x[a-fA-F0-9]{40}$/.test(trimmedRecipient)
@@ -190,6 +197,7 @@ function WalletSendForm({
   )
   const showConnectedWalletButton = !sendTo?.trim()
   const hasAvailableBalance = typeof availableBalance === 'number' && Number.isFinite(availableBalance)
+  const showBalanceLine = isBalanceLoading || hasAvailableBalance
 
   function formatBalanceLabel(value: number | null | undefined) {
     if (typeof value !== 'number' || !Number.isFinite(value)) {
@@ -214,8 +222,8 @@ function WalletSendForm({
         </button>
       )}
 
-      <form className="space-y-8" onSubmit={onSubmitSend}>
-        <div className="space-y-2">
+      <form className="grid gap-4" onSubmit={onSubmitSend}>
+        <div className="grid gap-2">
           <Label htmlFor="wallet-send-to">Recipient address</Label>
           <div className="relative">
             <Input
@@ -266,19 +274,21 @@ function WalletSendForm({
               size="sm"
               className="absolute inset-y-3 right-2 text-xs"
               onClick={onMax}
-              disabled={!onMax}
+              disabled={!onMax || isBalanceLoading}
             >
               Max
             </Button>
           </div>
-          {hasAvailableBalance && (
+          {showBalanceLine && (
             <div className="mr-2 ml-2 flex items-center justify-between text-xs text-muted-foreground">
               <span>USDC</span>
               <span>
                 Balance:
                 {' '}
                 $
-                {formatBalanceLabel(availableBalance)}
+                {isBalanceLoading
+                  ? <Skeleton className="inline-block h-3 w-12 align-middle" />
+                  : formatBalanceLabel(availableBalance)}
               </span>
             </div>
           )}
@@ -313,7 +323,7 @@ function WalletFundMenu({
   const transferLogos = TRANSFER_PAYMENT_METHODS.map(method => `/images/deposit/transfer/${method}_${logoVariant}.png`)
 
   return (
-    <div className="space-y-3">
+    <div className="grid gap-2">
       <button
         type="button"
         className={`
@@ -417,6 +427,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
     onViewChange,
     onBuy,
     walletBalance,
+    isBalanceLoading = false,
   } = props
 
   const [copied, setCopied] = useState(false)
@@ -424,6 +435,14 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
   const formattedBalance = walletBalance && walletBalance !== ''
     ? walletBalance
     : '0.00'
+  const balanceDisplay = isBalanceLoading
+    ? <Skeleton className="inline-block h-3 w-12 align-middle" />
+    : (
+        <>
+          $
+          {formattedBalance}
+        </>
+      )
   const content = view === 'fund'
     ? (
         <WalletFundMenu
@@ -471,14 +490,13 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
         <DrawerContent className="max-h-[90vh] w-full bg-background px-0">
           <DrawerHeader className="px-4 pt-4 pb-3">
             <DrawerTitle className="text-center text-2xl font-semibold text-foreground">Deposit</DrawerTitle>
-            <p className="text-center text-sm text-muted-foreground">
+            <DrawerDescription>
               {siteLabel}
               {' '}
               Balance:
               {' '}
-              $
-              {formattedBalance}
-            </p>
+              {balanceDisplay}
+            </DrawerDescription>
           </DrawerHeader>
           <div className="border-t" />
           <div className="w-full px-4 pb-4">
@@ -499,22 +517,19 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
         onOpenChange(next)
       }}
     >
-      <DialogContent className="w-full max-w-xl border bg-background p-6">
-        <DialogHeader className="pb-3">
+      <DialogContent className="w-full max-w-xl border bg-background">
+        <DialogHeader>
           <DialogTitle className="text-center text-2xl font-semibold text-foreground">Deposit</DialogTitle>
-          <p className="text-center text-sm text-muted-foreground">
+          <DialogDescription className="text-center">
             {siteLabel}
             {' '}
             Balance:
             {' '}
-            $
-            {formattedBalance}
-          </p>
+            {balanceDisplay}
+          </DialogDescription>
         </DialogHeader>
         <div className="border-t" />
-        <div className="space-y-4 pt-4">
-          {content}
-        </div>
+        {content}
       </DialogContent>
     </Dialog>
   )
@@ -536,7 +551,23 @@ export function WalletWithdrawModal(props: WalletWithdrawModalProps) {
     onUseConnectedWallet,
     availableBalance,
     onMax,
+    isBalanceLoading,
   } = props
+  const siteLabel = siteName ?? process.env.NEXT_PUBLIC_SITE_NAME!
+  const formattedBalance = typeof availableBalance === 'number' && Number.isFinite(availableBalance)
+    ? availableBalance.toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : '0.00'
+  const balanceDisplay = isBalanceLoading
+    ? <Skeleton className="inline-block h-3 w-12 align-middle" />
+    : (
+        <>
+          $
+          {formattedBalance}
+        </>
+      )
 
   const content = (
     <WalletSendForm
@@ -550,6 +581,7 @@ export function WalletWithdrawModal(props: WalletWithdrawModalProps) {
       onUseConnectedWallet={onUseConnectedWallet}
       availableBalance={availableBalance}
       onMax={onMax}
+      isBalanceLoading={isBalanceLoading}
     />
   )
 
@@ -563,10 +595,19 @@ export function WalletWithdrawModal(props: WalletWithdrawModalProps) {
               {' '}
               {siteName}
             </DrawerTitle>
+            <DrawerDescription>
+              {siteLabel}
+              {' '}
+              Balance:
+              {' '}
+              {balanceDisplay}
+            </DrawerDescription>
           </DrawerHeader>
           <div className="border-t" />
           <div className="w-full px-4 pb-4">
-            {content}
+            <div className="space-y-4 pt-4">
+              {content}
+            </div>
           </div>
         </DrawerContent>
       </Drawer>
@@ -575,16 +616,22 @@ export function WalletWithdrawModal(props: WalletWithdrawModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-xl border bg-background p-6">
-        <DialogHeader className="pb-3">
+      <DialogContent className="w-full max-w-xl border bg-background">
+        <DialogHeader>
           <DialogTitle className="text-center text-foreground">
             Withdraw from
             {' '}
             {siteName}
           </DialogTitle>
+          <DialogDescription className="text-center">
+            {siteLabel}
+            {' '}
+            Balance:
+            {' '}
+            {balanceDisplay}
+          </DialogDescription>
         </DialogHeader>
         <div className="border-t" />
-
         {content}
       </DialogContent>
     </Dialog>

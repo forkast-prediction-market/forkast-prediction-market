@@ -23,6 +23,29 @@ function isBrowser() {
   return typeof window !== 'undefined'
 }
 
+function clearAppKitLocalStorage() {
+  if (!isBrowser()) {
+    return
+  }
+
+  try {
+    const keysToRemove: string[] = []
+    for (let index = 0; index < window.localStorage.length; index += 1) {
+      const key = window.localStorage.key(index)
+      if (key?.startsWith('@appkit')) {
+        keysToRemove.push(key)
+      }
+    }
+
+    keysToRemove.forEach((key) => {
+      window.localStorage.removeItem(key)
+    })
+  }
+  catch {
+    //
+  }
+}
+
 function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
   if (hasInitializedAppKit || !isBrowser()) {
     return appKitInstance
@@ -129,6 +152,9 @@ function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
               })
             }
           }).catch(() => {})
+        },
+        onSignOut: () => {
+          clearAppKitLocalStorage()
         },
       }),
     })

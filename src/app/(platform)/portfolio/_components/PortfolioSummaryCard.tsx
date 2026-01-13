@@ -15,8 +15,8 @@ export default function PortfolioSummaryCard() {
   const isMounted = useClientMounted()
   const { status } = useAppKitAccount()
   const { value: positionsValue, isLoading, isFetching } = usePortfolioValue()
-  const isLoadingState = !isMounted || status === 'connecting' || (isLoading && !isFetching)
-  const { balance } = useBalance()
+  const { balance, isLoadingBalance } = useBalance()
+  const isLoadingState = !isMounted || status === 'connecting' || isLoadingBalance || (isLoading && !isFetching)
   const portfolioTotalValue = positionsValue + balance.raw
   const formattedValue = Number.isFinite(portfolioTotalValue)
     ? portfolioTotalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })

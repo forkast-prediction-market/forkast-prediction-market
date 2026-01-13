@@ -43,7 +43,7 @@ export function WalletFlow({
   const [walletSendTo, setWalletSendTo] = useState('')
   const [walletSendAmount, setWalletSendAmount] = useState('')
   const [isWalletSending, setIsWalletSending] = useState(false)
-  const { balance } = useBalance()
+  const { balance, isLoadingBalance } = useBalance()
   const connectedWalletAddress = user?.address ?? null
 
   const hasDeployedProxyWallet = useMemo(() => (
@@ -197,6 +197,7 @@ export function WalletFlow({
         onViewChange={setDepositView}
         onBuy={handleBuy}
         walletBalance={balance.text}
+        isBalanceLoading={isLoadingBalance}
       />
       <WalletWithdrawModal
         open={withdrawOpen}
@@ -213,6 +214,7 @@ export function WalletFlow({
         onUseConnectedWallet={handleUseConnectedWallet}
         availableBalance={balance.raw}
         onMax={handleSetMaxAmount}
+        isBalanceLoading={isLoadingBalance}
       />
     </>
   )
