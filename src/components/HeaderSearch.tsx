@@ -66,7 +66,11 @@ export default function HeaderSearch() {
         placeholder={`Search ${sitename}`}
         value={query}
         onChange={e => handleQueryChange(e.target.value)}
-        className="w-full bg-input pr-12 pl-9 dark:bg-input/30"
+        className={`
+          w-full border-transparent bg-input pr-12 pl-9 shadow-none transition-colors
+          hover:bg-[color:var(--input-hover)]
+          focus-visible:border-border focus-visible:bg-background focus-visible:ring-0 focus-visible:ring-offset-0
+        `}
       />
       <Kbd className="absolute top-1/2 right-3 hidden -translate-y-1/2 sm:inline-flex">/</Kbd>
       {(showResults || isLoading.events || isLoading.profiles) && (

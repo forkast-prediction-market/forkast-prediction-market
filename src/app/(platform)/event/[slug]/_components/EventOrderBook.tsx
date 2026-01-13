@@ -4,8 +4,8 @@ import type { InfiniteData } from '@tanstack/react-query'
 import type { EventOrderBookProps, OrderBookLevel, OrderBookUserOrder } from '@/app/(platform)/event/[slug]/_types/EventOrderBookTypes'
 import type { UserOpenOrder } from '@/types'
 import { useQueryClient } from '@tanstack/react-query'
-import { Loader2Icon } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { AlignVerticalSpaceAroundIcon, Loader2Icon } from 'lucide-react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { cancelOrderAction } from '@/app/(platform)/event/[slug]/_actions/cancel-order'
 import { useOrderBookSummaries } from '@/app/(platform)/event/[slug]/_hooks/useOrderBookSummaries'
@@ -20,6 +20,7 @@ import {
   getRoundedCents,
   microToUnit,
 } from '@/app/(platform)/event/[slug]/_utils/EventOrderBookUtils'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { ORDER_SIDE, ORDER_TYPE, tableHeaderClass } from '@/lib/constants'
 import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
@@ -43,6 +44,9 @@ export default function EventOrderBook({
   const { openTradeRequirements } = useTradingOnboarding()
   const queryClient = useQueryClient()
   const refreshTimeoutRef = useRef<number | null>(null)
+  const orderBookScrollRef = useRef<HTMLDivElement | null>(null)
+  const centerRowRef = useRef<HTMLDivElement | null>(null)
+  const hasCenteredRef = useRef(false)
   const [pendingCancelIds, setPendingCancelIds] = useState<Set<string>>(() => new Set())
   const tokenId = outcome?.token_id || market.outcomes[0]?.token_id
 
@@ -97,6 +101,20 @@ export default function EventOrderBook({
     })
     return map
   }, [userOpenOrders])
+
+  const recenterOrderBook = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    const container = orderBookScrollRef.current
+    const centerRow = centerRowRef.current
+    if (!container || !centerRow) {
+      return
+    }
+
+    const target = centerRow.offsetTop - container.clientHeight / 2 + centerRow.clientHeight / 2
+    const maxScrollTop = container.scrollHeight - container.clientHeight
+    const clampedTarget = Math.max(0, Math.min(target, maxScrollTop))
+
+    container.scrollTo({ top: clampedTarget, behavior })
+  }, [])
 
   const removeOrderFromCache = useCallback((orderIds: string[]) => {
     if (!orderIds.length) {
@@ -180,6 +198,44 @@ export default function EventOrderBook({
     }
   }, [])
 
+  useEffect(() => {
+    hasCenteredRef.current = false
+  }, [tokenId])
+
+  useLayoutEffect(() => {
+    if (!summary || hasCenteredRef.current) {
+      return
+    }
+
+    recenterOrderBook('auto')
+    hasCenteredRef.current = true
+  }, [recenterOrderBook, summary])
+
+  useEffect(() => {
+    function handleKeyDown(event: KeyboardEvent) {
+      if (!event.shiftKey || event.key.toLowerCase() !== 'c') {
+        return
+      }
+
+      const target = event.target as HTMLElement | null
+      const tagName = target?.tagName?.toLowerCase()
+      const isEditable = tagName === 'input'
+        || tagName === 'textarea'
+        || tagName === 'select'
+        || target?.isContentEditable
+
+      if (event.metaKey || event.ctrlKey || event.altKey || isEditable) {
+        return
+      }
+
+      event.preventDefault()
+      recenterOrderBook()
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [recenterOrderBook])
+
   const {
     asks,
     bids,
@@ -238,7 +294,7 @@ export default function EventOrderBook({
   }
 
   return (
-    <div className="relative scrollbar-hide max-h-90 overflow-y-auto">
+    <div ref={orderBookScrollRef} className="relative scrollbar-hide max-h-90 overflow-y-auto">
       <div>
         <div
           className={cn(
@@ -246,8 +302,31 @@ export default function EventOrderBook({
             'sticky top-0 z-1 grid h-9 grid-cols-[40%_20%_20%_20%] items-center border-b bg-background',
           )}
         >
-          <div className="flex h-full items-center">
+          <div className="flex h-full items-center gap-2">
             <span>{`Trade ${outcomeLabel}`}</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className={`
+                    inline-flex size-6 items-center justify-center rounded-md text-muted-foreground transition-colors
+                    hover:bg-muted/70 hover:text-foreground
+                  `}
+                  onClick={() => recenterOrderBook()}
+                  aria-label="Recenter order book"
+                >
+                  <AlignVerticalSpaceAroundIcon className="size-4" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                sideOffset={8}
+                hideArrow
+                className="border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground shadow-xl"
+              >
+                Recenter Book (Shift + C)
+              </TooltipContent>
+            </Tooltip>
           </div>
           <div className="flex h-full items-center justify-center">
             Price
@@ -281,6 +360,7 @@ export default function EventOrderBook({
           : <EventOrderBookEmptyRow label="No asks" />}
 
         <div
+          ref={centerRowRef}
           className={
             `
               sticky top-9 bottom-0 z-1 grid h-9 cursor-pointer grid-cols-[40%_20%_20%_20%] items-center border-y
