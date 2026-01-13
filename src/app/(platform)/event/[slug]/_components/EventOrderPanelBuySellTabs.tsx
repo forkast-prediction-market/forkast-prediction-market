@@ -49,6 +49,7 @@ export default function EventOrderPanelBuySellTabs({
   const [typeMenuOpen, setTypeMenuOpen] = useState(false)
   const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false)
   const [isSplitDialogOpen, setIsSplitDialogOpen] = useState(false)
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const hasHydratedType = useRef(false)
 
   useEffect(() => {
@@ -83,6 +84,27 @@ export default function EventOrderPanelBuySellTabs({
     onAmountReset()
     onFocusInput()
   }
+
+  function clearCloseTimeout() {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+  }
+
+  function handleTypeMenuEnter() {
+    clearCloseTimeout()
+    setTypeMenuOpen(true)
+  }
+
+  function handleTypeMenuLeave() {
+    clearCloseTimeout()
+    closeTimeoutRef.current = setTimeout(() => {
+      setTypeMenuOpen(false)
+    }, 120)
+  }
+
+  useEffect(() => () => clearCloseTimeout(), [])
 
   const orderTypeLabel = type === ORDER_TYPE.MARKET ? 'Market' : 'Limit'
 
@@ -130,87 +152,92 @@ export default function EventOrderPanelBuySellTabs({
           </button>
         </div>
 
-        <DropdownMenu open={typeMenuOpen} onOpenChange={setTypeMenuOpen}>
-          <DropdownMenuTrigger asChild>
-            <button
-              type="button"
-              onMouseEnter={() => setTypeMenuOpen(true)}
-              className={cn(`
-                flex cursor-pointer items-center gap-1 bg-transparent pb-2 text-sm font-semibold text-muted-foreground
-                transition-colors duration-200
-                hover:text-foreground
-                focus:outline-none
-                focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none
-              `, typeMenuOpen && 'text-foreground')}
-              aria-haspopup="menu"
-              aria-expanded={typeMenuOpen}
-            >
-              {orderTypeLabel}
-              <ChevronDownIcon
-                className={cn(
-                  'size-4 text-muted-foreground transition-colors',
-                  typeMenuOpen && 'text-foreground',
-                )}
-              />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-36">
-            <DropdownMenuRadioGroup value={type} onValueChange={value => onTypeChange(value as OrderType)}>
-              <DropdownMenuRadioItem
-                value={ORDER_TYPE.MARKET}
-                className={`
-                  cursor-pointer pl-2
-                  data-[state=checked]:font-semibold data-[state=checked]:text-foreground
-                  [&>span:first-of-type]:hidden
-                `}
+        <div onPointerEnter={handleTypeMenuEnter} onPointerLeave={handleTypeMenuLeave}>
+          <DropdownMenu open={typeMenuOpen} onOpenChange={setTypeMenuOpen} modal={false}>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className={cn(`
+                  group flex cursor-pointer items-center gap-1 bg-transparent pb-2 text-sm font-semibold
+                  text-muted-foreground transition-colors duration-200
+                  hover:text-foreground
+                  focus:outline-none
+                  focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:outline-none
+                `, typeMenuOpen && 'text-foreground')}
+                aria-haspopup="menu"
+                aria-expanded={typeMenuOpen}
               >
-                Market
-              </DropdownMenuRadioItem>
-              <DropdownMenuRadioItem
-                value={ORDER_TYPE.LIMIT}
-                className={`
-                  cursor-pointer pl-2
-                  data-[state=checked]:font-semibold data-[state=checked]:text-foreground
-                  [&>span:first-of-type]:hidden
-                `}
-              >
-                Limit
-              </DropdownMenuRadioItem>
-            </DropdownMenuRadioGroup>
+                {orderTypeLabel}
+                <ChevronDownIcon
+                  className={cn(
+                    `
+                      size-4 text-muted-foreground transition-transform
+                      group-hover:rotate-180
+                      group-data-[state=open]:rotate-180
+                    `,
+                    typeMenuOpen && 'text-foreground',
+                  )}
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-36" portalled={false}>
+              <DropdownMenuRadioGroup value={type} onValueChange={value => onTypeChange(value as OrderType)}>
+                <DropdownMenuRadioItem
+                  value={ORDER_TYPE.MARKET}
+                  className={`
+                    cursor-pointer pl-2
+                    data-[state=checked]:font-semibold data-[state=checked]:text-foreground
+                    [&>span:first-of-type]:hidden
+                  `}
+                >
+                  Market
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem
+                  value={ORDER_TYPE.LIMIT}
+                  className={`
+                    cursor-pointer pl-2
+                    data-[state=checked]:font-semibold data-[state=checked]:text-foreground
+                    [&>span:first-of-type]:hidden
+                  `}
+                >
+                  Limit
+                </DropdownMenuRadioItem>
+              </DropdownMenuRadioGroup>
 
-            <DropdownMenuSeparator />
+              <DropdownMenuSeparator />
 
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger className="cursor-pointer">
-                More
-              </DropdownMenuSubTrigger>
-              <DropdownMenuPortal>
-                <DropdownMenuSubContent className="min-w-32" alignOffset={-4}>
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onSelect={(event) => {
-                      event.preventDefault()
-                      setTypeMenuOpen(false)
-                      setIsMergeDialogOpen(true)
-                    }}
-                  >
-                    Merge
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="cursor-pointer"
-                    onSelect={(event) => {
-                      event.preventDefault()
-                      setTypeMenuOpen(false)
-                      setIsSplitDialogOpen(true)
-                    }}
-                  >
-                    Split
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuPortal>
-            </DropdownMenuSub>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger className="cursor-pointer">
+                  More
+                </DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent className="min-w-32" alignOffset={-4}>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onSelect={(event) => {
+                        event.preventDefault()
+                        setTypeMenuOpen(false)
+                        setIsMergeDialogOpen(true)
+                      }}
+                    >
+                      Merge
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer"
+                      onSelect={(event) => {
+                        event.preventDefault()
+                        setTypeMenuOpen(false)
+                        setIsSplitDialogOpen(true)
+                      }}
+                    >
+                      Split
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
       <div
         aria-hidden="true"
