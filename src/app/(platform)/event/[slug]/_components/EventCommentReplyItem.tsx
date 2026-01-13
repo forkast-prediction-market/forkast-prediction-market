@@ -73,7 +73,7 @@ export default function EventCommentReplyItem({
   }, [onSetReplyingTo, onSetReplyText])
 
   return (
-    <div className="grid gap-3">
+    <>
       <ProfileLink
         user={{
           image: reply.user_avatar,
@@ -95,7 +95,7 @@ export default function EventCommentReplyItem({
               @
               {parentUsername}
             </Link>
-            <p className="text-sm font-semibold">{reply.content}</p>
+            <p className="text-sm leading-5.25 font-normal">{reply.content}</p>
             <div className="mt-2 flex items-center gap-3">
               <EventCommentLikeForm
                 comment={reply}
@@ -151,6 +151,6 @@ export default function EventCommentReplyItem({
           />
         </div>
       )}
-    </div>
+    </>
   )
 }

@@ -180,33 +180,29 @@ export default function EventComments({ event, user }: EventCommentsProps) {
                   No comments yet. Be the first to comment!
                 </div>
               )
-            : (
-                <div className="grid gap-3">
-                  {comments.map(comment => (
-                    <EventCommentItem
-                      key={comment.id}
-                      comment={comment}
-                      user={user}
-                      onLikeToggle={handleLikeToggled}
-                      isTogglingLikeForComment={isTogglingLikeForComment}
-                      onDelete={handleDeleteComment}
-                      replyingTo={replyingTo}
-                      onSetReplyingTo={setReplyingTo}
-                      replyText={replyText}
-                      onSetReplyText={setReplyText}
-                      expandedComments={expandedComments}
-                      onRepliesLoaded={handleRepliesLoaded}
-                      onDeleteReply={handleDeleteReply}
-                      onUpdateReply={handleUpdateReply}
-                      createReply={createReply}
-                      isCreatingComment={isCreatingComment}
-                      isLoadingRepliesForComment={isLoadingRepliesForComment}
-                      loadRepliesError={loadRepliesError}
-                      retryLoadReplies={retryLoadReplies}
-                    />
-                  ))}
-                </div>
-              )}
+            : comments.map(comment => (
+                <EventCommentItem
+                  key={comment.id}
+                  comment={comment}
+                  user={user}
+                  onLikeToggle={handleLikeToggled}
+                  isTogglingLikeForComment={isTogglingLikeForComment}
+                  onDelete={handleDeleteComment}
+                  replyingTo={replyingTo}
+                  onSetReplyingTo={setReplyingTo}
+                  replyText={replyText}
+                  onSetReplyText={setReplyText}
+                  expandedComments={expandedComments}
+                  onRepliesLoaded={handleRepliesLoaded}
+                  onDeleteReply={handleDeleteReply}
+                  onUpdateReply={handleUpdateReply}
+                  createReply={createReply}
+                  isCreatingComment={isCreatingComment}
+                  isLoadingRepliesForComment={isLoadingRepliesForComment}
+                  loadRepliesError={loadRepliesError}
+                  retryLoadReplies={retryLoadReplies}
+                />
+              ))}
 
         {isFetchingNextPage && (
           <div className="mt-4">
