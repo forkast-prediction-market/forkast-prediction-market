@@ -23,7 +23,6 @@ export default function EventCommentReplyForm({
   parentCommentId,
   placeholder,
   initialValue,
-  onCancel,
   onReplyAddedAction,
   createReply,
   isCreatingComment,
@@ -56,13 +55,13 @@ export default function EventCommentReplyForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-3">
+    <form onSubmit={handleSubmit} className="flex items-center gap-3">
       <Image
         src={user.image}
         alt={user.username!}
-        width={24}
-        height={24}
-        className="size-6 shrink-0 rounded-full object-cover"
+        width={32}
+        height={32}
+        className="size-8 shrink-0 rounded-full object-cover"
       />
       <div className="flex-1 space-y-2">
         <div className="relative">
@@ -70,24 +69,21 @@ export default function EventCommentReplyForm({
             ref={inputRef}
             value={content}
             onChange={e => setContent(e.target.value)}
-            className="pr-20 text-sm placeholder:text-muted-foreground/70 focus:border-blue-500 focus:ring-blue-500/20"
+            className={`
+              h-11 pr-16 text-sm
+              placeholder:text-muted-foreground/70
+              focus:border-primary focus:ring-primary/20
+              focus-visible:border-primary focus-visible:ring-primary/20
+            `}
             placeholder={placeholder}
             required
           />
           <div className="absolute top-1/2 right-2 flex -translate-y-1/2 gap-1">
             <Button
-              type="button"
-              size="sm"
-              variant="ghost"
-              className="h-6 px-2 text-xs"
-              onClick={onCancel}
-            >
-              Cancel
-            </Button>
-            <Button
               type="submit"
               size="sm"
-              className="h-6 px-2 text-xs"
+              variant="ghost"
+              className="bg-transparent text-xs font-medium text-primary hover:bg-accent/70 hover:text-primary"
               disabled={isCreatingComment || !content.trim()}
             >
               {isCreatingComment ? 'Posting...' : user ? 'Reply' : 'Connect to Reply'}

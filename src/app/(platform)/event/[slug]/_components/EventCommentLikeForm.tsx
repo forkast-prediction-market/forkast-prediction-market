@@ -20,6 +20,7 @@ export default function EventCommentLikeForm({
   isSubmitting = false,
 }: EventCommentLikeFormProps) {
   const { open } = useAppKit()
+  const likesCount = comment.likes_count ?? 0
 
   function handleClick() {
     if (isSubmitting) {
@@ -41,13 +42,16 @@ export default function EventCommentLikeForm({
       disabled={isSubmitting}
       aria-pressed={comment.user_has_liked}
       title={comment.user_has_liked ? 'Remove like' : 'Like'}
-      className="flex size-auto items-center gap-1 p-0 text-xs text-muted-foreground"
+      className={`
+        flex size-auto items-center gap-1 rounded-sm px-1.5 py-0.5 text-sm text-muted-foreground
+        hover:bg-accent hover:text-foreground
+      `}
     >
       <HeartIcon className={cn({
         'fill-current text-destructive': comment.user_has_liked,
-      }, 'size-3')}
+      }, 'size-4')}
       />
-      {comment.likes_count > 0 && <span>{comment.likes_count}</span>}
+      <span>{likesCount}</span>
     </Button>
   )
 }

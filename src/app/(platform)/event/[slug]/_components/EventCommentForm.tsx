@@ -64,7 +64,11 @@ export default function EventCommentForm({
       >
         <Input
           name="content"
-          className="h-11 pr-16"
+          className={`
+            h-11 pr-16
+            focus:border-primary focus:ring-primary/20
+            focus-visible:border-primary focus-visible:ring-primary/20
+          `}
           placeholder="Add a comment"
           required
           value={content}
@@ -74,8 +78,12 @@ export default function EventCommentForm({
         <Button
           type="submit"
           size="sm"
-          className="absolute top-1/2 right-2 -translate-y-1/2 text-xs font-medium"
-          disabled={isCreatingComment}
+          variant="ghost"
+          className={`
+            absolute top-1/2 right-2 -translate-y-1/2 bg-transparent text-xs font-medium text-primary
+            hover:bg-accent/70 hover:text-primary
+          `}
+          disabled={isCreatingComment || !content.trim()}
         >
           {isCreatingComment ? 'Posting...' : user ? 'Post' : 'Connect to Post'}
         </Button>

@@ -83,31 +83,36 @@ export default function EventCommentReplyItem({
         }}
         date={reply.created_at}
         joinedAt={reply.user_created_at}
+        containerClassName="[&_img]:mt-1.5 [&_img]:h-10 [&_img]:w-10"
+        usernameClassName="text-sm font-semibold text-foreground"
       >
         <div className="flex w-full flex-1 gap-3">
           <div className="flex-1">
             <Link
               href={`/@${parentUsername}`}
-              className="text-xs text-primary transition-colors hover:text-primary/80"
+              className="text-sm font-semibold text-primary transition-colors hover:text-primary/80"
             >
               @
               {parentUsername}
             </Link>
-            <p className="text-sm">{reply.content}</p>
+            <p className="text-sm font-semibold">{reply.content}</p>
             <div className="mt-2 flex items-center gap-3">
-              <button
-                type="button"
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                onClick={handleReplyClick}
-              >
-                Reply
-              </button>
               <EventCommentLikeForm
                 comment={reply}
                 user={user}
                 onLikeToggled={handleLikeToggle}
                 isSubmitting={isTogglingLikeForComment(reply.id)}
               />
+              <button
+                type="button"
+                className={`
+                  rounded-sm px-1.5 py-0.5 text-sm text-muted-foreground transition-colors
+                  hover:bg-accent hover:text-foreground
+                `}
+                onClick={handleReplyClick}
+              >
+                Reply
+              </button>
             </div>
           </div>
           {reply.is_owner && (

@@ -193,7 +193,7 @@ export default function ProfileLink({
                 </div>
               )}
           {!isInline && children
-            ? <div className="pl-11">{children}</div>
+            ? <div className="pl-[3.25rem]">{children}</div>
             : null}
         </div>
         {!isInline && trailing

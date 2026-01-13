@@ -94,24 +94,29 @@ export default function EventCommentItem({
         }}
         date={comment.created_at}
         joinedAt={comment.user_created_at}
+        containerClassName="[&_img]:mt-2.5 [&_img]:h-10 [&_img]:w-10"
+        usernameClassName="text-sm font-semibold text-foreground"
       >
         <div className="flex w-full flex-1 gap-3">
           <div className="flex-1">
-            <p className="text-sm">{comment.content}</p>
+            <p className="text-sm font-semibold">{comment.content}</p>
             <div className="mt-2 flex items-center gap-3">
-              <button
-                type="button"
-                className="text-xs text-muted-foreground transition-colors hover:text-foreground"
-                onClick={handleReplyClick}
-              >
-                Reply
-              </button>
               <EventCommentLikeForm
                 comment={comment}
                 user={user}
                 onLikeToggled={handleLikeToggle}
                 isSubmitting={isTogglingLikeForComment(comment.id)}
               />
+              <button
+                type="button"
+                className={`
+                  rounded-sm px-1.5 py-0.5 text-sm text-muted-foreground transition-colors
+                  hover:bg-accent hover:text-foreground
+                `}
+                onClick={handleReplyClick}
+              >
+                Reply
+              </button>
             </div>
           </div>
           {comment.is_owner && (
@@ -137,7 +142,7 @@ export default function EventCommentItem({
       </ProfileLink>
 
       {replyingTo === comment.id && (
-        <div className="mt-3 ml-11">
+        <div className="mt-2 ml-[3.25rem]">
           <EventCommentReplyForm
             user={user}
             parentCommentId={comment.id}
@@ -152,7 +157,7 @@ export default function EventCommentItem({
       )}
 
       {comment.recent_replies && comment.recent_replies.length > 0 && (
-        <div className="ml-11 flex flex-col gap-3">
+        <div className="mt-1 ml-[3.25rem] flex flex-col gap-2">
           {comment.recent_replies.map(reply => (
             <EventCommentReplyItem
               key={reply.id}

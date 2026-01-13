@@ -1,8 +1,6 @@
 import type { Comment } from '@/types'
-import {
-  DropdownMenuContent,
-  DropdownMenuItem,
-} from '@/components/ui/dropdown-menu'
+import { useState } from 'react'
+import { DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import EventCommentDeleteForm from './EventCommentDeleteForm'
 
 interface CommentMenuProps {
@@ -12,16 +10,28 @@ interface CommentMenuProps {
 }
 
 export default function EventCommentMenu({ comment, onDelete, isDeleting }: CommentMenuProps) {
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+
   return (
-    <DropdownMenuContent className="w-32" align="end">
-      {comment.is_owner && (
-        <DropdownMenuItem asChild>
-          <EventCommentDeleteForm
-            onDelete={onDelete}
-            isDeleting={isDeleting}
-          />
-        </DropdownMenuItem>
-      )}
-    </DropdownMenuContent>
+    <>
+      <DropdownMenuContent className="w-32" align="end">
+        {comment.is_owner && (
+          <DropdownMenuItem
+            className="text-destructive"
+            onSelect={() => {
+              setTimeout(() => setIsDeleteOpen(true), 0)
+            }}
+          >
+            Delete
+          </DropdownMenuItem>
+        )}
+      </DropdownMenuContent>
+      <EventCommentDeleteForm
+        open={isDeleteOpen}
+        onOpenChange={setIsDeleteOpen}
+        onDelete={onDelete}
+        isDeleting={isDeleting}
+      />
+    </>
   )
 }
