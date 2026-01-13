@@ -171,7 +171,7 @@ export function PredictionChart({
 
       return previousPoint ?? nextPoint ?? null
     },
-    [data, series],
+    [data],
   )
 
   const handleTooltip = useCallback(
