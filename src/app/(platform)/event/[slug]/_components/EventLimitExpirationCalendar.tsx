@@ -2,14 +2,21 @@
 
 import { Clock2Icon } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
+import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
+import { DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 
 interface EventLimitExpirationCalendarProps {
   value?: Date
   onChange?: (value: Date) => void
+  title?: string
+  onCancel?: () => void
+  onApply?: () => void
+  cancelLabel?: string
+  applyLabel?: string
 }
 
 function formatTimeInput(date: Date) {
@@ -29,11 +36,20 @@ function mergeDateAndTime(date: Date, time: string) {
   return nextDate
 }
 
-export default function EventLimitExpirationCalendar({ value, onChange }: EventLimitExpirationCalendarProps) {
+export default function EventLimitExpirationCalendar({
+  value,
+  onChange,
+  title,
+  onCancel,
+  onApply,
+  cancelLabel = 'Cancel',
+  applyLabel = 'Apply',
+}: EventLimitExpirationCalendarProps) {
   const initialDate = useMemo(() => value ?? new Date(), [value])
   const minDate = useMemo(() => new Date(), [])
   const [selectedDate, setSelectedDate] = useState<Date>(() => initialDate)
   const [timeValue, setTimeValue] = useState<string>(() => formatTimeInput(initialDate))
+  const showActions = Boolean(onCancel || onApply)
 
   useEffect(() => {
     const nextDate = value ?? new Date()
@@ -54,8 +70,13 @@ export default function EventLimitExpirationCalendar({ value, onChange }: EventL
   }
 
   return (
-    <Card className="w-fit py-4">
-      <CardContent className="px-4">
+    <Card className="w-full max-w-md min-w-[320px] gap-0">
+      {title && (
+        <CardHeader className="pt-6 pb-4">
+          <DialogTitle>{title}</DialogTitle>
+        </CardHeader>
+      )}
+      <CardContent className="py-4">
         <Calendar
           mode="single"
           selected={selectedDate}
@@ -68,9 +89,10 @@ export default function EventLimitExpirationCalendar({ value, onChange }: EventL
             handleChange(nextDate)
           }}
           className="bg-transparent p-0"
+          classNames={{ root: 'w-full' }}
         />
       </CardContent>
-      <CardFooter className="flex flex-col gap-6 border-t px-4 pt-4!">
+      <CardFooter className="flex flex-col items-stretch gap-4 border-t py-4">
         <div className="flex w-full flex-col gap-3">
           <Label htmlFor="expiration-time">Expiration Time</Label>
           <div className="relative flex w-full items-center gap-2">
@@ -92,6 +114,20 @@ export default function EventLimitExpirationCalendar({ value, onChange }: EventL
             />
           </div>
         </div>
+        {showActions && (
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            {onCancel && (
+              <Button variant="outline" type="button" onClick={onCancel}>
+                {cancelLabel}
+              </Button>
+            )}
+            {onApply && (
+              <Button type="button" onClick={onApply}>
+                {applyLabel}
+              </Button>
+            )}
+          </div>
+        )}
       </CardFooter>
     </Card>
   )

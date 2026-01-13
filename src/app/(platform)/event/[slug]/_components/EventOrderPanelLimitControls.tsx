@@ -10,9 +10,6 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
@@ -423,32 +420,18 @@ export default function EventOrderPanelLimitControls({
       )}
 
       <Dialog open={isExpirationModalOpen} onOpenChange={handleExpirationModalChange}>
-        <DialogContent className="w-fit max-w-md min-w-[320px] space-y-4">
-          <DialogHeader>
-            <DialogTitle>Select expiration</DialogTitle>
-          </DialogHeader>
-          <div className="flex justify-center">
-            <EventLimitExpirationCalendar
-              value={draftExpiration}
-              onChange={(nextDate) => {
-                if (nextDate) {
-                  setDraftExpiration(nextDate)
-                }
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => setIsExpirationModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="button" onClick={handleApplyExpiration}>
-              Apply
-            </Button>
-          </DialogFooter>
+        <DialogContent className="w-fit border-0 bg-transparent p-0 shadow-none">
+          <EventLimitExpirationCalendar
+            title="Select expiration"
+            value={draftExpiration}
+            onChange={(nextDate) => {
+              if (nextDate) {
+                setDraftExpiration(nextDate)
+              }
+            }}
+            onCancel={() => setIsExpirationModalOpen(false)}
+            onApply={handleApplyExpiration}
+          />
         </DialogContent>
       </Dialog>
     </div>
