@@ -33,7 +33,10 @@ export default function UserInfoSection() {
           alt="User avatar"
           width={48}
           height={48}
-          className="rounded-full ring-2 ring-border/20 transition-all duration-200 hover:ring-border/40"
+          className={`
+            aspect-square rounded-full object-cover object-center ring-2 ring-border/20 transition-all duration-200
+            hover:ring-border/40
+          `}
         />
       </div>
       <div className="min-w-0 flex-1 space-y-1.5">

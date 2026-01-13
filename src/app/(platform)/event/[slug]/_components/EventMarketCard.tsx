@@ -167,7 +167,7 @@ function EventMarketCardComponent({
 
         <div className="flex gap-2">
           <Button
-            size="outcome"
+            size="outcomeLg"
             variant="yes"
             className={cn({
               'bg-yes text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.YES,
@@ -188,7 +188,7 @@ function EventMarketCardComponent({
             </span>
           </Button>
           <Button
-            size="outcome"
+            size="outcomeLg"
             variant="no"
             className={cn({
               'bg-no text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.NO,
@@ -258,7 +258,7 @@ function EventMarketCardComponent({
 
         <div className="ms-auto flex items-center gap-2">
           <Button
-            size="outcome"
+            size="outcomeLg"
             variant="yes"
             className={cn({
               'bg-yes text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.YES,
@@ -280,7 +280,7 @@ function EventMarketCardComponent({
           </Button>
 
           <Button
-            size="outcome"
+            size="outcomeLg"
             variant="no"
             className={cn({
               'bg-no text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.NO,

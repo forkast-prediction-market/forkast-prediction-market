@@ -89,7 +89,7 @@ export default function HeaderDropdownUserMenuAuth() {
             alt="User avatar"
             width={32}
             height={32}
-            className="pointer-events-none rounded-full"
+            className="pointer-events-none aspect-square shrink-0 rounded-full object-cover"
           />
           <ChevronDownIcon className={`
             pointer-events-none size-4 transition-transform duration-150

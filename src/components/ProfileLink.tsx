@@ -130,7 +130,7 @@ export default function ProfileLink({
           alt={user.username}
           width={32}
           height={32}
-          className="rounded-full"
+          className="aspect-square rounded-full object-cover object-center"
         />
         {position && (
           <Badge
