@@ -30,7 +30,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
             <div className="flex gap-2">
               <Button
                 variant="yes"
-                size="outcome"
+                size="outcomeLg"
                 onClick={() => {
                   if (!state.market) {
                     return
@@ -51,7 +51,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
               </Button>
               <Button
                 variant="no"
-                size="outcome"
+                size="outcomeLg"
                 onClick={() => {
                   if (!state.market) {
                     return

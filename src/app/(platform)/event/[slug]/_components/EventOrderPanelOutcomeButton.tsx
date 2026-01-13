@@ -21,7 +21,7 @@ export default function EventOrderPanelOutcomeButton({
     <Button
       type="button"
       variant={isSelected ? variant : 'outline'}
-      size="outcome"
+      size="outcomeLg"
       className={cn(
         isSelected
         && (variant === 'yes'

@@ -21,7 +21,7 @@ export default function EventOrderPanelSubmitButton({
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-4 rounded-b-md bg-[oklch(0.50_0.11_237.323)]" />
       <Button
         type={type}
-        size="outcome"
+        size="outcomeLg"
         disabled={isDisabled}
         aria-disabled={isDisabled}
         onClick={onClick}

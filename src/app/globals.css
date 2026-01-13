@@ -6,8 +6,8 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --yes: oklch(62.7% 0.194 149.214);
-  --yes-foreground: oklch(52.7% 0.154 150.069);
+  --yes: oklch(70% 0.194 149.214);
+  --yes-foreground: oklch(62% 0.154 150.069);
   --no: oklch(63.7% 0.237 25.331);
   --no-foreground: oklch(50.5% 0.213 27.518);
   --radius: 0.625rem;
@@ -48,8 +48,8 @@
 }
 
 .dark {
-  --yes: oklch(0.600 0.1419 153.41);
-  --yes-foreground: oklch(0.700 0.154 150.069);
+  --yes: oklch(0.68 0.1419 153.41);
+  --yes-foreground: oklch(0.8 0.154 150.069);
   --no: oklch(0.600 0.2065 26.05);
   --no-foreground: oklch(0.700 0.213 27.518);
   --background: oklch(0.28 0.04 260);

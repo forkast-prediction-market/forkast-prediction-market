@@ -1,5 +1,4 @@
 import type { Market, Outcome } from '@/types'
-import { ChevronsDownIcon, ChevronsUpIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface EventCardSingleMarketActionsProps {
@@ -36,13 +35,7 @@ export default function EventCardSingleMarketActions({
         variant="yes"
         size="outcome"
       >
-        <span className="truncate">
-          Buy
-          {' '}
-          {yesOutcome.outcome_text}
-          {' '}
-        </span>
-        <ChevronsUpIcon className="size-4" />
+        <span className="truncate">{yesOutcome.outcome_text}</span>
       </Button>
       <Button
         type="button"
@@ -55,13 +48,7 @@ export default function EventCardSingleMarketActions({
         variant="no"
         size="outcome"
       >
-        <span className="truncate">
-          Buy
-          {' '}
-          {noOutcome.outcome_text}
-          {' '}
-        </span>
-        <ChevronsDownIcon className="size-4" />
+        <span className="truncate">{noOutcome.outcome_text}</span>
       </Button>
     </div>
   )
