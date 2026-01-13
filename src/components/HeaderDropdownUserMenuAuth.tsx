@@ -5,6 +5,7 @@ import { ChevronDownIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { redirect, usePathname } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 import HeaderPortfolio from '@/components/HeaderPortfolio'
 import ThemeSelector from '@/components/ThemeSelector'
 import { Button } from '@/components/ui/button'
@@ -27,6 +28,29 @@ export default function HeaderDropdownUserMenuAuth() {
   const pathname = usePathname()
   const isAdmin = pathname.startsWith('/admin')
   const isMobile = useIsMobile()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  function clearCloseTimeout() {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current)
+      closeTimeoutRef.current = null
+    }
+  }
+
+  function handleOpen() {
+    clearCloseTimeout()
+    setMenuOpen(true)
+  }
+
+  function handleClose() {
+    clearCloseTimeout()
+    closeTimeoutRef.current = setTimeout(() => {
+      setMenuOpen(false)
+    }, 120)
+  }
+
+  useEffect(() => () => clearCloseTimeout(), [])
 
   function handleWatchlistClick() {
     updateFilters({ bookmarked: !filters.bookmarked })
@@ -38,13 +62,23 @@ export default function HeaderDropdownUserMenuAuth() {
   }
 
   return (
-    <DropdownMenu key={isAdmin ? 'admin' : 'platform'}>
+    <DropdownMenu
+      key={isAdmin ? 'admin' : 'platform'}
+      open={menuOpen}
+      onOpenChange={(nextOpen) => {
+        clearCloseTimeout()
+        setMenuOpen(nextOpen)
+      }}
+    >
       <DropdownMenuTrigger asChild>
         <Button
           type="button"
           variant="ghost"
-          className="flex h-auto items-center gap-2 px-2 py-1"
+          size="header"
+          className="group flex items-center gap-2 px-2"
           data-testid="header-menu-button"
+          onMouseEnter={handleOpen}
+          onMouseLeave={handleClose}
         >
           <Image
             src={user.image}
@@ -53,10 +87,20 @@ export default function HeaderDropdownUserMenuAuth() {
             height={32}
             className="rounded-full"
           />
-          <ChevronDownIcon className="size-3" />
+          <ChevronDownIcon className={`
+            size-4 transition-transform duration-150
+            group-hover:rotate-180
+            group-data-[state=open]:rotate-180
+          `}
+          />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-64" collisionPadding={16}>
+      <DropdownMenuContent
+        className="w-64"
+        collisionPadding={16}
+        onMouseEnter={handleOpen}
+        onMouseLeave={handleClose}
+      >
         <DropdownMenuItem asChild>
           <UserInfoSection />
         </DropdownMenuItem>

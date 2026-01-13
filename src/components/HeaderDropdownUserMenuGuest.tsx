@@ -20,7 +20,7 @@ export default function HeaderDropdownUserMenuGuest() {
         <Button
           type="button"
           variant="ghost"
-          size="icon"
+          size="headerIconCompact"
           data-testid="header-menu-button"
         >
           <MenuIcon />

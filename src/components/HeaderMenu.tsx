@@ -57,11 +57,11 @@ export default function HeaderMenu() {
   if (showSkeleton) {
     return (
       <div className="flex gap-1 sm:gap-2 lg:gap-4">
-        <Skeleton className="hidden h-9 w-18 lg:block" />
-        <Skeleton className="hidden h-9 w-18 lg:block" />
-        <Skeleton className="hidden h-9 w-20 lg:block" />
-        <Skeleton className="h-9 w-10" />
-        <Skeleton className="h-9 w-18" />
+        <Skeleton className="hidden h-10 w-18 lg:block" />
+        <Skeleton className="hidden h-10 w-18 lg:block" />
+        <Skeleton className="hidden h-10 w-20 lg:block" />
+        <Skeleton className="h-10 w-10" />
+        <Skeleton className="h-10 w-18" />
       </div>
     )
   }
@@ -72,11 +72,12 @@ export default function HeaderMenu() {
         <>
           {!isMobile && <HeaderPortfolio />}
           {!isMobile && (
-            <Button size="sm" onClick={startDepositFlow}>
+            <Button size="headerCompact" onClick={startDepositFlow}>
               Deposit
             </Button>
           )}
           <HeaderNotifications />
+          <div className="h-6 w-px bg-border" aria-hidden="true" />
           <HeaderDropdownUserMenuAuth />
         </>
       )}
@@ -84,7 +85,7 @@ export default function HeaderMenu() {
       {!isAuthenticated && (
         <>
           <Button
-            size="sm"
+            size="headerCompact"
             variant="link"
             className="no-underline hover:bg-accent/70 hover:no-underline"
             data-testid="header-login-button"
@@ -93,7 +94,7 @@ export default function HeaderMenu() {
             Log In
           </Button>
           <Button
-            size="sm"
+            size="headerCompact"
             data-testid="header-signup-button"
             onClick={() => open()}
           >
