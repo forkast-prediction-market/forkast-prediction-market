@@ -29,7 +29,18 @@ export default function HeaderDropdownUserMenuAuth() {
   const isAdmin = pathname.startsWith('/admin')
   const isMobile = useIsMobile()
   const [menuOpen, setMenuOpen] = useState(false)
+  const wrapperRef = useRef<HTMLDivElement | null>(null)
   const closeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => clearCloseTimeout(), [])
+
+  function relatedTargetIsWithin(ref: React.RefObject<HTMLElement | null>, relatedTarget: EventTarget | null) {
+    if (!relatedTarget) {
+      return false
+    }
+
+    return Boolean(ref.current?.contains(relatedTarget as Node))
+  }
 
   function clearCloseTimeout() {
     if (closeTimeoutRef.current) {
@@ -38,19 +49,21 @@ export default function HeaderDropdownUserMenuAuth() {
     }
   }
 
-  function handleOpen() {
+  function handleWrapperPointerEnter() {
     clearCloseTimeout()
     setMenuOpen(true)
   }
 
-  function handleClose() {
+  function handleWrapperPointerLeave(event: React.PointerEvent) {
+    if (relatedTargetIsWithin(wrapperRef, event.relatedTarget)) {
+      return
+    }
+
     clearCloseTimeout()
     closeTimeoutRef.current = setTimeout(() => {
       setMenuOpen(false)
-    }, 220)
+    }, 120)
   }
-
-  useEffect(() => () => clearCloseTimeout(), [])
 
   function handleWatchlistClick() {
     updateFilters({ bookmarked: !filters.bookmarked })
@@ -62,118 +75,121 @@ export default function HeaderDropdownUserMenuAuth() {
   }
 
   return (
-    <DropdownMenu
-      key={isAdmin ? 'admin' : 'platform'}
-      open={menuOpen}
-      onOpenChange={(nextOpen) => {
-        clearCloseTimeout()
-        setMenuOpen(nextOpen)
-      }}
+    <div
+      ref={wrapperRef}
+      onPointerEnter={handleWrapperPointerEnter}
+      onPointerLeave={handleWrapperPointerLeave}
     >
-      <DropdownMenuTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="header"
-          className={`
-            group flex cursor-pointer items-center gap-2 px-2 transition-colors
-            hover:bg-accent/70 hover:text-accent-foreground
-            data-[state=open]:bg-accent/70 data-[state=open]:text-accent-foreground
-          `}
-          data-testid="header-menu-button"
-          onPointerEnter={handleOpen}
-          onPointerLeave={handleClose}
-        >
-          <Image
-            src={user.image}
-            alt="User avatar"
-            width={32}
-            height={32}
-            className="pointer-events-none aspect-square shrink-0 rounded-full object-cover"
-          />
-          <ChevronDownIcon className={`
-            pointer-events-none size-4 transition-transform duration-150
-            group-hover:rotate-180
-            group-data-[state=open]:rotate-180
-          `}
-          />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent
-        className="w-64"
-        sideOffset={0}
-        collisionPadding={16}
-        onPointerEnter={handleOpen}
-        onPointerLeave={handleClose}
+      <DropdownMenu
+        key={isAdmin ? 'admin' : 'platform'}
+        open={menuOpen}
+        onOpenChange={setMenuOpen}
+        modal={false}
       >
-        <DropdownMenuItem asChild>
-          <UserInfoSection />
-        </DropdownMenuItem>
-
-        <DropdownMenuSeparator />
-
-        <DropdownMenuItem asChild>
-          <Link href="/settings">Profile</Link>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem asChild>
-          <Link href="/settings/affiliate">Affiliate</Link>
-        </DropdownMenuItem>
-
-        {user?.is_admin && (
-          <DropdownMenuItem asChild>
-            <Link href="/admin">Admin</Link>
-          </DropdownMenuItem>
-        )}
-
-        <DropdownMenuItem asChild>
-          <button
+        <DropdownMenuTrigger asChild>
+          <Button
             type="button"
-            className="w-full text-left"
-            onClick={handleWatchlistClick}
+            variant="ghost"
+            size="header"
+            className={`
+              group flex cursor-pointer items-center gap-2 px-2 transition-colors
+              hover:bg-accent/70 hover:text-accent-foreground
+              data-[state=open]:bg-accent/70 data-[state=open]:text-accent-foreground
+            `}
+            data-testid="header-menu-button"
           >
-            Watchlist
-            {' '}
-            {filters.bookmarked && '✓'}
-          </button>
-        </DropdownMenuItem>
+            <Image
+              src={user.image}
+              alt="User avatar"
+              width={32}
+              height={32}
+              className="aspect-square shrink-0 rounded-full object-cover"
+            />
+            <ChevronDownIcon className={`
+              size-4 transition-transform duration-150
+              group-hover:rotate-180
+              group-data-[state=open]:rotate-180
+            `}
+            />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-64"
+          sideOffset={0}
+          collisionPadding={16}
+          portalled={false}
+          onInteractOutside={() => setMenuOpen(false)}
+          onEscapeKeyDown={() => setMenuOpen(false)}
+        >
+          <DropdownMenuItem asChild>
+            <UserInfoSection />
+          </DropdownMenuItem>
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator />
 
-        <DropdownMenuItem asChild>
-          <Link href="/docs/users" data-testid="header-docs-link">Documentation</Link>
-        </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/settings">Profile</Link>
+          </DropdownMenuItem>
 
-        <DropdownMenuItem asChild>
-          <Link href="/terms-of-use" data-testid="header-terms-link">Terms of Use</Link>
-        </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href="/settings/affiliate">Affiliate</Link>
+          </DropdownMenuItem>
 
-        {isMobile && (
-          <>
-            <DropdownMenuSeparator />
-
+          {user?.is_admin && (
             <DropdownMenuItem asChild>
-              <div className="flex justify-center">
-                <HeaderPortfolio />
-              </div>
+              <Link href="/admin">Admin</Link>
             </DropdownMenuItem>
-          </>
-        )}
+          )}
 
-        <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <button
+              type="button"
+              className="w-full text-left"
+              onClick={handleWatchlistClick}
+            >
+              Watchlist
+              {' '}
+              {filters.bookmarked && '✓'}
+            </button>
+          </DropdownMenuItem>
 
-        <DropdownMenuItem asChild>
-          <ThemeSelector />
-        </DropdownMenuItem>
+          <DropdownMenuSeparator />
 
-        <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href="/docs/users" data-testid="header-docs-link">Documentation</Link>
+          </DropdownMenuItem>
 
-        <DropdownMenuItem asChild>
-          <button type="button" className="w-full" onClick={() => disconnect()}>
-            Logout
-          </button>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+          <DropdownMenuItem asChild>
+            <Link href="/terms-of-use" data-testid="header-terms-link">Terms of Use</Link>
+          </DropdownMenuItem>
+
+          {isMobile && (
+            <>
+              <DropdownMenuSeparator />
+
+              <DropdownMenuItem asChild>
+                <div className="flex justify-center">
+                  <HeaderPortfolio />
+                </div>
+              </DropdownMenuItem>
+            </>
+          )}
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem asChild>
+            <ThemeSelector />
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
+
+          <DropdownMenuItem asChild>
+            <button type="button" className="w-full" onClick={() => disconnect()}>
+              Logout
+            </button>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   )
 }

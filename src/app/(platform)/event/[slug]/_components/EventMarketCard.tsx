@@ -156,7 +156,7 @@ function EventMarketCardComponent({
             />
           </div>
           {shouldShowTags && (
-            <div className={cn('flex', shouldShowIcon && 'pl-[54px]')}>
+            <div className={cn('flex', shouldShowIcon && 'pl-13.5')}>
               <PositionTags
                 tags={resolvedPositionTags}
                 onCashOut={tag => onCashOut?.(market, tag)}
@@ -239,7 +239,7 @@ function EventMarketCardComponent({
             </div>
           </div>
           {shouldShowTags && (
-            <div className={cn('flex', shouldShowIcon && 'pl-[54px]')}>
+            <div className={cn('flex', shouldShowIcon && 'pl-13.5')}>
               <PositionTags
                 tags={resolvedPositionTags}
                 onCashOut={tag => onCashOut?.(market, tag)}
