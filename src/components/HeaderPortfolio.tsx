@@ -29,12 +29,12 @@ export default function HeaderPortfolio() {
       <Button
         variant="ghost"
         size="header"
-        className="flex flex-col gap-0"
+        className="flex flex-col justify-center gap-0.5"
         asChild
       >
         <Link href="/portfolio">
-          <div className="text-xs font-medium text-muted-foreground">Portfolio</div>
-          <div className="text-base font-semibold text-yes">
+          <div className="translate-y-[1px] text-xs leading-tight font-medium text-muted-foreground">Portfolio</div>
+          <div className="-translate-y-[1px] text-base leading-tight font-semibold text-yes">
             {isLoadingValue
               ? <Skeleton className="h-5 w-12" />
               : (
@@ -50,12 +50,12 @@ export default function HeaderPortfolio() {
       <Button
         variant="ghost"
         size="header"
-        className="flex flex-col gap-0"
+        className="flex flex-col justify-center gap-0.5"
         asChild
       >
         <Link href="/portfolio">
-          <div className="text-xs font-medium text-muted-foreground">Cash</div>
-          <div className="text-base font-semibold text-yes">
+          <div className="translate-y-[1px] text-xs leading-tight font-medium text-muted-foreground">Cash</div>
+          <div className="-translate-y-[1px] text-base leading-tight font-semibold text-yes">
             {isLoadingValue
               ? <Skeleton className="h-5 w-12" />
               : (

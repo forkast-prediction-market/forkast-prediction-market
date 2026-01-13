@@ -47,7 +47,7 @@ export default function HeaderDropdownUserMenuAuth() {
     clearCloseTimeout()
     closeTimeoutRef.current = setTimeout(() => {
       setMenuOpen(false)
-    }, 120)
+    }, 220)
   }
 
   useEffect(() => () => clearCloseTimeout(), [])
@@ -75,20 +75,24 @@ export default function HeaderDropdownUserMenuAuth() {
           type="button"
           variant="ghost"
           size="header"
-          className="group flex items-center gap-2 px-2"
+          className={`
+            group flex cursor-pointer items-center gap-2 px-2 transition-colors
+            hover:bg-accent/70 hover:text-accent-foreground
+            data-[state=open]:bg-accent/70 data-[state=open]:text-accent-foreground
+          `}
           data-testid="header-menu-button"
-          onMouseEnter={handleOpen}
-          onMouseLeave={handleClose}
+          onPointerEnter={handleOpen}
+          onPointerLeave={handleClose}
         >
           <Image
             src={user.image}
             alt="User avatar"
             width={32}
             height={32}
-            className="rounded-full"
+            className="pointer-events-none rounded-full"
           />
           <ChevronDownIcon className={`
-            size-4 transition-transform duration-150
+            pointer-events-none size-4 transition-transform duration-150
             group-hover:rotate-180
             group-data-[state=open]:rotate-180
           `}
@@ -97,9 +101,10 @@ export default function HeaderDropdownUserMenuAuth() {
       </DropdownMenuTrigger>
       <DropdownMenuContent
         className="w-64"
+        sideOffset={0}
         collisionPadding={16}
-        onMouseEnter={handleOpen}
-        onMouseLeave={handleClose}
+        onPointerEnter={handleOpen}
+        onPointerLeave={handleClose}
       >
         <DropdownMenuItem asChild>
           <UserInfoSection />
