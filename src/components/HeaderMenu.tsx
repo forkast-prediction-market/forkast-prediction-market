@@ -86,6 +86,7 @@ export default function HeaderMenu() {
           <Button
             size="sm"
             variant="link"
+            className="no-underline hover:bg-accent/70 hover:no-underline"
             data-testid="header-login-button"
             onClick={() => open()}
           >

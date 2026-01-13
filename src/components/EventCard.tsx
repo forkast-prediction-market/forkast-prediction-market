@@ -260,7 +260,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
       className={
         `
           flex h-45 cursor-pointer flex-col transition-all
-          hover:-translate-y-0.5 hover:shadow-lg
+          hover:-translate-y-0.5 hover:bg-[color:var(--card-hover)] hover:shadow-lg
           ${isInTradingMode ? 'ring-2 ring-primary/20' : ''}
           overflow-hidden
         `

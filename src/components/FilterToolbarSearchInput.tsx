@@ -45,7 +45,11 @@ export default function FilterToolbarSearchInput({ search, onSearchChange }: Fil
         placeholder="Search"
         value={searchQuery}
         onChange={e => setSearchQuery(e.target.value)}
-        className="bg-input pl-10 focus-visible:ring-0 dark:bg-input/30"
+        className={`
+          border-transparent bg-input pl-10 shadow-none transition-colors
+          hover:bg-[color:var(--input-hover)]
+          focus-visible:border-border focus-visible:bg-background focus-visible:ring-0 focus-visible:ring-offset-0
+        `}
       />
     </div>
   )

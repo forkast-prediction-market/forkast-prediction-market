@@ -103,7 +103,11 @@ export default function HeaderHowItWorks() {
           type="button"
           variant="link"
           size="sm"
-          className="hidden items-center gap-1.5 sm:inline-flex"
+          className={`
+            hidden items-center gap-1.5 text-primary/80 no-underline
+            hover:text-primary hover:no-underline
+            sm:inline-flex
+          `}
           data-testid="how-it-works-trigger-desktop"
         >
           <InfoIcon className="size-4" />
@@ -119,7 +123,10 @@ export default function HeaderHowItWorks() {
                 type="button"
                 variant="link"
                 size="sm"
-                className="flex-1 justify-center gap-2 text-primary no-underline"
+                className={`
+                  flex-1 justify-center gap-2 text-primary/80 no-underline
+                  hover:text-primary hover:no-underline
+                `}
                 data-testid="how-it-works-trigger-mobile"
               >
                 <InfoIcon className="size-4" />
