@@ -20,7 +20,7 @@ export function Providers({ children }: { children: ReactNode }) {
             <div className="min-h-screen bg-background">
               {children}
             </div>
-            <Toaster position="top-center" />
+            <Toaster position="bottom-left" />
             {process.env.NODE_ENV === 'production' && <SpeedInsights />}
             {process.env.NODE_ENV === 'production' && <GoogleAnalytics />}
           </AppKitProvider>

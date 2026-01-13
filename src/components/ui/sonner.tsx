@@ -15,12 +15,27 @@ function Toaster({ ...props }: ToasterProps) {
       closeButton={true}
       duration={6000}
       visibleToasts={5}
+      toastOptions={{
+        style: {
+          fontSize: '0.95rem',
+          padding: '14px 16px',
+          gap: '10px',
+        },
+        classNames: {
+          title: 'text-base',
+          description: 'text-sm',
+          icon: '!size-5',
+          closeButton: '!size-6',
+          actionButton: '!h-8 !px-3 !text-sm',
+          cancelButton: '!h-8 !px-3 !text-sm',
+        },
+      }}
       icons={{
-        success: <CircleCheckIcon className="size-4 text-yes" />,
-        info: <InfoIcon className="size-4 text-primary" />,
-        warning: <TriangleAlertIcon className="size-4 text-orange-400" />,
-        error: <OctagonXIcon className="size-4 text-no" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
+        success: <CircleCheckIcon className="size-5 text-yes" />,
+        info: <InfoIcon className="size-5 text-primary" />,
+        warning: <TriangleAlertIcon className="size-5 text-orange-400" />,
+        error: <OctagonXIcon className="size-5 text-no" />,
+        loading: <Loader2Icon className="size-5 animate-spin" />,
       }}
       style={
         {
@@ -28,6 +43,7 @@ function Toaster({ ...props }: ToasterProps) {
           '--normal-text': 'var(--popover-foreground)',
           '--normal-border': 'var(--border)',
           '--border-radius': 'var(--radius)',
+          '--width': '22rem',
         } as React.CSSProperties
       }
       {...props}
