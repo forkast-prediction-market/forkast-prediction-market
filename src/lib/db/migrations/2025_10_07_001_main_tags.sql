@@ -26,10 +26,12 @@ upserted AS (
   SET
     name = EXCLUDED.name,
     display_order = EXCLUDED.display_order,
-    is_main_category = TRUE
+    is_main_category = TRUE,
+    is_hidden = FALSE,
+    hide_events = FALSE
   RETURNING slug
 )
 UPDATE tags
 SET is_main_category = FALSE
 WHERE is_main_category = TRUE
-  AND slug NOT IN (SELECT slug FROM desired);
+  AND slug NOT IN (SELECT slug FROM upserted);
