@@ -83,7 +83,10 @@ export default function HeaderDropdownUserMenuAuth() {
       <DropdownMenu
         key={isAdmin ? 'admin' : 'platform'}
         open={menuOpen}
-        onOpenChange={setMenuOpen}
+        onOpenChange={(nextOpen) => {
+          clearCloseTimeout()
+          setMenuOpen(nextOpen)
+        }}
         modal={false}
       >
         <DropdownMenuTrigger asChild>
