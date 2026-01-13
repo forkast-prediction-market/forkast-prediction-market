@@ -181,6 +181,7 @@ describe('storeOrderAction', () => {
       .mockResolvedValueOnce({
         status: 201,
         statusText: 'Created',
+        ok: true,
         json: async () => ({ orderId: 'clob-123' }),
       })
       .mockResolvedValueOnce({
