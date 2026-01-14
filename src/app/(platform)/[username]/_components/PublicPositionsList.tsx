@@ -486,7 +486,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
     params.set('side', 'SELL')
     params.set('orderType', 'Market')
     params.set('outcomeIndex', resolvedOutcomeIndex.toString())
-    params.set('shares', formatAmountInputValue(shares))
+    params.set('shares', formatAmountInputValue(shares, { roundingMode: 'floor' }))
     if (position.conditionId) {
       params.set('conditionId', position.conditionId)
     }
@@ -549,7 +549,7 @@ export default function PublicPositionsList({ userAddress }: PublicPositionsList
       return
     }
 
-    const effectiveShares = formatAmountInputValue(shares)
+    const effectiveShares = formatAmountInputValue(shares, { roundingMode: 'floor' })
     if (!effectiveShares) {
       handleOrderErrorFeedback('Trade failed', 'Invalid share amount.')
       return

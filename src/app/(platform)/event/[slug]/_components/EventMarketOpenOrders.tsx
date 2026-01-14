@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { MICRO_UNIT, OUTCOME_INDEX, tableHeaderClass } from '@/lib/constants'
-import { formatCurrency, formatSharePriceLabel, sharesFormatter } from '@/lib/formatters'
+import { formatCurrency, formatSharePriceLabel, formatSharesLabel } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
@@ -167,7 +167,7 @@ function formatFilledLabel(filledShares: number, totalShares: number) {
   }
 
   const normalizedFilled = Math.min(Math.max(filledShares, 0), totalShares)
-  return `${sharesFormatter.format(normalizedFilled)}/${sharesFormatter.format(totalShares)}`
+  return `${formatSharesLabel(normalizedFilled)}/${formatSharesLabel(totalShares)}`
 }
 
 function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {

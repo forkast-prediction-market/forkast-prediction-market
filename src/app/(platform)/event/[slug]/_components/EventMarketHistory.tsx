@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { MICRO_UNIT, POLYGON_SCAN_BASE } from '@/lib/constants'
 import { fetchUserActivityData, mapDataApiActivityToActivityOrder } from '@/lib/data-api/user'
-import { formatCurrency, formatSharePriceLabel, formatTimeAgo, fromMicro, sharesFormatter } from '@/lib/formatters'
+import { formatCurrency, formatSharePriceLabel, formatSharesLabel, formatTimeAgo, fromMicro } from '@/lib/formatters'
 import { getUserPublicAddress } from '@/lib/user-address'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
@@ -171,7 +171,7 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
         {activities.map((activity) => {
           const sharesValue = Number.parseFloat(fromMicro(activity.amount, 4))
           const sharesLabel = Number.isFinite(sharesValue)
-            ? sharesFormatter.format(sharesValue)
+            ? formatSharesLabel(sharesValue)
             : '—'
           const outcomeColorClass = (activity.outcome.text || '').toLowerCase() === 'yes'
             ? 'text-yes'

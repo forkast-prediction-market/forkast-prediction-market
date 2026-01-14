@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { formatCurrencyValue, getLatestPrice, getValue } from '@/app/(platform)/[username]/_utils/PublicPositionsUtils'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
+import { formatCentsLabel, formatCurrency, formatSharesLabel } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
 interface PublicPositionsRowProps {
@@ -73,7 +73,7 @@ export default function PublicPositionsRow({
               </span>
               {Number.isFinite(position.size) && (
                 <span className="text-muted-foreground">
-                  {(position.size ?? 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                  {formatSharesLabel(position.size ?? 0)}
                   {' '}
                   shares
                 </span>

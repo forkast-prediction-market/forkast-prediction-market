@@ -2,7 +2,7 @@ import type { OrderBookLevel, OrderBookUserOrder } from '@/app/(platform)/event/
 import { CircleXIcon, Clock4Icon, Loader2Icon } from 'lucide-react'
 import { formatOrderBookPrice, formatTooltipShares } from '@/app/(platform)/event/[slug]/_utils/EventOrderBookUtils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
-import { sharesFormatter, usdFormatter } from '@/lib/formatters'
+import { formatSharesLabel, usdFormatter } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
 interface EventOrderBookRowProps {
@@ -126,7 +126,7 @@ export default function EventOrderBookRow({
       </div>
       <div className="flex h-full items-center justify-center px-2 sm:px-3">
         <span className="text-sm font-medium text-foreground">
-          {sharesFormatter.format(level.shares)}
+          {formatSharesLabel(level.shares)}
         </span>
       </div>
       <div className="flex h-full items-center justify-center px-2 sm:px-3">

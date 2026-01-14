@@ -2,7 +2,7 @@ import type { PublicActivity } from '@/types'
 import { SquareArrowOutUpRightIcon } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { formatCurrency, formatSharePriceLabel, formatTimeAgo } from '@/lib/formatters'
+import { formatCurrency, formatSharePriceLabel, formatSharesLabel, formatTimeAgo } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
 export function PublicActivityItem({ item }: { item: PublicActivity }) {
@@ -83,7 +83,7 @@ export function PublicActivityItem({ item }: { item: PublicActivity }) {
                 )}
             {typeof item.shares === 'number' && (
               <span className="text-xs font-semibold text-muted-foreground">
-                {item.shares.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                {formatSharesLabel(item.shares)}
                 {' '}
                 shares
               </span>

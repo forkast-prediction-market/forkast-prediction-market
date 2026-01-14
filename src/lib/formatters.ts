@@ -20,9 +20,49 @@ export const usdFormatter = new Intl.NumberFormat(DEFAULT_LOCALE, {
   maximumFractionDigits: 2,
 })
 
+const SHARES_FORMATTER_CACHE = new Map<string, Intl.NumberFormat>([
+  ['0-2', sharesFormatter],
+])
+
 const USD_FORMATTER_CACHE = new Map<string, Intl.NumberFormat>([
   ['2-2', usdFormatter],
 ])
+
+function getSharesFormatter(min: number, max: number) {
+  const key = `${min}-${max}`
+  const cached = SHARES_FORMATTER_CACHE.get(key)
+  if (cached) {
+    return cached
+  }
+
+  const formatter = new Intl.NumberFormat(DEFAULT_LOCALE, {
+    minimumFractionDigits: min,
+    maximumFractionDigits: max,
+  })
+  SHARES_FORMATTER_CACHE.set(key, formatter)
+  return formatter
+}
+
+interface SharesFormatOptions {
+  minimumFractionDigits?: number
+  maximumFractionDigits?: number
+}
+
+export function formatSharesLabel(value: number, options: SharesFormatOptions = {}) {
+  if (!Number.isFinite(value) || value <= 0) {
+    return '0'
+  }
+
+  const maximumFractionDigits = options.maximumFractionDigits ?? 2
+  const minimumFractionDigits = options.minimumFractionDigits ?? 0
+  const scale = 10 ** Math.max(0, maximumFractionDigits)
+  const truncated = Math.floor(value * scale + 1e-8) / scale
+  const formatter = getSharesFormatter(
+    Math.min(minimumFractionDigits, maximumFractionDigits),
+    maximumFractionDigits,
+  )
+  return formatter.format(Math.max(0, truncated))
+}
 
 function getUsdFormatter(min: number, max: number) {
   const key = `${min}-${max}`

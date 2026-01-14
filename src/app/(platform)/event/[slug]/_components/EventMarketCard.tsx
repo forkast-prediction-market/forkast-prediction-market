@@ -8,7 +8,7 @@ import { memo, useMemo } from 'react'
 import EventMarketChance from '@/app/(platform)/event/[slug]/_components/EventMarketChance'
 import { Button } from '@/components/ui/button'
 import { OUTCOME_INDEX } from '@/lib/constants'
-import { formatCentsLabel, sharesFormatter } from '@/lib/formatters'
+import { formatCentsLabel, formatSharesLabel } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
 export interface MarketPositionTag {
@@ -322,7 +322,7 @@ function PositionTags({
       {tags.map((tag) => {
         const isYes = tag.outcomeIndex === OUTCOME_INDEX.YES
         const label = tag.label || (isYes ? 'Yes' : 'No')
-        const sharesLabel = sharesFormatter.format(tag.shares)
+        const sharesLabel = formatSharesLabel(tag.shares)
         const avgPriceLabel = formatCentsLabel(tag.avgPrice, { fallback: '—' })
 
         return (

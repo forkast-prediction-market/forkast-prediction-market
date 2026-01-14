@@ -16,8 +16,8 @@ import {
   formatCentsLabel,
   formatCurrency,
   formatPercent,
+  formatSharesLabel,
   fromMicro,
-  sharesFormatter,
 } from '@/lib/formatters'
 import { buildShareCardPayload } from '@/lib/share-card'
 import { getUserPublicAddress } from '@/lib/user-address'
@@ -83,7 +83,7 @@ function MarketPositionRow({
   const quantity = toNumber(position.size)
     ?? (typeof position.total_shares === 'number' ? position.total_shares : 0)
   const formattedQuantity = quantity > 0
-    ? sharesFormatter.format(quantity)
+    ? formatSharesLabel(quantity)
     : '—'
   const averagePriceDollars = toNumber(position.avgPrice)
     ?? Number(fromMicro(String(position.average_position ?? 0), 6))
@@ -363,7 +363,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
 
     const shares = typeof positionItem.total_shares === 'number' ? positionItem.total_shares : 0
     if (shares > 0) {
-      setOrderAmount(formatAmountInputValue(shares))
+      setOrderAmount(formatAmountInputValue(shares, { roundingMode: 'floor' }))
     }
     else {
       setOrderAmount('')

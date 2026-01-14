@@ -1,5 +1,5 @@
 import { OUTCOME_INDEX } from '@/lib/constants'
-import { sharesFormatter } from '@/lib/formatters'
+import { formatSharesLabel } from '@/lib/formatters'
 
 type ActiveOutcome = typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO | undefined
 
@@ -15,8 +15,8 @@ export default function EventOrderPanelUserShares({ yesShares, noShares, activeO
     return null
   }
 
-  const formattedYesShares = formatShareValue(yesShares)
-  const formattedNoShares = formatShareValue(noShares)
+  const formattedYesShares = formatSharesLabel(yesShares)
+  const formattedNoShares = formatSharesLabel(noShares)
   const yesClass = activeOutcome === OUTCOME_INDEX.YES ? 'text-yes' : 'text-muted-foreground'
   const noClass = activeOutcome === OUTCOME_INDEX.NO ? 'text-no' : 'text-muted-foreground'
 
@@ -38,13 +38,4 @@ export default function EventOrderPanelUserShares({ yesShares, noShares, activeO
       </div>
     </div>
   )
-}
-
-function formatShareValue(value: number) {
-  if (!Number.isFinite(value) || value <= 0) {
-    return '0'
-  }
-
-  const truncated = Math.floor(value * 100 + 1e-8) / 100
-  return sharesFormatter.format(Math.max(0, truncated))
 }

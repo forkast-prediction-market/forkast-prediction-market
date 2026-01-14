@@ -10,6 +10,7 @@ import {
   UnfoldHorizontalIcon,
 } from 'lucide-react'
 import { MICRO_UNIT } from '@/lib/constants'
+import { formatSharesLabel } from '@/lib/formatters'
 
 export function resolveActivitySort(sortFilter: ActivitySort) {
   if (sortFilter === 'oldest') {
@@ -48,7 +49,7 @@ export function formatShares(amount: string | number | undefined) {
     return null
   }
   const useExtraPrecision = Math.abs(numeric) < 0.01
-  const formatted = numeric.toLocaleString(undefined, {
+  const formatted = formatSharesLabel(numeric, {
     minimumFractionDigits: useExtraPrecision ? 4 : 0,
     maximumFractionDigits: useExtraPrecision ? 4 : 2,
   })

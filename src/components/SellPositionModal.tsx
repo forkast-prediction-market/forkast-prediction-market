@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { formatCentsLabel, formatCurrency } from '@/lib/formatters'
+import { formatCentsLabel, formatCurrency, formatSharesLabel } from '@/lib/formatters'
 
 interface SellPositionModalProps {
   open: boolean
@@ -44,8 +44,8 @@ export default function SellPositionModal({
   const hasPartialFill = safeFilledShares != null
     && safeFilledShares > 0
     && safeFilledShares + 1e-6 < safeShares
-  const sharesLabel = safeShares.toFixed(2)
-  const filledSharesLabel = safeFilledShares != null ? safeFilledShares.toFixed(2) : sharesLabel
+  const sharesLabel = formatSharesLabel(safeShares)
+  const filledSharesLabel = safeFilledShares != null ? formatSharesLabel(safeFilledShares) : sharesLabel
   const avgPriceDollars = typeof avgPriceCents === 'number' && Number.isFinite(avgPriceCents)
     ? avgPriceCents / 100
     : null

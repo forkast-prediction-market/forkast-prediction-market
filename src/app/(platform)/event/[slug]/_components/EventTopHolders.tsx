@@ -10,7 +10,7 @@ import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { fetchTopHolders } from '@/lib/data-api/holders'
-import { sharesFormatter } from '@/lib/formatters'
+import { formatSharesLabel } from '@/lib/formatters'
 import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
 
 interface EventTopHoldersProps {
@@ -38,7 +38,7 @@ function formatHolderShares(value: string | number | null | undefined) {
     return '0'
   }
 
-  return sharesFormatter.format(Number(numericValue.toFixed(2)))
+  return formatSharesLabel(numericValue)
 }
 
 export default function EventTopHolders({ event }: EventTopHoldersProps) {

@@ -9,7 +9,7 @@ import type {
 } from '@/app/(platform)/event/[slug]/_types/EventOrderBookTypes'
 import type { Market, Outcome } from '@/types'
 import { MICRO_UNIT, OUTCOME_INDEX } from '@/lib/constants'
-import { formatCentsLabel, sharesFormatter, toCents } from '@/lib/formatters'
+import { formatCentsLabel, formatSharesLabel, toCents } from '@/lib/formatters'
 
 const DEFAULT_MAX_LEVELS = 12
 const MAX_LIMIT_PRICE = 99.9
@@ -242,7 +242,7 @@ export function formatTooltipShares(value: number) {
   if (!Number.isFinite(value)) {
     return '0'
   }
-  return sharesFormatter.format(Number(value.toFixed(2)))
+  return formatSharesLabel(value)
 }
 
 export function formatOrderBookPrice(value: number | null | undefined) {

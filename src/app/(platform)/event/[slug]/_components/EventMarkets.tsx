@@ -235,7 +235,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
     setSide(ORDER_SIDE.SELL)
     setMarket(market)
     setOutcome(outcome)
-    setAmount(formatAmountInputValue(tag.shares))
+    setAmount(formatAmountInputValue(tag.shares, { roundingMode: 'floor' }))
     if (isMobile) {
       setIsMobileOrderPanelOpen(true)
     }

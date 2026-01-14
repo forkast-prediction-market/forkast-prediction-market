@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { formatCurrency, formatTimeAgo } from '@/lib/formatters'
+import { formatCurrency, formatSharesLabel, formatTimeAgo } from '@/lib/formatters'
 
 export interface PublicPosition {
   id: string
@@ -76,7 +76,7 @@ export default function PublicPositionItem({ item }: PositionItemProps) {
               <span className="text-xs text-muted-foreground">
                 Size:
                 {' '}
-                {item.size.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                {formatSharesLabel(item.size)}
               </span>
             )}
 
