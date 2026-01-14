@@ -5,7 +5,6 @@ import { cacheTag } from 'next/cache'
 import { cacheTags } from '@/lib/cache-tags'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { bookmarks } from '@/lib/db/schema/bookmarks/tables'
-import { comments } from '@/lib/db/schema/comments/tables'
 import { event_tags, events, markets, tags } from '@/lib/db/schema/events/tables'
 import { runQuery } from '@/lib/db/utils/run-query'
 import { db } from '@/lib/drizzle'
@@ -212,7 +211,6 @@ type DrizzleEventResult = typeof events.$inferSelect & {
     tag: typeof tags.$inferSelect
   })[]
   bookmarks?: typeof bookmarks.$inferSelect[]
-  comments_count?: number | null
 }
 
 interface RelatedEvent {
@@ -303,7 +301,6 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
     rules: event.rules || undefined,
     active_markets_count: Number(event.active_markets_count || 0),
     total_markets_count: Number(event.total_markets_count || 0),
-    comments_count: Number(event.comments_count ?? 0),
     created_at: event.created_at?.toISOString() || new Date().toISOString(),
     updated_at: event.updated_at?.toISOString() || new Date().toISOString(),
     end_date: event.end_date?.toISOString() ?? null,
@@ -331,20 +328,6 @@ function getEventMainTag(tags: any[] | undefined): string {
 
   const mainTag = tags.find(tag => tag.is_main_category)
   return mainTag?.name || tags[0].name
-}
-
-function safeNumber(value: unknown): number {
-  if (typeof value === 'bigint') {
-    return Number(value)
-  }
-  if (typeof value === 'number') {
-    return Number.isFinite(value) ? value : 0
-  }
-  if (typeof value === 'string') {
-    const parsed = Number.parseFloat(value)
-    return Number.isFinite(parsed) ? parsed : 0
-  }
-  return 0
 }
 
 export const EventRepository = {
@@ -702,23 +685,13 @@ export const EventRepository = {
         throw new Error('Event not found')
       }
 
-      const commentsCountResult = await db
-        .select({ count: sql<number>`cast(count(*) as int)` })
-        .from(comments)
-        .where(and(
-          eq(comments.event_id, eventResult.id),
-          eq(comments.is_deleted, false),
-        ))
-
-      const commentsCount = safeNumber(commentsCountResult[0]?.count)
-
       const outcomeTokenIds = (eventResult.markets ?? []).flatMap((market: any) =>
         (market.condition?.outcomes ?? []).map((outcome: any) => outcome.token_id).filter(Boolean),
       )
 
       const priceMap = await fetchOutcomePrices(outcomeTokenIds)
       const transformedEvent = eventResource(
-        { ...(eventResult as DrizzleEventResult), comments_count: commentsCount },
+        eventResult as DrizzleEventResult,
         userId,
         priceMap,
       )

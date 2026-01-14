@@ -1,6 +1,5 @@
 import { relations } from 'drizzle-orm'
 import { bookmarks } from '@/lib/db/schema/bookmarks/tables'
-import { comment_likes, comment_reports, comments } from '@/lib/db/schema/comments/tables'
 import { notifications } from '@/lib/db/schema/notifications/tables'
 import { orders } from '@/lib/db/schema/orders/tables'
 import { accounts, sessions, two_factors, users, wallets } from './tables'
@@ -12,9 +11,6 @@ export const usersRelations = relations(users, ({ many, one }) => ({
   twoFactors: many(two_factors),
   bookmarks: many(bookmarks),
   orders: many(orders),
-  comments: many(comments),
-  commentLikes: many(comment_likes),
-  commentReports: many(comment_reports),
   notifications: many(notifications),
   referredByUser: one(users, {
     fields: [users.referred_by_user_id],

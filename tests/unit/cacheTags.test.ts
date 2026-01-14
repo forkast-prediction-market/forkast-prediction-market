@@ -4,8 +4,6 @@ import { cacheTags } from '@/lib/cache-tags'
 describe('cacheTags', () => {
   it('builds stable tag strings', () => {
     expect(cacheTags.notifications('u1')).toBe('notifications:u1')
-    expect(cacheTags.eventComments('e1')).toBe('eventcomments:e1')
-    expect(cacheTags.commentLikes('u1')).toBe('commentlikes:u1')
     expect(cacheTags.activity('slug')).toBe('activity:slug')
     expect(cacheTags.holders('cond')).toBe('holders:cond')
     expect(cacheTags.events('u1')).toBe('events:u1')
