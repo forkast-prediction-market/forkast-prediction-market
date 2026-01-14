@@ -158,7 +158,7 @@ export async function fetchProfileLinkStats(
         user: address,
         limit: '100',
         offset: '0',
-        sizeThreshold: '0',
+        sizeThreshold: '0.01',
         sortDirection: 'DESC',
       })
       const closedParams = new URLSearchParams({
@@ -167,6 +167,7 @@ export async function fetchProfileLinkStats(
         offset: '0',
         sortBy: 'TIMESTAMP',
         sortDirection: 'DESC',
+        sizeThreshold: '0.01',
       })
       const valueUrl = `${DATA_API_URL}/value?user=${encodeURIComponent(address)}`
       const tradedUrl = `${DATA_API_URL}/traded?user=${encodeURIComponent(address)}`

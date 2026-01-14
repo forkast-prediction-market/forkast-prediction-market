@@ -107,7 +107,7 @@ async function fetchDataApiPositions(address: string): Promise<DataApiPosition[]
       user: address,
       limit: limit.toString(),
       offset: offset.toString(),
-      sizeThreshold: '0',
+      sizeThreshold: '0.01',
     })
 
     let response: Response

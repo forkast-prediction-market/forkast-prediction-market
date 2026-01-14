@@ -407,13 +407,11 @@ export async function fetchUserPositionsForMarket({
     limit: '50',
     offset: pageParam.toString(),
     sortDirection: 'DESC',
+    sizeThreshold: '0.01',
   })
 
   if (status === 'closed') {
     params.set('sortBy', 'TIMESTAMP')
-  }
-  if (status === 'active') {
-    params.set('sizeThreshold', '0')
   }
   if (conditionId) {
     params.set('market', conditionId)

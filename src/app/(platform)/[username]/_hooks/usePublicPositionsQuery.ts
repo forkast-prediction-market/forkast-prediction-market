@@ -39,7 +39,7 @@ async function fetchUserPositions({
       params.set('sizeThreshold', minAmountFilter)
     }
     else {
-      params.set('sizeThreshold', '0')
+      params.set('sizeThreshold', '0.01')
     }
     if (shouldApplySort) {
       params.set('sortBy', apiSortBy)
@@ -56,6 +56,7 @@ async function fetchUserPositions({
   if (status === 'closed') {
     params.set('sortBy', 'TIMESTAMP')
     params.set('sortDirection', 'DESC')
+    params.set('sizeThreshold', '0.01')
     if (market) {
       params.set('market', market)
     }

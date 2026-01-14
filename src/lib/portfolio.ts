@@ -83,7 +83,7 @@ export async function fetchPortfolioSnapshot(userAddress?: string | null): Promi
       user: address,
       limit: '100',
       offset: '0',
-      sizeThreshold: '0',
+      sizeThreshold: '0.01',
       sortDirection: 'DESC',
     })
     const closedParams = new URLSearchParams({
@@ -92,6 +92,7 @@ export async function fetchPortfolioSnapshot(userAddress?: string | null): Promi
       offset: '0',
       sortBy: 'TIMESTAMP',
       sortDirection: 'DESC',
+      sizeThreshold: '0.01',
     })
 
     const tradedUrl = `${DATA_API_URL}/traded?user=${encodeURIComponent(address)}`

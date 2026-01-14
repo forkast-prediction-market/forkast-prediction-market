@@ -53,13 +53,14 @@ export function formatSharesLabel(value: number, options: SharesFormatOptions = 
     return '0'
   }
 
-  const maximumFractionDigits = options.maximumFractionDigits ?? 2
   const minimumFractionDigits = options.minimumFractionDigits ?? 0
-  const scale = 10 ** Math.max(0, maximumFractionDigits)
+  const maximumFractionDigits = options.maximumFractionDigits ?? Math.max(2, minimumFractionDigits)
+  const normalizedMaxDigits = Math.max(maximumFractionDigits, minimumFractionDigits)
+  const scale = 10 ** Math.max(0, normalizedMaxDigits)
   const truncated = Math.floor(value * scale + 1e-8) / scale
   const formatter = getSharesFormatter(
-    Math.min(minimumFractionDigits, maximumFractionDigits),
-    maximumFractionDigits,
+    minimumFractionDigits,
+    normalizedMaxDigits,
   )
   return formatter.format(Math.max(0, truncated))
 }
