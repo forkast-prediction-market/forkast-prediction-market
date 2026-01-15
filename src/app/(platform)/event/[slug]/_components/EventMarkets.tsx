@@ -470,11 +470,14 @@ function MarketDetailTabs({
 }: MarketDetailTabsProps) {
   const user = useUser()
   const { selected: controlledTab, select } = tabController
+  const positionSizeThreshold = 0.01
   const marketShares = sharesByCondition?.[market.condition_id]
+  const yesShares = marketShares?.[OUTCOME_INDEX.YES] ?? 0
+  const noShares = marketShares?.[OUTCOME_INDEX.NO] ?? 0
   const hasPositions = Boolean(
     user?.proxy_wallet_address
     && marketShares
-    && ((marketShares[OUTCOME_INDEX.YES] ?? 0) > 0 || (marketShares[OUTCOME_INDEX.NO] ?? 0) > 0),
+    && (yesShares >= positionSizeThreshold || noShares >= positionSizeThreshold),
   )
 
   const { data: openOrdersData } = useUserOpenOrdersQuery({
