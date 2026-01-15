@@ -218,7 +218,7 @@ function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
                 type="button"
                 aria-label={`Cancel ${sideLabel} order for ${outcomeLabel}`}
                 variant="outline"
-                size="icon"
+                size="sm"
                 disabled={isCancelling}
                 onClick={() => onCancel(order)}
               >

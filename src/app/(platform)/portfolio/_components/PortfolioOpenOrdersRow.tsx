@@ -60,7 +60,7 @@ export default function PortfolioOpenOrdersRow({ order }: PortfolioOpenOrdersRow
           <div className="min-w-0 space-y-1">
             <Link
               href={`/event/${eventSlug}`}
-              className="line-clamp-2 block text-sm font-semibold no-underline hover:no-underline"
+              className="block text-sm font-semibold whitespace-nowrap no-underline hover:no-underline"
               title={order.market.title}
             >
               {order.market.title}
@@ -102,8 +102,7 @@ export default function PortfolioOpenOrdersRow({ order }: PortfolioOpenOrdersRow
               <Button
                 type="button"
                 variant="outline"
-                size="icon"
-                className="rounded-lg"
+                size="sm"
                 aria-label="Cancel"
               >
                 <XIcon className="size-4" />
