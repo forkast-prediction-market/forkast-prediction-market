@@ -7,7 +7,7 @@ import { MICRO_UNIT } from '@/lib/constants'
 import { formatCurrency, formatTimeAgo } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
-export default function PublicActivityRow({ activity, rowGridClass }: PublicActivityRowProps) {
+export default function PublicActivityRow({ activity }: PublicActivityRowProps) {
   const variant = resolveVariant(activity)
   const { Icon, label, className } = activityIcon(variant)
   const sharesText = formatShares(activity.amount)
@@ -96,27 +96,28 @@ export default function PublicActivityRow({ activity, rowGridClass }: PublicActi
       )
 
   return (
-    <div
-      className={cn(
-        rowGridClass,
-        `border-b p-2 transition-colors first:border-t first:border-border/60 hover:bg-muted/50 sm:px-3`,
-        'last:border-b-0',
-      )}
-    >
-      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-        <Icon className={cn('size-4 text-muted-foreground', className)} />
-        <span>{label}</span>
-      </div>
+    <tr className="border-b transition-colors hover:bg-muted/50">
+      <td className="px-2 py-3 text-sm font-semibold text-foreground sm:px-3">
+        <div className="flex items-center gap-2">
+          <Icon className={cn('size-4 text-muted-foreground', className)} />
+          <span>{label}</span>
+        </div>
+      </td>
 
-      {marketContent}
+      <td className="px-2 py-3 sm:px-3">
+        {marketContent}
+      </td>
 
-      <div className={cn('text-right text-sm font-semibold', isPositive ? 'text-yes' : 'text-foreground')}>
+      <td className={cn('px-2 py-3 text-right text-sm font-semibold sm:px-3', isPositive
+        ? 'text-yes'
+        : `text-foreground`)}
+      >
         {Number.isFinite(valueNumber) ? `${valuePrefix}${valueDisplay}` : '—'}
-      </div>
+      </td>
 
-      <div className="text-right text-xs text-muted-foreground">
+      <td className="px-2 py-3 text-right text-xs text-muted-foreground sm:px-3">
         {formatTimeAgo(activity.created_at)}
-      </div>
-    </div>
+      </td>
+    </tr>
   )
 }

@@ -87,8 +87,8 @@ export default function PublicPositionsTable({
   const hasPositions = positions.length > 0
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-180 border-collapse">
+    <div className="relative w-full overflow-x-auto">
+      <table className="w-full border-collapse">
         <thead>
           <tr className="border-b">
             <th className={cn(tableHeaderClass, 'text-left')}>

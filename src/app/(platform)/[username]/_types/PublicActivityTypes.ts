@@ -6,5 +6,4 @@ export type ActivityVariant = 'split' | 'merge' | 'redeem' | 'deposit' | 'withdr
 
 export interface PublicActivityRowProps {
   activity: ActivityOrder
-  rowGridClass: string
 }

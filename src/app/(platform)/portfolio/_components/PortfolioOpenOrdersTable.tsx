@@ -5,7 +5,6 @@ import { cn } from '@/lib/utils'
 import PortfolioOpenOrdersRow from './PortfolioOpenOrdersRow'
 
 interface PortfolioOpenOrdersTableProps {
-  rowGridClass: string
   orders: PortfolioUserOpenOrder[]
   isLoading: boolean
   emptyText: string
@@ -14,60 +13,81 @@ interface PortfolioOpenOrdersTableProps {
 }
 
 export default function PortfolioOpenOrdersTable({
-  rowGridClass,
   orders,
   isLoading,
   emptyText,
   isFetchingNextPage,
   loadMoreRef,
 }: PortfolioOpenOrdersTableProps) {
-  return (
-    <div className="overflow-x-auto">
-      <div className="min-w-180">
-        <div
-          className={cn(
-            rowGridClass,
-            tableHeaderClass,
-          )}
-        >
-          <div className="pl-15 text-left">Market</div>
-          <div className="text-center">Side</div>
-          <div className="text-left">Outcome</div>
-          <div className="text-center">Price</div>
-          <div className="text-center">Filled</div>
-          <div className="text-center">Total</div>
-          <div className="text-left sm:text-center">Expiration</div>
-          <div className="flex justify-end">
-            <div className="w-10" aria-hidden />
-          </div>
-        </div>
+  const hasOrders = orders.length > 0
+  const colSpan = 8
+  let body = null
 
-        {isLoading && (
-          <div className="space-y-3 px-2 sm:px-3">
+  if (isLoading) {
+    body = (
+      <tr>
+        <td colSpan={colSpan} className="p-0">
+          <div className="space-y-3 px-2 py-3 sm:px-3">
             {Array.from({ length: 4 }).map((_, idx) => (
               <div key={idx} className="h-14 rounded-lg border bg-muted/30" />
             ))}
           </div>
+        </td>
+      </tr>
+    )
+  }
+  else if (!hasOrders) {
+    body = (
+      <tr>
+        <td colSpan={colSpan} className="py-12 text-center text-sm text-muted-foreground">
+          {emptyText}
+        </td>
+      </tr>
+    )
+  }
+  else {
+    body = (
+      <>
+        {orders.map(order => (
+          <PortfolioOpenOrdersRow key={order.id} order={order} />
+        ))}
+        {isFetchingNextPage && (
+          <tr>
+            <td colSpan={colSpan} className="py-3 text-center text-xs text-muted-foreground">
+              Loading more...
+            </td>
+          </tr>
         )}
-
-        {!isLoading && orders.length === 0 && (
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            {emptyText}
-          </div>
-        )}
-
-        {!isLoading && orders.length > 0 && (
-          <div className="space-y-0">
-            {orders.map(order => (
-              <PortfolioOpenOrdersRow key={order.id} order={order} rowGridClass={rowGridClass} />
-            ))}
-            {isFetchingNextPage && (
-              <div className="py-3 text-center text-xs text-muted-foreground">Loading more...</div>
-            )}
+        <tr>
+          <td colSpan={colSpan} className="p-0">
             <div ref={loadMoreRef} className="h-0" />
-          </div>
-        )}
-      </div>
+          </td>
+        </tr>
+      </>
+    )
+  }
+
+  return (
+    <div className="relative w-full overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b bg-background">
+            <th className={cn(tableHeaderClass, 'text-left')}>Market</th>
+            <th className={cn(tableHeaderClass, 'text-center')}>Side</th>
+            <th className={cn(tableHeaderClass, 'text-left')}>Outcome</th>
+            <th className={cn(tableHeaderClass, 'text-center')}>Price</th>
+            <th className={cn(tableHeaderClass, 'text-center')}>Filled</th>
+            <th className={cn(tableHeaderClass, 'text-center')}>Total</th>
+            <th className={cn(tableHeaderClass, 'text-left sm:text-center')}>Expiration</th>
+            <th className={cn(tableHeaderClass, 'text-right')}>
+              <span className="sr-only">Actions</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {body}
+        </tbody>
+      </table>
     </div>
   )
 }

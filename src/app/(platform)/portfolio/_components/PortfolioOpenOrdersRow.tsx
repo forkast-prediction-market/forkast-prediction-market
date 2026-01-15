@@ -16,10 +16,9 @@ import { cn } from '@/lib/utils'
 
 interface PortfolioOpenOrdersRowProps {
   order: PortfolioUserOpenOrder
-  rowGridClass: string
 }
 
-export default function PortfolioOpenOrdersRow({ order, rowGridClass }: PortfolioOpenOrdersRowProps) {
+export default function PortfolioOpenOrdersRow({ order }: PortfolioOpenOrdersRowProps) {
   const totalShares = getOrderTotalShares(order)
   const filledShares = getOrderFilledShares(order)
   const totalValue = order.side === 'buy'
@@ -35,87 +34,85 @@ export default function PortfolioOpenOrdersRow({ order, rowGridClass }: Portfoli
   const eventSlug = order.market.event_slug || order.market.slug
 
   return (
-    <div
-      className={cn(
-        rowGridClass,
-        `border-b px-2 py-3 transition-colors first:border-t first:border-border/60 hover:bg-muted/50 sm:px-3`,
-        'last:border-b-0',
-      )}
-    >
-      <div className="flex min-w-0 items-start gap-3">
-        <Link
-          href={`/event/${eventSlug}`}
-          className="relative size-12 shrink-0 overflow-hidden rounded bg-muted"
-        >
-          {marketIcon
-            ? (
-                <Image
-                  src={marketIcon}
-                  alt={order.market.title}
-                  fill
-                  sizes="48px"
-                  className="object-cover"
-                />
-              )
-            : (
-                <div className="grid size-full place-items-center text-2xs text-muted-foreground">
-                  No image
-                </div>
-              )}
-        </Link>
-        <div className="min-w-0 space-y-1">
+    <tr className="border-b transition-colors hover:bg-muted/50">
+      <td className="px-2 py-3 sm:px-3">
+        <div className="flex min-w-0 items-start gap-3">
           <Link
             href={`/event/${eventSlug}`}
-            className="line-clamp-2 block text-sm font-semibold no-underline hover:no-underline"
-            title={order.market.title}
+            className="relative size-12 shrink-0 overflow-hidden rounded bg-muted"
           >
-            {order.market.title}
+            {marketIcon
+              ? (
+                  <Image
+                    src={marketIcon}
+                    alt={order.market.title}
+                    fill
+                    sizes="48px"
+                    className="object-cover"
+                  />
+                )
+              : (
+                  <div className="grid size-full place-items-center text-2xs text-muted-foreground">
+                    No image
+                  </div>
+                )}
           </Link>
+          <div className="min-w-0 space-y-1">
+            <Link
+              href={`/event/${eventSlug}`}
+              className="line-clamp-2 block text-sm font-semibold no-underline hover:no-underline"
+              title={order.market.title}
+            >
+              {order.market.title}
+            </Link>
+          </div>
         </div>
-      </div>
+      </td>
 
-      <div className="text-center text-sm font-semibold">
+      <td className="px-2 py-3 text-center text-sm font-semibold sm:px-3">
         {order.side === 'buy' ? 'Buy' : 'Sell'}
-      </div>
+      </td>
 
-      <div className="text-left text-sm font-semibold">
+      <td className="px-2 py-3 text-left text-sm font-semibold sm:px-3">
         <span className={cn('inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-sm font-semibold md:text-sm', outcomeColor)}>
           {outcomeText}
         </span>
-      </div>
+      </td>
 
-      <div className="text-center text-sm font-semibold">
+      <td className="px-2 py-3 text-center text-sm font-semibold sm:px-3">
         {priceLabel}
-      </div>
+      </td>
 
-      <div className="text-center text-sm font-semibold">
+      <td className="px-2 py-3 text-center text-sm font-semibold sm:px-3">
         {filledLabel}
-      </div>
+      </td>
 
-      <div className="text-center text-sm font-semibold">
+      <td className="px-2 py-3 text-center text-sm font-semibold sm:px-3">
         {formatCurrency(totalValue)}
-      </div>
+      </td>
 
-      <div className="text-left text-xs font-medium text-muted-foreground">
+      <td className="px-2 py-3 text-left text-xs font-medium text-muted-foreground sm:px-3">
         {expirationLabel}
-      </div>
+      </td>
 
-      <div className="flex justify-end">
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="rounded-lg"
-              aria-label="Cancel"
-            >
-              <XIcon className="size-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>Cancel</TooltipContent>
-        </Tooltip>
-      </div>
-    </div>
+      <td className="px-2 py-3 text-right sm:px-3">
+        <div className="flex justify-end">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                className="rounded-lg"
+                aria-label="Cancel"
+              >
+                <XIcon className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Cancel</TooltipContent>
+          </Tooltip>
+        </div>
+      </td>
+    </tr>
   )
 }

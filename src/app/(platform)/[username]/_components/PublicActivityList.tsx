@@ -12,7 +12,6 @@ interface PublicActivityListProps {
 }
 
 export default function PublicActivityList({ userAddress }: PublicActivityListProps) {
-  const rowGridClass = 'grid grid-cols-[minmax(9rem,auto)_minmax(0,2.6fr)_minmax(0,1fr)_auto] items-center gap-3'
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [typeFilter, setTypeFilter] = useState<ActivityTypeFilter>('all')
@@ -123,7 +122,6 @@ export default function PublicActivityList({ userAddress }: PublicActivityListPr
 
       <PublicActivityTable
         activities={visibleActivities}
-        rowGridClass={rowGridClass}
         isLoading={isLoading}
         hasError={hasError}
         onRetry={() => refetch()}

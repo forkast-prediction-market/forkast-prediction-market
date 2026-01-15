@@ -26,7 +26,6 @@ export default function PortfolioOpenOrdersList({ userAddress }: PortfolioOpenOr
   const [sortBy, setSortBy] = useState<PortfolioOpenOrdersSort>('market')
   const [isCancellingAll, setIsCancellingAll] = useState(false)
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
-  const rowGridClass = 'grid grid-cols-[minmax(0,2.2fr)_repeat(6,minmax(0,1fr))_auto] items-center gap-4'
   const apiSearchFilters = useMemo(
     () => resolveOpenOrdersSearchParams(debouncedSearchQuery),
     [debouncedSearchQuery],
@@ -163,7 +162,6 @@ export default function PortfolioOpenOrdersList({ userAddress }: PortfolioOpenOr
       />
 
       <PortfolioOpenOrdersTable
-        rowGridClass={rowGridClass}
         orders={visibleOrders}
         isLoading={loading}
         emptyText={emptyText}

@@ -6,7 +6,6 @@ import PublicActivityRow from './PublicActivityRow'
 
 interface PublicActivityTableProps {
   activities: ActivityOrder[]
-  rowGridClass: string
   isLoading: boolean
   hasError: boolean
   onRetry: () => void
@@ -19,7 +18,6 @@ interface PublicActivityTableProps {
 
 export default function PublicActivityTable({
   activities,
-  rowGridClass,
   isLoading,
   hasError,
   onRetry,
@@ -30,26 +28,14 @@ export default function PublicActivityTable({
   loadMoreRef,
 }: PublicActivityTableProps) {
   const hasNoData = !isLoading && activities.length === 0
+  const colSpan = 4
+  let body = null
 
-  return (
-    <div className="overflow-x-auto">
-      <div className="min-w-180">
-        <div
-          className={cn(
-            rowGridClass,
-            tableHeaderClass,
-          )}
-        >
-          <div>Activity</div>
-          <div>Market</div>
-          <div className="text-right">Value</div>
-          <div className="text-right text-transparent" aria-hidden>
-            <span className="invisible">Time</span>
-          </div>
-        </div>
-
-        {isLoading && (
-          <div className="space-y-3 px-2 sm:px-3">
+  if (isLoading) {
+    body = (
+      <tr>
+        <td colSpan={colSpan} className="p-0">
+          <div className="space-y-3 px-2 py-3 sm:px-3">
             {Array.from({ length: 4 }).map((_, index) => (
               <div
                 key={index}
@@ -57,57 +43,93 @@ export default function PublicActivityTable({
               />
             ))}
           </div>
+        </td>
+      </tr>
+    )
+  }
+  else if (hasError) {
+    body = (
+      <tr>
+        <td colSpan={colSpan} className="py-10 text-center text-sm text-muted-foreground">
+          Could not load activity.
+          {' '}
+          <button
+            type="button"
+            onClick={onRetry}
+            className="underline underline-offset-2"
+          >
+            Retry
+          </button>
+        </td>
+      </tr>
+    )
+  }
+  else if (hasNoData) {
+    body = (
+      <tr>
+        <td colSpan={colSpan} className="py-12 text-center text-sm text-muted-foreground">
+          No activity found.
+        </td>
+      </tr>
+    )
+  }
+  else {
+    body = (
+      <>
+        {activities.map(activity => (
+          <PublicActivityRow
+            key={activity.id}
+            activity={activity}
+          />
+        ))}
+        {(isFetchingNextPage || isLoadingMore) && (
+          <tr>
+            <td colSpan={colSpan} className="py-3 text-center text-xs text-muted-foreground">
+              Loading more...
+            </td>
+          </tr>
         )}
-
-        {hasError && (
-          <div className="py-10 text-center text-sm text-muted-foreground">
-            Could not load activity.
-            {' '}
-            <button
-              type="button"
-              onClick={onRetry}
-              className="underline underline-offset-2"
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
-        {hasNoData && !hasError && (
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            No activity found.
-          </div>
-        )}
-
-        {!isLoading && !hasError && activities.length > 0 && (
-          <div>
-            {activities.map(activity => (
-              <PublicActivityRow
-                key={activity.id}
-                activity={activity}
-                rowGridClass={rowGridClass}
-              />
-            ))}
-            {(isFetchingNextPage || isLoadingMore) && (
-              <div className="py-3 text-center text-xs text-muted-foreground">Loading more...</div>
-            )}
+        <tr>
+          <td colSpan={colSpan} className="p-0">
             <div ref={loadMoreRef} />
-            {infiniteScrollError && (
-              <div className="py-3 text-center text-xs text-no">
-                {infiniteScrollError}
-                {' '}
-                <button
-                  type="button"
-                  onClick={onRetryLoadMore}
-                  className="underline underline-offset-2"
-                >
-                  Retry
-                </button>
-              </div>
-            )}
-          </div>
+          </td>
+        </tr>
+        {infiniteScrollError && (
+          <tr>
+            <td colSpan={colSpan} className="py-3 text-center text-xs text-no">
+              {infiniteScrollError}
+              {' '}
+              <button
+                type="button"
+                onClick={onRetryLoadMore}
+                className="underline underline-offset-2"
+              >
+                Retry
+              </button>
+            </td>
+          </tr>
         )}
-      </div>
+      </>
+    )
+  }
+
+  return (
+    <div className="relative w-full overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b bg-background">
+            <th className={cn(tableHeaderClass, 'text-left')}>Activity</th>
+            <th className={cn(tableHeaderClass, 'text-left')}>Market</th>
+            <th className={cn(tableHeaderClass, 'text-right')}>Value</th>
+            <th className={cn(tableHeaderClass, 'text-right')}>
+              <span className="sr-only">Time</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {body}
+        </tbody>
+      </table>
     </div>
   )
 }
