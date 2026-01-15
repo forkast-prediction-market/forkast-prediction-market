@@ -472,7 +472,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
         </section>
       )
     : (
-        <div className="min-w-0">
+        <div className="min-w-0 overflow-x-hidden">
           {content}
         </div>
       )

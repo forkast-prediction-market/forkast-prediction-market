@@ -234,7 +234,7 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
           <EventHeader event={event} />
           <EventMetaInformation event={event} />
           <EventChart event={event} isMobile={isMobile} />
-          <div ref={eventMarketsRef} id="event-markets">
+          <div ref={eventMarketsRef} id="event-markets" className="min-w-0 overflow-x-hidden">
             <EventMarkets event={event} isMobile={isMobile} />
           </div>
           {event.total_markets_count === 1 && (
