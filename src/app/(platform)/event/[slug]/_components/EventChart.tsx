@@ -2,8 +2,9 @@
 
 import type { TimeRange } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import type { EventChartProps } from '@/app/(platform)/event/[slug]/_types/EventChartTypes'
-import type { PredictionChartCursorSnapshot, SeriesConfig } from '@/components/PredictionChart'
 import type { Market } from '@/types'
+import type { PredictionChartCursorSnapshot, PredictionChartProps, SeriesConfig } from '@/types/PredictionChartTypes'
+import dynamic from 'next/dynamic'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useMarketChannelSubscription } from '@/app/(platform)/event/[slug]/_components/EventMarketChannelProvider'
 import {
@@ -33,7 +34,7 @@ import {
   getOutcomeLabelForMarket,
   getTopMarketIds,
 } from '@/app/(platform)/event/[slug]/_utils/EventChartUtils'
-import PredictionChart from '@/components/PredictionChart'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { formatSharePriceLabel } from '@/lib/formatters'
@@ -54,6 +55,11 @@ interface TradeFlowLabelItem {
 const tradeFlowMaxItems = 6
 const tradeFlowTtlMs = 8000
 const tradeFlowCleanupIntervalMs = 500
+
+const PredictionChart = dynamic<PredictionChartProps>(
+  () => import('@/components/PredictionChart'),
+  { ssr: false, loading: () => <Skeleton className="h-[332px] w-full" /> },
+)
 
 function getOutcomeTokenIds(market: Market | null) {
   if (!market) {

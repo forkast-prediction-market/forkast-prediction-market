@@ -14,27 +14,35 @@ export const metadata: Metadata = {
 export default async function AffiliateSettingsPage() {
   const user = await UserRepository.getCurrentUser({ disableCookieCache: true })
   const affiliateCode = user.affiliate_code
-
-  const { data: allSettings } = await SettingsRepository.getSettings()
-  const affiliateSettings = allSettings?.affiliate
-  const { data: statsData } = await AffiliateRepository.getUserAffiliateStats(user.id)
-  const { data: referralsData } = await AffiliateRepository.listReferralsByAffiliate(user.id)
-  let totalAffiliateFees = 0
-
   const receiverAddress = user.proxy_wallet_address ?? user.address
 
-  if (receiverAddress) {
-    try {
-      const feeTotals = await fetchFeeReceiverTotals({
+  const feeTotalsPromise = receiverAddress
+    ? fetchFeeReceiverTotals({
         endpoint: 'referrers',
         address: receiverAddress,
+      }).catch((error) => {
+        console.warn('Failed to load affiliate fee totals', error)
+        return null
       })
-      const usdcTotal = sumFeeTotalsByToken(feeTotals, '0')
-      totalAffiliateFees = baseUnitsToNumber(usdcTotal, 6)
-    }
-    catch (error) {
-      console.warn('Failed to load affiliate fee totals', error)
-    }
+    : Promise.resolve(null)
+
+  const [
+    { data: allSettings },
+    { data: statsData },
+    { data: referralsData },
+    feeTotals,
+  ] = await Promise.all([
+    SettingsRepository.getSettings(),
+    AffiliateRepository.getUserAffiliateStats(user.id),
+    AffiliateRepository.listReferralsByAffiliate(user.id),
+    feeTotalsPromise,
+  ])
+  const affiliateSettings = allSettings?.affiliate
+  let totalAffiliateFees = 0
+
+  if (feeTotals) {
+    const usdcTotal = sumFeeTotalsByToken(feeTotals, '0')
+    totalAffiliateFees = baseUnitsToNumber(usdcTotal, 6)
   }
 
   const tradeFeeBps = Number.parseInt(affiliateSettings?.trade_fee_bps?.value || '100', 10)

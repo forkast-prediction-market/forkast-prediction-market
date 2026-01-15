@@ -37,10 +37,16 @@ interface RowSummary {
 }
 
 export default async function AdminSettingsPage() {
-  const { data: allSettings } = await SettingsRepository.getSettings()
+  const [
+    { data: allSettings },
+    { data: overviewData },
+    exchangeBaseFeeBps,
+  ] = await Promise.all([
+    SettingsRepository.getSettings(),
+    AffiliateRepository.listAffiliateOverview(),
+    fetchMaxExchangeBaseFeeRate(),
+  ])
   const affiliateSettings = allSettings?.affiliate
-  const { data: overviewData } = await AffiliateRepository.listAffiliateOverview()
-  const exchangeBaseFeeBps = await fetchMaxExchangeBaseFeeRate()
 
   const overview = (overviewData ?? []) as AffiliateOverviewRow[]
   const userIds = overview.map(row => row.affiliate_user_id)

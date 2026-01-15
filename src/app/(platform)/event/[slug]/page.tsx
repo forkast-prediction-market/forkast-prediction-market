@@ -15,9 +15,11 @@ export async function generateMetadata({ params }: PageProps<'/event/[slug]'>): 
 }
 
 export default async function EventPage({ params }: PageProps<'/event/[slug]'>) {
-  const user = await UserRepository.getCurrentUser()
-  const { slug } = await params
-  const marketContextSettings = await loadMarketContextSettings()
+  const [user, { slug }, marketContextSettings] = await Promise.all([
+    UserRepository.getCurrentUser(),
+    params,
+    loadMarketContextSettings(),
+  ])
   const marketContextEnabled = marketContextSettings.enabled && Boolean(marketContextSettings.apiKey)
 
   const { data: event, error } = await EventRepository.getEventBySlug(slug, user?.id ?? '')

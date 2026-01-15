@@ -84,7 +84,7 @@ export default function EventCommentItem({
   }, [onSetReplyingTo, onSetReplyText])
 
   return (
-    <>
+    <div className="comment-item">
       <ProfileLink
         user={{
           image: comment.user_avatar,
@@ -188,6 +188,6 @@ export default function EventCommentItem({
           )}
         </div>
       )}
-    </>
+    </div>
   )
 }

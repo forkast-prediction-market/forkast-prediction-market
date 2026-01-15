@@ -1,8 +1,9 @@
 'use client'
 
 import type { TimeRange } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
-import type { PredictionChartCursorSnapshot } from '@/components/PredictionChart'
 import type { Market, Outcome } from '@/types'
+import type { PredictionChartCursorSnapshot, PredictionChartProps } from '@/types/PredictionChartTypes'
+import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useState } from 'react'
 import EventChartControls from '@/app/(platform)/event/[slug]/_components/EventChartControls'
 import EventChartHeader from '@/app/(platform)/event/[slug]/_components/EventChartHeader'
@@ -12,7 +13,7 @@ import {
   TIME_RANGES,
   useEventPriceHistory,
 } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
-import PredictionChart from '@/components/PredictionChart'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { sanitizeSvg } from '@/lib/utils'
@@ -24,6 +25,11 @@ interface MarketOutcomeGraphProps {
   eventCreatedAt: string
   isMobile: boolean
 }
+
+const PredictionChart = dynamic<PredictionChartProps>(
+  () => import('@/components/PredictionChart'),
+  { ssr: false, loading: () => <Skeleton className="h-[318px] w-full" /> },
+)
 
 export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventCreatedAt, isMobile }: MarketOutcomeGraphProps) {
   const [activeTimeRange, setActiveTimeRange] = useState<TimeRange>('ALL')

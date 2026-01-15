@@ -2,11 +2,11 @@
 
 import type { Event, User } from '@/types'
 import { ArrowUpIcon } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import EventHeader from '@/app/(platform)/event/[slug]/_components/EventHeader'
 import EventMarketChannelProvider from '@/app/(platform)/event/[slug]/_components/EventMarketChannelProvider'
-import EventMarketContext from '@/app/(platform)/event/[slug]/_components/EventMarketContext'
 import EventMarkets from '@/app/(platform)/event/[slug]/_components/EventMarkets'
 import EventMetaInformation from '@/app/(platform)/event/[slug]/_components/EventMetaInformation'
 import EventOrderPanelForm from '@/app/(platform)/event/[slug]/_components/EventOrderPanelForm'
@@ -26,6 +26,11 @@ import EventChart from './EventChart'
 import EventMarketHistory from './EventMarketHistory'
 import EventMarketOpenOrders from './EventMarketOpenOrders'
 import EventMarketPositions from './EventMarketPositions'
+
+const EventMarketContext = dynamic(
+  () => import('@/app/(platform)/event/[slug]/_components/EventMarketContext'),
+  { ssr: false, loading: () => null },
+)
 
 interface EventContentProps {
   event: Event

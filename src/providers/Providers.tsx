@@ -2,12 +2,20 @@
 
 import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { SpeedInsights } from '@vercel/speed-insights/next'
 import { ThemeProvider } from 'next-themes'
-import GoogleAnalytics from '@/components/GoogleAnalytics'
+import dynamic from 'next/dynamic'
 import { Toaster } from '@/components/ui/sonner'
 import AppKitProvider from '@/providers/AppKitProvider'
 import ProgressIndicatorProvider from '@/providers/ProgressIndicatorProvider'
+
+const SpeedInsights = dynamic(
+  () => import('@vercel/speed-insights/next').then(mod => mod.SpeedInsights),
+  { ssr: false },
+)
+const GoogleAnalytics = dynamic(
+  () => import('@/components/GoogleAnalytics'),
+  { ssr: false },
+)
 
 const queryClient = new QueryClient()
 

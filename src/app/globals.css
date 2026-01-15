@@ -191,6 +191,11 @@
   }
 }
 
+@utility comment-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 160px;
+}
+
 @keyframes prediction-chart-radar {
   0% {
     transform: scale(0.4);
