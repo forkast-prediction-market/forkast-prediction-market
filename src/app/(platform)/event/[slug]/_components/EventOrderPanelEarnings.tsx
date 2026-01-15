@@ -206,7 +206,7 @@ export default function EventOrderPanelEarnings({
                     </div>
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="h-4 w-1.5 rounded-full bg-emerald-500" />
+                        <span className="h-4 w-1.5 rounded-full bg-yes" />
                         <span>Decimal</span>
                       </div>
                       <span className="text-base font-bold">

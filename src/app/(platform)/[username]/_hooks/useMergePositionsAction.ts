@@ -90,14 +90,15 @@ export function useMergePositionsAction({
             (positionShares[secondOutcome] ?? 0) - (locked[secondOutcome] ?? 0),
           )
           const safeMergeAmount = Math.min(market.mergeAmount, availableFirst, availableSecond)
+          const normalizedMergeAmount = Math.floor(safeMergeAmount * 100 + 1e-8) / 100
 
-          if (!Number.isFinite(safeMergeAmount) || safeMergeAmount <= 0) {
+          if (!Number.isFinite(normalizedMergeAmount) || normalizedMergeAmount <= 0) {
             return null
           }
 
           return {
             conditionId,
-            mergeAmount: safeMergeAmount,
+            mergeAmount: normalizedMergeAmount,
           }
         })
         .filter((entry): entry is { conditionId: string, mergeAmount: number } => Boolean(entry))

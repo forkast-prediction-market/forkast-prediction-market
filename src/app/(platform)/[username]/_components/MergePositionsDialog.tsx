@@ -45,9 +45,6 @@ export function MergePositionsDialog({
 }: MergePositionsDialogProps) {
   function formatMergeValue(value: number) {
     const safeValue = Number.isFinite(value) ? value : 0
-    if (safeValue !== 0 && Math.abs(safeValue) < 0.01) {
-      return formatCurrency(safeValue, { minimumFractionDigits: 4, maximumFractionDigits: 4 })
-    }
     return formatCurrency(safeValue)
   }
   const totalValue = markets.reduce((total, market) => total + (market.mergeAmount || 0), 0)
@@ -70,7 +67,7 @@ export function MergePositionsDialog({
             {' '}
             in positions
           </DialogTitle>
-          <DialogDescription className="text-center text-sm text-muted-foreground">
+          <DialogDescription className="text-center">
             This will merge all eligible market positions.
           </DialogDescription>
         </DialogHeader>
@@ -78,7 +75,7 @@ export function MergePositionsDialog({
         {isSuccess
           ? (
               <div className="flex flex-col items-center gap-4 py-4 text-center">
-                <div className="grid size-16 place-items-center rounded-full bg-emerald-500">
+                <div className="grid size-16 place-items-center rounded-full bg-yes">
                   <CheckIcon className="size-8 text-white" />
                 </div>
                 <p className="text-sm text-muted-foreground">

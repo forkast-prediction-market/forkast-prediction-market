@@ -19,7 +19,7 @@ import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { defaultNetwork } from '@/lib/appkit'
 import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE, MICRO_UNIT } from '@/lib/constants'
 import { ZERO_COLLECTION_ID } from '@/lib/contracts'
-import { toMicro } from '@/lib/formatters'
+import { formatAmountInputValue, toMicro } from '@/lib/formatters'
 import {
   aggregateSafeTransactions,
   buildMergePositionTransaction,
@@ -60,7 +60,7 @@ export default function EventMergeSharesDialog({
     }
     const asString = value.toLocaleString('en-US', {
       useGrouping: false,
-      maximumFractionDigits: 6,
+      maximumFractionDigits: 2,
     })
     if (!asString.includes('.')) {
       return asString
@@ -85,10 +85,15 @@ export default function EventMergeSharesDialog({
 
   function handleAmountChange(value: string) {
     const sanitized = value.replace(/,/g, '.')
-    if (sanitized === '' || /^\d*(?:\.\d*)?$/.test(sanitized)) {
+    if (sanitized === '' || /^\d*(?:\.\d{0,2})?$/.test(sanitized)) {
       setAmount(sanitized)
       setError(null)
     }
+  }
+
+  function isWholeCentAmount(value: number) {
+    const scaled = value * 100
+    return Number.isFinite(scaled) && Math.abs(scaled - Math.round(scaled)) < 1e-8
   }
 
   function handleMaxClick() {
@@ -97,7 +102,8 @@ export default function EventMergeSharesDialog({
     }
 
     // Use the raw value to avoid rounding up tiny remainders that would fail validation
-    setAmount(`${numericAvailableShares}`)
+    const floored = formatAmountInputValue(numericAvailableShares, { roundingMode: 'floor' })
+    setAmount(floored || '0')
     setError(null)
   }
 
@@ -114,6 +120,11 @@ export default function EventMergeSharesDialog({
     const numericAmount = Number.parseFloat(amount)
     if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
       setError('Enter a valid amount.')
+      return
+    }
+
+    if (!isWholeCentAmount(numericAmount)) {
+      setError('Amount must be in whole cents.')
       return
     }
 
@@ -238,7 +249,7 @@ export default function EventMergeSharesDialog({
               id="merge-shares-amount"
               value={amount}
               onChange={event => handleAmountChange(event.target.value)}
-              placeholder="0.0"
+              placeholder="0.00"
               inputMode="decimal"
               className="h-12 text-base"
             />
@@ -279,7 +290,7 @@ export default function EventMergeSharesDialog({
 
 function SuccessIcon() {
   return (
-    <span className="flex size-6 items-center justify-center rounded-full bg-emerald-500/20 text-emerald-500">
+    <span className="flex size-6 items-center justify-center rounded-full bg-yes/20 text-yes">
       <CheckIcon className="size-4" />
     </span>
   )

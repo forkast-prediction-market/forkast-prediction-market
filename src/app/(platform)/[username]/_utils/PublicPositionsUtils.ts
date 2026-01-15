@@ -374,8 +374,9 @@ export function buildMergeableMarkets(positions: PublicPosition[]): MergeableMar
     }
 
     const mergeableAmount = Math.min(firstPosition.size ?? 0, secondPosition.size ?? 0)
+    const mergeableCents = Math.floor(mergeableAmount * 100 + 1e-8) / 100
 
-    if (!Number.isFinite(mergeableAmount) || mergeableAmount <= 0) {
+    if (!Number.isFinite(mergeableCents) || mergeableCents <= 0) {
       return
     }
 
@@ -386,7 +387,7 @@ export function buildMergeableMarkets(positions: PublicPosition[]): MergeableMar
       eventSlug: sample.eventSlug || sample.slug,
       title: sample.title,
       icon: sample.icon,
-      mergeAmount: mergeableAmount,
+      mergeAmount: mergeableCents,
       outcomeAssets,
     })
   })
