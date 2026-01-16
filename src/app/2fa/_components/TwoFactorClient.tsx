@@ -40,7 +40,7 @@ export default function TwoFactorClient({ next }: { next?: string | null }) {
   const [code, setCode] = useState('')
   const [isVerifying, setIsVerifying] = useState(false)
   const redirectTo = useMemo(() => getSafeRedirect(next), [next])
-  const abortHref = '/2fa/abort' as Route
+  const abortHref = '/auth/reset' as Route
 
   useEffect(() => {
     let isActive = true

@@ -1,11 +1,12 @@
 'use client'
 
+import { ThemeProvider } from 'next-themes'
 import { useEffect } from 'react'
 import HeaderLogo from '@/components/HeaderLogo'
 import { authClient } from '@/lib/auth-client'
 import { clearBrowserStorage, clearNonHttpOnlyCookies } from '@/lib/utils'
 
-export default function TwoFactorAbortPage() {
+export default function AuthResetPage() {
   useEffect(() => {
     let isActive = true
 
@@ -18,7 +19,7 @@ export default function TwoFactorAbortPage() {
       }
 
       try {
-        await fetch('/2fa/cancel', { credentials: 'include' })
+        await fetch('/auth/clear', { credentials: 'include' })
       }
       catch {
         //
@@ -40,8 +41,10 @@ export default function TwoFactorAbortPage() {
   }, [])
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-4 py-12 text-sm text-muted-foreground">
-      <HeaderLogo />
-    </main>
+    <ThemeProvider attribute="class">
+      <main className="flex min-h-screen items-center justify-center px-4 py-12 text-sm text-muted-foreground">
+        <HeaderLogo />
+      </main>
+    </ThemeProvider>
   )
 }
