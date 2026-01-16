@@ -38,6 +38,17 @@ function siweTwoFactorRedirect() {
               return
             }
 
+            const sessionToken = await ctx.getSignedCookie(
+              ctx.context.authCookies.sessionToken.name,
+              ctx.context.secret,
+            )
+            if (sessionToken) {
+              const existingSession = await ctx.context.internalAdapter.findSession(sessionToken)
+              if (existingSession?.session?.userId === data.user.id) {
+                return
+              }
+            }
+
             const trustDeviceCookieAttrs = ctx.context.createAuthCookie(TRUST_DEVICE_COOKIE_NAME, {
               maxAge: TRUST_DEVICE_COOKIE_MAX_AGE,
             })
