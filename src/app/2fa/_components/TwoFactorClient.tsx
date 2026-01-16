@@ -106,53 +106,51 @@ export default function TwoFactorClient({ next }: { next?: string | null }) {
   }
 
   return (
-    <main className="flex min-h-[70vh] items-center justify-center px-4 py-12">
-      <Card className="w-full max-w-md">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl">Two-Factor Authentication</CardTitle>
-          <CardDescription>
-            Enter the 6-digit code from your authenticator app to finish signing in.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form className="grid gap-6" onSubmit={handleVerify}>
-            <div className="flex flex-col items-center gap-3">
-              <InputOTP
-                maxLength={CODE_LENGTH}
-                value={code}
-                onChange={(value: string) => setCode(value)}
-              >
-                <InputOTPGroup>
-                  <InputOTPSlot className="size-12 lg:size-14" index={0} />
-                  <InputOTPSlot className="size-12 lg:size-14" index={1} />
-                  <InputOTPSlot className="size-12 lg:size-14" index={2} />
-                  <InputOTPSlot className="size-12 lg:size-14" index={3} />
-                  <InputOTPSlot className="size-12 lg:size-14" index={4} />
-                  <InputOTPSlot className="size-12 lg:size-14" index={5} />
-                </InputOTPGroup>
-              </InputOTP>
-            </div>
+    <Card className="py-6">
+      <CardHeader className="space-y-2">
+        <CardTitle className="text-2xl">Two-Factor Authentication</CardTitle>
+        <CardDescription>
+          Enter the 6-digit code from your authenticator app to finish signing in.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form className="grid gap-6" onSubmit={handleVerify}>
+          <div className="flex flex-col items-center gap-3">
+            <InputOTP
+              maxLength={CODE_LENGTH}
+              value={code}
+              onChange={(value: string) => setCode(value)}
+            >
+              <InputOTPGroup>
+                <InputOTPSlot className="size-12 lg:size-14" index={0} />
+                <InputOTPSlot className="size-12 lg:size-14" index={1} />
+                <InputOTPSlot className="size-12 lg:size-14" index={2} />
+                <InputOTPSlot className="size-12 lg:size-14" index={3} />
+                <InputOTPSlot className="size-12 lg:size-14" index={4} />
+                <InputOTPSlot className="size-12 lg:size-14" index={5} />
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
 
-            <div className="flex items-center justify-between gap-4">
-              <div className="grid gap-1">
-                <Label className="text-sm font-medium">Trust this device</Label>
-                <p className="text-sm text-muted-foreground">
-                  Skip 2FA for 30 days on this device.
-                </p>
-              </div>
-              <Switch
-                id="trust-device"
-                checked={trustDevice}
-                onCheckedChange={setTrustDevice}
-              />
+          <div className="flex items-center justify-between gap-4">
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">Trust this device</Label>
+              <p className="text-sm text-muted-foreground">
+                Skip 2FA for 30 days on this device.
+              </p>
             </div>
+            <Switch
+              id="trust-device"
+              checked={trustDevice}
+              onCheckedChange={setTrustDevice}
+            />
+          </div>
 
-            <Button type="submit" disabled={code.length !== CODE_LENGTH || isVerifying}>
-              {isVerifying ? 'Verifying...' : 'Verify'}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </main>
+          <Button type="submit" disabled={code.length !== CODE_LENGTH || isVerifying}>
+            {isVerifying ? 'Verifying...' : 'Verify'}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   )
 }
