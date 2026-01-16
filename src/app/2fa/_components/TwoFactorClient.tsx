@@ -7,8 +7,6 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
@@ -29,7 +27,6 @@ function getSafeRedirect(value: string | null | undefined) {
 export default function TwoFactorClient({ next }: { next?: string | null }) {
   const router = useRouter()
   const [code, setCode] = useState('')
-  const [trustDevice, setTrustDevice] = useState(false)
   const [isVerifying, setIsVerifying] = useState(false)
   const redirectTo = useMemo(() => getSafeRedirect(next), [next])
 
@@ -74,7 +71,6 @@ export default function TwoFactorClient({ next }: { next?: string | null }) {
     try {
       const { error } = await authClient.twoFactor.verifyTotp({
         code,
-        trustDevice,
       })
 
       if (error) {
@@ -130,20 +126,6 @@ export default function TwoFactorClient({ next }: { next?: string | null }) {
                 <InputOTPSlot className="size-12 lg:size-14" index={5} />
               </InputOTPGroup>
             </InputOTP>
-          </div>
-
-          <div className="flex items-center justify-between gap-4">
-            <div className="grid gap-1">
-              <Label className="text-sm font-medium">Trust this device</Label>
-              <p className="text-sm text-muted-foreground">
-                Skip 2FA for 30 days on this device.
-              </p>
-            </div>
-            <Switch
-              id="trust-device"
-              checked={trustDevice}
-              onCheckedChange={setTrustDevice}
-            />
           </div>
 
           <Button type="submit" disabled={code.length !== CODE_LENGTH || isVerifying}>

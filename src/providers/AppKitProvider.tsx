@@ -103,6 +103,16 @@ function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
         verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
           try {
             const address = getAddressFromMessage(message)
+            const existingSession = await authClient.getSession()
+            if (
+              // @ts-expect-error wip
+              existingSession.data?.user?.address
+              // @ts-expect-error wip
+              && existingSession.data.user.address.toLowerCase() === address.toLowerCase()
+            ) {
+              return true
+            }
+
             await authClient.siwe.nonce({
               walletAddress: address,
               chainId: defaultNetwork.id,
@@ -113,6 +123,13 @@ function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
               walletAddress: address,
               chainId: defaultNetwork.id,
             })
+            // @ts-expect-error does not recognize twoFactorRedirect
+            if (data?.twoFactorRedirect && typeof window !== 'undefined') {
+              if (window.location.pathname !== '/2fa') {
+                window.location.href = '/2fa'
+              }
+              return false
+            }
             return Boolean(data?.success)
           }
           catch {
