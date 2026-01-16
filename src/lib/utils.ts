@@ -208,3 +208,38 @@ export function calculateWinnings(amount: number, price: number): number {
 
   return amount / price - amount
 }
+
+export function clearBrowserStorage() {
+  if (!isBrowser()) {
+    return
+  }
+
+  try {
+    window.localStorage.clear()
+    window.sessionStorage.clear()
+  }
+  catch {
+    //
+  }
+}
+
+export function clearNonHttpOnlyCookies() {
+  if (typeof document === 'undefined') {
+    return
+  }
+
+  const cookies = document.cookie.split(';')
+  cookies.forEach((cookie) => {
+    const name = cookie.split('=')[0]?.trim()
+    if (!name) {
+      return
+    }
+
+    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax`
+    document.cookie = `${name}=; Max-Age=0; Path=/; SameSite=Lax; Secure`
+  })
+}
+
+export function isBrowser() {
+  return typeof window !== 'undefined'
+}

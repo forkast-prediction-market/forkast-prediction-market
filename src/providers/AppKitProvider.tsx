@@ -14,13 +14,39 @@ import { WagmiProvider } from 'wagmi'
 import { AppKitContext, defaultAppKitValue } from '@/hooks/useAppKit'
 import { defaultNetwork, networks, projectId, wagmiAdapter, wagmiConfig } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
+import { clearBrowserStorage, clearNonHttpOnlyCookies, isBrowser } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 
 let hasInitializedAppKit = false
 let appKitInstance: AppKit | null = null
+const SIWE_TWO_FACTOR_INTENT_COOKIE = 'siwe_2fa_intent'
 
-function isBrowser() {
-  return typeof window !== 'undefined'
+function setSiweTwoFactorIntentCookie() {
+  if (!isBrowser()) {
+    return
+  }
+
+  const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `${SIWE_TWO_FACTOR_INTENT_COOKIE}=1; Max-Age=180; Path=/; SameSite=Lax${secure}`
+}
+
+function hasSiweTwoFactorIntentCookie() {
+  if (!isBrowser()) {
+    return false
+  }
+
+  return document.cookie
+    .split('; ')
+    .some(cookie => cookie.startsWith(`${SIWE_TWO_FACTOR_INTENT_COOKIE}=`))
+}
+
+function clearSiweTwoFactorIntentCookie() {
+  if (!isBrowser()) {
+    return
+  }
+
+  const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `${SIWE_TWO_FACTOR_INTENT_COOKIE}=; Max-Age=0; Path=/; SameSite=Lax${secure}`
 }
 
 function clearAppKitLocalStorage() {
@@ -28,22 +54,8 @@ function clearAppKitLocalStorage() {
     return
   }
 
-  try {
-    const keysToRemove: string[] = []
-    for (let index = 0; index < window.localStorage.length; index += 1) {
-      const key = window.localStorage.key(index)
-      if (key?.startsWith('@appkit')) {
-        keysToRemove.push(key)
-      }
-    }
-
-    keysToRemove.forEach((key) => {
-      window.localStorage.removeItem(key)
-    })
-  }
-  catch {
-    //
-  }
+  clearBrowserStorage()
+  clearNonHttpOnlyCookies()
 }
 
 function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
@@ -115,7 +127,8 @@ function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
             })
             // @ts-expect-error does not recognize twoFactorRedirect
             if (data?.twoFactorRedirect && typeof window !== 'undefined') {
-              if (window.location.pathname !== '/2fa') {
+              if (window.location.pathname !== '/2fa' && hasSiweTwoFactorIntentCookie()) {
+                clearSiweTwoFactorIntentCookie()
                 window.location.href = '/2fa'
               }
               return false
@@ -204,6 +217,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       setCanSyncTheme(true)
       setAppKitValue({
         open: async (options) => {
+          setSiweTwoFactorIntentCookie()
           await instance.open(options)
         },
         close: async () => {

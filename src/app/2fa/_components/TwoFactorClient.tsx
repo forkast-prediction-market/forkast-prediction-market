@@ -1,6 +1,7 @@
 'use client'
 
 import type { Route } from 'next'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
@@ -11,6 +12,7 @@ import { authClient } from '@/lib/auth-client'
 import { useUser } from '@/stores/useUser'
 
 const CODE_LENGTH = 6
+const SIWE_TWO_FACTOR_INTENT_COOKIE = 'siwe_2fa_intent'
 
 function getSafeRedirect(value: string | null | undefined) {
   if (!value) {
@@ -24,11 +26,21 @@ function getSafeRedirect(value: string | null | undefined) {
   return value
 }
 
+function clearSiweTwoFactorIntentCookie() {
+  if (typeof document === 'undefined') {
+    return
+  }
+
+  const secure = window.location.protocol === 'https:' ? '; Secure' : ''
+  document.cookie = `${SIWE_TWO_FACTOR_INTENT_COOKIE}=; Max-Age=0; Path=/; SameSite=Lax${secure}`
+}
+
 export default function TwoFactorClient({ next }: { next?: string | null }) {
   const router = useRouter()
   const [code, setCode] = useState('')
   const [isVerifying, setIsVerifying] = useState(false)
   const redirectTo = useMemo(() => getSafeRedirect(next), [next])
+  const abortHref = '/2fa/abort' as Route
 
   useEffect(() => {
     let isActive = true
@@ -90,6 +102,7 @@ export default function TwoFactorClient({ next }: { next?: string | null }) {
         })
       }
 
+      clearSiweTwoFactorIntentCookie()
       router.replace(redirectTo as Route)
     }
     catch {
@@ -130,6 +143,11 @@ export default function TwoFactorClient({ next }: { next?: string | null }) {
 
           <Button type="submit" disabled={code.length !== CODE_LENGTH || isVerifying}>
             {isVerifying ? 'Verifying...' : 'Verify'}
+          </Button>
+          <Button variant="link" className="text-muted-foreground" asChild>
+            <Link href={abortHref}>
+              or go to home
+            </Link>
           </Button>
         </form>
       </CardContent>

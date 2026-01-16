@@ -3,7 +3,7 @@ import { getChainIdFromMessage } from '@reown/appkit-siwe'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { createAuthMiddleware } from 'better-auth/api'
-import { deleteSessionCookie } from 'better-auth/cookies'
+import { deleteSessionCookie, expireCookie } from 'better-auth/cookies'
 import { generateRandomString } from 'better-auth/crypto'
 import { nextCookies } from 'better-auth/next-js'
 import { customSession, siwe, twoFactor } from 'better-auth/plugins'
@@ -21,6 +21,12 @@ const TRUST_DEVICE_COOKIE_NAME = 'trust_device'
 const TRUST_DEVICE_COOKIE_MAX_AGE = 720 * 60 * 60
 const TWO_FACTOR_PENDING_MAX_AGE = 3 * 60
 const SIWE_TWO_FACTOR_PENDING_COOKIE = 'siwe_2fa_pending'
+const SIWE_TWO_FACTOR_INTENT_COOKIE = 'siwe_2fa_intent'
+
+function clearSiweTwoFactorPendingCookie(ctx: any) {
+  const pendingCookie = ctx.context.createAuthCookie(SIWE_TWO_FACTOR_PENDING_COOKIE)
+  expireCookie(ctx, pendingCookie)
+}
 
 function siweTwoFactorRedirect() {
   return {
@@ -94,10 +100,13 @@ function siweTwoFactorRedirect() {
               expiresAt: new Date(Date.now() + TWO_FACTOR_PENDING_MAX_AGE * 1000),
             })
 
-            const pendingCookie = ctx.context.createAuthCookie(SIWE_TWO_FACTOR_PENDING_COOKIE, {
-              maxAge: TWO_FACTOR_PENDING_MAX_AGE,
-            })
-            ctx.setCookie(pendingCookie.name, '1', pendingCookie.attributes)
+            const hasIntentCookie = Boolean(ctx.getCookie(SIWE_TWO_FACTOR_INTENT_COOKIE))
+            if (hasIntentCookie) {
+              const pendingCookie = ctx.context.createAuthCookie(SIWE_TWO_FACTOR_PENDING_COOKIE, {
+                maxAge: TWO_FACTOR_PENDING_MAX_AGE,
+              })
+              ctx.setCookie(pendingCookie.name, '1', pendingCookie.attributes)
+            }
 
             await ctx.setSignedCookie(
               twoFactorCookie.name,
@@ -107,6 +116,14 @@ function siweTwoFactorRedirect() {
             )
 
             return ctx.json({ twoFactorRedirect: true })
+          }),
+        },
+        {
+          matcher(context: any) {
+            return context.path === '/two-factor/verify-totp'
+          },
+          handler: createAuthMiddleware(async (ctx) => {
+            clearSiweTwoFactorPendingCookie(ctx)
           }),
         },
       ],
