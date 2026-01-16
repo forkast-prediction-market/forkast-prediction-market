@@ -270,7 +270,7 @@ export default function EventActivity({ event }: EventActivityProps) {
     <div className="mt-6 grid gap-6">
       <div className="flex items-center justify-between gap-2">
         <Select value={minAmountFilter} onValueChange={setMinAmountFilter}>
-          <SelectTrigger className="w-32">
+          <SelectTrigger className="dark:bg-transparent">
             <SelectValue placeholder="Min Amount:" />
           </SelectTrigger>
           <SelectContent>

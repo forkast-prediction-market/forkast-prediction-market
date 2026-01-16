@@ -160,7 +160,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
       />
       <div className="mt-2 flex items-center gap-3">
         <Select value={sortBy} onValueChange={value => setSortBy(value as 'newest' | 'most_liked')}>
-          <SelectTrigger size="default" className="h-9 px-3 text-sm">
+          <SelectTrigger size="default" className="h-9 px-3 text-sm dark:bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -176,17 +176,18 @@ export default function EventComments({ event, user }: EventCommentsProps) {
             id={holdersCheckboxId}
             checked={holdersOnly}
             onCheckedChange={checked => setHoldersOnly(Boolean(checked))}
-            className="rounded-sm"
+            className="size-5 rounded dark:bg-transparent"
           />
           Holders
         </label>
         <div className={`
-          ml-auto inline-flex h-9 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm
+          ml-auto inline-flex h-9 items-center gap-2 rounded-md border border-border bg-background px-3 text-xs
           font-semibold text-muted-foreground
+          md:text-sm
           dark:bg-input/30
         `}
         >
-          <ShieldIcon className="size-3" />
+          <ShieldIcon className="size-4 shrink-0" />
           Beware of external links
         </div>
       </div>

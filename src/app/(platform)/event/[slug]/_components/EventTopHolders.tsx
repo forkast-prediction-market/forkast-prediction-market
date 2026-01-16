@@ -165,7 +165,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
       {!isSingleMarket && event.markets.length > 1 && (
         <div className="mb-4">
           <Select value={selectedMarket} onValueChange={handleMarketChange}>
-            <SelectTrigger className="w-32">
+            <SelectTrigger className="dark:bg-transparent">
               <SelectValue placeholder="Select market..." />
             </SelectTrigger>
             <SelectContent>
