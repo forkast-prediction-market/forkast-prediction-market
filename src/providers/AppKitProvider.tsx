@@ -13,7 +13,8 @@ import { WagmiProvider } from 'wagmi'
 import { AppKitContext, defaultAppKitValue } from '@/hooks/useAppKit'
 import { defaultNetwork, networks, projectId, wagmiAdapter, wagmiConfig } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
-import { clearBrowserStorage, clearNonHttpOnlyCookies, isBrowser } from '@/lib/utils'
+import { IS_BROWSER } from '@/lib/constants'
+import { clearBrowserStorage, clearNonHttpOnlyCookies } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
 
 let hasInitializedAppKit = false
@@ -21,7 +22,7 @@ let appKitInstance: AppKit | null = null
 const SIWE_TWO_FACTOR_INTENT_COOKIE = 'siwe_2fa_intent'
 
 function setSiweTwoFactorIntentCookie() {
-  if (!isBrowser()) {
+  if (!IS_BROWSER) {
     return
   }
 
@@ -30,7 +31,7 @@ function setSiweTwoFactorIntentCookie() {
 }
 
 function hasSiweTwoFactorIntentCookie() {
-  if (!isBrowser()) {
+  if (!IS_BROWSER) {
     return false
   }
 
@@ -40,7 +41,7 @@ function hasSiweTwoFactorIntentCookie() {
 }
 
 function clearSiweTwoFactorIntentCookie() {
-  if (!isBrowser()) {
+  if (!IS_BROWSER) {
     return
   }
 
@@ -49,7 +50,7 @@ function clearSiweTwoFactorIntentCookie() {
 }
 
 function clearAppKitLocalStorage() {
-  if (!isBrowser()) {
+  if (!IS_BROWSER) {
     return
   }
 
@@ -58,7 +59,7 @@ function clearAppKitLocalStorage() {
 }
 
 function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
-  if (hasInitializedAppKit || !isBrowser()) {
+  if (hasInitializedAppKit || !IS_BROWSER) {
     return appKitInstance
   }
 
@@ -173,7 +174,7 @@ function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
         },
         onSignOut: () => {
           clearAppKitLocalStorage()
-          if (isBrowser()) {
+          if (IS_BROWSER) {
             window.location.href = '/auth/reset'
           }
         },
@@ -206,7 +207,7 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
   const [AppKitValue, setAppKitValue] = useState(defaultAppKitValue)
 
   useEffect(() => {
-    if (!isBrowser()) {
+    if (!IS_BROWSER) {
       return
     }
 

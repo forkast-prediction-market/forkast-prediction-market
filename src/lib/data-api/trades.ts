@@ -1,6 +1,7 @@
 import type { DataApiActivity } from '@/lib/data-api/user'
 import type { ActivityOrder } from '@/types'
 import { filterActivitiesByMinAmount } from '@/lib/activity/filter'
+import { IS_BROWSER } from '@/lib/constants'
 import { mapDataApiActivityToActivityOrder } from '@/lib/data-api/user'
 import { toMicro } from '@/lib/formatters'
 
@@ -34,9 +35,7 @@ export async function fetchEventTrades({
   const hasFilterAmount = Number.isFinite(parsedFilterAmount) && parsedFilterAmount > 0
   const minAmountMicro = hasFilterAmount ? Number(toMicro(parsedFilterAmount)) : undefined
 
-  const isBrowser = typeof window !== 'undefined'
-
-  if (isBrowser) {
+  if (IS_BROWSER) {
     const params = new URLSearchParams({
       limit: EVENT_ACTIVITY_PAGE_SIZE.toString(),
       offset: pageParam.toString(),

@@ -3,6 +3,7 @@ import { CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS } from '@/lib/contr
 import { IS_TEST_MODE } from '@/lib/network'
 
 export const DEFAULT_ERROR_MESSAGE = 'Internal server error. Try again in a few moments.'
+export const IS_BROWSER = typeof window !== 'undefined'
 
 export const DEFAULT_CONDITION_PARTITION = ['1', '2'] as const
 
