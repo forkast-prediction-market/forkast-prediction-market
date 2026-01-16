@@ -1,9 +1,11 @@
 import TwoFactorClient from '@/app/2fa/_components/TwoFactorClient'
 
-export default function TwoFactorPage({
+export default async function TwoFactorPage({
   searchParams,
 }: {
-  searchParams?: { next?: string }
+  searchParams?: Promise<{ next?: string }>
 }) {
-  return <TwoFactorClient next={searchParams?.next} />
+  const resolvedSearchParams = searchParams ? await searchParams : undefined
+
+  return <TwoFactorClient next={resolvedSearchParams?.next} />
 }
