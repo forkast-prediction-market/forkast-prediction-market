@@ -55,6 +55,18 @@ interface TradeFlowLabelItem {
 const tradeFlowMaxItems = 6
 const tradeFlowTtlMs = 8000
 const tradeFlowCleanupIntervalMs = 500
+const tradeFlowTextStrokeStyle = {
+  textShadow: `
+    1px 0 0 var(--background),
+    -1px 0 0 var(--background),
+    0 1px 0 var(--background),
+    0 -1px 0 var(--background),
+    1px 1px 0 var(--background),
+    -1px -1px 0 var(--background),
+    1px -1px 0 var(--background),
+    -1px 1px 0 var(--background)
+  `,
+} as const
 
 const PredictionChart = dynamic<PredictionChartProps>(
   () => import('@/components/PredictionChart'),
@@ -518,6 +530,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
                     <span
                       key={item.id}
                       className={`${item.outcome === 'yes' ? 'text-yes' : 'text-no'} animate-trade-flow-rise`}
+                      style={tradeFlowTextStrokeStyle}
                     >
                       +
                       {item.label}

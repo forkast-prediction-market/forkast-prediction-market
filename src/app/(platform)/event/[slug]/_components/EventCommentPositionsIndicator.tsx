@@ -1,3 +1,5 @@
+'use client'
+
 import type { Comment, Market } from '@/types'
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
 import { useState } from 'react'

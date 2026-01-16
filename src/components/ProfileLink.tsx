@@ -73,6 +73,7 @@ export default function ProfileLink({
   const normalizedUsername = typeof user.username === 'string' ? user.username.trim() : ''
   const addressSlug = user.proxy_wallet_address ?? user.address ?? ''
   const displayUsername = normalizedUsername || (addressSlug ? truncateAddress(addressSlug) : 'Anonymous')
+  const titleValue = normalizedUsername || addressSlug || displayUsername
   const resolvedProfileSlug = profileSlug ?? (normalizedUsername || addressSlug)
   const profileHref = resolvedProfileSlug ? (`/@${resolvedProfileSlug}` as any) : ('#' as any)
   const avatarSeed = addressSlug || resolvedProfileSlug || 'user'
@@ -157,7 +158,7 @@ export default function ProfileLink({
       <div className={usernameWrapperClassName}>
         <Link
           href={profileHref}
-          title={displayUsername}
+          title={titleValue}
           className={usernameLinkClassName}
         >
           {displayUsername}
