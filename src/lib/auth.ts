@@ -1,6 +1,9 @@
+import { createHMAC } from '@better-auth/utils/hmac'
 import { getChainIdFromMessage } from '@reown/appkit-siwe'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
+import { createAuthMiddleware } from 'better-auth/api'
+import { deleteSessionCookie } from 'better-auth/cookies'
 import { generateRandomString } from 'better-auth/crypto'
 import { nextCookies } from 'better-auth/next-js'
 import { customSession, siwe, twoFactor } from 'better-auth/plugins'
@@ -12,6 +15,87 @@ import { getSupabaseImageUrl } from '@/lib/supabase'
 import { ensureUserTradingAuthSecretFingerprint } from '@/lib/trading-auth/server'
 import { sanitizeTradingAuthSettings } from '@/lib/trading-auth/utils'
 import * as schema from './db/schema'
+
+const TWO_FACTOR_COOKIE_NAME = 'two_factor'
+const TRUST_DEVICE_COOKIE_NAME = 'trust_device'
+const TRUST_DEVICE_COOKIE_MAX_AGE = 720 * 60 * 60
+const TWO_FACTOR_PENDING_MAX_AGE = 3 * 60
+
+function siweTwoFactorRedirect() {
+  return {
+    id: 'siwe-two-factor-redirect',
+    hooks: {
+      after: [
+        {
+          matcher(context: any) {
+            return context.path === '/siwe/verify'
+          },
+          handler: createAuthMiddleware(async (ctx) => {
+            const data = ctx.context.newSession
+
+            if (!data?.user?.twoFactorEnabled) {
+              return
+            }
+
+            const trustDeviceCookieAttrs = ctx.context.createAuthCookie(TRUST_DEVICE_COOKIE_NAME, {
+              maxAge: TRUST_DEVICE_COOKIE_MAX_AGE,
+            })
+            const trustDeviceCookie = await ctx.getSignedCookie(trustDeviceCookieAttrs.name, ctx.context.secret)
+
+            if (trustDeviceCookie) {
+              const [token, sessionToken] = trustDeviceCookie.split('!')
+              const expected = await createHMAC('SHA-256', 'base64urlnopad').sign(
+                ctx.context.secret,
+                `${data.user.id}!${sessionToken}`,
+              )
+
+              if (token === expected) {
+                const newTrustDeviceCookie = ctx.context.createAuthCookie(TRUST_DEVICE_COOKIE_NAME, {
+                  maxAge: TRUST_DEVICE_COOKIE_MAX_AGE,
+                })
+                const newToken = await createHMAC('SHA-256', 'base64urlnopad').sign(
+                  ctx.context.secret,
+                  `${data.user.id}!${data.session.token}`,
+                )
+
+                await ctx.setSignedCookie(
+                  newTrustDeviceCookie.name,
+                  `${newToken}!${data.session.token}`,
+                  ctx.context.secret,
+                  trustDeviceCookieAttrs.attributes,
+                )
+                return
+              }
+            }
+
+            deleteSessionCookie(ctx, true)
+            await ctx.context.internalAdapter.deleteSession(data.session.token)
+
+            const twoFactorCookie = ctx.context.createAuthCookie(TWO_FACTOR_COOKIE_NAME, {
+              maxAge: TWO_FACTOR_PENDING_MAX_AGE,
+            })
+            const identifier = `2fa-${generateRandomString(20)}`
+
+            await ctx.context.internalAdapter.createVerificationValue({
+              value: data.user.id,
+              identifier,
+              expiresAt: new Date(Date.now() + TWO_FACTOR_PENDING_MAX_AGE * 1000),
+            })
+
+            await ctx.setSignedCookie(
+              twoFactorCookie.name,
+              identifier,
+              ctx.context.secret,
+              twoFactorCookie.attributes,
+            )
+
+            return ctx.json({ twoFactorRedirect: true })
+          }),
+        },
+      ],
+    },
+  }
+}
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
@@ -82,6 +166,7 @@ export const auth = betterAuth({
         })
       },
     }),
+    siweTwoFactorRedirect(),
     twoFactor({
       skipVerificationOnEnable: false,
       schema: {

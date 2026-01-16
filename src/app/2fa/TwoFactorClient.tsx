@@ -1,0 +1,158 @@
+'use client'
+
+import type { Route } from 'next'
+import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'sonner'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp'
+import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
+import { authClient } from '@/lib/auth-client'
+import { useUser } from '@/stores/useUser'
+
+const CODE_LENGTH = 6
+
+function getSafeRedirect(value: string | null | undefined) {
+  if (!value) {
+    return '/'
+  }
+
+  if (!value.startsWith('/') || value.startsWith('//')) {
+    return '/'
+  }
+
+  return value
+}
+
+export default function TwoFactorClient({ next }: { next?: string | null }) {
+  const router = useRouter()
+  const [code, setCode] = useState('')
+  const [trustDevice, setTrustDevice] = useState(false)
+  const [isVerifying, setIsVerifying] = useState(false)
+  const redirectTo = useMemo(() => getSafeRedirect(next), [next])
+
+  useEffect(() => {
+    let isActive = true
+
+    authClient.getSession().then((session) => {
+      if (!isActive) {
+        return
+      }
+
+      const user = session?.data?.user
+      if (!user) {
+        return
+      }
+
+      if (!user.twoFactorEnabled) {
+        router.replace('/')
+        return
+      }
+
+      useUser.setState({
+        ...user,
+        image: user.image ?? '',
+      })
+    }).catch(() => {})
+
+    return () => {
+      isActive = false
+    }
+  }, [router])
+
+  async function handleVerify(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+
+    if (code.length !== CODE_LENGTH || isVerifying) {
+      return
+    }
+
+    setIsVerifying(true)
+
+    try {
+      const { error } = await authClient.twoFactor.verifyTotp({
+        code,
+        trustDevice,
+      })
+
+      if (error) {
+        toast.error('Invalid code. Please try again.')
+        setCode('')
+        setIsVerifying(false)
+        return
+      }
+
+      const session = await authClient.getSession()
+      const user = session?.data?.user
+
+      if (user) {
+        useUser.setState({
+          ...user,
+          image: user.image ?? '',
+        })
+      }
+
+      router.replace(redirectTo as Route)
+    }
+    catch {
+      toast.error('Something went wrong while verifying your code.')
+      setCode('')
+    }
+    finally {
+      setIsVerifying(false)
+    }
+  }
+
+  return (
+    <main className="flex min-h-[70vh] items-center justify-center px-4 py-12">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-2">
+          <CardTitle className="text-2xl">Two-Factor Authentication</CardTitle>
+          <CardDescription>
+            Enter the 6-digit code from your authenticator app to finish signing in.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form className="grid gap-6" onSubmit={handleVerify}>
+            <div className="flex flex-col items-center gap-3">
+              <InputOTP
+                maxLength={CODE_LENGTH}
+                value={code}
+                onChange={(value: string) => setCode(value)}
+              >
+                <InputOTPGroup>
+                  <InputOTPSlot className="size-12 lg:size-14" index={0} />
+                  <InputOTPSlot className="size-12 lg:size-14" index={1} />
+                  <InputOTPSlot className="size-12 lg:size-14" index={2} />
+                  <InputOTPSlot className="size-12 lg:size-14" index={3} />
+                  <InputOTPSlot className="size-12 lg:size-14" index={4} />
+                  <InputOTPSlot className="size-12 lg:size-14" index={5} />
+                </InputOTPGroup>
+              </InputOTP>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div className="grid gap-1">
+                <Label className="text-sm font-medium">Trust this device</Label>
+                <p className="text-sm text-muted-foreground">
+                  Skip 2FA for 30 days on this device.
+                </p>
+              </div>
+              <Switch
+                id="trust-device"
+                checked={trustDevice}
+                onCheckedChange={setTrustDevice}
+              />
+            </div>
+
+            <Button type="submit" disabled={code.length !== CODE_LENGTH || isVerifying}>
+              {isVerifying ? 'Verifying...' : 'Verify'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    </main>
+  )
+}
