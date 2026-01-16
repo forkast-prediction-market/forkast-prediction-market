@@ -23,32 +23,6 @@ function isBrowser() {
   return typeof window !== 'undefined'
 }
 
-function setSiweIntent() {
-  if (!isBrowser()) {
-    return
-  }
-
-  try {
-    window.sessionStorage.setItem('auth:siwe-intent', String(Date.now()))
-  }
-  catch {
-    //
-  }
-}
-
-function clearSiweIntent() {
-  if (!isBrowser()) {
-    return
-  }
-
-  try {
-    window.sessionStorage.removeItem('auth:siwe-intent')
-  }
-  catch {
-    //
-  }
-}
-
 function clearAppKitLocalStorage() {
   if (!isBrowser()) {
     return
@@ -139,13 +113,6 @@ function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
               walletAddress: address,
               chainId: defaultNetwork.id,
             })
-            // @ts-expect-error does not recognize twoFactorRedirect
-            if (data?.twoFactorRedirect) {
-              if (typeof window !== 'undefined') {
-                window.location.href = '/2fa'
-              }
-              return true
-            }
             return Boolean(data?.success)
           }
           catch {
@@ -156,7 +123,6 @@ function initializeAppKitSingleton(themeMode: 'light' | 'dark') {
           try {
             await authClient.signOut()
             useUser.setState(null)
-            clearSiweIntent()
             queueMicrotask(() => redirect('/'))
             return true
           }
@@ -231,7 +197,6 @@ export default function AppKitProvider({ children }: { children: ReactNode }) {
       setCanSyncTheme(true)
       setAppKitValue({
         open: async (options) => {
-          setSiweIntent()
           await instance.open(options)
         },
         close: async () => {
