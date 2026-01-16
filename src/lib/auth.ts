@@ -3,7 +3,7 @@ import { getChainIdFromMessage } from '@reown/appkit-siwe'
 import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { createAuthMiddleware } from 'better-auth/api'
-import { deleteSessionCookie, expireCookie } from 'better-auth/cookies'
+import { deleteSessionCookie } from 'better-auth/cookies'
 import { generateRandomString } from 'better-auth/crypto'
 import { nextCookies } from 'better-auth/next-js'
 import { customSession, siwe, twoFactor } from 'better-auth/plugins'
@@ -25,7 +25,10 @@ const SIWE_TWO_FACTOR_INTENT_COOKIE = 'siwe_2fa_intent'
 
 function clearSiweTwoFactorPendingCookie(ctx: any) {
   const pendingCookie = ctx.context.createAuthCookie(SIWE_TWO_FACTOR_PENDING_COOKIE)
-  expireCookie(ctx, pendingCookie)
+  ctx.setCookie(pendingCookie.name, '', {
+    ...pendingCookie.attributes,
+    maxAge: 0,
+  })
 }
 
 function siweTwoFactorRedirect() {
