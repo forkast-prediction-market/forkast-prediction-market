@@ -18,13 +18,32 @@ function resolveSort(sortBy: CommentSort) {
   return sortBy === 'most_liked' ? 'top' : 'recent'
 }
 
-export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user: User | null) {
+function hasPositivePositions(positions?: Comment['positions']) {
+  if (!Array.isArray(positions)) {
+    return false
+  }
+
+  return positions.some((position) => {
+    if (!position) {
+      return false
+    }
+    const amount = typeof position.amount === 'number' ? position.amount : Number(position.amount)
+    return Number.isFinite(amount) && amount > 0
+  })
+}
+
+export function useInfiniteComments(
+  eventSlug: string,
+  sortBy: CommentSort,
+  user: User | null,
+  holdersOnly = false,
+) {
   const queryClient = useQueryClient()
   const { signMessageAsync } = useSignMessage()
   const [infiniteScrollError, setInfiniteScrollError] = useState<Error | null>(null)
   const [loadingRepliesForComment, setLoadingRepliesForComment] = useState<string | null>(null)
   const [pendingLikeIds, setPendingLikeIds] = useState<Set<string>>(() => new Set())
-  const commentsQueryKey = ['event-comments', eventSlug, sortBy, user?.address ?? null]
+  const commentsQueryKey = ['event-comments', eventSlug, sortBy, holdersOnly, user?.address ?? null]
   const communityApiUrl = process.env.COMMUNITY_URL!
 
   const getCommunityToken = useCallback(async () => {
@@ -47,6 +66,9 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
     url.searchParams.set('limit', COMMENTS_PAGE_SIZE.toString())
     url.searchParams.set('offset', offset.toString())
     url.searchParams.set('sort', resolveSort(sortBy))
+    if (holdersOnly) {
+      url.searchParams.set('holders_only', 'true')
+    }
 
     const headers: HeadersInit = {}
     if (user?.address) {
@@ -68,7 +90,7 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
 
     const payload = await response.json()
     return Array.isArray(payload) ? payload : []
-  }, [communityApiUrl, eventSlug, sortBy, user?.address])
+  }, [communityApiUrl, eventSlug, holdersOnly, sortBy, user?.address])
 
   const {
     data,
@@ -99,8 +121,12 @@ export function useInfiniteComments(eventSlug: string, sortBy: CommentSort, user
     if (!data || !data.pages) {
       return []
     }
-    return data.pages.flat()
-  }, [data])
+    const flattened = data.pages.flat()
+    if (!holdersOnly) {
+      return flattened
+    }
+    return flattened.filter(comment => hasPositivePositions(comment.positions))
+  }, [data, holdersOnly])
 
   const fetchNextPageWithErrorHandling = useCallback(async () => {
     try {

@@ -8,7 +8,7 @@ import ProfileActivityTooltipCard from '@/components/ProfileActivityTooltipCard'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { fetchProfileLinkStats } from '@/lib/data-api/profile-link-stats'
-import { formatTimeAgo } from '@/lib/formatters'
+import { formatTimeAgo, truncateAddress } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
 interface ProfileLinkProps {
@@ -18,6 +18,7 @@ interface ProfileLinkProps {
     image: string
     username: string
   }
+  profileSlug?: string
   layout?: 'default' | 'inline'
   position?: number
   date?: string
@@ -27,6 +28,7 @@ interface ProfileLinkProps {
   containerClassName?: string
   usernameMaxWidthClassName?: string
   usernameClassName?: string
+  usernameAddon?: ReactNode
   joinedAt?: string | null
 }
 
@@ -41,7 +43,9 @@ export default function ProfileLink({
   containerClassName,
   usernameMaxWidthClassName,
   usernameClassName,
+  usernameAddon,
   joinedAt,
+  profileSlug,
 }: ProfileLinkProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [stats, setStats] = useState<Awaited<ReturnType<typeof fetchProfileLinkStats>>>(null)
@@ -66,7 +70,15 @@ export default function ProfileLink({
   }[position ?? 0] ?? '#000000'
 
   const medalTextColor = medalColor === '#000000' ? '#ffffff' : '#1a1a1a'
-  const profileHref = `/@${user.username}` as any
+  const normalizedUsername = typeof user.username === 'string' ? user.username.trim() : ''
+  const addressSlug = user.proxy_wallet_address ?? user.address ?? ''
+  const displayUsername = normalizedUsername || (addressSlug ? truncateAddress(addressSlug) : 'Anonymous')
+  const resolvedProfileSlug = profileSlug ?? (normalizedUsername || addressSlug)
+  const profileHref = resolvedProfileSlug ? (`/@${resolvedProfileSlug}` as any) : ('#' as any)
+  const avatarSeed = addressSlug || resolvedProfileSlug || 'user'
+  const avatarSrc = user.image && user.image.trim()
+    ? user.image
+    : `https://avatar.vercel.sh/${avatarSeed}.png`
   const statsAddress = useMemo(
     () => user.proxy_wallet_address ?? user.address,
     [user.address, user.proxy_wallet_address],
@@ -126,8 +138,8 @@ export default function ProfileLink({
     <div className="inline-flex min-w-0 items-center gap-3">
       <Link href={profileHref} className="relative shrink-0">
         <Image
-          src={user.image}
-          alt={user.username}
+          src={avatarSrc}
+          alt={displayUsername}
           width={32}
           height={32}
           className="aspect-square rounded-full object-cover object-center"
@@ -145,10 +157,10 @@ export default function ProfileLink({
       <div className={usernameWrapperClassName}>
         <Link
           href={profileHref}
-          title={user.username}
+          title={displayUsername}
           className={usernameLinkClassName}
         >
-          {user.username}
+          {displayUsername}
         </Link>
       </div>
     </div>
@@ -172,6 +184,7 @@ export default function ProfileLink({
                     <TooltipTrigger asChild>
                       {triggerContent}
                     </TooltipTrigger>
+                    {usernameAddon ? <span className="shrink-0">{usernameAddon}</span> : null}
                     {inlineBody ?? null}
                   </div>
                   {dateLabel || trailing
@@ -189,6 +202,7 @@ export default function ProfileLink({
                   <TooltipTrigger asChild>
                     {triggerContent}
                   </TooltipTrigger>
+                  {usernameAddon ? <span className="shrink-0">{usernameAddon}</span> : null}
                   {dateLabel}
                 </div>
               )}
@@ -213,8 +227,8 @@ export default function ProfileLink({
       >
         <ProfileActivityTooltipCard
           profile={{
-            username: user.username,
-            avatarUrl: user.image,
+            username: displayUsername,
+            avatarUrl: avatarSrc,
             href: profileHref,
             joinedAt,
           }}

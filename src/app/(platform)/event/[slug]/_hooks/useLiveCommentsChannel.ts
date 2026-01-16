@@ -22,6 +22,7 @@ interface LiveCommentPayload {
   profile?: LiveCommentProfile | null
   reactionCount?: number
   userAddress?: string
+  positions?: Comment['positions']
 }
 
 interface LiveCommentsMessage {
@@ -45,6 +46,8 @@ function buildLiveComment(payload: LiveCommentPayload, user: User | null): Comme
   const username = profile.name || profile.pseudonym || 'Anonymous'
   const profileImage = profile.profileImage ?? `https://avatar.vercel.sh/${payload.id}.png`
 
+  const positions = Array.isArray(payload.positions) ? payload.positions : undefined
+
   return {
     id: String(payload.id),
     content: payload.body ?? '',
@@ -58,6 +61,7 @@ function buildLiveComment(payload: LiveCommentPayload, user: User | null): Comme
     created_at: createdAt,
     is_owner: normalizeAddress(user?.address) === normalizeAddress(userAddress),
     user_has_liked: false,
+    positions,
     recent_replies: [],
   }
 }

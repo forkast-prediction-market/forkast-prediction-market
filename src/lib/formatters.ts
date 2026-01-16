@@ -65,6 +65,27 @@ export function formatSharesLabel(value: number, options: SharesFormatOptions = 
   return formatter.format(Math.max(0, truncated))
 }
 
+export function formatCompactShares(value: number) {
+  if (!Number.isFinite(value)) {
+    return '0'
+  }
+
+  const abs = Math.abs(value)
+  const sign = value < 0 ? '-' : ''
+
+  if (abs >= 1_000_000) {
+    const scaled = (abs / 1_000_000).toFixed(1).replace(/\.0$/, '')
+    return `${sign}${scaled}M`
+  }
+
+  if (abs >= 1_000) {
+    const scaled = (abs / 1_000).toFixed(1).replace(/\.0$/, '')
+    return `${sign}${scaled}k`
+  }
+
+  return `${sign}${formatSharesLabel(abs)}`
+}
+
 function getUsdFormatter(min: number, max: number) {
   const key = `${min}-${max}`
   const cached = USD_FORMATTER_CACHE.get(key)

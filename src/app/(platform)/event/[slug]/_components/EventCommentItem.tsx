@@ -1,6 +1,9 @@
-import type { Comment } from '@/types'
+import type { Comment, Market } from '@/types'
 import { MoreHorizontalIcon } from 'lucide-react'
 import { useCallback } from 'react'
+import { resolveCommentUserIdentity } from '@/app/(platform)/event/[slug]/_components/comment-user'
+import EventCommentContent from '@/app/(platform)/event/[slug]/_components/EventCommentContent'
+import { CommentPositionsIndicator } from '@/app/(platform)/event/[slug]/_components/EventCommentPositionsIndicator'
 import ProfileLink from '@/components/ProfileLink'
 import { DropdownMenu, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { useAppKit } from '@/hooks/useAppKit'
@@ -13,6 +16,8 @@ import EventCommentsLoadMoreReplies from './EventCommentsLoadMoreReplies'
 interface CommentItemProps {
   comment: Comment
   user: any
+  isSingleMarket: boolean
+  marketsByConditionId: Map<string, Market>
   onLikeToggle: (commentId: string) => void
   onDelete: (commentId: string) => void
   replyingTo: string | null
@@ -34,6 +39,8 @@ interface CommentItemProps {
 export default function EventCommentItem({
   comment,
   user,
+  isSingleMarket,
+  marketsByConditionId,
   onLikeToggle,
   onDelete,
   replyingTo,
@@ -52,6 +59,7 @@ export default function EventCommentItem({
   retryLoadReplies,
 }: CommentItemProps) {
   const { open } = useAppKit()
+  const { displayName, profileSlug } = resolveCommentUserIdentity(comment)
 
   const handleReplyClick = useCallback(() => {
     if (!user) {
@@ -88,18 +96,26 @@ export default function EventCommentItem({
       <ProfileLink
         user={{
           image: comment.user_avatar,
-          username: comment.username,
+          username: displayName,
           address: comment.user_address,
           proxy_wallet_address: comment.user_proxy_wallet_address ?? null,
         }}
+        profileSlug={profileSlug}
         date={comment.created_at}
         joinedAt={comment.user_created_at}
         containerClassName="[&_img]:mt-2.5 [&_img]:h-10 [&_img]:w-10"
         usernameClassName="text-sm font-semibold text-foreground"
+        usernameAddon={(
+          <CommentPositionsIndicator
+            positions={comment.positions}
+            isSingleMarket={isSingleMarket}
+            marketsByConditionId={marketsByConditionId}
+          />
+        )}
       >
         <div className="flex w-full flex-1 gap-3">
           <div className="flex-1">
-            <p className="text-sm leading-5.25 font-normal">{comment.content}</p>
+            <EventCommentContent content={comment.content} />
             <div className="mt-2 flex items-center gap-3">
               <EventCommentLikeForm
                 comment={comment}
@@ -146,7 +162,7 @@ export default function EventCommentItem({
           <EventCommentReplyForm
             user={user}
             parentCommentId={comment.id}
-            placeholder={`Reply to ${comment.username}`}
+            placeholder={`Reply to ${displayName}`}
             initialValue={replyText}
             onCancel={handleReplyCancel}
             onReplyAddedAction={handleReplyAdded}
@@ -162,9 +178,12 @@ export default function EventCommentItem({
             <EventCommentReplyItem
               key={reply.id}
               reply={reply}
-              parentUsername={comment.username}
+              parentDisplayName={displayName}
+              parentProfileSlug={profileSlug}
               commentId={comment.id}
               user={user}
+              isSingleMarket={isSingleMarket}
+              marketsByConditionId={marketsByConditionId}
               onLikeToggle={onUpdateReply}
               onDelete={onDeleteReply}
               replyingTo={replyingTo}

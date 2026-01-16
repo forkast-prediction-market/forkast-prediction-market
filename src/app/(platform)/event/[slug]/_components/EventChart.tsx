@@ -458,11 +458,15 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
                   className="size-2 shrink-0 rounded-full"
                   style={{ backgroundColor: entry.color }}
                 />
-                <span className="inline-flex w-fit items-center gap-0.5 text-xs font-medium text-muted-foreground">
+                <span className="inline-flex w-fit items-center gap-2 text-xs font-medium text-muted-foreground">
                   <span>{entry.name}</span>
-                  <span className="inline-flex w-6 items-baseline justify-end font-semibold tabular-nums">
+                  <span className={`
+                    inline-flex min-w-8 shrink-0 items-baseline justify-end text-sm font-semibold text-foreground
+                    tabular-nums
+                  `}
+                  >
                     {resolvedValue.toFixed(0)}
-                    <span className="text-2xs">%</span>
+                    <span className="ml-0.5 text-sm text-foreground">%</span>
                   </span>
                 </span>
               </div>

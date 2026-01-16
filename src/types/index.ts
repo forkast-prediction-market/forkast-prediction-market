@@ -167,6 +167,14 @@ export interface Tag {
   updated_at: string
 }
 
+export interface CommentPosition {
+  condition_id?: string
+  outcome_index?: number
+  amount?: number | string
+  conditionId?: string
+  outcomeIndex?: number
+}
+
 export interface Comment {
   id: string
   content: string
@@ -181,6 +189,7 @@ export interface Comment {
   created_at: string
   is_owner: boolean
   user_has_liked: boolean
+  positions?: CommentPosition[]
   recent_replies?: Comment[]
 }
 

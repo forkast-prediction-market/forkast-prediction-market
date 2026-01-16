@@ -26,7 +26,7 @@ export default function PredictionChartHeader({
 
       {shouldRenderWatermark && (
         <div className={`
-          flex items-center gap-1 self-end text-xl text-muted-foreground opacity-50 select-none
+          mr-2 flex items-center gap-1 self-end text-xl text-muted-foreground opacity-50 select-none
           lg:self-auto
         `}
         >

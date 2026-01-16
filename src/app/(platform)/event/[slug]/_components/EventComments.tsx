@@ -2,11 +2,12 @@
 
 import type { Event, User } from '@/types'
 import { AlertCircleIcon, ShieldIcon } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useInfiniteComments } from '@/app/(platform)/event/[slug]/_hooks/useInfiniteComments'
 import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -29,6 +30,17 @@ export default function EventComments({ event, user }: EventCommentsProps) {
   const [isInitialized, setIsInitialized] = useState(false)
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const [sortBy, setSortBy] = useState<'newest' | 'most_liked'>('newest')
+  const [holdersOnly, setHoldersOnly] = useState(false)
+  const holdersCheckboxId = useId()
+  const marketsByConditionId = useMemo(() => {
+    const map = new Map<string, Event['markets'][number]>()
+    event.markets.forEach((market) => {
+      if (market?.condition_id) {
+        map.set(market.condition_id, market)
+      }
+    })
+    return map
+  }, [event.markets])
 
   const {
     comments,
@@ -50,7 +62,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     isLoadingRepliesForComment,
     loadRepliesError,
     retryLoadReplies,
-  } = useInfiniteComments(event.slug, sortBy, user)
+  } = useInfiniteComments(event.slug, sortBy, user, holdersOnly)
 
   useEffect(() => {
     function handleScroll() {
@@ -146,7 +158,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
         isCreatingComment={isCreatingComment}
         onCommentAddedAction={() => refetch()}
       />
-      <div className="mt-2 flex items-center justify-between gap-3">
+      <div className="mt-2 flex items-center gap-3">
         <Select value={sortBy} onValueChange={value => setSortBy(value as 'newest' | 'most_liked')}>
           <SelectTrigger size="default" className="h-9 px-3 text-sm">
             <SelectValue />
@@ -156,8 +168,22 @@ export default function EventComments({ event, user }: EventCommentsProps) {
             <SelectItem value="most_liked">Most liked</SelectItem>
           </SelectContent>
         </Select>
+        <label
+          htmlFor={holdersCheckboxId}
+          className="ml-2 inline-flex items-center gap-2 text-sm font-semibold text-foreground"
+        >
+          <Checkbox
+            id={holdersCheckboxId}
+            checked={holdersOnly}
+            onCheckedChange={checked => setHoldersOnly(Boolean(checked))}
+            className="rounded-md"
+          />
+          Holders
+        </label>
         <div className={`
-          ml-auto inline-flex h-9 items-center gap-2 rounded-md border border-border px-3 text-sm text-muted-foreground
+          ml-auto inline-flex h-9 items-center gap-2 rounded-md border border-border bg-background px-3 text-sm
+          font-semibold text-muted-foreground
+          dark:bg-input/30
         `}
         >
           <ShieldIcon className="size-3" />
@@ -185,6 +211,8 @@ export default function EventComments({ event, user }: EventCommentsProps) {
                   key={comment.id}
                   comment={comment}
                   user={user}
+                  isSingleMarket={(event.total_markets_count ?? event.markets.length) <= 1}
+                  marketsByConditionId={marketsByConditionId}
                   onLikeToggle={handleLikeToggled}
                   isTogglingLikeForComment={isTogglingLikeForComment}
                   onDelete={handleDeleteComment}

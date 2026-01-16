@@ -116,7 +116,7 @@ export default function EventChartHeader({
       </div>
 
       {(watermark.iconSvg || watermark.label) && (
-        <div className="flex items-center gap-1 self-start text-xl text-muted-foreground opacity-50 select-none">
+        <div className="mr-2 flex items-center gap-1 self-start text-xl text-muted-foreground opacity-50 select-none">
           {watermark.iconSvg
             ? (
                 <div
