@@ -70,6 +70,10 @@ export default function HeaderDropdownUserMenuAuth() {
     queueMicrotask(() => redirect('/'))
   }
 
+  function handleMenuClose() {
+    setMenuOpen(false)
+  }
+
   if (!user) {
     return <></>
   }
@@ -171,7 +175,7 @@ export default function HeaderDropdownUserMenuAuth() {
               <DropdownMenuSeparator />
 
               <DropdownMenuItem asChild>
-                <div className="flex justify-center">
+                <div className="flex justify-center" onClick={handleMenuClose}>
                   <HeaderPortfolio />
                 </div>
               </DropdownMenuItem>
