@@ -13,8 +13,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { defaultNetwork } from '@/lib/appkit'
 import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE, MICRO_UNIT } from '@/lib/constants'
 import { ZERO_COLLECTION_ID } from '@/lib/contracts'
@@ -48,6 +56,7 @@ export default function EventSplitSharesDialog({
   const queryClient = useQueryClient()
   const { ensureTradingReady } = useTradingOnboarding()
   const user = useUser()
+  const isMobile = useIsMobile()
   const { signMessageAsync } = useSignMessage()
   const [amount, setAmount] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -229,59 +238,82 @@ export default function EventSplitSharesDialog({
     }
   }
 
+  const dialogTitle = 'Split shares'
+  const dialogDescription = 'Split a USDC into a share of Yes and No. You can do this to save cost by getting both and just selling the other side.'
+  const formBody = (
+    <>
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-foreground" htmlFor="split-shares-amount">
+          Amount
+        </label>
+        <Input
+          id="split-shares-amount"
+          value={amount}
+          onChange={event => handleAmountChange(event.target.value)}
+          placeholder="0.00"
+          inputMode="decimal"
+          className="h-12 text-base"
+        />
+        <div className="text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            Available:
+            <strong className="text-foreground">{formattedUsdcBalance}</strong>
+            <span className="text-muted-foreground">USDC</span>
+            <button
+              type="button"
+              className={cn(
+                'text-primary transition-colors',
+                numericAvailableBalance > 0 ? 'hover:opacity-80' : 'cursor-not-allowed opacity-40',
+              )}
+              onClick={handleMaxClick}
+              disabled={numericAvailableBalance <= 0}
+            >
+              Max
+            </button>
+          </span>
+          {error && <p className="text-xs text-destructive">{error}</p>}
+        </div>
+      </div>
+
+      <Button
+        type="button"
+        size="outcome"
+        className="w-full text-base font-bold"
+        disabled={isSubmitting || !conditionId}
+        onClick={handleSubmit}
+      >
+        {isSubmitting ? 'Splitting...' : 'Split Shares'}
+      </Button>
+    </>
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="max-h-[90vh] w-full bg-background px-4 pt-4 pb-6">
+          <div className="space-y-6">
+            <DrawerHeader className="space-y-3 text-center">
+              <DrawerTitle className="text-2xl font-bold">{dialogTitle}</DrawerTitle>
+              <DrawerDescription className="text-sm text-foreground">{dialogDescription}</DrawerDescription>
+            </DrawerHeader>
+            {formBody}
+          </div>
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md sm:p-8">
         <div className="space-y-6">
           <DialogHeader className="space-y-3">
-            <DialogTitle className="text-center text-2xl font-bold">Split shares</DialogTitle>
+            <DialogTitle className="text-center text-2xl font-bold">{dialogTitle}</DialogTitle>
             <DialogDescription className="text-center text-sm text-foreground">
-              Split a USDC into a share of Yes and No. You can do this to save cost by getting both and just selling the other side.
+              {dialogDescription}
             </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-foreground" htmlFor="split-shares-amount">
-              Amount
-            </label>
-            <Input
-              id="split-shares-amount"
-              value={amount}
-              onChange={event => handleAmountChange(event.target.value)}
-              placeholder="0.00"
-              inputMode="decimal"
-              className="h-12 text-base"
-            />
-            <div className="text-xs text-muted-foreground">
-              <span className="flex items-center gap-1">
-                Available:
-                <strong className="text-foreground">{formattedUsdcBalance}</strong>
-                <span className="text-muted-foreground">USDC</span>
-                <button
-                  type="button"
-                  className={cn(
-                    'text-primary transition-colors',
-                    numericAvailableBalance > 0 ? 'hover:opacity-80' : 'cursor-not-allowed opacity-40',
-                  )}
-                  onClick={handleMaxClick}
-                  disabled={numericAvailableBalance <= 0}
-                >
-                  Max
-                </button>
-              </span>
-              {error && <p className="text-xs text-destructive">{error}</p>}
-            </div>
-          </div>
-
-          <Button
-            type="button"
-            size="outcome"
-            className="w-full text-base font-bold"
-            disabled={isSubmitting || !conditionId}
-            onClick={handleSubmit}
-          >
-            {isSubmitting ? 'Splitting...' : 'Split Shares'}
-          </Button>
+          {formBody}
         </div>
       </DialogContent>
     </Dialog>

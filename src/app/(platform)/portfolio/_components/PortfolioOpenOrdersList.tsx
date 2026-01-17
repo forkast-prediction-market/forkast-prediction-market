@@ -151,7 +151,7 @@ export default function PortfolioOpenOrdersList({ userAddress }: PortfolioOpenOr
                 type="button"
                 variant="outline"
                 size="sm"
-                className="text-xs font-semibold text-destructive uppercase"
+                className="h-9 rounded-md text-xs font-semibold text-destructive uppercase"
                 onClick={handleCancelAll}
                 disabled={isCancellingAll || orders.length === 0}
               >
