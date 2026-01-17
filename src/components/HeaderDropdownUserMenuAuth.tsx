@@ -175,9 +175,9 @@ export default function HeaderDropdownUserMenuAuth() {
               <DropdownMenuSeparator />
 
               <DropdownMenuItem asChild>
-                <button type="button" className="flex w-full justify-center" onClick={handleMenuClose}>
+                <div className="flex justify-center" onClickCapture={handleMenuClose}>
                   <HeaderPortfolio />
-                </button>
+                </div>
               </DropdownMenuItem>
             </>
           )}
