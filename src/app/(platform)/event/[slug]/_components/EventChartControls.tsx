@@ -129,7 +129,7 @@ export default function EventChartControls({
           align="end"
           sideOffset={8}
           collisionPadding={16}
-          className="w-52 border border-border bg-background p-3 text-xs font-semibold text-foreground shadow-xl"
+          className="w-52 border border-border bg-background p-3 text-sm font-semibold text-foreground shadow-xl"
         >
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-2">
