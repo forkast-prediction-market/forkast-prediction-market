@@ -8,7 +8,6 @@ import { useEffect, useRef, useState } from 'react'
 import EventHeader from '@/app/(platform)/event/[slug]/_components/EventHeader'
 import EventMarketChannelProvider from '@/app/(platform)/event/[slug]/_components/EventMarketChannelProvider'
 import EventMarkets from '@/app/(platform)/event/[slug]/_components/EventMarkets'
-import EventMetaInformation from '@/app/(platform)/event/[slug]/_components/EventMetaInformation'
 import EventOrderPanelForm from '@/app/(platform)/event/[slug]/_components/EventOrderPanelForm'
 import EventOrderPanelMobile from '@/app/(platform)/event/[slug]/_components/EventOrderPanelMobile'
 import { EventOutcomeChanceProvider } from '@/app/(platform)/event/[slug]/_components/EventOutcomeChanceProvider'
@@ -232,7 +231,6 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
         <OrderLimitPriceSync />
         <div className="grid gap-3" ref={contentRef}>
           <EventHeader event={event} />
-          <EventMetaInformation event={event} />
           <EventChart event={event} isMobile={isMobile} />
           <div ref={eventMarketsRef} id="event-markets" className="min-w-0 overflow-x-hidden">
             <EventMarkets event={event} isMobile={isMobile} />

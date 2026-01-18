@@ -3,7 +3,12 @@
 import type { TimeRange } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import type { EventChartProps } from '@/app/(platform)/event/[slug]/_types/EventChartTypes'
 import type { Market } from '@/types'
-import type { PredictionChartCursorSnapshot, PredictionChartProps, SeriesConfig } from '@/types/PredictionChartTypes'
+import type {
+  DataPoint,
+  PredictionChartCursorSnapshot,
+  PredictionChartProps,
+  SeriesConfig,
+} from '@/types/PredictionChartTypes'
 import dynamic from 'next/dynamic'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
 import { useMarketChannelSubscription } from '@/app/(platform)/event/[slug]/_components/EventMarketChannelProvider'
@@ -41,9 +46,10 @@ import { formatSharePriceLabel } from '@/lib/formatters'
 import { resolveDisplayPrice } from '@/lib/market-chance'
 import { sanitizeSvg } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
-import EventChartControls from './EventChartControls'
+import EventChartControls, { defaultChartSettings } from './EventChartControls'
 import EventChartHeader from './EventChartHeader'
 import EventChartLayout from './EventChartLayout'
+import EventMetaInformation from './EventMetaInformation'
 
 interface TradeFlowLabelItem {
   id: string
@@ -106,6 +112,81 @@ function trimTradeFlowItems(items: TradeFlowLabelItem[]) {
   return items.slice(-tradeFlowMaxItems)
 }
 
+function buildCombinedOutcomeHistory(
+  yesHistory: DataPoint[],
+  noHistory: DataPoint[],
+  conditionId: string,
+  yesKey: string,
+  noKey: string,
+) {
+  if (!conditionId) {
+    return { points: [], latestSnapshot: {} as Record<string, number> }
+  }
+
+  const yesByTimestamp = new Map<number, number>()
+  const noByTimestamp = new Map<number, number>()
+
+  yesHistory.forEach((point) => {
+    const value = point[conditionId]
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      yesByTimestamp.set(point.date.getTime(), value)
+    }
+  })
+
+  noHistory.forEach((point) => {
+    const value = point[conditionId]
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      noByTimestamp.set(point.date.getTime(), value)
+    }
+  })
+
+  const timestamps = Array.from(new Set([
+    ...yesByTimestamp.keys(),
+    ...noByTimestamp.keys(),
+  ])).sort((a, b) => a - b)
+
+  let lastYes: number | null = null
+  let lastNo: number | null = null
+  const points: DataPoint[] = []
+
+  timestamps.forEach((timestamp) => {
+    const yesValue = yesByTimestamp.get(timestamp)
+    const noValue = noByTimestamp.get(timestamp)
+    if (typeof yesValue === 'number') {
+      lastYes = yesValue
+    }
+    if (typeof noValue === 'number') {
+      lastNo = noValue
+    }
+    if (lastYes === null && lastNo === null) {
+      return
+    }
+    const point: DataPoint = { date: new Date(timestamp) }
+    if (lastYes !== null) {
+      point[yesKey] = lastYes
+    }
+    if (lastNo !== null) {
+      point[noKey] = lastNo
+    }
+    points.push(point)
+  })
+
+  const latestSnapshot: Record<string, number> = {}
+  const latestPoint = points[points.length - 1]
+  if (latestPoint) {
+    const yesValue = latestPoint[yesKey]
+    const noValue = latestPoint[noKey]
+    if (typeof yesValue === 'number' && Number.isFinite(yesValue)) {
+      latestSnapshot[yesKey] = yesValue
+    }
+    if (typeof noValue === 'number' && Number.isFinite(noValue)) {
+      latestSnapshot[noKey] = noValue
+    }
+  }
+
+  return { points, latestSnapshot }
+}
+
 function EventChartComponent({ event, isMobile }: EventChartProps) {
   const isSingleMarket = useIsSingleMarket()
   const currentOutcomeChances = useEventOutcomeChances()
@@ -123,11 +204,14 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   >(OUTCOME_INDEX.YES)
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
   const [tradeFlowItems, setTradeFlowItems] = useState<TradeFlowLabelItem[]>([])
+  const [chartSettings, setChartSettings] = useState(defaultChartSettings)
   const tradeFlowIdRef = useRef(0)
 
   useEffect(() => {
     setCursorSnapshot(null)
-  }, [activeTimeRange, event.slug, activeOutcomeIndex])
+  }, [activeTimeRange, event.slug, activeOutcomeIndex, chartSettings.bothOutcomes])
+
+  const showBothOutcomes = isSingleMarket && chartSettings.bothOutcomes
 
   const yesMarketTargets = useMemo(
     () => buildMarketTargets(event.markets, OUTCOME_INDEX.YES),
@@ -182,8 +266,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   const chartHistory = isSingleMarket && activeOutcomeIndex === OUTCOME_INDEX.NO
     ? noPriceHistory
     : yesPriceHistory
-  const normalizedHistory = chartHistory.normalizedHistory
-  const latestSnapshot = chartHistory.latestSnapshot
+  const marketSnapshot = showBothOutcomes ? yesPriceHistory.latestSnapshot : chartHistory.latestSnapshot
 
   useEffect(() => {
     if (Object.keys(displayChanceByMarket).length > 0) {
@@ -222,8 +305,8 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   }, [currentMarketQuotes, marketQuotesByMarket, updateMarketQuotes])
 
   const topMarketIds = useMemo(
-    () => getTopMarketIds(latestSnapshot, getMaxSeriesCount()),
-    [latestSnapshot],
+    () => getTopMarketIds(marketSnapshot, getMaxSeriesCount()),
+    [marketSnapshot],
   )
 
   const chartSeries = useMemo(
@@ -249,7 +332,45 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     [chartSeries, fallbackChartSeries],
   )
 
+  const primaryMarket = useMemo(
+    () => {
+      if (isSingleMarket) {
+        return event.markets[0]
+      }
+      const primaryId = baseSeries[0]?.key
+      return (primaryId
+        ? event.markets.find(market => market.condition_id === primaryId)
+        : null) ?? event.markets[0]
+    },
+    [event.markets, baseSeries, isSingleMarket],
+  )
+
+  const primaryConditionId = primaryMarket?.condition_id ?? ''
+  const yesSeriesKey = showBothOutcomes && primaryConditionId
+    ? `${primaryConditionId}-yes`
+    : primaryConditionId
+  const noSeriesKey = showBothOutcomes && primaryConditionId
+    ? `${primaryConditionId}-no`
+    : primaryConditionId
+  const yesOutcomeLabel = getOutcomeLabelForMarket(primaryMarket, OUTCOME_INDEX.YES)
+  const noOutcomeLabel = getOutcomeLabelForMarket(primaryMarket, OUTCOME_INDEX.NO)
+  const bothOutcomeSeries = useMemo(
+    () => {
+      if (!showBothOutcomes || !primaryConditionId) {
+        return []
+      }
+      return [
+        { key: yesSeriesKey, name: yesOutcomeLabel, color: '#2D9CDB' },
+        { key: noSeriesKey, name: noOutcomeLabel, color: '#FF6600' },
+      ]
+    },
+    [showBothOutcomes, primaryConditionId, yesSeriesKey, noSeriesKey, yesOutcomeLabel, noOutcomeLabel],
+  )
+
   const effectiveSeries = useMemo(() => {
+    if (showBothOutcomes) {
+      return bothOutcomeSeries
+    }
     if (!isSingleMarket || baseSeries.length === 0) {
       return baseSeries
     }
@@ -257,7 +378,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     return baseSeries.map((seriesItem, index) => (index === 0
       ? { ...seriesItem, color: primaryColor }
       : seriesItem))
-  }, [activeOutcomeIndex, baseSeries, isSingleMarket])
+  }, [activeOutcomeIndex, baseSeries, isSingleMarket, showBothOutcomes, bothOutcomeSeries])
 
   const watermark = useMemo(
     () => ({
@@ -269,17 +390,6 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
 
   const legendSeries = effectiveSeries
   const hasLegendSeries = legendSeries.length > 0
-
-  const primaryMarket = useMemo(
-    () => {
-      const primaryId = legendSeries[0]?.key
-      return (primaryId
-        ? event.markets.find(market => market.condition_id === primaryId)
-        : null) ?? event.markets[0]
-    },
-    [event.markets, legendSeries],
-  )
-  const primarySeriesColor = legendSeries[0]?.color ?? 'currentColor'
   const oppositeOutcomeIndex = activeOutcomeIndex === OUTCOME_INDEX.YES
     ? OUTCOME_INDEX.NO
     : OUTCOME_INDEX.YES
@@ -291,6 +401,33 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     },
     [primaryMarket],
   )
+
+  const bothOutcomeHistory = useMemo(() => {
+    if (!showBothOutcomes || !primaryConditionId) {
+      return { points: [] as DataPoint[], latestSnapshot: {} as Record<string, number> }
+    }
+    return buildCombinedOutcomeHistory(
+      yesPriceHistory.normalizedHistory,
+      noPriceHistory.normalizedHistory,
+      primaryConditionId,
+      yesSeriesKey,
+      noSeriesKey,
+    )
+  }, [
+    showBothOutcomes,
+    primaryConditionId,
+    yesSeriesKey,
+    noSeriesKey,
+    yesPriceHistory.normalizedHistory,
+    noPriceHistory.normalizedHistory,
+  ])
+
+  const normalizedHistory = showBothOutcomes
+    ? bothOutcomeHistory.points
+    : chartHistory.normalizedHistory
+  const latestSnapshot = showBothOutcomes
+    ? bothOutcomeHistory.latestSnapshot
+    : chartHistory.latestSnapshot
 
   const chartData = useMemo(
     () => filterChartDataForSeries(
@@ -311,7 +448,9 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   const legendEntries = useMemo<Array<SeriesConfig & { value: number | null }>>(
     () => legendSeries.map((seriesItem) => {
       const hoveredValue = cursorSnapshot?.values?.[seriesItem.key]
-      const snapshotValue = currentOutcomeChances[seriesItem.key] ?? latestSnapshot[seriesItem.key]
+      const snapshotValue = showBothOutcomes
+        ? latestSnapshot[seriesItem.key]
+        : (currentOutcomeChances[seriesItem.key] ?? latestSnapshot[seriesItem.key])
       const value = typeof hoveredValue === 'number' && Number.isFinite(hoveredValue)
         ? hoveredValue
         : (Number.isFinite(snapshotValue)
@@ -319,73 +458,83 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
             : null)
       return { ...seriesItem, value }
     }),
-    [legendSeries, cursorSnapshot, currentOutcomeChances, latestSnapshot],
+    [legendSeries, cursorSnapshot, currentOutcomeChances, latestSnapshot, showBothOutcomes],
   )
 
-  const leadingMarket = legendSeries[0]
-  const hoveredYesChance = leadingMarket
-    ? cursorSnapshot?.values?.[leadingMarket.key]
+  const activeSeriesKey = showBothOutcomes
+    ? (activeOutcomeIndex === OUTCOME_INDEX.NO ? noSeriesKey : yesSeriesKey)
+    : legendSeries[0]?.key
+  const primarySeriesColor = showBothOutcomes
+    ? (activeOutcomeIndex === OUTCOME_INDEX.NO ? '#FF6600' : '#2D9CDB')
+    : (legendSeries[0]?.color ?? 'currentColor')
+  const hoveredActiveChance = activeSeriesKey
+    ? cursorSnapshot?.values?.[activeSeriesKey]
     : null
-  const storedYesChance = leadingMarket
-    ? currentOutcomeChances[leadingMarket.key]
+  const primaryMarketKey = primaryConditionId || legendSeries[0]?.key
+  const storedYesChance = primaryMarketKey
+    ? currentOutcomeChances[primaryMarketKey]
     : null
-  const latestYesChance = leadingMarket
-    ? yesPriceHistory.latestSnapshot[leadingMarket.key]
+  const latestYesChance = primaryMarketKey
+    ? yesPriceHistory.latestSnapshot[primaryMarketKey]
     : null
   const baseYesChance = typeof storedYesChance === 'number' && Number.isFinite(storedYesChance)
     ? storedYesChance
     : (typeof latestYesChance === 'number' && Number.isFinite(latestYesChance)
         ? latestYesChance
         : null)
-  const baseActiveChance = typeof baseYesChance === 'number'
+  const derivedActiveChance = typeof baseYesChance === 'number'
     ? (activeOutcomeIndex === OUTCOME_INDEX.NO
         ? Math.max(0, Math.min(100, 100 - baseYesChance))
         : baseYesChance)
     : null
-  const resolvedYesChance = typeof hoveredYesChance === 'number' && Number.isFinite(hoveredYesChance)
-    ? hoveredYesChance
+  const snapshotActiveChance = showBothOutcomes && activeSeriesKey
+    ? (typeof latestSnapshot[activeSeriesKey] === 'number' ? latestSnapshot[activeSeriesKey] : null)
+    : null
+  const baseActiveChance = snapshotActiveChance ?? derivedActiveChance
+  const resolvedActiveChance = typeof hoveredActiveChance === 'number' && Number.isFinite(hoveredActiveChance)
+    ? hoveredActiveChance
     : (typeof baseActiveChance === 'number' && Number.isFinite(baseActiveChance)
         ? baseActiveChance
         : null)
-  const yesChanceValue = typeof resolvedYesChance === 'number' ? resolvedYesChance : null
+  const yesChanceValue = typeof resolvedActiveChance === 'number' ? resolvedActiveChance : null
   const legendEntriesWithValues = useMemo(
     () => legendEntries.filter(entry => typeof entry.value === 'number' && Number.isFinite(entry.value)),
     [legendEntries],
   )
   const shouldRenderLegendEntries = chartSeries.length > 0 && legendEntriesWithValues.length > 0
-  const cursorYesChance = typeof hoveredYesChance === 'number' && Number.isFinite(hoveredYesChance)
-    ? hoveredYesChance
+  const cursorActiveChance = typeof hoveredActiveChance === 'number' && Number.isFinite(hoveredActiveChance)
+    ? hoveredActiveChance
     : null
   const defaultBaselineYesChance = useMemo(() => {
-    if (!leadingMarket) {
+    if (!activeSeriesKey) {
       return null
     }
     for (const point of chartData) {
-      const value = point[leadingMarket.key]
+      const value = point[activeSeriesKey]
       if (typeof value === 'number' && Number.isFinite(value)) {
         return value
       }
     }
     return null
-  }, [chartData, leadingMarket])
+  }, [chartData, activeSeriesKey])
   const defaultCurrentYesChance = useMemo(() => {
-    if (!leadingMarket) {
+    if (!activeSeriesKey) {
       return null
     }
     for (let index = chartData.length - 1; index >= 0; index -= 1) {
-      const value = chartData[index]?.[leadingMarket.key]
+      const value = chartData[index]?.[activeSeriesKey]
       if (typeof value === 'number' && Number.isFinite(value)) {
         return value
       }
     }
     return null
-  }, [chartData, leadingMarket])
+  }, [chartData, activeSeriesKey])
   const isHovering = cursorSnapshot !== null
-    && cursorYesChance !== null
-    && Number.isFinite(cursorYesChance)
+    && cursorActiveChance !== null
+    && Number.isFinite(cursorActiveChance)
   const effectiveBaselineYesChance = defaultBaselineYesChance
   const effectiveCurrentYesChance = isHovering
-    ? cursorYesChance
+    ? cursorActiveChance
     : defaultCurrentYesChance
   const hasTradeFlowLabels = tradeFlowItems.length > 0
 
@@ -394,7 +543,6 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
       setTradeFlowItems([])
     }
   }, [outcomeTokenIds])
-
   useMarketChannelSubscription((payload) => {
     if (!outcomeTokenIds) {
       return
@@ -516,6 +664,12 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
             dataSignature={chartSignature}
             onCursorDataChange={setCursorSnapshot}
             xAxisTickCount={isMobile ? 3 : 6}
+            autoscale={chartSettings.autoscale}
+            showXAxis={chartSettings.xAxis}
+            showYAxis={chartSettings.yAxis}
+            showHorizontalGrid={chartSettings.horizontalGrid}
+            showVerticalGrid={chartSettings.verticalGrid}
+            showAnnotations={chartSettings.annotations}
             legendContent={legendContent}
             showLegend={!isSingleMarket}
             watermark={isSingleMarket ? undefined : watermark}
@@ -542,18 +696,26 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
         </div>
       )}
       controls={(
-        <EventChartControls
-          hasChartData={hasChartData}
-          timeRanges={TIME_RANGES}
-          activeTimeRange={activeTimeRange}
-          onTimeRangeChange={setActiveTimeRange}
-          showOutcomeSwitch={isSingleMarket}
-          oppositeOutcomeLabel={oppositeOutcomeLabel}
-          onShuffle={() => {
-            setActiveOutcomeIndex(oppositeOutcomeIndex)
-            setCursorSnapshot(null)
-          }}
-        />
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <EventMetaInformation event={event} />
+          {hasChartData
+            ? (
+                <EventChartControls
+                  timeRanges={TIME_RANGES}
+                  activeTimeRange={activeTimeRange}
+                  onTimeRangeChange={setActiveTimeRange}
+                  showOutcomeSwitch={isSingleMarket}
+                  oppositeOutcomeLabel={oppositeOutcomeLabel}
+                  onShuffle={() => {
+                    setActiveOutcomeIndex(oppositeOutcomeIndex)
+                    setCursorSnapshot(null)
+                  }}
+                  settings={chartSettings}
+                  onSettingsChange={setChartSettings}
+                />
+              )
+            : null}
+        </div>
       )}
     />
   )

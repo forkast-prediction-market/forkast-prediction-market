@@ -18,6 +18,7 @@ import {
   calculateYAxisBounds,
   clamp01,
   DEFAULT_X_AXIS_TICKS,
+  DEFAULT_Y_AXIS_MAX,
   INITIAL_REVEAL_DURATION,
   INTERACTION_BASE_REVEAL_DURATION,
   runRevealAnimation,
@@ -40,8 +41,6 @@ const GRID_LINE_COLOR_DARK = '#3E5364'
 const GRID_LINE_COLOR_LIGHT = '#A7B4C2'
 const GRID_LINE_OPACITY_DARK = 0.7
 const GRID_LINE_OPACITY_LIGHT = 0.35
-const MIDLINE_OPACITY_DARK = 0.8
-const MIDLINE_OPACITY_LIGHT = 0.45
 const CROSS_FADE_DURATION = 320
 
 export function PredictionChart({
@@ -54,6 +53,12 @@ export function PredictionChart({
   onCursorDataChange,
   cursorStepMs,
   xAxisTickCount = DEFAULT_X_AXIS_TICKS,
+  autoscale = true,
+  showXAxis = true,
+  showYAxis = true,
+  showHorizontalGrid = true,
+  showVerticalGrid = false,
+  showAnnotations: _showAnnotations = true,
   leadingGapStart = null,
   legendContent,
   showLegend = true,
@@ -119,12 +124,27 @@ export function PredictionChart({
     showTooltip,
     hideTooltip,
   } = useTooltip<DataPoint>()
-  const plotHeight = Math.max(1, height - margin.top - margin.bottom)
+  const resolvedMargin = useMemo(() => {
+    const axisPadding = 12
+    return {
+      top: margin.top,
+      left: margin.left,
+      right: showYAxis ? margin.right : Math.min(margin.right, axisPadding),
+      bottom: showXAxis ? margin.bottom : Math.min(margin.bottom, axisPadding),
+    }
+  }, [margin.top, margin.left, margin.right, margin.bottom, showXAxis, showYAxis])
+  const plotHeight = Math.max(1, height - resolvedMargin.top - resolvedMargin.bottom)
   const yAxisMinTicks = Math.max(4, Math.min(7, Math.round(plotHeight / 40)))
-  const { min: yAxisMin, max: yAxisMax, ticks: yAxisTicks } = useMemo(
-    () => calculateYAxisBounds(data, series, yAxisMinTicks),
-    [data, series, yAxisMinTicks],
-  )
+  const { min: yAxisMin, max: yAxisMax, ticks: yAxisTicks } = useMemo(() => {
+    if (!autoscale) {
+      return {
+        min: 0,
+        max: DEFAULT_Y_AXIS_MAX,
+        ticks: [0, 25, 50, 75, 100],
+      }
+    }
+    return calculateYAxisBounds(data, series, yAxisMinTicks)
+  }, [autoscale, data, series, yAxisMinTicks])
   const domainBounds = useMemo(() => {
     if (!data.length) {
       return { start: 0, end: 0 }
@@ -190,8 +210,8 @@ export function PredictionChart({
       }
 
       const { x } = localPoint(event) || { x: 0 }
-      const innerWidth = width - margin.left - margin.right
-      const innerHeight = height - margin.top - margin.bottom
+      const innerWidth = width - resolvedMargin.left - resolvedMargin.right
+      const innerHeight = height - resolvedMargin.top - resolvedMargin.bottom
       const domainStart = domainBounds.start
       const domainEnd = domainBounds.end
 
@@ -206,7 +226,7 @@ export function PredictionChart({
         nice: true,
       })
 
-      const rawDate = xScale.invert(x - margin.left)
+      const rawDate = xScale.invert(x - resolvedMargin.left)
       const clampedTime = Math.max(domainStart, Math.min(domainEnd, rawDate.getTime()))
       const targetTime = cursorStepMs && cursorStepMs > 0
         ? snapTimestampToInterval(clampedTime, cursorStepMs, domainStart)
@@ -234,7 +254,10 @@ export function PredictionChart({
       series,
       width,
       height,
-      margin,
+      resolvedMargin.left,
+      resolvedMargin.right,
+      resolvedMargin.top,
+      resolvedMargin.bottom,
       cursorStepMs,
       domainBounds,
       revealAnimationFrameRef,
@@ -552,8 +575,8 @@ export function PredictionChart({
     )
   }
 
-  const innerWidth = width - margin.left - margin.right
-  const innerHeight = height - margin.top - margin.bottom
+  const innerWidth = width - resolvedMargin.left - resolvedMargin.right
+  const innerHeight = height - resolvedMargin.top - resolvedMargin.bottom
 
   const xScale = scaleTime<number>({
     range: [0, innerWidth],
@@ -620,6 +643,9 @@ export function PredictionChart({
   const totalDurationHours = data.length > 1
     ? (data[data.length - 1].date.valueOf() - data[0].date.valueOf()) / 36e5
     : 0
+  const verticalGridTicks = showVerticalGrid
+    ? xScale.ticks(Math.max(2, xAxisTickCount * 2))
+    : []
 
   function formatAxisTick(value: number | { valueOf: () => number }) {
     const numericValue = typeof value === 'number' ? value : value.valueOf()
@@ -667,7 +693,7 @@ export function PredictionChart({
             name: seriesItem.name,
             color: seriesItem.color,
             value,
-            initialTop: margin.top
+            initialTop: resolvedMargin.top
               + yScale(value)
               - TOOLTIP_LABEL_HEIGHT / 2,
           }
@@ -681,8 +707,8 @@ export function PredictionChart({
       (a, b) => a.initialTop - b.initialTop,
     )
 
-    const minTop = margin.top
-    const rawMaxTop = margin.top + innerHeight - TOOLTIP_LABEL_HEIGHT
+    const minTop = resolvedMargin.top
+    const rawMaxTop = resolvedMargin.top + innerHeight - TOOLTIP_LABEL_HEIGHT
     const maxTop = rawMaxTop < minTop ? minTop : rawMaxTop
     const step = TOOLTIP_LABEL_HEIGHT + TOOLTIP_LABEL_GAP
 
@@ -743,9 +769,6 @@ export function PredictionChart({
   const gridLineOpacity = isDarkMode
     ? GRID_LINE_OPACITY_DARK
     : GRID_LINE_OPACITY_LIGHT
-  const midlineOpacity = isDarkMode
-    ? MIDLINE_OPACITY_DARK
-    : MIDLINE_OPACITY_LIGHT
   const axisLabelColor = gridLineColor
   const axisLabelOpacity = Math.min(1, gridLineOpacity + 0.25)
   const leadingGapStartMs = leadingGapStart instanceof Date ? leadingGapStart.getTime() : Number.NaN
@@ -786,8 +809,26 @@ export function PredictionChart({
               />
             </clipPath>
           </defs>
-          <Group left={margin.left} top={margin.top}>
-            {yAxisTicks.map(value => (
+          <Group left={resolvedMargin.left} top={resolvedMargin.top}>
+            {showVerticalGrid && verticalGridTicks.map((tick) => {
+              const tickTime = tick.getTime()
+              const xValue = xScale(tick)
+              return (
+                <line
+                  key={`grid-x-${tickTime}`}
+                  x1={xValue}
+                  x2={xValue}
+                  y1={0}
+                  y2={innerHeight}
+                  stroke={gridLineColor}
+                  strokeWidth={1}
+                  strokeDasharray="1,3"
+                  opacity={gridLineOpacity}
+                />
+              )
+            })}
+
+            {showHorizontalGrid && yAxisTicks.map(value => (
               <line
                 key={`grid-${value}`}
                 x1={0}
@@ -800,19 +841,6 @@ export function PredictionChart({
                 opacity={gridLineOpacity}
               />
             ))}
-
-            {yAxisMax >= 50 && yAxisMin <= 50 && (
-              <line
-                x1={0}
-                x2={innerWidth}
-                y1={yScale(50)}
-                y2={yScale(50)}
-                stroke={gridLineColor}
-                strokeWidth={1.5}
-                strokeDasharray="2,4"
-                opacity={midlineOpacity}
-              />
-            )}
 
             {series.map((seriesItem) => {
               const seriesColor = seriesItem.color
@@ -992,51 +1020,55 @@ export function PredictionChart({
                 )
               })}
 
-            <AxisRight
-              left={innerWidth}
-              scale={yScale}
-              tickFormat={value => `${value}%`}
-              tickValues={yAxisTicks}
-              stroke="transparent"
-              tickStroke="transparent"
-              tickLabelProps={{
-                fill: axisLabelColor,
-                fontSize: 11,
-                fontFamily: 'Arial, sans-serif',
-                textAnchor: 'start',
-                dy: '0.33em',
-                dx: '0.5em',
-                opacity: axisLabelOpacity,
-              }}
-              tickLength={0}
-            />
-
-            <AxisBottom
-              top={innerHeight}
-              scale={xScale}
-              tickFormat={formatAxisTick}
-              stroke="transparent"
-              tickStroke="transparent"
-              tickLabelProps={(_value, index, values) => {
-                const lastIndex = Array.isArray(values) ? values.length - 1 : -1
-                const textAnchor = index === 0
-                  ? 'start'
-                  : index === lastIndex
-                    ? 'end'
-                    : 'middle'
-
-                return {
+            {showYAxis && (
+              <AxisRight
+                left={innerWidth}
+                scale={yScale}
+                tickFormat={value => `${value}%`}
+                tickValues={yAxisTicks}
+                stroke="transparent"
+                tickStroke="transparent"
+                tickLabelProps={{
                   fill: axisLabelColor,
                   fontSize: 11,
                   fontFamily: 'Arial, sans-serif',
-                  textAnchor,
-                  dy: '0.6em',
+                  textAnchor: 'start',
+                  dy: '0.33em',
+                  dx: '0.5em',
                   opacity: axisLabelOpacity,
-                }
-              }}
-              numTicks={xAxisTickCount}
-              tickLength={0}
-            />
+                }}
+                tickLength={0}
+              />
+            )}
+
+            {showXAxis && (
+              <AxisBottom
+                top={innerHeight}
+                scale={xScale}
+                tickFormat={formatAxisTick}
+                stroke="transparent"
+                tickStroke="transparent"
+                tickLabelProps={(_value, index, values) => {
+                  const lastIndex = Array.isArray(values) ? values.length - 1 : -1
+                  const textAnchor = index === 0
+                    ? 'start'
+                    : index === lastIndex
+                      ? 'end'
+                      : 'middle'
+
+                  return {
+                    fill: axisLabelColor,
+                    fontSize: 11,
+                    fontFamily: 'Arial, sans-serif',
+                    textAnchor,
+                    dy: '0.6em',
+                    opacity: axisLabelOpacity,
+                  }
+                }}
+                numTicks={xAxisTickCount}
+                tickLength={0}
+              />
+            )}
 
             <rect
               x={0}
@@ -1087,7 +1119,7 @@ export function PredictionChart({
           tooltipActive={tooltipActive}
           tooltipData={effectiveTooltipData}
           positionedTooltipEntries={positionedTooltipEntries}
-          margin={margin}
+          margin={resolvedMargin}
           innerWidth={innerWidth}
           clampedTooltipX={clampedTooltipX}
         />

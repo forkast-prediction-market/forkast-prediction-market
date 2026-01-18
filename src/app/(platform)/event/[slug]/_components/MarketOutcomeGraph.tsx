@@ -5,7 +5,7 @@ import type { Market, Outcome } from '@/types'
 import type { PredictionChartCursorSnapshot, PredictionChartProps } from '@/types/PredictionChartTypes'
 import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useState } from 'react'
-import EventChartControls from '@/app/(platform)/event/[slug]/_components/EventChartControls'
+import EventChartControls, { defaultChartSettings } from '@/app/(platform)/event/[slug]/_components/EventChartControls'
 import EventChartHeader from '@/app/(platform)/event/[slug]/_components/EventChartHeader'
 import EventChartLayout from '@/app/(platform)/event/[slug]/_components/EventChartLayout'
 import {
@@ -35,6 +35,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   const [activeTimeRange, setActiveTimeRange] = useState<TimeRange>('ALL')
   const [activeOutcomeIndex, setActiveOutcomeIndex] = useState(outcome.outcome_index)
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
+  const [chartSettings, setChartSettings] = useState(defaultChartSettings)
   const marketTargets = useMemo(() => buildMarketTargets(allMarkets), [allMarkets])
   const { width: windowWidth } = useWindowSize()
   const chartWidth = isMobile ? ((windowWidth || 400) * 0.84) : Math.min((windowWidth ?? 1440) * 0.55, 900)
@@ -46,7 +47,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
 
   useEffect(() => {
     setCursorSnapshot(null)
-  }, [activeTimeRange, activeOutcomeIndex])
+  }, [activeTimeRange, activeOutcomeIndex, chartSettings.bothOutcomes])
 
   const activeOutcome = useMemo(
     () => market.outcomes.find(item => item.outcome_index === activeOutcomeIndex) ?? outcome,
@@ -61,6 +62,9 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   )
   const showOutcomeSwitch = market.outcomes.length > 1
     && oppositeOutcome.outcome_index !== activeOutcome.outcome_index
+  const showBothOutcomes = chartSettings.bothOutcomes && showOutcomeSwitch
+  const yesOutcomeLabel = market.outcomes.find(item => item.outcome_index === OUTCOME_INDEX.YES)?.outcome_text ?? 'Yes'
+  const noOutcomeLabel = market.outcomes.find(item => item.outcome_index === OUTCOME_INDEX.NO)?.outcome_text ?? 'No'
 
   const {
     normalizedHistory,
@@ -72,22 +76,29 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   })
 
   const chartData = useMemo(
-    () => buildChartData(normalizedHistory, market.condition_id, activeOutcomeIndex),
-    [normalizedHistory, market.condition_id, activeOutcomeIndex],
+    () => (showBothOutcomes
+      ? buildComparisonChartData(normalizedHistory, market.condition_id)
+      : buildChartData(normalizedHistory, market.condition_id, activeOutcomeIndex)),
+    [normalizedHistory, market.condition_id, activeOutcomeIndex, showBothOutcomes],
   )
   const leadingGapStart = normalizedHistory[0]?.date ?? null
 
   const series = useMemo(
-    () => [{
-      key: 'value',
-      name: activeOutcome.outcome_text,
-      color: activeOutcome.outcome_index === OUTCOME_INDEX.NO ? '#FF6600' : '#2D9CDB',
-    }],
-    [activeOutcome.outcome_index, activeOutcome.outcome_text],
+    () => (showBothOutcomes
+      ? [
+          { key: 'yes', name: yesOutcomeLabel, color: '#2D9CDB' },
+          { key: 'no', name: noOutcomeLabel, color: '#FF6600' },
+        ]
+      : [{
+          key: 'value',
+          name: activeOutcome.outcome_text,
+          color: activeOutcome.outcome_index === OUTCOME_INDEX.NO ? '#FF6600' : '#2D9CDB',
+        }]),
+    [activeOutcome.outcome_index, activeOutcome.outcome_text, showBothOutcomes, yesOutcomeLabel, noOutcomeLabel],
   )
   const chartSignature = useMemo(
-    () => `${market.condition_id}:${activeOutcomeIndex}:${activeTimeRange}`,
-    [market.condition_id, activeOutcomeIndex, activeTimeRange],
+    () => `${market.condition_id}:${activeOutcomeIndex}:${activeTimeRange}:${showBothOutcomes ? 'both' : 'single'}`,
+    [market.condition_id, activeOutcomeIndex, activeTimeRange, showBothOutcomes],
   )
   const hasChartData = chartData.length > 0
   const watermark = useMemo(
@@ -98,27 +109,34 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
     [],
   )
 
-  const hoveredValue = cursorSnapshot?.values?.value
+  const activeSeriesKey = showBothOutcomes
+    ? (activeOutcomeIndex === OUTCOME_INDEX.NO ? 'no' : 'yes')
+    : 'value'
+  const primarySeriesColor = showBothOutcomes
+    ? (activeOutcomeIndex === OUTCOME_INDEX.NO ? '#FF6600' : '#2D9CDB')
+    : (series[0]?.color ?? '#2D9CDB')
+  const hoveredValue = cursorSnapshot?.values?.[activeSeriesKey]
   const latestValue = useMemo(() => {
     for (let index = chartData.length - 1; index >= 0; index -= 1) {
-      const value = chartData[index]?.value
+      const value = chartData[index]?.[activeSeriesKey]
       if (typeof value === 'number' && Number.isFinite(value)) {
         return value
       }
     }
     return null
-  }, [chartData])
+  }, [chartData, activeSeriesKey])
   const resolvedValue = typeof hoveredValue === 'number' && Number.isFinite(hoveredValue)
     ? hoveredValue
     : latestValue
   const baselineValue = useMemo(() => {
     for (const point of chartData) {
-      if (Number.isFinite(point.value)) {
-        return point.value
+      const value = point[activeSeriesKey]
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        return value
       }
     }
     return null
-  }, [chartData])
+  }, [chartData, activeSeriesKey])
   const currentValue = resolvedValue
 
   return (
@@ -129,7 +147,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
               isSingleMarket
               activeOutcomeIndex={activeOutcome.outcome_index as typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO}
               activeOutcomeLabel={activeOutcome.outcome_text}
-              primarySeriesColor={series[0]?.color ?? '#2D9CDB'}
+              primarySeriesColor={primarySeriesColor}
               yesChanceValue={typeof resolvedValue === 'number' ? resolvedValue : null}
               effectiveBaselineYesChance={typeof baselineValue === 'number' ? baselineValue : null}
               effectiveCurrentYesChance={typeof currentValue === 'number' ? currentValue : null}
@@ -148,6 +166,12 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
               dataSignature={chartSignature}
               onCursorDataChange={setCursorSnapshot}
               xAxisTickCount={isMobile ? 3 : 6}
+              autoscale={chartSettings.autoscale}
+              showXAxis={chartSettings.xAxis}
+              showYAxis={chartSettings.yAxis}
+              showHorizontalGrid={chartSettings.horizontalGrid}
+              showVerticalGrid={chartSettings.verticalGrid}
+              showAnnotations={chartSettings.annotations}
               leadingGapStart={leadingGapStart}
               legendContent={null}
               showLegend={false}
@@ -161,15 +185,16 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
           )}
       controls={hasChartData
         ? (
-            <div className="pb-2">
+            <div className="mt-3 pb-2">
               <EventChartControls
-                hasChartData
                 timeRanges={TIME_RANGES}
                 activeTimeRange={activeTimeRange}
                 onTimeRangeChange={setActiveTimeRange}
                 showOutcomeSwitch={showOutcomeSwitch}
                 oppositeOutcomeLabel={oppositeOutcome.outcome_text}
                 onShuffle={() => setActiveOutcomeIndex(oppositeOutcome.outcome_index)}
+                settings={chartSettings}
+                onSettingsChange={setChartSettings}
               />
             </div>
           )
@@ -202,4 +227,27 @@ function buildChartData(
       }
     })
     .filter((entry): entry is { date: Date, value: number } => entry !== null)
+}
+
+function buildComparisonChartData(
+  normalizedHistory: Array<Record<string, number | Date> & { date: Date }>,
+  conditionId: string,
+) {
+  if (!normalizedHistory.length) {
+    return []
+  }
+
+  return normalizedHistory
+    .map((point) => {
+      const value = point[conditionId]
+      if (typeof value !== 'number' || !Number.isFinite(value)) {
+        return null
+      }
+      return {
+        date: point.date,
+        yes: value,
+        no: Math.max(0, 100 - value),
+      }
+    })
+    .filter((entry): entry is { date: Date, yes: number, no: number } => entry !== null)
 }
