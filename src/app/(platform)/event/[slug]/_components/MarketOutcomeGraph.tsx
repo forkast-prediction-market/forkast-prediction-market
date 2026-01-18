@@ -118,25 +118,36 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   const hoveredValue = cursorSnapshot?.values?.[activeSeriesKey]
   const latestValue = useMemo(() => {
     for (let index = chartData.length - 1; index >= 0; index -= 1) {
-      const value = chartData[index]?.[activeSeriesKey]
+      const point = chartData[index]
+      if (!point) {
+        continue
+      }
+
+      const value = showBothOutcomes
+        ? (activeSeriesKey === 'yes' ? point.yes : point.no)
+        : ('value' in point ? point.value : undefined)
+
       if (typeof value === 'number' && Number.isFinite(value)) {
         return value
       }
     }
     return null
-  }, [chartData, activeSeriesKey])
+  }, [chartData, activeSeriesKey, showBothOutcomes])
   const resolvedValue = typeof hoveredValue === 'number' && Number.isFinite(hoveredValue)
     ? hoveredValue
     : latestValue
   const baselineValue = useMemo(() => {
     for (const point of chartData) {
-      const value = point[activeSeriesKey]
+      const value = showBothOutcomes
+        ? (activeSeriesKey === 'yes' ? point.yes : point.no)
+        : ('value' in point ? point.value : undefined)
+
       if (typeof value === 'number' && Number.isFinite(value)) {
         return value
       }
     }
     return null
-  }, [chartData, activeSeriesKey])
+  }, [chartData, activeSeriesKey, showBothOutcomes])
   const currentValue = resolvedValue
 
   return (
