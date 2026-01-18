@@ -124,7 +124,11 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
       }
 
       const value = showBothOutcomes
-        ? (activeSeriesKey === 'yes' ? point.yes : point.no)
+        ? (activeSeriesKey === 'yes' && 'yes' in point
+            ? point.yes
+            : 'no' in point
+              ? point.no
+              : undefined)
         : ('value' in point ? point.value : undefined)
 
       if (typeof value === 'number' && Number.isFinite(value)) {
@@ -139,7 +143,11 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   const baselineValue = useMemo(() => {
     for (const point of chartData) {
       const value = showBothOutcomes
-        ? (activeSeriesKey === 'yes' ? point.yes : point.no)
+        ? (activeSeriesKey === 'yes' && 'yes' in point
+            ? point.yes
+            : 'no' in point
+              ? point.no
+              : undefined)
         : ('value' in point ? point.value : undefined)
 
       if (typeof value === 'number' && Number.isFinite(value)) {
