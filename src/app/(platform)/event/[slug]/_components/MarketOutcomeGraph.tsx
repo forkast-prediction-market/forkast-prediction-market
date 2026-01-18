@@ -6,6 +6,7 @@ import type { PredictionChartCursorSnapshot, PredictionChartProps } from '@/type
 import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useState } from 'react'
 import EventChartControls, { defaultChartSettings } from '@/app/(platform)/event/[slug]/_components/EventChartControls'
+import EventChartExportDialog from '@/app/(platform)/event/[slug]/_components/EventChartExportDialog'
 import EventChartHeader from '@/app/(platform)/event/[slug]/_components/EventChartHeader'
 import EventChartLayout from '@/app/(platform)/event/[slug]/_components/EventChartLayout'
 import {
@@ -36,6 +37,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   const [activeOutcomeIndex, setActiveOutcomeIndex] = useState(outcome.outcome_index)
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
   const [chartSettings, setChartSettings] = useState(defaultChartSettings)
+  const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const marketTargets = useMemo(() => buildMarketTargets(allMarkets), [allMarkets])
   const { width: windowWidth } = useWindowSize()
   const chartWidth = isMobile ? ((windowWidth || 400) * 0.84) : Math.min((windowWidth ?? 1440) * 0.55, 900)
@@ -159,66 +161,76 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   const currentValue = resolvedValue
 
   return (
-    <EventChartLayout
-      header={hasChartData
-        ? (
-            <EventChartHeader
-              isSingleMarket
-              activeOutcomeIndex={activeOutcome.outcome_index as typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO}
-              activeOutcomeLabel={activeOutcome.outcome_text}
-              primarySeriesColor={primarySeriesColor}
-              yesChanceValue={typeof resolvedValue === 'number' ? resolvedValue : null}
-              effectiveBaselineYesChance={typeof baselineValue === 'number' ? baselineValue : null}
-              effectiveCurrentYesChance={typeof currentValue === 'number' ? currentValue : null}
-              watermark={watermark}
-            />
-          )
-        : null}
-      chart={hasChartData
-        ? (
-            <PredictionChart
-              data={chartData}
-              series={series}
-              width={chartWidth}
-              height={318}
-              margin={{ top: 20, right: 40, bottom: 48, left: 0 }}
-              dataSignature={chartSignature}
-              onCursorDataChange={setCursorSnapshot}
-              xAxisTickCount={isMobile ? 3 : 6}
-              autoscale={chartSettings.autoscale}
-              showXAxis={chartSettings.xAxis}
-              showYAxis={chartSettings.yAxis}
-              showHorizontalGrid={chartSettings.horizontalGrid}
-              showVerticalGrid={chartSettings.verticalGrid}
-              showAnnotations={chartSettings.annotations}
-              leadingGapStart={leadingGapStart}
-              legendContent={null}
-              showLegend={false}
-              watermark={undefined}
-            />
-          )
-        : (
-            <div className="flex min-h-16 items-center justify-center px-4 text-center text-sm text-muted-foreground">
-              Price history is unavailable for this outcome.
-            </div>
-          )}
-      controls={hasChartData
-        ? (
-            <div className="mt-3 pb-2">
-              <EventChartControls
-                timeRanges={TIME_RANGES}
-                activeTimeRange={activeTimeRange}
-                onTimeRangeChange={setActiveTimeRange}
-                showOutcomeSwitch={showOutcomeSwitch}
-                oppositeOutcomeLabel={oppositeOutcome.outcome_text}
-                onShuffle={() => setActiveOutcomeIndex(oppositeOutcome.outcome_index)}
-                settings={chartSettings}
-                onSettingsChange={setChartSettings}
+    <>
+      <EventChartLayout
+        header={hasChartData
+          ? (
+              <EventChartHeader
+                isSingleMarket
+                activeOutcomeIndex={activeOutcome.outcome_index as typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO}
+                activeOutcomeLabel={activeOutcome.outcome_text}
+                primarySeriesColor={primarySeriesColor}
+                yesChanceValue={typeof resolvedValue === 'number' ? resolvedValue : null}
+                effectiveBaselineYesChance={typeof baselineValue === 'number' ? baselineValue : null}
+                effectiveCurrentYesChance={typeof currentValue === 'number' ? currentValue : null}
+                watermark={watermark}
               />
-            </div>
-          )
-        : null}
-    />
+            )
+          : null}
+        chart={hasChartData
+          ? (
+              <PredictionChart
+                data={chartData}
+                series={series}
+                width={chartWidth}
+                height={318}
+                margin={{ top: 20, right: 40, bottom: 48, left: 0 }}
+                dataSignature={chartSignature}
+                onCursorDataChange={setCursorSnapshot}
+                xAxisTickCount={isMobile ? 3 : 6}
+                autoscale={chartSettings.autoscale}
+                showXAxis={chartSettings.xAxis}
+                showYAxis={chartSettings.yAxis}
+                showHorizontalGrid={chartSettings.horizontalGrid}
+                showVerticalGrid={chartSettings.verticalGrid}
+                showAnnotations={chartSettings.annotations}
+                leadingGapStart={leadingGapStart}
+                legendContent={null}
+                showLegend={false}
+                watermark={undefined}
+              />
+            )
+          : (
+              <div className="flex min-h-16 items-center justify-center px-4 text-center text-sm text-muted-foreground">
+                Price history is unavailable for this outcome.
+              </div>
+            )}
+        controls={hasChartData
+          ? (
+              <div className="mt-3 pb-2">
+                <EventChartControls
+                  timeRanges={TIME_RANGES}
+                  activeTimeRange={activeTimeRange}
+                  onTimeRangeChange={setActiveTimeRange}
+                  showOutcomeSwitch={showOutcomeSwitch}
+                  oppositeOutcomeLabel={oppositeOutcome.outcome_text}
+                  onShuffle={() => setActiveOutcomeIndex(oppositeOutcome.outcome_index)}
+                  settings={chartSettings}
+                  onSettingsChange={setChartSettings}
+                  onExportData={() => setExportDialogOpen(true)}
+                />
+              </div>
+            )
+          : null}
+      />
+      <EventChartExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        eventCreatedAt={eventCreatedAt}
+        markets={allMarkets}
+        isMultiMarket={allMarkets.length > 1}
+      />
+    </>
   )
 }
 

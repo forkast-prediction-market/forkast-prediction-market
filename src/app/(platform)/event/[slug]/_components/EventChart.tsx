@@ -47,6 +47,7 @@ import { resolveDisplayPrice } from '@/lib/market-chance'
 import { sanitizeSvg } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
 import EventChartControls, { defaultChartSettings } from './EventChartControls'
+import EventChartExportDialog from './EventChartExportDialog'
 import EventChartHeader from './EventChartHeader'
 import EventChartLayout from './EventChartLayout'
 import EventMetaInformation from './EventMetaInformation'
@@ -205,6 +206,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
   const [tradeFlowItems, setTradeFlowItems] = useState<TradeFlowLabelItem[]>([])
   const [chartSettings, setChartSettings] = useState(defaultChartSettings)
+  const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const tradeFlowIdRef = useRef(0)
 
   useEffect(() => {
@@ -640,84 +642,94 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     return null
   }
   return (
-    <EventChartLayout
-      header={(
-        <EventChartHeader
-          isSingleMarket={isSingleMarket}
-          activeOutcomeIndex={activeOutcomeIndex}
-          activeOutcomeLabel={activeOutcomeLabel}
-          primarySeriesColor={primarySeriesColor}
-          yesChanceValue={yesChanceValue}
-          effectiveBaselineYesChance={effectiveBaselineYesChance}
-          effectiveCurrentYesChance={effectiveCurrentYesChance}
-          watermark={watermark}
-        />
-      )}
-      chart={(
-        <div className="relative">
-          <PredictionChart
-            data={chartData}
-            series={legendSeries}
-            width={chartWidth}
-            height={332}
-            margin={{ top: 30, right: 40, bottom: 52, left: 0 }}
-            dataSignature={chartSignature}
-            onCursorDataChange={setCursorSnapshot}
-            xAxisTickCount={isMobile ? 3 : 6}
-            autoscale={chartSettings.autoscale}
-            showXAxis={chartSettings.xAxis}
-            showYAxis={chartSettings.yAxis}
-            showHorizontalGrid={chartSettings.horizontalGrid}
-            showVerticalGrid={chartSettings.verticalGrid}
-            showAnnotations={chartSettings.annotations}
-            legendContent={legendContent}
-            showLegend={!isSingleMarket}
-            watermark={isSingleMarket ? undefined : watermark}
+    <>
+      <EventChartLayout
+        header={(
+          <EventChartHeader
+            isSingleMarket={isSingleMarket}
+            activeOutcomeIndex={activeOutcomeIndex}
+            activeOutcomeLabel={activeOutcomeLabel}
+            primarySeriesColor={primarySeriesColor}
+            yesChanceValue={yesChanceValue}
+            effectiveBaselineYesChance={effectiveBaselineYesChance}
+            effectiveCurrentYesChance={effectiveCurrentYesChance}
+            watermark={watermark}
           />
-          {hasTradeFlowLabels
-            ? (
-                <div className={`
-                  pointer-events-none absolute bottom-6 left-4 flex flex-col gap-1 text-sm font-semibold tabular-nums
-                `}
-                >
-                  {tradeFlowItems.map(item => (
-                    <span
-                      key={item.id}
-                      className={`${item.outcome === 'yes' ? 'text-yes' : 'text-no'} animate-trade-flow-rise`}
-                      style={tradeFlowTextStrokeStyle}
-                    >
-                      +
-                      {item.label}
-                    </span>
-                  ))}
-                </div>
-              )
-            : null}
-        </div>
-      )}
-      controls={(
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <EventMetaInformation event={event} />
-          {hasChartData
-            ? (
-                <EventChartControls
-                  timeRanges={TIME_RANGES}
-                  activeTimeRange={activeTimeRange}
-                  onTimeRangeChange={setActiveTimeRange}
-                  showOutcomeSwitch={isSingleMarket}
-                  oppositeOutcomeLabel={oppositeOutcomeLabel}
-                  onShuffle={() => {
-                    setActiveOutcomeIndex(oppositeOutcomeIndex)
-                    setCursorSnapshot(null)
-                  }}
-                  settings={chartSettings}
-                  onSettingsChange={setChartSettings}
-                />
-              )
-            : null}
-        </div>
-      )}
-    />
+        )}
+        chart={(
+          <div className="relative">
+            <PredictionChart
+              data={chartData}
+              series={legendSeries}
+              width={chartWidth}
+              height={332}
+              margin={{ top: 30, right: 40, bottom: 52, left: 0 }}
+              dataSignature={chartSignature}
+              onCursorDataChange={setCursorSnapshot}
+              xAxisTickCount={isMobile ? 3 : 6}
+              autoscale={chartSettings.autoscale}
+              showXAxis={chartSettings.xAxis}
+              showYAxis={chartSettings.yAxis}
+              showHorizontalGrid={chartSettings.horizontalGrid}
+              showVerticalGrid={chartSettings.verticalGrid}
+              showAnnotations={chartSettings.annotations}
+              legendContent={legendContent}
+              showLegend={!isSingleMarket}
+              watermark={isSingleMarket ? undefined : watermark}
+            />
+            {hasTradeFlowLabels
+              ? (
+                  <div className={`
+                    pointer-events-none absolute bottom-6 left-4 flex flex-col gap-1 text-sm font-semibold tabular-nums
+                  `}
+                  >
+                    {tradeFlowItems.map(item => (
+                      <span
+                        key={item.id}
+                        className={`${item.outcome === 'yes' ? 'text-yes' : 'text-no'} animate-trade-flow-rise`}
+                        style={tradeFlowTextStrokeStyle}
+                      >
+                        +
+                        {item.label}
+                      </span>
+                    ))}
+                  </div>
+                )
+              : null}
+          </div>
+        )}
+        controls={(
+          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+            <EventMetaInformation event={event} />
+            {hasChartData
+              ? (
+                  <EventChartControls
+                    timeRanges={TIME_RANGES}
+                    activeTimeRange={activeTimeRange}
+                    onTimeRangeChange={setActiveTimeRange}
+                    showOutcomeSwitch={isSingleMarket}
+                    oppositeOutcomeLabel={oppositeOutcomeLabel}
+                    onShuffle={() => {
+                      setActiveOutcomeIndex(oppositeOutcomeIndex)
+                      setCursorSnapshot(null)
+                    }}
+                    settings={chartSettings}
+                    onSettingsChange={setChartSettings}
+                    onExportData={() => setExportDialogOpen(true)}
+                  />
+                )
+              : null}
+          </div>
+        )}
+      />
+      <EventChartExportDialog
+        open={exportDialogOpen}
+        onOpenChange={setExportDialogOpen}
+        eventCreatedAt={event.created_at}
+        markets={event.markets}
+        isMultiMarket={event.total_markets_count > 1}
+      />
+    </>
   )
 }
 

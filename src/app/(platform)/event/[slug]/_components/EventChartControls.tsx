@@ -1,6 +1,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 import type { TimeRange } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import { CodeXmlIcon, FileTextIcon, SettingsIcon, ShuffleIcon } from 'lucide-react'
+import { useState } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +34,7 @@ interface EventChartControlsProps {
   onShuffle: () => void
   settings: ChartSettings
   onSettingsChange: Dispatch<SetStateAction<ChartSettings>>
+  onExportData?: () => void
 }
 
 export default function EventChartControls({
@@ -44,7 +46,9 @@ export default function EventChartControls({
   onShuffle,
   settings,
   onSettingsChange,
+  onExportData,
 }: EventChartControlsProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const settingItems: Array<{ key: ChartSettingKey, label: string }> = [
     { key: 'autoscale', label: 'Autoscale' },
     { key: 'xAxis', label: 'X-Axis' },
@@ -110,7 +114,7 @@ export default function EventChartControls({
         </Tooltip>
       )}
 
-      <DropdownMenu>
+      <DropdownMenu open={settingsOpen} onOpenChange={setSettingsOpen}>
         <DropdownMenuTrigger asChild>
           <button
             type="button"
@@ -136,6 +140,7 @@ export default function EventChartControls({
               <button
                 type="button"
                 className="flex items-center gap-2 text-foreground"
+                onClick={() => setSettingsOpen(false)}
               >
                 <CodeXmlIcon className="size-4" />
                 <span>Embed</span>
@@ -143,6 +148,10 @@ export default function EventChartControls({
               <button
                 type="button"
                 className="flex items-center gap-2 text-foreground"
+                onClick={() => {
+                  onExportData?.()
+                  setSettingsOpen(false)
+                }}
               >
                 <FileTextIcon className="size-4" />
                 <span>Export Data</span>
