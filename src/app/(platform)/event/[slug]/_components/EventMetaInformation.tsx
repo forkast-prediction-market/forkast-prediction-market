@@ -94,8 +94,8 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
   const expiryDate = maybeEndDate && !Number.isNaN(maybeEndDate.getTime()) ? maybeEndDate : null
 
   return (
-    <div className="flex flex-wrap items-center gap-3 text-xs text-foreground">
-      <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-3 text-xs">
+      <div className="flex items-center gap-2 text-foreground">
         {isNegRiskEnabled && (
           <Tooltip>
             <TooltipTrigger asChild>
@@ -148,10 +148,13 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
           : <span className="text-sm font-semibold text-foreground">{volumeLabel}</span>}
       </div>
       {expiryDate && (
+        <span className="h-4 w-px bg-muted-foreground/40" aria-hidden="true" />
+      )}
+      {expiryDate && (
         <Tooltip>
           <TooltipTrigger>
-            <div className="flex items-center gap-1.5 text-sm leading-tight font-semibold text-foreground">
-              <Clock3Icon className="size-4 text-foreground" strokeWidth={2.5} />
+            <div className="flex items-center gap-1.5 text-sm leading-tight font-semibold text-muted-foreground">
+              <Clock3Icon className="size-4 text-muted-foreground" strokeWidth={2.5} />
               <span>{formatDate(expiryDate)}</span>
             </div>
           </TooltipTrigger>

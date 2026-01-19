@@ -1,0 +1,111 @@
+import type { NextRequest } from 'next/server'
+
+function escapeAttr(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+}
+
+function normalizeBaseUrl(value: string) {
+  return value.replace(/\/$/, '')
+}
+
+function requireEnv(value: string | undefined, name: string) {
+  if (!value || !value.trim()) {
+    throw new Error(`${name} is required for embeds.`)
+  }
+  return value
+}
+
+function slugifySiteName(value: string) {
+  const slug = value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+  if (!slug) {
+    throw new Error('NEXT_PUBLIC_SITE_NAME must include at least one letter or number.')
+  }
+  return slug
+}
+
+function buildLogoUrl(value: string) {
+  const trimmed = value.trim()
+  if (!trimmed) {
+    return ''
+  }
+  if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith('data:')) {
+    return trimmed
+  }
+  return `data:image/svg+xml;utf8,${encodeURIComponent(trimmed)}`
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const marketSlug = searchParams.get('market') ?? ''
+  const eventSlug = searchParams.get('event') ?? ''
+  const theme = searchParams.get('theme') === 'dark' ? 'dark' : 'light'
+  const features = new Set(
+    (searchParams.get('features') ?? '')
+      .split(',')
+      .map(value => value.trim())
+      .filter(Boolean),
+  )
+
+  const showVolume = features.has('volume')
+  const showChart = features.has('chart')
+  const showFilters = showChart && features.has('filters')
+
+  const siteUrl = normalizeBaseUrl(requireEnv(process.env.SITE_URL, 'SITE_URL'))
+  const scriptUrl = 'https://unpkg.com/@kuestcom/embeds/dist/index.js'
+  const siteName = requireEnv(process.env.NEXT_PUBLIC_SITE_NAME, 'NEXT_PUBLIC_SITE_NAME')
+  const elementName = `${slugifySiteName(siteName)}-market-embed`
+  const siteLogoUrl = buildLogoUrl(process.env.NEXT_PUBLIC_SITE_LOGO_SVG ?? '')
+
+  const attrs: string[] = [`theme="${theme}"`]
+  if (marketSlug) {
+    attrs.push(`market="${escapeAttr(marketSlug)}"`)
+  }
+  else if (eventSlug) {
+    attrs.push(`event="${escapeAttr(eventSlug)}"`)
+  }
+  if (showVolume) {
+    attrs.push('volume="true"')
+  }
+  if (showChart) {
+    attrs.push('chart="true"')
+  }
+  if (showFilters) {
+    attrs.push('filters="true"')
+  }
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      html, body { margin: 0; padding: 0; background: transparent; }
+      body { display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+    </style>
+    <script>
+      window.__KUEST_SITE_URL = ${JSON.stringify(siteUrl)};
+      window.__KUEST_SITE_NAME = ${JSON.stringify(siteName)};
+      window.__KUEST_SITE_LOGO_URL = ${JSON.stringify(siteLogoUrl)};
+    </script>
+    <script type="module" src="${scriptUrl}"></script>
+  </head>
+  <body>
+    <${elementName} ${attrs.join(' ')}></${elementName}>
+  </body>
+</html>`
+
+  return new Response(html, {
+    headers: {
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-store',
+    },
+  })
+}

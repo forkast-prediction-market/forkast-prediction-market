@@ -5,7 +5,8 @@ import type { Market, Outcome } from '@/types'
 import type { PredictionChartCursorSnapshot, PredictionChartProps } from '@/types/PredictionChartTypes'
 import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useState } from 'react'
-import EventChartControls, { defaultChartSettings } from '@/app/(platform)/event/[slug]/_components/EventChartControls'
+import EventChartControls from '@/app/(platform)/event/[slug]/_components/EventChartControls'
+import EventChartEmbedDialog from '@/app/(platform)/event/[slug]/_components/EventChartEmbedDialog'
 import EventChartExportDialog from '@/app/(platform)/event/[slug]/_components/EventChartExportDialog'
 import EventChartHeader from '@/app/(platform)/event/[slug]/_components/EventChartHeader'
 import EventChartLayout from '@/app/(platform)/event/[slug]/_components/EventChartLayout'
@@ -14,6 +15,7 @@ import {
   TIME_RANGES,
   useEventPriceHistory,
 } from '@/app/(platform)/event/[slug]/_hooks/useEventPriceHistory'
+import { loadStoredChartSettings, storeChartSettings } from '@/app/(platform)/event/[slug]/_utils/chartSettingsStorage'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { OUTCOME_INDEX } from '@/lib/constants'
@@ -36,8 +38,9 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   const [activeTimeRange, setActiveTimeRange] = useState<TimeRange>('ALL')
   const [activeOutcomeIndex, setActiveOutcomeIndex] = useState(outcome.outcome_index)
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
-  const [chartSettings, setChartSettings] = useState(defaultChartSettings)
+  const [chartSettings, setChartSettings] = useState(() => loadStoredChartSettings())
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
+  const [embedDialogOpen, setEmbedDialogOpen] = useState(false)
   const marketTargets = useMemo(() => buildMarketTargets(allMarkets), [allMarkets])
   const { width: windowWidth } = useWindowSize()
   const chartWidth = isMobile ? ((windowWidth || 400) * 0.84) : Math.min((windowWidth ?? 1440) * 0.55, 900)
@@ -50,6 +53,10 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   useEffect(() => {
     setCursorSnapshot(null)
   }, [activeTimeRange, activeOutcomeIndex, chartSettings.bothOutcomes])
+
+  useEffect(() => {
+    storeChartSettings(chartSettings)
+  }, [chartSettings])
 
   const activeOutcome = useMemo(
     () => market.outcomes.find(item => item.outcome_index === activeOutcomeIndex) ?? outcome,
@@ -218,6 +225,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
                   settings={chartSettings}
                   onSettingsChange={setChartSettings}
                   onExportData={() => setExportDialogOpen(true)}
+                  onEmbed={() => setEmbedDialogOpen(true)}
                 />
               </div>
             )
@@ -229,6 +237,12 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
         eventCreatedAt={eventCreatedAt}
         markets={allMarkets}
         isMultiMarket={allMarkets.length > 1}
+      />
+      <EventChartEmbedDialog
+        open={embedDialogOpen}
+        onOpenChange={setEmbedDialogOpen}
+        markets={allMarkets}
+        initialMarketId={market.condition_id}
       />
     </>
   )

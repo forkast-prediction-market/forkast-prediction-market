@@ -35,6 +35,7 @@ interface EventChartControlsProps {
   settings: ChartSettings
   onSettingsChange: Dispatch<SetStateAction<ChartSettings>>
   onExportData?: () => void
+  onEmbed?: () => void
 }
 
 export default function EventChartControls({
@@ -47,6 +48,7 @@ export default function EventChartControls({
   settings,
   onSettingsChange,
   onExportData,
+  onEmbed,
 }: EventChartControlsProps) {
   const [settingsOpen, setSettingsOpen] = useState(false)
   const settingItems: Array<{ key: ChartSettingKey, label: string }> = [
@@ -139,15 +141,18 @@ export default function EventChartControls({
             <div className="flex flex-col gap-2">
               <button
                 type="button"
-                className="flex items-center gap-2 text-foreground"
-                onClick={() => setSettingsOpen(false)}
+                className="flex items-center gap-2 text-foreground transition-colors hover:text-foreground/80"
+                onClick={() => {
+                  onEmbed?.()
+                  setSettingsOpen(false)
+                }}
               >
                 <CodeXmlIcon className="size-4" />
                 <span>Embed</span>
               </button>
               <button
                 type="button"
-                className="flex items-center gap-2 text-foreground"
+                className="flex items-center gap-2 text-foreground transition-colors hover:text-foreground/80"
                 onClick={() => {
                   onExportData?.()
                   setSettingsOpen(false)
@@ -165,7 +170,10 @@ export default function EventChartControls({
                   <label
                     key={item.key}
                     htmlFor={settingId}
-                    className="flex items-center justify-between gap-4 text-foreground"
+                    className={`
+                      flex items-center justify-between gap-4 text-foreground transition-colors
+                      hover:text-foreground/80
+                    `}
                   >
                     <span>{item.label}</span>
                     <Switch

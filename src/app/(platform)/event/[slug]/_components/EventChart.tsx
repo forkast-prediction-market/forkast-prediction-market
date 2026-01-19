@@ -46,7 +46,9 @@ import { formatSharePriceLabel } from '@/lib/formatters'
 import { resolveDisplayPrice } from '@/lib/market-chance'
 import { sanitizeSvg } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
-import EventChartControls, { defaultChartSettings } from './EventChartControls'
+import { loadStoredChartSettings, storeChartSettings } from '../_utils/chartSettingsStorage'
+import EventChartControls from './EventChartControls'
+import EventChartEmbedDialog from './EventChartEmbedDialog'
 import EventChartExportDialog from './EventChartExportDialog'
 import EventChartHeader from './EventChartHeader'
 import EventChartLayout from './EventChartLayout'
@@ -205,13 +207,18 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   >(OUTCOME_INDEX.YES)
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
   const [tradeFlowItems, setTradeFlowItems] = useState<TradeFlowLabelItem[]>([])
-  const [chartSettings, setChartSettings] = useState(defaultChartSettings)
+  const [chartSettings, setChartSettings] = useState(() => loadStoredChartSettings())
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
+  const [embedDialogOpen, setEmbedDialogOpen] = useState(false)
   const tradeFlowIdRef = useRef(0)
 
   useEffect(() => {
     setCursorSnapshot(null)
   }, [activeTimeRange, event.slug, activeOutcomeIndex, chartSettings.bothOutcomes])
+
+  useEffect(() => {
+    storeChartSettings(chartSettings)
+  }, [chartSettings])
 
   const showBothOutcomes = isSingleMarket && chartSettings.bothOutcomes
 
@@ -716,6 +723,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
                     settings={chartSettings}
                     onSettingsChange={setChartSettings}
                     onExportData={() => setExportDialogOpen(true)}
+                    onEmbed={() => setEmbedDialogOpen(true)}
                   />
                 )
               : null}
@@ -728,6 +736,12 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
         eventCreatedAt={event.created_at}
         markets={event.markets}
         isMultiMarket={event.total_markets_count > 1}
+      />
+      <EventChartEmbedDialog
+        open={embedDialogOpen}
+        onOpenChange={setEmbedDialogOpen}
+        markets={event.markets}
+        initialMarketId={primaryMarket?.condition_id ?? null}
       />
     </>
   )
