@@ -124,7 +124,8 @@ function buildWebComponentCode(
     '\t<script',
     '\t\ttype="module"',
     `\t\tsrc="${EMBED_SCRIPT_URL}"`,
-    '\t/>',
+    '\t>',
+    '\t</script>',
     `\t<${EMBED_ELEMENT_NAME}`,
     `\t\tmarket="${marketSlug}"`,
   ]
@@ -196,6 +197,13 @@ function tagSelfCloseLine(indent: string): CodeLine {
   return [
     token(indent),
     token('/>', tokenStyles.tag),
+  ]
+}
+
+function tagEndLine(indent: string): CodeLine {
+  return [
+    token(indent),
+    token('>', tokenStyles.tag),
   ]
 }
 
@@ -303,7 +311,8 @@ export default function EventChartEmbedDialog({
       tagOpenLine('\t', 'script'),
       attributeLine('\t\t', 'type', 'module'),
       attributeLine('\t\t', 'src', EMBED_SCRIPT_URL),
-      tagSelfCloseLine('\t'),
+      tagEndLine('\t'),
+      tagCloseLine('\t', 'script'),
       tagOpenLine('\t', EMBED_ELEMENT_NAME),
       attributeLine('\t\t', 'market', marketSlug),
     ]

@@ -5,7 +5,7 @@ import type { Market, Outcome } from '@/types'
 import type { PredictionChartCursorSnapshot, PredictionChartProps } from '@/types/PredictionChartTypes'
 import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useState } from 'react'
-import EventChartControls from '@/app/(platform)/event/[slug]/_components/EventChartControls'
+import EventChartControls, { defaultChartSettings } from '@/app/(platform)/event/[slug]/_components/EventChartControls'
 import EventChartEmbedDialog from '@/app/(platform)/event/[slug]/_components/EventChartEmbedDialog'
 import EventChartExportDialog from '@/app/(platform)/event/[slug]/_components/EventChartExportDialog'
 import EventChartHeader from '@/app/(platform)/event/[slug]/_components/EventChartHeader'
@@ -38,7 +38,8 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   const [activeTimeRange, setActiveTimeRange] = useState<TimeRange>('ALL')
   const [activeOutcomeIndex, setActiveOutcomeIndex] = useState(outcome.outcome_index)
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
-  const [chartSettings, setChartSettings] = useState(() => loadStoredChartSettings())
+  const [chartSettings, setChartSettings] = useState(() => ({ ...defaultChartSettings }))
+  const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [embedDialogOpen, setEmbedDialogOpen] = useState(false)
   const marketTargets = useMemo(() => buildMarketTargets(allMarkets), [allMarkets])
@@ -55,8 +56,16 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   }, [activeTimeRange, activeOutcomeIndex, chartSettings.bothOutcomes])
 
   useEffect(() => {
+    setChartSettings(loadStoredChartSettings())
+    setHasLoadedSettings(true)
+  }, [])
+
+  useEffect(() => {
+    if (!hasLoadedSettings) {
+      return
+    }
     storeChartSettings(chartSettings)
-  }, [chartSettings])
+  }, [chartSettings, hasLoadedSettings])
 
   const activeOutcome = useMemo(
     () => market.outcomes.find(item => item.outcome_index === activeOutcomeIndex) ?? outcome,

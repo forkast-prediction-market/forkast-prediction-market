@@ -47,7 +47,7 @@ import { resolveDisplayPrice } from '@/lib/market-chance'
 import { sanitizeSvg } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
 import { loadStoredChartSettings, storeChartSettings } from '../_utils/chartSettingsStorage'
-import EventChartControls from './EventChartControls'
+import EventChartControls, { defaultChartSettings } from './EventChartControls'
 import EventChartEmbedDialog from './EventChartEmbedDialog'
 import EventChartExportDialog from './EventChartExportDialog'
 import EventChartHeader from './EventChartHeader'
@@ -207,7 +207,8 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   >(OUTCOME_INDEX.YES)
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
   const [tradeFlowItems, setTradeFlowItems] = useState<TradeFlowLabelItem[]>([])
-  const [chartSettings, setChartSettings] = useState(() => loadStoredChartSettings())
+  const [chartSettings, setChartSettings] = useState(() => ({ ...defaultChartSettings }))
+  const [hasLoadedSettings, setHasLoadedSettings] = useState(false)
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [embedDialogOpen, setEmbedDialogOpen] = useState(false)
   const tradeFlowIdRef = useRef(0)
@@ -217,8 +218,16 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   }, [activeTimeRange, event.slug, activeOutcomeIndex, chartSettings.bothOutcomes])
 
   useEffect(() => {
+    setChartSettings(loadStoredChartSettings())
+    setHasLoadedSettings(true)
+  }, [])
+
+  useEffect(() => {
+    if (!hasLoadedSettings) {
+      return
+    }
     storeChartSettings(chartSettings)
-  }, [chartSettings])
+  }, [chartSettings, hasLoadedSettings])
 
   const showBothOutcomes = isSingleMarket && chartSettings.bothOutcomes
 

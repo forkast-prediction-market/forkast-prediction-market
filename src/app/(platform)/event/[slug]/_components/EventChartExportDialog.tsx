@@ -112,7 +112,11 @@ function slugifySiteName(value: string) {
 }
 
 function sanitizeTsvValue(value: string) {
-  return value.replace(/[\t\r\n]+/g, ' ').trim()
+  const sanitized = value.replace(/[\t\r\n]+/g, ' ').trim()
+  if (!sanitized) {
+    return sanitized
+  }
+  return /^[=+\-@]/.test(sanitized) ? `'${sanitized}` : sanitized
 }
 
 function buildMarketTarget(market: Market): MarketTarget | null {
