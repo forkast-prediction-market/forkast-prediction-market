@@ -35,9 +35,10 @@ interface EventContentProps {
   event: Event
   user: User | null
   marketContextEnabled: boolean
+  marketSlug?: string
 }
 
-export default function EventContent({ event, user, marketContextEnabled }: EventContentProps) {
+export default function EventContent({ event, user, marketContextEnabled, marketSlug }: EventContentProps) {
   const setEvent = useOrder(state => state.setEvent)
   const setMarket = useOrder(state => state.setMarket)
   const setOutcome = useOrder(state => state.setOutcome)
@@ -47,6 +48,7 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
   const setLimitShares = useOrder(state => state.setLimitShares)
   const setIsMobileOrderPanelOpen = useOrder(state => state.setIsMobileOrderPanelOpen)
   const currentEventId = useOrder(state => state.event?.id)
+  const currentMarketId = useOrder(state => state.market?.condition_id)
   const isMobile = useIsMobile()
   const searchParams = useSearchParams()
   const clientUser = useUser()
@@ -76,21 +78,27 @@ export default function EventContent({ event, user, marketContextEnabled }: Even
   }, [event, setEvent])
 
   useEffect(() => {
-    if (currentEventId === event.id) {
+    const targetMarket = marketSlug
+      ? event.markets.find(market => market.slug === marketSlug)
+      : event.markets[0]
+    if (!targetMarket) {
       return
     }
 
-    const defaultMarket = event.markets[0]
-    if (!defaultMarket) {
+    if (currentEventId === event.id && !marketSlug) {
       return
     }
 
-    setMarket(defaultMarket)
-    const defaultOutcome = defaultMarket.outcomes[0]
+    if (currentEventId === event.id && currentMarketId === targetMarket.condition_id) {
+      return
+    }
+
+    setMarket(targetMarket)
+    const defaultOutcome = targetMarket.outcomes[0]
     if (defaultOutcome) {
       setOutcome(defaultOutcome)
     }
-  }, [currentEventId, event, setMarket, setOutcome])
+  }, [currentEventId, currentMarketId, event, marketSlug, setMarket, setOutcome])
 
   useEffect(() => {
     const paramsKey = searchParams.toString()

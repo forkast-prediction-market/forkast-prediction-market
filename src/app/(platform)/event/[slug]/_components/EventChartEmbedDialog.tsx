@@ -436,7 +436,7 @@ export default function EventChartEmbedDialog({
                   <Label className="text-xs font-semibold tracking-wide text-muted-foreground">EMBED CODE</Label>
                   <div className="flex items-center gap-2">
                     <Select value={embedType} onValueChange={value => setEmbedType(value as EmbedType)}>
-                      <SelectTrigger className="h-8 text-xs">
+                      <SelectTrigger size="sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -466,7 +466,7 @@ export default function EventChartEmbedDialog({
                   title="Embed preview"
                   src={previewSrc}
                   style={{ height: `${iframeHeight}px` }}
-                  className="w-[400px] max-w-full border-0 bg-transparent"
+                  className="w-100 max-w-full border-0 bg-transparent"
                 />
               </div>
             </div>
