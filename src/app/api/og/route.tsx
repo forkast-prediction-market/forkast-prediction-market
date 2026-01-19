@@ -1,5 +1,5 @@
 import { ImageResponse } from 'next/og'
-import { sanitizeSvg } from '@/lib/utils'
+import { svgLogoUri } from '@/lib/utils'
 
 interface ShareCardPayload {
   title: string
@@ -53,14 +53,6 @@ function sanitizeImageUrl(rawUrl: string) {
   catch {
     return ''
   }
-}
-
-function buildSvgDataUri(svg: string) {
-  const sanitized = sanitizeSvg(svg)
-  if (!sanitized) {
-    return ''
-  }
-  return `data:image/svg+xml;utf8,${encodeURIComponent(sanitized)}`
 }
 
 function parsePayload(rawPayload: string | null): ShareCardPayload | null {
@@ -152,8 +144,7 @@ export async function GET(request: Request) {
   const variant = payload.variant === 'no' ? 'no' : 'yes'
   const accent = variant === 'no' ? '#ef4444' : '#22c55e'
   const outcomeLabel = payload.outcome || (variant === 'no' ? 'No' : 'Yes')
-  const siteLogoSvg = process.env.NEXT_PUBLIC_SITE_LOGO_SVG ?? ''
-  const siteLogoSrc = siteLogoSvg ? buildSvgDataUri(siteLogoSvg) : ''
+  const siteLogoSrc = svgLogoUri()
   const hasUserBadge = Boolean(payload.userName || payload.userImage)
   const dividerDots = Array.from({ length: 32 })
   const horizontalDots = Array.from({ length: 40 })

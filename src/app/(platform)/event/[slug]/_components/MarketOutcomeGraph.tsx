@@ -19,7 +19,7 @@ import { loadStoredChartSettings, storeChartSettings } from '@/app/(platform)/ev
 import { Skeleton } from '@/components/ui/skeleton'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { OUTCOME_INDEX } from '@/lib/constants'
-import { sanitizeSvg } from '@/lib/utils'
+import { svgLogo } from '@/lib/utils'
 
 interface MarketOutcomeGraphProps {
   market: Market
@@ -121,7 +121,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   const hasChartData = chartData.length > 0
   const watermark = useMemo(
     () => ({
-      iconSvg: sanitizeSvg(process.env.NEXT_PUBLIC_SITE_LOGO_SVG!),
+      iconSvg: svgLogo(),
       label: process.env.NEXT_PUBLIC_SITE_NAME,
     }),
     [],

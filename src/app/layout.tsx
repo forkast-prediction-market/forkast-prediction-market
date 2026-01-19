@@ -3,11 +3,10 @@ import type { ReactNode } from 'react'
 import TestModeBanner from '@/components/TestModeBanner'
 import { openSauceOne } from '@/lib/fonts'
 import { IS_TEST_MODE } from '@/lib/network'
-import { sanitizeSvg } from '@/lib/utils'
+import { svgLogoUri } from '@/lib/utils'
 import './globals.css'
 
-const siteLogoSvg = sanitizeSvg(process.env.NEXT_PUBLIC_SITE_LOGO_SVG!)
-const siteIcon = siteLogoSvg ? `data:image/svg+xml;utf8,${encodeURIComponent(siteLogoSvg)}` : '/favicon.ico'
+const siteIcon = svgLogoUri()
 
 export const metadata: Metadata = {
   title: {

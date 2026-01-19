@@ -1,4 +1,5 @@
 import type { NextRequest } from 'next/server'
+import { svgLogoUri } from '@/lib/utils'
 
 function escapeAttr(value: string) {
   return value
@@ -31,17 +32,6 @@ function slugifySiteName(value: string) {
   return slug
 }
 
-function buildLogoUrl(value: string) {
-  const trimmed = value.trim()
-  if (!trimmed) {
-    return ''
-  }
-  if (/^https?:\/\//i.test(trimmed) || trimmed.startsWith('data:')) {
-    return trimmed
-  }
-  return `data:image/svg+xml;utf8,${encodeURIComponent(trimmed)}`
-}
-
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const marketSlug = searchParams.get('market') ?? ''
@@ -62,7 +52,7 @@ export async function GET(request: NextRequest) {
   const scriptUrl = 'https://unpkg.com/@kuestcom/embeds/dist/index.js'
   const siteName = requireEnv(process.env.NEXT_PUBLIC_SITE_NAME, 'NEXT_PUBLIC_SITE_NAME')
   const elementName = `${slugifySiteName(siteName)}-market-embed`
-  const siteLogoUrl = buildLogoUrl(process.env.NEXT_PUBLIC_SITE_LOGO_SVG ?? '')
+  const siteLogoUrl = svgLogoUri()
 
   const attrs: string[] = [`theme="${theme}"`]
   if (marketSlug) {

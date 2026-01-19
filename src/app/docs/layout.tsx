@@ -2,7 +2,7 @@ import { DocsLayout } from 'fumadocs-ui/layouts/docs'
 import { RootProvider } from 'fumadocs-ui/provider/next'
 import { BookOpenIcon, CodeIcon, GitForkIcon, HomeIcon } from 'lucide-react'
 import { source } from '@/lib/source'
-import { sanitizeSvg } from '@/lib/utils'
+import { svgLogo } from '@/lib/utils'
 
 export default async function Layout({ children }: LayoutProps<'/docs'>) {
   return (
@@ -20,7 +20,7 @@ export default async function Layout({ children }: LayoutProps<'/docs'>) {
               <div
                 className="size-6"
                 dangerouslySetInnerHTML={{
-                  __html: sanitizeSvg(process.env.NEXT_PUBLIC_SITE_LOGO_SVG!),
+                  __html: svgLogo(),
                 }}
               />
               <span className="font-medium">

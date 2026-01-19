@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import { sanitizeSvg } from '@/lib/utils'
+import { svgLogo } from '@/lib/utils'
 
 export default async function HeaderLogo() {
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME
-  const logoSvg = sanitizeSvg(process.env.NEXT_PUBLIC_SITE_LOGO_SVG!)
+  const logoSvg = svgLogo()
 
   return (
     <Link

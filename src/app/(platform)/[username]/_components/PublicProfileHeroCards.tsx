@@ -14,7 +14,7 @@ import ProfileOverviewCard from '@/components/ProfileOverviewCard'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatCurrency } from '@/lib/formatters'
-import { cn, sanitizeSvg } from '@/lib/utils'
+import { cn, svgLogo } from '@/lib/utils'
 
 interface PnlPoint {
   date: Date
@@ -38,7 +38,6 @@ function ProfitLossCard({
   portfolioAddress?: string | null
 }) {
   const platformName = process.env.NEXT_PUBLIC_SITE_NAME ?? ''
-  const platformLogoSvg = process.env.NEXT_PUBLIC_SITE_LOGO_SVG
   const [activeTimeframe, setActiveTimeframe] = useState<(typeof PNL_TIMEFRAMES)[number]>('ALL')
   const [cursorX, setCursorX] = useState<number | null>(null)
   const [pnlSeries, setPnlSeries] = useState<PnlPoint[]>([])
@@ -51,10 +50,10 @@ function ProfitLossCard({
   const areaGradientId = `${chartId}-area`
   const areaFadeId = `${chartId}-fade`
   const areaMaskId = `${chartId}-mask`
-  const logoSvg = sanitizeSvg(platformLogoSvg || '')
+  const logoSvg = svgLogo()
     .replace(/fill="url\([^"]+\)"/gi, 'fill="currentColor"')
   const pnlAddress = portfolioAddress
-  const pnlBaseUrl = process.env.USER_PNL_URL ?? 'https://user-pnl-api.kuest.com'
+  const pnlBaseUrl = process.env.USER_PNL_URL!
 
   useEffect(() => {
     if (!pnlAddress || !pnlBaseUrl) {
@@ -447,16 +446,14 @@ function ProfitLossCard({
           </div>
 
           <div className="flex items-center gap-2 text-xl text-muted-foreground/70">
-            {platformLogoSvg && (
-              <div
-                className={`
-                  h-[1em] w-[1em] text-current
-                  [&_svg]:h-[1em] [&_svg]:w-[1em]
-                  [&_svg_*]:fill-current [&_svg_*]:stroke-current
-                `}
-                dangerouslySetInnerHTML={{ __html: logoSvg }}
-              />
-            )}
+            <div
+              className={`
+                h-[1em] w-[1em] text-current
+                [&_svg]:h-[1em] [&_svg]:w-[1em]
+                [&_svg_*]:fill-current [&_svg_*]:stroke-current
+              `}
+              dangerouslySetInnerHTML={{ __html: logoSvg }}
+            />
             <span className="font-semibold">{platformName}</span>
           </div>
         </div>

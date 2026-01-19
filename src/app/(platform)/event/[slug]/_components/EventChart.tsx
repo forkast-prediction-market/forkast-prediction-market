@@ -44,7 +44,7 @@ import { useWindowSize } from '@/hooks/useWindowSize'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { formatSharePriceLabel } from '@/lib/formatters'
 import { resolveDisplayPrice } from '@/lib/market-chance'
-import { sanitizeSvg } from '@/lib/utils'
+import { svgLogo } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
 import { loadStoredChartSettings, storeChartSettings } from '../_utils/chartSettingsStorage'
 import EventChartControls, { defaultChartSettings } from './EventChartControls'
@@ -400,7 +400,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
 
   const watermark = useMemo(
     () => ({
-      iconSvg: sanitizeSvg(process.env.NEXT_PUBLIC_SITE_LOGO_SVG!),
+      iconSvg: svgLogo(),
       label: process.env.NEXT_PUBLIC_SITE_NAME,
     }),
     [],
