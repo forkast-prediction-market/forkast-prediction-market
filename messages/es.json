@@ -1,5 +1,7 @@
 {
   "Header": {
-    "deposit": "Depositar"
+    "deposit": "Depositar",
+    "logIn": "Iniciar sesion",
+    "signUp": "Registrarse"
   }
 }
