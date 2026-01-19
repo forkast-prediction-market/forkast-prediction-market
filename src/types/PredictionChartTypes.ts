@@ -26,6 +26,12 @@ export interface PredictionChartProps {
   onCursorDataChange?: (snapshot: PredictionChartCursorSnapshot | null) => void
   cursorStepMs?: number
   xAxisTickCount?: number
+  autoscale?: boolean
+  showXAxis?: boolean
+  showYAxis?: boolean
+  showHorizontalGrid?: boolean
+  showVerticalGrid?: boolean
+  showAnnotations?: boolean
   leadingGapStart?: Date | null
   legendContent?: ReactNode
   showLegend?: boolean

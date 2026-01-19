@@ -2,7 +2,7 @@
 
 import type { Event } from '@/types'
 import { useQuery } from '@tanstack/react-query'
-import { Clock3Icon } from 'lucide-react'
+import { CheckIcon, Clock3Icon, PlusIcon, TrophyIcon } from 'lucide-react'
 import { useMemo } from 'react'
 import { NewBadge } from '@/components/ui/new-badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -77,6 +77,7 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
     return event.volume
   }, [event.volume, volumeFromApi])
 
+  const isNegRiskEnabled = Boolean(event.enable_neg_risk || event.neg_risk)
   const hasRecentMarket = event.markets.some(
     market => isMarketNew(market.created_at),
   )
@@ -93,15 +94,62 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
   const expiryDate = maybeEndDate && !Number.isNaN(maybeEndDate.getTime()) ? maybeEndDate : null
 
   return (
-    <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-      {hasRecentMarket
-        ? (
-            <NewBadge
-              variant="soft"
-              className="rounded-sm p-2"
-            />
-          )
-        : <span className="text-sm font-semibold text-muted-foreground">{volumeLabel}</span>}
+    <div className="flex flex-wrap items-center gap-3 text-xs">
+      <div className="flex items-center gap-2 text-foreground">
+        {isNegRiskEnabled && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label="Negative risk details"
+                className="inline-flex items-center justify-center text-foreground transition-colors"
+              >
+                <TrophyIcon className="size-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent
+              side="bottom"
+              sideOffset={8}
+              collisionPadding={16}
+              hideArrow
+              className="max-w-72 border border-border bg-background px-3 py-2 text-xs text-foreground shadow-xl"
+            >
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-semibold text-foreground">Winner-take-all</span>
+                <div className="flex flex-col gap-2 text-muted-foreground">
+                  <div className="flex items-start gap-2">
+                    <CheckIcon className="mt-0.5 size-4 text-primary" />
+                    <span>Only 1 winner</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckIcon className="mt-0.5 size-4 text-primary" />
+                    <span>Supports negative risk (convert No shares to Yes of the other options)</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <PlusIcon className="mt-0.5 size-4 text-primary" />
+                    <span>
+                      <span className="font-semibold text-foreground">Complete negative risk</span>
+                      {' '}
+                      (users who convert will receive Yes shares in any outcomes added in the future)
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {hasRecentMarket
+          ? (
+              <NewBadge
+                variant="soft"
+                className="rounded-sm p-2"
+              />
+            )
+          : <span className="text-sm font-semibold text-foreground">{volumeLabel}</span>}
+      </div>
+      {expiryDate && (
+        <span className="h-4 w-px bg-muted-foreground/40" aria-hidden="true" />
+      )}
       {expiryDate && (
         <Tooltip>
           <TooltipTrigger>
