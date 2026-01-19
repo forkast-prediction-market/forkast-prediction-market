@@ -343,7 +343,7 @@ export default function EventChartExportDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl sm:p-8">
+      <DialogContent className="sm:max-w-xl sm:p-8">
         <div className="space-y-6">
           <DialogHeader>
             <DialogTitle className="text-center text-xl font-bold">Download Price History</DialogTitle>

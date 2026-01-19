@@ -51,6 +51,9 @@ const EMBED_BASE_URL = SITE_URL
 const EMBED_SCRIPT_URL = 'https://unpkg.com/@kuestcom/embeds/dist/index.js'
 const EMBED_ELEMENT_NAME = `${SITE_SLUG}-market-embed`
 const EMBED_IFRAME_TITLE = `${SITE_SLUG}-market-iframe`
+const IFRAME_HEIGHT_WITH_CHART = 400
+const IFRAME_HEIGHT_WITH_FILTERS = 440
+const IFRAME_HEIGHT_NO_CHART = 180
 
 const tokenStyles = {
   tag: 'text-muted-foreground',
@@ -100,13 +103,13 @@ function buildPreviewSrc(marketSlug: string, theme: EmbedTheme, features: string
   return `/market.html?${params.toString()}`
 }
 
-function buildIframeCode(src: string) {
+function buildIframeCode(src: string, height: number) {
   return [
     '<iframe',
     `\ttitle="${EMBED_IFRAME_TITLE}"`,
     `\tsrc="${src}"`,
     '\twidth="400"',
-    '\theight="440"',
+    `\theight="${height}"`,
     '\tframeBorder="0"',
     '/>',
   ].join('\n')
@@ -288,7 +291,10 @@ export default function EventChartEmbedDialog({
     () => buildPreviewSrc(marketSlug, theme, features),
     [marketSlug, theme, features],
   )
-  const iframeCode = useMemo(() => buildIframeCode(iframeSrc), [iframeSrc])
+  const iframeHeight = showChart
+    ? (showTimeRange ? IFRAME_HEIGHT_WITH_FILTERS : IFRAME_HEIGHT_WITH_CHART)
+    : IFRAME_HEIGHT_NO_CHART
+  const iframeCode = useMemo(() => buildIframeCode(iframeSrc, iframeHeight), [iframeSrc, iframeHeight])
   const webComponentCode = useMemo(
     () => buildWebComponentCode(marketSlug, theme, showVolume, showChart, showTimeRange),
     [marketSlug, theme, showVolume, showChart, showTimeRange],
@@ -300,10 +306,10 @@ export default function EventChartEmbedDialog({
     attributeLine('\t', 'title', EMBED_IFRAME_TITLE),
     attributeLine('\t', 'src', iframeSrc),
     attributeLine('\t', 'width', '400'),
-    attributeLine('\t', 'height', '440'),
+    attributeLine('\t', 'height', String(iframeHeight)),
     attributeLine('\t', 'frameBorder', '0'),
     tagSelfCloseLine(''),
-  ]), [iframeSrc])
+  ]), [iframeSrc, iframeHeight])
 
   const webComponentLines = useMemo<CodeLine[]>(() => {
     const lines: CodeLine[] = [
@@ -347,13 +353,13 @@ export default function EventChartEmbedDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-7xl sm:max-w-7xl sm:p-8">
+      <DialogContent className="max-w-4xl sm:max-w-4xl sm:p-8">
         <div className="space-y-6">
           <DialogHeader>
             <DialogTitle className="text-center text-2xl font-bold">Embed</DialogTitle>
           </DialogHeader>
 
-          <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div className="grid items-stretch gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
             <div className="space-y-6">
               <div className="space-y-3">
                 <Label className="text-xs font-semibold tracking-wide text-muted-foreground">THEME</Label>
@@ -363,7 +369,7 @@ export default function EventChartEmbedDialog({
                       key={option}
                       type="button"
                       className={cn(
-                        'h-9 rounded-md border px-3 text-sm font-semibold transition-colors',
+                        'h-10 rounded-md border px-3 text-sm font-semibold transition-colors',
                         option === theme
                           ? 'border-primary bg-primary text-primary-foreground'
                           : 'border-border bg-muted text-muted-foreground hover:text-foreground',
@@ -450,13 +456,17 @@ export default function EventChartEmbedDialog({
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="flex h-full flex-col gap-3">
               <Label className="text-xs font-semibold tracking-wide text-muted-foreground">PREVIEW</Label>
-              <div className="flex min-h-[440px] items-center justify-center overflow-hidden rounded-md bg-muted/60 p-4">
+              <div
+                className="flex flex-1 items-center justify-center overflow-hidden rounded-md bg-[#f7f7f9] p-2"
+                style={{ minHeight: `${iframeHeight}px` }}
+              >
                 <iframe
                   title="Embed preview"
                   src={previewSrc}
-                  className="h-[440px] w-full border-0"
+                  style={{ height: `${iframeHeight}px` }}
+                  className="w-[400px] max-w-full border-0 bg-transparent"
                 />
               </div>
             </div>
