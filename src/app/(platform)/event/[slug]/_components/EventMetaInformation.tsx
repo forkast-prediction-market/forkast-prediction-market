@@ -77,10 +77,9 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
   }, [event.volume, volumeFromApi])
 
   const isNegRiskEnabled = Boolean(event.enable_neg_risk || event.neg_risk)
-  const hasRecentMarket = event.markets.some(
+  const shouldShowNew = event.markets.some(
     market => isMarketNew(market.created_at),
   )
-  const shouldShowNew = hasRecentMarket
   const expiryTooltip = 'This is estimated end date.<br>See rules below for specific resolution details.'
   const formattedVolume = Number.isFinite(resolvedVolume)
     ? (resolvedVolume || 0).toLocaleString('en-US', {
@@ -121,23 +120,23 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
               sideOffset={8}
               collisionPadding={16}
               hideArrow
-              className="max-w-68 border border-border bg-background px-4 py-3 text-sm text-white shadow-xl"
+              className="max-w-68 border border-border bg-background px-4 py-3 text-sm text-foreground shadow-xl"
             >
-              <div className="flex flex-col gap-3 text-white">
-                <span className="text-base font-bold text-white">Winner-take-all</span>
+              <div className="flex flex-col gap-3 text-foreground">
+                <span className="text-base font-bold text-foreground">Winner-take-all</span>
                 <div className="flex flex-col gap-3">
                   <div className="flex items-start gap-3">
                     <CheckIcon className="mt-0.5 size-5 shrink-0 text-primary" />
-                    <span className="text-white">Only 1 winner</span>
+                    <span className="text-foreground">Only 1 winner</span>
                   </div>
                   <div className="flex items-start gap-3">
                     <CheckIcon className="mt-0.5 size-5 shrink-0 text-primary" />
-                    <span className="text-white">Supports negative risk (convert No shares to Yes of the other options)</span>
+                    <span className="text-foreground">Supports negative risk (convert No shares to Yes of the other options)</span>
                   </div>
                   <div className="flex items-start gap-3">
                     <PlusIcon className="mt-0.5 size-5 shrink-0 text-primary" />
                     <span>
-                      <span className="font-bold text-white">Complete negative risk</span>
+                      <span className="font-bold text-foreground">Complete negative risk</span>
                       {' '}
                       (users who convert will receive Yes shares in any outcomes added in the future)
                     </span>
