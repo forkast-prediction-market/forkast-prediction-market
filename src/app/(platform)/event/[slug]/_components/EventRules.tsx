@@ -114,7 +114,19 @@ export default function EventRules({ event }: EventRulesProps) {
     : primaryMarket?.condition?.oracle
   const resolverGradient = getResolverGradient(resolverAddress)
   const proposeUrl = proposeTarget?.url ?? null
-  const resolutionSourceUrl = primaryMarket?.resolution_source_url?.trim() ?? ''
+  const resolutionSourceUrl = (() => {
+    const value = primaryMarket?.resolution_source_url?.trim() ?? ''
+    if (!value) {
+      return ''
+    }
+    const href = value.startsWith('http') ? value : `https://${value}`
+    try {
+      const url = new URL(href)
+      return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : ''
+    } catch {
+      return ''
+    }
+  })()
   const normalizedResolutionSourceUrl = resolutionSourceUrl.toLowerCase()
   const formattedRules = formatRules(event.rules ?? '')
   const createdAtLabel = formatCreatedAt(event.created_at)
