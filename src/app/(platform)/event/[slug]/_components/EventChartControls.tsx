@@ -83,9 +83,9 @@ export default function EventChartControls({
     : baseSettingItems.filter(item => item.key !== 'bothOutcomes')
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-3">
+    <div className="flex flex-wrap items-center justify-end gap-1">
       <div
-        className="flex flex-wrap items-center justify-start gap-2 text-xs font-semibold"
+        className="flex flex-wrap items-center justify-start gap-1 text-xs font-semibold"
       >
         {timeRanges.map(range => (
           <button
