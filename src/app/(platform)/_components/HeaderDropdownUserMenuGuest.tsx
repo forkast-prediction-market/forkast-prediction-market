@@ -33,7 +33,7 @@ export default function HeaderDropdownUserMenuGuest() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>
-          <Link href="/public">Rewards</Link>
+          <Link href="/">Rewards</Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/docs/users" data-testid="header-docs-link">Documentation</Link>

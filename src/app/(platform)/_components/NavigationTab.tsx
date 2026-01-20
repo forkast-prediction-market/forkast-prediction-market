@@ -298,7 +298,7 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
       {tag.slug !== 'mentions' && (
         <span ref={mainTabRef}>
           <Link
-            href="/public"
+            href="/"
             onClick={() => handleTagClick(tag.slug)}
             className={`flex cursor-pointer items-center gap-1.5 border-b-2 py-2 pb-1 whitespace-nowrap transition-colors ${
               isActive
