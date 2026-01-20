@@ -1,7 +1,7 @@
 import type { Event } from '@/types'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { buildUmaProposeUrl } from '@/lib/uma'
+import { resolveUmaProposeTarget } from '@/lib/uma'
 
 interface EventRulesProps {
   event: Event
@@ -51,9 +51,12 @@ export default function EventRules({ event }: EventRulesProps) {
   }
 
   const primaryMarket = event.markets[0]
-  const resolverAddress = primaryMarket?.condition?.oracle
+  const proposeTarget = resolveUmaProposeTarget(primaryMarket?.condition)
+  const resolverAddress = proposeTarget?.isMirror
+    ? primaryMarket?.resolver
+    : primaryMarket?.condition?.oracle
   const resolverGradient = getResolverGradient(resolverAddress)
-  const proposeUrl = buildUmaProposeUrl(primaryMarket?.condition)
+  const proposeUrl = proposeTarget?.url ?? null
 
   return (
     <div className="rounded-xl border transition-all duration-200 ease-in-out">

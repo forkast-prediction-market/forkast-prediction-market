@@ -7,7 +7,12 @@ interface UmaProposeSource {
 
 const UMA_ORACLE_BASE_URL = 'https://oracle.uma.xyz'
 
-export function buildUmaProposeUrl(source?: UmaProposeSource | null): string | null {
+export interface UmaProposeTarget {
+  url: string
+  isMirror: boolean
+}
+
+export function resolveUmaProposeTarget(source?: UmaProposeSource | null): UmaProposeTarget | null {
   if (!source) {
     return null
   }
@@ -17,8 +22,9 @@ export function buildUmaProposeUrl(source?: UmaProposeSource | null): string | n
   const directTxHash = source.uma_request_tx_hash
   const directLogIndex = source.uma_request_log_index
 
-  const txHash = mirrorTxHash && mirrorLogIndex != null ? mirrorTxHash : directTxHash
-  const logIndex = mirrorTxHash && mirrorLogIndex != null ? mirrorLogIndex : directLogIndex
+  const isMirror = Boolean(mirrorTxHash && mirrorLogIndex != null)
+  const txHash = isMirror ? mirrorTxHash : directTxHash
+  const logIndex = isMirror ? mirrorLogIndex : directLogIndex
 
   if (!txHash || logIndex == null) {
     return null
@@ -32,5 +38,12 @@ export function buildUmaProposeUrl(source?: UmaProposeSource | null): string | n
   params.set('transactionHash', txHash)
   params.set('eventIndex', String(logIndex))
 
-  return `${baseUrl}/propose?${params.toString()}`
+  return {
+    url: `${baseUrl}/propose?${params.toString()}`,
+    isMirror,
+  }
+}
+
+export function buildUmaProposeUrl(source?: UmaProposeSource | null): string | null {
+  return resolveUmaProposeTarget(source)?.url ?? null
 }
