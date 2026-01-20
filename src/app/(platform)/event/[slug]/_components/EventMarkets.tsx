@@ -84,9 +84,6 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   const [chancePulseToken, setChancePulseToken] = useState(0)
   const priceHistoryWasFetchingRef = useRef(false)
   const {
-    refresh: handleChanceRefresh,
-    isDisabled: isChanceRefreshDisabled,
-    isRefreshing: isManualChanceRefreshing,
     isFetching: isPriceHistoryFetching,
   } = useChanceRefresh({ queryKeys: chanceRefreshQueryKeys })
   const eventTokenIds = useMemo(() => {
@@ -320,43 +317,9 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   return (
     <>
       <div className="-mx-4 overflow-hidden bg-background lg:mx-0">
-        <div className="relative hidden items-center rounded-t-lg px-4 py-3 lg:flex">
-          <span className="pointer-events-none absolute inset-x-4 bottom-0 block border-b border-border/90" />
-          <div className="w-2/5">
-            <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-              OUTCOMES
-            </span>
-          </div>
-          <div className="flex w-1/5 items-center justify-center gap-1">
-            <span className="text-xs font-semibold tracking-wide text-muted-foreground uppercase">
-              % CHANCE
-            </span>
-            <button
-              type="button"
-              className={cn(
-                `
-                  inline-flex items-center justify-center rounded-sm border border-transparent text-muted-foreground
-                  transition-colors
-                  focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none
-                `,
-                'hover:bg-muted/80 hover:text-foreground',
-                'p-0.5',
-              )}
-              aria-label="Refresh chance data"
-              title="Refresh"
-              onClick={handleChanceRefresh}
-              disabled={isChanceRefreshDisabled}
-            >
-              <RefreshCwIcon
-                className={cn(
-                  'size-3',
-                  isManualChanceRefreshing && 'animate-spin',
-                )}
-              />
-            </button>
-          </div>
-        </div>
-
+        {marketRows.length > 0 && (
+          <div className="mx-2 mt-4 border-b border-border" />
+        )}
         {marketRows
           .map((row, index, orderedMarkets) => {
             const { market } = row

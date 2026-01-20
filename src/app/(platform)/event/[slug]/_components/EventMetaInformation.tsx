@@ -2,9 +2,8 @@
 
 import type { Event } from '@/types'
 import { useQuery } from '@tanstack/react-query'
-import { CheckIcon, Clock3Icon, PlusIcon, TrophyIcon } from 'lucide-react'
+import { CheckIcon, Clock3Icon, PlusIcon, SparkleIcon, TrophyIcon } from 'lucide-react'
 import { useMemo } from 'react'
-import { NewBadge } from '@/components/ui/new-badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatDate } from '@/lib/formatters'
 import { isMarketNew } from '@/lib/utils'
@@ -81,6 +80,7 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
   const hasRecentMarket = event.markets.some(
     market => isMarketNew(market.created_at),
   )
+  const shouldShowNew = hasRecentMarket
   const expiryTooltip = 'This is estimated end date.<br>See rules below for specific resolution details.'
   const formattedVolume = Number.isFinite(resolvedVolume)
     ? (resolvedVolume || 0).toLocaleString('en-US', {
@@ -94,7 +94,16 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
   const expiryDate = maybeEndDate && !Number.isNaN(maybeEndDate.getTime()) ? maybeEndDate : null
 
   return (
-    <div className="flex flex-wrap items-center gap-3 text-xs">
+    <div className="flex flex-wrap items-center gap-2 pl-4 text-xs">
+      {shouldShowNew && (
+        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+          <SparkleIcon className="size-3.5 fill-current" stroke="currentColor" fill="currentColor" />
+          <span>New</span>
+        </span>
+      )}
+      {shouldShowNew && (
+        <span className="mx-1.5 h-4 w-px bg-muted-foreground/40" aria-hidden="true" />
+      )}
       <div className="flex items-center gap-2 text-foreground">
         {isNegRiskEnabled && (
           <Tooltip>
@@ -112,23 +121,23 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
               sideOffset={8}
               collisionPadding={16}
               hideArrow
-              className="max-w-72 border border-border bg-background px-3 py-2 text-xs text-foreground shadow-xl"
+              className="max-w-68 border border-border bg-background px-4 py-3 text-sm text-white shadow-xl"
             >
-              <div className="flex flex-col gap-2">
-                <span className="text-sm font-semibold text-foreground">Winner-take-all</span>
-                <div className="flex flex-col gap-2 text-muted-foreground">
-                  <div className="flex items-start gap-2">
-                    <CheckIcon className="mt-0.5 size-4 text-primary" />
-                    <span>Only 1 winner</span>
+              <div className="flex flex-col gap-3 text-white">
+                <span className="text-base font-bold text-white">Winner-take-all</span>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-start gap-3">
+                    <CheckIcon className="mt-0.5 size-5 shrink-0 text-primary" />
+                    <span className="text-white">Only 1 winner</span>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <CheckIcon className="mt-0.5 size-4 text-primary" />
-                    <span>Supports negative risk (convert No shares to Yes of the other options)</span>
+                  <div className="flex items-start gap-3">
+                    <CheckIcon className="mt-0.5 size-5 shrink-0 text-primary" />
+                    <span className="text-white">Supports negative risk (convert No shares to Yes of the other options)</span>
                   </div>
-                  <div className="flex items-start gap-2">
-                    <PlusIcon className="mt-0.5 size-4 text-primary" />
+                  <div className="flex items-start gap-3">
+                    <PlusIcon className="mt-0.5 size-5 shrink-0 text-primary" />
                     <span>
-                      <span className="font-semibold text-foreground">Complete negative risk</span>
+                      <span className="font-bold text-white">Complete negative risk</span>
                       {' '}
                       (users who convert will receive Yes shares in any outcomes added in the future)
                     </span>
@@ -138,17 +147,10 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
             </TooltipContent>
           </Tooltip>
         )}
-        {hasRecentMarket
-          ? (
-              <NewBadge
-                variant="soft"
-                className="rounded-sm p-2"
-              />
-            )
-          : <span className="text-sm font-semibold text-foreground">{volumeLabel}</span>}
+        <span className="text-sm font-semibold text-foreground">{volumeLabel}</span>
       </div>
       {expiryDate && (
-        <span className="h-4 w-px bg-muted-foreground/40" aria-hidden="true" />
+        <span className="mx-1.5 h-4 w-px bg-muted-foreground/40" aria-hidden="true" />
       )}
       {expiryDate && (
         <Tooltip>
