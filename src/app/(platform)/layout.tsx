@@ -1,8 +1,8 @@
-import Header from '@/components/Header'
-import NavigationTabs from '@/components/NavigationTabs'
+import Header from '@/app/(platform)/_components/Header'
+import NavigationTabs from '@/app/(platform)/_components/NavigationTabs'
+import { FilterProvider } from '@/app/(platform)/_providers/FilterProvider'
+import { TradingOnboardingProvider } from '@/app/(platform)/_providers/TradingOnboardingProvider'
 import { AppProviders } from '@/providers/AppProviders'
-import { FilterProvider } from '@/providers/FilterProvider'
-import { TradingOnboardingProvider } from '@/providers/TradingOnboardingProvider'
 
 export default async function PlatformLayout({ children }: LayoutProps<'/'>) {
   return (

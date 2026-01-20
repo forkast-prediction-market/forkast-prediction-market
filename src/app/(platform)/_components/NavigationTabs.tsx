@@ -1,7 +1,7 @@
 'use cache'
 
 import { Suspense } from 'react'
-import NavigationTab from '@/components/NavigationTab'
+import NavigationTab from '@/app/(platform)/_components/NavigationTab'
 import { Skeleton } from '@/components/ui/skeleton'
 import { TagRepository } from '@/lib/db/queries/tag'
 

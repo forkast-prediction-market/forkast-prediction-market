@@ -9,15 +9,13 @@ import { useSignMessage, useSignTypedData } from 'wagmi'
 import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
 import { saveProxyWalletSignature } from '@/app/(platform)/_actions/proxy-wallet'
 import { generateTradingAuthAction } from '@/app/(platform)/_actions/trading-auth'
+import TradingOnboardingDialogs from '@/app/(platform)/_components/TradingOnboardingDialogs'
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { useProxyWalletPolling } from '@/hooks/useProxyWalletPolling'
 import { defaultNetwork } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
-import {
-  DEFAULT_ERROR_MESSAGE,
-
-} from '@/lib/constants'
+import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { CONDITIONAL_TOKENS_CONTRACT, CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS } from '@/lib/contracts'
 import { fetchReferralLocked } from '@/lib/exchange'
 import {
@@ -39,7 +37,6 @@ import {
   TRADING_AUTH_PRIMARY_TYPE,
   TRADING_AUTH_TYPES,
 } from '@/lib/trading-auth/client'
-import TradingOnboardingDialogs from '@/providers/TradingOnboardingDialogs'
 import { useUser } from '@/stores/useUser'
 
 interface TradingOnboardingContextValue {

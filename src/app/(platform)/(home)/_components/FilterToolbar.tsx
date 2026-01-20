@@ -1,7 +1,7 @@
 'use client'
 
 import type { LucideIcon } from 'lucide-react'
-import type { FilterState } from '@/providers/FilterProvider'
+import type { FilterState } from '@/app/(platform)/_providers/FilterProvider'
 import { useAppKitAccount } from '@reown/appkit/react'
 import { BookmarkIcon, ClockIcon, DropletIcon, FlameIcon, HandFistIcon, Settings2Icon, SparklesIcon, TrendingUpIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'

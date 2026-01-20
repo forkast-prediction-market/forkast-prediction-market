@@ -1,6 +1,6 @@
 import type { User } from '@/types'
-import { EnableTradingDialog, FundAccountDialog, TradeRequirementsDialog } from '@/components/trading/TradingDialogs'
-import { WalletFlow } from '@/components/trading/WalletFlow'
+import { EnableTradingDialog, FundAccountDialog, TradeRequirementsDialog } from '@/app/(platform)/_components/TradingDialogs'
+import { WalletFlow } from '@/app/(platform)/_components/WalletFlow'
 
 interface TradingOnboardingDialogsProps {
   enableModalOpen: boolean

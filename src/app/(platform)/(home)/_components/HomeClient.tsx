@@ -5,7 +5,7 @@ import { useEffect, useRef } from 'react'
 import { OpenCardProvider } from '@/app/(platform)/(home)/_components/EventOpenCardProvider'
 import EventsGrid from '@/app/(platform)/(home)/_components/EventsGrid'
 import FilterToolbar from '@/app/(platform)/(home)/_components/FilterToolbar'
-import { useFilters } from '@/providers/FilterProvider'
+import { useFilters } from '@/app/(platform)/_providers/FilterProvider'
 
 interface HomeClientProps {
   initialEvents: Event[]

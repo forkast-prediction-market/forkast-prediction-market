@@ -12,6 +12,7 @@ import EventCardMarketsList from '@/app/(platform)/(home)/_components/EventCardM
 import EventCardSingleMarketActions from '@/app/(platform)/(home)/_components/EventCardSingleMarketActions'
 import EventCardTradePanel from '@/app/(platform)/(home)/_components/EventCardTradePanel'
 import { OpenCardContext } from '@/app/(platform)/(home)/_components/EventOpenCardProvider'
+import { useTradingOnboarding } from '@/app/(platform)/_providers/TradingOnboardingProvider'
 import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
 import { Card, CardContent } from '@/components/ui/card'
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
@@ -28,7 +29,6 @@ import { signOrderPayload } from '@/lib/orders/signing'
 import { validateOrder } from '@/lib/orders/validation'
 import { isMarketNew } from '@/lib/utils'
 import { isUserRejectedRequestError, normalizeAddress } from '@/lib/wallet'
-import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useUser } from '@/stores/useUser'
 
 const EMPTY_PRICE_OVERRIDES: Record<string, number> = {}
