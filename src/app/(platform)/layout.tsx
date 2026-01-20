@@ -1,12 +1,12 @@
 import Header from '@/components/Header'
 import NavigationTabs from '@/components/NavigationTabs'
+import { AppProviders } from '@/providers/AppProviders'
 import { FilterProvider } from '@/providers/FilterProvider'
-import { Providers } from '@/providers/Providers'
 import { TradingOnboardingProvider } from '@/providers/TradingOnboardingProvider'
 
 export default async function PlatformLayout({ children }: LayoutProps<'/'>) {
   return (
-    <Providers>
+    <AppProviders>
       <TradingOnboardingProvider>
         <FilterProvider>
           <Header />
@@ -14,6 +14,6 @@ export default async function PlatformLayout({ children }: LayoutProps<'/'>) {
           {children}
         </FilterProvider>
       </TradingOnboardingProvider>
-    </Providers>
+    </AppProviders>
   )
 }

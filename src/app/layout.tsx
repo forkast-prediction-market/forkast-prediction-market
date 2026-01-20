@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from 'react'
-import IntlProvider from '@/components/IntlProvider'
 import TestModeBanner from '@/components/TestModeBanner'
 import { defaultLocale } from '@/i18n/locales'
 import { openSauceOne } from '@/lib/fonts'
@@ -33,10 +32,8 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   return (
     <html lang={defaultLocale} className={`${openSauceOne.variable}`} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col font-sans antialiased">
-        <IntlProvider>
-          {IS_TEST_MODE && <TestModeBanner />}
-          {children}
-        </IntlProvider>
+        {IS_TEST_MODE && <TestModeBanner />}
+        {children}
       </body>
     </html>
   )

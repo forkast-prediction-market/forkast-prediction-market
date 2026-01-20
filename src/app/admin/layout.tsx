@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import AdminHeader from '@/app/admin/_components/AdminHeader'
 import AdminSidebar from '@/app/admin/_components/AdminSidebar'
-import { Providers } from '@/providers/Providers'
+import { AppProviders } from '@/providers/AppProviders'
 
 export const metadata: Metadata = {
   title: 'Admin',
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default async function AdminLayout({ children }: LayoutProps<'/admin'>) {
   return (
-    <Providers>
+    <AppProviders>
       <AdminHeader />
       <main className="container py-8">
         <div className="grid gap-8 lg:grid-cols-[240px_1fr] lg:gap-16">
@@ -19,6 +19,6 @@ export default async function AdminLayout({ children }: LayoutProps<'/admin'>) {
           </div>
         </div>
       </main>
-    </Providers>
+    </AppProviders>
   )
 }

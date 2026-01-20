@@ -1,12 +1,12 @@
 import type { ReactNode } from 'react'
-import TwoFactorProviders from '@/app/2fa/_components/TwoFactorProviders'
+import { AppProviders } from '@/providers/AppProviders'
 
 export default function TwoFactorLayout({ children }: { children: ReactNode }) {
   return (
-    <TwoFactorProviders>
+    <AppProviders disableAppKit>
       <main className="flex min-h-screen items-center justify-center px-4 py-12">
         {children}
       </main>
-    </TwoFactorProviders>
+    </AppProviders>
   )
 }
