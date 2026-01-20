@@ -69,7 +69,7 @@ export default function EventChartControls({
   const unselectedOptions = marketOptions.filter(option => !selectedSet.has(option.key))
   const maxReached = maxSeriesCount > 0 && selectedMarketIds.length >= maxSeriesCount
   const hasMarketSelector = showMarketSelector && marketOptions.length > 0
-  const settingItems: Array<{ key: ChartSettingKey, label: string }> = [
+  const baseSettingItems: Array<{ key: ChartSettingKey, label: string }> = [
     { key: 'autoscale', label: 'Autoscale' },
     { key: 'xAxis', label: 'X-Axis' },
     { key: 'yAxis', label: 'Y-Axis' },
@@ -77,7 +77,10 @@ export default function EventChartControls({
     { key: 'verticalGrid', label: 'Vertical Grid' },
     { key: 'annotations', label: 'Annotations' },
     { key: 'bothOutcomes', label: 'Both Outcomes' },
-  ].filter(item => showOutcomeSwitch || item.key !== 'bothOutcomes')
+  ]
+  const settingItems = showOutcomeSwitch
+    ? baseSettingItems
+    : baseSettingItems.filter(item => item.key !== 'bothOutcomes')
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-3">
