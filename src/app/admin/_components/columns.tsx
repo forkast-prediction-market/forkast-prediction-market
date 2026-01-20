@@ -2,7 +2,7 @@
 
 import type { ColumnDef } from '@tanstack/react-table'
 import { ArrowUpDown, MailIcon } from 'lucide-react'
-import Image from 'next/image'
+import ProfileLink from '@/components/ProfileLink'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -64,27 +64,20 @@ export const columns: ColumnDef<AdminUserRow>[] = [
     },
     cell: ({ row }) => {
       const user = row.original
+      const profileSlug = user.username || user.proxy_wallet_address || user.address
       return (
-        <div className="flex min-w-44 items-center gap-2">
-          <Image
-            src={user.avatarUrl}
-            alt={user.username}
-            width={28}
-            height={28}
-            className="shrink-0 rounded-full sm:size-8"
+        <div className="min-w-44">
+          <ProfileLink
+            user={{
+              address: user.address,
+              proxy_wallet_address: user.proxy_wallet_address,
+              image: user.avatarUrl,
+              username: user.username,
+            }}
+            profileSlug={profileSlug}
+            layout="inline"
+            usernameAddon={user.is_admin ? <Badge variant="outline" className="text-xs">Admin</Badge> : null}
           />
-          <div className="min-w-44 flex-1">
-            <a
-              href={user.profileUrl}
-              target="_blank"
-              className="flex items-center gap-1 font-medium text-foreground hover:text-primary"
-            >
-              <span>
-                {user.username || user.proxy_wallet_address}
-              </span>
-              {user.is_admin && <Badge variant="outline" className="mt-1 text-xs">Admin</Badge>}
-            </a>
-          </div>
         </div>
       )
     },
