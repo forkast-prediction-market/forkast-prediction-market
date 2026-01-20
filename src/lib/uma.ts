@@ -31,7 +31,7 @@ export function resolveUmaProposeTarget(source?: UmaProposeSource | null): UmaPr
   }
 
   const baseUrl = UMA_ORACLE_BASE_URL.replace(/\/$/, '')
-  const project = process.env.NEXT_PUBLIC_SITE_NAME || 'Kuest'
+  const project = process.env.NEXT_PUBLIC_SITE_NAME!
 
   const params = new URLSearchParams()
   params.set('project', project)
