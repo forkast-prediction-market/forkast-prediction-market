@@ -11,7 +11,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { fetchAffiliateSettingsFromAPI } from '@/lib/affiliate-data'
 import { cn } from '@/lib/utils'
 import { useUser } from '@/stores/useUser'
@@ -31,15 +30,44 @@ export default function EventShare({ event }: EventShareProps) {
   const [shareSuccess, setShareSuccess] = useState(false)
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
   const [affiliateSharePercent, setAffiliateSharePercent] = useState<number | null>(null)
+  const [shareMenuOpen, setShareMenuOpen] = useState(false)
   const copyTimeoutRef = useRef<number | null>(null)
+  const hoverCloseTimeoutRef = useRef<number | null>(null)
   const user = useUser()
   const affiliateCode = user?.affiliate_code?.trim() ?? ''
   const isMultiMarket = event.total_markets_count > 1
+
+  const clearHoverCloseTimeout = useCallback(() => {
+    if (hoverCloseTimeoutRef.current) {
+      window.clearTimeout(hoverCloseTimeoutRef.current)
+      hoverCloseTimeoutRef.current = null
+    }
+  }, [])
+
+  const handleShareMenuOpen = useCallback(() => {
+    clearHoverCloseTimeout()
+    setShareMenuOpen(true)
+  }, [clearHoverCloseTimeout])
+
+  const handleShareMenuClose = useCallback(() => {
+    clearHoverCloseTimeout()
+    setShareMenuOpen(false)
+  }, [clearHoverCloseTimeout])
+
+  const scheduleShareMenuClose = useCallback(() => {
+    clearHoverCloseTimeout()
+    hoverCloseTimeoutRef.current = window.setTimeout(() => {
+      setShareMenuOpen(false)
+    }, 120)
+  }, [clearHoverCloseTimeout])
 
   useEffect(() => {
     return () => {
       if (copyTimeoutRef.current) {
         window.clearTimeout(copyTimeoutRef.current)
+      }
+      if (hoverCloseTimeoutRef.current) {
+        window.clearTimeout(hoverCloseTimeoutRef.current)
       }
     }
   }, [])
@@ -135,36 +163,34 @@ export default function EventShare({ event }: EventShareProps) {
 
   if (isMultiMarket) {
     return (
-      <DropdownMenu>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className={cn(headerIconButtonClass, 'size-auto p-0')}
-                aria-label="Copy event link"
-              >
-                <LinkIcon className="size-4 -scale-x-100" />
-              </Button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent
-            side="bottom"
-            align="center"
-            sideOffset={5}
-            className="max-w-20 px-1.5 py-0.5 text-center text-[10px] leading-none font-semibold"
+      <DropdownMenu
+        open={shareMenuOpen}
+        onOpenChange={(open) => {
+          clearHoverCloseTimeout()
+          setShareMenuOpen(open)
+        }}
+      >
+        <DropdownMenuTrigger asChild>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className={cn(headerIconButtonClass, 'size-auto p-0')}
+            aria-label="Copy event link"
+            onPointerEnter={handleShareMenuOpen}
+            onPointerLeave={scheduleShareMenuClose}
           >
-            Copy link
-          </TooltipContent>
-        </Tooltip>
+            <LinkIcon className="size-4 -scale-x-100" />
+          </Button>
+        </DropdownMenuTrigger>
         <DropdownMenuContent
           side="bottom"
           align="end"
           sideOffset={8}
           collisionPadding={16}
-          className="scrollbar-hide max-h-80 w-56 border border-border bg-background p-2 text-foreground shadow-xl"
+          onPointerEnter={handleShareMenuOpen}
+          onPointerLeave={handleShareMenuClose}
+          className="scrollbar-hide max-h-80 w-48 border border-border bg-background p-2 text-foreground shadow-xl"
         >
           <DropdownMenuItem
             onSelect={(menuEvent) => {
@@ -172,7 +198,7 @@ export default function EventShare({ event }: EventShareProps) {
               void handleCopy('event', `/event/${event.slug}`)
             }}
             className={cn(
-              'rounded-md px-3 py-2 text-base font-semibold transition-colors',
+              'rounded-md px-3 py-2 text-sm font-semibold transition-colors',
               copiedKey === 'event' ? 'text-foreground' : 'text-muted-foreground',
               'hover:bg-muted/70 hover:text-foreground focus:bg-muted',
             )}
@@ -193,7 +219,7 @@ export default function EventShare({ event }: EventShareProps) {
                     void handleCopy(key, `/event/${event.slug}/${market.slug}`)
                   }}
                   className={cn(
-                    'rounded-md px-3 py-2 text-base font-semibold transition-colors',
+                    'rounded-md px-3 py-2 text-sm font-semibold transition-colors',
                     copiedKey === key ? 'text-foreground' : 'text-muted-foreground',
                     'hover:bg-muted/70 hover:text-foreground focus:bg-muted',
                   )}
@@ -208,29 +234,17 @@ export default function EventShare({ event }: EventShareProps) {
   }
 
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className={cn(headerIconButtonClass, 'size-auto p-0')}
-          onClick={handleShare}
-          aria-label="Copy event link"
-        >
-          {shareSuccess
-            ? <CheckIcon className="size-4 text-primary" />
-            : <LinkIcon className="size-4 -scale-x-100" />}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent
-        side="bottom"
-        align="center"
-        sideOffset={5}
-        className="max-w-20 px-1.5 py-0.5 text-center text-[10px] leading-none font-semibold"
-      >
-        Copy link
-      </TooltipContent>
-    </Tooltip>
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className={cn(headerIconButtonClass, 'size-auto p-0')}
+      onClick={handleShare}
+      aria-label="Copy event link"
+    >
+      {shareSuccess
+        ? <CheckIcon className="size-4 text-primary" />
+        : <LinkIcon className="size-4 -scale-x-100" />}
+    </Button>
   )
 }

@@ -317,9 +317,9 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
 
   return (
     <>
-      <div className="-mx-4 overflow-hidden bg-background lg:mx-0">
+      <div className="-mx-4 bg-background lg:mx-0">
         {marketRows.length > 0 && (
-          <div className="mx-2 mt-4 border-b border-border" />
+          <div className="mt-4 mr-2 ml-4 border-b border-border lg:mx-0" />
         )}
         {marketRows
           .map((row, index, orderedMarkets) => {
@@ -378,7 +378,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                 </div>
 
                 {index !== orderedMarkets.length - 1 && (
-                  <div className="mx-2 border-b border-border" />
+                  <div className="mr-2 ml-4 border-b border-border lg:mx-0" />
                 )}
               </div>
             )

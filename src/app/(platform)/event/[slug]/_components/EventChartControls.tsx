@@ -216,10 +216,6 @@ export default function EventChartControls({
                       <span className="inline-flex size-4 items-center justify-center" />
                       <span className="truncate">{option.name}</span>
                     </span>
-                    <span
-                      className="size-3.5 shrink-0 rounded-[2px]"
-                      style={{ backgroundColor: option.color }}
-                    />
                   </DropdownMenuItem>
                 )
               })}

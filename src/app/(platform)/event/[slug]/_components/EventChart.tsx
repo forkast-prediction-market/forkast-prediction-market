@@ -212,6 +212,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   const [exportDialogOpen, setExportDialogOpen] = useState(false)
   const [embedDialogOpen, setEmbedDialogOpen] = useState(false)
   const tradeFlowIdRef = useRef(0)
+  const lastEventIdRef = useRef(event.id)
 
   useEffect(() => {
     setCursorSnapshot(null)
@@ -345,12 +346,16 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   const [hasCustomSelection, setHasCustomSelection] = useState(false)
 
   useEffect(() => {
-    if (isSingleMarket) {
+    if (lastEventIdRef.current === event.id) {
       return
     }
-    setSelectedMarketIds(defaultMarketIds)
+
+    lastEventIdRef.current = event.id
     setHasCustomSelection(false)
-  }, [defaultMarketIds, isSingleMarket, event.id])
+    if (!isSingleMarket) {
+      setSelectedMarketIds(defaultMarketIds)
+    }
+  }, [defaultMarketIds, event.id, isSingleMarket])
 
   useEffect(() => {
     if (isSingleMarket || hasCustomSelection) {

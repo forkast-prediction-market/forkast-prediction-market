@@ -105,10 +105,15 @@ function EventMarketCardComponent({
     <div
       className={cn(
         `
-          flex w-full cursor-pointer flex-col items-start p-4 transition-all duration-200 ease-in-out
-          lg:flex-row lg:items-center lg:rounded-lg
+          relative z-0 flex w-full cursor-pointer flex-col items-start py-3 pr-2 pl-4 transition-all duration-200
+          ease-in-out
+          before:pointer-events-none before:absolute before:inset-y-0 before:-right-3 before:-left-3 before:-z-10
+          before:rounded-lg before:bg-black/5 before:opacity-0 before:transition-opacity before:duration-200
+          before:content-['']
+          hover:before:opacity-100
+          lg:flex-row lg:items-center lg:rounded-lg lg:px-0
+          dark:before:bg-white/5
         `,
-        'hover:bg-black/5 dark:hover:bg-white/5',
       )}
       role="button"
       tabIndex={0}
@@ -121,9 +126,99 @@ function EventMarketCardComponent({
         }
       }}
     >
-      <div className="w-full lg:hidden">
-        <div className="mb-3 flex flex-col gap-2">
-          <div className="flex items-center justify-between">
+      <div className="relative w-full">
+        <div className="w-full lg:hidden">
+          <div className="mb-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-start gap-3">
+                {shouldShowIcon && (
+                  <Image
+                    src={market.icon_url}
+                    alt={market.title}
+                    width={42}
+                    height={42}
+                    className="shrink-0 rounded-md"
+                  />
+                )}
+                <div>
+                  <div className="text-sm font-bold">
+                    {market.title}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    $
+                    {resolvedVolume?.toLocaleString('en-US', {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }) || '0.00'}
+                    {' '}
+                    Vol.
+                  </div>
+                </div>
+              </div>
+              <EventMarketChance
+                chanceMeta={chanceMeta}
+                layout="mobile"
+                highlightKey={chanceHighlightKey}
+              />
+            </div>
+            {shouldShowTags && (
+              <div className={cn('flex', shouldShowIcon && 'pl-13.5')}>
+                <PositionTags
+                  tags={resolvedPositionTags}
+                  onCashOut={tag => onCashOut?.(market, tag)}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              size="outcomeLg"
+              variant="yes"
+              className={cn({
+                'bg-yes text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.YES,
+              })}
+              onClick={(event) => {
+                event.stopPropagation()
+                onBuy(market, OUTCOME_INDEX.YES, 'mobile')
+              }}
+            >
+              <span className="truncate opacity-70">
+                Buy
+                {' '}
+                {' '}
+                {yesOutcomeText}
+              </span>
+              <span className="shrink-0 text-base font-bold">
+                {formatCentsLabel(yesPriceValue)}
+              </span>
+            </Button>
+            <Button
+              size="outcomeLg"
+              variant="no"
+              className={cn({
+                'bg-no text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.NO,
+              })}
+              onClick={(event) => {
+                event.stopPropagation()
+                onBuy(market, OUTCOME_INDEX.NO, 'mobile')
+              }}
+            >
+              <span className="truncate opacity-70">
+                Buy
+                {' '}
+                {' '}
+                {noOutcomeText}
+              </span>
+              <span className="shrink-0 text-base font-bold">
+                {formatCentsLabel(noPriceValue)}
+              </span>
+            </Button>
+          </div>
+        </div>
+
+        <div className="hidden w-full items-center lg:flex">
+          <div className="flex w-2/5 flex-col gap-2">
             <div className="flex items-start gap-3">
               {shouldShowIcon && (
                 <Image
@@ -135,7 +230,7 @@ function EventMarketCardComponent({
                 />
               )}
               <div>
-                <div className="text-sm font-bold">
+                <div className="font-bold">
                   {market.title}
                 </div>
                 <div className="text-xs text-muted-foreground">
@@ -149,157 +244,69 @@ function EventMarketCardComponent({
                 </div>
               </div>
             </div>
+            {shouldShowTags && (
+              <div className={cn('flex', shouldShowIcon && 'pl-13.5')}>
+                <PositionTags
+                  tags={resolvedPositionTags}
+                  onCashOut={tag => onCashOut?.(market, tag)}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="flex w-1/5 justify-center">
             <EventMarketChance
               chanceMeta={chanceMeta}
-              layout="mobile"
+              layout="desktop"
               highlightKey={chanceHighlightKey}
             />
           </div>
-          {shouldShowTags && (
-            <div className={cn('flex', shouldShowIcon && 'pl-13.5')}>
-              <PositionTags
-                tags={resolvedPositionTags}
-                onCashOut={tag => onCashOut?.(market, tag)}
-              />
-            </div>
-          )}
-        </div>
 
-        <div className="flex gap-2">
-          <Button
-            size="outcomeLg"
-            variant="yes"
-            className={cn({
-              'bg-yes text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.YES,
-            })}
-            onClick={(event) => {
-              event.stopPropagation()
-              onBuy(market, OUTCOME_INDEX.YES, 'mobile')
-            }}
-          >
-            <span className="truncate opacity-70">
-              Buy
-              {' '}
-              {' '}
-              {yesOutcomeText}
-            </span>
-            <span className="shrink-0 text-base font-bold">
-              {formatCentsLabel(yesPriceValue)}
-            </span>
-          </Button>
-          <Button
-            size="outcomeLg"
-            variant="no"
-            className={cn({
-              'bg-no text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.NO,
-            })}
-            onClick={(event) => {
-              event.stopPropagation()
-              onBuy(market, OUTCOME_INDEX.NO, 'mobile')
-            }}
-          >
-            <span className="truncate opacity-70">
-              Buy
-              {' '}
-              {' '}
-              {noOutcomeText}
-            </span>
-            <span className="shrink-0 text-base font-bold">
-              {formatCentsLabel(noPriceValue)}
-            </span>
-          </Button>
-        </div>
-      </div>
-
-      <div className="hidden w-full items-center lg:flex">
-        <div className="flex w-2/5 flex-col gap-2">
-          <div className="flex items-start gap-3">
-            {shouldShowIcon && (
-              <Image
-                src={market.icon_url}
-                alt={market.title}
-                width={42}
-                height={42}
-                className="shrink-0 rounded-md"
-              />
-            )}
-            <div>
-              <div className="font-bold">
-                {market.title}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                $
-                {resolvedVolume?.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                }) || '0.00'}
+          <div className="ms-auto flex items-center gap-2">
+            <Button
+              size="outcomeLg"
+              variant="yes"
+              className={cn({
+                'bg-yes text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.YES,
+              }, 'w-[8.5rem]')}
+              onClick={(event) => {
+                event.stopPropagation()
+                onBuy(market, OUTCOME_INDEX.YES, 'desktop')
+              }}
+            >
+              <span className="truncate opacity-70">
+                Buy
                 {' '}
-                Vol.
-              </div>
-            </div>
+                {' '}
+                {yesOutcomeText}
+              </span>
+              <span className="shrink-0 text-base font-bold">
+                {formatCentsLabel(yesPriceValue)}
+              </span>
+            </Button>
+
+            <Button
+              size="outcomeLg"
+              variant="no"
+              className={cn({
+                'bg-no text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.NO,
+              }, 'w-[8.5rem]')}
+              onClick={(event) => {
+                event.stopPropagation()
+                onBuy(market, OUTCOME_INDEX.NO, 'desktop')
+              }}
+            >
+              <span className="truncate opacity-70">
+                Buy
+                {' '}
+                {' '}
+                {noOutcomeText}
+              </span>
+              <span className="shrink-0 text-base font-bold">
+                {formatCentsLabel(noPriceValue)}
+              </span>
+            </Button>
           </div>
-          {shouldShowTags && (
-            <div className={cn('flex', shouldShowIcon && 'pl-13.5')}>
-              <PositionTags
-                tags={resolvedPositionTags}
-                onCashOut={tag => onCashOut?.(market, tag)}
-              />
-            </div>
-          )}
-        </div>
-
-        <div className="flex w-1/5 justify-center">
-          <EventMarketChance
-            chanceMeta={chanceMeta}
-            layout="desktop"
-            highlightKey={chanceHighlightKey}
-          />
-        </div>
-
-        <div className="ms-auto flex items-center gap-2">
-          <Button
-            size="outcomeLg"
-            variant="yes"
-            className={cn({
-              'bg-yes text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.YES,
-            }, 'w-36')}
-            onClick={(event) => {
-              event.stopPropagation()
-              onBuy(market, OUTCOME_INDEX.YES, 'desktop')
-            }}
-          >
-            <span className="truncate opacity-70">
-              Buy
-              {' '}
-              {' '}
-              {yesOutcomeText}
-            </span>
-            <span className="shrink-0 text-base font-bold">
-              {formatCentsLabel(yesPriceValue)}
-            </span>
-          </Button>
-
-          <Button
-            size="outcomeLg"
-            variant="no"
-            className={cn({
-              'bg-no text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.NO,
-            }, 'w-36')}
-            onClick={(event) => {
-              event.stopPropagation()
-              onBuy(market, OUTCOME_INDEX.NO, 'desktop')
-            }}
-          >
-            <span className="truncate opacity-70">
-              Buy
-              {' '}
-              {' '}
-              {noOutcomeText}
-            </span>
-            <span className="shrink-0 text-base font-bold">
-              {formatCentsLabel(noPriceValue)}
-            </span>
-          </Button>
         </div>
       </div>
     </div>

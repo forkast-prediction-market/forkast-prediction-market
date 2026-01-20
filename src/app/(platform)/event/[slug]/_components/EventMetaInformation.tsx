@@ -93,7 +93,7 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
   const expiryDate = maybeEndDate && !Number.isNaN(maybeEndDate.getTime()) ? maybeEndDate : null
 
   return (
-    <div className="flex flex-wrap items-center gap-2 pl-4 text-xs">
+    <div className="flex flex-wrap items-center gap-2 text-xs">
       {shouldShowNew && (
         <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
           <SparkleIcon className="size-3.5 fill-current" stroke="currentColor" fill="currentColor" />

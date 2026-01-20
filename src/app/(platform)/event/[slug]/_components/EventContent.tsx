@@ -240,7 +240,11 @@ export default function EventContent({ event, user, marketContextEnabled, market
         <div className="grid gap-3" ref={contentRef}>
           <EventHeader event={event} />
           <EventChart event={event} isMobile={isMobile} />
-          <div ref={eventMarketsRef} id="event-markets" className="min-w-0 overflow-x-hidden">
+          <div
+            ref={eventMarketsRef}
+            id="event-markets"
+            className="min-w-0 overflow-x-hidden lg:overflow-x-visible"
+          >
             <EventMarkets event={event} isMobile={isMobile} />
           </div>
           {event.total_markets_count === 1 && (
