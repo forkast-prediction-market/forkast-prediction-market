@@ -1,4 +1,4 @@
-import EventCardSkeleton from '@/components/EventCardSkeleton'
+import EventCardSkeleton from '@/app/(platform)/(home)/_components/EventCardSkeleton'
 
 interface EventsGridSkeletonProps {
   count?: number

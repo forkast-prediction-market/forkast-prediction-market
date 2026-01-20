@@ -4,10 +4,10 @@ import { TrendingUpIcon } from 'lucide-react'
 import Link from 'next/link'
 import { redirect, usePathname } from 'next/navigation'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useFilters } from '@/app/(platform)/_providers/FilterProvider'
 import { Teleport } from '@/components/Teleport'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useFilters } from '@/providers/FilterProvider'
 
 interface NavigationTabProps {
   tag: {

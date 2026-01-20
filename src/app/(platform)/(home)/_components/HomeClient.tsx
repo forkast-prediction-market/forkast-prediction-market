@@ -2,10 +2,10 @@
 
 import type { Event } from '@/types'
 import { useEffect, useRef } from 'react'
-import { OpenCardProvider } from '@/components/EventOpenCardContext'
-import EventsGrid from '@/components/EventsGrid'
-import FilterToolbar from '@/components/FilterToolbar'
-import { useFilters } from '@/providers/FilterProvider'
+import { OpenCardProvider } from '@/app/(platform)/(home)/_components/EventOpenCardProvider'
+import EventsGrid from '@/app/(platform)/(home)/_components/EventsGrid'
+import FilterToolbar from '@/app/(platform)/(home)/_components/FilterToolbar'
+import { useFilters } from '@/app/(platform)/_providers/FilterProvider'
 
 interface HomeClientProps {
   initialEvents: Event[]

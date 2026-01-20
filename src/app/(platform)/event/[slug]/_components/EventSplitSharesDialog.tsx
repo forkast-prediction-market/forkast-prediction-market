@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { hashTypedData } from 'viem'
 import { useSignMessage } from 'wagmi'
 import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/(platform)/_actions/approve-tokens'
+import { useTradingOnboarding } from '@/app/(platform)/_providers/TradingOnboardingProvider'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -35,7 +36,6 @@ import {
 
 } from '@/lib/safe/transactions'
 import { cn } from '@/lib/utils'
-import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 import { useUser } from '@/stores/useUser'
 
 interface EventSplitSharesDialogProps {

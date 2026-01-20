@@ -1,7 +1,7 @@
 'use cache'
 
 import type { Event } from '@/types'
-import HomeClient from '@/components/HomeClient'
+import HomeClient from '@/app/(platform)/(home)/_components/HomeClient'
 import { EventRepository } from '@/lib/db/queries/event'
 
 export default async function HomePage() {

@@ -1,6 +1,6 @@
 import { BarChart3Icon, SearchIcon, XIcon } from 'lucide-react'
+import { useFilters } from '@/app/(platform)/_providers/FilterProvider'
 import { Button } from '@/components/ui/button'
-import { useFilters } from '@/providers/FilterProvider'
 
 interface EventsEmptyStateProps {
   tag: string

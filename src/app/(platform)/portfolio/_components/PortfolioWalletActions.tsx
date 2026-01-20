@@ -1,9 +1,9 @@
 'use client'
 
 import { ArrowDownToLine, ArrowUpToLine } from 'lucide-react'
+import { useTradingOnboarding } from '@/app/(platform)/_providers/TradingOnboardingProvider'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { useTradingOnboarding } from '@/providers/TradingOnboardingProvider'
 
 interface PortfolioWalletActionsProps {
   className?: string
