@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { fetchUserActivityData, fetchUserPositionsForMarket } from '@/lib/data-api/user'
 import { formatAmountInputValue, fromMicro } from '@/lib/formatters'
+import { buildUmaProposeUrl } from '@/lib/uma'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
@@ -500,6 +501,8 @@ function MarketDetailTabs({
     return visibleTabs[0]?.id ?? 'orderBook'
   }, [controlledTab, visibleTabs])
 
+  const proposeUrl = useMemo(() => buildUmaProposeUrl(market.condition), [market.condition])
+
   useEffect(() => {
     if (selectedTab !== controlledTab) {
       select(selectedTab)
@@ -589,14 +592,31 @@ function MarketDetailTabs({
         {selectedTab === 'history' && <EventMarketHistory market={market} />}
 
         {selectedTab === 'resolution' && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="mb-3"
-            onClick={event => event.stopPropagation()}
-          >
-            Propose resolution
-          </Button>
+          proposeUrl
+            ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mb-3"
+                  asChild
+                  onClick={event => event.stopPropagation()}
+                >
+                  <a href={proposeUrl} target="_blank" rel="noopener noreferrer">
+                    Propose resolution
+                  </a>
+                </Button>
+              )
+            : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="mb-3"
+                  disabled
+                  onClick={event => event.stopPropagation()}
+                >
+                  Propose resolution
+                </Button>
+              )
         )}
       </div>
     </div>

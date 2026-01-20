@@ -1,6 +1,7 @@
 import type { Event } from '@/types'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { buildUmaProposeUrl } from '@/lib/uma'
 
 interface EventRulesProps {
   event: Event
@@ -52,6 +53,7 @@ export default function EventRules({ event }: EventRulesProps) {
   const primaryMarket = event.markets[0]
   const resolverAddress = primaryMarket?.condition?.oracle
   const resolverGradient = getResolverGradient(resolverAddress)
+  const proposeUrl = buildUmaProposeUrl(primaryMarket?.condition)
 
   return (
     <div className="rounded-xl border transition-all duration-200 ease-in-out">
@@ -127,9 +129,19 @@ export default function EventRules({ event }: EventRulesProps) {
                   </div>
                 </div>
 
-                <Button variant="outline" size="sm">
-                  Propose resolution
-                </Button>
+                {proposeUrl
+                  ? (
+                      <Button variant="outline" size="sm" asChild>
+                        <a href={proposeUrl} target="_blank" rel="noopener noreferrer">
+                          Propose resolution
+                        </a>
+                      </Button>
+                    )
+                  : (
+                      <Button variant="outline" size="sm" disabled>
+                        Propose resolution
+                      </Button>
+                    )}
               </div>
             </div>
           </div>

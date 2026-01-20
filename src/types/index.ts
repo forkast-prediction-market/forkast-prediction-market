@@ -87,6 +87,12 @@ interface Condition {
   payout_denominator?: number
   arweave_hash?: string
   creator?: string
+  uma_request_tx_hash?: string
+  uma_request_log_index?: number
+  uma_oracle_address?: string
+  mirror_uma_request_tx_hash?: string
+  mirror_uma_request_log_index?: number
+  mirror_uma_oracle_address?: string
   volume: number
   open_interest: number
   active_positions_count: number

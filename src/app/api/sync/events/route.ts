@@ -559,10 +559,46 @@ async function processMarketData(
   const negRiskOtherFlag = normalizeBooleanField(metadata.neg_risk_other)
   const negRiskMarketId = normalizeHexField(metadata.neg_risk_market_id)
   const negRiskRequestId = normalizeHexField(metadata.neg_risk_request_id)
+  const umaRequestTxHash = normalizeHexField(metadata.uma_request_tx_hash)
+  const umaRequestLogIndex = normalizeIntegerField(metadata.uma_request_log_index)
+  const umaOracleAddress = normalizeAddressField(metadata.uma_oracle_address)
+  const mirrorUmaRequestTxHash = normalizeHexField(metadata.mirror_uma_request_tx_hash)
+  const mirrorUmaRequestLogIndex = normalizeIntegerField(metadata.mirror_uma_request_log_index)
+  const mirrorUmaOracleAddress = normalizeAddressField(metadata.mirror_uma_oracle_address)
   const metadataVersion = normalizeStringField(metadata.version)
   const metadataSchema = normalizeStringField(metadata.schema)
 
   const normalizedMarketEndTime = normalizeTimestamp(metadata.end_time)
+
+  const conditionUpdate: Record<string, any> = {}
+  if (umaRequestTxHash) {
+    conditionUpdate.uma_request_tx_hash = umaRequestTxHash
+  }
+  if (umaRequestLogIndex != null) {
+    conditionUpdate.uma_request_log_index = umaRequestLogIndex
+  }
+  if (umaOracleAddress) {
+    conditionUpdate.uma_oracle_address = umaOracleAddress
+  }
+  if (mirrorUmaRequestTxHash) {
+    conditionUpdate.mirror_uma_request_tx_hash = mirrorUmaRequestTxHash
+  }
+  if (mirrorUmaRequestLogIndex != null) {
+    conditionUpdate.mirror_uma_request_log_index = mirrorUmaRequestLogIndex
+  }
+  if (mirrorUmaOracleAddress) {
+    conditionUpdate.mirror_uma_oracle_address = mirrorUmaOracleAddress
+  }
+  if (Object.keys(conditionUpdate).length > 0) {
+    const { error: conditionUpdateError } = await supabaseAdmin
+      .from('conditions')
+      .update(conditionUpdate)
+      .eq('id', market.id)
+
+    if (conditionUpdateError) {
+      throw new Error(`Failed to update UMA fields for condition ${market.id}: ${conditionUpdateError.message}`)
+    }
+  }
 
   const marketData: Record<string, any> = {
     condition_id: market.id,
@@ -777,6 +813,25 @@ function normalizeStringField(value: unknown): string | null {
   }
   const trimmed = value.trim()
   return trimmed.length > 0 ? trimmed : null
+}
+
+function normalizeIntegerField(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return Math.trunc(value)
+  }
+
+  if (typeof value === 'string') {
+    const trimmed = value.trim()
+    if (!trimmed) {
+      return null
+    }
+    const parsed = Number(trimmed)
+    if (Number.isFinite(parsed)) {
+      return Math.trunc(parsed)
+    }
+  }
+
+  return null
 }
 
 function normalizeAddressField(value: unknown): string | null {
