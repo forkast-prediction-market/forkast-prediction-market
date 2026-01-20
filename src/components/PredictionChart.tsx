@@ -1,6 +1,6 @@
 'use client'
 
-import type { ReactElement } from 'react'
+import type { CSSProperties, ReactElement } from 'react'
 import type { DataPoint, PredictionChartCursorSnapshot, PredictionChartProps, SeriesConfig } from '@/types/PredictionChartTypes'
 import { AxisBottom, AxisRight } from '@visx/axis'
 import { curveCatmullRom } from '@visx/curve'
@@ -42,6 +42,9 @@ const GRID_LINE_COLOR_LIGHT = '#A7B4C2'
 const GRID_LINE_OPACITY_DARK = 0.7
 const GRID_LINE_OPACITY_LIGHT = 0.35
 const CROSS_FADE_DURATION = 320
+const SURGE_DURATION = 520
+const SURGE_DASH_RATIO = 0.1
+const SURGE_COLOR_BLEND = 0.55
 
 export function PredictionChart({
   data: providedData,
@@ -74,8 +77,14 @@ export function PredictionChart({
   const [revealProgress, setRevealProgress] = useState(0)
   const [crossFadeProgress, setCrossFadeProgress] = useState(1)
   const [crossFadeData, setCrossFadeData] = useState<DataPoint[] | null>(null)
+  const [surgeActive, setSurgeActive] = useState(false)
+  const [surgeToken, setSurgeToken] = useState(0)
   const revealAnimationFrameRef = useRef<number | null>(null)
   const crossFadeFrameRef = useRef<number | null>(null)
+  const surgeTimeoutRef = useRef<number | null>(null)
+  const surgePendingRef = useRef(false)
+  const surgeLengthsRef = useRef<Record<string, number>>({})
+  const seriesPathRef = useRef<Record<string, SVGPathElement | null>>({})
   const dataSignatureRef = useRef<string | number | null>(null)
   const lastDataUpdateTypeRef = useRef<'reset' | 'append' | 'none'>('reset')
   const hasPointerInteractionRef = useRef(false)
@@ -124,6 +133,7 @@ export function PredictionChart({
     showTooltip,
     hideTooltip,
   } = useTooltip<DataPoint>()
+  const tooltipActive = Boolean(tooltipOpen && tooltipData && tooltipLeft !== undefined)
   const resolvedMargin = useMemo(() => {
     const axisPadding = 12
     return {
@@ -297,6 +307,12 @@ export function PredictionChart({
     })
   }, [hideTooltip, emitCursorDataChange, dataLength, revealAnimationFrameRef])
 
+  const registerSeriesPath = useCallback((seriesKey: string) => {
+    return (node: SVGPathElement | null) => {
+      seriesPathRef.current[seriesKey] = node
+    }
+  }, [])
+
   useLayoutEffect(() => {
     queueMicrotask(() => {
       setIsClient(true)
@@ -449,12 +465,22 @@ export function PredictionChart({
   )
 
   useEffect(() => {
+    return () => {
+      if (surgeTimeoutRef.current) {
+        window.clearTimeout(surgeTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
     if (data.length === 0) {
       stopRevealAnimation(revealAnimationFrameRef)
       stopRevealAnimation(crossFadeFrameRef)
       setRevealProgress(0)
       setCrossFadeProgress(1)
       setCrossFadeData(null)
+      surgePendingRef.current = false
+      setSurgeActive(false)
       lastDataUpdateTypeRef.current = 'reset'
       previousDataRef.current = data
       return
@@ -462,6 +488,8 @@ export function PredictionChart({
 
     const updateType = lastDataUpdateTypeRef.current
     const previousData = previousDataRef.current
+
+    surgePendingRef.current = updateType === 'reset'
 
     if (updateType === 'reset' && previousData && previousData.length > 0) {
       hasPointerInteractionRef.current = false
@@ -528,6 +556,65 @@ export function PredictionChart({
     }
   }, [crossFadeData, crossFadeProgress])
 
+  const crossFadeAnimating = Boolean(crossFadeData && crossFadeProgress < 0.999)
+
+  const lightenSeriesColor = useCallback((color: string) => {
+    const match = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(color)
+    if (!match) {
+      return color
+    }
+
+    const r = Number.parseInt(match[1], 16)
+    const g = Number.parseInt(match[2], 16)
+    const b = Number.parseInt(match[3], 16)
+    function mix(channel: number) {
+      return Math.round(channel + (255 - channel) * SURGE_COLOR_BLEND)
+    }
+
+    return `rgb(${mix(r)}, ${mix(g)}, ${mix(b)})`
+  }, [])
+
+  useEffect(() => {
+    if (!surgePendingRef.current) {
+      return
+    }
+
+    if (revealProgress < 0.999) {
+      return
+    }
+
+    if (crossFadeAnimating || tooltipActive || data.length < 2 || series.length === 0) {
+      return
+    }
+
+    surgePendingRef.current = false
+
+    const nextLengths: Record<string, number> = {}
+    series.forEach((seriesItem) => {
+      const node = seriesPathRef.current[seriesItem.key]
+      if (node) {
+        nextLengths[seriesItem.key] = node.getTotalLength()
+      }
+    })
+
+    if (Object.keys(nextLengths).length === 0) {
+      return
+    }
+
+    surgeLengthsRef.current = nextLengths
+
+    setSurgeActive(true)
+    setSurgeToken(prev => prev + 1)
+
+    if (surgeTimeoutRef.current) {
+      window.clearTimeout(surgeTimeoutRef.current)
+    }
+
+    surgeTimeoutRef.current = window.setTimeout(() => {
+      setSurgeActive(false)
+    }, SURGE_DURATION)
+  }, [revealProgress, crossFadeAnimating, tooltipActive, data.length, series])
+
   const firstFinitePointBySeries = useMemo(() => {
     const result: Record<string, DataPoint | null> = {}
 
@@ -589,7 +676,6 @@ export function PredictionChart({
     nice: true,
   })
 
-  const tooltipActive = Boolean(tooltipOpen && tooltipData && tooltipLeft !== undefined)
   const clampedTooltipX = tooltipActive
     ? Math.max(0, Math.min(tooltipLeft as number, innerWidth))
     : innerWidth
@@ -637,6 +723,7 @@ export function PredictionChart({
   const showEndpointMarkers = Boolean(lastDataPoint)
     && (!tooltipActive || isTooltipAtLastPoint)
     && (mutedPoints.length === 0 || shouldSplitByCursor)
+    && !surgeActive
   const crossFadeActive = Boolean(crossFadeData && crossFadeProgress < 0.999 && !shouldSplitByCursor)
   const crossFadeIn = crossFadeActive ? crossFadeProgress : 1
   const crossFadeOut = crossFadeActive ? 1 - crossFadeProgress : 0
@@ -844,6 +931,20 @@ export function PredictionChart({
 
             {series.map((seriesItem) => {
               const seriesColor = seriesItem.color
+              const surgeLength = surgeLengthsRef.current[seriesItem.key]
+              const surgeDashLength = typeof surgeLength === 'number' && Number.isFinite(surgeLength)
+                ? Math.max(12, surgeLength * SURGE_DASH_RATIO)
+                : 0
+              const surgeDashGap = surgeLength ?? 0
+              const shouldRenderSurge = Boolean(
+                surgeActive
+                && !crossFadeActive
+                && !shouldSplitByCursor
+                && mutedPoints.length === 0
+                && coloredPoints.length > 1
+                && surgeLength
+                && surgeDashLength > 0,
+              )
               const firstPoint = firstFinitePointBySeries[seriesItem.key] ?? null
               const firstPointTime = firstPoint?.date.getTime()
               const hasLeadingGap = Number.isFinite(leadingGapStartMs)
@@ -949,6 +1050,7 @@ export function PredictionChart({
                             curve={curveCatmullRom}
                             fill="transparent"
                             clipPath={`url(#${leftClipId})`}
+                            innerRef={registerSeriesPath(seriesItem.key)}
                           />
                         </>
                       )
@@ -981,10 +1083,33 @@ export function PredictionChart({
                               strokeLinejoin="round"
                               curve={curveCatmullRom}
                               fill="transparent"
+                              innerRef={registerSeriesPath(seriesItem.key)}
                             />
                           )}
                         </>
                       )}
+
+                  {shouldRenderSurge && (
+                    <LinePath<DataPoint>
+                      key={`surge-${seriesItem.key}-${surgeToken}`}
+                      data={data}
+                      x={d => xScale(getDate(d))}
+                      y={d => yScale((d[seriesItem.key] as number) || 0)}
+                      stroke={lightenSeriesColor(seriesColor)}
+                      strokeWidth={3}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      curve={curveCatmullRom}
+                      fill="transparent"
+                      strokeDasharray={`${surgeDashLength} ${surgeDashGap}`}
+                      strokeDashoffset={0}
+                      style={{
+                        'animation': `prediction-chart-surge ${SURGE_DURATION}ms ease-out`,
+                        '--surge-offset-start': '0',
+                        '--surge-offset-end': `${-(surgeLength + surgeDashLength)}`,
+                      } as CSSProperties}
+                    />
+                  )}
                 </g>
               )
             })}

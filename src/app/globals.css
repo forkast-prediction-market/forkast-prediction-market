@@ -211,6 +211,20 @@
   }
 }
 
+@keyframes prediction-chart-surge {
+  0% {
+    stroke-dashoffset: var(--surge-offset-start, 0);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  100% {
+    stroke-dashoffset: var(--surge-offset-end, 0);
+    opacity: 0;
+  }
+}
+
 @keyframes order-shake {
   0% {
     transform: translateX(0);

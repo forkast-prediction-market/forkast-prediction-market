@@ -77,7 +77,7 @@ export default function EventChartControls({
     { key: 'verticalGrid', label: 'Vertical Grid' },
     { key: 'annotations', label: 'Annotations' },
     { key: 'bothOutcomes', label: 'Both Outcomes' },
-  ]
+  ].filter(item => showOutcomeSwitch || item.key !== 'bothOutcomes')
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-3">
