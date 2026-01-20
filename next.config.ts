@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next'
 import { createMDX } from 'fumadocs-mdx/next'
+import createNextIntlPlugin from 'next-intl/plugin'
 
 const config: NextConfig = {
   cacheComponents: true,
@@ -51,4 +52,6 @@ const withMDX = createMDX({
   configPath: 'docs.config.ts',
 })
 
-export default withMDX(config)
+const withNextIntl = createNextIntlPlugin()
+
+export default withNextIntl(withMDX(config))
