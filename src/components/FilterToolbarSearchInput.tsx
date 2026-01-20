@@ -47,7 +47,7 @@ export default function FilterToolbarSearchInput({ search, onSearchChange }: Fil
         onChange={e => setSearchQuery(e.target.value)}
         className={`
           border-transparent bg-input pl-10 shadow-none transition-colors
-          hover:bg-[color:var(--input-hover)]
+          hover:bg-(--input-hover)
           focus-visible:border-border focus-visible:bg-background focus-visible:ring-0 focus-visible:ring-offset-0
         `}
       />
