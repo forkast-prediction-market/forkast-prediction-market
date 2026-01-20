@@ -4,7 +4,6 @@ import type { ReactNode } from 'react'
 import type { Locale } from '@/i18n/locales'
 import { NextIntlClientProvider } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
-import LocaleHtmlLangSync from '@/components/LocaleHtmlLangSync'
 import { defaultLocale, isLocaleSupported } from '@/i18n/locales'
 import enMessages from '@/i18n/messages/en.json'
 import esMessages from '@/i18n/messages/es.json'
@@ -51,6 +50,18 @@ function resolveClientLocale(): Locale {
   }
 
   return defaultLocale
+}
+
+interface LocaleHtmlLangSyncProps {
+  locale: string
+}
+
+function LocaleHtmlLangSync({ locale }: LocaleHtmlLangSyncProps) {
+  useEffect(() => {
+    document.documentElement.lang = locale
+  }, [locale])
+
+  return <></>
 }
 
 export default function IntlProvider({ children }: IntlProviderProps) {

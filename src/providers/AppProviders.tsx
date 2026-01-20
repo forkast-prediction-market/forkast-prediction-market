@@ -4,9 +4,9 @@ import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ThemeProvider } from 'next-themes'
 import dynamic from 'next/dynamic'
-import IntlProvider from '@/components/IntlProvider'
 import { Toaster } from '@/components/ui/sonner'
 import AppKitProvider from '@/providers/AppKitProvider'
+import IntlProvider from '@/providers/IntlProvider'
 import ProgressIndicatorProvider from '@/providers/ProgressIndicatorProvider'
 
 const SpeedInsights = dynamic(

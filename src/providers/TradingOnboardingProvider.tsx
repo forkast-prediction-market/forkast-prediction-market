@@ -11,6 +11,7 @@ import { saveProxyWalletSignature } from '@/app/(platform)/_actions/proxy-wallet
 import { generateTradingAuthAction } from '@/app/(platform)/_actions/trading-auth'
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
+import { useProxyWalletPolling } from '@/hooks/useProxyWalletPolling'
 import { defaultNetwork } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
 import {
@@ -38,7 +39,6 @@ import {
   TRADING_AUTH_PRIMARY_TYPE,
   TRADING_AUTH_TYPES,
 } from '@/lib/trading-auth/client'
-import { useProxyWalletPolling } from '@/providers/_hooks/useProxyWalletPolling'
 import TradingOnboardingDialogs from '@/providers/TradingOnboardingDialogs'
 import { useUser } from '@/stores/useUser'
 

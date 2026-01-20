@@ -1,4 +1,4 @@
-import EventsGridSkeleton from '@/components/EventsGridSkeleton'
+import EventsGridSkeleton from '@/app/(platform)/(home)/_components/EventsGridSkeleton'
 import { Skeleton } from '@/components/ui/skeleton'
 
 export default function Loading() {
