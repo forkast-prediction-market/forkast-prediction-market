@@ -4,7 +4,7 @@ import { defaultLocale, isLocaleSupported } from '@/i18n/locales'
 
 async function resolveLocaleFromCookie() {
   const store = await cookies()
-  const locale = store.get('NEXT_LOCALE')?.value || 'en'
+  const locale = store.get('NEXT_LOCALE')?.value
   return isLocaleSupported(locale) ? locale : null
 }
 

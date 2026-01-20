@@ -55,6 +55,7 @@ export function useClientLocation() {
       setLocation(readLocation())
     }
 
+    handleChange()
     window.addEventListener('app:locationchange', handleChange)
     return () => {
       window.removeEventListener('app:locationchange', handleChange)
