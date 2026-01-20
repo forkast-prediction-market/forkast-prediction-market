@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from 'react'
 import { Suspense } from 'react'
+import AffiliateQueryHandler from '@/components/AffiliateQueryHandler'
 import IntlProvider from '@/components/IntlProvider'
 import TestModeBanner from '@/components/TestModeBanner'
 import { defaultLocale } from '@/i18n/locales'
@@ -36,6 +37,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body className="flex min-h-screen flex-col font-sans antialiased">
         <Suspense fallback={null}>
           <IntlProvider>
+            <AffiliateQueryHandler />
             {IS_TEST_MODE && <TestModeBanner />}
             {children}
           </IntlProvider>

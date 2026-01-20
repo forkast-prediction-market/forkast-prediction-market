@@ -10,7 +10,7 @@ import type {
   SeriesConfig,
 } from '@/types/PredictionChartTypes'
 import dynamic from 'next/dynamic'
-import { memo, useEffect, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useMarketChannelSubscription } from '@/app/(platform)/event/[slug]/_components/EventMarketChannelProvider'
 import {
   useEventOutcomeChanceChanges,
@@ -322,33 +322,114 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     }
   }, [currentMarketQuotes, marketQuotesByMarket, updateMarketQuotes])
 
-  const topMarketIds = useMemo(
-    () => getTopMarketIds(marketSnapshot, getMaxSeriesCount()),
-    [marketSnapshot],
+  const maxSeriesCount = getMaxSeriesCount()
+  const allMarketIds = useMemo(
+    () => event.markets
+      .map(market => market.condition_id)
+      .filter((conditionId): conditionId is string => Boolean(conditionId)),
+    [event.markets],
   )
+  const topMarketIds = useMemo(
+    () => getTopMarketIds(marketSnapshot, maxSeriesCount),
+    [marketSnapshot, maxSeriesCount],
+  )
+  const fallbackMarketIds = useMemo(
+    () => allMarketIds.slice(0, maxSeriesCount),
+    [allMarketIds, maxSeriesCount],
+  )
+  const defaultMarketIds = useMemo(
+    () => (topMarketIds.length > 0 ? topMarketIds : fallbackMarketIds),
+    [topMarketIds, fallbackMarketIds],
+  )
+  const [selectedMarketIds, setSelectedMarketIds] = useState<string[]>(() => defaultMarketIds)
+  const [hasCustomSelection, setHasCustomSelection] = useState(false)
+
+  useEffect(() => {
+    if (isSingleMarket) {
+      return
+    }
+    setSelectedMarketIds(defaultMarketIds)
+    setHasCustomSelection(false)
+  }, [defaultMarketIds, isSingleMarket, event.id])
+
+  useEffect(() => {
+    if (isSingleMarket || hasCustomSelection) {
+      return
+    }
+    setSelectedMarketIds(defaultMarketIds)
+  }, [defaultMarketIds, hasCustomSelection, isSingleMarket])
+
+  useEffect(() => {
+    if (isSingleMarket) {
+      return
+    }
+    setSelectedMarketIds((prev) => {
+      const filtered = prev.filter(id => allMarketIds.includes(id))
+      if (filtered.length > 0) {
+        return filtered
+      }
+      return defaultMarketIds
+    })
+  }, [allMarketIds, defaultMarketIds, isSingleMarket])
+
+  const handleToggleMarket = useCallback((marketId: string) => {
+    if (isSingleMarket) {
+      return
+    }
+
+    setHasCustomSelection(true)
+    setSelectedMarketIds((prev) => {
+      const isSelected = prev.includes(marketId)
+      if (isSelected) {
+        const next = prev.filter(id => id !== marketId)
+        return next.length > 0 ? next : prev
+      }
+      if (prev.length >= maxSeriesCount) {
+        return prev
+      }
+      const nextSet = new Set(prev)
+      nextSet.add(marketId)
+      return allMarketIds.filter(id => nextSet.has(id)).slice(0, maxSeriesCount)
+    })
+  }, [allMarketIds, isSingleMarket, maxSeriesCount])
 
   const chartSeries = useMemo(
     () => buildChartSeries(event, topMarketIds),
     [event, topMarketIds],
   )
-
-  const fallbackMarketIds = useMemo(
-    () => event.markets
-      .map(market => market.condition_id)
-      .filter((conditionId): conditionId is string => Boolean(conditionId))
-      .slice(0, getMaxSeriesCount()),
-    [event.markets],
-  )
-
   const fallbackChartSeries = useMemo(
     () => buildChartSeries(event, fallbackMarketIds),
     [event, fallbackMarketIds],
   )
-
-  const baseSeries = useMemo(
-    () => (chartSeries.length > 0 ? chartSeries : fallbackChartSeries),
-    [chartSeries, fallbackChartSeries],
+  const allSeries = useMemo(
+    () => buildChartSeries(event, allMarketIds),
+    [event, allMarketIds],
   )
+  const selectedSeries = useMemo(
+    () => buildChartSeries(event, selectedMarketIds),
+    [event, selectedMarketIds],
+  )
+  const selectedColors = useMemo(
+    () => Object.fromEntries(selectedSeries.map(series => [series.key, series.color])),
+    [selectedSeries],
+  )
+  const marketOptions = useMemo(
+    () => allSeries.map(series => ({
+      ...series,
+      color: selectedColors[series.key] ?? '#374151',
+    })),
+    [allSeries, selectedColors],
+  )
+
+  const baseSeries = useMemo(() => {
+    if (!isSingleMarket) {
+      if (selectedSeries.length > 0) {
+        return selectedSeries
+      }
+      return chartSeries.length > 0 ? chartSeries : fallbackChartSeries
+    }
+    return chartSeries.length > 0 ? chartSeries : fallbackChartSeries
+  }, [chartSeries, fallbackChartSeries, isSingleMarket, selectedSeries])
 
   const primaryMarket = useMemo(
     () => {
@@ -715,7 +796,7 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
           </div>
         )}
         controls={(
-          <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
             <EventMetaInformation event={event} />
             {hasChartData
               ? (
@@ -729,6 +810,11 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
                       setActiveOutcomeIndex(oppositeOutcomeIndex)
                       setCursorSnapshot(null)
                     }}
+                    showMarketSelector={!isSingleMarket}
+                    marketOptions={marketOptions}
+                    selectedMarketIds={selectedMarketIds}
+                    maxSeriesCount={maxSeriesCount}
+                    onToggleMarket={handleToggleMarket}
                     settings={chartSettings}
                     onSettingsChange={setChartSettings}
                     onExportData={() => setExportDialogOpen(true)}

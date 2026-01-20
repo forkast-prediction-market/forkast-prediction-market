@@ -1,6 +1,7 @@
 import type { QueryClient } from '@tanstack/react-query'
 import type { OrderValidationError } from '@/lib/orders/validation'
 import type { OrderSide } from '@/types'
+import { WalletIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import EventTradeToast from '@/app/(platform)/event/[slug]/_components/EventTradeToast'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
@@ -157,7 +158,9 @@ export function handleOrderErrorFeedback(message: string, description?: string) 
 }
 
 export function notifyWalletApprovalPrompt() {
-  toast.info('Approve the transaction on your wallet.')
+  toast.info('Approve the transaction on your wallet.', {
+    icon: <WalletIcon className="size-5 text-primary" />,
+  })
 }
 
 export function handleOrderCancelledFeedback() {

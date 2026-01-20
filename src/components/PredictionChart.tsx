@@ -775,7 +775,7 @@ export function PredictionChart({
   const clipPadding = 2
 
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="flex w-full flex-col gap-3">
       <PredictionChartHeader
         shouldRenderLegend={shouldRenderLegend}
         legendContent={legendContent}

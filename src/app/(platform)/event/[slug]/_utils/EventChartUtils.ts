@@ -127,9 +127,15 @@ function isDefaultMarketLabel(label?: string | null) {
   return /^(?:outcome|token)\s*\d+$/i.test(label.trim())
 }
 
-function deriveSeriesName(market: Event['markets'][number]) {
-  const outcomeLabel = market.outcomes?.[0]?.outcome_text?.trim()
+export function getMarketSeriesLabel(market: Event['markets'][number]) {
+  const metadata = (market.metadata ?? {}) as Record<string, unknown>
+  const metadataShortTitle = typeof metadata.short_title === 'string' ? metadata.short_title.trim() : ''
   const shortTitle = market.short_title?.trim()
+  const outcomeLabel = market.outcomes?.[0]?.outcome_text?.trim()
+
+  if (metadataShortTitle && !isDefaultMarketLabel(metadataShortTitle)) {
+    return metadataShortTitle
+  }
 
   if (shortTitle && !isDefaultMarketLabel(shortTitle)) {
     return shortTitle
@@ -165,7 +171,7 @@ export function buildChartSeries(event: Event, marketIds: string[]) {
       }
       return {
         key: conditionId,
-        name: deriveSeriesName(market),
+        name: getMarketSeriesLabel(market),
         color: CHART_COLORS[index % CHART_COLORS.length],
       }
     })
