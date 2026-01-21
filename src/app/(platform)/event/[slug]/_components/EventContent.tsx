@@ -249,7 +249,18 @@ export default function EventContent({ event, user, marketContextEnabled, market
           </div>
           {event.total_markets_count === 1 && (
             <>
-              { currentUser && <EventMarketPositions market={event.markets[0]} /> }
+              {currentUser && (
+                <EventMarketPositions
+                  market={event.markets[0]}
+                  isNegRiskEnabled={Boolean(event.enable_neg_risk || event.neg_risk)}
+                  isNegRiskAugmented={Boolean(event.neg_risk_augmented)}
+                  eventOutcomes={event.markets.map(market => ({
+                    conditionId: market.condition_id,
+                    label: market.short_title || market.title,
+                  }))}
+                  negRiskMarketId={event.neg_risk_market_id}
+                />
+              )}
               <EventSingleMarketOrderBook market={event.markets[0]} eventSlug={event.slug} />
               { currentUser && <EventMarketOpenOrders market={event.markets[0]} eventSlug={event.slug} />}
               { currentUser && <EventMarketHistory market={event.markets[0]} /> }

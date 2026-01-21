@@ -14,6 +14,7 @@ import {
   CTF_EXCHANGE_ADDRESS,
   NEG_RISK_CTF_EXCHANGE_ADDRESS,
   SAFE_MULTISEND_ADDRESS,
+  UMA_NEG_RISK_ADAPTER_ADDRESS,
   ZERO_COLLECTION_ID,
 } from '@/lib/contracts'
 
@@ -111,6 +112,20 @@ const exchangeReferralAbi = [
   },
 ] as const
 
+const negRiskAdapterAbi = [
+  {
+    name: 'convertPositions',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'marketId', type: 'bytes32' },
+      { name: 'indexSet', type: 'uint256' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [],
+  },
+] as const
+
 interface SafeTxMessage {
   to: `0x${string}`
   value: bigint
@@ -179,7 +194,7 @@ export function buildApproveTokenTransactions(options?: ApproveOptions): SafeTra
   const uniqueSpenders = Array.from(new Set(spenderList)) as `0x${string}`[]
   const operators = options?.operators?.length
     ? options.operators
-    : [CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS]
+    : [CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS, UMA_NEG_RISK_ADAPTER_ADDRESS]
 
   const transactions: SafeTransaction[] = uniqueSpenders.map(spender => ({
     to: COLLATERAL_TOKEN_ADDRESS as `0x${string}`,
@@ -276,6 +291,13 @@ interface ConditionalRedeemArgs {
   indexSets: Array<string | number | bigint>
 }
 
+interface ConvertPositionsArgs {
+  contract?: `0x${string}`
+  marketId: `0x${string}`
+  indexSet: string | number | bigint
+  amount: string | number | bigint
+}
+
 function normalizePartition(values: Array<string | number | bigint>): bigint[] {
   return values.map(value => BigInt(value))
 }
@@ -316,6 +338,25 @@ export function buildMergePositionTransaction(args: ConditionalPositionArgs): Sa
 
   return {
     to: (args.contract ?? CONDITIONAL_TOKENS_CONTRACT) as `0x${string}`,
+    value: '0',
+    data,
+    operation: SafeOperationType.Call,
+  }
+}
+
+export function buildConvertPositionsTransaction(args: ConvertPositionsArgs): SafeTransaction {
+  const data = encodeFunctionData({
+    abi: negRiskAdapterAbi,
+    functionName: 'convertPositions',
+    args: [
+      args.marketId,
+      BigInt(args.indexSet),
+      BigInt(args.amount),
+    ],
+  })
+
+  return {
+    to: (args.contract ?? UMA_NEG_RISK_ADAPTER_ADDRESS) as `0x${string}`,
     value: '0',
     data,
     operation: SafeOperationType.Call,

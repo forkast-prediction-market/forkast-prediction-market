@@ -66,6 +66,8 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   const inputRef = useOrder(state => state.inputRef)
   const user = useUser()
   const isSingleMarket = useIsSingleMarket()
+  const isNegRiskEnabled = Boolean(event.enable_neg_risk || event.neg_risk)
+  const isNegRiskAugmented = Boolean(event.neg_risk_augmented)
   const { rows: marketRows, hasChanceData } = useEventMarketRows(event)
   const {
     expandedMarketId,
@@ -206,6 +208,62 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
       return acc
     }, {})
   }, [event.markets, userPositions])
+
+  const convertOptions = useMemo(() => {
+    if (!isNegRiskEnabled || !userPositions?.length) {
+      return []
+    }
+
+    const marketsByConditionId = new Map(
+      event.markets.map(market => [market.condition_id, market]),
+    )
+
+    return userPositions.reduce<Array<{ id: string, label: string, shares: number }>>(
+      (options, position, index) => {
+        const conditionId = position.market?.condition_id
+        if (!conditionId) {
+          return options
+        }
+        const market = marketsByConditionId.get(conditionId)
+        if (!market) {
+          return options
+        }
+
+        const normalizedOutcome = position.outcome_text?.toLowerCase()
+        const explicitOutcomeIndex = typeof position.outcome_index === 'number' ? position.outcome_index : undefined
+        const resolvedOutcomeIndex = explicitOutcomeIndex != null
+          ? explicitOutcomeIndex
+          : normalizedOutcome === 'no'
+            ? OUTCOME_INDEX.NO
+            : OUTCOME_INDEX.YES
+        if (resolvedOutcomeIndex !== OUTCOME_INDEX.NO) {
+          return options
+        }
+
+        const quantity = toNumber(position.size)
+          ?? (typeof position.total_shares === 'number' ? position.total_shares : 0)
+        if (!(quantity > 0)) {
+          return options
+        }
+
+        options.push({
+          id: `${conditionId}-no-${index}`,
+          label: market.short_title || market.title,
+          conditionId,
+          shares: quantity,
+        })
+        return options
+      },
+      [],
+    )
+  }, [event.markets, isNegRiskEnabled, userPositions])
+
+  const eventOutcomes = useMemo(() => {
+    return event.markets.map(market => ({
+      conditionId: market.condition_id,
+      label: market.short_title || market.title,
+    }))
+  }, [event.markets])
 
   const handleCashOut = useCallback(async (market: Event['markets'][number], tag: MarketPositionTag) => {
     const outcome = market.outcomes.find(item => item.outcome_index === tag.outcomeIndex)
@@ -362,6 +420,10 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                     market={market}
                     event={event}
                     isMobile={isMobile}
+                    isNegRiskEnabled={isNegRiskEnabled}
+                    isNegRiskAugmented={isNegRiskAugmented}
+                    convertOptions={convertOptions}
+                    eventOutcomes={eventOutcomes}
                     activeOutcomeForMarket={activeOutcomeForMarket}
                     tabController={{
                       selected: getSelectedDetailTab(market.condition_id),
@@ -409,6 +471,10 @@ interface MarketDetailTabsProps {
   market: Event['markets'][number]
   event: Event
   isMobile: boolean
+  isNegRiskEnabled: boolean
+  isNegRiskAugmented: boolean
+  convertOptions: Array<{ id: string, label: string, shares: number, conditionId: string }>
+  eventOutcomes: Array<{ conditionId: string, label: string }>
   activeOutcomeForMarket: Event['markets'][number]['outcomes'][number] | undefined
   tabController: {
     selected: MarketDetailTab | undefined
@@ -427,6 +493,10 @@ function MarketDetailTabs({
   market,
   event,
   isMobile,
+  isNegRiskEnabled,
+  isNegRiskAugmented,
+  convertOptions,
+  eventOutcomes,
   activeOutcomeForMarket,
   tabController,
   orderBookData,
@@ -585,7 +655,16 @@ function MarketDetailTabs({
           />
         )}
 
-        {selectedTab === 'positions' && <EventMarketPositions market={market} />}
+        {selectedTab === 'positions' && (
+          <EventMarketPositions
+            market={market}
+            isNegRiskEnabled={isNegRiskEnabled}
+            isNegRiskAugmented={isNegRiskAugmented}
+            convertOptions={convertOptions}
+            eventOutcomes={eventOutcomes}
+            negRiskMarketId={event.neg_risk_market_id}
+          />
+        )}
 
         {selectedTab === 'openOrders' && <EventMarketOpenOrders market={market} eventSlug={event.slug} />}
 

@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { AlertCircleIcon, ShareIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { PositionShareDialog } from '@/app/(platform)/_components/PositionShareDialog'
+import EventConvertPositionsDialog from '@/app/(platform)/event/[slug]/_components/EventConvertPositionsDialog'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -27,6 +28,11 @@ import { useUser } from '@/stores/useUser'
 
 interface EventMarketPositionsProps {
   market: Event['markets'][number]
+  isNegRiskEnabled?: boolean
+  convertOptions?: Array<{ id: string, label: string, shares: number, conditionId: string }>
+  eventOutcomes?: Array<{ conditionId: string, label: string }>
+  negRiskMarketId?: string
+  isNegRiskAugmented?: boolean
 }
 
 function toNumber(value: unknown) {
@@ -65,10 +71,12 @@ function MarketPositionRow({
   position,
   onSell,
   onShare,
+  onConvert,
 }: {
   position: UserPosition
   onSell: (position: UserPosition) => void
   onShare: (position: UserPosition) => void
+  onConvert?: (position: UserPosition) => void
 }) {
   const outcomeText = position.outcome_text
     || (position.outcome_index === 1 ? 'No' : 'Yes')
@@ -80,8 +88,10 @@ function MarketPositionRow({
       ? OUTCOME_INDEX.NO
       : OUTCOME_INDEX.YES
   const isYesOutcome = resolvedOutcomeIndex === OUTCOME_INDEX.YES
+  const isNoOutcome = resolvedOutcomeIndex === OUTCOME_INDEX.NO
   const quantity = toNumber(position.size)
     ?? (typeof position.total_shares === 'number' ? position.total_shares : 0)
+  const canConvert = Boolean(onConvert) && isNoOutcome && quantity > 0
   const formattedQuantity = quantity > 0
     ? formatSharesLabel(quantity)
     : '—'
@@ -228,8 +238,19 @@ function MarketPositionRow({
           </TooltipContent>
         </Tooltip>
       </td>
-      <td className="w-28 p-2 pl-6 text-right sm:px-3 sm:pl-6">
+      <td className="w-40 p-2 pl-6 text-right sm:px-3 sm:pl-6">
         <div className="flex items-center justify-end gap-2 sm:flex-nowrap">
+          {canConvert && (
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              aria-label="Convert position"
+              onClick={() => onConvert?.(position)}
+            >
+              Convert
+            </Button>
+          )}
           <Button
             type="button"
             variant="outline"
@@ -259,7 +280,14 @@ function MarketPositionRow({
   )
 }
 
-export default function EventMarketPositions({ market }: EventMarketPositionsProps) {
+export default function EventMarketPositions({
+  market,
+  isNegRiskEnabled,
+  convertOptions: eventConvertOptions,
+  eventOutcomes,
+  negRiskMarketId,
+  isNegRiskAugmented,
+}: EventMarketPositionsProps) {
   const user = useUser()
   const userAddress = getUserPublicAddress(user)
   const isMobile = useIsMobile()
@@ -300,6 +328,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
   const hasInitialError = status === 'error' && Boolean(user?.proxy_wallet_address)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const [sharePosition, setSharePosition] = useState<UserPosition | null>(null)
+  const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false)
 
   const aggregatedShares = useMemo(() => {
     const map: Record<string, Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>> = {}
@@ -335,6 +364,51 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
 
     return map
   }, [market.condition_id, positions])
+
+  const resolvedConvertOptions = useMemo(() => {
+    if (!isNegRiskEnabled) {
+      return []
+    }
+    if (eventConvertOptions !== undefined) {
+      return eventConvertOptions
+    }
+
+    const label = market.short_title || market.title
+
+    return positions
+      .map((positionItem, index) => {
+        const normalizedOutcome = positionItem.outcome_text?.toLowerCase()
+        const explicitOutcomeIndex = typeof positionItem.outcome_index === 'number'
+          ? positionItem.outcome_index
+          : undefined
+        const resolvedOutcomeIndex = explicitOutcomeIndex != null
+          ? explicitOutcomeIndex
+          : normalizedOutcome === 'no'
+            ? OUTCOME_INDEX.NO
+            : OUTCOME_INDEX.YES
+        const quantity = toNumber(positionItem.size)
+          ?? (typeof positionItem.total_shares === 'number' ? positionItem.total_shares : 0)
+
+        if (resolvedOutcomeIndex !== OUTCOME_INDEX.NO || quantity <= 0) {
+          return null
+        }
+
+        return {
+          id: `${explicitOutcomeIndex ?? positionItem.outcome_text ?? index}`,
+          conditionId: market.condition_id,
+          label,
+          shares: quantity,
+        }
+      })
+      .filter((option): option is { id: string, label: string, shares: number, conditionId: string } => Boolean(option))
+  }, [eventConvertOptions, isNegRiskEnabled, market.condition_id, market.short_title, market.title, positions])
+
+  const resolvedEventOutcomes = useMemo(() => {
+    if (eventOutcomes && eventOutcomes.length > 0) {
+      return eventOutcomes
+    }
+    return [{ conditionId: market.condition_id, label: market.short_title || market.title }]
+  }, [eventOutcomes, market.condition_id, market.short_title, market.title])
 
   useEffect(() => {
     setOrderUserShares(aggregatedShares, { replace: true })
@@ -399,6 +473,13 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
     setIsShareDialogOpen(true)
   }, [])
 
+  const handleConvertClick = useCallback(() => {
+    if (resolvedConvertOptions.length === 0) {
+      return
+    }
+    setIsConvertDialogOpen(true)
+  }, [resolvedConvertOptions.length])
+
   if (!userAddress) {
     return <></>
   }
@@ -440,7 +521,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
               <th className={cn(tableHeaderClass, 'text-center')}>Avg</th>
               <th className={cn(tableHeaderClass, 'text-left')}>Value</th>
               <th className={cn(tableHeaderClass, 'text-left')}>Return</th>
-              <th className={cn(tableHeaderClass, 'w-28 text-right')}>
+              <th className={cn(tableHeaderClass, 'w-40 text-right')}>
                 <span className="sr-only">Actions</span>
               </th>
             </tr>
@@ -452,6 +533,7 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
                 position={position}
                 onSell={handleSell}
                 onShare={handleShareClick}
+                onConvert={isNegRiskEnabled && resolvedConvertOptions.length > 0 ? handleConvertClick : undefined}
               />
             ))}
           </tbody>
@@ -461,6 +543,14 @@ export default function EventMarketPositions({ market }: EventMarketPositionsPro
         open={isShareDialogOpen}
         onOpenChange={handleShareOpenChange}
         payload={shareCardPayload}
+      />
+      <EventConvertPositionsDialog
+        open={isConvertDialogOpen}
+        onOpenChange={setIsConvertDialogOpen}
+        options={resolvedConvertOptions}
+        outcomes={resolvedEventOutcomes}
+        negRiskMarketId={negRiskMarketId}
+        isNegRiskAugmented={isNegRiskAugmented}
       />
     </>
   )
