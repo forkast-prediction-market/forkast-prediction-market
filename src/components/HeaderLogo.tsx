@@ -1,4 +1,4 @@
-import Link from 'next/link'
+import { Link } from '@/i18n/routing'
 import { svgLogo } from '@/lib/utils'
 
 export default async function HeaderLogo() {

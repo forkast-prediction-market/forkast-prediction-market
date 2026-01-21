@@ -1,7 +1,6 @@
 'use client'
 
 import Image from 'next/image'
-import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
 interface TestModeBannerProps {
@@ -47,7 +46,7 @@ export default function TestModeBanner({
           <p className="text-sm leading-relaxed">
             {message}
           </p>
-          <Link
+          <a
             href={discordUrl}
             target="_blank"
             rel="noreferrer"
@@ -66,7 +65,7 @@ export default function TestModeBanner({
               aria-hidden="true"
             />
             Open Discord
-          </Link>
+          </a>
         </div>
         <button
           type="button"

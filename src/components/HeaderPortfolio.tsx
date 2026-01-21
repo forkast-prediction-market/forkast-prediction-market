@@ -1,8 +1,8 @@
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBalance } from '@/hooks/useBalance'
 import { usePortfolioValue } from '@/hooks/usePortfolioValue'
+import { Link } from '@/i18n/routing'
 
 export default function HeaderPortfolio() {
   const { balance, isLoadingBalance } = useBalance()

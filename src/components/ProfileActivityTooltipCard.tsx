@@ -1,7 +1,7 @@
 import type { ProfileLinkStats } from '@/lib/data-api/profile-link-stats'
 import Image from 'next/image'
-import Link from 'next/link'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Link } from '@/i18n/routing'
 import { cn } from '@/lib/utils'
 
 interface ProfileActivityTooltipCardProps {

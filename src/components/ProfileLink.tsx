@@ -2,11 +2,11 @@
 
 import type { ReactNode } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import ProfileActivityTooltipCard from '@/components/ProfileActivityTooltipCard'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Link } from '@/i18n/routing'
 import { fetchProfileLinkStats } from '@/lib/data-api/profile-link-stats'
 import { formatTimeAgo, truncateAddress } from '@/lib/formatters'
 import { cn } from '@/lib/utils'

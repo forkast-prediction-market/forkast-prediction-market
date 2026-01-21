@@ -2,7 +2,7 @@ import type { NextRequest } from 'next/server'
 import createMiddleware from 'next-intl/middleware'
 import { headers } from 'next/headers'
 import { NextResponse } from 'next/server'
-import { defaultLocale, locales } from '@/i18n/locales'
+import { defaultLocale, isLocaleSupported, locales } from '@/i18n/locales'
 import { auth } from '@/lib/auth'
 
 const intlMiddleware = createMiddleware({
@@ -12,8 +12,27 @@ const intlMiddleware = createMiddleware({
   localeDetection: false,
 })
 
+function resolveLocaleFromPathname(pathname: string) {
+  const [, candidate] = pathname.split('/')
+  return isLocaleSupported(candidate) ? candidate : null
+}
+
+function stripLocalePrefix(pathname: string, locale: string | null) {
+  if (!locale) {
+    return pathname
+  }
+
+  return pathname.replace(new RegExp(`^/${locale}(?=/|$)`), '')
+}
+
+function withLocalePrefix(pathname: string, locale: string | null) {
+  const prefix = locale && locale !== defaultLocale ? `/${locale}` : ''
+  return `${prefix}${pathname}`
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
+  const locale = resolveLocaleFromPathname(pathname)
 
   if (pathname === '/en' || pathname.startsWith('/en/')) {
     const url = request.nextUrl.clone()
@@ -22,8 +41,13 @@ export async function proxy(request: NextRequest) {
   }
 
   const intlResponse = intlMiddleware(request)
+  const normalizedPathname = stripLocalePrefix(pathname, locale)
 
-  if (pathname.startsWith('/settings') || pathname.startsWith('/portfolio') || pathname.startsWith('/admin')) {
+  if (
+    normalizedPathname.startsWith('/settings')
+    || normalizedPathname.startsWith('/portfolio')
+    || normalizedPathname.startsWith('/admin')
+  ) {
     const hasTwoFactorCookie = Boolean(
       request.cookies.get('__Secure-better-auth.siwe_2fa_pending')
       ?? request.cookies.get('better-auth.siwe_2fa_pending'),
@@ -34,13 +58,13 @@ export async function proxy(request: NextRequest) {
 
     if (!session) {
       if (hasTwoFactorCookie) {
-        return NextResponse.redirect(new URL('/2fa', request.url))
+        return NextResponse.redirect(new URL(withLocalePrefix('/2fa', locale), request.url))
       }
-      return NextResponse.redirect(new URL('/', request.url))
+      return NextResponse.redirect(new URL(withLocalePrefix('/', locale), request.url))
     }
 
-    if (pathname.startsWith('/admin') && !session.user?.is_admin) {
-      return NextResponse.redirect(new URL('/', request.url))
+    if (normalizedPathname.startsWith('/admin') && !session.user?.is_admin) {
+      return NextResponse.redirect(new URL(withLocalePrefix('/', locale), request.url))
     }
   }
 
