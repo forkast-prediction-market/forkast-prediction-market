@@ -1,7 +1,7 @@
 'use cache'
 
-import AdminAffiliateOverview from '@/app/admin/_components/AdminAffiliateOverview'
-import AdminAffiliateSettingsForm from '@/app/admin/_components/AdminAffiliateSettingsForm'
+import AdminAffiliateOverview from '@/app/admin/affiliate/_components/AdminAffiliateOverview'
+import AdminAffiliateSettingsForm from '@/app/admin/affiliate/_components/AdminAffiliateSettingsForm'
 import { baseUnitsToNumber, fetchFeeReceiverTotals, sumFeeTotalsByToken } from '@/lib/data-api/fees'
 import { AffiliateRepository } from '@/lib/db/queries/affiliate'
 import { SettingsRepository } from '@/lib/db/queries/settings'

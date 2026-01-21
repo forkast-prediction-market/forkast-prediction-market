@@ -1,4 +1,4 @@
-import AdminUsersTable from '@/app/admin/_components/AdminUsersTable'
+import AdminUsersTable from '@/app/admin/(users)/_components/AdminUsersTable'
 
 export default async function AdminUsersPage() {
   return (

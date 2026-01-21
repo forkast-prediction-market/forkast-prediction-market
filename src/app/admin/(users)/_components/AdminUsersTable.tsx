@@ -1,8 +1,8 @@
 'use client'
 
+import { DataTable } from '@/app/admin/_components/DataTable'
 import { useAdminUsersTable } from '@/app/admin/_hooks/useAdminUsers'
 import { columns } from './columns'
-import { DataTable } from './DataTable'
 
 export default function AdminUsersTable() {
   const {

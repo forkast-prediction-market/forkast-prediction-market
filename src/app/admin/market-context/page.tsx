@@ -1,6 +1,6 @@
 'use cache'
 
-import AdminMarketContextSettingsForm from '@/app/admin/_components/AdminMarketContextSettingsForm'
+import AdminMarketContextSettingsForm from '@/app/admin/market-context/_components/AdminMarketContextSettingsForm'
 import { parseMarketContextSettings } from '@/lib/ai/market-context-config'
 import { MARKET_CONTEXT_VARIABLES } from '@/lib/ai/market-context-template'
 import { fetchOpenRouterModels } from '@/lib/ai/openrouter'
