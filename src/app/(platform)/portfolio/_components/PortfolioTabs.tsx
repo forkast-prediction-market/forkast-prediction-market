@@ -11,7 +11,7 @@ type TabType = 'positions' | 'openOrders' | 'activity'
 const baseTabs = [
   { id: 'positions' as const, label: 'Positions' },
   { id: 'openOrders' as const, label: 'Open Orders' },
-  { id: 'activity' as const, label: 'Activity' },
+  { id: 'activity' as const, label: 'History' },
 ]
 
 interface PortfolioTabsProps {

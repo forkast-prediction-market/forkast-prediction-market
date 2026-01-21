@@ -3,6 +3,7 @@ import type { ActivityOrder } from '@/types'
 import {
   ArrowDownToLineIcon,
   ArrowUpToLineIcon,
+  CircleCheckIcon,
   CircleDollarSignIcon,
   CircleMinusIcon,
   CirclePlusIcon,
@@ -75,6 +76,9 @@ export function resolveVariant(activity: ActivityOrder): ActivityVariant {
   if (type === 'redeem' || type === 'redeemed' || type === 'redemption') {
     return 'redeem'
   }
+  if (type === 'conversion' || type === 'convert' || type === 'converted') {
+    return 'convert'
+  }
   if (type === 'deposit' || type === 'deposit_funds') {
     return 'deposit'
   }
@@ -104,6 +108,8 @@ export function activityIcon(variant: ActivityVariant) {
       return { Icon: MergeIcon, label: 'Merged', className: 'rotate-90' }
     case 'redeem':
       return { Icon: CircleDollarSignIcon, label: 'Redeemed', className: '' }
+    case 'convert':
+      return { Icon: CircleCheckIcon, label: 'Convert', className: 'text-yes' }
     case 'deposit':
       return { Icon: ArrowDownToLineIcon, label: 'Deposited', className: '' }
     case 'withdraw':

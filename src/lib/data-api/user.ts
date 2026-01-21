@@ -58,6 +58,12 @@ export interface DataApiPosition {
   orderCount?: number
 }
 
+export interface DataApiOtherBalance {
+  id?: string
+  user?: string
+  size?: number
+}
+
 const DATA_API_URL = process.env.DATA_URL!
 
 function assertDataApiUrl() {
@@ -307,6 +313,46 @@ export async function fetchUserActivityData({
   }
 
   return result as DataApiActivity[]
+}
+
+export async function fetchUserOtherBalance({
+  eventSlug,
+  userAddress,
+  signal,
+}: {
+  eventSlug: string
+  userAddress: string
+  signal?: AbortSignal
+}): Promise<DataApiOtherBalance[]> {
+  assertDataApiUrl()
+
+  const slug = eventSlug.trim()
+  if (!slug) {
+    return []
+  }
+
+  const normalizedUserAddress = userAddress.toLowerCase()
+  const params = new URLSearchParams({
+    slug,
+    user: normalizedUserAddress,
+  })
+
+  const response = await fetch(`${DATA_API_URL}/other?${params.toString()}`, { signal })
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => null)
+    const errorMessage = errorBody?.error || 'Server error occurred. Please try again later.'
+    throw new Error(errorMessage)
+  }
+
+  const result = await response.json()
+  if (!Array.isArray(result)) {
+    throw new TypeError('Unexpected response from data service.')
+  }
+
+  return result.map((entry: DataApiOtherBalance) => ({
+    ...entry,
+    size: normalizeShares(entry.size),
+  }))
 }
 
 export function mapDataApiPositionToUserPosition(

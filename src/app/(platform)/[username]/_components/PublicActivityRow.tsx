@@ -27,7 +27,7 @@ export default function PublicActivityRow({ activity }: PublicActivityRowProps) 
   const valueNumber = Number(activity.total_value) / MICRO_UNIT
   const hasValue = Number.isFinite(valueNumber)
   const isCreditVariant = variant === 'merge' || variant === 'redeem' || variant === 'deposit' || variant === 'sell'
-  const isDebitVariant = variant === 'withdraw' || variant === 'split' || variant === 'buy'
+  const isDebitVariant = variant === 'withdraw' || variant === 'split' || variant === 'buy' || variant === 'convert'
   const isPositive = isCreditVariant || (!isDebitVariant && hasValue && valueNumber > 0)
   const isNegative = isDebitVariant || (!isCreditVariant && hasValue && valueNumber < 0)
   const valueDisplay = hasValue ? formatCurrency(Math.abs(valueNumber)) : '—'
