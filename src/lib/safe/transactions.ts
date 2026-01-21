@@ -124,6 +124,16 @@ const negRiskAdapterAbi = [
     ],
     outputs: [],
   },
+  {
+    name: 'splitPosition',
+    type: 'function',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'conditionId', type: 'bytes32' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [],
+  },
 ] as const
 
 interface SafeTxMessage {
@@ -189,7 +199,7 @@ function parseAmountToBaseUnits(amount: string | number | bigint, decimals: numb
 export function buildApproveTokenTransactions(options?: ApproveOptions): SafeTransaction[] {
   const spenderList = options?.spenders?.length
     ? options.spenders
-    : [CONDITIONAL_TOKENS_CONTRACT]
+    : [CONDITIONAL_TOKENS_CONTRACT, UMA_NEG_RISK_ADAPTER_ADDRESS]
 
   const uniqueSpenders = Array.from(new Set(spenderList)) as `0x${string}`[]
   const operators = options?.operators?.length
@@ -300,6 +310,30 @@ interface ConvertPositionsArgs {
 
 function normalizePartition(values: Array<string | number | bigint>): bigint[] {
   return values.map(value => BigInt(value))
+}
+
+interface NegRiskSplitArgs {
+  conditionId: `0x${string}`
+  amount: string | number | bigint
+  contract?: `0x${string}`
+}
+
+export function buildNegRiskSplitPositionTransaction(args: NegRiskSplitArgs): SafeTransaction {
+  const data = encodeFunctionData({
+    abi: negRiskAdapterAbi,
+    functionName: 'splitPosition',
+    args: [
+      args.conditionId,
+      BigInt(args.amount),
+    ],
+  })
+
+  return {
+    to: (args.contract ?? UMA_NEG_RISK_ADAPTER_ADDRESS) as `0x${string}`,
+    value: '0',
+    data,
+    operation: SafeOperationType.Call,
+  }
 }
 
 export function buildSplitPositionTransaction(args: ConditionalPositionArgs): SafeTransaction {

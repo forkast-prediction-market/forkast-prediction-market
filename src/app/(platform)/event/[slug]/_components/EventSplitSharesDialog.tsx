@@ -30,6 +30,7 @@ import { ZERO_COLLECTION_ID } from '@/lib/contracts'
 import { formatAmountInputValue, toMicro } from '@/lib/formatters'
 import {
   aggregateSafeTransactions,
+  buildNegRiskSplitPositionTransaction,
   buildSplitPositionTransaction,
   getSafeTxTypedData,
   packSafeSignature,
@@ -43,6 +44,7 @@ interface EventSplitSharesDialogProps {
   availableUsdc: number
   conditionId?: string
   marketTitle?: string
+  isNegRiskMarket?: boolean
   onOpenChange: (open: boolean) => void
 }
 
@@ -51,6 +53,7 @@ export default function EventSplitSharesDialog({
   availableUsdc,
   conditionId,
   marketTitle,
+  isNegRiskMarket = false,
   onOpenChange,
 }: EventSplitSharesDialogProps) {
   const queryClient = useQueryClient()
@@ -158,12 +161,17 @@ export default function EventSplitSharesDialog({
       }
 
       const transactions = [
-        buildSplitPositionTransaction({
-          conditionId: conditionId as `0x${string}`,
-          partition: [...DEFAULT_CONDITION_PARTITION],
-          amount: toMicro(numericAmount),
-          parentCollectionId: ZERO_COLLECTION_ID,
-        }),
+        isNegRiskMarket
+          ? buildNegRiskSplitPositionTransaction({
+              conditionId: conditionId as `0x${string}`,
+              amount: toMicro(numericAmount),
+            })
+          : buildSplitPositionTransaction({
+              conditionId: conditionId as `0x${string}`,
+              partition: [...DEFAULT_CONDITION_PARTITION],
+              amount: toMicro(numericAmount),
+              parentCollectionId: ZERO_COLLECTION_ID,
+            }),
       ]
 
       const aggregated = aggregateSafeTransactions(transactions)

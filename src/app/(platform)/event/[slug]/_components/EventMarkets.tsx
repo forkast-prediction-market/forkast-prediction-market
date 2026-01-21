@@ -445,6 +445,9 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
               </div>
             )
           })}
+        {marketRows.length > 0 && (
+          <div className="mr-2 mb-4 ml-4 border-b border-border lg:mx-0" />
+        )}
       </div>
 
       {cashOutPayload && (

@@ -559,6 +559,8 @@ async function processMarketData(
   const negRiskOtherFlag = normalizeBooleanField(metadata.neg_risk_other)
   const negRiskMarketId = normalizeHexField(metadata.neg_risk_market_id)
   const negRiskRequestId = normalizeHexField(metadata.neg_risk_request_id)
+  const blockchainNegRiskMarketId = normalizeHexField(metadata.blockchain_neg_risk_market_id)
+  const resolvedNegRiskMarketId = blockchainNegRiskMarketId ?? negRiskMarketId
   const umaRequestTxHash = normalizeHexField(metadata.uma_request_tx_hash)
   const umaRequestLogIndex = normalizeIntegerField(metadata.uma_request_log_index)
   const umaOracleAddress = normalizeAddressField(metadata.uma_oracle_address)
@@ -617,7 +619,7 @@ async function processMarketData(
     resolver: resolverAddress ?? null,
     neg_risk: negRiskFlag,
     neg_risk_other: negRiskOtherFlag,
-    neg_risk_market_id: negRiskMarketId ?? null,
+    neg_risk_market_id: resolvedNegRiskMarketId ?? null,
     neg_risk_request_id: negRiskRequestId ?? null,
     metadata_version: metadataVersion ?? null,
     metadata_schema: metadataSchema ?? null,

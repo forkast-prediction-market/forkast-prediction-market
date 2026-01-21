@@ -27,7 +27,7 @@ import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { defaultNetwork } from '@/lib/appkit'
 import { DEFAULT_CONDITION_PARTITION, DEFAULT_ERROR_MESSAGE, MICRO_UNIT } from '@/lib/constants'
-import { ZERO_COLLECTION_ID } from '@/lib/contracts'
+import { UMA_NEG_RISK_ADAPTER_ADDRESS, ZERO_COLLECTION_ID } from '@/lib/contracts'
 import { formatAmountInputValue, toMicro } from '@/lib/formatters'
 import {
   aggregateSafeTransactions,
@@ -44,6 +44,7 @@ interface EventMergeSharesDialogProps {
   availableShares: number
   conditionId?: string
   marketTitle?: string
+  isNegRiskMarket?: boolean
   onOpenChange: (open: boolean) => void
 }
 
@@ -52,6 +53,7 @@ export default function EventMergeSharesDialog({
   availableShares,
   conditionId,
   marketTitle,
+  isNegRiskMarket = false,
   onOpenChange,
 }: EventMergeSharesDialogProps) {
   const queryClient = useQueryClient()
@@ -166,6 +168,7 @@ export default function EventMergeSharesDialog({
           partition: [...DEFAULT_CONDITION_PARTITION],
           amount: toMicro(numericAmount),
           parentCollectionId: ZERO_COLLECTION_ID,
+          contract: isNegRiskMarket ? UMA_NEG_RISK_ADAPTER_ADDRESS : undefined,
         }),
       ]
 

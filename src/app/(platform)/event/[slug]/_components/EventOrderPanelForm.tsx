@@ -106,6 +106,9 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     conditionId: state.market?.condition_id,
   })
   const isNegRiskEnabled = Boolean(event.enable_neg_risk)
+  const isNegRiskMarket = typeof state.market?.neg_risk === 'boolean'
+    ? state.market.neg_risk
+    : Boolean(event.enable_neg_risk || event.neg_risk)
   const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskEnabled), [isNegRiskEnabled])
   const endOfDayTimestamp = useMemo(() => {
     const now = new Date()
@@ -695,6 +698,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         type={state.type}
         availableMergeShares={availableMergeShares}
         availableSplitBalance={availableSplitBalance}
+        isNegRiskMarket={isNegRiskMarket}
         conditionId={state.market?.condition_id}
         marketTitle={state.market?.title || state.market?.short_title}
         onSideChange={state.setSide}

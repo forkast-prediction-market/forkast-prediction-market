@@ -16,7 +16,12 @@ import { useProxyWalletPolling } from '@/hooks/useProxyWalletPolling'
 import { defaultNetwork } from '@/lib/appkit'
 import { authClient } from '@/lib/auth-client'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
-import { CONDITIONAL_TOKENS_CONTRACT, CTF_EXCHANGE_ADDRESS, NEG_RISK_CTF_EXCHANGE_ADDRESS } from '@/lib/contracts'
+import {
+  CONDITIONAL_TOKENS_CONTRACT,
+  CTF_EXCHANGE_ADDRESS,
+  NEG_RISK_CTF_EXCHANGE_ADDRESS,
+  UMA_NEG_RISK_ADAPTER_ADDRESS,
+} from '@/lib/contracts'
 import { fetchReferralLocked } from '@/lib/exchange'
 import {
   getSafeProxyDomain,
@@ -399,10 +404,12 @@ export function TradingOnboardingProvider({ children }: { children: ReactNode })
           CONDITIONAL_TOKENS_CONTRACT as `0x${string}`,
           CTF_EXCHANGE_ADDRESS as `0x${string}`,
           NEG_RISK_CTF_EXCHANGE_ADDRESS as `0x${string}`,
+          UMA_NEG_RISK_ADAPTER_ADDRESS as `0x${string}`,
         ],
         operators: [
           CTF_EXCHANGE_ADDRESS as `0x${string}`,
           NEG_RISK_CTF_EXCHANGE_ADDRESS as `0x${string}`,
+          UMA_NEG_RISK_ADAPTER_ADDRESS as `0x${string}`,
         ],
       })
       transactions.push(

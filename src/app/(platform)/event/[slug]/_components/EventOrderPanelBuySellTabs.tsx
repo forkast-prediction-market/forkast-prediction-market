@@ -27,6 +27,7 @@ interface EventOrderPanelBuySellTabsProps {
   type: OrderType
   availableMergeShares: number
   availableSplitBalance: number
+  isNegRiskMarket?: boolean
   conditionId?: string
   marketTitle?: string | null
   onSideChange: (side: OrderSide) => void
@@ -40,6 +41,7 @@ export default function EventOrderPanelBuySellTabs({
   type,
   availableMergeShares,
   availableSplitBalance,
+  isNegRiskMarket = false,
   conditionId,
   marketTitle,
   onSideChange,
@@ -259,6 +261,7 @@ export default function EventOrderPanelBuySellTabs({
         availableShares={availableMergeShares}
         conditionId={conditionId}
         marketTitle={marketTitle ?? undefined}
+        isNegRiskMarket={isNegRiskMarket}
       />
       <EventSplitSharesDialog
         open={isSplitDialogOpen}
@@ -266,6 +269,7 @@ export default function EventOrderPanelBuySellTabs({
         availableUsdc={availableSplitBalance}
         conditionId={conditionId}
         marketTitle={marketTitle ?? undefined}
+        isNegRiskMarket={isNegRiskMarket}
       />
     </div>
   )

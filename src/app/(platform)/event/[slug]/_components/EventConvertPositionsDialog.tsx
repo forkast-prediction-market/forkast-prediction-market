@@ -458,8 +458,8 @@ export default function EventConvertPositionsDialog({
             </div>
           </div>
 
-          <div className="relative z-10 -mt-4 -mb-4 flex items-center justify-center text-muted-foreground">
-            <div className="rounded-md border border-muted/60 bg-background p-1">
+          <div className="relative z-10 -mt-2 -mb-2 flex items-center justify-center text-muted-foreground">
+            <div className="rounded-md border-8 border-muted/60 bg-background p-1">
               <MoveDown className="size-4" />
             </div>
           </div>
@@ -511,7 +511,7 @@ export default function EventConvertPositionsDialog({
                 </div>
               )}
             </div>
-            <div className="mt-4 flex items-center justify-between text-sm font-semibold">
+            <div className="mt-2 flex items-center justify-between text-sm font-semibold">
               <span className="text-primary">USDC 💸</span>
               <span className="text-muted-foreground">
                 +
@@ -531,9 +531,9 @@ export default function EventConvertPositionsDialog({
         {submitState === 'signing' && <Loader2 className="size-4 animate-spin" />}
         {submitState === 'submitting' && <Loader2 className="size-4 animate-spin" />}
         {submitState === 'signing'
-          ? 'Aguardando assinatura'
+          ? 'Awaiting signature'
           : submitState === 'submitting'
-            ? 'Enviando...'
+            ? 'Submitting...'
             : 'Confirm'}
       </Button>
     </div>
