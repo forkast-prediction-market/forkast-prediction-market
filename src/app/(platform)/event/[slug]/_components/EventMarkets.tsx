@@ -218,7 +218,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
       event.markets.map(market => [market.condition_id, market]),
     )
 
-    return userPositions.reduce<Array<{ id: string, label: string, shares: number }>>(
+    return userPositions.reduce<Array<{ id: string, label: string, shares: number, conditionId: string }>>(
       (options, position, index) => {
         const conditionId = position.market?.condition_id
         if (!conditionId) {
