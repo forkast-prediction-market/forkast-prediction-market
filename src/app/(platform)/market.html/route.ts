@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const marketSlug = searchParams.get('market') ?? ''
   const eventSlug = searchParams.get('event') ?? ''
+  const affiliateCode = searchParams.get('r')?.trim() ?? ''
   const theme = searchParams.get('theme') === 'dark' ? 'dark' : 'light'
   const features = new Set(
     (searchParams.get('features') ?? '')
@@ -69,6 +70,9 @@ export async function GET(request: NextRequest) {
   }
   if (showFilters) {
     attrs.push('filters="true"')
+  }
+  if (affiliateCode) {
+    attrs.push(`affiliate="${escapeAttr(affiliateCode)}"`)
   }
 
   const html = `<!DOCTYPE html>

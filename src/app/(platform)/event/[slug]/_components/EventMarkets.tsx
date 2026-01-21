@@ -511,7 +511,7 @@ function MarketDetailTabs({
 
   return (
     <div className="pt-2">
-      <div className="pr-2 pl-4 lg:px-0">
+      <div className="px-0">
         <div className="flex items-center gap-2 border-b">
           <div className="scrollbar-hide flex w-0 flex-1 gap-4 overflow-x-auto">
             {visibleTabs.map((tab) => {
@@ -564,7 +564,7 @@ function MarketDetailTabs({
         </div>
       </div>
 
-      <div className="py-4 pr-2 pl-4 lg:px-0">
+      <div className="px-0 py-4">
         {selectedTab === 'orderBook' && (
           <EventOrderBook
             market={market}

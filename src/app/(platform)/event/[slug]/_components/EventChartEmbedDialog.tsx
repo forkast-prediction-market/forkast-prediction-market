@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
+import { useUser } from '@/stores/useUser'
 
 interface EventChartEmbedDialogProps {
   open: boolean
@@ -87,18 +88,24 @@ function buildFeatureList(showVolume: boolean, showChart: boolean, showTimeRange
   return features
 }
 
-function buildIframeSrc(marketSlug: string, theme: EmbedTheme, features: string[]) {
+function buildIframeSrc(marketSlug: string, theme: EmbedTheme, features: string[], affiliateCode?: string) {
   const params = new URLSearchParams({ market: marketSlug, theme })
   if (features.length > 0) {
     params.set('features', features.join(','))
   }
+  if (affiliateCode) {
+    params.set('r', affiliateCode)
+  }
   return `${EMBED_BASE_URL}/market.html?${params.toString()}`
 }
 
-function buildPreviewSrc(marketSlug: string, theme: EmbedTheme, features: string[]) {
+function buildPreviewSrc(marketSlug: string, theme: EmbedTheme, features: string[], affiliateCode?: string) {
   const params = new URLSearchParams({ market: marketSlug, theme })
   if (features.length > 0) {
     params.set('features', features.join(','))
+  }
+  if (affiliateCode) {
+    params.set('r', affiliateCode)
   }
   return `/market.html?${params.toString()}`
 }
@@ -121,6 +128,7 @@ function buildWebComponentCode(
   showVolume: boolean,
   showChart: boolean,
   showTimeRange: boolean,
+  affiliateCode?: string,
 ) {
   const lines = [
     `<div id="${EMBED_ELEMENT_NAME}">`,
@@ -141,6 +149,9 @@ function buildWebComponentCode(
   }
   if (showChart && showTimeRange) {
     lines.push('\t\tfilters="true"')
+  }
+  if (affiliateCode) {
+    lines.push(`\t\taffiliate="${affiliateCode}"`)
   }
 
   lines.push(`\t\ttheme="${theme}"`)
@@ -240,6 +251,8 @@ export default function EventChartEmbedDialog({
   const [showTimeRange, setShowTimeRange] = useState(false)
   const [copied, setCopied] = useState(false)
   const showMarketSelector = markets.length > 1
+  const user = useUser()
+  const affiliateCode = user?.affiliate_code?.trim() ?? ''
 
   useEffect(() => {
     if (!open) {
@@ -284,20 +297,20 @@ export default function EventChartEmbedDialog({
     [showVolume, showChart, showTimeRange],
   )
   const iframeSrc = useMemo(
-    () => buildIframeSrc(marketSlug, theme, features),
-    [marketSlug, theme, features],
+    () => buildIframeSrc(marketSlug, theme, features, affiliateCode),
+    [marketSlug, theme, features, affiliateCode],
   )
   const previewSrc = useMemo(
-    () => buildPreviewSrc(marketSlug, theme, features),
-    [marketSlug, theme, features],
+    () => buildPreviewSrc(marketSlug, theme, features, affiliateCode),
+    [marketSlug, theme, features, affiliateCode],
   )
   const iframeHeight = showChart
     ? (showTimeRange ? IFRAME_HEIGHT_WITH_FILTERS : IFRAME_HEIGHT_WITH_CHART)
     : IFRAME_HEIGHT_NO_CHART
   const iframeCode = useMemo(() => buildIframeCode(iframeSrc, iframeHeight), [iframeSrc, iframeHeight])
   const webComponentCode = useMemo(
-    () => buildWebComponentCode(marketSlug, theme, showVolume, showChart, showTimeRange),
-    [marketSlug, theme, showVolume, showChart, showTimeRange],
+    () => buildWebComponentCode(marketSlug, theme, showVolume, showChart, showTimeRange, affiliateCode),
+    [marketSlug, theme, showVolume, showChart, showTimeRange, affiliateCode],
   )
   const activeCode = embedType === 'iframe' ? iframeCode : webComponentCode
 
@@ -332,13 +345,16 @@ export default function EventChartEmbedDialog({
     if (showChart && showTimeRange) {
       lines.push(attributeLine('\t\t', 'filters', 'true'))
     }
+    if (affiliateCode) {
+      lines.push(attributeLine('\t\t', 'affiliate', affiliateCode))
+    }
 
     lines.push(attributeLine('\t\t', 'theme', theme))
     lines.push(tagSelfCloseLine('\t'))
     lines.push(tagCloseLine('', 'div'))
 
     return lines
-  }, [marketSlug, showVolume, showChart, showTimeRange, theme])
+  }, [marketSlug, showVolume, showChart, showTimeRange, theme, affiliateCode])
 
   async function handleCopy() {
     try {
