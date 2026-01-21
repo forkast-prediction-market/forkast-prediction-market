@@ -3,7 +3,8 @@
 import type { ReactNode } from 'react'
 import type { Locale } from '@/i18n/locales'
 import { NextIntlClientProvider } from 'next-intl'
-import { useEffect, useMemo, useState } from 'react'
+import { usePathname } from 'next/navigation'
+import { useEffect, useMemo } from 'react'
 import { defaultLocale, isLocaleSupported } from '@/i18n/locales'
 import enMessages from '@/i18n/messages/en.json'
 import esMessages from '@/i18n/messages/es.json'
@@ -19,34 +20,14 @@ const messagesByLocale: Record<Locale, Messages> = {
   es: esMessages,
 }
 
-function readCookieLocale(): string | null {
-  if (typeof document === 'undefined') {
-    return null
+function resolveLocaleFromPathname(pathname: string | null): Locale {
+  if (!pathname) {
+    return defaultLocale
   }
 
-  const match = document.cookie.match(/(?:^|; )NEXT_LOCALE=([^;]*)/)
-  return match ? decodeURIComponent(match[1]) : null
-}
-
-function resolveClientLocale(): Locale {
-  const cookieLocale = readCookieLocale()
-  if (isLocaleSupported(cookieLocale)) {
-    return cookieLocale
-  }
-
-  const languages = typeof navigator !== 'undefined'
-    ? navigator.languages ?? [navigator.language]
-    : []
-
-  for (const language of languages) {
-    const normalized = language.toLowerCase()
-    if (isLocaleSupported(normalized)) {
-      return normalized
-    }
-    const base = normalized.split('-')[0]
-    if (isLocaleSupported(base)) {
-      return base
-    }
+  const [, candidate] = pathname.split('/')
+  if (isLocaleSupported(candidate)) {
+    return candidate
   }
 
   return defaultLocale
@@ -65,18 +46,9 @@ function LocaleHtmlLangSync({ locale }: LocaleHtmlLangSyncProps) {
 }
 
 export default function IntlProvider({ children }: IntlProviderProps) {
-  const [locale, setLocale] = useState<Locale>(defaultLocale)
-  const [messages, setMessages] = useState<Messages>(messagesByLocale[defaultLocale])
-
-  useEffect(() => {
-    const resolvedLocale = resolveClientLocale()
-    if (resolvedLocale === locale) {
-      return
-    }
-
-    setLocale(resolvedLocale)
-    setMessages(messagesByLocale[resolvedLocale])
-  }, [locale])
+  const pathname = usePathname()
+  const locale = useMemo(() => resolveLocaleFromPathname(pathname), [pathname])
+  const messages = messagesByLocale[locale]
 
   const timeZone = useMemo(() => {
     if (typeof Intl === 'undefined') {
