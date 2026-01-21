@@ -5,7 +5,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useFilters } from '@/app/[locale]/(platform)/_providers/FilterProvider'
 import { Teleport } from '@/components/Teleport'
 import { Button } from '@/components/ui/button'
-import { Link, redirect, usePathname } from '@/i18n/routing'
+import { Link, usePathname, useRouter } from '@/i18n/routing'
 import { cn } from '@/lib/utils'
 
 interface NavigationTabProps {
@@ -19,6 +19,7 @@ interface NavigationTabProps {
 
 export default function NavigationTab({ tag, childParentMap }: NavigationTabProps) {
   const pathname = usePathname()
+  const router = useRouter()
   const isHomePage = pathname === '/'
   const { filters, updateFilters } = useFilters()
 
@@ -271,11 +272,12 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
 
   const handleTagClick = useCallback((targetTag: string) => {
     if (targetTag === 'mentions') {
-      redirect('/mentions')
+      router.push('/mentions')
+      return
     }
 
     updateFilters({ tag: targetTag })
-  }, [updateFilters])
+  }, [router, updateFilters])
 
   return (
     <>

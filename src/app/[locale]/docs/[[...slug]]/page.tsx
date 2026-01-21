@@ -1,13 +1,14 @@
 import type { MDXComponents } from 'mdx/types'
-import type { Metadata } from 'next'
+import type { Metadata, Route } from 'next'
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/layouts/docs/page'
 import defaultMdxComponents from 'fumadocs-ui/mdx'
-import { notFound } from 'next/navigation'
+import { getLocale } from 'next-intl/server'
+import { notFound, redirect } from 'next/navigation'
 import { AffiliateShareDisplay } from '@/app/[locale]/docs/_components/AffiliateShareDisplay'
 import { FeeCalculationExample } from '@/app/[locale]/docs/_components/FeeCalculationExample'
 import { PlatformShareDisplay } from '@/app/[locale]/docs/_components/PlatformShareDisplay'
 import { TradingFeeDisplay } from '@/app/[locale]/docs/_components/TradingFeeDisplay'
-import { redirect } from '@/i18n/routing'
+import { getPathname } from '@/i18n/routing'
 import { source } from '@/lib/source'
 
 function getMDXComponents(components?: MDXComponents): MDXComponents {
@@ -23,15 +24,17 @@ function getMDXComponents(components?: MDXComponents): MDXComponents {
 
 export default async function Page(props: PageProps<'/[locale]/docs/[[...slug]]'>) {
   const params = await props.params
+  const locale = await getLocale()
+  const fallbackUrl = getPathname({ href: '/docs/users', locale }) as Route
 
   const isOwnerGuideEnabled = JSON.parse(process.env.NEXT_PUBLIC_FORK_OWNER_GUIDE || 'false')
   if (params.slug?.[0] === 'owners' && !isOwnerGuideEnabled) {
-    redirect('/docs/users')
+    redirect(fallbackUrl)
   }
 
   const page = source.getPage(params.slug)
   if (!page) {
-    redirect('/docs/users')
+    redirect(fallbackUrl)
   }
 
   const MDX = page.data.body

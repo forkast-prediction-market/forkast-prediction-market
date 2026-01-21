@@ -1,5 +1,6 @@
 'use client'
 
+import type { Route } from 'next'
 import { useDisconnect } from '@reown/appkit-controllers/react'
 import { ChevronDownIcon } from 'lucide-react'
 import Image from 'next/image'
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import UserInfoSection from '@/components/UserInfoSection'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { Link, redirect, usePathname } from '@/i18n/routing'
+import { Link, usePathname, useRouter } from '@/i18n/routing'
 import { useUser } from '@/stores/useUser'
 
 export default function HeaderDropdownUserMenuAuth() {
@@ -25,6 +26,7 @@ export default function HeaderDropdownUserMenuAuth() {
   const { filters, updateFilters } = useFilters()
   const user = useUser()
   const pathname = usePathname()
+  const router = useRouter()
   const isAdmin = pathname.startsWith('/admin')
   const isMobile = useIsMobile()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -66,7 +68,7 @@ export default function HeaderDropdownUserMenuAuth() {
 
   function handleWatchlistClick() {
     updateFilters({ bookmarked: !filters.bookmarked })
-    queueMicrotask(() => redirect('/'))
+    queueMicrotask(() => router.push('/' as Route))
   }
 
   function handleMenuClose() {
