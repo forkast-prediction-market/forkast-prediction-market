@@ -152,6 +152,24 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
     }, 0)
   }, [otherBalances])
   const shouldShowOtherRow = isNegRiskAugmented && otherShares > 0
+  const { data: eventOpenOrdersData } = useUserOpenOrdersQuery({
+    userId: user?.id,
+    eventSlug: event.slug,
+    enabled: Boolean(user?.id),
+  })
+  const openOrdersCountByCondition = useMemo(() => {
+    const pages = eventOpenOrdersData?.pages ?? []
+    return pages.reduce<Record<string, number>>((acc, page) => {
+      page.data.forEach((order) => {
+        const conditionId = order.market?.condition_id
+        if (!conditionId) {
+          return
+        }
+        acc[conditionId] = (acc[conditionId] ?? 0) + 1
+      })
+      return acc
+    }, {})
+  }, [eventOpenOrdersData?.pages])
   const positionTagsByCondition = useMemo(() => {
     if (!userPositions?.length) {
       return {}
@@ -428,6 +446,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                   onBuy={(cardMarket, outcomeIndex, source) => handleBuy(cardMarket, outcomeIndex, source)}
                   chanceHighlightKey={chanceHighlightKey}
                   positionTags={positionTags}
+                  openOrdersCount={openOrdersCountByCondition[market.condition_id] ?? 0}
                   onCashOut={handleCashOut}
                 />
 
@@ -471,7 +490,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
           })}
         {shouldShowOtherRow && (
           <div className="transition-colors">
-            <OtherOutcomeRow shares={otherShares} />
+            <OtherOutcomeRow shares={otherShares} showMarketIcon={Boolean(event.show_market_icons)} />
           </div>
         )}
         {(marketRows.length > 0 || shouldShowOtherRow) && (
@@ -499,25 +518,40 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   )
 }
 
-function OtherOutcomeRow({ shares }: { shares: number }) {
+function OtherOutcomeRow({ shares, showMarketIcon }: { shares: number, showMarketIcon?: boolean }) {
   const sharesLabel = formatSharesLabel(shares, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
 
   return (
-    <div className={cn(
-      `
-        relative z-0 flex w-full flex-col items-start py-3 pr-2 pl-4 transition-all duration-200 ease-in-out
-        lg:flex-row lg:items-center lg:px-0
-      `,
-    )}
+    <div
+      className={cn(
+        `
+          relative z-0 flex w-full cursor-default flex-col items-start py-3 pr-2 pl-4 transition-all duration-200
+          ease-in-out
+          before:pointer-events-none before:absolute before:inset-y-0 before:-right-3 before:-left-3 before:-z-10
+          before:rounded-lg before:bg-black/5 before:opacity-0 before:transition-opacity before:duration-200
+          before:content-['']
+          hover:before:opacity-100
+          lg:flex-row lg:items-center lg:rounded-lg lg:px-0
+          dark:before:bg-white/5
+        `,
+      )}
     >
       <div className="flex w-full flex-col gap-2 lg:w-2/5">
-        <div className="text-sm font-bold text-foreground">Other</div>
+        <div className="flex items-start gap-3">
+          {showMarketIcon && (
+            <div className="size-10.5 shrink-0 rounded-md bg-muted/60" aria-hidden="true" />
+          )}
+          <div className="text-sm font-bold text-foreground">Other</div>
+        </div>
         <div>
           <span className={cn(
-            'inline-flex items-center gap-1 rounded-sm bg-yes/15 px-2 py-0.5 text-sm font-semibold text-yes-foreground',
+            `
+              inline-flex items-center gap-1 rounded-sm bg-yes/15 px-1.5 py-0.5 text-xs leading-tight font-semibold
+              text-yes-foreground
+            `,
           )}
           >
             <LockKeyhole className="size-3 text-yes" />

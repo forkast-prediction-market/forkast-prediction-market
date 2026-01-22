@@ -11,6 +11,14 @@ import { cancelOrderAction } from '@/app/(platform)/event/[slug]/_actions/cancel
 import { buildUserOpenOrdersQueryKey, useUserOpenOrdersQuery } from '@/app/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { MICRO_UNIT, OUTCOME_INDEX, tableHeaderClass } from '@/lib/constants'
@@ -243,6 +251,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const [pendingCancelIds, setPendingCancelIds] = useState<Set<string>>(() => new Set())
   const [isCancellingAll, setIsCancellingAll] = useState(false)
+  const [isCancelAllDialogOpen, setIsCancelAllDialogOpen] = useState(false)
   const [sortState, setSortState] = useState<{ column: SortColumn, direction: SortDirection } | null>(null)
 
   useEffect(() => {
@@ -254,6 +263,10 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
   const openOrdersQueryKey = useMemo(
     () => buildUserOpenOrdersQueryKey(user?.id, eventSlug, market.condition_id),
     [eventSlug, market.condition_id, user?.id],
+  )
+  const eventOpenOrdersQueryKey = useMemo(
+    () => buildUserOpenOrdersQueryKey(user?.id, eventSlug),
+    [eventSlug, user?.id],
   )
 
   const {
@@ -277,24 +290,30 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
       return
     }
 
-    queryClient.setQueryData<InfiniteData<{ data: UserOpenOrder[], next_cursor: string }>>(openOrdersQueryKey, (current) => {
-      if (!current) {
-        return current
-      }
+    function updateCache(queryKey: readonly unknown[]) {
+      queryClient.setQueryData<InfiniteData<{ data: UserOpenOrder[], next_cursor: string }>>(queryKey, (current) => {
+        if (!current) {
+          return current
+        }
 
-      const updatedPages = current.pages.map(page => ({
-        ...page,
-        data: page.data.filter(item => !orderIds.includes(item.id)),
-      }))
-      return { ...current, pages: updatedPages }
-    })
-  }, [openOrdersQueryKey, queryClient])
+        const updatedPages = current.pages.map(page => ({
+          ...page,
+          data: page.data.filter(item => !orderIds.includes(item.id)),
+        }))
+        return { ...current, pages: updatedPages }
+      })
+    }
+
+    updateCache(openOrdersQueryKey)
+    updateCache(eventOpenOrdersQueryKey)
+  }, [eventOpenOrdersQueryKey, openOrdersQueryKey, queryClient])
 
   const scheduleOpenOrdersRefresh = useCallback(() => {
     setTimeout(() => {
       void queryClient.invalidateQueries({ queryKey: openOrdersQueryKey })
+      void queryClient.invalidateQueries({ queryKey: eventOpenOrdersQueryKey })
     }, 10_000)
-  }, [openOrdersQueryKey, queryClient])
+  }, [eventOpenOrdersQueryKey, openOrdersQueryKey, queryClient])
 
   const handleCancelOrder = useCallback(async (order: UserOpenOrder) => {
     if (pendingCancelIds.has(order.id)) {
@@ -317,6 +336,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
 
       removeOrdersFromCache([order.id])
       await queryClient.invalidateQueries({ queryKey: openOrdersQueryKey })
+      void queryClient.invalidateQueries({ queryKey: eventOpenOrdersQueryKey })
       void queryClient.invalidateQueries({ queryKey: ['orderbook-summary'] })
       void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
       setTimeout(() => {
@@ -337,7 +357,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
         return next
       })
     }
-  }, [openOrdersQueryKey, pendingCancelIds, queryClient, removeOrdersFromCache, scheduleOpenOrdersRefresh])
+  }, [eventOpenOrdersQueryKey, openOrdersQueryKey, pendingCancelIds, queryClient, removeOrdersFromCache, scheduleOpenOrdersRefresh])
 
   const handleSort = useCallback((column: SortColumn) => {
     setSortState((current) => {
@@ -384,6 +404,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
         removeOrdersFromCache(result.cancelled)
       }
       await queryClient.invalidateQueries({ queryKey: openOrdersQueryKey })
+      void queryClient.invalidateQueries({ queryKey: eventOpenOrdersQueryKey })
       void queryClient.invalidateQueries({ queryKey: ['orderbook-summary'] })
       void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
       setTimeout(() => {
@@ -408,12 +429,21 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
   }, [
     isCancellingAll,
     market.condition_id,
+    eventOpenOrdersQueryKey,
     openOrdersQueryKey,
     queryClient,
     removeOrdersFromCache,
     scheduleOpenOrdersRefresh,
     sortedOrders,
   ])
+
+  const handleCancelAllConfirm = useCallback(() => {
+    if (isCancellingAll) {
+      return
+    }
+    setIsCancelAllDialogOpen(false)
+    void handleCancelAll()
+  }, [handleCancelAll, isCancellingAll])
 
   useEffect(() => {
     if (!hasOrders || typeof window === 'undefined') {
@@ -422,10 +452,11 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
 
     const intervalId = window.setInterval(() => {
       void queryClient.invalidateQueries({ queryKey: openOrdersQueryKey })
+      void queryClient.invalidateQueries({ queryKey: eventOpenOrdersQueryKey })
     }, 60_000)
 
     return () => window.clearInterval(intervalId)
-  }, [hasOrders, openOrdersQueryKey, queryClient])
+  }, [eventOpenOrdersQueryKey, hasOrders, openOrdersQueryKey, queryClient])
 
   useEffect(() => {
     if (!sentinelRef.current || !hasNextPage || status === 'pending') {
@@ -495,7 +526,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
                     text-2xs font-semibold tracking-wide whitespace-nowrap text-destructive uppercase transition-opacity
                     disabled:opacity-40
                   `}
-                  onClick={handleCancelAll}
+                  onClick={() => setIsCancelAllDialogOpen(true)}
                   disabled={isCancellingAll || !hasOrders}
                 >
                   {isCancellingAll ? 'Cancelling…' : 'Cancel All'}
@@ -552,6 +583,40 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
           </Alert>
         </div>
       )}
+
+      <Dialog open={isCancelAllDialogOpen} onOpenChange={setIsCancelAllDialogOpen}>
+        <DialogContent className="max-w-sm bg-background sm:p-8">
+          <div className="space-y-6">
+            <DialogHeader className="space-y-3">
+              <DialogTitle className="text-center text-2xl font-bold">
+                Are you sure?
+              </DialogTitle>
+              <DialogDescription className="text-center text-sm text-muted-foreground">
+                Are you sure you want to cancel this open order?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <Button
+                type="button"
+                variant="outline"
+                className="bg-background sm:w-36"
+                onClick={() => setIsCancelAllDialogOpen(false)}
+              >
+                Never mind
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                className="bg-destructive hover:bg-destructive sm:w-36"
+                onClick={handleCancelAllConfirm}
+                disabled={isCancellingAll}
+              >
+                {isCancellingAll ? 'Cancelling…' : 'Confirm'}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   )
 

@@ -20,6 +20,7 @@ import EventOrderPanelUserShares from '@/app/(platform)/event/[slug]/_components
 import { handleOrderCancelledFeedback, handleOrderErrorFeedback, handleOrderSuccessFeedback, handleValidationError, notifyWalletApprovalPrompt } from '@/app/(platform)/event/[slug]/_components/feedback'
 import { useEventOrderPanelOpenOrders } from '@/app/(platform)/event/[slug]/_hooks/useEventOrderPanelOpenOrders'
 import { useEventOrderPanelPositions } from '@/app/(platform)/event/[slug]/_hooks/useEventOrderPanelPositions'
+import { buildUserOpenOrdersQueryKey } from '@/app/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
 import { useUserShareBalances } from '@/app/(platform)/event/[slug]/_hooks/useUserShareBalances'
 import {
   calculateMarketFill,
@@ -105,6 +106,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     eventSlug: event.slug,
     conditionId: state.market?.condition_id,
   })
+  const eventOpenOrdersQueryKey = useMemo(
+    () => buildUserOpenOrdersQueryKey(user?.id, event.slug),
+    [event.slug, user?.id],
+  )
   const isNegRiskEnabled = Boolean(event.enable_neg_risk)
   const isNegRiskMarket = typeof state.market?.neg_risk === 'boolean'
     ? state.market.neg_risk
@@ -632,9 +637,11 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
 
       if (state.market?.condition_id && user?.id) {
         void queryClient.invalidateQueries({ queryKey: openOrdersQueryKey })
+        void queryClient.invalidateQueries({ queryKey: eventOpenOrdersQueryKey })
         void queryClient.invalidateQueries({ queryKey: ['orderbook-summary'] })
         setTimeout(() => {
           void queryClient.invalidateQueries({ queryKey: openOrdersQueryKey })
+          void queryClient.invalidateQueries({ queryKey: eventOpenOrdersQueryKey })
           void queryClient.invalidateQueries({ queryKey: ['orderbook-summary'] })
         }, 10_000)
       }

@@ -45,7 +45,7 @@ export function useUserOpenOrdersQuery({
       }
       return undefined
     },
-    enabled: Boolean(enabled && userId && eventSlug && conditionId),
+    enabled: Boolean(enabled && userId && eventSlug),
     initialPageParam: 'MA==',
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,

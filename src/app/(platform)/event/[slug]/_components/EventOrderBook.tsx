@@ -62,6 +62,10 @@ export default function EventOrderBook({
     () => buildUserOpenOrdersQueryKey(user?.id, eventSlug, market.condition_id),
     [eventSlug, market.condition_id, user?.id],
   )
+  const eventOpenOrdersQueryKey = useMemo(
+    () => buildUserOpenOrdersQueryKey(user?.id, eventSlug),
+    [eventSlug, user?.id],
+  )
   const { data: userOpenOrdersData } = useUserOpenOrdersQuery({
     userId: user?.id,
     eventSlug,
@@ -121,18 +125,23 @@ export default function EventOrderBook({
       return
     }
 
-    queryClient.setQueryData<InfiniteData<{ data: UserOpenOrder[], next_cursor: string }>>(openOrdersQueryKey, (current) => {
-      if (!current) {
-        return current
-      }
+    function updateCache(queryKey: readonly unknown[]) {
+      queryClient.setQueryData<InfiniteData<{ data: UserOpenOrder[], next_cursor: string }>>(queryKey, (current) => {
+        if (!current) {
+          return current
+        }
 
-      const nextPages = current.pages.map(page => ({
-        ...page,
-        data: page.data.filter(order => !orderIds.includes(order.id)),
-      }))
-      return { ...current, pages: nextPages }
-    })
-  }, [openOrdersQueryKey, queryClient])
+        const nextPages = current.pages.map(page => ({
+          ...page,
+          data: page.data.filter(order => !orderIds.includes(order.id)),
+        }))
+        return { ...current, pages: nextPages }
+      })
+    }
+
+    updateCache(openOrdersQueryKey)
+    updateCache(eventOpenOrdersQueryKey)
+  }, [eventOpenOrdersQueryKey, openOrdersQueryKey, queryClient])
 
   const scheduleOpenOrdersRefresh = useCallback(() => {
     if (typeof window === 'undefined') {
@@ -143,8 +152,9 @@ export default function EventOrderBook({
     }
     refreshTimeoutRef.current = window.setTimeout(() => {
       void queryClient.invalidateQueries({ queryKey: openOrdersQueryKey })
+      void queryClient.invalidateQueries({ queryKey: eventOpenOrdersQueryKey })
     }, 10_000)
-  }, [openOrdersQueryKey, queryClient])
+  }, [eventOpenOrdersQueryKey, openOrdersQueryKey, queryClient])
 
   const handleCancelUserOrder = useCallback(async (orderId: string) => {
     if (!orderId || pendingCancelIds.has(orderId)) {
@@ -170,6 +180,7 @@ export default function EventOrderBook({
       removeOrderFromCache([orderId])
 
       await queryClient.invalidateQueries({ queryKey: openOrdersQueryKey })
+      void queryClient.invalidateQueries({ queryKey: eventOpenOrdersQueryKey })
       void queryClient.invalidateQueries({ queryKey: ['orderbook-summary'] })
       void queryClient.invalidateQueries({ queryKey: [SAFE_BALANCE_QUERY_KEY] })
       setTimeout(() => {
@@ -190,7 +201,7 @@ export default function EventOrderBook({
         return next
       })
     }
-  }, [openOrdersQueryKey, pendingCancelIds, queryClient, removeOrderFromCache, scheduleOpenOrdersRefresh, openTradeRequirements])
+  }, [eventOpenOrdersQueryKey, openOrdersQueryKey, pendingCancelIds, queryClient, removeOrderFromCache, scheduleOpenOrdersRefresh, openTradeRequirements])
 
   useEffect(() => () => {
     if (refreshTimeoutRef.current) {
