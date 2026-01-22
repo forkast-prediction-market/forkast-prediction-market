@@ -1,5 +1,6 @@
 'use client'
 
+import type { Route } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { formatCurrency, formatSharesLabel, formatTimeAgo } from '@/lib/formatters'
@@ -32,7 +33,7 @@ interface PositionItemProps {
 export default function PublicPositionItem({ item }: PositionItemProps) {
   const eventSlug = item.eventSlug || item.slug
   const marketSlug = item.eventSlug && item.slug ? item.slug : null
-  const eventHref = marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`
+  const eventHref = (marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`) as Route
 
   return (
     <div className={`

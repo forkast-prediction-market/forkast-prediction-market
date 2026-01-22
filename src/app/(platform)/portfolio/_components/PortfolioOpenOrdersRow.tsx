@@ -1,3 +1,4 @@
+import type { Route } from 'next'
 import type { PortfolioUserOpenOrder } from '@/app/(platform)/portfolio/_types/PortfolioOpenOrdersTypes'
 import { XIcon } from 'lucide-react'
 import Image from 'next/image'
@@ -33,7 +34,7 @@ export default function PortfolioOpenOrdersRow({ order }: PortfolioOpenOrdersRow
   const marketIcon = order.market.icon_url || undefined
   const eventSlug = order.market.event_slug || order.market.slug
   const marketSlug = order.market.event_slug ? order.market.slug : null
-  const eventHref = marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`
+  const eventHref = (marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`) as Route
 
   return (
     <tr className="border-b transition-colors hover:bg-muted/50">

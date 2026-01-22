@@ -1,3 +1,4 @@
+import type { Route } from 'next'
 import type { PublicActivity } from '@/types'
 import { SquareArrowOutUpRightIcon } from 'lucide-react'
 import Image from 'next/image'
@@ -9,7 +10,7 @@ export function PublicActivityItem({ item }: { item: PublicActivity }) {
   const isSplit = item.type === 'split'
   const eventSlug = item.eventSlug || item.slug
   const marketSlug = item.eventSlug ? item.slug : null
-  const eventHref = marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`
+  const eventHref = (marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`) as Route
   const outcomeText = item.outcomeText || 'Outcome'
   const outcomeChipColor = outcomeText.toLowerCase() === 'yes'
     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'

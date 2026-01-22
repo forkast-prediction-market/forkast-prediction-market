@@ -1,3 +1,4 @@
+import type { Route } from 'next'
 import type { PublicActivityRowProps } from '@/app/(platform)/[username]/_types/PublicActivityTypes'
 import { CircleDollarSignIcon } from 'lucide-react'
 import Image from 'next/image'
@@ -14,7 +15,7 @@ export default function PublicActivityRow({ activity }: PublicActivityRowProps) 
   const priceText = formatPriceCents(activity.price)
   const eventSlug = activity.market.event?.slug || activity.market.slug
   const marketSlug = activity.market.event?.slug ? activity.market.slug : null
-  const eventHref = marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`
+  const eventHref = (marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`) as Route
   const outcomeText = activity.outcome?.text || 'Outcome'
   const outcomeIsYes = outcomeText.toLowerCase().includes('yes') || activity.outcome?.index === 0
   const outcomeColor = outcomeIsYes ? 'bg-yes/15 text-yes' : 'bg-no/15 text-no'

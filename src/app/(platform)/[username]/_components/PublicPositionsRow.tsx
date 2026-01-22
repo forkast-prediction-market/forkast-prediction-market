@@ -1,3 +1,4 @@
+import type { Route } from 'next'
 import type { PublicPosition } from './PublicPositionItem'
 import { ArrowRightIcon, ShareIcon } from 'lucide-react'
 import Image from 'next/image'
@@ -32,7 +33,7 @@ export default function PublicPositionsRow({
   const outcomeColor = outcomeLabel.toLowerCase().includes('yes') ? 'bg-yes/15 text-yes' : 'bg-no/15 text-no'
   const eventSlug = position.eventSlug || position.slug
   const marketSlug = position.eventSlug && position.slug ? position.slug : null
-  const eventHref = marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`
+  const eventHref = (marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`) as Route
 
   return (
     <tr className="transition-colors hover:bg-muted/50">
