@@ -246,10 +246,11 @@ export default function EventRules({ event }: EventRulesProps) {
         type="button"
         onClick={() => setRulesExpanded(!rulesExpanded)}
         className={`
-          flex w-full items-center justify-between p-4 text-left transition-colors
+          flex w-full items-center justify-between rounded-xl p-4 text-left transition-colors
           hover:bg-muted/50
           focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
           focus-visible:outline-none
+          ${rulesExpanded ? 'rounded-b-none' : ''}
         `}
         aria-expanded={rulesExpanded}
       >

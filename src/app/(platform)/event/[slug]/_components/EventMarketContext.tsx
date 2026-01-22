@@ -1,6 +1,6 @@
 import type { Event } from '@/types'
 import { LoaderIcon, SparklesIcon } from 'lucide-react'
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { generateMarketContextAction } from '@/app/(platform)/event/[slug]/_actions/generate-market-context'
 import { cn } from '@/lib/utils'
 import { useOrder } from '@/stores/useOrder'
@@ -13,12 +13,19 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
   const state = useOrder()
   const [contextExpanded, setContextExpanded] = useState(false)
   const [context, setContext] = useState<string | null>(null)
+  const [displayedContext, setDisplayedContext] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const [hasGenerated, setHasGenerated] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
+  const hasAnimatedRef = useRef(false)
+  const contextRef = useRef<string | null>(null)
 
   async function generateMarketContext() {
     if (!state.market) {
+      return
+    }
+    if (isPending) {
       return
     }
 
@@ -53,16 +60,75 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
     })
   }
 
-  const paragraphs = useMemo(() => {
+  useEffect(() => {
+    if (contextRef.current !== context) {
+      contextRef.current = context
+      hasAnimatedRef.current = false
+    }
+
     if (!context) {
+      setDisplayedContext('')
+      setIsTyping(false)
+      return
+    }
+
+    if (!contextExpanded) {
+      setDisplayedContext(context)
+      setIsTyping(false)
+      return
+    }
+
+    if (hasAnimatedRef.current) {
+      return
+    }
+
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setDisplayedContext(context)
+      setIsTyping(false)
+      hasAnimatedRef.current = true
+      return
+    }
+
+    const totalDurationMs = Math.min(2400, Math.max(900, context.length * 12))
+    const start = performance.now()
+    let animationFrame = 0
+
+    setIsTyping(true)
+    setDisplayedContext('')
+
+    function tick(now: number) {
+      const progress = Math.min(1, (now - start) / totalDurationMs)
+      const nextLength = Math.max(1, Math.floor(progress * context.length))
+      setDisplayedContext(context.slice(0, nextLength))
+
+      if (progress < 1) {
+        animationFrame = window.requestAnimationFrame(tick)
+      }
+      else {
+        setIsTyping(false)
+        hasAnimatedRef.current = true
+      }
+    }
+
+    animationFrame = window.requestAnimationFrame(tick)
+
+    return () => {
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame)
+      }
+    }
+  }, [context, contextExpanded])
+
+  const paragraphs = useMemo(() => {
+    if (!displayedContext) {
       return []
     }
 
-    return context
+    return displayedContext
       .split(/\n{2,}|\r\n{2,}/)
       .map(block => block.trim())
       .filter(Boolean)
-  }, [context])
+  }, [displayedContext])
 
   function toggleCollapse() {
     setContextExpanded(current => !current)
@@ -76,12 +142,13 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
               type="button"
               onClick={toggleCollapse}
               className={cn(
-                'flex w-full items-center justify-between p-4 text-left transition-colors',
+                'flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors',
                 `
                   hover:bg-muted/50
                   focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
                   focus-visible:ring-offset-background focus-visible:outline-none
                 `,
+                contextExpanded ? 'rounded-b-none' : '',
               )}
               aria-expanded={contextExpanded}
             >
@@ -116,23 +183,32 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
             </button>
           )
         : (
-            <div className="flex items-center justify-between p-4 hover:bg-muted/50">
+            <button
+              type="button"
+              onClick={generateMarketContext}
+              className={cn(
+                'flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors',
+                `
+                  hover:bg-muted/50
+                  focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+                  focus-visible:ring-offset-background focus-visible:outline-none
+                  disabled:cursor-not-allowed disabled:opacity-60
+                `,
+                contextExpanded ? 'rounded-b-none' : '',
+              )}
+              disabled={isPending || !state.market}
+            >
               <span className="text-lg font-medium">Market Context</span>
-              <button
-                type="button"
-                onClick={generateMarketContext}
+              <span
                 className={`
                   flex items-center gap-1 rounded-md border bg-background px-3 py-1 text-sm font-medium text-foreground
                   shadow-sm transition
-                  hover:bg-muted/50
-                  disabled:cursor-not-allowed disabled:opacity-50
                 `}
-                disabled={isPending || !state.market}
               >
                 {isPending ? <LoaderIcon className="size-3 animate-spin" /> : <SparklesIcon className="size-3" />}
                 {isPending ? 'Generating...' : 'Generate'}
-              </button>
-            </div>
+              </span>
+            </button>
           )}
 
       {(contextExpanded || error) && (
@@ -153,7 +229,7 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
               </p>
             ))}
 
-            {!error && context && (
+            {!error && context && !isTyping && displayedContext === context && (
               <div className="flex justify-end">
                 <span className="font-mono text-2xs tracking-wide text-muted-foreground/80 uppercase">
                   Results are experimental
