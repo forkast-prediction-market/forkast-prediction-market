@@ -59,7 +59,7 @@ export interface DataApiPosition {
 }
 
 export interface DataApiOtherBalance {
-  id?: string
+  slug?: string
   user?: string
   size?: number
 }

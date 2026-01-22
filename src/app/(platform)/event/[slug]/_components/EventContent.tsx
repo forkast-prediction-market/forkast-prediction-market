@@ -256,6 +256,7 @@ export default function EventContent({ event, user, marketContextEnabled, market
                   isNegRiskAugmented={Boolean(event.neg_risk_augmented)}
                   eventOutcomes={event.markets.map(market => ({
                     conditionId: market.condition_id,
+                    questionId: market.question_id,
                     label: market.short_title || market.title,
                   }))}
                   negRiskMarketId={event.neg_risk_market_id}

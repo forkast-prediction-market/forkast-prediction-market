@@ -30,7 +30,7 @@ interface EventMarketPositionsProps {
   market: Event['markets'][number]
   isNegRiskEnabled?: boolean
   convertOptions?: Array<{ id: string, label: string, shares: number, conditionId: string }>
-  eventOutcomes?: Array<{ conditionId: string, label: string }>
+  eventOutcomes?: Array<{ conditionId: string, questionId?: string, label: string }>
   negRiskMarketId?: string
   isNegRiskAugmented?: boolean
 }
@@ -407,8 +407,12 @@ export default function EventMarketPositions({
     if (eventOutcomes && eventOutcomes.length > 0) {
       return eventOutcomes
     }
-    return [{ conditionId: market.condition_id, label: market.short_title || market.title }]
-  }, [eventOutcomes, market.condition_id, market.short_title, market.title])
+    return [{
+      conditionId: market.condition_id,
+      questionId: market.question_id,
+      label: market.short_title || market.title,
+    }]
+  }, [eventOutcomes, market.condition_id, market.question_id, market.short_title, market.title])
 
   useEffect(() => {
     setOrderUserShares(aggregatedShares, { replace: true })

@@ -256,7 +256,7 @@ function eventResource(event: DrizzleEventResult, userId: string, priceMap: Map<
       neg_risk: Boolean(market.neg_risk),
       neg_risk_other: Boolean(market.neg_risk_other),
       end_time: market.end_time?.toISOString?.() ?? null,
-      question_id: market.condition?.id || '',
+      question_id: market.condition?.question_id || '',
       title: market.short_title || market.title,
       probability,
       price: yesMidPrice,

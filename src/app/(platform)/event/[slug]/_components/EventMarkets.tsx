@@ -283,6 +283,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   const eventOutcomes = useMemo(() => {
     return event.markets.map(market => ({
       conditionId: market.condition_id,
+      questionId: market.question_id,
       label: market.short_title || market.title,
     }))
   }, [event.markets])
@@ -536,7 +537,7 @@ interface MarketDetailTabsProps {
   isNegRiskEnabled: boolean
   isNegRiskAugmented: boolean
   convertOptions: Array<{ id: string, label: string, shares: number, conditionId: string }>
-  eventOutcomes: Array<{ conditionId: string, label: string }>
+  eventOutcomes: Array<{ conditionId: string, questionId?: string, label: string }>
   activeOutcomeForMarket: Event['markets'][number]['outcomes'][number] | undefined
   tabController: {
     selected: MarketDetailTab | undefined

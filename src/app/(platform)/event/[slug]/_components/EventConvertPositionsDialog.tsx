@@ -49,6 +49,7 @@ interface ConvertPositionOption {
 
 interface ConvertOutcomeOption {
   conditionId: string
+  questionId?: string
   label: string
 }
 
@@ -124,19 +125,55 @@ export default function EventConvertPositionsDialog({
     () => outcomes.filter(outcome => !selectedConditionIds.has(outcome.conditionId)),
     [outcomes, selectedConditionIds],
   )
+  function parseQuestionIndex(questionId?: string) {
+    if (!questionId) {
+      return null
+    }
+    const normalized = questionId.startsWith('0x') ? questionId.slice(2) : questionId
+    if (normalized.length < 2) {
+      return null
+    }
+    const lastByte = normalized.slice(-2)
+    const index = Number.parseInt(lastByte, 16)
+    return Number.isFinite(index) ? index : null
+  }
+
+  const questionIndexByCondition = useMemo(() => {
+    const map = new Map<string, number>()
+    outcomes.forEach((outcome) => {
+      const questionIndex = parseQuestionIndex(outcome.questionId)
+      if (questionIndex !== null) {
+        map.set(outcome.conditionId, questionIndex)
+      }
+    })
+    return map
+  }, [outcomes])
+
   const selectedIndexSet = useMemo(() => {
     let indexSet = 0n
-    outcomes.forEach((outcome, index) => {
-      if (selectedConditionIds.has(outcome.conditionId)) {
-        indexSet |= 1n << BigInt(index)
+    selectedConditionIds.forEach((conditionId) => {
+      const questionIndex = questionIndexByCondition.get(conditionId)
+      if (questionIndex !== undefined) {
+        indexSet |= 1n << BigInt(questionIndex)
       }
     })
     return indexSet
-  }, [outcomes, selectedConditionIds])
+  }, [selectedConditionIds, questionIndexByCondition])
+  const hasMissingQuestionIndex = useMemo(() => {
+    if (selectedConditionIds.size === 0) {
+      return false
+    }
+    for (const conditionId of selectedConditionIds) {
+      if (!questionIndexByCondition.has(conditionId)) {
+        return true
+      }
+    }
+    return false
+  }, [selectedConditionIds, questionIndexByCondition])
   const hasSelection = selectedIds.size > 0
   const numericAmount = Number(amount)
   const hasValidAmount = Number.isFinite(numericAmount) && numericAmount > 0
-  const isReviewDisabled = !hasSelection || !hasValidAmount
+  const isReviewDisabled = !hasSelection || !hasValidAmount || hasMissingQuestionIndex
 
   function truncateToDecimals(value: number, decimals: number) {
     if (!Number.isFinite(value)) {
