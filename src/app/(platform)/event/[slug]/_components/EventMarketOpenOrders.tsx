@@ -592,7 +592,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
                 Are you sure?
               </DialogTitle>
               <DialogDescription className="text-center text-sm text-muted-foreground">
-                Are you sure you want to cancel this open order?
+                Are you sure you want to cancel all open orders for this market?
               </DialogDescription>
             </DialogHeader>
             <DialogFooter className="flex flex-col gap-2 sm:flex-row sm:justify-center">
