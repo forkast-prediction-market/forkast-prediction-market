@@ -13,6 +13,8 @@ export default function PublicActivityRow({ activity }: PublicActivityRowProps) 
   const sharesText = formatShares(activity.amount)
   const priceText = formatPriceCents(activity.price)
   const eventSlug = activity.market.event?.slug || activity.market.slug
+  const marketSlug = activity.market.event?.slug ? activity.market.slug : null
+  const eventHref = marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`
   const outcomeText = activity.outcome?.text || 'Outcome'
   const outcomeIsYes = outcomeText.toLowerCase().includes('yes') || activity.outcome?.index === 0
   const outcomeColor = outcomeIsYes ? 'bg-yes/15 text-yes' : 'bg-no/15 text-no'
@@ -48,7 +50,7 @@ export default function PublicActivityRow({ activity }: PublicActivityRowProps) 
     : (
         <div className="flex min-w-0 items-start gap-2.5 pl-1">
           <Link
-            href={`/event/${eventSlug}`}
+            href={eventHref}
             className="relative size-12 shrink-0 overflow-hidden rounded bg-muted"
           >
             {imageUrl
@@ -70,11 +72,11 @@ export default function PublicActivityRow({ activity }: PublicActivityRowProps) 
 
           <div className="min-w-0 space-y-1">
             <Link
-              href={`/event/${eventSlug}`}
+              href={eventHref}
               className={
                 `
-                  block max-w-[64ch] truncate text-sm leading-tight font-semibold text-foreground no-underline
-                  hover:no-underline
+                  block max-w-[64ch] truncate text-sm leading-tight font-semibold text-foreground underline-offset-2
+                  hover:underline
                 `
               }
               title={activity.market.title}

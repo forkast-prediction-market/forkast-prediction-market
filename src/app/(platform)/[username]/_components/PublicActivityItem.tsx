@@ -7,6 +7,9 @@ import { cn } from '@/lib/utils'
 
 export function PublicActivityItem({ item }: { item: PublicActivity }) {
   const isSplit = item.type === 'split'
+  const eventSlug = item.eventSlug || item.slug
+  const marketSlug = item.eventSlug ? item.slug : null
+  const eventHref = marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`
   const outcomeText = item.outcomeText || 'Outcome'
   const outcomeChipColor = outcomeText.toLowerCase() === 'yes'
     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
@@ -28,7 +31,7 @@ export function PublicActivityItem({ item }: { item: PublicActivity }) {
 
       <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
         <Link
-          href={`/event/${item.eventSlug}`}
+          href={eventHref}
           className="size-10 shrink-0 overflow-hidden rounded bg-muted sm:size-12"
         >
           <Image
@@ -42,7 +45,12 @@ export function PublicActivityItem({ item }: { item: PublicActivity }) {
 
         <div className="min-w-0 flex-1">
           <h4 className="mb-1 line-clamp-2 text-xs font-medium sm:text-sm">
-            <Link href={`/event/${item.eventSlug}`}>{item.title}</Link>
+            <Link
+              href={eventHref}
+              className="underline-offset-2 hover:underline"
+            >
+              {item.title}
+            </Link>
           </h4>
 
           <div className="flex flex-col gap-1 text-xs sm:flex-row sm:items-center sm:gap-2">

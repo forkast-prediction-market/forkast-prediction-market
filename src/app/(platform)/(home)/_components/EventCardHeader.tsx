@@ -37,8 +37,8 @@ export default function EventCardHeader({
         <h3
           className={
             `
-              line-clamp-2 w-fit text-sm leading-5 font-bold text-pretty transition-all duration-200
-              hover:line-clamp-none hover:text-foreground
+              line-clamp-2 w-fit text-sm leading-5 font-bold text-pretty underline-offset-2 transition-all duration-200
+              hover:line-clamp-none hover:text-foreground hover:underline
             `
           }
         >

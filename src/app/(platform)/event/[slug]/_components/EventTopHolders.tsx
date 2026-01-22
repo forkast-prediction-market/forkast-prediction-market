@@ -196,7 +196,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
                       key={holder.user.proxy_wallet_address!}
                       user={holder.user}
                       joinedAt={holder.user.created_at}
-                      usernameClassName="font-semibold text-foreground"
+                      usernameClassName="font-semibold text-foreground hover:underline underline-offset-2"
                       usernameMaxWidthClassName="max-w-35"
                       trailing={(
                         <span className="text-sm font-semibold text-yes tabular-nums">
@@ -225,7 +225,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
                       key={holder.user.proxy_wallet_address!}
                       user={holder.user}
                       joinedAt={holder.user.created_at}
-                      usernameClassName="font-semibold text-foreground"
+                      usernameClassName="font-semibold text-foreground hover:underline underline-offset-2"
                       usernameMaxWidthClassName="max-w-35"
                       trailing={(
                         <span className="text-sm font-semibold text-no tabular-nums">

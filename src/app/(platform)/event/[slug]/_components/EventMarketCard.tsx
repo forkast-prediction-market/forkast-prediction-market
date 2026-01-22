@@ -108,7 +108,7 @@ function EventMarketCardComponent({
     <div
       className={cn(
         `
-          relative z-0 flex w-full cursor-pointer flex-col items-start py-3 pr-2 pl-4 transition-all duration-200
+          group relative z-0 flex w-full cursor-pointer flex-col items-start py-3 pr-2 pl-4 transition-all duration-200
           ease-in-out
           before:pointer-events-none before:absolute before:inset-y-0 before:-right-3 before:-left-3 before:-z-10
           before:rounded-lg before:bg-black/5 before:opacity-0 before:transition-opacity before:duration-200
@@ -144,7 +144,7 @@ function EventMarketCardComponent({
                   />
                 )}
                 <div>
-                  <div className="text-sm font-bold">
+                  <div className="text-sm font-bold underline-offset-2 group-hover:underline">
                     {market.title}
                   </div>
                   <div className="text-xs text-muted-foreground">
@@ -235,7 +235,7 @@ function EventMarketCardComponent({
                   />
                 )}
                 <div>
-                  <div className="font-bold">
+                  <div className="font-bold underline-offset-2 group-hover:underline">
                     {market.title}
                   </div>
                   <div className="text-xs text-muted-foreground">

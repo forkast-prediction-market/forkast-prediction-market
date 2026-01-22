@@ -32,13 +32,15 @@ export default function PortfolioOpenOrdersRow({ order }: PortfolioOpenOrdersRow
   const expirationLabel = formatExpirationLabel(order)
   const marketIcon = order.market.icon_url || undefined
   const eventSlug = order.market.event_slug || order.market.slug
+  const marketSlug = order.market.event_slug ? order.market.slug : null
+  const eventHref = marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`
 
   return (
     <tr className="border-b transition-colors hover:bg-muted/50">
       <td className="px-2 py-3 sm:px-3">
         <div className="flex min-w-0 items-start gap-3">
           <Link
-            href={`/event/${eventSlug}`}
+            href={eventHref}
             className="relative size-12 shrink-0 overflow-hidden rounded bg-muted"
           >
             {marketIcon
@@ -59,8 +61,8 @@ export default function PortfolioOpenOrdersRow({ order }: PortfolioOpenOrdersRow
           </Link>
           <div className="min-w-0 space-y-1">
             <Link
-              href={`/event/${eventSlug}`}
-              className="block text-sm font-semibold whitespace-nowrap no-underline hover:no-underline"
+              href={eventHref}
+              className="block text-sm font-semibold whitespace-nowrap underline-offset-2 hover:underline"
               title={order.market.title}
             >
               {order.market.title}

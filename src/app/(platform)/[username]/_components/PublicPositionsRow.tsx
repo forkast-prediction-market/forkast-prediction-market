@@ -31,13 +31,15 @@ export default function PublicPositionsRow({
   const outcomeLabel = position.outcome ?? '—'
   const outcomeColor = outcomeLabel.toLowerCase().includes('yes') ? 'bg-yes/15 text-yes' : 'bg-no/15 text-no'
   const eventSlug = position.eventSlug || position.slug
+  const marketSlug = position.eventSlug && position.slug ? position.slug : null
+  const eventHref = marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`
 
   return (
     <tr className="transition-colors hover:bg-muted/50">
       <td className="px-2 py-3 align-middle sm:px-3">
         <div className="flex min-w-0 items-start gap-3">
           <Link
-            href={`/event/${eventSlug}`}
+            href={eventHref}
             className="relative size-12 shrink-0 overflow-hidden rounded bg-muted"
           >
             {imageSrc
@@ -56,10 +58,10 @@ export default function PublicPositionsRow({
           </Link>
           <div className="min-w-0 space-y-1">
             <Link
-              href={`/event/${eventSlug}`}
+              href={eventHref}
               className={`
-                block max-w-[64ch] truncate text-sm font-semibold text-foreground no-underline
-                hover:no-underline
+                block max-w-[64ch] truncate text-sm font-semibold text-foreground underline-offset-2
+                hover:underline
               `}
               title={position.title}
             >

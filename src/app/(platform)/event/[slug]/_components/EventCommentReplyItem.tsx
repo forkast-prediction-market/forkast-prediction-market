@@ -96,7 +96,7 @@ export default function EventCommentReplyItem({
         date={reply.created_at}
         joinedAt={reply.user_created_at}
         containerClassName="[&_img]:mt-1.5 [&_img]:h-10 [&_img]:w-10"
-        usernameClassName="text-sm font-semibold text-foreground"
+        usernameClassName="text-sm font-semibold text-foreground hover:underline underline-offset-2"
         usernameAddon={(
           <CommentPositionsIndicator
             positions={reply.positions}
@@ -109,7 +109,10 @@ export default function EventCommentReplyItem({
           <div className="flex-1">
             <Link
               href={parentHref}
-              className="text-sm font-semibold text-primary transition-colors hover:text-primary/80"
+              className={`
+                text-sm font-semibold text-primary underline-offset-2 transition-colors
+                hover:text-primary/80 hover:underline
+              `}
             >
               @
               {parentDisplayName}

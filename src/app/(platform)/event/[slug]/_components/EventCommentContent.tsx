@@ -34,7 +34,7 @@ function splitContent(content: string) {
         href={normalizeUrl(url)}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-primary transition-colors hover:text-primary/80"
+        className="text-primary underline-offset-2 transition-colors hover:text-primary/80 hover:underline"
       >
         {url}
       </a>,
