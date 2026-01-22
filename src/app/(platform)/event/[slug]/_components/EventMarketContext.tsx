@@ -89,7 +89,8 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
       return
     }
 
-    const totalDurationMs = Math.min(2400, Math.max(900, context.length * 12))
+    const fullContext = context
+    const totalDurationMs = Math.min(2400, Math.max(900, fullContext.length * 12))
     const start = performance.now()
     let animationFrame = 0
 
@@ -98,8 +99,8 @@ export default function EventMarketContext({ event }: EventMarketContextProps) {
 
     function tick(now: number) {
       const progress = Math.min(1, (now - start) / totalDurationMs)
-      const nextLength = Math.max(1, Math.floor(progress * context.length))
-      setDisplayedContext(context.slice(0, nextLength))
+      const nextLength = Math.max(1, Math.floor(progress * fullContext.length))
+      setDisplayedContext(fullContext.slice(0, nextLength))
 
       if (progress < 1) {
         animationFrame = window.requestAnimationFrame(tick)
