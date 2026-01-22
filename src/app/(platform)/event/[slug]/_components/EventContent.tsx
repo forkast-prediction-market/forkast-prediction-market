@@ -56,6 +56,8 @@ export default function EventContent({ event, user, marketContextEnabled, market
   const contentRef = useRef<HTMLDivElement | null>(null)
   const eventMarketsRef = useRef<HTMLDivElement | null>(null)
   const appliedOrderParamsRef = useRef<string | null>(null)
+  const appliedMarketSlugRef = useRef<string | null>(null)
+  const appliedEventIdRef = useRef<string | null>(null)
   const currentUser = clientUser ?? user
   const [showBackToTop, setShowBackToTop] = useState(false)
   const [backToTopBounds, setBackToTopBounds] = useState<{ left: number, width: number } | null>(null)
@@ -85,11 +87,14 @@ export default function EventContent({ event, user, marketContextEnabled, market
       return
     }
 
-    if (currentEventId === event.id && !marketSlug) {
-      return
-    }
+    const shouldApplyMarket = marketSlug
+      ? appliedMarketSlugRef.current !== marketSlug
+      || appliedEventIdRef.current !== event.id
+      || !currentMarketId
+      : currentEventId !== event.id
+        || !currentMarketId
 
-    if (currentEventId === event.id && currentMarketId === targetMarket.condition_id) {
+    if (!shouldApplyMarket) {
       return
     }
 
@@ -98,6 +103,8 @@ export default function EventContent({ event, user, marketContextEnabled, market
     if (defaultOutcome) {
       setOutcome(defaultOutcome)
     }
+    appliedMarketSlugRef.current = marketSlug ?? null
+    appliedEventIdRef.current = event.id
   }, [currentEventId, currentMarketId, event, marketSlug, setMarket, setOutcome])
 
   useEffect(() => {
