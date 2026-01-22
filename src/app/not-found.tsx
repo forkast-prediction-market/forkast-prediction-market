@@ -91,11 +91,11 @@ export default function NotFound() {
           </span>
         </p>
       )}
-      <Link className="mt-5" href="/">
-        <Button>
+      <Button asChild className="mt-5">
+        <Link href="/">
           Go to home
-        </Button>
-      </Link>
+        </Link>
+      </Button>
     </div>
   )
 }
