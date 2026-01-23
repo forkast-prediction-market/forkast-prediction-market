@@ -5,7 +5,7 @@ import { FilterProvider } from '@/app/[locale]/(platform)/_providers/FilterProvi
 import { TradingOnboardingProvider } from '@/app/[locale]/(platform)/_providers/TradingOnboardingProvider'
 import { AppProviders } from '@/providers/AppProviders'
 
-export default async function PlatformLayout({ children }: LayoutProps<'/'>) {
+export default async function PlatformLayout({ children }: LayoutProps<'/[locale]'>) {
   return (
     <AppProviders>
       <TradingOnboardingProvider>

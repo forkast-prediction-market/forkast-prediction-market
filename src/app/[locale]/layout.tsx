@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next'
-import { hasLocale } from 'next-intl'
+import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import TestModeBanner from '@/components/TestModeBanner'
@@ -45,8 +45,10 @@ export default async function LocaleLayout({ params, children }: LayoutProps<'/[
   return (
     <html lang={locale} className={`${openSauceOne.variable}`} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col font-sans antialiased">
-        {IS_TEST_MODE && <TestModeBanner />}
-        {children}
+        <NextIntlClientProvider>
+          {IS_TEST_MODE && <TestModeBanner />}
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   )

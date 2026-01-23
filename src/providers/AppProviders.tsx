@@ -2,7 +2,6 @@
 
 import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { NextIntlClientProvider } from 'next-intl'
 import { ThemeProvider } from 'next-themes'
 import dynamic from 'next/dynamic'
 import { Toaster } from '@/components/ui/sonner'
@@ -39,21 +38,19 @@ export function AppProviders({ children, disableAppKit }: AppProvidersProps) {
 
   return (
     <ProgressIndicatorProvider>
-      <NextIntlClientProvider locale="en">
-        <ThemeProvider attribute="class">
-          <QueryClientProvider client={queryClient}>
-            {shouldLoadAppKit
-              ? (
-                  <AppKitProvider>
-                    {content}
-                  </AppKitProvider>
-                )
-              : (
-                  content
-                )}
-          </QueryClientProvider>
-        </ThemeProvider>
-      </NextIntlClientProvider>
+      <ThemeProvider attribute="class">
+        <QueryClientProvider client={queryClient}>
+          {shouldLoadAppKit
+            ? (
+                <AppKitProvider>
+                  {content}
+                </AppKitProvider>
+              )
+            : (
+                content
+              )}
+        </QueryClientProvider>
+      </ThemeProvider>
     </ProgressIndicatorProvider>
   )
 }
