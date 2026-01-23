@@ -269,6 +269,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
       <CardContent className="flex h-full flex-col px-3 pt-3 pb-1">
         <EventCardHeader
           event={event}
+          activeOutcome={activeOutcome}
           isInTradingMode={isInTradingMode}
           isSingleMarket={isSingleMarket}
           roundedPrimaryDisplayChance={roundedPrimaryDisplayChance}

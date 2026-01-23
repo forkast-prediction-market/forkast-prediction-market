@@ -1,9 +1,11 @@
 import type { Event } from '@/types'
+import type { SelectedOutcome } from '@/types/EventCardTypes'
 import Image from 'next/image'
 import Link from 'next/link'
 
 interface EventCardHeaderProps {
   event: Event
+  activeOutcome?: SelectedOutcome | null
   isInTradingMode: boolean
   isSingleMarket: boolean
   roundedPrimaryDisplayChance: number
@@ -12,23 +14,32 @@ interface EventCardHeaderProps {
 
 export default function EventCardHeader({
   event,
+  activeOutcome,
   isInTradingMode,
   isSingleMarket,
   roundedPrimaryDisplayChance,
   onCancelTrade,
 }: EventCardHeaderProps) {
+  const activeMarket = activeOutcome?.market
+  const tradingTitle = !isSingleMarket
+    ? activeMarket?.short_title || activeMarket?.title
+    : null
+  const headerTitle = (isInTradingMode && tradingTitle) ? tradingTitle : event.title
+  const headerIcon = (isInTradingMode && activeMarket?.icon_url) ? activeMarket.icon_url : event.icon_url
+  const iconSizeClass = isInTradingMode ? 'size-7' : 'size-10'
+
   return (
     <div className="mb-3 flex items-start justify-between">
       <Link href={`/event/${event.slug}`} className="flex flex-1 items-center gap-2 pr-2">
         <div
           className={`
-            flex size-10 shrink-0 items-center justify-center self-start overflow-hidden rounded bg-muted
-            text-muted-foreground
+            flex ${iconSizeClass}
+            shrink-0 items-center justify-center self-start overflow-hidden rounded bg-muted text-muted-foreground
           `}
         >
           <Image
-            src={event.icon_url}
-            alt={event.creator || 'Market creator'}
+            src={headerIcon}
+            alt={headerTitle || event.creator || 'Market'}
             width={40}
             height={40}
             className="size-full rounded object-cover"
@@ -43,7 +54,7 @@ export default function EventCardHeader({
             `
           }
         >
-          {event.title}
+          {headerTitle}
         </h3>
       </Link>
 
@@ -57,9 +68,9 @@ export default function EventCardHeader({
               }}
               className={
                 `
-                  flex size-6 items-center justify-center rounded-lg bg-slate-200 text-slate-600 transition-colors
-                  hover:bg-slate-300
-                  dark:bg-slate-600 dark:text-slate-400 dark:hover:bg-slate-500
+                  flex size-6 items-center justify-center rounded-md text-slate-600 transition-colors
+                  hover:bg-slate-200
+                  dark:text-slate-400 dark:hover:bg-slate-600
                 `
               }
             >

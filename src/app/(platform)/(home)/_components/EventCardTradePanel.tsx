@@ -1,7 +1,8 @@
 import type { SelectedOutcome } from '@/types/EventCardTypes'
-import { DollarSignIcon } from 'lucide-react'
+import { DollarSignIcon, GripVerticalIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
+import { formatAmountInputValue } from '@/lib/formatters'
 
 interface EventCardTradePanelProps {
   activeOutcome: SelectedOutcome
@@ -24,12 +25,25 @@ export default function EventCardTradePanel({
   availableBalance,
   isLoading,
   canValidateBalance,
-  isSingleMarket,
+  isSingleMarket: _isSingleMarket,
   toWinLabel,
   onAmountChange,
   onConfirmTrade,
   onCancelTrade,
 }: EventCardTradePanelProps) {
+  const buyButtonClassName = activeOutcome.variant === 'yes'
+    ? 'bg-yes-foreground text-white hover:bg-yes-foreground/90 dark:bg-yes dark:hover:bg-yes/90'
+    : 'bg-no-foreground text-white hover:bg-no-foreground/90 dark:bg-no dark:hover:bg-no/90'
+  const sliderMax = canValidateBalance
+    ? Math.min(MAX_AMOUNT_INPUT, Math.max(availableBalance, 0))
+    : MAX_AMOUNT_INPUT
+  const sliderValue = sliderMax > 0
+    ? Math.min(Math.max(amountNumber, 0), sliderMax)
+    : 0
+  const sliderPercent = sliderMax > 0
+    ? Math.min(100, Math.max(0, (sliderValue / sliderMax) * 100))
+    : 0
+
   function handleTradeAmountInputChange(rawValue: string) {
     const cleaned = sanitizeNumericInput(rawValue)
 
@@ -51,43 +65,116 @@ export default function EventCardTradePanel({
     onAmountChange(cleaned)
   }
 
+  function handleSliderChange(rawValue: string) {
+    const numericValue = Number.parseFloat(rawValue)
+    if (!Number.isFinite(numericValue)) {
+      return
+    }
+    onAmountChange(formatAmountInputValue(numericValue))
+  }
+
+  function handleQuickAdd(delta: number) {
+    const nextValue = Math.min(MAX_AMOUNT_INPUT, Math.max(0, amountNumber + delta))
+    onAmountChange(formatAmountInputValue(nextValue))
+  }
+
   return (
     <div className="flex-1 space-y-3">
-      <div className="relative">
-        <DollarSignIcon
-          className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-yes"
-        />
-        <input
-          type="text"
-          inputMode="decimal"
-          placeholder="0.00"
-          value={formattedTradeAmount}
-          onChange={event => handleTradeAmountInputChange(event.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && amountNumber > 0) {
-              e.preventDefault()
-              onConfirmTrade()
-            }
-            else if (e.key === 'Escape') {
-              e.preventDefault()
-              onCancelTrade()
-            }
-          }}
+      <div className="grid grid-cols-5 gap-4">
+        <div
           className={
             `
-              w-full
-              [appearance:textfield]
-              rounded border ${amountNumber > availableBalance ? 'border-red-500' : 'border-transparent'}
-              bg-slate-100 py-2 pr-3 pl-10 text-sm text-slate-900 transition-colors
-              placeholder:text-slate-500
-              focus:bg-slate-200 focus:outline-none
-              dark:bg-slate-500 dark:text-slate-100 dark:placeholder:text-slate-400 dark:focus:bg-slate-600
-              [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
+              relative col-span-3 flex items-center gap-0 rounded-md border px-2 py-2.5 transition-colors
+              ${amountNumber > availableBalance ? 'border-red-500' : 'border-border/70'}
+              bg-background
+              focus-within:border-border focus-within:ring-0
             `
           }
-          onClick={e => e.stopPropagation()}
-          autoFocus
-        />
+        >
+          <DollarSignIcon className="size-3 text-foreground" />
+          <input
+            type="text"
+            inputMode="decimal"
+            placeholder="0.00"
+            value={formattedTradeAmount}
+            onChange={event => handleTradeAmountInputChange(event.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && amountNumber > 0) {
+                e.preventDefault()
+                onConfirmTrade()
+              }
+              else if (e.key === 'Escape') {
+                e.preventDefault()
+                onCancelTrade()
+              }
+            }}
+            className={
+              `
+                w-full min-w-0
+                [appearance:textfield]
+                bg-transparent pr-9 text-sm font-medium text-foreground
+                placeholder:text-muted-foreground
+                focus:outline-none
+                [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
+              `
+            }
+            onClick={e => e.stopPropagation()}
+            autoFocus
+          />
+          <div className="absolute top-1/2 right-1.5 flex -translate-y-1/2 items-center gap-0.5">
+            <button
+              type="button"
+              className={`
+                h-6 rounded bg-muted px-0.5 text-xs leading-none font-medium text-muted-foreground transition-colors
+                hover:text-foreground
+              `}
+              onClick={() => handleQuickAdd(1)}
+            >
+              +1
+            </button>
+            <button
+              type="button"
+              className={`
+                h-6 rounded bg-muted px-0.5 text-xs leading-none font-medium text-muted-foreground transition-colors
+                hover:text-foreground
+              `}
+              onClick={() => handleQuickAdd(10)}
+            >
+              +10
+            </button>
+          </div>
+        </div>
+
+        <div className="relative col-span-2 flex items-center">
+          <div className="relative h-2 w-full rounded-full bg-border/60">
+            <div
+              className="absolute inset-y-0 left-0 rounded-full"
+              style={{
+                width: `${sliderPercent}%`,
+                background: 'linear-gradient(90deg, #7dd3fc 0%, #a855f7 100%)',
+              }}
+            />
+            <div
+              className="absolute top-1/2 -translate-y-1/2"
+              style={{ left: `${sliderPercent}%` }}
+            >
+              <div className="flex size-6 -translate-x-1/2 items-center justify-center rounded-full bg-white shadow-sm">
+                <GripVerticalIcon className="size-3 text-muted-foreground" />
+              </div>
+            </div>
+          </div>
+          <input
+            type="range"
+            min="0"
+            max={sliderMax}
+            step="0.01"
+            value={sliderValue}
+            onChange={event => handleSliderChange(event.target.value)}
+            className="absolute inset-0 h-6 w-full cursor-pointer opacity-0"
+            disabled={sliderMax <= 0}
+            aria-label="Trade amount slider"
+          />
+        </div>
       </div>
 
       <Button
@@ -101,9 +188,9 @@ export default function EventCardTradePanel({
           || amountNumber <= 0
           || (canValidateBalance && amountNumber > availableBalance)
         }
-        size="outcome"
+        size="outcomeLg"
         variant={activeOutcome.variant}
-        className="w-full"
+        className={`w-full text-white [&_*]:text-white ${buyButtonClassName}`}
       >
         {isLoading
           ? (
@@ -117,15 +204,13 @@ export default function EventCardTradePanel({
             )
           : (
               <div className="line-clamp-3 text-center text-xs">
-                <div>
+                <div className="text-sm font-bold">
                   Buy
                   {' '}
-                  {activeOutcome.variant === 'yes'
-                    ? activeOutcome.outcome.outcome_text
-                    : (isSingleMarket ? activeOutcome.outcome.outcome_text : `Against ${activeOutcome.outcome.outcome_text}`)}
+                  {activeOutcome.outcome.outcome_text}
                 </div>
                 <div className="text-xs opacity-90">
-                  to win $
+                  To win $
                   {toWinLabel}
                 </div>
               </div>
