@@ -42,6 +42,8 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])
   const mainTabRef = useRef<HTMLButtonElement>(null)
   const parentScrollContainerRef = useRef<HTMLDivElement>(null)
+  const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })
+  const [indicatorReady, setIndicatorReady] = useState(false)
 
   const tagItems = useMemo(() => {
     return [
@@ -49,6 +51,10 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
       ...tag.childs.map(child => ({ slug: child.slug, label: child.name })),
     ]
   }, [tag.slug, tag.childs])
+  const activeSubtagSlug = useMemo(
+    () => (tagItems.some(item => item.slug === tagFromFilters) ? tagFromFilters : tag.slug),
+    [tag.slug, tagFromFilters, tagItems],
+  )
 
   const updateScrollShadows = useCallback(() => {
     const container = scrollContainerRef.current
@@ -64,6 +70,26 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
     setShowLeftShadow(scrollLeft > 4)
     setShowRightShadow(scrollLeft < maxScrollLeft - 4)
   }, [])
+
+  const updateIndicator = useCallback(() => {
+    if (!isActive) {
+      setIndicatorReady(false)
+      return
+    }
+
+    const activeIndex = tagItems.findIndex(item => item.slug === activeSubtagSlug)
+    const activeButton = buttonRefs.current[activeIndex]
+
+    if (!activeButton) {
+      return
+    }
+
+    const { offsetLeft, offsetWidth } = activeButton
+    queueMicrotask(() => {
+      setIndicatorStyle({ left: offsetLeft, width: offsetWidth })
+      setIndicatorReady(true)
+    })
+  }, [activeSubtagSlug, isActive, tagItems])
 
   const updateParentScrollShadows = useCallback(() => {
     const parentContainer = parentScrollContainerRef.current
@@ -104,6 +130,10 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
 
     return () => cancelAnimationFrame(rafId)
   }, [isActive, updateScrollShadows, tag.childs.length])
+
+  useLayoutEffect(() => {
+    updateIndicator()
+  }, [updateIndicator])
 
   useLayoutEffect(() => {
     const rafId = requestAnimationFrame(() => {
@@ -225,6 +255,7 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
       clearTimeout(resizeTimeout)
       resizeTimeout = setTimeout(() => {
         updateScrollShadows()
+        updateIndicator()
       }, 16)
     }
 
@@ -240,7 +271,7 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
       window.removeEventListener('resize', handleResize)
       clearTimeout(resizeTimeout)
     }
-  }, [updateScrollShadows, isActive])
+  }, [updateScrollShadows, updateIndicator, isActive])
 
   useEffect(() => {
     const parentContainer = parentScrollContainerRef.current
@@ -336,21 +367,29 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
                 `,
               )}
             >
+              <div
+                className={cn(
+                  'pointer-events-none absolute inset-y-0 rounded-sm bg-primary/50',
+                  indicatorReady && 'transition-all duration-300 ease-out',
+                )}
+                style={{
+                  left: `${indicatorStyle.left}px`,
+                  width: `${indicatorStyle.width}px`,
+                  opacity: indicatorReady ? 1 : 0,
+                }}
+              />
               <Button
                 ref={(el: HTMLButtonElement | null) => {
                   buttonRefs.current[0] = el
                 }}
                 onClick={() => handleTagClick(tag.slug)}
-                variant={
-                  tagFromFilters === tag.slug
-                    ? 'default'
-                    : 'ghost'
-                }
+                variant="ghost"
                 size="sm"
                 className={cn(
-                  'h-8 shrink-0 text-sm whitespace-nowrap',
-                  tagFromFilters === tag.slug
-                    ? undefined
+                  'relative z-10 h-8 shrink-0 bg-transparent text-sm whitespace-nowrap',
+                  'hover:bg-transparent dark:hover:bg-transparent',
+                  activeSubtagSlug === tag.slug
+                    ? 'text-primary hover:text-primary'
                     : 'text-muted-foreground hover:text-foreground',
                 )}
               >
@@ -364,16 +403,13 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
                     buttonRefs.current[index + 1] = el
                   }}
                   onClick={() => handleTagClick(subtag.slug)}
-                  variant={
-                    tagFromFilters === subtag.slug
-                      ? 'default'
-                      : 'ghost'
-                  }
+                  variant="ghost"
                   size="sm"
                   className={cn(
-                    'h-8 shrink-0 text-sm whitespace-nowrap',
-                    tagFromFilters === subtag.slug
-                      ? undefined
+                    'relative z-10 h-8 shrink-0 bg-transparent text-sm whitespace-nowrap',
+                    'hover:bg-transparent dark:hover:bg-transparent',
+                    activeSubtagSlug === subtag.slug
+                      ? 'text-primary hover:text-primary'
                       : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
