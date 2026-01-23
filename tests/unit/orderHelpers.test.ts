@@ -3,7 +3,7 @@ import { ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 import { buildOrderPayload, calculateOrderAmounts, submitOrder } from '@/lib/orders'
 
 const storeOrderActionMock = vi.fn()
-vi.mock('@/app/(platform)/event/[slug]/_actions/store-order', () => ({
+vi.mock('@/app/[locale]/(platform)/event/[slug]/_actions/store-order', () => ({
   storeOrderAction: (...args: any[]) => storeOrderActionMock(...args),
 }))
 
