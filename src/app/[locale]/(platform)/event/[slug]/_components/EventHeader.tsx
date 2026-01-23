@@ -39,13 +39,13 @@ export default function EventHeader({ event }: EventHeaderProps) {
           height={64}
           className={cn(
             'shrink-0 rounded-sm transition-all ease-in-out',
-            scrolled ? 'size-10' : 'size-12 lg:size-14',
+            scrolled ? 'size-10' : 'size-16',
           )}
         />
 
         <h1 className={cn(
           'font-bold transition-all ease-in-out',
-          scrolled ? 'text-xs lg:text-base' : 'text-sm lg:text-xl',
+          scrolled ? 'text-sm lg:text-base' : 'text-lg lg:text-2xl',
         )}
         >
           {event.title}

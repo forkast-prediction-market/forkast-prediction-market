@@ -65,6 +65,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
   const isSingleMarket = event.markets.length === 1
   const yesOutcome = event.markets[0].outcomes[0]
   const noOutcome = event.markets[0].outcomes[1]
+  const isResolvedEvent = event.status === 'resolved'
   const hasRecentMarket = event.markets.some(market => isMarketNew(market.created_at))
   const isNegRiskEnabled = Boolean(event.enable_neg_risk)
   const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskEnabled), [isNegRiskEnabled])
@@ -82,6 +83,28 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
   const primaryMarket = event.markets[0]
   const primaryDisplayChance = primaryMarket ? getDisplayChance(primaryMarket.condition_id) : 0
   const roundedPrimaryDisplayChance = Math.round(primaryDisplayChance)
+  const endedLabel = useMemo(() => {
+    if (!isResolvedEvent || !isSingleMarket) {
+      return null
+    }
+    const endedAt = event.end_date
+      ?? primaryMarket?.end_time
+      ?? primaryMarket?.condition?.resolved_at
+      ?? null
+    if (!endedAt) {
+      return null
+    }
+    const resolvedDate = new Date(endedAt)
+    if (Number.isNaN(resolvedDate.getTime())) {
+      return null
+    }
+    const formatter = new Intl.DateTimeFormat('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    })
+    return `Ended ${formatter.format(resolvedDate)}`
+  }, [event.end_date, isResolvedEvent, isSingleMarket, primaryMarket?.condition?.resolved_at, primaryMarket?.end_time])
 
   const resolvedVolume = useMemo(() => event.volume ?? 0, [event.volume])
 
@@ -303,6 +326,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
                   {!isSingleMarket && (
                     <EventCardMarketsList
                       event={event}
+                      isResolvedEvent={isResolvedEvent}
                       getDisplayChance={getDisplayChance}
                       onTrade={handleTrade}
                       onToggle={onToggle}
@@ -315,6 +339,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
                       noOutcome={noOutcome}
                       primaryMarket={primaryMarket}
                       isLoading={isLoading}
+                      isResolvedEvent={isResolvedEvent}
                       onTrade={handleTrade}
                       onToggle={onToggle}
                     />
@@ -328,6 +353,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
           hasRecentMarket={hasRecentMarket}
           resolvedVolume={resolvedVolume}
           isInTradingMode={isInTradingMode}
+          endedLabel={endedLabel}
         />
       </CardContent>
     </Card>

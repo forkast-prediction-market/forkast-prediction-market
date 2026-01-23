@@ -694,15 +694,29 @@ async function updateEventStatusFromMarkets(eventId: string) {
     return
   }
 
+  const { count: unresolvedCount, error: unresolvedError } = await supabaseAdmin
+    .from('markets')
+    .select('condition_id', { count: 'exact', head: true })
+    .eq('event_id', eventId)
+    .or('is_resolved.eq.false,is_resolved.is.null')
+
+  if (unresolvedError) {
+    console.error(`Failed to compute resolved market count for event ${eventId}:`, unresolvedError)
+    return
+  }
+
   const hasMarkets = (totalCount ?? 0) > 0
   const hasActiveMarket = (activeCount ?? 0) > 0
+  const hasUnresolvedMarket = (unresolvedCount ?? 0) > 0
 
-  const nextStatus: 'draft' | 'active' | 'archived'
-    = hasActiveMarket
-      ? 'active'
-      : hasMarkets
-        ? 'archived'
-        : 'draft'
+  const nextStatus: 'draft' | 'active' | 'resolved' | 'archived'
+    = !hasMarkets
+      ? 'draft'
+      : !hasUnresolvedMarket
+          ? 'resolved'
+          : hasActiveMarket
+            ? 'active'
+            : 'archived'
 
   const { error: updateError } = await supabaseAdmin
     .from('events')

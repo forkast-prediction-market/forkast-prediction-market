@@ -180,6 +180,7 @@ interface ListEventsProps {
   search?: string
   userId?: string | undefined
   bookmarked?: boolean
+  status?: Event['status']
   offset?: number
 }
 
@@ -336,6 +337,7 @@ export const EventRepository = {
     search = '',
     userId = '',
     bookmarked = false,
+    status = 'active',
     offset = 0,
   }: ListEventsProps): Promise<QueryResult<Event[]>> {
     'use cache'
@@ -347,7 +349,7 @@ export const EventRepository = {
 
       const whereConditions = []
 
-      whereConditions.push(eq(events.status, 'active'))
+      whereConditions.push(eq(events.status, status))
 
       if (search) {
         const normalizedSearch = search.trim().toLowerCase()
@@ -403,7 +405,7 @@ export const EventRepository = {
       }
 
       whereConditions[0] = and(
-        eq(events.status, 'active'),
+        eq(events.status, status),
         sql`NOT EXISTS (
           SELECT 1
           FROM ${event_tags} et

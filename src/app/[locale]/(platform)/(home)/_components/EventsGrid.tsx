@@ -35,6 +35,7 @@ async function fetchEvents({
     tag: filters.tag,
     search: filters.search,
     bookmarked: filters.bookmarked.toString(),
+    status: filters.status,
     offset: pageParam.toString(),
   })
   if (filters.hideSports) {
@@ -63,7 +64,10 @@ export default function EventsGrid({
   const [hasInitialized, setHasInitialized] = useState(false)
   const [scrollMargin, setScrollMargin] = useState(0)
   const PAGE_SIZE = 40
-  const isDefaultState = filters.tag === 'trending' && filters.search === '' && !filters.bookmarked
+  const isDefaultState = filters.tag === 'trending'
+    && filters.search === ''
+    && !filters.bookmarked
+    && filters.status === 'active'
   const shouldUseInitialData = isDefaultState && initialEvents.length > 0
 
   const {
@@ -76,7 +80,17 @@ export default function EventsGrid({
     isPending,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ['events', filters.tag, filters.search, filters.bookmarked, filters.hideSports, filters.hideCrypto, filters.hideEarnings, userCacheKey],
+    queryKey: [
+      'events',
+      filters.tag,
+      filters.search,
+      filters.bookmarked,
+      filters.status,
+      filters.hideSports,
+      filters.hideCrypto,
+      filters.hideEarnings,
+      userCacheKey,
+    ],
     queryFn: ({ pageParam }) => fetchEvents({
       pageParam,
       filters,

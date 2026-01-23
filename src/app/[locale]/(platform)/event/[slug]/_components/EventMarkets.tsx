@@ -1,11 +1,13 @@
 import type { MarketPositionTag } from '@/app/[locale]/(platform)/event/[slug]/_components/EventMarketCard'
+import type { EventMarketRow } from '@/app/[locale]/(platform)/event/[slug]/_hooks/useEventMarketRows'
 import type { MarketDetailTab } from '@/app/[locale]/(platform)/event/[slug]/_hooks/useMarketDetailController'
 import type { SharesByCondition } from '@/app/[locale]/(platform)/event/[slug]/_hooks/useUserShareBalances'
 import type { OrderBookSummariesResponse } from '@/app/[locale]/(platform)/event/[slug]/_types/EventOrderBookTypes'
 import type { DataApiActivity } from '@/lib/data-api/user'
 import type { Event, UserPosition } from '@/types'
 import { useQuery } from '@tanstack/react-query'
-import { LockKeyhole, RefreshCwIcon } from 'lucide-react'
+import { Check, ChevronDown, LockKeyhole, RefreshCwIcon, SquareArrowOutUpRight, X } from 'lucide-react'
+import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import SellPositionModal from '@/app/[locale]/(platform)/_components/SellPositionModal'
 import EventMarketCard from '@/app/[locale]/(platform)/event/[slug]/_components/EventMarketCard'
@@ -25,7 +27,7 @@ import { Button } from '@/components/ui/button'
 import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { fetchUserActivityData, fetchUserOtherBalance, fetchUserPositionsForMarket } from '@/lib/data-api/user'
 import { formatAmountInputValue, formatSharesLabel, fromMicro } from '@/lib/formatters'
-import { buildUmaProposeUrl } from '@/lib/uma'
+import { buildUmaProposeUrl, buildUmaSettledUrl } from '@/lib/uma'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket, useOrder } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
@@ -41,6 +43,40 @@ function toNumber(value: unknown) {
   }
   const numeric = Number(value)
   return Number.isFinite(numeric) ? numeric : null
+}
+
+function isMarketResolved(market: Event['markets'][number]) {
+  return Boolean(market.is_resolved || market.condition?.resolved)
+}
+
+export function resolveWinningOutcomeIndex(market: Event['markets'][number]) {
+  const explicitWinner = market.outcomes.find(outcome => outcome.is_winning_outcome)
+  if (explicitWinner && (explicitWinner.outcome_index === OUTCOME_INDEX.YES || explicitWinner.outcome_index === OUTCOME_INDEX.NO)) {
+    return explicitWinner.outcome_index
+  }
+
+  const payoutNumerators = market.condition?.payout_numerators
+  if (!Array.isArray(payoutNumerators) || payoutNumerators.length === 0) {
+    return null
+  }
+
+  const numericNumerators = payoutNumerators.map(value => Number(value))
+  const finiteNumerators = numericNumerators.filter(value => Number.isFinite(value))
+  if (finiteNumerators.length === 0) {
+    return null
+  }
+
+  const maxValue = Math.max(...finiteNumerators)
+  if (!(maxValue > 0)) {
+    return null
+  }
+
+  const winnerIndex = numericNumerators.findIndex(value => value === maxValue)
+  if (winnerIndex === OUTCOME_INDEX.YES || winnerIndex === OUTCOME_INDEX.NO) {
+    return winnerIndex
+  }
+
+  return null
 }
 
 interface CashOutModalPayload {
@@ -69,6 +105,25 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   const isNegRiskEnabled = Boolean(event.enable_neg_risk || event.neg_risk)
   const isNegRiskAugmented = Boolean(event.neg_risk_augmented)
   const { rows: marketRows, hasChanceData } = useEventMarketRows(event)
+  const { activeMarketRows, resolvedMarketRows } = useMemo(() => {
+    if (isNegRiskEnabled) {
+      return { activeMarketRows: marketRows, resolvedMarketRows: [] }
+    }
+
+    const activeRows: typeof marketRows = []
+    const resolvedRows: typeof marketRows = []
+
+    marketRows.forEach((row) => {
+      if (isMarketResolved(row.market)) {
+        resolvedRows.push(row)
+      }
+      else {
+        activeRows.push(row)
+      }
+    })
+
+    return { activeMarketRows: activeRows, resolvedMarketRows: resolvedRows }
+  }, [isNegRiskEnabled, marketRows])
   const {
     expandedMarketId,
     orderBookPollingEnabled,
@@ -85,6 +140,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
     [event.id],
   )
   const [chancePulseToken, setChancePulseToken] = useState(0)
+  const [showResolvedMarkets, setShowResolvedMarkets] = useState(false)
   const priceHistoryWasFetchingRef = useRef(false)
   const {
     isFetching: isPriceHistoryFetching,
@@ -410,6 +466,14 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
     }
   }, [expandMarket, inputRef, setIsMobileOrderPanelOpen, setMarket, setOutcome, setSide])
 
+  const allMarketsResolved = !isNegRiskEnabled
+    && marketRows.length > 0
+    && marketRows.every(row => isMarketResolved(row.market))
+  const showResolvedInline = allMarketsResolved
+  const primaryMarketRows = showResolvedInline ? resolvedMarketRows : activeMarketRows
+  const shouldShowActiveSection = primaryMarketRows.length > 0 || shouldShowOtherRow
+  const shouldShowResolvedSection = !showResolvedInline && !isNegRiskEnabled && resolvedMarketRows.length > 0
+
   if (isSingleMarket) {
     return <></>
   }
@@ -417,10 +481,10 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
   return (
     <>
       <div className="-mx-4 bg-background lg:mx-0">
-        {(marketRows.length > 0 || shouldShowOtherRow) && (
+        {shouldShowActiveSection && (
           <div className="mt-4 mr-2 ml-4 border-b border-border lg:mx-0" />
         )}
-        {marketRows
+        {primaryMarketRows
           .map((row, index, orderedMarkets) => {
             const { market } = row
             const isExpanded = expandedMarketId === market.condition_id
@@ -433,22 +497,34 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
               : null
             const positionTags = positionTagsByCondition[market.condition_id] ?? []
             const shouldShowSeparator = index !== orderedMarkets.length - 1 || shouldShowOtherRow
+            const isResolvedInlineRow = showResolvedInline
 
             return (
               <div key={market.condition_id} className="transition-colors">
-                <EventMarketCard
-                  row={row}
-                  showMarketIcon={Boolean(event.show_market_icons)}
-                  isExpanded={isExpanded}
-                  isActiveMarket={selectedMarketId === market.condition_id}
-                  activeOutcomeIndex={activeOutcomeIndex}
-                  onToggle={() => handleToggle(market)}
-                  onBuy={(cardMarket, outcomeIndex, source) => handleBuy(cardMarket, outcomeIndex, source)}
-                  chanceHighlightKey={chanceHighlightKey}
-                  positionTags={positionTags}
-                  openOrdersCount={openOrdersCountByCondition[market.condition_id] ?? 0}
-                  onCashOut={handleCashOut}
-                />
+                {isResolvedInlineRow
+                  ? (
+                      <ResolvedMarketRow
+                        row={row}
+                        showMarketIcon={Boolean(event.show_market_icons)}
+                        isExpanded={isExpanded}
+                        onToggle={() => handleToggle(market)}
+                      />
+                    )
+                  : (
+                      <EventMarketCard
+                        row={row}
+                        showMarketIcon={Boolean(event.show_market_icons)}
+                        isExpanded={isExpanded}
+                        isActiveMarket={selectedMarketId === market.condition_id}
+                        activeOutcomeIndex={activeOutcomeIndex}
+                        onToggle={() => handleToggle(market)}
+                        onBuy={(cardMarket, outcomeIndex, source) => handleBuy(cardMarket, outcomeIndex, source)}
+                        chanceHighlightKey={chanceHighlightKey}
+                        positionTags={positionTags}
+                        openOrdersCount={openOrdersCountByCondition[market.condition_id] ?? 0}
+                        onCashOut={handleCashOut}
+                      />
+                    )}
 
                 <div
                   className={cn(
@@ -465,6 +541,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
                     isMobile={isMobile}
                     isNegRiskEnabled={isNegRiskEnabled}
                     isNegRiskAugmented={isNegRiskAugmented}
+                    variant={isResolvedInlineRow ? 'resolved' : undefined}
                     convertOptions={convertOptions}
                     eventOutcomes={eventOutcomes}
                     activeOutcomeForMarket={activeOutcomeForMarket}
@@ -493,8 +570,89 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
             <OtherOutcomeRow shares={otherShares} showMarketIcon={Boolean(event.show_market_icons)} />
           </div>
         )}
-        {(marketRows.length > 0 || shouldShowOtherRow) && (
+        {shouldShowActiveSection && (
           <div className="mr-2 mb-4 ml-4 border-b border-border lg:mx-0" />
+        )}
+
+        {shouldShowResolvedSection && (
+          <div className="pb-4">
+            <button
+              type="button"
+              className={cn(
+                'group flex items-center gap-1 px-4 py-2 text-base font-semibold text-foreground',
+                'transition-colors hover:text-foreground/80 lg:px-0',
+              )}
+              onClick={() => setShowResolvedMarkets(open => !open)}
+              aria-expanded={showResolvedMarkets}
+              data-state={showResolvedMarkets ? 'open' : 'closed'}
+            >
+              <span>{showResolvedMarkets ? 'Hide resolved' : 'View resolved'}</span>
+              <ChevronDown
+                className="size-6 transition-transform duration-150 group-data-[state=open]:rotate-180"
+              />
+            </button>
+
+            {showResolvedMarkets && (
+              <div className="mt-4">
+                {resolvedMarketRows.map((row, index, orderedMarkets) => {
+                  const { market } = row
+                  const isExpanded = expandedMarketId === market.condition_id
+                  const activeOutcomeForMarket = selectedOutcome && selectedOutcome.condition_id === market.condition_id
+                    ? selectedOutcome
+                    : market.outcomes[0]
+                  const shouldShowSeparator = index !== orderedMarkets.length - 1
+
+                  return (
+                    <div key={market.condition_id} className="transition-colors">
+                      <ResolvedMarketRow
+                        row={row}
+                        showMarketIcon={Boolean(event.show_market_icons)}
+                        isExpanded={isExpanded}
+                        onToggle={() => handleToggle(market)}
+                      />
+
+                      <div
+                        className={cn(
+                          'overflow-hidden transition-all duration-500 ease-in-out',
+                          isExpanded
+                            ? 'max-h-160 translate-y-0 opacity-100'
+                            : 'pointer-events-none max-h-0 -translate-y-2 opacity-0',
+                        )}
+                        aria-hidden={!isExpanded}
+                      >
+                        <MarketDetailTabs
+                          market={market}
+                          event={event}
+                          isMobile={isMobile}
+                          isNegRiskEnabled={isNegRiskEnabled}
+                          isNegRiskAugmented={isNegRiskAugmented}
+                          variant="resolved"
+                          convertOptions={convertOptions}
+                          eventOutcomes={eventOutcomes}
+                          activeOutcomeForMarket={activeOutcomeForMarket}
+                          tabController={{
+                            selected: getSelectedDetailTab(market.condition_id),
+                            select: tabId => selectDetailTab(market.condition_id, tabId),
+                          }}
+                          orderBookData={{
+                            summaries: orderBookSummaries,
+                            isLoading: shouldShowOrderBookLoader,
+                            refetch: orderBookQuery.refetch,
+                            isRefetching: orderBookQuery.isRefetching,
+                          }}
+                          sharesByCondition={sharesByCondition}
+                        />
+                      </div>
+
+                      {shouldShowSeparator && (
+                        <div className="mr-2 ml-4 border-b border-border lg:mx-0" />
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -515,6 +673,102 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
         />
       )}
     </>
+  )
+}
+
+function ResolvedMarketRow({
+  row,
+  showMarketIcon,
+  isExpanded,
+  onToggle,
+}: {
+  row: EventMarketRow
+  showMarketIcon: boolean
+  isExpanded: boolean
+  onToggle: () => void
+}) {
+  const { market } = row
+  const resolvedOutcomeIndex = resolveWinningOutcomeIndex(market)
+  const hasResolvedOutcome = resolvedOutcomeIndex === OUTCOME_INDEX.YES || resolvedOutcomeIndex === OUTCOME_INDEX.NO
+  const isYesOutcome = resolvedOutcomeIndex !== OUTCOME_INDEX.NO
+  const resolvedOutcomeLabel = isYesOutcome ? 'Yes' : 'No'
+  const resolvedVolume = Number.isFinite(market.volume) ? market.volume : 0
+  const shouldShowIcon = showMarketIcon && Boolean(market.icon_url)
+
+  return (
+    <div
+      className={cn(
+        `
+          group relative z-0 flex w-full cursor-pointer flex-col items-start py-3 pr-2 pl-4 transition-all duration-200
+          ease-in-out
+          before:pointer-events-none before:absolute before:inset-y-0 before:-right-3 before:-left-3 before:-z-10
+          before:rounded-lg before:bg-black/5 before:opacity-0 before:transition-opacity before:duration-200
+          before:content-['']
+          hover:before:opacity-100
+          lg:flex-row lg:items-center lg:rounded-lg lg:px-0
+          dark:before:bg-white/5
+        `,
+      )}
+      role="button"
+      tabIndex={0}
+      aria-expanded={isExpanded}
+      onClick={onToggle}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onToggle()
+        }
+      }}
+    >
+      <div className="flex w-full flex-col gap-3 lg:flex-row lg:items-center">
+        <div className="flex w-full items-start gap-3 lg:w-2/5">
+          {shouldShowIcon && (
+            <Image
+              src={market.icon_url}
+              alt={market.title}
+              width={42}
+              height={42}
+              className="shrink-0 rounded-md"
+            />
+          )}
+          <div>
+            <div className="text-sm font-bold underline-offset-2 group-hover:underline">
+              {market.short_title || market.title}
+            </div>
+            <div className="text-sm text-muted-foreground">
+              $
+              {resolvedVolume.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+              {' '}
+              Vol.
+            </div>
+          </div>
+        </div>
+
+        <div className="flex w-full justify-end lg:ms-auto lg:w-auto">
+          {hasResolvedOutcome
+            ? (
+                <span className="inline-flex items-center gap-2 text-sm font-semibold text-foreground">
+                  <span className="text-base font-bold">{resolvedOutcomeLabel}</span>
+                  <span className={cn(
+                    'flex size-4 items-center justify-center rounded-full',
+                    isYesOutcome ? 'bg-yes' : 'bg-no',
+                  )}
+                  >
+                    {isYesOutcome
+                      ? <Check className="size-3 text-background" strokeWidth={2.5} />
+                      : <X className="size-3 text-background" strokeWidth={2.5} />}
+                  </span>
+                </span>
+              )
+            : (
+                <span className="text-sm font-semibold text-muted-foreground">Resolved</span>
+              )}
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -570,6 +824,7 @@ interface MarketDetailTabsProps {
   isMobile: boolean
   isNegRiskEnabled: boolean
   isNegRiskAugmented: boolean
+  variant?: 'default' | 'resolved'
   convertOptions: Array<{ id: string, label: string, shares: number, conditionId: string }>
   eventOutcomes: Array<{ conditionId: string, questionId?: string, label: string }>
   activeOutcomeForMarket: Event['markets'][number]['outcomes'][number] | undefined
@@ -592,6 +847,7 @@ function MarketDetailTabs({
   isMobile,
   isNegRiskEnabled,
   isNegRiskAugmented,
+  variant = 'default',
   convertOptions,
   eventOutcomes,
   activeOutcomeForMarket,
@@ -602,6 +858,7 @@ function MarketDetailTabs({
   const user = useUser()
   const { selected: controlledTab, select } = tabController
   const positionSizeThreshold = 0.01
+  const isResolvedView = variant === 'resolved'
   const marketShares = sharesByCondition?.[market.condition_id]
   const yesShares = marketShares?.[OUTCOME_INDEX.YES] ?? 0
   const noShares = marketShares?.[OUTCOME_INDEX.NO] ?? 0
@@ -615,12 +872,15 @@ function MarketDetailTabs({
     userId: user?.id,
     eventSlug: event.slug,
     conditionId: market.condition_id,
-    enabled: Boolean(user?.id),
+    enabled: Boolean(user?.id) && !isResolvedView,
   })
   const hasOpenOrders = useMemo(() => {
+    if (isResolvedView) {
+      return false
+    }
     const pages = openOrdersData?.pages ?? []
     return pages.some(page => page.data.length > 0)
-  }, [openOrdersData?.pages])
+  }, [isResolvedView, openOrdersData?.pages])
 
   const { data: historyPreview } = useQuery<DataApiActivity[]>({
     queryKey: ['user-market-activity-preview', user?.proxy_wallet_address, market.condition_id],
@@ -631,18 +891,30 @@ function MarketDetailTabs({
         conditionId: market.condition_id,
         signal,
       }),
-    enabled: Boolean(user?.proxy_wallet_address && market.condition_id),
+    enabled: Boolean(user?.proxy_wallet_address && market.condition_id) && !isResolvedView,
     staleTime: 1000 * 60 * 5,
     gcTime: 1000 * 60 * 10,
   })
   const hasHistory = useMemo(
-    () => (historyPreview ?? []).some(activity =>
-      activity.type?.toLowerCase() === 'trade'
-      && activity.conditionId === market.condition_id),
-    [historyPreview, market.condition_id],
+    () => {
+      if (isResolvedView) {
+        return false
+      }
+      return (historyPreview ?? []).some(activity =>
+        activity.type?.toLowerCase() === 'trade'
+        && activity.conditionId === market.condition_id)
+    },
+    [historyPreview, isResolvedView, market.condition_id],
   )
 
   const visibleTabs = useMemo(() => {
+    if (isResolvedView) {
+      return [
+        { id: 'graph', label: 'Graph' },
+        { id: 'resolution', label: 'Resolution' },
+      ] satisfies Array<{ id: MarketDetailTab, label: string }>
+    }
+
     const tabs: Array<{ id: MarketDetailTab, label: string }> = [
       { id: 'orderBook', label: 'Order Book' },
       { id: 'graph', label: 'Graph' },
@@ -659,7 +931,7 @@ function MarketDetailTabs({
     }
     tabs.push({ id: 'resolution', label: 'Resolution' })
     return tabs
-  }, [hasHistory, hasOpenOrders, hasPositions])
+  }, [hasHistory, hasOpenOrders, hasPositions, isResolvedView])
 
   const selectedTab = useMemo<MarketDetailTab>(() => {
     if (controlledTab && visibleTabs.some(tab => tab.id === controlledTab)) {
@@ -669,6 +941,16 @@ function MarketDetailTabs({
   }, [controlledTab, visibleTabs])
 
   const proposeUrl = useMemo(() => buildUmaProposeUrl(market.condition), [market.condition])
+  const settledUrl = useMemo(
+    () => buildUmaSettledUrl(market.condition) ?? buildUmaProposeUrl(market.condition),
+    [market.condition],
+  )
+  const resolvedOutcomeIndex = useMemo(() => resolveWinningOutcomeIndex(market), [market])
+  const resolvedOutcomeLabel = resolvedOutcomeIndex === OUTCOME_INDEX.NO
+    ? 'No'
+    : resolvedOutcomeIndex === OUTCOME_INDEX.YES
+      ? 'Yes'
+      : 'Unknown'
 
   useEffect(() => {
     if (selectedTab !== controlledTab) {
@@ -768,33 +1050,97 @@ function MarketDetailTabs({
         {selectedTab === 'history' && <EventMarketHistory market={market} />}
 
         {selectedTab === 'resolution' && (
-          proposeUrl
+          isResolvedView
             ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mb-3"
-                  asChild
-                  onClick={event => event.stopPropagation()}
-                >
-                  <a href={proposeUrl} target="_blank" rel="noopener noreferrer">
-                    Propose resolution
-                  </a>
-                </Button>
+                <ResolvedResolutionPanel outcomeLabel={resolvedOutcomeLabel} settledUrl={settledUrl} />
               )
             : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mb-3"
-                  disabled
-                  onClick={event => event.stopPropagation()}
-                >
-                  Propose resolution
-                </Button>
+                proposeUrl
+                  ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mb-3"
+                        asChild
+                        onClick={event => event.stopPropagation()}
+                      >
+                        <a href={proposeUrl} target="_blank" rel="noopener noreferrer">
+                          Propose resolution
+                        </a>
+                      </Button>
+                    )
+                  : (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mb-3"
+                        disabled
+                        onClick={event => event.stopPropagation()}
+                      >
+                        Propose resolution
+                      </Button>
+                    )
               )
         )}
       </div>
+    </div>
+  )
+}
+
+export function ResolvedResolutionPanel({
+  outcomeLabel,
+  settledUrl,
+  showLink = true,
+}: {
+  outcomeLabel: string
+  settledUrl: string | null
+  showLink?: boolean
+}) {
+  const hasLink = Boolean(settledUrl) && showLink
+
+  return (
+    <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="relative flex flex-col gap-6">
+        <div className="absolute top-3 bottom-3 left-2.5 w-1 bg-primary" aria-hidden="true" />
+        <div className="flex items-center gap-3">
+          <span className="relative flex size-6 items-center justify-center rounded-full bg-primary">
+            <Check className="size-3.5 text-primary-foreground" />
+          </span>
+          <span className="text-sm font-medium text-foreground">
+            Outcome proposed:
+            {' '}
+            {outcomeLabel}
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="relative flex size-6 items-center justify-center rounded-full bg-primary">
+            <Check className="size-3.5 text-primary-foreground" />
+          </span>
+          <span className="text-sm font-medium text-foreground">No dispute</span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="relative flex size-6 items-center justify-center rounded-full bg-primary">
+            <Check className="size-3.5 text-primary-foreground" />
+          </span>
+          <span className="text-sm font-medium text-foreground">
+            Final outcome:
+            {' '}
+            {outcomeLabel}
+          </span>
+        </div>
+      </div>
+
+      {hasLink && (
+        <a
+          href={settledUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-foreground hover:underline"
+        >
+          View details
+          <SquareArrowOutUpRight className="size-4" />
+        </a>
+      )}
     </div>
   )
 }

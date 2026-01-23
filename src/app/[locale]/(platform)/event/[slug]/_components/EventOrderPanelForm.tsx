@@ -1,7 +1,7 @@
 import type { Event } from '@/types'
 import { useAppKitAccount } from '@reown/appkit/react'
 import { useQueryClient } from '@tanstack/react-query'
-import { TriangleAlertIcon } from 'lucide-react'
+import { CheckIcon, TriangleAlertIcon } from 'lucide-react'
 import Form from 'next/form'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSignTypedData } from 'wagmi'
@@ -43,6 +43,40 @@ import { useUser } from '@/stores/useUser'
 interface EventOrderPanelFormProps {
   isMobile: boolean
   event: Event
+}
+
+function resolveWinningOutcomeIndex(market: Event['markets'][number] | null | undefined) {
+  if (!market) {
+    return null
+  }
+
+  const explicitWinner = market.outcomes?.find(outcome => outcome.is_winning_outcome)
+  if (explicitWinner && (explicitWinner.outcome_index === OUTCOME_INDEX.YES || explicitWinner.outcome_index === OUTCOME_INDEX.NO)) {
+    return explicitWinner.outcome_index
+  }
+
+  const payoutNumerators = market.condition?.payout_numerators
+  if (!Array.isArray(payoutNumerators) || payoutNumerators.length === 0) {
+    return null
+  }
+
+  const numericNumerators = payoutNumerators.map(value => Number(value))
+  const finiteNumerators = numericNumerators.filter(value => Number.isFinite(value))
+  if (finiteNumerators.length === 0) {
+    return null
+  }
+
+  const maxValue = Math.max(...finiteNumerators)
+  if (!(maxValue > 0)) {
+    return null
+  }
+
+  const winnerIndex = numericNumerators.findIndex(value => value === maxValue)
+  if (winnerIndex === OUTCOME_INDEX.YES || winnerIndex === OUTCOME_INDEX.NO) {
+    return winnerIndex
+  }
+
+  return null
 }
 
 export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanelFormProps) {
@@ -114,6 +148,17 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const isNegRiskMarket = typeof state.market?.neg_risk === 'boolean'
     ? state.market.neg_risk
     : Boolean(event.enable_neg_risk || event.neg_risk)
+  const isResolvedMarket = Boolean(state.market?.is_resolved || state.market?.condition?.resolved)
+  const resolvedOutcomeIndex = useMemo(
+    () => resolveWinningOutcomeIndex(state.market),
+    [state.market],
+  )
+  const resolvedOutcomeLabel = resolvedOutcomeIndex === OUTCOME_INDEX.NO
+    ? 'No'
+    : resolvedOutcomeIndex === OUTCOME_INDEX.YES
+      ? 'Yes'
+      : 'Resolved'
+  const resolvedMarketTitle = state.market?.short_title || state.market?.title
   const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskEnabled), [isNegRiskEnabled])
   const endOfDayTimestamp = useMemo(() => {
     const now = new Date()
@@ -689,8 +734,8 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         'rounded-lg border lg:w-85': !isMobile,
       }, 'w-full p-4 shadow-xl/5')}
     >
-      {!isMobile && !isSingleMarket && <EventOrderPanelMarketInfo market={state.market} />}
-      {isMobile && (
+      {!isResolvedMarket && !isMobile && !isSingleMarket && <EventOrderPanelMarketInfo market={state.market} />}
+      {!isResolvedMarket && isMobile && (
         <EventOrderPanelMobileMarketInfo
           event={event}
           market={state.market}
@@ -699,199 +744,219 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
           isBalanceLoading={isLoadingBalance}
         />
       )}
-
-      <EventOrderPanelBuySellTabs
-        side={state.side}
-        type={state.type}
-        availableMergeShares={availableMergeShares}
-        availableSplitBalance={availableSplitBalance}
-        isNegRiskMarket={isNegRiskMarket}
-        conditionId={state.market?.condition_id}
-        marketTitle={state.market?.title || state.market?.short_title}
-        onSideChange={state.setSide}
-        onTypeChange={handleTypeChange}
-        onAmountReset={() => state.setAmount('')}
-        onFocusInput={focusInput}
-      />
-
-      <div className="mb-2 flex gap-2">
-        <EventOrderPanelOutcomeButton
-          variant="yes"
-          price={yesPrice}
-          label={yesOutcome?.outcome_text ?? 'Yes'}
-          isSelected={state.outcome?.outcome_index === OUTCOME_INDEX.YES}
-          onSelect={() => {
-            if (!state.market || !yesOutcome) {
-              return
-            }
-            state.setOutcome(yesOutcome)
-            focusInput()
-          }}
-        />
-        <EventOrderPanelOutcomeButton
-          variant="no"
-          price={noPrice}
-          label={noOutcome?.outcome_text ?? 'No'}
-          isSelected={state.outcome?.outcome_index === OUTCOME_INDEX.NO}
-          onSelect={() => {
-            if (!state.market || !noOutcome) {
-              return
-            }
-            state.setOutcome(noOutcome)
-            focusInput()
-          }}
-        />
-      </div>
-
-      {isLimitOrder
+      {isResolvedMarket
         ? (
-            <div className="mb-4">
-              {state.side === ORDER_SIDE.SELL && (
-                <EventOrderPanelUserShares
-                  yesShares={availableYesTokenShares}
-                  noShares={availableNoTokenShares}
-                  activeOutcome={outcomeIndex}
-                />
+            <div className="flex flex-col items-center gap-3 px-2 py-4 text-center">
+              <div className="flex size-10 items-center justify-center rounded-full bg-primary">
+                <CheckIcon className="size-7 text-background" />
+              </div>
+              <div className="text-lg font-bold text-primary">
+                Outcome:
+                {' '}
+                {resolvedOutcomeLabel}
+              </div>
+              {resolvedMarketTitle && (
+                <div className="text-sm text-muted-foreground">{resolvedMarketTitle}</div>
               )}
-              <EventOrderPanelLimitControls
-                side={state.side}
-                limitPrice={state.limitPrice}
-                limitShares={state.limitShares}
-                limitExpirationEnabled={state.limitExpirationEnabled}
-                limitExpirationOption={state.limitExpirationOption}
-                limitExpirationTimestamp={state.limitExpirationTimestamp}
-                isLimitOrder={isLimitOrder}
-                availableShares={selectedShares}
-                showLimitMinimumWarning={showLimitMinimumWarning}
-                shouldShakeShares={shouldShakeLimitShares}
-                limitSharesRef={limitSharesInputRef}
-                onLimitPriceChange={state.setLimitPrice}
-                onLimitSharesChange={state.setLimitShares}
-                onLimitExpirationEnabledChange={state.setLimitExpirationEnabled}
-                onLimitExpirationOptionChange={state.setLimitExpirationOption}
-                onLimitExpirationTimestampChange={state.setLimitExpirationTimestamp}
-                onAmountUpdateFromLimit={state.setAmount}
-              />
             </div>
           )
         : (
             <>
-              {state.side === ORDER_SIDE.SELL
-                ? (
-                    <EventOrderPanelUserShares
-                      yesShares={availableYesPositionShares}
-                      noShares={availableNoPositionShares}
-                      activeOutcome={outcomeIndex}
-                    />
-                  )
-                : <div className="mb-4"></div>}
-              <EventOrderPanelInput
-                isMobile={isMobile}
+              <EventOrderPanelBuySellTabs
                 side={state.side}
-                amount={state.amount}
-                amountNumber={amountNumber}
-                availableShares={selectedShares}
-                balance={balance}
-                isBalanceLoading={isLoadingBalance}
-                inputRef={state.inputRef}
-                onAmountChange={state.setAmount}
-                shouldShake={shouldShakeInput}
+                type={state.type}
+                availableMergeShares={availableMergeShares}
+                availableSplitBalance={availableSplitBalance}
+                isNegRiskMarket={isNegRiskMarket}
+                conditionId={state.market?.condition_id}
+                marketTitle={state.market?.title || state.market?.short_title}
+                onSideChange={state.setSide}
+                onTypeChange={handleTypeChange}
+                onAmountReset={() => state.setAmount('')}
+                onFocusInput={focusInput}
               />
-              <div
-                className={cn(
-                  'overflow-hidden transition-all duration-500 ease-in-out',
-                  shouldShowEarnings
-                    ? 'max-h-96 translate-y-0 opacity-100'
-                    : 'pointer-events-none max-h-0 -translate-y-2 opacity-0',
-                )}
-                aria-hidden={!shouldShowEarnings}
-              >
-                <EventOrderPanelEarnings
-                  isMobile={isMobile}
-                  side={state.side}
-                  sellAmountLabel={sellAmountLabel}
-                  avgSellPriceLabel={avgSellPriceLabel}
-                  avgBuyPriceLabel={avgBuyPriceLabel}
-                  avgSellPriceCents={avgSellPriceCentsValue}
-                  avgBuyPriceCents={avgBuyPriceCentsValue}
-                  buyPayout={buyPayoutSummary.payout}
-                  buyProfit={buyPayoutSummary.profit}
-                  buyChangePct={buyPayoutSummary.changePct}
-                  buyMultiplier={buyPayoutSummary.multiplier}
+
+              <div className="mb-2 flex gap-2">
+                <EventOrderPanelOutcomeButton
+                  variant="yes"
+                  price={yesPrice}
+                  label={yesOutcome?.outcome_text ?? 'Yes'}
+                  isSelected={state.outcome?.outcome_index === OUTCOME_INDEX.YES}
+                  onSelect={() => {
+                    if (!state.market || !yesOutcome) {
+                      return
+                    }
+                    state.setOutcome(yesOutcome)
+                    focusInput()
+                  }}
+                />
+                <EventOrderPanelOutcomeButton
+                  variant="no"
+                  price={noPrice}
+                  label={noOutcome?.outcome_text ?? 'No'}
+                  isSelected={state.outcome?.outcome_index === OUTCOME_INDEX.NO}
+                  onSelect={() => {
+                    if (!state.market || !noOutcome) {
+                      return
+                    }
+                    state.setOutcome(noOutcome)
+                    focusInput()
+                  }}
                 />
               </div>
-              {showMarketMinimumWarning && (
+
+              {isLimitOrder
+                ? (
+                    <div className="mb-4">
+                      {state.side === ORDER_SIDE.SELL && (
+                        <EventOrderPanelUserShares
+                          yesShares={availableYesTokenShares}
+                          noShares={availableNoTokenShares}
+                          activeOutcome={outcomeIndex}
+                        />
+                      )}
+                      <EventOrderPanelLimitControls
+                        side={state.side}
+                        limitPrice={state.limitPrice}
+                        limitShares={state.limitShares}
+                        limitExpirationEnabled={state.limitExpirationEnabled}
+                        limitExpirationOption={state.limitExpirationOption}
+                        limitExpirationTimestamp={state.limitExpirationTimestamp}
+                        isLimitOrder={isLimitOrder}
+                        availableShares={selectedShares}
+                        showLimitMinimumWarning={showLimitMinimumWarning}
+                        shouldShakeShares={shouldShakeLimitShares}
+                        limitSharesRef={limitSharesInputRef}
+                        onLimitPriceChange={state.setLimitPrice}
+                        onLimitSharesChange={state.setLimitShares}
+                        onLimitExpirationEnabledChange={state.setLimitExpirationEnabled}
+                        onLimitExpirationOptionChange={state.setLimitExpirationOption}
+                        onLimitExpirationTimestampChange={state.setLimitExpirationTimestamp}
+                        onAmountUpdateFromLimit={state.setAmount}
+                      />
+                    </div>
+                  )
+                : (
+                    <>
+                      {state.side === ORDER_SIDE.SELL
+                        ? (
+                            <EventOrderPanelUserShares
+                              yesShares={availableYesPositionShares}
+                              noShares={availableNoPositionShares}
+                              activeOutcome={outcomeIndex}
+                            />
+                          )
+                        : <div className="mb-4"></div>}
+                      <EventOrderPanelInput
+                        isMobile={isMobile}
+                        side={state.side}
+                        amount={state.amount}
+                        amountNumber={amountNumber}
+                        availableShares={selectedShares}
+                        balance={balance}
+                        isBalanceLoading={isLoadingBalance}
+                        inputRef={state.inputRef}
+                        onAmountChange={state.setAmount}
+                        shouldShake={shouldShakeInput}
+                      />
+                      <div
+                        className={cn(
+                          'overflow-hidden transition-all duration-500 ease-in-out',
+                          shouldShowEarnings
+                            ? 'max-h-96 translate-y-0 opacity-100'
+                            : 'pointer-events-none max-h-0 -translate-y-2 opacity-0',
+                        )}
+                        aria-hidden={!shouldShowEarnings}
+                      >
+                        <EventOrderPanelEarnings
+                          isMobile={isMobile}
+                          side={state.side}
+                          sellAmountLabel={sellAmountLabel}
+                          avgSellPriceLabel={avgSellPriceLabel}
+                          avgBuyPriceLabel={avgBuyPriceLabel}
+                          avgSellPriceCents={avgSellPriceCentsValue}
+                          avgBuyPriceCents={avgBuyPriceCentsValue}
+                          buyPayout={buyPayoutSummary.payout}
+                          buyProfit={buyPayoutSummary.profit}
+                          buyChangePct={buyPayoutSummary.changePct}
+                          buyMultiplier={buyPayoutSummary.multiplier}
+                        />
+                      </div>
+                      {showMarketMinimumWarning && (
+                        <div
+                          className={`
+                            mt-3 flex animate-order-shake items-center justify-center gap-2 pb-1 text-sm font-semibold
+                            text-orange-500
+                          `}
+                        >
+                          <TriangleAlertIcon className="size-4" />
+                          Market buys must be at least $1
+                        </div>
+                      )}
+                      {showNoLiquidityWarning && (
+                        <div
+                          className={`
+                            mt-3 flex animate-order-shake items-center justify-center gap-2 pb-1 text-sm font-semibold
+                            text-orange-500
+                          `}
+                        >
+                          <TriangleAlertIcon className="size-4" />
+                          No liquidity for this market order
+                        </div>
+                      )}
+                    </>
+                  )}
+
+              {(showInsufficientSharesWarning || showInsufficientBalanceWarning || showAmountTooLowWarning) && (
                 <div
                   className={`
-                    mt-3 flex animate-order-shake items-center justify-center gap-2 pb-1 text-sm font-semibold
+                    mt-2 mb-3 flex animate-order-shake items-center justify-center gap-2 text-sm font-semibold
                     text-orange-500
                   `}
                 >
                   <TriangleAlertIcon className="size-4" />
-                  Market buys must be at least $1
+                  {showAmountTooLowWarning
+                    ? 'Amount too low'
+                    : showInsufficientBalanceWarning
+                      ? 'Insufficient USDC balance'
+                      : 'Insufficient shares for this order'}
                 </div>
               )}
-              {showNoLiquidityWarning && (
-                <div
-                  className={`
-                    mt-3 flex animate-order-shake items-center justify-center gap-2 pb-1 text-sm font-semibold
-                    text-orange-500
-                  `}
-                >
-                  <TriangleAlertIcon className="size-4" />
-                  No liquidity for this market order
-                </div>
-              )}
+
+              <EventOrderPanelSubmitButton
+                type={!isConnected || shouldShowDepositCta ? 'button' : 'submit'}
+                isLoading={state.isLoading}
+                isDisabled={state.isLoading}
+                onClick={(event) => {
+                  if (!isConnected) {
+                    void open()
+                    return
+                  }
+                  if (shouldShowDepositCta) {
+                    focusInput()
+                    startDepositFlow()
+                    return
+                  }
+                  state.setLastMouseEvent(event)
+                }}
+                label={(() => {
+                  if (!isConnected) {
+                    return 'Trade'
+                  }
+                  if (shouldShowDepositCta) {
+                    return 'Deposit'
+                  }
+                  const outcomeLabel = selectedShareLabel
+                  if (outcomeLabel) {
+                    const verb = state.side === ORDER_SIDE.SELL ? 'Sell' : 'Buy'
+                    return `${verb} ${outcomeLabel}`
+                  }
+                  return 'Trade'
+                })()}
+              />
+              <EventOrderPanelTermsDisclaimer />
             </>
           )}
-
-      {(showInsufficientSharesWarning || showInsufficientBalanceWarning || showAmountTooLowWarning) && (
-        <div
-          className={`
-            mt-2 mb-3 flex animate-order-shake items-center justify-center gap-2 text-sm font-semibold text-orange-500
-          `}
-        >
-          <TriangleAlertIcon className="size-4" />
-          {showAmountTooLowWarning
-            ? 'Amount too low'
-            : showInsufficientBalanceWarning
-              ? 'Insufficient USDC balance'
-              : 'Insufficient shares for this order'}
-        </div>
-      )}
-
-      <EventOrderPanelSubmitButton
-        type={!isConnected || shouldShowDepositCta ? 'button' : 'submit'}
-        isLoading={state.isLoading}
-        isDisabled={state.isLoading}
-        onClick={(event) => {
-          if (!isConnected) {
-            void open()
-            return
-          }
-          if (shouldShowDepositCta) {
-            focusInput()
-            startDepositFlow()
-            return
-          }
-          state.setLastMouseEvent(event)
-        }}
-        label={(() => {
-          if (!isConnected) {
-            return 'Trade'
-          }
-          if (shouldShowDepositCta) {
-            return 'Deposit'
-          }
-          const outcomeLabel = selectedShareLabel
-          if (outcomeLabel) {
-            const verb = state.side === ORDER_SIDE.SELL ? 'Sell' : 'Buy'
-            return `${verb} ${outcomeLabel}`
-          }
-          return 'Trade'
-        })()}
-      />
-      <EventOrderPanelTermsDisclaimer />
     </Form>
   )
 }

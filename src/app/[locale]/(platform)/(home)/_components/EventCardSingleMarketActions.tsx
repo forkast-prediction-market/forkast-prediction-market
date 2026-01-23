@@ -1,11 +1,14 @@
 import type { Market, Outcome } from '@/types'
+import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { OUTCOME_INDEX } from '@/lib/constants'
 
 interface EventCardSingleMarketActionsProps {
   yesOutcome: Outcome
   noOutcome: Outcome
   primaryMarket: Market | undefined
   isLoading: boolean
+  isResolvedEvent: boolean
   onTrade: (outcome: Outcome, market: Market, variant: 'yes' | 'no') => void
   onToggle: () => void
 }
@@ -15,11 +18,50 @@ export default function EventCardSingleMarketActions({
   noOutcome,
   primaryMarket,
   isLoading,
+  isResolvedEvent,
   onTrade,
   onToggle,
 }: EventCardSingleMarketActionsProps) {
   if (!primaryMarket) {
     return null
+  }
+
+  if (isResolvedEvent) {
+    const resolvedOutcome = primaryMarket.outcomes.find(outcome => outcome.is_winning_outcome)
+    const resolvedLabel = resolvedOutcome?.outcome_text
+    const isYesOutcome = resolvedOutcome?.outcome_index === OUTCOME_INDEX.YES
+
+    return (
+      <div className="mt-auto mb-3">
+        {resolvedOutcome
+          ? (
+              <div className={`
+                flex w-full cursor-default items-center justify-center gap-2 rounded-md bg-muted/60 px-3 py-2 text-sm
+                font-semibold text-foreground
+              `}
+              >
+                <span className="min-w-8 text-right">{resolvedLabel}</span>
+                <span className={`flex size-4 items-center justify-center rounded-full ${isYesOutcome
+                  ? 'bg-yes'
+                  : `bg-no`}`}
+                >
+                  {isYesOutcome
+                    ? <Check className="size-3 text-background" strokeWidth={2.5} />
+                    : <X className="size-3 text-background" strokeWidth={2.5} />}
+                </span>
+              </div>
+            )
+          : (
+              <div className={`
+                flex w-full cursor-default items-center justify-center rounded-md bg-muted/60 px-3 py-2 text-sm
+                font-semibold text-muted-foreground
+              `}
+              >
+                Resolved
+              </div>
+            )}
+      </div>
+    )
   }
 
   return (

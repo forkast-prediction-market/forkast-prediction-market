@@ -9,7 +9,7 @@ export interface Event {
   neg_risk_augmented?: boolean
   neg_risk?: boolean
   neg_risk_market_id?: string
-  status: 'draft' | 'active' | 'archived'
+  status: 'draft' | 'active' | 'resolved' | 'archived'
   rules?: string
   active_markets_count: number
   total_markets_count: number

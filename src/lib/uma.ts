@@ -12,7 +12,13 @@ export interface UmaProposeTarget {
   isMirror: boolean
 }
 
-export function resolveUmaProposeTarget(source?: UmaProposeSource | null): UmaProposeTarget | null {
+interface UmaRequestParams {
+  txHash: string
+  logIndex: number
+  isMirror: boolean
+}
+
+function resolveUmaRequestParams(source?: UmaProposeSource | null): UmaRequestParams | null {
   if (!source) {
     return null
   }
@@ -30,20 +36,49 @@ export function resolveUmaProposeTarget(source?: UmaProposeSource | null): UmaPr
     return null
   }
 
+  return {
+    txHash,
+    logIndex,
+    isMirror,
+  }
+}
+
+export function resolveUmaProposeTarget(source?: UmaProposeSource | null): UmaProposeTarget | null {
+  const requestParams = resolveUmaRequestParams(source)
+  if (!requestParams) {
+    return null
+  }
+
   const baseUrl = UMA_ORACLE_BASE_URL.replace(/\/$/, '')
   const project = process.env.NEXT_PUBLIC_SITE_NAME!
 
-  const params = new URLSearchParams()
-  params.set('project', project)
-  params.set('transactionHash', txHash)
-  params.set('eventIndex', String(logIndex))
+  const query = new URLSearchParams()
+  query.set('project', project)
+  query.set('transactionHash', requestParams.txHash)
+  query.set('eventIndex', String(requestParams.logIndex))
 
   return {
-    url: `${baseUrl}/propose?${params.toString()}`,
-    isMirror,
+    url: `${baseUrl}/propose?${query.toString()}`,
+    isMirror: requestParams.isMirror,
   }
 }
 
 export function buildUmaProposeUrl(source?: UmaProposeSource | null): string | null {
   return resolveUmaProposeTarget(source)?.url ?? null
+}
+
+export function buildUmaSettledUrl(source?: UmaProposeSource | null): string | null {
+  const requestParams = resolveUmaRequestParams(source)
+  if (!requestParams) {
+    return null
+  }
+
+  const baseUrl = UMA_ORACLE_BASE_URL.replace(/\/$/, '')
+  const project = process.env.NEXT_PUBLIC_SITE_NAME!
+  const query = new URLSearchParams()
+  query.set('project', project)
+  query.set('transactionHash', requestParams.txHash)
+  query.set('eventIndex', String(requestParams.logIndex))
+
+  return `${baseUrl}/settled?${query.toString()}`
 }

@@ -8,6 +8,7 @@ interface EventCardFooterProps {
   hasRecentMarket: boolean
   resolvedVolume: number
   isInTradingMode: boolean
+  endedLabel?: string | null
 }
 
 export default function EventCardFooter({
@@ -15,10 +16,13 @@ export default function EventCardFooter({
   hasRecentMarket,
   resolvedVolume,
   isInTradingMode,
+  endedLabel,
 }: EventCardFooterProps) {
   if (isInTradingMode) {
     return null
   }
+
+  const isResolvedEvent = event.status === 'resolved'
 
   return (
     <div className="mt-0 flex items-center justify-between gap-2 text-xs leading-tight text-muted-foreground">
@@ -33,7 +37,11 @@ export default function EventCardFooter({
               </span>
             )}
       </div>
-      <EventBookmark event={event} />
+      {isResolvedEvent
+        ? (endedLabel
+            ? <span className="text-sm text-muted-foreground">{endedLabel}</span>
+            : null)
+        : <EventBookmark event={event} />}
     </div>
   )
 }

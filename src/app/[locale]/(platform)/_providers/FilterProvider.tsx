@@ -7,6 +7,7 @@ export interface FilterState {
   search: string
   tag: string
   bookmarked: boolean
+  status: 'active' | 'resolved'
   hideSports: boolean
   hideCrypto: boolean
   hideEarnings: boolean
@@ -28,6 +29,7 @@ const DEFAULT_FILTERS: FilterState = {
   search: '',
   tag: 'trending',
   bookmarked: false,
+  status: 'active',
   hideSports: false,
   hideCrypto: false,
   hideEarnings: false,

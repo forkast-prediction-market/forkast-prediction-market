@@ -14,6 +14,7 @@ export default function EventsEmptyState({ searchQuery, tag }: EventsEmptyStateP
     updateFilters({
       search: '',
       bookmarked: false,
+      status: 'active',
       hideSports: false,
       hideCrypto: false,
       hideEarnings: false,

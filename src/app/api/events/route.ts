@@ -8,8 +8,13 @@ export async function GET(request: Request) {
   const tag = searchParams.get('tag') || 'trending'
   const search = searchParams.get('search') || ''
   const bookmarked = searchParams.get('bookmarked') === 'true'
+  const status = searchParams.get('status') || 'active'
   const offset = Number.parseInt(searchParams.get('offset') || '0', 10)
   const clampedOffset = Number.isNaN(offset) ? 0 : Math.max(0, offset)
+
+  if (status !== 'active' && status !== 'resolved') {
+    return NextResponse.json({ error: 'Invalid status filter.' }, { status: 400 })
+  }
 
   const user = await UserRepository.getCurrentUser()
   const userId = user?.id
@@ -20,6 +25,7 @@ export async function GET(request: Request) {
       search,
       userId,
       bookmarked,
+      status,
       offset: clampedOffset,
     })
 

@@ -192,6 +192,8 @@ function buildCombinedOutcomeHistory(
 
 function EventChartComponent({ event, isMobile }: EventChartProps) {
   const isSingleMarket = useIsSingleMarket()
+  const isNegRiskEnabled = Boolean(event.enable_neg_risk || event.neg_risk)
+  const shouldHideChart = !isSingleMarket && !isNegRiskEnabled
   const currentOutcomeChances = useEventOutcomeChances()
   const currentOutcomeChanceChanges = useEventOutcomeChanceChanges()
   const currentMarketQuotes = useMarketQuotes()
@@ -233,12 +235,12 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
   const showBothOutcomes = isSingleMarket && chartSettings.bothOutcomes
 
   const yesMarketTargets = useMemo(
-    () => buildMarketTargets(event.markets, OUTCOME_INDEX.YES),
-    [event.markets],
+    () => (shouldHideChart ? [] : buildMarketTargets(event.markets, OUTCOME_INDEX.YES)),
+    [event.markets, shouldHideChart],
   )
   const noMarketTargets = useMemo(
-    () => (isSingleMarket ? buildMarketTargets(event.markets, OUTCOME_INDEX.NO) : []),
-    [event.markets, isSingleMarket],
+    () => (shouldHideChart || !isSingleMarket ? [] : buildMarketTargets(event.markets, OUTCOME_INDEX.NO)),
+    [event.markets, isSingleMarket, shouldHideChart],
   )
 
   const yesPriceHistory = useEventPriceHistory({
@@ -491,6 +493,27 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
     }),
     [],
   )
+  const chartLogo = (watermark.iconSvg || watermark.label)
+    ? (
+        <div className="flex items-center gap-1 text-xl text-muted-foreground opacity-50 select-none">
+          {watermark.iconSvg
+            ? (
+                <div
+                  className="size-[1em] **:fill-current **:stroke-current"
+                  dangerouslySetInnerHTML={{ __html: watermark.iconSvg }}
+                />
+              )
+            : null}
+          {watermark.label
+            ? (
+                <span className="font-semibold">
+                  {watermark.label}
+                </span>
+              )
+            : null}
+        </div>
+      )
+    : null
 
   const legendSeries = effectiveSeries
   const hasLegendSeries = legendSeries.length > 0
@@ -739,6 +762,15 @@ function EventChartComponent({ event, isMobile }: EventChartProps) {
         </div>
       )
     : null
+
+  if (shouldHideChart) {
+    return (
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+        <EventMetaInformation event={event} />
+        {chartLogo}
+      </div>
+    )
+  }
 
   if (!hasLegendSeries) {
     return null

@@ -370,7 +370,7 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
             >
               <div
                 className={cn(
-                  'pointer-events-none absolute inset-y-0 rounded-sm bg-primary/50',
+                  'pointer-events-none absolute inset-y-0 rounded-sm bg-primary/30',
                   indicatorReady && 'transition-all duration-300 ease-out',
                 )}
                 style={{

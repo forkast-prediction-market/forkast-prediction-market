@@ -3,6 +3,8 @@
 import type { TimeRange } from '@/app/[locale]/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import type { Market, Outcome } from '@/types'
 import type { PredictionChartCursorSnapshot, PredictionChartProps } from '@/types/PredictionChartTypes'
+import { useQuery } from '@tanstack/react-query'
+import { Clock3Icon, SparkleIcon } from 'lucide-react'
 import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useState } from 'react'
 import EventChartControls, { defaultChartSettings } from '@/app/[locale]/(platform)/event/[slug]/_components/EventChartControls'
@@ -17,9 +19,11 @@ import {
 } from '@/app/[locale]/(platform)/event/[slug]/_hooks/useEventPriceHistory'
 import { loadStoredChartSettings, storeChartSettings } from '@/app/[locale]/(platform)/event/[slug]/_utils/chartSettingsStorage'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { OUTCOME_INDEX } from '@/lib/constants'
-import { svgLogo } from '@/lib/utils'
+import { formatDate } from '@/lib/formatters'
+import { isMarketNew, svgLogo } from '@/lib/utils'
 
 interface MarketOutcomeGraphProps {
   market: Market
@@ -221,9 +225,11 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
                 Price history is unavailable for this outcome.
               </div>
             )}
-        controls={hasChartData
-          ? (
-              <div className="mt-3 pb-2">
+        controls={(
+          <div className="mt-3 flex flex-wrap items-center gap-3 pb-2">
+            <MarketOutcomeMetaInformation market={market} />
+            {hasChartData && (
+              <div className="ml-auto">
                 <EventChartControls
                   timeRanges={TIME_RANGES}
                   activeTimeRange={activeTimeRange}
@@ -237,8 +243,9 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
                   onEmbed={() => setEmbedDialogOpen(true)}
                 />
               </div>
-            )
-          : null}
+            )}
+          </div>
+        )}
       />
       <EventChartExportDialog
         open={exportDialogOpen}
@@ -281,6 +288,118 @@ function buildChartData(
       }
     })
     .filter((entry): entry is { date: Date, value: number } => entry !== null)
+}
+
+function MarketOutcomeMetaInformation({ market }: { market: Market }) {
+  const volumeRequestPayload = useMemo(() => {
+    const tokenIds = (market.outcomes ?? [])
+      .map(outcome => outcome.token_id)
+      .filter(Boolean)
+      .slice(0, 2)
+
+    if (!market.condition_id || tokenIds.length < 2) {
+      return { conditions: [], signature: '' }
+    }
+
+    const signature = `${market.condition_id}:${tokenIds.join(':')}`
+    return {
+      conditions: [{ condition_id: market.condition_id, token_ids: tokenIds as [string, string] }],
+      signature,
+    }
+  }, [market.condition_id, market.outcomes])
+
+  const { data: volumeFromApi } = useQuery({
+    queryKey: ['market-volumes', market.condition_id, volumeRequestPayload.signature],
+    enabled: volumeRequestPayload.conditions.length > 0,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    queryFn: async () => {
+      const response = await fetch(`${process.env.CLOB_URL}/data/volumes`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          include_24h: false,
+          conditions: volumeRequestPayload.conditions,
+        }),
+      })
+
+      const payload = await response.json() as Array<{
+        condition_id: string
+        status: number
+        volume?: string
+      }>
+
+      return payload
+        .filter(entry => entry?.status === 200)
+        .reduce((total, entry) => {
+          const numeric = Number(entry.volume ?? 0)
+          return Number.isFinite(numeric) ? total + numeric : total
+        }, 0)
+    },
+  })
+
+  const resolvedVolume = useMemo(() => {
+    if (typeof volumeFromApi === 'number' && Number.isFinite(volumeFromApi)) {
+      return volumeFromApi
+    }
+    return market.volume
+  }, [market.volume, volumeFromApi])
+
+  const shouldShowNew = isMarketNew(market.created_at)
+  const formattedVolume = Number.isFinite(resolvedVolume)
+    ? (resolvedVolume || 0).toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      })
+    : '0.00'
+  const volumeLabel = `$${formattedVolume} Vol.`
+  const expiryTooltip = 'This is estimated end date.<br>See rules below for specific resolution details.'
+  const maybeEndDate = market.end_time ? new Date(market.end_time) : null
+  const expiryDate = maybeEndDate && !Number.isNaN(maybeEndDate.getTime()) ? maybeEndDate : null
+
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-xs">
+      {shouldShowNew && (
+        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
+          <SparkleIcon className="size-3.5 fill-current" stroke="currentColor" fill="currentColor" />
+          <span>New</span>
+        </span>
+      )}
+      {shouldShowNew && (
+        <span className="mx-1.5 h-4 w-px bg-muted-foreground/40" aria-hidden="true" />
+      )}
+      <div className="flex items-center gap-2 text-foreground">
+        <span className="text-sm font-semibold text-foreground">{volumeLabel}</span>
+      </div>
+      {expiryDate && (
+        <span className="mx-1.5 h-4 w-px bg-muted-foreground/40" aria-hidden="true" />
+      )}
+      {expiryDate && (
+        <Tooltip>
+          <TooltipTrigger>
+            <div className="flex items-center gap-1.5 text-sm leading-tight font-semibold text-muted-foreground">
+              <Clock3Icon className="size-4 text-muted-foreground" strokeWidth={2.5} />
+              <span>{formatDate(expiryDate)}</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent
+            side="bottom"
+            sideOffset={8}
+            collisionPadding={16}
+            hideArrow
+            className="border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground shadow-xl"
+          >
+            <p
+              dangerouslySetInnerHTML={{ __html: expiryTooltip }}
+              className="text-center"
+            />
+          </TooltipContent>
+        </Tooltip>
+      )}
+    </div>
+  )
 }
 
 function buildComparisonChartData(
