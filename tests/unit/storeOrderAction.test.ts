@@ -1,4 +1,4 @@
-import type { storeOrderAction } from '@/app/(platform)/event/[slug]/_actions/store-order'
+import type { storeOrderAction } from '@/app/[locale]/(platform)/event/[slug]/_actions/store-order'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { TRADING_AUTH_REQUIRED_ERROR } from '@/lib/trading-auth/errors'
 
@@ -87,7 +87,7 @@ describe('storeOrderAction', () => {
     process.env.CLOB_URL = 'https://clob.local'
     mocks.getCurrentUser.mockResolvedValueOnce(null)
 
-    const { storeOrderAction } = await import('@/app/(platform)/event/[slug]/_actions/store-order')
+    const { storeOrderAction } = await import('@/app/[locale]/(platform)/event/[slug]/_actions/store-order')
     const result = await storeOrderAction(basePayload())
     expect(result).toEqual({ error: 'Unauthenticated.' })
   })
@@ -103,7 +103,7 @@ describe('storeOrderAction', () => {
     mocks.getCurrentUser.mockResolvedValueOnce(baseUser)
     mocks.getUserTradingAuthSecrets.mockResolvedValueOnce({ clob: null })
 
-    const { storeOrderAction } = await import('@/app/(platform)/event/[slug]/_actions/store-order')
+    const { storeOrderAction } = await import('@/app/[locale]/(platform)/event/[slug]/_actions/store-order')
     const result = await storeOrderAction(basePayload())
     expect(result?.error).toBe(TRADING_AUTH_REQUIRED_ERROR)
 
@@ -127,7 +127,7 @@ describe('storeOrderAction', () => {
       clob: { key: 'k', passphrase: 'p', secret: 's' },
     })
 
-    const { storeOrderAction } = await import('@/app/(platform)/event/[slug]/_actions/store-order')
+    const { storeOrderAction } = await import('@/app/[locale]/(platform)/event/[slug]/_actions/store-order')
     const result = await storeOrderAction({} as any)
     expect(typeof result?.error).toBe('string')
     expect(result?.error?.length).toBeGreaterThan(0)
@@ -149,7 +149,7 @@ describe('storeOrderAction', () => {
       readContract: vi.fn().mockResolvedValue(0n),
     })
 
-    const { storeOrderAction } = await import('@/app/(platform)/event/[slug]/_actions/store-order')
+    const { storeOrderAction } = await import('@/app/[locale]/(platform)/event/[slug]/_actions/store-order')
     const result = await storeOrderAction(basePayload({
       side: 1,
       maker: proxy,
@@ -190,7 +190,7 @@ describe('storeOrderAction', () => {
       })
     globalThis.fetch = fetchMock as any
 
-    const { storeOrderAction } = await import('@/app/(platform)/event/[slug]/_actions/store-order')
+    const { storeOrderAction } = await import('@/app/[locale]/(platform)/event/[slug]/_actions/store-order')
     const result = await storeOrderAction(basePayload({
       maker: proxy,
       signer: proxy,

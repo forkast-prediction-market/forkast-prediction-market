@@ -1,0 +1,245 @@
+import type { Event } from '@/types'
+import { LoaderIcon, SparklesIcon } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import { generateMarketContextAction } from '@/app/[locale]/(platform)/event/[slug]/_actions/generate-market-context'
+import { cn } from '@/lib/utils'
+import { useOrder } from '@/stores/useOrder'
+
+interface EventMarketContextProps {
+  event: Event
+}
+
+export default function EventMarketContext({ event }: EventMarketContextProps) {
+  const state = useOrder()
+  const [contextExpanded, setContextExpanded] = useState(false)
+  const [context, setContext] = useState<string | null>(null)
+  const [displayedContext, setDisplayedContext] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
+  const [hasGenerated, setHasGenerated] = useState(false)
+  const [isTyping, setIsTyping] = useState(false)
+  const hasAnimatedRef = useRef(false)
+  const contextRef = useRef<string | null>(null)
+
+  async function generateMarketContext() {
+    if (!state.market) {
+      return
+    }
+    if (isPending) {
+      return
+    }
+
+    startTransition(async () => {
+      setError(null)
+
+      try {
+        const response = await generateMarketContextAction({
+          slug: event.slug,
+          marketConditionId: state.market?.condition_id,
+        })
+
+        if (response?.error) {
+          setError(response.error)
+          setContext(null)
+          setContextExpanded(false)
+          return
+        }
+
+        if (response?.context) {
+          setContext(response.context)
+          setContextExpanded(true)
+          setHasGenerated(true)
+        }
+      }
+      catch (caughtError) {
+        console.error('Failed to fetch market context.', caughtError)
+        setError('Unable to reach the market context service right now.')
+        setContext(null)
+        setContextExpanded(false)
+      }
+    })
+  }
+
+  useEffect(() => {
+    if (contextRef.current !== context) {
+      contextRef.current = context
+      hasAnimatedRef.current = false
+    }
+
+    if (!context) {
+      setDisplayedContext('')
+      setIsTyping(false)
+      return
+    }
+
+    if (!contextExpanded) {
+      setDisplayedContext(context)
+      setIsTyping(false)
+      return
+    }
+
+    if (hasAnimatedRef.current) {
+      return
+    }
+
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setDisplayedContext(context)
+      setIsTyping(false)
+      hasAnimatedRef.current = true
+      return
+    }
+
+    const fullContext = context
+    const totalDurationMs = Math.min(2400, Math.max(900, fullContext.length * 12))
+    const start = performance.now()
+    let animationFrame = 0
+
+    setIsTyping(true)
+    setDisplayedContext('')
+
+    function tick(now: number) {
+      const progress = Math.min(1, (now - start) / totalDurationMs)
+      const nextLength = Math.max(1, Math.floor(progress * fullContext.length))
+      setDisplayedContext(fullContext.slice(0, nextLength))
+
+      if (progress < 1) {
+        animationFrame = window.requestAnimationFrame(tick)
+      }
+      else {
+        setIsTyping(false)
+        hasAnimatedRef.current = true
+      }
+    }
+
+    animationFrame = window.requestAnimationFrame(tick)
+
+    return () => {
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame)
+      }
+    }
+  }, [context, contextExpanded])
+
+  const paragraphs = useMemo(() => {
+    if (!displayedContext) {
+      return []
+    }
+
+    return displayedContext
+      .split(/\n{2,}|\r\n{2,}/)
+      .map(block => block.trim())
+      .filter(Boolean)
+  }, [displayedContext])
+
+  function toggleCollapse() {
+    setContextExpanded(current => !current)
+  }
+
+  return (
+    <div className="rounded-lg border transition-all duration-200 ease-in-out">
+      {hasGenerated
+        ? (
+            <button
+              type="button"
+              onClick={toggleCollapse}
+              className={cn(
+                'flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors',
+                `
+                  hover:bg-muted/50
+                  focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+                  focus-visible:ring-offset-background focus-visible:outline-none
+                `,
+                contextExpanded ? 'rounded-b-none' : '',
+              )}
+              aria-expanded={contextExpanded}
+            >
+              <span className="text-lg font-medium">Market Context</span>
+              <span
+                aria-hidden="true"
+                className={cn(
+                  `
+                    pointer-events-none flex size-8 items-center justify-center rounded-md border bg-background
+                    text-muted-foreground transition
+                  `,
+                  contextExpanded ? 'bg-muted/50' : '',
+                )}
+              >
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className={cn('transition-transform', { 'rotate-180': contextExpanded })}
+                >
+                  <path
+                    d="M4 6L8 10L12 6"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </span>
+            </button>
+          )
+        : (
+            <button
+              type="button"
+              onClick={generateMarketContext}
+              className={cn(
+                'flex w-full items-center justify-between rounded-lg p-4 text-left transition-colors',
+                `
+                  hover:bg-muted/50
+                  focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+                  focus-visible:ring-offset-background focus-visible:outline-none
+                  disabled:cursor-not-allowed disabled:opacity-60
+                `,
+                contextExpanded ? 'rounded-b-none' : '',
+              )}
+              disabled={isPending || !state.market}
+            >
+              <span className="text-lg font-medium">Market Context</span>
+              <span
+                className={`
+                  flex items-center gap-1 rounded-md border bg-background px-3 py-1 text-sm font-medium text-foreground
+                  shadow-sm transition
+                `}
+              >
+                {isPending ? <LoaderIcon className="size-3 animate-spin" /> : <SparklesIcon className="size-3" />}
+                {isPending ? 'Generating...' : 'Generate'}
+              </span>
+            </button>
+          )}
+
+      {(contextExpanded || error) && (
+        <div className="border-t border-border/30 px-3 pt-3 pb-3">
+          <div className="space-y-3">
+            {error && (
+              <p className="text-sm font-medium text-destructive">
+                {error}
+              </p>
+            )}
+
+            {paragraphs.map(paragraph => (
+              <p
+                key={paragraph}
+                className="text-sm leading-relaxed text-muted-foreground"
+              >
+                {paragraph}
+              </p>
+            ))}
+
+            {!error && context && !isTyping && displayedContext === context && (
+              <div className="flex justify-end">
+                <span className="font-mono text-2xs tracking-wide text-muted-foreground/80 uppercase">
+                  Results are experimental
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

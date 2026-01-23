@@ -31,7 +31,7 @@ describe('cancelOrderAction', () => {
     process.env.CLOB_URL = 'https://clob.local'
     mocks.getCurrentUser.mockResolvedValueOnce(null)
 
-    const { cancelOrderAction } = await import('@/app/(platform)/event/[slug]/_actions/cancel-order')
+    const { cancelOrderAction } = await import('@/app/[locale]/(platform)/event/[slug]/_actions/cancel-order')
     expect(await cancelOrderAction('order-1')).toEqual({ error: 'Unauthenticated.' })
   })
 
@@ -44,7 +44,7 @@ describe('cancelOrderAction', () => {
     })
     mocks.getUserTradingAuthSecrets.mockResolvedValueOnce({ clob: null })
 
-    const { cancelOrderAction } = await import('@/app/(platform)/event/[slug]/_actions/cancel-order')
+    const { cancelOrderAction } = await import('@/app/[locale]/(platform)/event/[slug]/_actions/cancel-order')
     expect(await cancelOrderAction('order-1')).toEqual({ error: TRADING_AUTH_REQUIRED_ERROR })
 
     mocks.getUserTradingAuthSecrets.mockResolvedValueOnce({ clob: { key: 'k', passphrase: 'p', secret: 's' } })
@@ -66,7 +66,7 @@ describe('cancelOrderAction', () => {
       json: async () => ({ error: 'not found' }),
     }) as any
 
-    const { cancelOrderAction } = await import('@/app/(platform)/event/[slug]/_actions/cancel-order')
+    const { cancelOrderAction } = await import('@/app/[locale]/(platform)/event/[slug]/_actions/cancel-order')
     expect(await cancelOrderAction('order-1')).toEqual({ error: 'Order not found.' })
   })
 
@@ -85,7 +85,7 @@ describe('cancelOrderAction', () => {
       json: async () => ({}),
     }) as any
 
-    const { cancelOrderAction } = await import('@/app/(platform)/event/[slug]/_actions/cancel-order')
+    const { cancelOrderAction } = await import('@/app/[locale]/(platform)/event/[slug]/_actions/cancel-order')
     expect(await cancelOrderAction('order-1')).toEqual({ error: null })
   })
 })

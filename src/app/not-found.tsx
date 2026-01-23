@@ -92,7 +92,7 @@ export default function NotFound() {
         </p>
       )}
       <Button asChild className="mt-5">
-        <Link href="/">
+        <Link href={'/' as Route}>
           Go to home
         </Link>
       </Button>

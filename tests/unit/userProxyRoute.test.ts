@@ -35,7 +35,7 @@ vi.mock('@/lib/drizzle', () => {
   }
 })
 
-const { GET } = await import('@/app/(platform)/api/user/proxy/route')
+const { GET } = await import('@/app/api/user/proxy/route')
 
 describe('user proxy route', () => {
   it('returns 401 when unauthenticated', async () => {

@@ -56,7 +56,7 @@ export default function TwoFactorClient({ next }: { next?: string | null }) {
       }
 
       if (!user.twoFactorEnabled) {
-        router.replace('/')
+        router.replace('/' as Route)
         return
       }
 

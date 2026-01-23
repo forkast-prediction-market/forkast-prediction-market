@@ -13,7 +13,7 @@ vi.mock('@/lib/db/queries/notification', () => ({
   NotificationRepository: { deleteById: (...args: any[]) => mocks.deleteById(...args) },
 }))
 
-const { DELETE } = await import('@/app/(platform)/api/notifications/[id]/route')
+const { DELETE } = await import('@/app/api/notifications/[id]/route')
 
 describe('notifications delete route', () => {
   it('returns 401 for unauthenticated user', async () => {

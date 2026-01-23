@@ -1,3 +1,4 @@
+import type { Route } from 'next'
 import Link from 'next/link'
 import { svgLogo } from '@/lib/utils'
 
@@ -7,7 +8,7 @@ export default async function HeaderLogo() {
 
   return (
     <Link
-      href="/"
+      href={'/' as Route}
       className={`
         flex shrink-0 items-center gap-2 text-2xl font-bold text-foreground transition-opacity
         hover:opacity-80

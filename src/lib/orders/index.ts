@@ -1,6 +1,6 @@
 import type { CLOB_ORDER_TYPE } from '@/lib/constants'
 import type { BlockchainOrder, OrderSide, OrderType, Outcome } from '@/types'
-import { storeOrderAction } from '@/app/(platform)/event/[slug]/_actions/store-order'
+import { storeOrderAction } from '@/app/[locale]/(platform)/event/[slug]/_actions/store-order'
 import { MICRO_UNIT, ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 import { ZERO_ADDRESS } from '@/lib/contracts'
 import { toMicro } from '@/lib/formatters'
