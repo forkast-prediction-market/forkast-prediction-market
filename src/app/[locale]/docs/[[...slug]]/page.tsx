@@ -3,10 +3,10 @@ import type { Metadata } from 'next'
 import { DocsBody, DocsDescription, DocsPage, DocsTitle } from 'fumadocs-ui/layouts/docs/page'
 import defaultMdxComponents from 'fumadocs-ui/mdx'
 import { notFound, redirect } from 'next/navigation'
-import { AffiliateShareDisplay } from '@/app/docs/_components/AffiliateShareDisplay'
-import { FeeCalculationExample } from '@/app/docs/_components/FeeCalculationExample'
-import { PlatformShareDisplay } from '@/app/docs/_components/PlatformShareDisplay'
-import { TradingFeeDisplay } from '@/app/docs/_components/TradingFeeDisplay'
+import { AffiliateShareDisplay } from '@/app/[locale]/docs/_components/AffiliateShareDisplay'
+import { FeeCalculationExample } from '@/app/[locale]/docs/_components/FeeCalculationExample'
+import { PlatformShareDisplay } from '@/app/[locale]/docs/_components/PlatformShareDisplay'
+import { TradingFeeDisplay } from '@/app/[locale]/docs/_components/TradingFeeDisplay'
 import { source } from '@/lib/source'
 
 function getMDXComponents(components?: MDXComponents): MDXComponents {
@@ -20,7 +20,7 @@ function getMDXComponents(components?: MDXComponents): MDXComponents {
   }
 }
 
-export default async function Page(props: PageProps<'/docs/[[...slug]]'>) {
+export default async function Page(props: PageProps<'/[locale]/docs/[[...slug]]'>) {
   const params = await props.params
 
   const isOwnerGuideEnabled = JSON.parse(process.env.NEXT_PUBLIC_FORK_OWNER_GUIDE || 'false')
@@ -56,7 +56,7 @@ export async function generateStaticParams() {
   return source.generateParams()
 }
 
-export async function generateMetadata(props: PageProps<'/docs/[[...slug]]'>): Promise<Metadata> {
+export async function generateMetadata(props: PageProps<'/[locale]/docs/[[...slug]]'>): Promise<Metadata> {
   const params = await props.params
 
   const isOwnerGuideEnabled = JSON.parse(process.env.NEXT_PUBLIC_FORK_OWNER_GUIDE || 'false')
