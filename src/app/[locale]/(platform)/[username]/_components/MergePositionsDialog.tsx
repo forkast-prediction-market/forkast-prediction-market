@@ -2,7 +2,6 @@
 
 import { CheckIcon } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -21,6 +20,7 @@ import {
   DrawerTitle,
 } from '@/components/ui/drawer'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { Link } from '@/i18n/navigation'
 import { formatCurrency } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 

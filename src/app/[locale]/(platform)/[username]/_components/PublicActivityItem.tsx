@@ -2,7 +2,7 @@ import type { Route } from 'next'
 import type { PublicActivity } from '@/types'
 import { SquareArrowOutUpRightIcon } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { formatCurrency, formatSharePriceLabel, formatSharesLabel, formatTimeAgo } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 

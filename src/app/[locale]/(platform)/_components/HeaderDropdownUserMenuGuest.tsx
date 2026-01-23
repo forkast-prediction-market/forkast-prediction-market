@@ -1,6 +1,5 @@
 import type { Route } from 'next'
 import { MenuIcon } from 'lucide-react'
-import Link from 'next/link'
 import ThemeSelector from '@/components/ThemeSelector'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useAppKit } from '@/hooks/useAppKit'
+import { Link } from '@/i18n/navigation'
 
 export default function HeaderDropdownUserMenuGuest() {
   const { open } = useAppKit()

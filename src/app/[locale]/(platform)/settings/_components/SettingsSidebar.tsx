@@ -1,9 +1,9 @@
 'use client'
 
 import type { Route } from 'next'
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { Link } from '@/i18n/navigation'
 
 interface MenuItem {
   id: string

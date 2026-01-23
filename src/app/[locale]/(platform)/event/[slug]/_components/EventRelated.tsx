@@ -3,10 +3,10 @@
 import type { Event } from '@/types'
 import { useQuery } from '@tanstack/react-query'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import EventRelatedSkeleton from '@/app/[locale]/(platform)/event/[slug]/_components/EventRelatedSkeleton'
 import { Button } from '@/components/ui/button'
+import { Link } from '@/i18n/navigation'
 import { cn } from '@/lib/utils'
 
 interface EventRelatedProps {

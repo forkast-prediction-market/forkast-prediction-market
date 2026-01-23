@@ -2,7 +2,6 @@ import type { Route } from 'next'
 import type { PortfolioUserOpenOrder } from '@/app/[locale]/(platform)/portfolio/_types/PortfolioOpenOrdersTypes'
 import { XIcon } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 import {
   formatCents,
   formatExpirationLabel,
@@ -12,6 +11,7 @@ import {
 } from '@/app/[locale]/(platform)/portfolio/_utils/PortfolioOpenOrdersUtils'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Link } from '@/i18n/navigation'
 import { formatCurrency } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 

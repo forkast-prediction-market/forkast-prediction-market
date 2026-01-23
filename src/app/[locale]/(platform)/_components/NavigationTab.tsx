@@ -2,12 +2,12 @@
 
 import type { Route } from 'next'
 import { TrendingUpIcon } from 'lucide-react'
-import Link from 'next/link'
 import { redirect, usePathname } from 'next/navigation'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useFilters } from '@/app/[locale]/(platform)/_providers/FilterProvider'
 import { Teleport } from '@/components/Teleport'
 import { Button } from '@/components/ui/button'
+import { Link } from '@/i18n/navigation'
 import { cn } from '@/lib/utils'
 
 interface NavigationTabProps {

@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { tableHeaderClass } from '@/lib/constants'
 import { formatCurrency } from '@/lib/formatters'
 import { cn } from '@/lib/utils'

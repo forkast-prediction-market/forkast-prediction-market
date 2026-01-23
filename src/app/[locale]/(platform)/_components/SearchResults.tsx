@@ -1,8 +1,8 @@
 import type { Event, PublicProfile, SearchLoadingStates, SearchResultItems } from '@/types'
 import { LoaderIcon } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 import ProfileLink from '@/components/ProfileLink'
+import { Link } from '@/i18n/navigation'
 import { SearchTabs } from './SearchTabs'
 
 interface SearchResultsProps {

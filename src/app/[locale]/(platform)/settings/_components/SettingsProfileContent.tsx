@@ -3,7 +3,6 @@
 import type { User } from '@/types'
 import { useQueryClient } from '@tanstack/react-query'
 import Image from 'next/image'
-import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useSignMessage } from 'wagmi'
@@ -12,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { InputError } from '@/components/ui/input-error'
 import { Label } from '@/components/ui/label'
+import { Link } from '@/i18n/navigation'
 import {
   clearCommunityAuth,
   ensureCommunityToken,

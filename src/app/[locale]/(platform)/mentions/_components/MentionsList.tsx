@@ -2,12 +2,12 @@
 
 import type { Event } from '@/types'
 import Image from 'next/image'
-import Link from 'next/link'
 import { Suspense } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { NewBadge } from '@/components/ui/new-badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Link } from '@/i18n/navigation'
 import { formatVolume } from '@/lib/formatters'
 import { cn, isMarketNew } from '@/lib/utils'
 

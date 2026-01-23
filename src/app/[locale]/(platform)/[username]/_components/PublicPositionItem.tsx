@@ -2,7 +2,7 @@
 
 import type { Route } from 'next'
 import Image from 'next/image'
-import Link from 'next/link'
+import { Link } from '@/i18n/navigation'
 import { formatCurrency, formatSharesLabel, formatTimeAgo } from '@/lib/formatters'
 
 export interface PublicPosition {
