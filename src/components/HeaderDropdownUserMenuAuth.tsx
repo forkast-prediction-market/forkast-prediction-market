@@ -4,7 +4,6 @@ import type { Route } from 'next'
 import { useDisconnect } from '@reown/appkit-controllers/react'
 import { ChevronDownIcon } from 'lucide-react'
 import Image from 'next/image'
-import Link from 'next/link'
 import { redirect, usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useFilters } from '@/app/[locale]/(platform)/_providers/FilterProvider'
@@ -20,6 +19,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import UserInfoSection from '@/components/UserInfoSection'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { Link } from '@/i18n/navigation'
 import { useUser } from '@/stores/useUser'
 
 export default function HeaderDropdownUserMenuAuth() {
