@@ -1,4 +1,4 @@
-import TwoFactorClient from '@/app/2fa/_components/TwoFactorClient'
+import TwoFactorClient from '@/app/[locale]/2fa/_components/TwoFactorClient'
 
 export default async function TwoFactorPage({
   searchParams,
