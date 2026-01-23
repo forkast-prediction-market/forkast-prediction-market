@@ -2,7 +2,6 @@
 
 import type { User } from '@/types'
 import { useAppKitAccount } from '@reown/appkit/react'
-import { useTranslations } from 'next-intl'
 import { useEffect } from 'react'
 import HeaderDropdownUserMenuGuest from '@/app/(platform)/_components/HeaderDropdownUserMenuGuest'
 import HeaderNotifications from '@/app/(platform)/_components/HeaderNotifications'
@@ -20,7 +19,6 @@ import { useUser } from '@/stores/useUser'
 const { useSession } = authClient
 
 export default function HeaderMenu() {
-  const t = useTranslations('Header')
   const isMounted = useClientMounted()
   const { open, isReady } = useAppKit()
   const { isConnected, status } = useAppKitAccount()
@@ -76,7 +74,7 @@ export default function HeaderMenu() {
           {!isMobile && <HeaderPortfolio />}
           {!isMobile && (
             <Button size="headerCompact" onClick={startDepositFlow}>
-              {t('deposit')}
+              Deposit
             </Button>
           )}
           <HeaderNotifications />
@@ -94,14 +92,14 @@ export default function HeaderMenu() {
             data-testid="header-login-button"
             onClick={() => open()}
           >
-            {t('logIn')}
+            Log In
           </Button>
           <Button
             size="headerCompact"
             data-testid="header-signup-button"
             onClick={() => open()}
           >
-            {t('signUp')}
+            Sign Up
           </Button>
           <HeaderDropdownUserMenuGuest />
         </>

@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import type { ReactNode } from 'react'
 import TestModeBanner from '@/components/TestModeBanner'
-import { defaultLocale } from '@/i18n/locales'
 import { openSauceOne } from '@/lib/fonts'
 import { IS_TEST_MODE } from '@/lib/network'
 import { svgLogoUri } from '@/lib/utils'
@@ -30,7 +29,7 @@ export const viewport: Viewport = {
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang={defaultLocale} className={`${openSauceOne.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${openSauceOne.variable}`} suppressHydrationWarning>
       <body className="flex min-h-screen flex-col font-sans antialiased">
         {IS_TEST_MODE && <TestModeBanner />}
         {children}

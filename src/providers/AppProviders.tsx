@@ -2,11 +2,11 @@
 
 import type { ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { NextIntlClientProvider } from 'next-intl'
 import { ThemeProvider } from 'next-themes'
 import dynamic from 'next/dynamic'
 import { Toaster } from '@/components/ui/sonner'
 import AppKitProvider from '@/providers/AppKitProvider'
-import IntlProvider from '@/providers/IntlProvider'
 import ProgressIndicatorProvider from '@/providers/ProgressIndicatorProvider'
 
 const SpeedInsights = dynamic(
@@ -39,7 +39,7 @@ export function AppProviders({ children, disableAppKit }: AppProvidersProps) {
 
   return (
     <ProgressIndicatorProvider>
-      <IntlProvider>
+      <NextIntlClientProvider locale="en">
         <ThemeProvider attribute="class">
           <QueryClientProvider client={queryClient}>
             {shouldLoadAppKit
@@ -53,7 +53,7 @@ export function AppProviders({ children, disableAppKit }: AppProvidersProps) {
                 )}
           </QueryClientProvider>
         </ThemeProvider>
-      </IntlProvider>
+      </NextIntlClientProvider>
     </ProgressIndicatorProvider>
   )
 }
