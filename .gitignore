@@ -5,6 +5,8 @@
 .vscode
 .aider
 .cursor
+.codex
+.agents
 openspec
 AGENTS.md
 
