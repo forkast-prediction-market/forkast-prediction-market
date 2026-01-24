@@ -8,6 +8,7 @@ import { redirect, usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useFilters } from '@/app/[locale]/(platform)/_providers/FilterProvider'
 import HeaderPortfolio from '@/components/HeaderPortfolio'
+import LocaleSwitcherMenuItem from '@/components/LocaleSwitcherMenuItem'
 import ThemeSelector from '@/components/ThemeSelector'
 import { Button } from '@/components/ui/button'
 import {
@@ -184,6 +185,8 @@ export default function HeaderDropdownUserMenuAuth() {
           )}
 
           <DropdownMenuSeparator />
+
+          <LocaleSwitcherMenuItem />
 
           <DropdownMenuItem asChild>
             <ThemeSelector />
