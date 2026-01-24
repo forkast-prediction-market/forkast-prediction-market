@@ -11,6 +11,7 @@ export default function AuthResetPage() {
   const params = useParams()
   const rawLocale = params?.locale
   const locale = Array.isArray(rawLocale) ? rawLocale[0] : rawLocale
+  const redirectHref = !locale || locale === 'en' ? '/' : `/${locale}`
 
   useEffect(() => {
     let isActive = true
@@ -34,7 +35,7 @@ export default function AuthResetPage() {
       clearNonHttpOnlyCookies()
 
       if (isActive) {
-        window.location.href = locale ? `/${locale}` : '/'
+        window.location.href = redirectHref
       }
     }
 
@@ -43,7 +44,7 @@ export default function AuthResetPage() {
     return () => {
       isActive = false
     }
-  }, [locale])
+  }, [redirectHref])
 
   return (
     <ThemeProvider attribute="class">
