@@ -18,33 +18,6 @@ import { useAppKit } from '@/hooks/useAppKit'
 import { useClientMounted } from '@/hooks/useClientMounted'
 import { cn, triggerConfetti } from '@/lib/utils'
 
-const STEPS = [
-  {
-    title: '1. Choose a Market',
-    description:
-      'Buy ‘Yes’ or ‘No’ shares based on what you honestly think will happen. Prices move in real time as other traders trade.',
-    image: '/images/how-it-works/1.webp',
-    imageAlt: 'Illustration showing how to pick a market',
-    ctaLabel: 'Next',
-  },
-  {
-    title: '2. Make Your Trade',
-    description:
-      'Add funds with crypto, card, or bank transfer—then choose your position. Trade on real-world events with full transparency.',
-    image: '/images/how-it-works/2.webp',
-    imageAlt: 'Illustration showing how to place a bet',
-    ctaLabel: 'Next',
-  },
-  {
-    title: '3. Cash Out 🤑',
-    description:
-      'Sell your ‘Yes’ or ‘No’ shares anytime, or wait until the market settles. Winning shares redeem for $1 each. Start trading in minutes.',
-    image: '/images/how-it-works/3.png',
-    imageAlt: 'Illustration showing how profits work',
-    ctaLabel: 'Get Started',
-  },
-] as const
-
 export default function HeaderHowItWorks() {
   const isMounted = useClientMounted()
   const t = useExtracted('Header')
@@ -54,8 +27,35 @@ export default function HeaderHowItWorks() {
   const [activeStep, setActiveStep] = useState(0)
   const [isMobileBannerDismissed, setIsMobileBannerDismissed] = useState(false)
 
-  const currentStep = STEPS[activeStep]
-  const isLastStep = activeStep === STEPS.length - 1
+  const steps = [
+    {
+      title: t('1. Choose a Market'),
+      description:
+        t('Buy ‘Yes’ or ‘No’ shares based on what you honestly think will happen. Prices move in real time as other traders trade.'),
+      image: '/images/how-it-works/1.webp',
+      imageAlt: t('Illustration showing how to pick a market'),
+      ctaLabel: t('Next'),
+    },
+    {
+      title: t('2. Make Your Trade'),
+      description:
+        t('Add funds with crypto, card, or bank transfer—then choose your position. Trade on real-world events with full transparency.'),
+      image: '/images/how-it-works/2.webp',
+      imageAlt: t('Illustration showing how to place a bet'),
+      ctaLabel: t('Next'),
+    },
+    {
+      title: t('3. Cash Out 🤑'),
+      description:
+        t('Sell your ‘Yes’ or ‘No’ shares anytime, or wait until the market settles. Winning shares redeem for $1 each. Start trading in minutes.'),
+      image: '/images/how-it-works/3.png',
+      imageAlt: t('Illustration showing how profits work'),
+      ctaLabel: t('Get Started'),
+    },
+  ] as const
+
+  const currentStep = steps[activeStep]
+  const isLastStep = activeStep === steps.length - 1
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -89,7 +89,7 @@ export default function HeaderHowItWorks() {
       return
     }
 
-    setActiveStep(step => Math.min(step + 1, STEPS.length - 1))
+    setActiveStep(step => Math.min(step + 1, steps.length - 1))
   }
 
   if (!isMounted || status === 'connecting' || isConnected) {
@@ -133,7 +133,7 @@ export default function HeaderHowItWorks() {
                 data-testid="how-it-works-trigger-mobile"
               >
                 <InfoIcon className="size-4" />
-                How it works
+                {t('How it works')}
               </Button>
             </DialogTrigger>
             <Button
@@ -145,7 +145,7 @@ export default function HeaderHowItWorks() {
               data-testid="how-it-works-dismiss-banner"
             >
               <XIcon className="size-4" />
-              <span className="sr-only">Dismiss</span>
+              <span className="sr-only">{t('Dismiss')}</span>
             </Button>
           </div>
         </div>
@@ -164,7 +164,7 @@ export default function HeaderHowItWorks() {
 
         <div className="flex flex-col gap-6 p-6">
           <div className="flex items-center justify-center gap-2">
-            {STEPS.map((step, index) => (
+            {steps.map((step, index) => (
               <span
                 key={step.title}
                 className={cn(
