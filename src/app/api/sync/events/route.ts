@@ -673,6 +673,16 @@ function getMarketTimestamps(market: SubgraphCondition): MarketTimestamps {
 }
 
 async function updateEventStatusFromMarkets(eventId: string) {
+  const { data: currentEvent, error: currentEventError } = await supabaseAdmin
+    .from('events')
+    .select('status,resolved_at')
+    .eq('id', eventId)
+    .maybeSingle()
+
+  if (currentEventError) {
+    console.error(`Failed to load current status for event ${eventId}:`, currentEventError)
+  }
+
   const { count: totalCount, error: totalError } = await supabaseAdmin
     .from('markets')
     .select('condition_id', { count: 'exact', head: true })
@@ -718,9 +728,17 @@ async function updateEventStatusFromMarkets(eventId: string) {
             ? 'active'
             : 'archived'
 
+  const shouldSetResolvedAt = nextStatus === 'resolved'
+    && (currentEvent?.resolved_at == null)
+  const resolvedAtUpdate = shouldSetResolvedAt
+    ? new Date().toISOString()
+    : nextStatus === 'resolved'
+      ? currentEvent?.resolved_at ?? null
+      : null
+
   const { error: updateError } = await supabaseAdmin
     .from('events')
-    .update({ status: nextStatus })
+    .update({ status: nextStatus, resolved_at: resolvedAtUpdate })
     .eq('id', eventId)
 
   if (updateError) {

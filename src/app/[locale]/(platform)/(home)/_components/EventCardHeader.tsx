@@ -8,7 +8,6 @@ interface EventCardHeaderProps {
   activeOutcome?: SelectedOutcome | null
   isInTradingMode: boolean
   isSingleMarket: boolean
-  roundedPrimaryDisplayChance: number
   onCancelTrade: () => void
 }
 
@@ -17,7 +16,6 @@ export default function EventCardHeader({
   activeOutcome,
   isInTradingMode,
   isSingleMarket,
-  roundedPrimaryDisplayChance,
   onCancelTrade,
 }: EventCardHeaderProps) {
   const activeMarket = activeOutcome?.market
@@ -77,58 +75,7 @@ export default function EventCardHeader({
               ✕
             </button>
           )
-        : (
-            isSingleMarket && (
-              <div className="relative -mt-3 flex flex-col items-center">
-                <div className="relative">
-                  <svg
-                    width="72"
-                    height="52"
-                    viewBox="0 0 72 52"
-                    className="rotate-0 transform"
-                  >
-                    <path
-                      d="M 6 46 A 30 30 0 0 1 66 46"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="5"
-                      className="text-slate-200 dark:text-slate-600"
-                    />
-
-                    <path
-                      d="M 6 46 A 30 30 0 0 1 66 46"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="5"
-                      strokeLinecap="round"
-                      className={
-                        `transition-all duration-300 ${
-                          roundedPrimaryDisplayChance < 40
-                            ? 'text-no'
-                            : roundedPrimaryDisplayChance === 50
-                              ? 'text-slate-400'
-                              : 'text-yes'
-                        }`
-                      }
-                      strokeDasharray={`${(roundedPrimaryDisplayChance / 100) * 94.25} 94.25`}
-                      strokeDashoffset="0"
-                    />
-                  </svg>
-
-                  <div className="absolute inset-0 flex items-center justify-center pt-4">
-                    <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                      {roundedPrimaryDisplayChance}
-                      %
-                    </span>
-                  </div>
-                </div>
-
-                <div className="-mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
-                  chance
-                </div>
-              </div>
-            )
-          )}
+        : null}
     </div>
   )
 }

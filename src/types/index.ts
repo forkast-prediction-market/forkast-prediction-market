@@ -15,6 +15,7 @@ export interface Event {
   total_markets_count: number
   volume: number
   end_date: string | null
+  resolved_at?: string | null
   created_at: string
   updated_at: string
   markets: Market[]

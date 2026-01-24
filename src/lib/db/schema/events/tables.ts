@@ -68,6 +68,7 @@ export const events = pgTable(
       .notNull()
       .defaultNow(),
     end_date: timestamp({ withTimezone: true }),
+    resolved_at: timestamp({ withTimezone: true }),
   },
 )
 

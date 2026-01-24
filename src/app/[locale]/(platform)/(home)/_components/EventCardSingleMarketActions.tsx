@@ -32,11 +32,11 @@ export default function EventCardSingleMarketActions({
     const isYesOutcome = resolvedOutcome?.outcome_index === OUTCOME_INDEX.YES
 
     return (
-      <div className="mt-auto mb-3">
+      <div className="mt-auto mb-0">
         {resolvedOutcome
           ? (
               <div className={`
-                flex w-full cursor-default items-center justify-center gap-2 rounded-md bg-muted/60 px-3 py-2 text-sm
+                flex h-12 w-full cursor-default items-center justify-center gap-2 rounded-md bg-muted/60 px-3 text-sm
                 font-semibold text-foreground
               `}
               >
@@ -53,7 +53,7 @@ export default function EventCardSingleMarketActions({
             )
           : (
               <div className={`
-                flex w-full cursor-default items-center justify-center rounded-md bg-muted/60 px-3 py-2 text-sm
+                flex h-10 w-full cursor-default items-center justify-center rounded-md bg-muted/60 px-3 text-sm
                 font-semibold text-muted-foreground
               `}
               >
@@ -65,7 +65,7 @@ export default function EventCardSingleMarketActions({
   }
 
   return (
-    <div className="mt-auto mb-3 grid grid-cols-2 gap-2">
+    <div className="mt-auto mb-1 grid grid-cols-2 gap-2">
       <Button
         type="button"
         onClick={(e) => {
