@@ -1,7 +1,7 @@
 import type { RefObject } from 'react'
 import type { Event } from '@/types'
 import { CheckIcon, LinkIcon } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getMarketSeriesLabel } from '@/app/[locale]/(platform)/event/[slug]/_utils/EventChartUtils'
 import { Button } from '@/components/ui/button'
 import {
@@ -123,6 +123,48 @@ export default function EventShare({ event }: EventShareProps) {
     })
   }, [affiliateCode, affiliateSharePercent, tradeFeePercent])
 
+  const debugPayload = useMemo(() => {
+    return {
+      event: {
+        id: event.id,
+        slug: event.slug,
+        title: event.title,
+      },
+      markets: event.markets.map(market => ({
+        slug: market.slug,
+        condition_id: market.condition_id,
+        question_id: market.question_id,
+        short_title: market.short_title ?? null,
+        title: market.title,
+        outcomes: market.outcomes.map(outcome => ({
+          outcome_index: outcome.outcome_index,
+          outcome_text: outcome.outcome_text,
+          token_id: outcome.token_id,
+        })),
+      })),
+    }
+  }, [event.id, event.markets, event.slug, event.title])
+
+  const handleDebugCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(debugPayload, null, 2))
+    }
+    catch (error) {
+      console.error('Error copying debug payload:', error)
+    }
+  }, [debugPayload])
+
+  const maybeHandleDebugCopy = useCallback((event: React.MouseEvent | React.PointerEvent) => {
+    if (!event.altKey) {
+      return false
+    }
+
+    event.preventDefault()
+    event.stopPropagation()
+    void handleDebugCopy()
+    return true
+  }, [handleDebugCopy])
+
   const buildShareUrl = useCallback((path: string) => {
     const url = new URL(path, window.location.origin)
     if (affiliateCode) {
@@ -182,6 +224,7 @@ export default function EventShare({ event }: EventShareProps) {
               size="icon"
               className={cn(headerIconButtonClass, 'size-auto p-0')}
               aria-label="Copy event link"
+              onPointerDown={maybeHandleDebugCopy}
             >
               <LinkIcon className="size-4 -scale-x-100" />
             </Button>
@@ -241,7 +284,12 @@ export default function EventShare({ event }: EventShareProps) {
       variant="ghost"
       size="icon"
       className={cn(headerIconButtonClass, 'size-auto p-0')}
-      onClick={handleShare}
+      onClick={(event) => {
+        if (maybeHandleDebugCopy(event)) {
+          return
+        }
+        void handleShare()
+      }}
       aria-label="Copy event link"
     >
       {shareSuccess
