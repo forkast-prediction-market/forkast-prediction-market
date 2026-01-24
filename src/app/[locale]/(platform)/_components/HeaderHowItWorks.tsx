@@ -20,7 +20,7 @@ import { cn, triggerConfetti } from '@/lib/utils'
 
 export default function HeaderHowItWorks() {
   const isMounted = useClientMounted()
-  const t = useExtracted('Header')
+  const t = useExtracted('HowItWorks')
   const { open } = useAppKit()
   const { isConnected, status } = useAppKitAccount()
   const [isOpen, setIsOpen] = useState(false)
