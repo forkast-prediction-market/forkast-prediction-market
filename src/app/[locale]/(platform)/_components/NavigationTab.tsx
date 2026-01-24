@@ -28,11 +28,11 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   const tagFromFilters = isHomePage
     ? (showBookmarkedOnly && filters.tag === 'trending' ? '' : filters.tag)
     : pathname === '/mentions' ? 'mentions' : 'trending'
+  const mainTagFromFilters = isHomePage
+    ? (filters.mainTag || childParentMap[tagFromFilters] || tagFromFilters || 'trending')
+    : pathname === '/mentions' ? 'mentions' : 'trending'
 
-  const parentSlug = childParentMap[tagFromFilters]
-  const hasChildMatch = tag.childs.some(child => child.slug === tagFromFilters)
-  const effectiveParent = parentSlug ?? (hasChildMatch ? tag.slug : tagFromFilters)
-  const isActive = effectiveParent === tag.slug
+  const isActive = mainTagFromFilters === tag.slug
 
   const [showLeftShadow, setShowLeftShadow] = useState(false)
   const [showRightShadow, setShowRightShadow] = useState(false)
@@ -45,6 +45,7 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   const parentScrollContainerRef = useRef<HTMLDivElement>(null)
   const [indicatorStyle, setIndicatorStyle] = useState({ left: 0, width: 0 })
   const [indicatorReady, setIndicatorReady] = useState(false)
+  const indicatorRetryRef = useRef<number | null>(null)
 
   const tagItems = useMemo(() => {
     return [
@@ -74,6 +75,10 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
 
   const updateIndicator = useCallback(() => {
     if (!isActive) {
+      if (indicatorRetryRef.current !== null) {
+        cancelAnimationFrame(indicatorRetryRef.current)
+        indicatorRetryRef.current = null
+      }
       setIndicatorReady(false)
       return
     }
@@ -82,6 +87,12 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
     const activeButton = buttonRefs.current[activeIndex]
 
     if (!activeButton) {
+      if (indicatorRetryRef.current === null) {
+        indicatorRetryRef.current = requestAnimationFrame(() => {
+          indicatorRetryRef.current = null
+          updateIndicator()
+        })
+      }
       return
     }
 
@@ -135,6 +146,16 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
   useLayoutEffect(() => {
     updateIndicator()
   }, [updateIndicator])
+
+  useEffect(() => {
+    if (!isActive) {
+      return
+    }
+    const rafId = requestAnimationFrame(() => {
+      updateIndicator()
+    })
+    return () => cancelAnimationFrame(rafId)
+  }, [isActive, updateIndicator, tagItems.length])
 
   useLayoutEffect(() => {
     const rafId = requestAnimationFrame(() => {
@@ -302,12 +323,12 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
     }
   }, [updateParentScrollShadows])
 
-  const handleTagClick = useCallback((targetTag: string) => {
+  const handleTagClick = useCallback((targetTag: string, parentTag?: string) => {
     if (targetTag === 'mentions') {
       redirect('/mentions')
     }
 
-    updateFilters({ tag: targetTag })
+    updateFilters({ tag: targetTag, mainTag: parentTag ?? targetTag })
   }, [updateFilters])
 
   return (
@@ -383,7 +404,7 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
                 ref={(el: HTMLButtonElement | null) => {
                   buttonRefs.current[0] = el
                 }}
-                onClick={() => handleTagClick(tag.slug)}
+                onClick={() => handleTagClick(tag.slug, tag.slug)}
                 variant="ghost"
                 size="sm"
                 className={cn(
@@ -403,7 +424,7 @@ export default function NavigationTab({ tag, childParentMap }: NavigationTabProp
                   ref={(el: HTMLButtonElement | null) => {
                     buttonRefs.current[index + 1] = el
                   }}
-                  onClick={() => handleTagClick(subtag.slug)}
+                  onClick={() => handleTagClick(subtag.slug, tag.slug)}
                   variant="ghost"
                   size="sm"
                   className={cn(

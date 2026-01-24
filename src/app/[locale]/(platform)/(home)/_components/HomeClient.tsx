@@ -24,7 +24,7 @@ export default function HomeClient({ initialEvents, initialTag }: HomeClientProp
     hasInitialized.current = true
 
     if (initialTag) {
-      updateFilters({ tag: initialTag })
+      updateFilters({ tag: initialTag, mainTag: initialTag })
     }
   }, [initialTag, updateFilters])
 
