@@ -184,9 +184,9 @@ export default function HeaderDropdownUserMenuAuth() {
             </>
           )}
 
-          <DropdownMenuSeparator />
-
           <LocaleSwitcherMenuItem />
+
+          <DropdownMenuSeparator />
 
           <DropdownMenuItem asChild>
             <ThemeSelector />

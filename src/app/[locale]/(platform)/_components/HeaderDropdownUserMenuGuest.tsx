@@ -46,9 +46,9 @@ export default function HeaderDropdownUserMenuGuest() {
           <Link href="/terms-of-use" data-testid="header-terms-link">Terms of Use</Link>
         </DropdownMenuItem>
 
-        <DropdownMenuSeparator />
-
         <LocaleSwitcherMenuItem />
+
+        <DropdownMenuSeparator />
 
         <DropdownMenuItem asChild>
           <ThemeSelector />

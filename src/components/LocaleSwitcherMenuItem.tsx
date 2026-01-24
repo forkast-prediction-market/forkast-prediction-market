@@ -80,7 +80,7 @@ export default function LocaleSwitcherMenuItem() {
     <DropdownMenuSub>
       <DropdownMenuSubTrigger disabled={isPending}>
         <span className="sr-only">Language</span>
-        <span className="h-5 overflow-hidden text-sm font-medium">
+        <span className="h-5 overflow-hidden text-sm">
           <span
             className="block transition-transform duration-200 ease-in-out"
             style={{
