@@ -43,7 +43,7 @@ export default function AuthResetPage() {
   return (
     <ThemeProvider attribute="class">
       <main className="flex min-h-screen items-center justify-center px-4 py-12 text-sm text-muted-foreground">
-        <HeaderLogo />
+        <HeaderLogo locale="en" />
       </main>
     </ThemeProvider>
   )

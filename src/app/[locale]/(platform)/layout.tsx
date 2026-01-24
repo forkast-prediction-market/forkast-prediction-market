@@ -3,14 +3,21 @@ import Header from '@/app/[locale]/(platform)/_components/Header'
 import NavigationTabs from '@/app/[locale]/(platform)/_components/NavigationTabs'
 import { FilterProvider } from '@/app/[locale]/(platform)/_providers/FilterProvider'
 import { TradingOnboardingProvider } from '@/app/[locale]/(platform)/_providers/TradingOnboardingProvider'
+import { routing } from '@/i18n/routing'
 import { AppProviders } from '@/providers/AppProviders'
 
-export default async function PlatformLayout({ children }: LayoutProps<'/[locale]'>) {
+export function generateStaticParams() {
+  return routing.locales.map(locale => ({ locale }))
+}
+
+export default async function PlatformLayout({ params, children }: LayoutProps<'/[locale]'>) {
+  const { locale } = await params
+
   return (
     <AppProviders>
       <TradingOnboardingProvider>
         <FilterProvider>
-          <Header />
+          <Header locale={locale} />
           <NavigationTabs />
           {children}
           <AffiliateQueryHandler />
