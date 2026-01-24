@@ -22,9 +22,9 @@
   },
   "dependencies": {
     "@bprogress/next": "^3.2.12",
-    "@reown/appkit": "1.8.16",
-    "@reown/appkit-adapter-wagmi": "1.8.16",
-    "@reown/appkit-siwe": "1.8.16",
+    "@reown/appkit": "1.8.17",
+    "@reown/appkit-adapter-wagmi": "1.8.17",
+    "@reown/appkit-siwe": "1.8.17",
     "@supabase/supabase-js": "^2.90.1",
     "@tanstack/react-query": "^5.90.19",
     "@tanstack/react-table": "^8.21.3",

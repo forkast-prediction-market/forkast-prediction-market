@@ -80,6 +80,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
   function getDisplayChance(marketId: string) {
     return chanceByMarket[marketId] ?? 0
   }
+
   const primaryMarket = event.markets[0]
   const primaryDisplayChance = primaryMarket ? getDisplayChance(primaryMarket.condition_id) : 0
   const roundedPrimaryDisplayChance = Math.round(primaryDisplayChance)
@@ -278,7 +279,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
       className={
         `
           flex h-45 cursor-pointer flex-col transition-all
-          hover:-translate-y-0.5 hover:bg-[color:var(--card-hover)] hover:shadow-lg
+          hover:-translate-y-0.5 hover:bg-(--card-hover) hover:shadow-lg
           ${isInTradingMode ? 'ring-2 ring-primary/20' : ''}
           overflow-hidden
         `

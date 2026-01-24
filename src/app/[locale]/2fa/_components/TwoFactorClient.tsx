@@ -129,6 +129,7 @@ export default function TwoFactorClient({ next }: { next?: string | null }) {
               maxLength={CODE_LENGTH}
               value={code}
               onChange={(value: string) => setCode(value)}
+              autoFocus={true}
             >
               <InputOTPGroup>
                 <InputOTPSlot className="size-12 lg:size-14" index={0} />
