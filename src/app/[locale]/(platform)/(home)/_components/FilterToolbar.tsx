@@ -414,7 +414,7 @@ function FilterSettingsSelect({ label, value, options, onChange }: FilterSetting
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
         <span className="text-xs font-semibold text-foreground">{activeOption?.label ?? ''}</span>
       </SelectTrigger>
-      <SelectContent align="start">
+      <SelectContent align="start" position="popper" side="bottom" sideOffset={6}>
         {options.map((option) => {
           const OptionIcon = option.icon
 

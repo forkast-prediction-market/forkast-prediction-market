@@ -22,7 +22,7 @@ import { useEventCardOrderBook } from '@/hooks/useEventCardOrderBook'
 import { formatDisplayAmount } from '@/lib/amount-input'
 import { getExchangeEip712Domain, ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 import { calculateMarketFill } from '@/lib/event-card-orderbook'
-import { formatCurrency } from '@/lib/formatters'
+import { formatCurrency, formatDate } from '@/lib/formatters'
 import { buildChanceByMarket } from '@/lib/market-chance'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
 import { signOrderPayload } from '@/lib/orders/signing'
@@ -98,12 +98,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
     if (Number.isNaN(resolvedDate.getTime())) {
       return null
     }
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    })
-    return `Ended ${formatter.format(resolvedDate)}`
+    return `Ended ${formatDate(resolvedDate)}`
   }, [event.end_date, isResolvedEvent, isSingleMarket, primaryMarket?.condition?.resolved_at, primaryMarket?.end_time])
 
   const resolvedVolume = useMemo(() => event.volume ?? 0, [event.volume])
@@ -282,14 +277,15 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
     <Card
       className={
         `
-          flex h-45 cursor-pointer flex-col transition-all
+          flex ${isResolvedEvent ? 'h-auto' : 'h-45'}
+          cursor-pointer flex-col transition-all
           hover:-translate-y-0.5 hover:bg-[color:var(--card-hover)] hover:shadow-lg
           ${isInTradingMode ? 'ring-2 ring-primary/20' : ''}
           overflow-hidden
         `
       }
     >
-      <CardContent className="flex h-full flex-col px-3 pt-3 pb-1">
+      <CardContent className={`flex flex-col px-3 pt-3 pb-1 ${isResolvedEvent ? '' : 'h-full'}`}>
         <EventCardHeader
           event={event}
           activeOutcome={activeOutcome}
@@ -322,7 +318,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
                 />
               )
             : (
-                <div className="mt-auto">
+                <div className={isResolvedEvent ? 'mt-1' : 'mt-auto'}>
                   {!isSingleMarket && (
                     <EventCardMarketsList
                       event={event}

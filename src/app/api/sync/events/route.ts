@@ -701,7 +701,7 @@ async function updateEventStatusFromMarkets(eventId: string) {
     .or('is_resolved.eq.false,is_resolved.is.null')
 
   if (unresolvedError) {
-    console.error(`Failed to compute resolved market count for event ${eventId}:`, unresolvedError)
+    console.error(`Failed to compute unresolved market count for event ${eventId}:`, unresolvedError)
     return
   }
 
