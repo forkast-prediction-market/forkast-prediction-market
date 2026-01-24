@@ -1,5 +1,5 @@
 import type { Event, Market, Outcome } from '@/types'
-import { Check, X } from 'lucide-react'
+import { CheckIcon, XIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Link } from '@/i18n/navigation'
 import { OUTCOME_INDEX } from '@/lib/constants'
@@ -55,8 +55,8 @@ export default function EventCardMarketsList({
                               : `bg-no`}`}
                             >
                               {isYesOutcome
-                                ? <Check className="size-3 text-background" strokeWidth={2.5} />
-                                : <X className="size-3 text-background" strokeWidth={2.5} />}
+                                ? <CheckIcon className="size-3 text-background" strokeWidth={2.5} />
+                                : <XIcon className="size-3 text-background" strokeWidth={2.5} />}
                             </span>
                             <span className="min-w-8 text-left">{resolvedLabel}</span>
                           </span>
