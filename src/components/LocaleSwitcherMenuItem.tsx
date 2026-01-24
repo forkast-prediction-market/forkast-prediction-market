@@ -1,6 +1,7 @@
 'use client'
 
 import type { Locale } from 'next-intl'
+import { CheckIcon } from 'lucide-react'
 import { useLocale } from 'next-intl'
 import { useParams } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
@@ -20,6 +21,11 @@ const LOCALE_LABELS: Record<Locale, string> = {
   es: 'Spanish',
 }
 
+const LOOP_LABELS: Record<Locale, string> = {
+  en: 'Language',
+  es: 'Idioma',
+}
+
 export default function LocaleSwitcherMenuItem() {
   const router = useRouter()
   const pathname = usePathname()
@@ -29,7 +35,7 @@ export default function LocaleSwitcherMenuItem() {
   const [carouselIndex, setCarouselIndex] = useState(0)
   const [isSliding, setIsSliding] = useState(true)
   const localeLabels = routing.locales.map(
-    option => LOCALE_LABELS[option as Locale] ?? option.toUpperCase(),
+    option => LOOP_LABELS[option as Locale] ?? option.toUpperCase(),
   )
   const loopedLabels = [
     ...localeLabels,
@@ -98,8 +104,15 @@ export default function LocaleSwitcherMenuItem() {
             onValueChange={handleValueChange}
           >
             {routing.locales.map(option => (
-              <DropdownMenuRadioItem key={option} value={option}>
-                {LOCALE_LABELS[option as Locale] ?? option.toUpperCase()}
+              <DropdownMenuRadioItem
+                key={option}
+                value={option}
+                className="group flex items-center gap-2 pr-8 pl-2 [&>span:first-child]:hidden"
+              >
+                <span className="flex-1">
+                  {LOCALE_LABELS[option as Locale] ?? option.toUpperCase()}
+                </span>
+                <CheckIcon className="ml-auto size-4 opacity-0 group-data-[state=checked]:opacity-100" />
               </DropdownMenuRadioItem>
             ))}
           </DropdownMenuRadioGroup>
