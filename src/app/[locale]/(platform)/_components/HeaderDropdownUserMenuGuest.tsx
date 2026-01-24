@@ -2,6 +2,7 @@
 
 import type { Route } from 'next'
 import { MenuIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import LocaleSwitcherMenuItem from '@/components/LocaleSwitcherMenuItem'
 import ThemeSelector from '@/components/ThemeSelector'
@@ -17,6 +18,7 @@ import { useAppKit } from '@/hooks/useAppKit'
 import { Link } from '@/i18n/navigation'
 
 export default function HeaderDropdownUserMenuGuest() {
+  const t = useExtracted('Header')
   const { open } = useAppKit()
   const [menuOpen, setMenuOpen] = useState(false)
   const wrapperRef = useRef<HTMLDivElement | null>(null)
@@ -60,6 +62,7 @@ export default function HeaderDropdownUserMenuGuest() {
       ref={wrapperRef}
       onPointerEnter={handleWrapperPointerEnter}
       onPointerLeave={handleWrapperPointerLeave}
+      className="font-medium"
     >
       <DropdownMenu
         open={menuOpen}
@@ -86,19 +89,19 @@ export default function HeaderDropdownUserMenuGuest() {
           onInteractOutside={() => setMenuOpen(false)}
           onEscapeKeyDown={() => setMenuOpen(false)}
         >
-          <DropdownMenuItem onClick={() => open()}>Sign Up</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => open()}>Log In</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => open()}>{t('Sign Up')}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => open()}>{t('Log In')}</DropdownMenuItem>
 
           <DropdownMenuSeparator />
 
           <DropdownMenuItem asChild>
-            <Link href={'/' as Route}>Rewards</Link>
+            <Link href={'/' as Route}>{t('Rewards')}</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/docs/users" data-testid="header-docs-link">Documentation</Link>
+            <Link href="/docs/users" data-testid="header-docs-link">{t('Documentation')}</Link>
           </DropdownMenuItem>
           <DropdownMenuItem asChild>
-            <Link href="/terms-of-use" data-testid="header-terms-link">Terms of Use</Link>
+            <Link href="/terms-of-use" data-testid="header-terms-link">{t('Terms of Use')}</Link>
           </DropdownMenuItem>
 
           <LocaleSwitcherMenuItem />

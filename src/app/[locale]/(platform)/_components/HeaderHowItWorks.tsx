@@ -2,6 +2,7 @@
 
 import { useAppKitAccount } from '@reown/appkit/react'
 import { InfoIcon, XIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
@@ -46,6 +47,7 @@ const STEPS = [
 
 export default function HeaderHowItWorks() {
   const isMounted = useClientMounted()
+  const t = useExtracted('Header')
   const { open } = useAppKit()
   const { isConnected, status } = useAppKitAccount()
   const [isOpen, setIsOpen] = useState(false)
@@ -107,11 +109,12 @@ export default function HeaderHowItWorks() {
             hidden items-center gap-1.5 text-primary/80 no-underline
             hover:text-primary hover:no-underline
             sm:inline-flex
+            [&>svg]:text-primary
           `}
           data-testid="how-it-works-trigger-desktop"
         >
           <InfoIcon className="size-4" />
-          How it works
+          {t('How it works')}
         </Button>
       </DialogTrigger>
 

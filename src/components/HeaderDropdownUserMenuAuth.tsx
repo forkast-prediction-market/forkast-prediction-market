@@ -1,12 +1,11 @@
 'use client'
 
-import type { Route } from 'next'
 import { useDisconnect } from '@reown/appkit-controllers/react'
 import { ChevronDownIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import Image from 'next/image'
-import { redirect, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { useFilters } from '@/app/[locale]/(platform)/_providers/FilterProvider'
 import HeaderPortfolio from '@/components/HeaderPortfolio'
 import LocaleSwitcherMenuItem from '@/components/LocaleSwitcherMenuItem'
 import ThemeSelector from '@/components/ThemeSelector'
@@ -24,8 +23,8 @@ import { Link } from '@/i18n/navigation'
 import { useUser } from '@/stores/useUser'
 
 export default function HeaderDropdownUserMenuAuth() {
+  const t = useExtracted('Header')
   const { disconnect } = useDisconnect()
-  const { filters, updateFilters } = useFilters()
   const user = useUser()
   const pathname = usePathname()
   const isAdmin = pathname.startsWith('/admin')
@@ -67,11 +66,6 @@ export default function HeaderDropdownUserMenuAuth() {
     }, 120)
   }
 
-  function handleWatchlistClick() {
-    updateFilters({ bookmarked: !filters.bookmarked })
-    queueMicrotask(() => redirect('/' as Route))
-  }
-
   function handleMenuClose() {
     setMenuOpen(false)
   }
@@ -85,6 +79,7 @@ export default function HeaderDropdownUserMenuAuth() {
       ref={wrapperRef}
       onPointerEnter={handleWrapperPointerEnter}
       onPointerLeave={handleWrapperPointerLeave}
+      className="font-medium"
     >
       <DropdownMenu
         key={isAdmin ? 'admin' : 'platform'}
@@ -137,39 +132,27 @@ export default function HeaderDropdownUserMenuAuth() {
           <DropdownMenuSeparator />
 
           <DropdownMenuItem asChild>
-            <Link href="/settings">Profile</Link>
+            <Link href="/settings">{t('Profile')}</Link>
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild>
-            <Link href="/settings/affiliate">Affiliate</Link>
+            <Link href="/settings/affiliate">{t('Affiliate')}</Link>
           </DropdownMenuItem>
 
           {user?.is_admin && (
             <DropdownMenuItem asChild>
-              <Link href="/admin">Admin</Link>
+              <Link href="/admin">{t('Admin')}</Link>
             </DropdownMenuItem>
           )}
-
-          <DropdownMenuItem asChild>
-            <button
-              type="button"
-              className="w-full text-left"
-              onClick={handleWatchlistClick}
-            >
-              Watchlist
-              {' '}
-              {filters.bookmarked && '✓'}
-            </button>
-          </DropdownMenuItem>
 
           <DropdownMenuSeparator />
 
           <DropdownMenuItem asChild>
-            <Link href="/docs/users" data-testid="header-docs-link">Documentation</Link>
+            <Link href="/docs/users" data-testid="header-docs-link">{t('Documentation')}</Link>
           </DropdownMenuItem>
 
           <DropdownMenuItem asChild>
-            <Link href="/terms-of-use" data-testid="header-terms-link">Terms of Use</Link>
+            <Link href="/terms-of-use" data-testid="header-terms-link">{t('Terms of Use')}</Link>
           </DropdownMenuItem>
 
           {isMobile && (
@@ -195,8 +178,8 @@ export default function HeaderDropdownUserMenuAuth() {
           <DropdownMenuSeparator />
 
           <DropdownMenuItem asChild>
-            <button type="button" className="w-full" onClick={() => disconnect()}>
-              Logout
+            <button type="button" className="w-full text-destructive" onClick={() => disconnect()}>
+              {t('Logout')}
             </button>
           </DropdownMenuItem>
         </DropdownMenuContent>

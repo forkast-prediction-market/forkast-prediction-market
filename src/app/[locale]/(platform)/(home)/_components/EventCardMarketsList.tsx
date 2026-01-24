@@ -1,8 +1,8 @@
 import type { Event, Market, Outcome } from '@/types'
 import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { OUTCOME_INDEX } from '@/lib/constants'
 import { Link } from '@/i18n/navigation'
+import { OUTCOME_INDEX } from '@/lib/constants'
 
 interface EventCardMarketsListProps {
   event: Event

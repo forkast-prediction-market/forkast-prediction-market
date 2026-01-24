@@ -109,7 +109,7 @@ export default function LocaleSwitcherMenuItem() {
                 value={option}
                 className="group flex items-center gap-2 pr-8 pl-2 [&>span:first-child]:hidden"
               >
-                <span className="flex-1">
+                <span className="flex-1 font-medium">
                   {LOCALE_LABELS[option as Locale] ?? option.toUpperCase()}
                 </span>
                 <CheckIcon className="ml-auto size-4 opacity-0 group-data-[state=checked]:opacity-100" />

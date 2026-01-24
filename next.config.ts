@@ -52,6 +52,18 @@ const withMDX = createMDX({
   configPath: 'docs.config.ts',
 })
 
-const withNextIntl = createNextIntlPlugin()
+const withNextIntl = createNextIntlPlugin({
+  experimental: {
+    srcPath: './src',
+    extract: {
+      sourceLocale: 'en',
+    },
+    messages: {
+      path: './src/i18n/messages',
+      format: 'json',
+      locales: 'infer',
+    },
+  },
+})
 
 export default withNextIntl(withMDX(config))
