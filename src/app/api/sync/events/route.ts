@@ -681,6 +681,7 @@ async function updateEventStatusFromMarkets(eventId: string) {
 
   if (currentEventError) {
     console.error(`Failed to load current status for event ${eventId}:`, currentEventError)
+    return
   }
 
   const { count: totalCount, error: totalError } = await supabaseAdmin
