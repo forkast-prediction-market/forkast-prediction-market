@@ -49,6 +49,14 @@ function isMarketResolved(market: Event['markets'][number]) {
   return Boolean(market.is_resolved || market.condition?.resolved)
 }
 
+function getMarketEndTime(market: Event['markets'][number]) {
+  if (!market.end_time) {
+    return null
+  }
+  const parsed = Date.parse(market.end_time)
+  return Number.isNaN(parsed) ? null : parsed
+}
+
 export function resolveWinningOutcomeIndex(market: Event['markets'][number]) {
   const explicitWinner = market.outcomes.find(outcome => outcome.is_winning_outcome)
   if (explicitWinner && (explicitWinner.outcome_index === OUTCOME_INDEX.YES || explicitWinner.outcome_index === OUTCOME_INDEX.NO)) {
@@ -124,6 +132,25 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
 
     return { activeMarketRows: activeRows, resolvedMarketRows: resolvedRows }
   }, [isNegRiskEnabled, marketRows])
+  const sortedResolvedMarketRows = useMemo(() => {
+    if (!resolvedMarketRows.length) {
+      return resolvedMarketRows
+    }
+
+    return resolvedMarketRows
+      .map((row, index) => ({
+        row,
+        index,
+        endTime: getMarketEndTime(row.market),
+      }))
+      .sort((a, b) => {
+        if (a.endTime != null && b.endTime != null) {
+          return a.endTime - b.endTime
+        }
+        return a.index - b.index
+      })
+      .map(item => item.row)
+  }, [resolvedMarketRows])
   const {
     expandedMarketId,
     orderBookPollingEnabled,
@@ -470,9 +497,9 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
     && marketRows.length > 0
     && marketRows.every(row => isMarketResolved(row.market))
   const showResolvedInline = allMarketsResolved
-  const primaryMarketRows = showResolvedInline ? resolvedMarketRows : activeMarketRows
+  const primaryMarketRows = showResolvedInline ? sortedResolvedMarketRows : activeMarketRows
   const shouldShowActiveSection = primaryMarketRows.length > 0 || shouldShowOtherRow
-  const shouldShowResolvedSection = !showResolvedInline && !isNegRiskEnabled && resolvedMarketRows.length > 0
+  const shouldShowResolvedSection = !showResolvedInline && !isNegRiskEnabled && sortedResolvedMarketRows.length > 0
 
   if (isSingleMarket) {
     return <></>
@@ -594,7 +621,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
 
             {showResolvedMarkets && (
               <div className="mt-4">
-                {resolvedMarketRows.map((row, index, orderedMarkets) => {
+                {sortedResolvedMarketRows.map((row, index, orderedMarkets) => {
                   const { market } = row
                   const isExpanded = expandedMarketId === market.condition_id
                   const activeOutcomeForMarket = selectedOutcome && selectedOutcome.condition_id === market.condition_id

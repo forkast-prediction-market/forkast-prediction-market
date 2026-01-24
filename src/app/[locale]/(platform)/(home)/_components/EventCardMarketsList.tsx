@@ -1,8 +1,8 @@
 import type { Event, Market, Outcome } from '@/types'
 import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { OUTCOME_INDEX } from '@/lib/constants'
 import { Link } from '@/i18n/navigation'
+import { OUTCOME_INDEX } from '@/lib/constants'
 
 interface EventCardMarketsListProps {
   event: Event
@@ -19,9 +19,30 @@ export default function EventCardMarketsList({
   onTrade,
   onToggle,
 }: EventCardMarketsListProps) {
+  const marketsToRender = isResolvedEvent
+    ? event.markets
+        .map((market, index) => {
+          const resolvedOutcome = market.outcomes.find(outcome => outcome.is_winning_outcome)
+          const resolvedOutcomeIndex = resolvedOutcome?.outcome_index ?? null
+          const rank = resolvedOutcomeIndex === OUTCOME_INDEX.YES
+            ? 0
+            : resolvedOutcomeIndex === OUTCOME_INDEX.NO
+              ? 1
+              : 2
+
+          return {
+            market,
+            index,
+            rank,
+          }
+        })
+        .sort((a, b) => (a.rank - b.rank) || (a.index - b.index))
+        .map(item => item.market)
+    : event.markets
+
   return (
     <div className="mb-1 scrollbar-hide max-h-16 space-y-2 overflow-y-auto">
-      {event.markets.map((market) => {
+      {marketsToRender.map((market) => {
         const resolvedOutcome = isResolvedEvent
           ? market.outcomes.find(outcome => outcome.is_winning_outcome)
           : null
