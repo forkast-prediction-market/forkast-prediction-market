@@ -277,15 +277,14 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
     <Card
       className={
         `
-          flex ${isResolvedEvent ? 'h-auto' : 'h-45'}
-          cursor-pointer flex-col transition-all
+          flex h-45 cursor-pointer flex-col transition-all
           hover:-translate-y-0.5 hover:bg-[color:var(--card-hover)] hover:shadow-lg
           ${isInTradingMode ? 'ring-2 ring-primary/20' : ''}
           overflow-hidden
         `
       }
     >
-      <CardContent className={`flex flex-col px-3 pt-3 pb-1 ${isResolvedEvent ? '' : 'h-full'}`}>
+      <CardContent className="flex h-full flex-col px-3 pt-3 pb-1">
         <EventCardHeader
           event={event}
           activeOutcome={activeOutcome}
