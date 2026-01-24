@@ -3,12 +3,11 @@
 import type { Locale } from 'next-intl'
 import { useLocale } from 'next-intl'
 import { useParams } from 'next/navigation'
-import { useTransition } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import {
   DropdownMenuPortal,
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
-  DropdownMenuShortcut,
   DropdownMenuSub,
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
@@ -27,6 +26,39 @@ export default function LocaleSwitcherMenuItem() {
   const params = useParams()
   const locale = useLocale()
   const [isPending, startTransition] = useTransition()
+  const [carouselIndex, setCarouselIndex] = useState(0)
+  const [isSliding, setIsSliding] = useState(true)
+  const localeLabels = routing.locales.map(
+    option => LOCALE_LABELS[option as Locale] ?? option.toUpperCase(),
+  )
+  const loopedLabels = [
+    ...localeLabels,
+    localeLabels[0],
+  ].filter(Boolean)
+  const shouldAnimate = localeLabels.length > 1
+  const displayDurationMs = 1000
+  const transitionDurationMs = 200
+  const itemHeightRem = 1.25
+
+  useEffect(() => {
+    if (!shouldAnimate) {
+      return
+    }
+
+    const interval = window.setInterval(() => {
+      setIsSliding(true)
+      setCarouselIndex(prev => prev + 1)
+    }, displayDurationMs + transitionDurationMs)
+
+    return () => window.clearInterval(interval)
+  }, [shouldAnimate, displayDurationMs, transitionDurationMs])
+
+  function handleCarouselTransitionEnd() {
+    if (carouselIndex === localeLabels.length) {
+      setIsSliding(false)
+      setCarouselIndex(0)
+    }
+  }
 
   function handleValueChange(nextLocale: string) {
     startTransition(() => {
@@ -41,10 +73,23 @@ export default function LocaleSwitcherMenuItem() {
   return (
     <DropdownMenuSub>
       <DropdownMenuSubTrigger disabled={isPending}>
-        Language
-        <DropdownMenuShortcut>
-          {LOCALE_LABELS[locale as Locale] ?? locale.toUpperCase()}
-        </DropdownMenuShortcut>
+        <span className="sr-only">Language</span>
+        <span className="h-5 overflow-hidden text-sm font-medium">
+          <span
+            className="block transition-transform duration-200 ease-in-out"
+            style={{
+              transform: `translateY(-${carouselIndex * itemHeightRem}rem)`,
+              transition: isSliding && shouldAnimate ? undefined : 'none',
+            }}
+            onTransitionEnd={handleCarouselTransitionEnd}
+          >
+            {loopedLabels.map((label, index) => (
+              <span key={`${label}-${index}`} className="block h-5 leading-5">
+                {label}
+              </span>
+            ))}
+          </span>
+        </span>
       </DropdownMenuSubTrigger>
       <DropdownMenuPortal>
         <DropdownMenuSubContent>
