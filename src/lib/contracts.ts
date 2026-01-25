@@ -1,5 +1,8 @@
 import { IS_TEST_MODE } from '@/lib/network'
 
+export const NATIVE_USDC_TOKEN_ADDRESS = IS_TEST_MODE
+  ? '0x41E94Eb019C0762f9Bfcf9Fb1E58725BfB0e7582' as `0x${string}`
+  : '0x3c499c542cEF5E3811e1192ce70d8cC03d5c3359' as `0x${string}`
 export const COLLATERAL_TOKEN_ADDRESS = IS_TEST_MODE
   ? '0x29604FdE966E3AEe42d9b5451BD9912863b3B904' as `0x${string}`
   : '0x2791bca1f2de4661ed88a30c99a7a9449aa84174' as `0x${string}`

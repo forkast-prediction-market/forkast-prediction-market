@@ -202,6 +202,35 @@ export function triggerConfetti(color: 'primary' | 'yes' | 'no', event?: any) {
   })
 }
 
+export function triggerConfettiColorful(event?: any) {
+  let origin: { x?: number, y: number } = { y: 0.6 }
+
+  if (event && event.clientX && event.clientY) {
+    const x = event.clientX / window.innerWidth
+    const y = event.clientY / window.innerHeight
+    origin = { x, y }
+  }
+
+  const colors = [
+    '#ef4444',
+    '#f97316',
+    '#f59e0b',
+    '#22c55e',
+    '#3b82f6',
+    '#8b5cf6',
+    '#ec4899',
+  ]
+
+  confetti({
+    particleCount: 120,
+    spread: 70,
+    decay: 0.92,
+    scalar: 0.9,
+    origin,
+    colors,
+  })
+}
+
 export function calculateWinnings(amount: number, price: number): number {
   if (!Number.isFinite(amount) || !Number.isFinite(price) || amount <= 0 || price <= 0) {
     return 0

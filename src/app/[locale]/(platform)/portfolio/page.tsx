@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import PublicProfileHeroCards from '@/app/[locale]/(platform)/[username]/_components/PublicProfileHeroCards'
+import PendingDepositBanner from '@/app/[locale]/(platform)/portfolio/_components/PendingDepositBanner'
 import PortfolioMarketsWonCard from '@/app/[locale]/(platform)/portfolio/_components/PortfolioMarketsWonCard'
 import PortfolioTabs from '@/app/[locale]/(platform)/portfolio/_components/PortfolioTabs'
 import PortfolioWalletActions from '@/app/[locale]/(platform)/portfolio/_components/PortfolioWalletActions'
@@ -19,6 +20,7 @@ export default async function PortfolioPage() {
 
   return (
     <>
+      <PendingDepositBanner />
       <PublicProfileHeroCards
         profile={{
           username: user?.username ?? 'Your portfolio',

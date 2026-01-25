@@ -61,8 +61,9 @@ export default function PublicPositionsRow({
             <Link
               href={eventHref}
               className={`
-                block max-w-[64ch] truncate text-sm font-semibold text-foreground underline-offset-2
+                block max-w-[44ch] truncate text-[13px] leading-tight font-semibold text-foreground underline-offset-2
                 hover:underline
+                sm:max-w-[56ch]
               `}
               title={position.title}
             >

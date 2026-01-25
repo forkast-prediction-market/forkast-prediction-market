@@ -1,11 +1,14 @@
+import { ArrowDown } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useBalance } from '@/hooks/useBalance'
+import { usePendingUsdcDeposit } from '@/hooks/usePendingUsdcDeposit'
 import { usePortfolioValue } from '@/hooks/usePortfolioValue'
 
 export default function HeaderPortfolio() {
   const { balance, isLoadingBalance } = useBalance()
+  const { hasPendingDeposit } = usePendingUsdcDeposit()
   const { isLoading, value: positionsValue } = usePortfolioValue()
   const isLoadingValue = isLoadingBalance || isLoading
   const totalPortfolioValue = (positionsValue ?? 0) + (balance?.raw ?? 0)
@@ -46,7 +49,17 @@ export default function HeaderPortfolio() {
         asChild
       >
         <Link href="/portfolio">
-          <div className="translate-y-px text-xs leading-tight font-medium text-muted-foreground">Cash</div>
+          <div className={`
+            flex translate-y-px items-center gap-1 text-xs leading-tight font-medium text-muted-foreground
+          `}
+          >
+            <span>Cash</span>
+            {hasPendingDeposit && (
+              <span className="inline-flex size-4 items-center justify-center rounded-full bg-primary">
+                <ArrowDown className="size-3 text-background" />
+              </span>
+            )}
+          </div>
           <div className="-translate-y-px text-base leading-tight font-semibold text-yes">
             {isLoadingValue
               ? <Skeleton className="h-5 w-12" />
