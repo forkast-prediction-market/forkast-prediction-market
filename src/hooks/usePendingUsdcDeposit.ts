@@ -91,7 +91,7 @@ export function usePendingUsdcDeposit(options: UsePendingUsdcDepositOptions = {}
       }
 
       try {
-        const balanceRaw = await contract.read.balanceOf([proxyWalletAddress])
+        const balanceRaw = await contract.read.balanceOf([proxyWalletAddress]) as bigint
         const balanceNumber = Number(balanceRaw) / 10 ** USDC_DECIMALS
 
         return {
