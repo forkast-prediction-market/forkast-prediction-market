@@ -26,7 +26,11 @@ export default function EventCardFooter({
   const isResolvedEvent = event.status === 'resolved'
 
   return (
-    <div className={cn('flex items-center justify-between gap-2 text-xs leading-tight text-muted-foreground', { 'pb-2': isResolvedEvent })}>
+    <div className={cn(`
+      flex items-center justify-between gap-2 pb-2 text-xs leading-tight text-muted-foreground
+      md:pb-0
+    `, { 'pb-2': isResolvedEvent })}
+    >
       <div className="flex items-center gap-2">
         {hasRecentMarket
           ? <NewBadge />

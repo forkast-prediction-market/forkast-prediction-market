@@ -3,6 +3,7 @@
 import type { Event } from '@/types'
 import { useQuery } from '@tanstack/react-query'
 import { CheckIcon, Clock3Icon, PlusIcon, SparkleIcon, TrophyIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useMemo } from 'react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { formatDate } from '@/lib/formatters'
@@ -13,6 +14,8 @@ interface EventMetaInformationProps {
 }
 
 export default function EventMetaInformation({ event }: EventMetaInformationProps) {
+  const t = useExtracted('Event')
+
   const volumeRequestPayload = useMemo(() => {
     const conditions = event.markets
       .map((market) => {
@@ -124,7 +127,7 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
               className="max-w-68 border border-border bg-background px-4 py-3 text-sm text-foreground shadow-xl"
             >
               <div className="flex flex-col gap-3 text-foreground">
-                <span className="text-base font-bold text-foreground">Winner-take-all</span>
+                <span className="text-base font-bold text-foreground">{t('Winner-take-all')}</span>
                 <div className="flex flex-col gap-3">
                   <div className="flex items-start gap-3">
                     <CheckIcon className="mt-0.5 size-5 shrink-0 text-primary" />

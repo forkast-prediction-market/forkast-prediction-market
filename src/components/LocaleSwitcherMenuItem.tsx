@@ -18,12 +18,20 @@ import { routing } from '@/i18n/routing'
 
 const LOCALE_LABELS: Record<Locale, string> = {
   en: 'English',
+  de: 'Deutsch',
   es: 'Spanish',
+  pt: 'Português',
+  fr: 'French',
+  zh: '中文',
 }
 
 const LOOP_LABELS: Record<Locale, string> = {
   en: 'Language',
+  de: 'Sprache',
   es: 'Idioma',
+  pt: 'Língua',
+  fr: 'Langue',
+  zh: '语言',
 }
 
 export default function LocaleSwitcherMenuItem() {

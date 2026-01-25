@@ -188,7 +188,9 @@ export default function EventComments({ event, user }: EventCommentsProps) {
         `}
         >
           <ShieldIcon className="size-4 shrink-0" />
-          Beware of external links
+          <span className="line-clamp-1">
+            Beware of external links
+          </span>
         </div>
       </div>
 

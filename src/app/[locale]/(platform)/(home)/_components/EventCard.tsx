@@ -321,7 +321,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
                       ? 'mt-6'
                       : isResolvedEvent && !isSingleMarket
                         ? 'mt-1'
-                        : 'mt-auto'
+                        : 'mt-auto pb-2 md:pb-0'
                   }
                 >
                   {!isSingleMarket && (
