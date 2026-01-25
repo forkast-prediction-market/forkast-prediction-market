@@ -1,5 +1,6 @@
 import type { Comment, Market } from '@/types'
 import { MoreHorizontalIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useCallback } from 'react'
 import { resolveCommentUserIdentity } from '@/app/[locale]/(platform)/event/[slug]/_components/comment-user'
 import EventCommentContent from '@/app/[locale]/(platform)/event/[slug]/_components/EventCommentContent'
@@ -52,6 +53,7 @@ export default function EventCommentReplyItem({
   const { open } = useAppKit()
   const { displayName, profileSlug } = resolveCommentUserIdentity(reply)
   const parentHref = parentProfileSlug ? (`/@${parentProfileSlug}` as any) : ('#' as any)
+  const t = useExtracted('Event.Comments')
 
   const handleReplyClick = useCallback(() => {
     if (!user) {
@@ -133,7 +135,7 @@ export default function EventCommentReplyItem({
                 `}
                 onClick={handleReplyClick}
               >
-                Reply
+                {t('Reply')}
               </button>
             </div>
           </div>

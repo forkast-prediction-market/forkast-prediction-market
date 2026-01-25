@@ -2,10 +2,12 @@
 
 import type { Event, User } from '@/types'
 import { AlertCircleIcon, ShieldIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useInfiniteComments } from '@/app/[locale]/(platform)/event/[slug]/_hooks/useInfiniteComments'
 import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -41,6 +43,8 @@ export default function EventComments({ event, user }: EventCommentsProps) {
     })
     return map
   }, [event.markets])
+
+  const t = useExtracted('Event.Comments')
 
   const {
     comments,
@@ -158,14 +162,18 @@ export default function EventComments({ event, user }: EventCommentsProps) {
         isCreatingComment={isCreatingComment}
         onCommentAddedAction={() => refetch()}
       />
+      <Badge className="h-8 w-full md:hidden [&>svg]:size-4" variant="outline">
+        <ShieldIcon />
+        {t('Beware of external links')}
+      </Badge>
       <div className="mt-2 flex items-center gap-3">
         <Select value={sortBy} onValueChange={value => setSortBy(value as 'newest' | 'most_liked')}>
           <SelectTrigger size="default" className="h-9 px-3 text-sm dark:bg-transparent">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="newest">Newest</SelectItem>
-            <SelectItem value="most_liked">Most liked</SelectItem>
+            <SelectItem value="newest">{t('Newest')}</SelectItem>
+            <SelectItem value="most_liked">{t('Most liked')}</SelectItem>
           </SelectContent>
         </Select>
         <label
@@ -178,20 +186,12 @@ export default function EventComments({ event, user }: EventCommentsProps) {
             onCheckedChange={checked => setHoldersOnly(Boolean(checked))}
             className="size-5 rounded dark:bg-transparent"
           />
-          Holders
+          {t('Holders')}
         </label>
-        <div className={`
-          ml-auto inline-flex h-9 items-center gap-2 rounded-md border border-border bg-background px-3 text-xs
-          font-semibold text-muted-foreground
-          md:text-sm
-          dark:bg-input/30
-        `}
-        >
-          <ShieldIcon className="size-4 shrink-0" />
-          <span className="line-clamp-1">
-            Beware of external links
-          </span>
-        </div>
+        <Badge className="ml-auto hidden h-8 md:inline-flex [&>svg]:size-4" variant="outline">
+          <ShieldIcon />
+          {t('Beware of external links')}
+        </Badge>
       </div>
 
       <div className="mt-6">
@@ -206,7 +206,7 @@ export default function EventComments({ event, user }: EventCommentsProps) {
           : comments.length === 0
             ? (
                 <div className="text-center text-sm text-muted-foreground">
-                  No comments yet. Be the first to comment!
+                  {t('No comments yet. Be the first to comment!')}
                 </div>
               )
             : comments.map(comment => (

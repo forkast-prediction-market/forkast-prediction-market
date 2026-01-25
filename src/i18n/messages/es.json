@@ -27,6 +27,20 @@
     "TDaF6J": "Cerrar"
   },
   "Event": {
+    "Comments": {
+      "2oCaym": "¿Estás seguro?",
+      "oIpOzP": "¿Seguro que deseas eliminar este comentario?",
+      "Yn86tb": "Cancelar",
+      "noZdV2": "Eliminando...",
+      "N2IrpM": "Confirmar",
+      "9HU8vw": "Responder",
+      "K3r6DQ": "Eliminar",
+      "+5I2Cl": "Cuidado con los enlaces externos",
+      "fwIt1X": "Más recientes",
+      "6mRa9V": "Más gustados",
+      "Riqzb0": "Titulares",
+      "fkEYTF": "Aún no hay comentarios. ¡Sé el primero en comentar!"
+    },
     "LbOi59": "El ganador se lo lleva todo"
   }
 }

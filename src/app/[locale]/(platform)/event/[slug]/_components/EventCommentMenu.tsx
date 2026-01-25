@@ -1,5 +1,6 @@
 import type { Comment } from '@/types'
 import { Trash2Icon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useState } from 'react'
 import { DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu'
 import EventCommentDeleteForm from './EventCommentDeleteForm'
@@ -12,6 +13,7 @@ interface CommentMenuProps {
 
 export default function EventCommentMenu({ comment, onDelete, isDeleting }: CommentMenuProps) {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const t = useExtracted('Event.Comments')
 
   return (
     <>
@@ -23,8 +25,8 @@ export default function EventCommentMenu({ comment, onDelete, isDeleting }: Comm
               setTimeout(() => setIsDeleteOpen(true), 0)
             }}
           >
-            <Trash2Icon className="size-4" />
-            Delete
+            <Trash2Icon />
+            {t('Delete')}
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>
