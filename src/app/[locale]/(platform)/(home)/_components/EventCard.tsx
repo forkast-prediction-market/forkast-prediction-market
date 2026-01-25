@@ -82,6 +82,8 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
   }
 
   const primaryMarket = event.markets[0]
+  const primaryDisplayChance = primaryMarket ? getDisplayChance(primaryMarket.condition_id) : 0
+  const roundedPrimaryDisplayChance = Math.round(primaryDisplayChance)
   const endedLabel = useMemo(() => {
     if (!isResolvedEvent || !isSingleMarket) {
       return null
@@ -286,6 +288,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
           activeOutcome={activeOutcome}
           isInTradingMode={isInTradingMode}
           isSingleMarket={isSingleMarket}
+          roundedPrimaryDisplayChance={roundedPrimaryDisplayChance}
           onCancelTrade={handleCancelTrade}
         />
 
