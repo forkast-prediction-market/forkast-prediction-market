@@ -13,7 +13,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { ORDER_SIDE, OUTCOME_INDEX, tableHeaderClass } from '@/lib/constants'
+import { MICRO_UNIT, ORDER_SIDE, OUTCOME_INDEX, tableHeaderClass } from '@/lib/constants'
 import { fetchUserPositionsForMarket } from '@/lib/data-api/user'
 import {
   formatAmountInputValue,
@@ -93,6 +93,23 @@ function resolvePositionValue(position: UserPosition) {
   return value
 }
 
+function normalizePnlValue(value: number | null, baseCostValue: number | null) {
+  if (!Number.isFinite(value)) {
+    return 0
+  }
+  if (!baseCostValue || baseCostValue <= 0) {
+    return value ?? 0
+  }
+  if (Math.abs(value ?? 0) <= baseCostValue * 10) {
+    return value ?? 0
+  }
+  const scaled = (value ?? 0) / MICRO_UNIT
+  if (Math.abs(scaled) <= baseCostValue * 10) {
+    return scaled
+  }
+  return 0
+}
+
 function buildShareCardPosition(position: UserPosition) {
   const outcomeText = position.outcome_text
     || (position.outcome_index === 1 ? 'No' : 'Yes')
@@ -155,9 +172,10 @@ function MarketPositionRow({
   const costLabel = baseCostValue != null
     ? formatCurrency(baseCostValue, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : null
-  const realizedPnlValue = toNumber(position.realizedPnl)
+  const rawRealizedPnl = toNumber(position.realizedPnl)
     ?? toNumber(position.cashPnl)
     ?? 0
+  const realizedPnlValue = normalizePnlValue(rawRealizedPnl, baseCostValue)
   const unrealizedValue = baseCostValue != null
     ? Number((totalValue - baseCostValue).toFixed(6))
     : 0
