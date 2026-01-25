@@ -1,6 +1,7 @@
 import type { PortfolioClaimMarket, PortfolioMarketsWonData } from './PortfolioMarketsWonCardClient'
 import type { DataApiPosition } from '@/lib/data-api/user'
 import { inArray } from 'drizzle-orm'
+import { MICRO_UNIT } from '@/lib/constants'
 import { markets } from '@/lib/db/schema/events/tables'
 import { db } from '@/lib/drizzle'
 import { getSupabaseImageUrl } from '@/lib/supabase'
@@ -70,15 +71,26 @@ function resolveDataApiIcon(icon?: string | null): string | undefined {
 }
 
 function resolveInvested(position: DataApiPosition, size: number): number {
-  const totalBought = toNumber(position.totalBought)
+  let totalBought = toNumber(position.totalBought)
+  let initialValue = toNumber(position.initialValue)
+  const avgPrice = toNumber(position.avgPrice)
+  const expected = size > 0 && avgPrice > 0 ? size * avgPrice : 0
+
+  if (expected > 0) {
+    if (totalBought > expected * 10) {
+      totalBought /= MICRO_UNIT
+    }
+    if (initialValue > expected * 10) {
+      initialValue /= MICRO_UNIT
+    }
+  }
+
   if (totalBought > 0) {
     return totalBought
   }
-  const initialValue = toNumber(position.initialValue)
   if (initialValue > 0) {
     return initialValue
   }
-  const avgPrice = toNumber(position.avgPrice)
   if (size > 0 && avgPrice > 0) {
     return size * avgPrice
   }
@@ -86,7 +98,14 @@ function resolveInvested(position: DataApiPosition, size: number): number {
 }
 
 function resolveProceeds(position: DataApiPosition, size: number): number {
-  const currentValue = toNumber(position.currentValue)
+  let currentValue = toNumber(position.currentValue)
+  const avgPrice = toNumber(position.avgPrice)
+  const expected = size > 0 && avgPrice > 0 ? size * avgPrice : 0
+
+  if (expected > 0 && currentValue > expected * 10) {
+    currentValue /= MICRO_UNIT
+  }
+
   if (currentValue > 0) {
     return currentValue
   }
