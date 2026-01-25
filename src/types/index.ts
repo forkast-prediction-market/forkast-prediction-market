@@ -378,6 +378,7 @@ export interface UserPosition {
   profit_loss_percent?: number
   size?: number
   avgPrice?: number
+  curPrice?: number
   currentValue?: number
   totalBought?: number
   initialValue?: number

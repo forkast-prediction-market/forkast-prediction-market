@@ -58,6 +58,18 @@ function resolvePositionCost(position: UserPosition) {
     ?? (typeof position.total_position_cost === 'number'
       ? Number(fromMicro(String(position.total_position_cost), 2))
       : null)
+  const quantity = resolvePositionShares(position)
+  const avgPrice = toNumber(position.avgPrice)
+    ?? Number(fromMicro(String(position.average_position ?? 0), 6))
+  const derivedCost = quantity > 0 && Number.isFinite(avgPrice) ? quantity * avgPrice : null
+  if (derivedCost != null) {
+    if (!baseCostValue || baseCostValue <= 0) {
+      return derivedCost
+    }
+    if (derivedCost > 0 && baseCostValue > derivedCost * 10) {
+      return derivedCost
+    }
+  }
   return baseCostValue
 }
 
@@ -67,8 +79,17 @@ function buildShareCardPosition(position: UserPosition) {
   const quantity = resolvePositionShares(position)
   const avgPrice = toNumber(position.avgPrice)
     ?? Number(fromMicro(String(position.average_position ?? 0), 6))
-  const totalValue = toNumber(position.currentValue)
+  let totalValue = toNumber(position.currentValue)
     ?? Number(fromMicro(String(position.total_position_value ?? 0), 2))
+  if (!(totalValue > 0) && quantity > 0) {
+    const currentPrice = toNumber(position.curPrice)
+    if (currentPrice && currentPrice > 0) {
+      totalValue = currentPrice * quantity
+    }
+    else if (averagePriceDollars > 0) {
+      totalValue = averagePriceDollars * quantity
+    }
+  }
   const currentPrice = quantity > 0 ? totalValue / quantity : avgPrice
   const eventSlug = position.market.event?.slug || position.market.slug
 
