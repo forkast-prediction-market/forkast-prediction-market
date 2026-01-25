@@ -3,11 +3,14 @@
 import type { Event, UserPosition } from '@/types'
 import { useQuery } from '@tanstack/react-query'
 import { AlertCircleIcon, ShareIcon } from 'lucide-react'
+import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { PositionShareDialog } from '@/app/[locale]/(platform)/_components/PositionShareDialog'
 import EventConvertPositionsDialog from '@/app/[locale]/(platform)/event/[slug]/_components/EventConvertPositionsDialog'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent } from '@/components/ui/dialog'
+import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { ORDER_SIDE, OUTCOME_INDEX, tableHeaderClass } from '@/lib/constants'
@@ -43,11 +46,25 @@ function toNumber(value: unknown) {
   return Number.isFinite(numeric) ? numeric : null
 }
 
+function resolvePositionShares(position: UserPosition) {
+  const quantity = toNumber(position.size)
+    ?? (typeof position.total_shares === 'number' ? position.total_shares : 0)
+  return Number.isFinite(quantity) ? quantity : 0
+}
+
+function resolvePositionCost(position: UserPosition) {
+  const baseCostValue = toNumber(position.totalBought)
+    ?? toNumber(position.initialValue)
+    ?? (typeof position.total_position_cost === 'number'
+      ? Number(fromMicro(String(position.total_position_cost), 2))
+      : null)
+  return baseCostValue
+}
+
 function buildShareCardPosition(position: UserPosition) {
   const outcomeText = position.outcome_text
     || (position.outcome_index === 1 ? 'No' : 'Yes')
-  const quantity = toNumber(position.size)
-    ?? (typeof position.total_shares === 'number' ? position.total_shares : 0)
+  const quantity = resolvePositionShares(position)
   const avgPrice = toNumber(position.avgPrice)
     ?? Number(fromMicro(String(position.average_position ?? 0), 6))
   const totalValue = toNumber(position.currentValue)
@@ -90,7 +107,7 @@ function MarketPositionRow({
   const isYesOutcome = resolvedOutcomeIndex === OUTCOME_INDEX.YES
   const isNoOutcome = resolvedOutcomeIndex === OUTCOME_INDEX.NO
   const quantity = toNumber(position.size)
-    ?? (typeof position.total_shares === 'number' ? position.total_shares : 0)
+    ?? resolvePositionShares(position)
   const canConvert = Boolean(onConvert) && isNoOutcome && quantity > 0
   const formattedQuantity = quantity > 0
     ? formatSharesLabel(quantity)
@@ -104,11 +121,7 @@ function MarketPositionRow({
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })
-  const baseCostValue = toNumber(position.totalBought)
-    ?? toNumber(position.initialValue)
-    ?? (typeof position.total_position_cost === 'number'
-      ? Number(fromMicro(String(position.total_position_cost), 2))
-      : null)
+  const baseCostValue = resolvePositionCost(position)
   const costLabel = baseCostValue != null
     ? formatCurrency(baseCostValue, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : null
@@ -121,10 +134,12 @@ function MarketPositionRow({
   const totalProfitLossValue = Number((unrealizedValue + realizedPnlValue).toFixed(6))
   const percentFromPayload = toNumber(position.percentPnl)
     ?? toNumber(position.profit_loss_percent)
-  const percentSource = percentFromPayload ?? (baseCostValue && baseCostValue !== 0
+  const derivedPercent = baseCostValue && baseCostValue !== 0
     ? (totalProfitLossValue / baseCostValue) * 100
-    : 0)
-  const normalizedPercent = Math.abs(percentSource) <= 1 && percentFromPayload !== null
+    : null
+  const percentSource = derivedPercent ?? percentFromPayload ?? 0
+  const isPayloadPercent = derivedPercent == null && percentFromPayload !== null
+  const normalizedPercent = isPayloadPercent && Math.abs(percentSource) <= 1
     ? percentSource * 100
     : percentSource
   const percentDigits = Math.abs(normalizedPercent) >= 10 ? 0 : 1
@@ -280,6 +295,110 @@ function MarketPositionRow({
   )
 }
 
+function NetPositionsDialog({
+  open,
+  onOpenChange,
+  rows,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  rows: Array<{
+    id: string
+    outcomeLabel: string
+    payout: number
+    netValue: number
+    iconUrl?: string | null
+  }>
+}) {
+  const isMobile = useIsMobile()
+
+  const body = (
+    <div className="space-y-4 text-foreground">
+      <div className="space-y-1 text-left">
+        <div className="text-lg font-semibold">Net Positions</div>
+        <div className="text-sm text-muted-foreground">
+          See your gains for each outcome scenario based on all your positions.
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <div className={`
+          grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-4 text-sm font-semibold text-muted-foreground
+          uppercase
+        `}
+        >
+          <span>Outcome</span>
+          <span className="text-right">Payout</span>
+          <span className="text-right">Net Value</span>
+        </div>
+        <div className="border-t border-border" />
+        <div className="divide-y divide-border">
+          {rows.map((row) => {
+            const isPositive = row.netValue >= 0
+            const netLabel = formatCurrency(Math.abs(row.netValue), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            const payoutLabel = formatCurrency(row.payout, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            return (
+              <div
+                key={row.id}
+                className="grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] items-center gap-4 py-3"
+              >
+                <div className="flex min-w-0 items-center gap-3">
+                  {row.iconUrl
+                    ? (
+                        <Image
+                          src={row.iconUrl}
+                          alt={row.outcomeLabel}
+                          width={36}
+                          height={36}
+                          className="size-9 rounded-md object-cover"
+                        />
+                      )
+                    : (
+                        <div className={`
+                          flex size-9 items-center justify-center rounded-md bg-muted text-sm font-semibold
+                          text-muted-foreground
+                        `}
+                        >
+                          {row.outcomeLabel.slice(0, 1)}
+                        </div>
+                      )}
+                  <div className="min-w-0 text-sm font-semibold text-foreground">
+                    <span className="line-clamp-2">{row.outcomeLabel}</span>
+                  </div>
+                </div>
+                <div className="text-right text-sm font-semibold text-foreground">
+                  {payoutLabel}
+                </div>
+                <div className={cn('text-right text-sm font-semibold', isPositive ? 'text-yes' : 'text-no')}>
+                  {`${isPositive ? '+' : '-'}${netLabel}`}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </div>
+  )
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent className="max-h-[85vh] w-full bg-background px-4 pt-4 pb-6">
+          {body}
+        </DrawerContent>
+      </Drawer>
+    )
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md bg-background p-6">
+        {body}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 export default function EventMarketPositions({
   market,
   isNegRiskEnabled,
@@ -329,6 +448,7 @@ export default function EventMarketPositions({
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
   const [sharePosition, setSharePosition] = useState<UserPosition | null>(null)
   const [isConvertDialogOpen, setIsConvertDialogOpen] = useState(false)
+  const [isNetPositionsOpen, setIsNetPositionsOpen] = useState(false)
 
   const aggregatedShares = useMemo(() => {
     const map: Record<string, Record<typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO, number>> = {}
@@ -417,6 +537,57 @@ export default function EventMarketPositions({
   useEffect(() => {
     setOrderUserShares(aggregatedShares, { replace: true })
   }, [aggregatedShares, setOrderUserShares])
+
+  const netPositionsRows = useMemo(() => {
+    const outcomes = market.outcomes ?? []
+    if (outcomes.length === 0) {
+      return []
+    }
+
+    const totalCost = positions.reduce((sum, positionItem) => {
+      const costValue = resolvePositionCost(positionItem)
+      if (costValue != null && Number.isFinite(costValue)) {
+        return sum + costValue
+      }
+      const shares = resolvePositionShares(positionItem)
+      const avgPrice = toNumber(positionItem.avgPrice)
+        ?? Number(fromMicro(String(positionItem.average_position ?? 0), 6))
+      if (!Number.isFinite(avgPrice) || shares <= 0) {
+        return sum
+      }
+      return sum + shares * avgPrice
+    }, 0)
+
+    const sharesByOutcome = positions.reduce<Record<number, number>>((acc, positionItem) => {
+      const normalizedOutcome = positionItem.outcome_text?.toLowerCase()
+      const explicitOutcomeIndex = typeof positionItem.outcome_index === 'number' ? positionItem.outcome_index : undefined
+      const resolvedOutcomeIndex = explicitOutcomeIndex != null
+        ? explicitOutcomeIndex
+        : normalizedOutcome === 'no'
+          ? OUTCOME_INDEX.NO
+          : OUTCOME_INDEX.YES
+      const shares = resolvePositionShares(positionItem)
+      if (!acc[resolvedOutcomeIndex]) {
+        acc[resolvedOutcomeIndex] = 0
+      }
+      acc[resolvedOutcomeIndex] += shares
+      return acc
+    }, {})
+
+    return outcomes.map((outcome) => {
+      const outcomeIndex = typeof outcome.outcome_index === 'number'
+        ? outcome.outcome_index
+        : Number(outcome.outcome_index || 0)
+      const payout = sharesByOutcome[outcomeIndex] ?? 0
+      return {
+        id: `${market.condition_id}-${outcomeIndex}`,
+        outcomeLabel: outcome.outcome_text || (outcomeIndex === OUTCOME_INDEX.NO ? 'No' : 'Yes'),
+        payout,
+        netValue: payout - totalCost,
+        iconUrl: market.icon_url,
+      }
+    })
+  }, [market.condition_id, market.icon_url, market.outcomes, positions])
 
   const handleSell = useCallback((positionItem: UserPosition) => {
     if (!market) {
@@ -526,7 +697,13 @@ export default function EventMarketPositions({
               <th className={cn(tableHeaderClass, 'text-left')}>Value</th>
               <th className={cn(tableHeaderClass, 'text-left')}>Return</th>
               <th className={cn(tableHeaderClass, 'w-40 text-right')}>
-                <span className="sr-only">Actions</span>
+                <button
+                  type="button"
+                  onClick={() => setIsNetPositionsOpen(true)}
+                  className="text-sm text-muted-foreground transition-colors hover:underline"
+                >
+                  View net positions
+                </button>
               </th>
             </tr>
           </thead>
@@ -547,6 +724,11 @@ export default function EventMarketPositions({
         open={isShareDialogOpen}
         onOpenChange={handleShareOpenChange}
         payload={shareCardPayload}
+      />
+      <NetPositionsDialog
+        open={isNetPositionsOpen}
+        onOpenChange={setIsNetPositionsOpen}
+        rows={netPositionsRows}
       />
       <EventConvertPositionsDialog
         open={isConvertDialogOpen}
