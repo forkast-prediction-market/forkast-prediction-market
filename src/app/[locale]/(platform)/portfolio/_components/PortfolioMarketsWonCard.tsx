@@ -70,20 +70,26 @@ function resolveDataApiIcon(icon?: string | null): string | undefined {
   return `https://gateway.irys.xyz/${trimmed}`
 }
 
-function resolveInvested(position: DataApiPosition, size: number): number {
-  let totalBought = toNumber(position.totalBought)
-  let initialValue = toNumber(position.initialValue)
-  const avgPrice = toNumber(position.avgPrice)
-  const expected = size > 0 && avgPrice > 0 ? size * avgPrice : 0
-
-  if (expected > 0) {
-    if (totalBought > expected * 10) {
-      totalBought /= MICRO_UNIT
-    }
-    if (initialValue > expected * 10) {
-      initialValue /= MICRO_UNIT
-    }
+function normalizeValueByPrice(value: number, size: number): number {
+  if (!(value > 0) || !(size > 0)) {
+    return value
   }
+  const impliedPrice = value / size
+  if (impliedPrice <= 2) {
+    return value
+  }
+  const scaled = value / MICRO_UNIT
+  const scaledImplied = scaled / size
+  if (scaledImplied <= 2) {
+    return scaled
+  }
+  return value
+}
+
+function resolveInvested(position: DataApiPosition, size: number): number {
+  const avgPrice = toNumber(position.avgPrice)
+  const totalBought = normalizeValueByPrice(toNumber(position.totalBought), size)
+  const initialValue = normalizeValueByPrice(toNumber(position.initialValue), size)
 
   if (totalBought > 0) {
     return totalBought
@@ -98,13 +104,7 @@ function resolveInvested(position: DataApiPosition, size: number): number {
 }
 
 function resolveProceeds(position: DataApiPosition, size: number): number {
-  let currentValue = toNumber(position.currentValue)
-  const avgPrice = toNumber(position.avgPrice)
-  const expected = size > 0 && avgPrice > 0 ? size * avgPrice : 0
-
-  if (expected > 0 && currentValue > expected * 10) {
-    currentValue /= MICRO_UNIT
-  }
+  const currentValue = normalizeValueByPrice(toNumber(position.currentValue), size)
 
   if (currentValue > 0) {
     return currentValue

@@ -110,6 +110,39 @@ function normalizePnlValue(value: number | null, baseCostValue: number | null) {
   return 0
 }
 
+async function fetchAllUserPositions({
+  userAddress,
+  status,
+  signal,
+}: {
+  userAddress: string
+  status: 'active' | 'closed'
+  signal?: AbortSignal
+}) {
+  const pageSize = 50
+  const results: UserPosition[] = []
+  let offset = 0
+
+  while (true) {
+    const page = await fetchUserPositionsForMarket({
+      pageParam: offset,
+      userAddress,
+      status,
+      signal,
+    })
+    results.push(...page)
+    if (page.length < pageSize) {
+      break
+    }
+    offset += page.length
+    if (page.length === 0) {
+      break
+    }
+  }
+
+  return results
+}
+
 function buildShareCardPosition(position: UserPosition) {
   const outcomeText = position.outcome_text
     || (position.outcome_index === 1 ? 'No' : 'Yes')
@@ -596,8 +629,7 @@ export default function EventMarketPositions({
   const eventPositionsQuery = useQuery({
     queryKey: ['user-event-positions', userAddress, positionStatus, eventOutcomeIds.join(',')],
     queryFn: ({ signal }) =>
-      fetchUserPositionsForMarket({
-        pageParam: 0,
+      fetchAllUserPositions({
         userAddress,
         status: positionStatus,
         signal,
@@ -703,6 +735,8 @@ export default function EventMarketPositions({
     market.condition_id,
     market.icon_url,
     market.outcomes,
+    market.short_title,
+    market.title,
     positions,
     resolvedEventOutcomes,
   ])
