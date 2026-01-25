@@ -2,7 +2,7 @@ import type { Address } from 'viem'
 import { useAppKitAccount } from '@reown/appkit/react'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { createPublicClient, getContract, http } from 'viem'
+import { createPublicClient, formatUnits, getContract, http } from 'viem'
 import { defaultNetwork } from '@/lib/appkit'
 import { NATIVE_USDC_TOKEN_ADDRESS } from '@/lib/contracts'
 import { normalizeAddress } from '@/lib/wallet'
@@ -92,12 +92,14 @@ export function usePendingUsdcDeposit(options: UsePendingUsdcDepositOptions = {}
 
       try {
         const balanceRaw = await contract.read.balanceOf([proxyWalletAddress]) as bigint
-        const balanceNumber = Number(balanceRaw) / 10 ** USDC_DECIMALS
+        const balanceFormatted = formatUnits(balanceRaw, USDC_DECIMALS)
+        const balanceNumber = Number.parseFloat(balanceFormatted)
+        const displayNumber = Number.isFinite(balanceNumber) ? balanceNumber : 0
 
         return {
-          raw: balanceNumber,
+          raw: displayNumber,
           rawBase: balanceRaw.toString(),
-          text: balanceNumber.toFixed(2),
+          text: displayNumber.toFixed(2),
           symbol: 'USDC',
         }
       }
@@ -110,7 +112,7 @@ export function usePendingUsdcDeposit(options: UsePendingUsdcDepositOptions = {}
   const pendingBalance = isQueryEnabled && data ? data : INITIAL_STATE
   const isWaitingForProxy = Boolean(isConnected && isOptionsEnabled && !proxyWalletAddress)
   const isLoadingPendingDeposit = isAwaitingConnection || isWaitingForProxy || (isQueryEnabled ? (isLoading || (!data && isFetching)) : false)
-  const hasPendingDeposit = pendingBalance.raw > 0
+  const hasPendingDeposit = pendingBalance.rawBase !== '0'
 
   return {
     pendingBalance,

@@ -180,7 +180,7 @@ export function sanitizeSvg(svg: string) {
 export function triggerConfetti(color: 'primary' | 'yes' | 'no', event?: any) {
   let origin: { x?: number, y: number } = { y: 0.6 }
 
-  if (event && event.clientX && event.clientY) {
+  if (event && Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
     const x = event.clientX / window.innerWidth
     const y = event.clientY / window.innerHeight
     origin = { x, y }
@@ -205,7 +205,7 @@ export function triggerConfetti(color: 'primary' | 'yes' | 'no', event?: any) {
 export function triggerConfettiColorful(event?: any) {
   let origin: { x?: number, y: number } = { y: 0.6 }
 
-  if (event && event.clientX && event.clientY) {
+  if (event && Number.isFinite(event.clientX) && Number.isFinite(event.clientY)) {
     const x = event.clientX / window.innerWidth
     const y = event.clientY / window.innerHeight
     origin = { x, y }
