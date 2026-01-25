@@ -10,6 +10,7 @@ import { useUser } from '@/stores/useUser'
 
 interface Balance {
   raw: number
+  rawBase: string
   text: string
   symbol: string
 }
@@ -23,6 +24,7 @@ const ERC20_ABI = [
 ]
 const INITIAL_STATE: Balance = {
   raw: 0.0,
+  rawBase: '0',
   text: '0.00',
   symbol: 'USDC',
 }
@@ -94,6 +96,7 @@ export function usePendingUsdcDeposit(options: UsePendingUsdcDepositOptions = {}
 
         return {
           raw: balanceNumber,
+          rawBase: balanceRaw.toString(),
           text: balanceNumber.toFixed(2),
           symbol: 'USDC',
         }

@@ -1,29 +1,40 @@
 'use client'
 
+import type { SafeOperationType } from '@/lib/safe/transactions'
 import { ArrowDownToLine, CheckIcon, Loader2Icon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { hashTypedData } from 'viem'
 import { useSignMessage } from 'wagmi'
+import { useTradingOnboarding } from '@/app/[locale]/(platform)/_providers/TradingOnboardingProvider'
+import { buildPendingUsdcSwapAction, submitPendingUsdcSwapAction } from '@/app/[locale]/(platform)/portfolio/_actions/pending-deposit'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { usePendingUsdcDeposit } from '@/hooks/usePendingUsdcDeposit'
 import { useRouter } from '@/i18n/navigation'
+import { defaultNetwork } from '@/lib/appkit'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { formatCurrency } from '@/lib/formatters'
+import { IS_TEST_MODE } from '@/lib/network'
+import { getSafeTxTypedData, packSafeSignature } from '@/lib/safe/transactions'
+import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
 import { triggerConfettiColorful } from '@/lib/utils'
 import { isUserRejectedRequestError } from '@/lib/wallet'
+import { useUser } from '@/stores/useUser'
 
-const RELAYER_SIGNATURE_HASH = '0x16bc61429de6c366f24a7c3f6eb282898e798a277988a3fb62f22fc37a87ec59'
 const CONFIRMATION_DELAY_MS = 900
 
 type PendingDepositStep = 'prompt' | 'signing' | 'success'
 
 export default function PendingDepositBanner() {
-  const { pendingBalance, hasPendingDeposit } = usePendingUsdcDeposit()
+  const { pendingBalance, hasPendingDeposit, refetchPendingDeposit } = usePendingUsdcDeposit()
   const { signMessageAsync } = useSignMessage()
   const router = useRouter()
+  const user = useUser()
+  const { openTradeRequirements } = useTradingOnboarding()
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<PendingDepositStep>('prompt')
+  const [statusMessage, setStatusMessage] = useState<string | null>(null)
 
   const formattedAmount = useMemo(() => formatCurrency(pendingBalance.raw, {
     minimumFractionDigits: 2,
@@ -33,6 +44,7 @@ export default function PendingDepositBanner() {
   useEffect(() => {
     if (!open) {
       setStep('prompt')
+      setStatusMessage(null)
     }
   }, [open])
 
@@ -53,12 +65,91 @@ export default function PendingDepositBanner() {
       return
     }
 
+    if (IS_TEST_MODE) {
+      setStatusMessage('Swap is disabled on test Mode.')
+      return
+    }
+
+    if (!user?.address || !user.proxy_wallet_address) {
+      toast.error('Connect your wallet to continue.')
+      return
+    }
+
+    if (!pendingBalance.rawBase || pendingBalance.rawBase === '0') {
+      toast.error('No pending deposit found.')
+      return
+    }
+
+    setStatusMessage(null)
     setStep('signing')
 
     try {
-      await signMessageAsync({ message: { raw: RELAYER_SIGNATURE_HASH } })
+      const buildResult = await buildPendingUsdcSwapAction({
+        amount: pendingBalance.rawBase,
+      })
+
+      if (buildResult.error || !buildResult.payload) {
+        if (isTradingAuthRequiredError(buildResult.error)) {
+          setOpen(false)
+          openTradeRequirements()
+        }
+        else {
+          toast.error(buildResult.error ?? DEFAULT_ERROR_MESSAGE)
+        }
+        setStep('prompt')
+        return
+      }
+
+      const { transaction, nonce, signatureParams } = buildResult.payload
+      const typedData = getSafeTxTypedData({
+        chainId: defaultNetwork.id,
+        safeAddress: user.proxy_wallet_address as `0x${string}`,
+        transaction: {
+          to: transaction.to as `0x${string}`,
+          value: transaction.value,
+          data: transaction.data as `0x${string}`,
+          operation: transaction.operation as SafeOperationType,
+        },
+        nonce,
+      })
+
+      const { signatureParams: typedSignatureParams, ...safeTypedData } = typedData
+      const structHash = hashTypedData({
+        domain: safeTypedData.domain,
+        types: safeTypedData.types,
+        primaryType: safeTypedData.primaryType,
+        message: safeTypedData.message,
+      }) as `0x${string}`
+
+      const signature = await signMessageAsync({ message: { raw: structHash } })
+      const submitPayload = {
+        type: 'SAFE' as const,
+        from: user.address,
+        to: transaction.to,
+        proxyWallet: user.proxy_wallet_address,
+        data: transaction.data,
+        nonce,
+        signature: packSafeSignature(signature as `0x${string}`),
+        signatureParams: signatureParams ?? typedSignatureParams,
+        metadata: 'swap_usdc_e',
+      }
+
+      const submitResult = await submitPendingUsdcSwapAction(submitPayload)
+      if (submitResult.error) {
+        if (isTradingAuthRequiredError(submitResult.error)) {
+          setOpen(false)
+          openTradeRequirements()
+        }
+        else {
+          toast.error(submitResult.error)
+        }
+        setStep('prompt')
+        return
+      }
+
       await new Promise(resolve => setTimeout(resolve, CONFIRMATION_DELAY_MS))
       setStep('success')
+      void refetchPendingDeposit()
     }
     catch (error) {
       if (!isUserRejectedRequestError(error)) {
@@ -67,7 +158,15 @@ export default function PendingDepositBanner() {
       }
       setStep('prompt')
     }
-  }, [signMessageAsync, step])
+  }, [
+    openTradeRequirements,
+    pendingBalance.rawBase,
+    refetchPendingDeposit,
+    signMessageAsync,
+    step,
+    user?.address,
+    user?.proxy_wallet_address,
+  ])
 
   const handleStartTrading = useCallback(() => {
     setOpen(false)
@@ -116,6 +215,12 @@ export default function PendingDepositBanner() {
             <Button className="mt-6 h-11 w-full text-base" onClick={handleConfirm}>
               Continue
             </Button>
+          )}
+
+          {step === 'prompt' && statusMessage && (
+            <div className="mt-3 text-sm text-muted-foreground">
+              {statusMessage}
+            </div>
           )}
 
           {step === 'signing' && (
