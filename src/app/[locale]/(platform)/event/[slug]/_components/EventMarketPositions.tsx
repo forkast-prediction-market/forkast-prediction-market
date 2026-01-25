@@ -73,23 +73,33 @@ function resolvePositionCost(position: UserPosition) {
   return baseCostValue
 }
 
+function resolvePositionValue(position: UserPosition) {
+  let value = toNumber(position.currentValue)
+    ?? Number(fromMicro(String(position.total_position_value ?? 0), 2))
+  const quantity = resolvePositionShares(position)
+  if (!(value > 0) && quantity > 0) {
+    const currentPrice = toNumber(position.curPrice)
+    if (currentPrice && currentPrice > 0) {
+      value = currentPrice * quantity
+    }
+    else {
+      const avgPrice = toNumber(position.avgPrice)
+        ?? Number(fromMicro(String(position.average_position ?? 0), 6))
+      if (avgPrice > 0) {
+        value = avgPrice * quantity
+      }
+    }
+  }
+  return value
+}
+
 function buildShareCardPosition(position: UserPosition) {
   const outcomeText = position.outcome_text
     || (position.outcome_index === 1 ? 'No' : 'Yes')
   const quantity = resolvePositionShares(position)
   const avgPrice = toNumber(position.avgPrice)
     ?? Number(fromMicro(String(position.average_position ?? 0), 6))
-  let totalValue = toNumber(position.currentValue)
-    ?? Number(fromMicro(String(position.total_position_value ?? 0), 2))
-  if (!(totalValue > 0) && quantity > 0) {
-    const currentPrice = toNumber(position.curPrice)
-    if (currentPrice && currentPrice > 0) {
-      totalValue = currentPrice * quantity
-    }
-    else if (avgPrice > 0) {
-      totalValue = avgPrice * quantity
-    }
-  }
+  const totalValue = resolvePositionValue(position)
   const currentPrice = quantity > 0 ? totalValue / quantity : avgPrice
   const eventSlug = position.market.event?.slug || position.market.slug
 
@@ -136,8 +146,7 @@ function MarketPositionRow({
   const averagePriceDollars = toNumber(position.avgPrice)
     ?? Number(fromMicro(String(position.average_position ?? 0), 6))
   const averageLabel = formatCentsLabel(averagePriceDollars, { fallback: '—' })
-  const totalValue = toNumber(position.currentValue)
-    ?? Number(fromMicro(String(position.total_position_value ?? 0), 2))
+  const totalValue = resolvePositionValue(position)
   const valueLabel = formatCurrency(Math.max(0, totalValue), {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -353,7 +362,7 @@ function NetPositionsDialog({
           <span className="text-right">Net Value</span>
         </div>
         <div className="border-t border-border" />
-        <div className="divide-y divide-border">
+        <div className="max-h-[60vh] divide-y divide-border overflow-y-auto pr-2">
           {rows.map((row) => {
             const isPositive = row.netValue >= 0
             const netLabel = formatCurrency(Math.abs(row.netValue), { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -617,45 +626,29 @@ export default function EventMarketPositions({
       return sum + shares * avgPrice
     }, 0)
 
-    if (hasMultipleMarkets) {
-      const sharesByCondition = scopedPositions.reduce<Record<string, { yes: number, no: number }>>((acc, positionItem) => {
-        const conditionId = positionItem.market.condition_id
-        if (!acc[conditionId]) {
-          acc[conditionId] = { yes: 0, no: 0 }
+    if (!hasMultipleMarkets) {
+      const totalValue = scopedPositions.reduce((sum, positionItem) => {
+        const value = resolvePositionValue(positionItem)
+        if (Number.isFinite(value)) {
+          return sum + value
         }
-        const normalizedOutcome = positionItem.outcome_text?.toLowerCase()
-        const explicitOutcomeIndex = typeof positionItem.outcome_index === 'number' ? positionItem.outcome_index : undefined
-        const resolvedOutcomeIndex = explicitOutcomeIndex != null
-          ? explicitOutcomeIndex
-          : normalizedOutcome === 'no'
-            ? OUTCOME_INDEX.NO
-            : OUTCOME_INDEX.YES
-        const shares = resolvePositionShares(positionItem)
-        if (resolvedOutcomeIndex === OUTCOME_INDEX.NO) {
-          acc[conditionId].no += shares
-        }
-        else {
-          acc[conditionId].yes += shares
-        }
-        return acc
-      }, {})
+        return sum
+      }, 0)
 
-      const totalNoShares = Object.values(sharesByCondition).reduce((sum, entry) => sum + entry.no, 0)
-
-      return resolvedEventOutcomes.map((outcome) => {
-        const entry = sharesByCondition[outcome.conditionId] ?? { yes: 0, no: 0 }
-        const payout = entry.yes + (totalNoShares - entry.no)
-        return {
-          id: outcome.conditionId,
-          outcomeLabel: outcome.label,
-          payout,
-          netValue: payout - totalCost,
-          iconUrl: outcome.iconUrl ?? market.icon_url,
-        }
-      })
+      return [{
+        id: market.condition_id,
+        outcomeLabel: market.short_title || market.title,
+        payout: totalValue,
+        netValue: totalValue - totalCost,
+        iconUrl: market.icon_url,
+      }]
     }
 
-    const sharesByOutcome = scopedPositions.reduce<Record<number, number>>((acc, positionItem) => {
+    const sharesByCondition = scopedPositions.reduce<Record<string, { yes: number, no: number }>>((acc, positionItem) => {
+      const conditionId = positionItem.market.condition_id
+      if (!acc[conditionId]) {
+        acc[conditionId] = { yes: 0, no: 0 }
+      }
       const normalizedOutcome = positionItem.outcome_text?.toLowerCase()
       const explicitOutcomeIndex = typeof positionItem.outcome_index === 'number' ? positionItem.outcome_index : undefined
       const resolvedOutcomeIndex = explicitOutcomeIndex != null
@@ -664,24 +657,26 @@ export default function EventMarketPositions({
           ? OUTCOME_INDEX.NO
           : OUTCOME_INDEX.YES
       const shares = resolvePositionShares(positionItem)
-      if (!acc[resolvedOutcomeIndex]) {
-        acc[resolvedOutcomeIndex] = 0
+      if (resolvedOutcomeIndex === OUTCOME_INDEX.NO) {
+        acc[conditionId].no += shares
       }
-      acc[resolvedOutcomeIndex] += shares
+      else {
+        acc[conditionId].yes += shares
+      }
       return acc
     }, {})
 
-    return outcomes.map((outcome) => {
-      const outcomeIndex = typeof outcome.outcome_index === 'number'
-        ? outcome.outcome_index
-        : Number(outcome.outcome_index || 0)
-      const payout = sharesByOutcome[outcomeIndex] ?? 0
+    const totalNoShares = Object.values(sharesByCondition).reduce((sum, entry) => sum + entry.no, 0)
+
+    return resolvedEventOutcomes.map((outcome) => {
+      const entry = sharesByCondition[outcome.conditionId] ?? { yes: 0, no: 0 }
+      const payout = entry.yes + (totalNoShares - entry.no)
       return {
-        id: `${market.condition_id}-${outcomeIndex}`,
-        outcomeLabel: outcome.outcome_text || (outcomeIndex === OUTCOME_INDEX.NO ? 'No' : 'Yes'),
+        id: outcome.conditionId,
+        outcomeLabel: outcome.label,
         payout,
         netValue: payout - totalCost,
-        iconUrl: market.icon_url,
+        iconUrl: outcome.iconUrl ?? market.icon_url,
       }
     })
   }, [
