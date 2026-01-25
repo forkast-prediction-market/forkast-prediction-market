@@ -5,11 +5,13 @@ import type { PortfolioOpenOrdersSort, PortfolioUserOpenOrder } from '@/app/[loc
 import { useQueryClient } from '@tanstack/react-query'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useTradingOnboarding } from '@/app/[locale]/(platform)/_providers/TradingOnboardingProvider'
 import { cancelAllOrdersAction } from '@/app/[locale]/(platform)/portfolio/_actions/cancel-all-orders'
 import { usePortfolioOpenOrdersQuery } from '@/app/[locale]/(platform)/portfolio/_hooks/usePortfolioOpenOrdersQuery'
 import { matchesOpenOrdersSearchQuery, resolveOpenOrdersSearchParams, sortOpenOrders } from '@/app/[locale]/(platform)/portfolio/_utils/PortfolioOpenOrdersUtils'
 import { Button } from '@/components/ui/button'
 import { useDebounce } from '@/hooks/useDebounce'
+import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
 import { useUser } from '@/stores/useUser'
 import PortfolioOpenOrdersFilters from './PortfolioOpenOrdersFilters'
 import PortfolioOpenOrdersTable from './PortfolioOpenOrdersTable'
@@ -21,6 +23,7 @@ interface PortfolioOpenOrdersListProps {
 export default function PortfolioOpenOrdersList({ userAddress }: PortfolioOpenOrdersListProps) {
   const user = useUser()
   const queryClient = useQueryClient()
+  const { openTradeRequirements } = useTradingOnboarding()
   const [searchQuery, setSearchQuery] = useState('')
   const debouncedSearchQuery = useDebounce(searchQuery, 300)
   const [sortBy, setSortBy] = useState<PortfolioOpenOrdersSort>('market')
@@ -110,12 +113,17 @@ export default function PortfolioOpenOrdersList({ userAddress }: PortfolioOpenOr
       const message = typeof error?.message === 'string'
         ? error.message
         : 'Failed to cancel open orders.'
-      toast.error(message)
+      if (isTradingAuthRequiredError(message)) {
+        openTradeRequirements()
+      }
+      else {
+        toast.error(message)
+      }
     }
     finally {
       setIsCancellingAll(false)
     }
-  }, [isCancellingAll, orders.length, queryClient, removeOrdersFromCache, userAddress])
+  }, [isCancellingAll, openTradeRequirements, orders.length, queryClient, removeOrdersFromCache, userAddress])
 
   useEffect(() => {
     if (!hasNextPage || !loadMoreRef.current) {

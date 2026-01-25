@@ -8,12 +8,14 @@ import { hashTypedData, isAddress } from 'viem'
 import { useSignMessage } from 'wagmi'
 import { getSafeNonceAction, submitSafeTransactionAction } from '@/app/[locale]/(platform)/_actions/approve-tokens'
 import { WalletDepositModal, WalletWithdrawModal } from '@/app/[locale]/(platform)/_components/WalletModal'
+import { useTradingOnboarding } from '@/app/[locale]/(platform)/_providers/TradingOnboardingProvider'
 import { useBalance } from '@/hooks/useBalance'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { defaultNetwork } from '@/lib/appkit'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { COLLATERAL_TOKEN_ADDRESS } from '@/lib/contracts'
 import { buildSendErc20Transaction, getSafeTxTypedData, packSafeSignature } from '@/lib/safe/transactions'
+import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
 
 interface WalletFlowProps {
   depositOpen: boolean
@@ -45,6 +47,7 @@ export function WalletFlow({
   const [isWalletSending, setIsWalletSending] = useState(false)
   const { balance, isLoadingBalance } = useBalance()
   const connectedWalletAddress = user?.address ?? null
+  const { openTradeRequirements } = useTradingOnboarding()
 
   const hasDeployedProxyWallet = useMemo(() => (
     Boolean(user?.proxy_wallet_address && user?.proxy_wallet_status === 'deployed')
@@ -86,7 +89,13 @@ export function WalletFlow({
     try {
       const nonceResult = await getSafeNonceAction()
       if (nonceResult.error || !nonceResult.nonce) {
-        toast.error(nonceResult.error ?? DEFAULT_ERROR_MESSAGE)
+        if (isTradingAuthRequiredError(nonceResult.error)) {
+          handleWithdrawModalChange(false)
+          openTradeRequirements()
+        }
+        else {
+          toast.error(nonceResult.error ?? DEFAULT_ERROR_MESSAGE)
+        }
         return
       }
 
@@ -127,7 +136,13 @@ export function WalletFlow({
 
       const result = await submitSafeTransactionAction(payload)
       if (result.error) {
-        toast.error(result.error)
+        if (isTradingAuthRequiredError(result.error)) {
+          handleWithdrawModalChange(false)
+          openTradeRequirements()
+        }
+        else {
+          toast.error(result.error)
+        }
         return
       }
 
@@ -142,7 +157,15 @@ export function WalletFlow({
     finally {
       setIsWalletSending(false)
     }
-  }, [handleWithdrawModalChange, signMessageAsync, user?.address, user?.proxy_wallet_address, walletSendAmount, walletSendTo])
+  }, [
+    handleWithdrawModalChange,
+    openTradeRequirements,
+    signMessageAsync,
+    user?.address,
+    user?.proxy_wallet_address,
+    walletSendAmount,
+    walletSendTo,
+  ])
 
   const handleBuy = useCallback((url?: string | null) => {
     const targetUrl = url ?? meldUrl

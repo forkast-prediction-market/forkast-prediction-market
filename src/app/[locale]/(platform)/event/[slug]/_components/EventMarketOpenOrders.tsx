@@ -6,6 +6,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { AlertCircleIcon, ChevronDown, ChevronUp, XIcon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
+import { useTradingOnboarding } from '@/app/[locale]/(platform)/_providers/TradingOnboardingProvider'
 import { cancelMarketOrdersAction } from '@/app/[locale]/(platform)/event/[slug]/_actions/cancel-market-orders'
 import { cancelOrderAction } from '@/app/[locale]/(platform)/event/[slug]/_actions/cancel-order'
 import { buildUserOpenOrdersQueryKey, useUserOpenOrdersQuery } from '@/app/[locale]/(platform)/event/[slug]/_hooks/useUserOpenOrdersQuery'
@@ -23,6 +24,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
 import { MICRO_UNIT, OUTCOME_INDEX, tableHeaderClass } from '@/lib/constants'
 import { formatCurrency, formatSharePriceLabel, formatSharesLabel } from '@/lib/formatters'
+import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
 import { cn } from '@/lib/utils'
 import { useIsSingleMarket } from '@/stores/useOrder'
 import { useUser } from '@/stores/useUser'
@@ -247,6 +249,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
   const sentinelRef = useRef<HTMLDivElement | null>(null)
   const user = useUser()
   const queryClient = useQueryClient()
+  const { openTradeRequirements } = useTradingOnboarding()
   const isSingleMarket = useIsSingleMarket()
   const [infiniteScrollError, setInfiniteScrollError] = useState<string | null>(null)
   const [pendingCancelIds, setPendingCancelIds] = useState<Set<string>>(() => new Set())
@@ -348,7 +351,12 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
       const message = typeof error?.message === 'string'
         ? error.message
         : 'Failed to cancel order.'
-      toast.error(message)
+      if (isTradingAuthRequiredError(message)) {
+        openTradeRequirements()
+      }
+      else {
+        toast.error(message)
+      }
     }
     finally {
       setPendingCancelIds((current) => {
@@ -357,7 +365,15 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
         return next
       })
     }
-  }, [eventOpenOrdersQueryKey, openOrdersQueryKey, pendingCancelIds, queryClient, removeOrdersFromCache, scheduleOpenOrdersRefresh])
+  }, [
+    eventOpenOrdersQueryKey,
+    openOrdersQueryKey,
+    openTradeRequirements,
+    pendingCancelIds,
+    queryClient,
+    removeOrdersFromCache,
+    scheduleOpenOrdersRefresh,
+  ])
 
   const handleSort = useCallback((column: SortColumn) => {
     setSortState((current) => {
@@ -416,7 +432,12 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
       const message = typeof error?.message === 'string'
         ? error.message
         : 'Failed to cancel open orders.'
-      toast.error(message)
+      if (isTradingAuthRequiredError(message)) {
+        openTradeRequirements()
+      }
+      else {
+        toast.error(message)
+      }
     }
     finally {
       setPendingCancelIds((current) => {
@@ -429,6 +450,7 @@ export default function EventMarketOpenOrders({ market, eventSlug }: EventMarket
   }, [
     isCancellingAll,
     market.condition_id,
+    openTradeRequirements,
     eventOpenOrdersQueryKey,
     openOrdersQueryKey,
     queryClient,
