@@ -86,8 +86,8 @@ function buildShareCardPosition(position: UserPosition) {
     if (currentPrice && currentPrice > 0) {
       totalValue = currentPrice * quantity
     }
-    else if (averagePriceDollars > 0) {
-      totalValue = averagePriceDollars * quantity
+    else if (avgPrice > 0) {
+      totalValue = avgPrice * quantity
     }
   }
   const currentPrice = quantity > 0 ? totalValue / quantity : avgPrice
