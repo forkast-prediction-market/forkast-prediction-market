@@ -283,6 +283,7 @@ export default function EventContent({ event, user, marketContextEnabled, market
                     conditionId: market.condition_id,
                     questionId: market.question_id,
                     label: market.short_title || market.title,
+                    iconUrl: market.icon_url,
                   }))}
                   negRiskMarketId={event.neg_risk_market_id}
                 />

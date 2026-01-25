@@ -33,7 +33,7 @@ interface EventMarketPositionsProps {
   market: Event['markets'][number]
   isNegRiskEnabled?: boolean
   convertOptions?: Array<{ id: string, label: string, shares: number, conditionId: string }>
-  eventOutcomes?: Array<{ conditionId: string, questionId?: string, label: string }>
+  eventOutcomes?: Array<{ conditionId: string, questionId?: string, label: string, iconUrl?: string | null }>
   negRiskMarketId?: string
   isNegRiskAugmented?: boolean
 }
@@ -538,13 +538,51 @@ export default function EventMarketPositions({
     setOrderUserShares(aggregatedShares, { replace: true })
   }, [aggregatedShares, setOrderUserShares])
 
+  const eventOutcomeIds = useMemo(() => {
+    return resolvedEventOutcomes
+      .map(outcome => outcome.conditionId)
+      .filter(Boolean)
+  }, [resolvedEventOutcomes])
+
+  const shouldFetchEventPositions = Boolean(userAddress && eventOutcomeIds.length > 1)
+  const eventPositionsQuery = useQuery({
+    queryKey: ['user-event-positions', userAddress, positionStatus, eventOutcomeIds.join(',')],
+    queryFn: ({ signal }) =>
+      fetchUserPositionsForMarket({
+        pageParam: 0,
+        userAddress,
+        status: positionStatus,
+        signal,
+      }),
+    enabled: shouldFetchEventPositions,
+    staleTime: 1000 * 60 * 5,
+    refetchInterval: shouldFetchEventPositions ? 10_000 : false,
+    refetchIntervalInBackground: true,
+    gcTime: 1000 * 60 * 10,
+  })
+
   const netPositionsRows = useMemo(() => {
     const outcomes = market.outcomes ?? []
-    if (outcomes.length === 0) {
+    const hasMultipleMarkets = resolvedEventOutcomes.length > 1
+    if (!hasMultipleMarkets && outcomes.length === 0) {
       return []
     }
 
-    const totalCost = positions.reduce((sum, positionItem) => {
+    if (hasMultipleMarkets && !eventPositionsQuery.data) {
+      return []
+    }
+
+    const outcomeIdSet = new Set(eventOutcomeIds)
+    const sourcePositions = hasMultipleMarkets ? eventPositionsQuery.data ?? [] : positions
+    const scopedPositions = hasMultipleMarkets
+      ? sourcePositions.filter(positionItem => outcomeIdSet.has(positionItem.market.condition_id))
+      : sourcePositions
+
+    if (hasMultipleMarkets && scopedPositions.length === 0) {
+      return []
+    }
+
+    const totalCost = scopedPositions.reduce((sum, positionItem) => {
       const costValue = resolvePositionCost(positionItem)
       if (costValue != null && Number.isFinite(costValue)) {
         return sum + costValue
@@ -558,7 +596,45 @@ export default function EventMarketPositions({
       return sum + shares * avgPrice
     }, 0)
 
-    const sharesByOutcome = positions.reduce<Record<number, number>>((acc, positionItem) => {
+    if (hasMultipleMarkets) {
+      const sharesByCondition = scopedPositions.reduce<Record<string, { yes: number, no: number }>>((acc, positionItem) => {
+        const conditionId = positionItem.market.condition_id
+        if (!acc[conditionId]) {
+          acc[conditionId] = { yes: 0, no: 0 }
+        }
+        const normalizedOutcome = positionItem.outcome_text?.toLowerCase()
+        const explicitOutcomeIndex = typeof positionItem.outcome_index === 'number' ? positionItem.outcome_index : undefined
+        const resolvedOutcomeIndex = explicitOutcomeIndex != null
+          ? explicitOutcomeIndex
+          : normalizedOutcome === 'no'
+            ? OUTCOME_INDEX.NO
+            : OUTCOME_INDEX.YES
+        const shares = resolvePositionShares(positionItem)
+        if (resolvedOutcomeIndex === OUTCOME_INDEX.NO) {
+          acc[conditionId].no += shares
+        }
+        else {
+          acc[conditionId].yes += shares
+        }
+        return acc
+      }, {})
+
+      const totalNoShares = Object.values(sharesByCondition).reduce((sum, entry) => sum + entry.no, 0)
+
+      return resolvedEventOutcomes.map((outcome) => {
+        const entry = sharesByCondition[outcome.conditionId] ?? { yes: 0, no: 0 }
+        const payout = entry.yes + (totalNoShares - entry.no)
+        return {
+          id: outcome.conditionId,
+          outcomeLabel: outcome.label,
+          payout,
+          netValue: payout - totalCost,
+          iconUrl: outcome.iconUrl ?? market.icon_url,
+        }
+      })
+    }
+
+    const sharesByOutcome = scopedPositions.reduce<Record<number, number>>((acc, positionItem) => {
       const normalizedOutcome = positionItem.outcome_text?.toLowerCase()
       const explicitOutcomeIndex = typeof positionItem.outcome_index === 'number' ? positionItem.outcome_index : undefined
       const resolvedOutcomeIndex = explicitOutcomeIndex != null
@@ -587,7 +663,15 @@ export default function EventMarketPositions({
         iconUrl: market.icon_url,
       }
     })
-  }, [market.condition_id, market.icon_url, market.outcomes, positions])
+  }, [
+    eventOutcomeIds,
+    eventPositionsQuery.data,
+    market.condition_id,
+    market.icon_url,
+    market.outcomes,
+    positions,
+    resolvedEventOutcomes,
+  ])
 
   const handleSell = useCallback((positionItem: UserPosition) => {
     if (!market) {

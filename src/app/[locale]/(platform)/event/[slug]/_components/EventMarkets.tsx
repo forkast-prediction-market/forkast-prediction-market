@@ -386,6 +386,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
       conditionId: market.condition_id,
       questionId: market.question_id,
       label: market.short_title || market.title,
+      iconUrl: market.icon_url,
     }))
   }, [event.markets])
 
@@ -853,7 +854,7 @@ interface MarketDetailTabsProps {
   isNegRiskAugmented: boolean
   variant?: 'default' | 'resolved'
   convertOptions: Array<{ id: string, label: string, shares: number, conditionId: string }>
-  eventOutcomes: Array<{ conditionId: string, questionId?: string, label: string }>
+  eventOutcomes: Array<{ conditionId: string, questionId?: string, label: string, iconUrl?: string | null }>
   activeOutcomeForMarket: Event['markets'][number]['outcomes'][number] | undefined
   tabController: {
     selected: MarketDetailTab | undefined
