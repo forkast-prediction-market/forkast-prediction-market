@@ -159,7 +159,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     ? t('No')
     : resolvedOutcomeIndex === OUTCOME_INDEX.YES
       ? t('Yes')
-      : 'Resolved'
+      : t('Resolved')
   const resolvedMarketTitle = state.market?.short_title || state.market?.title
   const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskEnabled), [isNegRiskEnabled])
   const endOfDayTimestamp = useMemo(() => {
@@ -633,7 +633,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         return
       }
 
-      handleOrderErrorFeedback('Trade failed', 'We could not sign your order. Please try again.')
+      handleOrderErrorFeedback(t('Trade failed'), t('We could not sign your order. Please try again.'))
       return
     }
 
@@ -654,7 +654,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         if (isTradingAuthRequiredError(result.error)) {
           openTradeRequirements()
         }
-        handleOrderErrorFeedback('Trade failed', result.error)
+        handleOrderErrorFeedback(t('Trade failed'), result.error)
         return
       }
 
@@ -702,7 +702,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       }, 3000)
     }
     catch {
-      handleOrderErrorFeedback('Trade failed', 'An unexpected error occurred. Please try again.')
+      handleOrderErrorFeedback(t('Trade failed'), t('An unexpected error occurred. Please try again.'))
     }
     finally {
       state.setIsLoading(false)
@@ -753,7 +753,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 <CheckIcon className="size-7 text-background" />
               </div>
               <div className="text-lg font-bold text-primary">
-                Outcome:
+                {t('Outcome:')}
                 {' '}
                 {resolvedOutcomeLabel}
               </div>
@@ -892,7 +892,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                           `}
                         >
                           <TriangleAlertIcon className="size-4" />
-                          Market buys must be at least $1
+                          {t('Market buys must be at least $1')}
                         </div>
                       )}
                       {showNoLiquidityWarning && (
@@ -903,7 +903,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                           `}
                         >
                           <TriangleAlertIcon className="size-4" />
-                          No liquidity for this market order
+                          {t('No liquidity for this market order')}
                         </div>
                       )}
                     </>
@@ -918,10 +918,10 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 >
                   <TriangleAlertIcon className="size-4" />
                   {showAmountTooLowWarning
-                    ? 'Amount too low'
+                    ? t('Amount too low')
                     : showInsufficientBalanceWarning
-                      ? 'Insufficient USDC balance'
-                      : 'Insufficient shares for this order'}
+                      ? t('Insufficient USDC balance')
+                      : t('Insufficient shares for this order')}
                 </div>
               )}
 
@@ -946,7 +946,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                     return t('Trade')
                   }
                   if (shouldShowDepositCta) {
-                    return 'Deposit'
+                    return t('Deposit')
                   }
                   const outcomeLabel = selectedShareLabel
                   if (outcomeLabel) {

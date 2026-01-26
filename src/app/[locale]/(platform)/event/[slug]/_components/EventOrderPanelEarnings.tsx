@@ -1,5 +1,6 @@
 import type { OrderSide } from '@/types'
 import { InfoIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import Image from 'next/image'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ORDER_SIDE } from '@/lib/constants'
@@ -33,6 +34,7 @@ export default function EventOrderPanelEarnings({
   buyChangePct,
   buyMultiplier,
 }: EventOrderPanelEarningsProps) {
+  const t = useExtracted('Event')
   const buyPayoutLabel = formatCurrency(Math.max(0, buyPayout))
   const buyProfitLabel = formatCurrency(buyProfit)
   const buyChangeLabel = `${buyChangePct >= 0 ? '+' : '-'}${Math.abs(buyChangePct).toFixed(0)}%`
@@ -61,6 +63,9 @@ export default function EventOrderPanelEarnings({
   const sellProfitLabel = formatCurrency(0)
   const sellChangeLabel = '+0%'
   const sellMultiplierLabel = decimalOdds != null ? `${decimalOdds.toFixed(3)}x` : '—'
+  const avgPriceLabel = t('Avg. price {price}', {
+    price: side === ORDER_SIDE.SELL ? avgSellPriceLabel : avgBuyPriceLabel,
+  })
 
   function getWholeDigitCount(value: string) {
     const numericValue = Number.parseFloat(value.replace(/[^0-9.]/g, ''))
@@ -94,7 +99,7 @@ export default function EventOrderPanelEarnings({
             isMobile ? 'justify-center text-lg' : 'text-sm',
           )}
           >
-            {side === ORDER_SIDE.SELL ? 'You\'ll receive' : 'To win'}
+            {side === ORDER_SIDE.SELL ? t('You\'ll receive') : t('To win')}
             {shouldShowMoneyIcon && (
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -119,7 +124,7 @@ export default function EventOrderPanelEarnings({
                 >
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-3">
-                      <span>Profit</span>
+                      <span>{t('Profit')}</span>
                       <span className="text-base font-bold text-yes">
                         {side === ORDER_SIDE.SELL
                           ? sellProfitLabel
@@ -127,13 +132,13 @@ export default function EventOrderPanelEarnings({
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <span>Change</span>
+                      <span>{t('Change')}</span>
                       <span className="text-base font-bold text-yes">
                         {side === ORDER_SIDE.SELL ? sellChangeLabel : buyChangeLabel}
                       </span>
                     </div>
                     <div className="flex items-center justify-between gap-3">
-                      <span>Multiplier</span>
+                      <span>{t('Multiplier')}</span>
                       <span className="text-base font-bold text-yes">
                         {side === ORDER_SIDE.SELL ? sellMultiplierLabel : buyMultiplierLabel}
                       </span>
@@ -155,9 +160,7 @@ export default function EventOrderPanelEarnings({
             )}
           >
             <span>
-              {side === ORDER_SIDE.SELL
-                ? `Avg. price ${avgSellPriceLabel}`
-                : `Avg. price ${avgBuyPriceLabel}`}
+              {avgPriceLabel}
             </span>
             {effectivePriceDollars && (
               <Tooltip>
@@ -188,7 +191,7 @@ export default function EventOrderPanelEarnings({
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <span className="h-4 w-1.5 rounded-full bg-blue-500" />
-                        <span>Price</span>
+                        <span>{t('Price')}</span>
                       </div>
                       <span className="text-base font-bold">
                         {(effectivePriceCents ?? 0).toFixed(1)}
@@ -198,7 +201,7 @@ export default function EventOrderPanelEarnings({
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <span className="h-4 w-1.5 rounded-full bg-amber-400" />
-                        <span>American</span>
+                        <span>{t('American')}</span>
                       </div>
                       <span className="text-base font-bold">
                         {americanOdds != null ? `${americanOdds >= 0 ? '+' : ''}${americanOdds.toFixed(1)}` : '—'}
@@ -207,7 +210,7 @@ export default function EventOrderPanelEarnings({
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2">
                         <span className="h-4 w-1.5 rounded-full bg-yes" />
-                        <span>Decimal</span>
+                        <span>{t('Decimal')}</span>
                       </div>
                       <span className="text-base font-bold">
                         {decimalOdds != null ? decimalOdds.toFixed(3) : '—'}

@@ -1,4 +1,5 @@
 import type { MouseEvent } from 'react'
+import { useExtracted } from 'next-intl'
 import { Button } from '@/components/ui/button'
 
 interface EventOrderPanelSubmitButtonProps {
@@ -16,6 +17,8 @@ export default function EventOrderPanelSubmitButton({
   label,
   type = 'submit',
 }: EventOrderPanelSubmitButtonProps) {
+  const t = useExtracted('Event')
+
   return (
     <div className="relative w-full pb-1.25">
       <div className="pointer-events-none absolute inset-x-0 bottom-0 h-4 rounded-b-md bg-[oklch(0.50_0.11_237.323)]" />
@@ -37,11 +40,11 @@ export default function EventOrderPanelSubmitButton({
           ? (
               <div className="flex items-center justify-center gap-2">
                 <div className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                <span>Processing...</span>
+                <span>{t('Processing...')}</span>
               </div>
             )
           : (
-              <span>{label ?? 'Trade'}</span>
+              <span>{label ?? t('Trade')}</span>
             )}
       </Button>
     </div>

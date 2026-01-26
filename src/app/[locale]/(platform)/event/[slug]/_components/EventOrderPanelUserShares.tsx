@@ -1,3 +1,4 @@
+import { useExtracted } from 'next-intl'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { formatSharesLabel } from '@/lib/formatters'
 
@@ -10,6 +11,7 @@ interface EventOrderPanelUserSharesProps {
 }
 
 export default function EventOrderPanelUserShares({ yesShares, noShares, activeOutcome }: EventOrderPanelUserSharesProps) {
+  const t = useExtracted('Event')
   const shouldShow = yesShares > 0 || noShares > 0
   if (!shouldShow) {
     return null
@@ -26,14 +28,14 @@ export default function EventOrderPanelUserShares({ yesShares, noShares, activeO
         <span className={`text-xs font-semibold ${yesClass}`}>
           {formattedYesShares}
           {' '}
-          shares
+          {t('shares')}
         </span>
       </div>
       <div className="flex-1 text-center">
         <span className={`text-xs font-semibold ${noClass}`}>
           {formattedNoShares}
           {' '}
-          shares
+          {t('shares')}
         </span>
       </div>
     </div>

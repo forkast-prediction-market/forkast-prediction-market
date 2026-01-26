@@ -2,6 +2,7 @@ import type { RefObject } from 'react'
 import type { LimitExpirationOption } from '@/stores/useOrder'
 import type { OrderSide } from '@/types'
 import { TriangleAlertIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
@@ -76,6 +77,7 @@ export default function EventOrderPanelLimitControls({
   onLimitExpirationTimestampChange,
   onAmountUpdateFromLimit,
 }: EventOrderPanelLimitControlsProps) {
+  const t = useExtracted('Event')
   const { balance } = useBalance()
   const limitPriceNumber = useMemo(
     () => Number.parseFloat(limitPrice) || 0,
@@ -115,6 +117,7 @@ export default function EventOrderPanelLimitControls({
   const formattedBalanceText = Number.isFinite(balance?.raw)
     ? (balance?.raw ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : '0.00'
+  const maxLabel = t('Max')
   const [isExpirationModalOpen, setIsExpirationModalOpen] = useState(false)
   const [draftExpiration, setDraftExpiration] = useState<Date>(() => {
     const now = new Date()
@@ -209,7 +212,7 @@ export default function EventOrderPanelLimitControls({
     }
 
     if (draftExpiration.getTime() <= Date.now()) {
-      toast.error('Expiration must be in future. Try again')
+      toast.error(t('Expiration must be in future. Try again'))
       return
     }
 
@@ -223,11 +226,13 @@ export default function EventOrderPanelLimitControls({
       <div className="flex items-center justify-between gap-3">
         <div className="flex flex-col">
           <span className="text-lg font-medium text-foreground">
-            Limit Price
+            {t('Limit Price')}
           </span>
           {isLimitOrder && side === ORDER_SIDE.BUY && (
             <span className="text-xs text-muted-foreground">
-              Balance $
+              {t('Balance')}
+              {' '}
+              $
               {formattedBalanceText}
             </span>
           )}
@@ -249,7 +254,7 @@ export default function EventOrderPanelLimitControls({
               shouldShakeShares && 'animate-order-shake',
             )}
           >
-            Shares
+            {t('Shares')}
           </span>
           <div className="flex w-1/2 items-center justify-end gap-2">
             <Input
@@ -269,29 +274,32 @@ export default function EventOrderPanelLimitControls({
         {side === ORDER_SIDE.SELL
           ? (
               <div className="ml-auto flex h-8 w-1/2 justify-end gap-2">
-                {['25%', '50%', 'MAX'].map(label => (
-                  <button
-                    type="button"
-                    key={label}
-                    className={QUICK_BUTTON_CLASS}
-                    onClick={() => {
-                      if (availableShares <= 0) {
-                        return
-                      }
+                {['25%', '50%', 'max'].map((value) => {
+                  const label = value === 'max' ? maxLabel : value
+                  return (
+                    <button
+                      type="button"
+                      key={value}
+                      className={QUICK_BUTTON_CLASS}
+                      onClick={() => {
+                        if (availableShares <= 0) {
+                          return
+                        }
 
-                      if (label === 'MAX') {
-                        updateLimitShares(availableShares, 'floor')
-                        return
-                      }
+                        if (value === 'max') {
+                          updateLimitShares(availableShares, 'floor')
+                          return
+                        }
 
-                      const percent = Number.parseInt(label.replace('%', ''), 10) / 100
-                      const calculatedShares = Number.parseFloat((availableShares * percent).toFixed(2))
-                      updateLimitShares(calculatedShares)
-                    }}
-                  >
-                    {label}
-                  </button>
-                ))}
+                        const percent = Number.parseInt(label.replace('%', ''), 10) / 100
+                        const calculatedShares = Number.parseFloat((availableShares * percent).toFixed(2))
+                        updateLimitShares(calculatedShares)
+                      }}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
               </div>
             )
           : (
@@ -317,7 +325,7 @@ export default function EventOrderPanelLimitControls({
 
       <div className="mt-4 space-y-4">
         <div className="flex items-center justify-between text-xs font-bold text-muted-foreground">
-          <span>Set Expiration</span>
+          <span>{t('Set Expiration')}</span>
           <Switch
             checked={limitExpirationEnabled}
             onCheckedChange={(checked) => {
@@ -347,11 +355,11 @@ export default function EventOrderPanelLimitControls({
               }}
             >
               <SelectTrigger className="w-full justify-between bg-background text-sm font-medium">
-                <SelectValue placeholder="Select expiration" />
+                <SelectValue placeholder={t('Select expiration')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="end-of-day">End of Day</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
+                <SelectItem value="end-of-day">{t('End of Day')}</SelectItem>
+                <SelectItem value="custom">{t('Custom')}</SelectItem>
               </SelectContent>
             </Select>
 
@@ -361,8 +369,8 @@ export default function EventOrderPanelLimitControls({
               `}
               >
                 <div className="flex flex-col">
-                  <span className="font-semibold text-foreground">Custom expiration</span>
-                  <span>{customExpirationLabel ?? 'Select a date and time to apply.'}</span>
+                  <span className="font-semibold text-foreground">{t('Custom expiration')}</span>
+                  <span>{customExpirationLabel ?? t('Select a date and time to apply.')}</span>
                 </div>
                 <Button
                   size="sm"
@@ -370,7 +378,7 @@ export default function EventOrderPanelLimitControls({
                   type="button"
                   onClick={openExpirationModal}
                 >
-                  Edit
+                  {t('Edit')}
                 </Button>
               </div>
             )}
@@ -382,7 +390,7 @@ export default function EventOrderPanelLimitControls({
         {side === ORDER_SIDE.SELL
           ? (
               <div className="flex items-center justify-between text-lg font-bold text-foreground">
-                <span>You'll receive</span>
+                <span>{t('You\'ll receive')}</span>
                 <span className="inline-flex items-center gap-2 text-xl font-bold text-yes">
                   <Image
                     src="/images/trade/money.svg"
@@ -398,14 +406,14 @@ export default function EventOrderPanelLimitControls({
           : (
               <>
                 <div className="flex items-center justify-between text-lg font-bold text-foreground">
-                  <span>Total</span>
+                  <span>{t('Total')}</span>
                   <span className="font-semibold text-primary">
                     {totalValueLabel}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-lg font-bold">
                   <span className="flex items-center gap-2 text-foreground">
-                    To Win
+                    {t('To win')}
                     <Image
                       src="/images/trade/money.svg"
                       alt=""
@@ -424,18 +432,14 @@ export default function EventOrderPanelLimitControls({
       {showMinimumSharesWarning && (
         <div className="flex items-center justify-center gap-2 pt-2 text-sm font-semibold text-orange-500">
           <TriangleAlertIcon className="size-4" />
-          Minimum
-          {' '}
-          {MIN_LIMIT_ORDER_SHARES}
-          {' '}
-          shares for limit orders
+          {t('Minimum {min} shares for limit orders', { min: MIN_LIMIT_ORDER_SHARES })}
         </div>
       )}
 
       <Dialog open={isExpirationModalOpen} onOpenChange={handleExpirationModalChange}>
         <DialogContent className="w-fit border-0 bg-transparent p-0 shadow-none">
           <EventLimitExpirationCalendar
-            title="Select expiration"
+            title={t('Select expiration')}
             value={draftExpiration}
             onChange={(nextDate) => {
               if (nextDate) {

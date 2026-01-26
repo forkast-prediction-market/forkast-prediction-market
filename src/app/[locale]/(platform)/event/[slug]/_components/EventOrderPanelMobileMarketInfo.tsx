@@ -1,4 +1,5 @@
 import type { Event, Market } from '@/types'
+import { useExtracted } from 'next-intl'
 import Image from 'next/image'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -17,6 +18,8 @@ export default function EventOrderPanelMobileMarketInfo({
   balanceText,
   isBalanceLoading = false,
 }: EventOrderPanelMobileMarketInfoProps) {
+  const t = useExtracted('Event')
+
   if (!market) {
     return <></>
   }
@@ -37,7 +40,7 @@ export default function EventOrderPanelMobileMarketInfo({
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           {!isSingleMarket && <span>{market.short_title || market.title}</span>}
           <span className="flex items-center gap-1">
-            <span>Bal.</span>
+            <span>{t('Bal.')}</span>
             {isBalanceLoading
               ? <Skeleton className="inline-block h-3 w-10 align-middle" />
               : (

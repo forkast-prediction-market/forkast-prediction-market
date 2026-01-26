@@ -1,6 +1,7 @@
 'use client'
 
 import { Clock2Icon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
@@ -42,14 +43,17 @@ export default function EventLimitExpirationCalendar({
   title,
   onCancel,
   onApply,
-  cancelLabel = 'Cancel',
-  applyLabel = 'Apply',
+  cancelLabel,
+  applyLabel,
 }: EventLimitExpirationCalendarProps) {
+  const t = useExtracted('Event')
   const initialDate = useMemo(() => value ?? new Date(), [value])
   const minDate = useMemo(() => new Date(), [])
   const [selectedDate, setSelectedDate] = useState<Date>(() => initialDate)
   const [timeValue, setTimeValue] = useState<string>(() => formatTimeInput(initialDate))
   const showActions = Boolean(onCancel || onApply)
+  const resolvedCancelLabel = cancelLabel ?? t('Cancel')
+  const resolvedApplyLabel = applyLabel ?? t('Apply')
 
   useEffect(() => {
     const nextDate = value ?? new Date()
@@ -94,7 +98,7 @@ export default function EventLimitExpirationCalendar({
       </CardContent>
       <CardFooter className="flex flex-col items-stretch gap-4 border-t py-4">
         <div className="flex w-full flex-col gap-3">
-          <Label htmlFor="expiration-time">Expiration Time</Label>
+          <Label htmlFor="expiration-time">{t('Expiration Time')}</Label>
           <div className="relative flex w-full items-center gap-2">
             <Clock2Icon className="pointer-events-none absolute left-2.5 size-4 text-muted-foreground select-none" />
             <Input
@@ -118,12 +122,12 @@ export default function EventLimitExpirationCalendar({
           <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             {onCancel && (
               <Button variant="outline" type="button" onClick={onCancel}>
-                {cancelLabel}
+                {resolvedCancelLabel}
               </Button>
             )}
             {onApply && (
               <Button type="button" onClick={onApply}>
-                {applyLabel}
+                {resolvedApplyLabel}
               </Button>
             )}
           </div>

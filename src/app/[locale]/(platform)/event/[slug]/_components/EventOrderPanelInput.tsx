@@ -1,5 +1,6 @@
 import type { RefObject } from 'react'
 import type { OrderSide } from '@/types'
+import { useExtracted } from 'next-intl'
 import { Skeleton } from '@/components/ui/skeleton'
 import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { ORDER_SIDE } from '@/lib/constants'
@@ -44,6 +45,8 @@ export default function EventOrderPanelInput({
   onAmountChange,
   shouldShake,
 }: EventOrderPanelInputProps) {
+  const t = useExtracted('Event')
+
   function focusInput() {
     inputRef?.current?.focus()
   }
@@ -218,7 +221,7 @@ export default function EventOrderPanelInput({
             <div className="mb-2 flex items-center gap-3">
               <div className="shrink-0">
                 <div className="text-lg font-medium">
-                  {side === ORDER_SIDE.SELL ? 'Shares' : 'Amount'}
+                  {side === ORDER_SIDE.SELL ? t('Shares') : t('Amount')}
                 </div>
                 <div className="text-xs text-muted-foreground">
                   {side === ORDER_SIDE.SELL
@@ -234,7 +237,9 @@ export default function EventOrderPanelInput({
                             `}
                             onClick={handleBalanceClick}
                           >
-                            Balance $
+                            {t('Balance')}
+                            {' '}
+                            $
                             {formattedBalanceText}
                           </button>
                         )}
@@ -293,7 +298,7 @@ export default function EventOrderPanelInput({
             focusInput()
           }}
         >
-          MAX
+          {t('Max')}
         </button>
       </div>
     </>

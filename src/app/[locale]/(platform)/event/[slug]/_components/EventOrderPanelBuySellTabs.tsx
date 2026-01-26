@@ -119,7 +119,7 @@ export default function EventOrderPanelBuySellTabs({
 
   useEffect(() => () => clearCloseTimeout(), [])
 
-  const orderTypeLabel = type === ORDER_TYPE.MARKET ? 'Market' : 'Limit'
+  const orderTypeLabel = type === ORDER_TYPE.MARKET ? t('Market') : t('Limit')
 
   return (
     <div className="relative mb-4">
@@ -203,7 +203,7 @@ export default function EventOrderPanelBuySellTabs({
                     [&>span:first-of-type]:hidden
                   `}
                 >
-                  Market
+                  {t('Market')}
                 </DropdownMenuRadioItem>
                 <DropdownMenuRadioItem
                   value={ORDER_TYPE.LIMIT}
@@ -213,7 +213,7 @@ export default function EventOrderPanelBuySellTabs({
                     [&>span:first-of-type]:hidden
                   `}
                 >
-                  Limit
+                  {t('Limit')}
                 </DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
 
