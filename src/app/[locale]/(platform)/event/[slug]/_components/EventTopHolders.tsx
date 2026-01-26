@@ -2,11 +2,10 @@
 
 import type { Event } from '@/types'
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircleIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import AlertBanner from '@/components/AlertBanner'
 import ProfileLink from '@/components/ProfileLink'
 import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
-import { Alert, AlertTitle } from '@/components/ui/alert'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { fetchTopHolders } from '@/lib/data-api/holders'
@@ -87,10 +86,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
   if (!conditionId) {
     return (
       <div className="mt-6">
-        <Alert variant="destructive">
-          <AlertCircleIcon />
-          <AlertTitle>No market available for this event</AlertTitle>
-        </Alert>
+        <AlertBanner title="No market available for this event" />
       </div>
     )
   }
@@ -152,10 +148,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
   if (error) {
     return (
       <div className="mt-6">
-        <Alert variant="destructive">
-          <AlertCircleIcon />
-          <AlertTitle>Failed to load holders</AlertTitle>
-        </Alert>
+        <AlertBanner title="Failed to load holders" />
       </div>
     )
   }

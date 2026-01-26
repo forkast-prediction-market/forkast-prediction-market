@@ -2,9 +2,9 @@
 
 import type { Event } from '@/types'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { AlertCircleIcon, Loader2Icon } from 'lucide-react'
+import { Loader2Icon } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import AlertBanner from '@/components/AlertBanner'
 import { Button } from '@/components/ui/button'
 import { MICRO_UNIT, POLYGON_SCAN_BASE } from '@/lib/constants'
 import { fetchUserActivityData, mapDataApiActivityToActivityOrder } from '@/lib/data-api/user'
@@ -115,10 +115,9 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
           </div>
         )}
         <div className={cn(isSingleMarket ? 'border-t' : '', 'p-4')}>
-          <Alert variant="destructive">
-            <AlertCircleIcon />
-            <AlertTitle>Failed to load activity</AlertTitle>
-            <AlertDescription>
+          <AlertBanner
+            title="Failed to load activity"
+            description={(
               <Button
                 type="button"
                 onClick={() => refetch()}
@@ -128,8 +127,8 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
               >
                 Try again
               </Button>
-            </AlertDescription>
-          </Alert>
+            )}
+          />
         </div>
       </>
     )
@@ -247,10 +246,9 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
 
       {infiniteScrollError && (
         <div className={cn(isSingleMarket ? 'border-t' : '', 'px-4 py-3')}>
-          <Alert variant="destructive">
-            <AlertCircleIcon />
-            <AlertTitle>Failed to load more activity</AlertTitle>
-            <AlertDescription>
+          <AlertBanner
+            title="Failed to load more activity"
+            description={(
               <Button
                 type="button"
                 onClick={retryInfiniteScroll}
@@ -260,8 +258,8 @@ export default function EventMarketHistory({ market }: EventMarketHistoryProps) 
               >
                 Try again
               </Button>
-            </AlertDescription>
-          </Alert>
+            )}
+          />
         </div>
       )}
 

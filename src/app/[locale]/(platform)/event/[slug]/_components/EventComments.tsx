@@ -1,12 +1,12 @@
 'use client'
 
 import type { Event, User } from '@/types'
-import { AlertCircleIcon, ShieldIcon } from 'lucide-react'
+import { ShieldIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
 import { useCallback, useEffect, useId, useMemo, useState } from 'react'
 import { useInfiniteComments } from '@/app/[locale]/(platform)/event/[slug]/_hooks/useInfiniteComments'
+import AlertBanner from '@/components/AlertBanner'
 import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -135,10 +135,9 @@ export default function EventComments({ event, user }: EventCommentsProps) {
   if (error) {
     return (
       <div className="mt-6">
-        <Alert variant="destructive">
-          <AlertCircleIcon />
-          <AlertTitle>Internal server error</AlertTitle>
-          <AlertDescription>
+        <AlertBanner
+          title="Internal server error"
+          description={(
             <Button
               type="button"
               onClick={() => refetch()}
@@ -148,8 +147,8 @@ export default function EventComments({ event, user }: EventCommentsProps) {
             >
               Try again
             </Button>
-          </AlertDescription>
-        </Alert>
+          )}
+        />
       </div>
     )
   }
@@ -245,10 +244,9 @@ export default function EventComments({ event, user }: EventCommentsProps) {
 
         {infiniteScrollError && (
           <div className="mt-6">
-            <Alert variant="destructive">
-              <AlertCircleIcon />
-              <AlertTitle>Error loading more comments</AlertTitle>
-              <AlertDescription>
+            <AlertBanner
+              title="Error loading more comments"
+              description={(
                 <Button
                   type="button"
                   onClick={retryInfiniteScroll}
@@ -258,8 +256,8 @@ export default function EventComments({ event, user }: EventCommentsProps) {
                 >
                   Try again
                 </Button>
-              </AlertDescription>
-            </Alert>
+              )}
+            />
           </div>
         )}
       </div>

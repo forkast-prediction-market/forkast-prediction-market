@@ -2,10 +2,10 @@
 
 import type { PublicActivity } from '@/types'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertCircleIcon, RefreshCwIcon } from 'lucide-react'
+import { RefreshCwIcon } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { PublicActivityItem } from '@/app/[locale]/(platform)/[username]/_components/PublicActivityItem'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import AlertBanner from '@/components/AlertBanner'
 import { Button } from '@/components/ui/button'
 import { fetchUserActivityData, mapDataApiActivityToPublicActivity } from '@/lib/data-api/user'
 import { cn } from '@/lib/utils'
@@ -189,46 +189,48 @@ export default function PublicActivityFeedList({ userAddress }: PublicActivityFe
 
           {infiniteScrollError && (
             <div className="border-t bg-muted/30 p-4">
-              <Alert variant="destructive">
-                <AlertCircleIcon className="size-4" />
-                <AlertTitle>Failed to load more activity</AlertTitle>
-                <AlertDescription className="mt-2 space-y-3">
-                  <p className="text-sm">
-                    {retryCount > 0
-                      ? `Unable to load more data after ${retryCount} attempt${retryCount > 1 ? 's' : ''}. Please check your connection.`
-                      : 'There was a problem loading more activity data.'}
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      onClick={retryInfiniteScroll}
-                      size="sm"
-                      variant="outline"
-                      className="flex items-center gap-2"
-                      disabled={isLoadingMore}
-                    >
-                      <RefreshCwIcon className={cn('size-3', isLoadingMore && 'animate-spin')} />
-                      {isLoadingMore ? 'Retrying...' : 'Try again'}
-                    </Button>
-                    {retryCount > 2 && (
+              <AlertBanner
+                title="Failed to load more activity"
+                description={(
+                  <>
+                    <p className="text-sm">
+                      {retryCount > 0
+                        ? `Unable to load more data after ${retryCount} attempt${retryCount > 1 ? 's' : ''}. Please check your connection.`
+                        : 'There was a problem loading more activity data.'}
+                    </p>
+                    <div className="flex gap-2">
                       <Button
                         type="button"
-                        onClick={() => {
-                          setInfiniteScrollError(null)
-                          setRetryCount(0)
-                          void queryClient.invalidateQueries({
-                            queryKey: ['user-activity', userAddress],
-                          })
-                        }}
+                        onClick={retryInfiniteScroll}
                         size="sm"
-                        variant="ghost"
+                        variant="outline"
+                        className="flex items-center gap-2"
+                        disabled={isLoadingMore}
                       >
-                        Start over
+                        <RefreshCwIcon className={cn('size-3', isLoadingMore && 'animate-spin')} />
+                        {isLoadingMore ? 'Retrying...' : 'Try again'}
                       </Button>
-                    )}
-                  </div>
-                </AlertDescription>
-              </Alert>
+                      {retryCount > 2 && (
+                        <Button
+                          type="button"
+                          onClick={() => {
+                            setInfiniteScrollError(null)
+                            setRetryCount(0)
+                            void queryClient.invalidateQueries({
+                              queryKey: ['user-activity', userAddress],
+                            })
+                          }}
+                          size="sm"
+                          variant="ghost"
+                        >
+                          Start over
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                )}
+                descriptionClassName="mt-2 space-y-3"
+              />
             </div>
           )}
         </div>

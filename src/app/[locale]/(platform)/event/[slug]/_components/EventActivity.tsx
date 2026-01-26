@@ -3,14 +3,14 @@
 import type { InfiniteData } from '@tanstack/react-query'
 import type { ActivityOrder, Event } from '@/types'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
-import { AlertCircleIcon, ExternalLinkIcon, Loader2Icon } from 'lucide-react'
+import { ExternalLinkIcon, Loader2Icon } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   useMarketChannelSubscription,
 } from '@/app/[locale]/(platform)/event/[slug]/_components/EventMarketChannelProvider'
+import AlertBanner from '@/components/AlertBanner'
 import ProfileLink from '@/components/ProfileLink'
 import ProfileLinkSkeleton from '@/components/ProfileLinkSkeleton'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MICRO_UNIT, POLYGON_SCAN_BASE } from '@/lib/constants'
@@ -236,10 +236,7 @@ export default function EventActivity({ event }: EventActivityProps) {
   if (!hasMarkets) {
     return (
       <div className="mt-6">
-        <Alert variant="destructive">
-          <AlertCircleIcon />
-          <AlertTitle>No market available for this event</AlertTitle>
-        </Alert>
+        <AlertBanner title="No market available for this event" />
       </div>
     )
   }
@@ -247,10 +244,9 @@ export default function EventActivity({ event }: EventActivityProps) {
   if (hasInitialError) {
     return (
       <div className="mt-6">
-        <Alert variant="destructive">
-          <AlertCircleIcon />
-          <AlertTitle>Failed to load activity</AlertTitle>
-          <AlertDescription>
+        <AlertBanner
+          title="Failed to load activity"
+          description={(
             <Button
               type="button"
               onClick={() => refetch()}
@@ -260,8 +256,8 @@ export default function EventActivity({ event }: EventActivityProps) {
             >
               Try again
             </Button>
-          </AlertDescription>
-        </Alert>
+          )}
+        />
       </div>
     )
   }
@@ -418,10 +414,9 @@ export default function EventActivity({ event }: EventActivityProps) {
 
           {infiniteScrollError && (
             <div className="bg-destructive/5 p-4">
-              <Alert variant="destructive">
-                <AlertCircleIcon />
-                <AlertTitle>Failed to load more activity</AlertTitle>
-                <AlertDescription>
+              <AlertBanner
+                title="Failed to load more activity"
+                description={(
                   <Button
                     type="button"
                     onClick={retryInfiniteScroll}
@@ -431,8 +426,8 @@ export default function EventActivity({ event }: EventActivityProps) {
                   >
                     Try again
                   </Button>
-                </AlertDescription>
-              </Alert>
+                )}
+              />
             </div>
           )}
 

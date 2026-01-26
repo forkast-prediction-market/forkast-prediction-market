@@ -2,12 +2,12 @@
 
 import type { Event, UserPosition } from '@/types'
 import { useQuery } from '@tanstack/react-query'
-import { AlertCircleIcon, ShareIcon } from 'lucide-react'
+import { ShareIcon } from 'lucide-react'
 import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { PositionShareDialog } from '@/app/[locale]/(platform)/_components/PositionShareDialog'
 import EventConvertPositionsDialog from '@/app/[locale]/(platform)/event/[slug]/_components/EventConvertPositionsDialog'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import AlertBanner from '@/components/AlertBanner'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
@@ -813,18 +813,20 @@ export default function EventMarketPositions({
 
   if (hasInitialError) {
     return (
-      <Alert variant="destructive">
-        <AlertCircleIcon />
-        <AlertTitle>Failed to load positions</AlertTitle>
-        <AlertDescription className="flex flex-col gap-2">
-          <span>We couldn&apos;t fetch your positions for this market.</span>
-          <div>
-            <Button type="button" variant="secondary" size="sm" onClick={() => refetch()}>
-              Try again
-            </Button>
-          </div>
-        </AlertDescription>
-      </Alert>
+      <AlertBanner
+        title="Failed to load positions"
+        description={(
+          <>
+            <span>We couldn&apos;t fetch your positions for this market.</span>
+            <div>
+              <Button type="button" variant="secondary" size="sm" onClick={() => refetch()}>
+                Try again
+              </Button>
+            </div>
+          </>
+        )}
+        descriptionClassName="flex flex-col gap-2"
+      />
     )
   }
 

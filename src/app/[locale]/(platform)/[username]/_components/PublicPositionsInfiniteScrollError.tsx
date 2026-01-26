@@ -1,7 +1,7 @@
 'use client'
 
-import { AlertCircleIcon, RefreshCwIcon } from 'lucide-react'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { RefreshCwIcon } from 'lucide-react'
+import AlertBanner from '@/components/AlertBanner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 
@@ -24,49 +24,51 @@ export default function PublicPositionsInfiniteScrollError({
 
   return (
     <div className="border-t bg-muted/30 p-4">
-      <Alert variant="destructive">
-        <AlertCircleIcon className="size-4" />
-        <AlertTitle>Failed to load more positions</AlertTitle>
-        <AlertDescription className="mt-2 space-y-3">
-          <p className="text-sm">
-            {retryCount > 0
-              ? `Unable to load more ${isSearchActive ? 'search results' : 'data'} after ${retryCount} attempt${retryCount > 1 ? 's' : ''}. Please check your connection.`
-              : `There was a problem loading more ${isSearchActive ? 'search results' : 'positions data'}.`}
-          </p>
-          {isSearchActive && searchQuery && (
-            <p className="text-xs text-muted-foreground">
-              Search: "
-              {searchQuery}
-              "
+      <AlertBanner
+        title="Failed to load more positions"
+        description={(
+          <>
+            <p className="text-sm">
+              {retryCount > 0
+                ? `Unable to load more ${isSearchActive ? 'search results' : 'data'} after ${retryCount} attempt${retryCount > 1 ? 's' : ''}. Please check your connection.`
+                : `There was a problem loading more ${isSearchActive ? 'search results' : 'positions data'}.`}
             </p>
-          )}
-          <div className="flex gap-2">
-            {onRetry && (
-              <Button
-                type="button"
-                onClick={onRetry}
-                size="sm"
-                variant="outline"
-                className="flex items-center gap-2"
-                disabled={isLoadingMore}
-              >
-                <RefreshCwIcon className={cn('size-3', isLoadingMore && 'animate-spin')} />
-                {isLoadingMore ? 'Retrying...' : 'Try again'}
-              </Button>
+            {isSearchActive && searchQuery && (
+              <p className="text-xs text-muted-foreground">
+                Search: "
+                {searchQuery}
+                "
+              </p>
             )}
-            {retryCount > 2 && onStartOver && (
-              <Button
-                type="button"
-                onClick={onStartOver}
-                size="sm"
-                variant="ghost"
-              >
-                Start over
-              </Button>
-            )}
-          </div>
-        </AlertDescription>
-      </Alert>
+            <div className="flex gap-2">
+              {onRetry && (
+                <Button
+                  type="button"
+                  onClick={onRetry}
+                  size="sm"
+                  variant="outline"
+                  className="flex items-center gap-2"
+                  disabled={isLoadingMore}
+                >
+                  <RefreshCwIcon className={cn('size-3', isLoadingMore && 'animate-spin')} />
+                  {isLoadingMore ? 'Retrying...' : 'Try again'}
+                </Button>
+              )}
+              {retryCount > 2 && onStartOver && (
+                <Button
+                  type="button"
+                  onClick={onStartOver}
+                  size="sm"
+                  variant="ghost"
+                >
+                  Start over
+                </Button>
+              )}
+            </div>
+          </>
+        )}
+        descriptionClassName="mt-2 space-y-3"
+      />
     </div>
   )
 }
