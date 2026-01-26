@@ -3,7 +3,6 @@
 import type { ChangeEventHandler, FormEventHandler } from 'react'
 import {
   ArrowLeft,
-  ArrowUpToLine,
   Check,
   ChevronRight,
   CircleDollarSign,
@@ -271,7 +270,7 @@ function WalletSendForm({
         </button>
       )}
 
-      <form className="grid gap-4" onSubmit={onSubmitSend}>
+      <form className="mt-2 grid gap-4" onSubmit={onSubmitSend}>
         <div className="grid gap-2">
           <Label htmlFor="wallet-send-to">Recipient address</Label>
           <div className="relative">
@@ -323,7 +322,7 @@ function WalletSendForm({
                 type="button"
                 variant="default"
                 size="sm"
-                className="text-sm"
+                className="h-7 px-2 text-xs"
                 onClick={onMax}
                 disabled={!onMax || isBalanceLoading}
               >
@@ -331,7 +330,7 @@ function WalletSendForm({
               </Button>
             </div>
           </div>
-          <div className="mx-2 flex items-center justify-between text-sm text-muted-foreground">
+          <div className="mx-2 flex items-center justify-between text-xs text-muted-foreground">
             <span>
               $
               {amountDisplay}
@@ -538,7 +537,6 @@ function WalletSendForm({
         )}
 
         <Button type="submit" className="h-12 w-full gap-2 text-base" disabled={isSubmitDisabled}>
-          <ArrowUpToLine className="size-4" />
           {isSending ? 'Submitting…' : 'Withdraw'}
         </Button>
       </form>
