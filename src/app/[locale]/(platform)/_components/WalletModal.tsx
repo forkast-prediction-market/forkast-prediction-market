@@ -10,6 +10,7 @@ import {
   CircleDollarSign,
   Copy,
   CreditCard,
+  ExternalLink,
   Fuel,
   Info,
   Loader2,
@@ -17,7 +18,7 @@ import {
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import QRCode from 'react-qr-code'
 import { Button } from '@/components/ui/button'
 import {
@@ -39,6 +40,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { POLYGON_SCAN_BASE } from '@/lib/constants'
 import { svgLogo } from '@/lib/utils'
 
 const MELD_PAYMENT_METHODS = [
@@ -86,7 +88,7 @@ const WITHDRAW_CHAIN_OPTIONS = [
   { value: 'Optimism', label: 'Optimism', icon: '/images/withdraw/chain/optimism.svg', enabled: false },
 ] as const
 
-type WalletDepositView = 'fund' | 'receive' | 'wallets' | 'amount' | 'confirm'
+type WalletDepositView = 'fund' | 'receive' | 'wallets' | 'amount' | 'confirm' | 'success'
 
 interface WalletDepositModalProps {
   open: boolean
@@ -606,6 +608,12 @@ function WalletFundMenu({
   const paymentLogos = MELD_PAYMENT_METHODS.map(method => `/images/deposit/meld/${method}_${logoVariant}.png`)
   const transferLogos = TRANSFER_PAYMENT_METHODS.map(method => `/images/deposit/transfer/${method}_${logoVariant}.png`)
   const walletSuffix = walletEoaAddress?.slice(-4) ?? '----'
+  const [showWalletValue, setShowWalletValue] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setShowWalletValue(true), 1800)
+    return () => clearTimeout(timer)
+  }, [])
 
   return (
     <div className="grid gap-2">
@@ -630,7 +638,9 @@ function WalletFundMenu({
               )
             </p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>$18,20</span>
+              {showWalletValue
+                ? <span>$18,20</span>
+                : <Skeleton className="h-3 w-10 rounded-full" />}
               <span className="size-1 rounded-full bg-muted-foreground" />
               <span>Instant</span>
             </div>
@@ -989,17 +999,20 @@ function WalletAmountStep({ onContinue }: { onContinue: () => void }) {
 
 function CountdownBadge({ seconds = 30 }: { seconds?: number }) {
   const [remaining, setRemaining] = useState(seconds)
+  const endTimeRef = useRef(Date.now() + seconds * 1000)
 
   useEffect(() => {
     setRemaining(seconds)
-    const endTime = Date.now() + seconds * 1000
+    endTimeRef.current = Date.now() + seconds * 1000
     const interval = setInterval(() => {
       const now = Date.now()
-      const next = Math.max(0, Math.ceil((endTime - now) / 1000))
-      setRemaining(next)
-      if (next === 0) {
-        setRemaining(seconds)
+      let diff = endTimeRef.current - now
+      if (diff <= 0) {
+        endTimeRef.current = Date.now() + seconds * 1000
+        diff = endTimeRef.current - now
       }
+      const next = Math.max(0, Math.ceil(diff / 1000))
+      setRemaining(next)
     }, 250)
 
     return () => clearInterval(interval)
@@ -1027,9 +1040,18 @@ function CountdownBadge({ seconds = 30 }: { seconds?: number }) {
   )
 }
 
-function WalletConfirmStep({ walletEoaAddress, siteLabel }: { walletEoaAddress?: string | null, siteLabel: string }) {
+function WalletConfirmStep({
+  walletEoaAddress,
+  siteLabel,
+  onComplete,
+}: {
+  walletEoaAddress?: string | null
+  siteLabel: string
+  onComplete: () => void
+}) {
   const [status, setStatus] = useState<'quote' | 'gas' | 'ready'>('quote')
   const isLoading = status !== 'ready'
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const eoaSuffix = walletEoaAddress?.slice(-4) ?? '542d'
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false)
   const logoSvg = svgLogo()
@@ -1042,6 +1064,17 @@ function WalletConfirmStep({ walletEoaAddress, siteLabel }: { walletEoaAddress?:
       clearTimeout(readyTimer)
     }
   }, [])
+
+  useEffect(() => {
+    if (!isSubmitting) {
+      return
+    }
+    const doneTimer = setTimeout(() => {
+      onComplete()
+    }, 2000)
+
+    return () => clearTimeout(doneTimer)
+  }, [isSubmitting, onComplete])
 
   return (
     <div className="space-y-5">
@@ -1255,12 +1288,193 @@ function WalletConfirmStep({ walletEoaAddress, siteLabel }: { walletEoaAddress?:
         )}
       </div>
 
-      <Button type="button" className="h-12 w-full text-foreground" disabled={isLoading}>
-        {isLoading && <Loader2 className="size-4 animate-spin" />}
-        {status === 'quote' && 'Preparing your quote...'}
-        {status === 'gas' && 'Estimating gas...'}
-        {status === 'ready' && 'Confirm order'}
+      <div className="rounded-lg bg-muted/50 p-3 text-xs text-foreground">
+        By clicking on Confirm Order, you agree to our
+        {' '}
+        <a
+          href="/terms-of-use"
+          target="_blank"
+          rel="noreferrer"
+          className="underline"
+        >
+          terms
+        </a>
+        .
+      </div>
+      <Button
+        type="button"
+        className="h-12 w-full text-foreground"
+        disabled={isLoading || isSubmitting}
+        onClick={() => {
+          if (status !== 'ready') {
+            return
+          }
+          setIsSubmitting(true)
+        }}
+      >
+        {(isLoading || isSubmitting) && <Loader2 className="size-4 animate-spin" />}
+        {isSubmitting && 'Confirm transaction in your wallet'}
+        {!isSubmitting && status === 'quote' && 'Preparing your quote...'}
+        {!isSubmitting && status === 'gas' && 'Estimating gas...'}
+        {!isSubmitting && status === 'ready' && 'Confirm order'}
       </Button>
+    </div>
+  )
+}
+
+function WalletSuccessStep({
+  walletEoaAddress,
+  walletAddress,
+  siteLabel,
+  onClose,
+  onNewDeposit,
+}: {
+  walletEoaAddress?: string | null
+  walletAddress?: string | null
+  siteLabel: string
+  onClose: () => void
+  onNewDeposit: () => void
+}) {
+  const eoaSuffix = walletEoaAddress?.slice(-4) ?? '1234'
+  const safeSuffix = walletAddress?.slice(-4) ?? '5678'
+  const logoSvg = svgLogo()
+  const supportUrl = process.env.NEXT_PUBLIC_SUPPORT_URL
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-col items-center gap-3 text-center">
+        <div className="relative flex items-center justify-center">
+          <div className="absolute size-20 rounded-full bg-emerald-500/25 blur-md" />
+          <div className="relative flex size-14 items-center justify-center rounded-full bg-emerald-500">
+            <Check className="size-7 text-background" />
+          </div>
+        </div>
+        <div className="space-y-1">
+          <p className="text-base font-semibold text-foreground">Deposit successful</p>
+          <p className="text-sm text-muted-foreground">Your funds were successfully deposited.</p>
+        </div>
+      </div>
+
+      <div className="space-y-3">
+        <div className="rounded-lg border">
+          <div className="px-4 py-1.5 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Fill status</span>
+              <span className="font-semibold text-emerald-500">Successful</span>
+            </div>
+          </div>
+          <div className="mx-auto h-px w-[90%] bg-border/60" />
+          <div className="px-4 py-1.5 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Total time</span>
+              <span className="font-semibold text-foreground">1 second</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border">
+          <div className="px-4 py-1.5 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Source</span>
+              <span className="flex items-center gap-2 font-semibold text-foreground">
+                <Wallet className="size-4" />
+                Wallet (...
+                {eoaSuffix}
+                )
+                {walletEoaAddress && (
+                  <a
+                    href={`${POLYGON_SCAN_BASE}/address/${walletEoaAddress}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex"
+                    aria-label="View wallet on Polygonscan"
+                  >
+                    <ExternalLink className="size-3" />
+                  </a>
+                )}
+              </span>
+            </div>
+          </div>
+          <div className="mx-auto h-px w-[90%] bg-border/60" />
+          <div className="px-4 py-1.5 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Destination</span>
+              <span className="flex items-center gap-2 font-semibold text-foreground">
+                <span
+                  className={`
+                    size-4 text-current
+                    [&_svg]:h-[1em] [&_svg]:w-[1em]
+                    [&_svg_*]:fill-current [&_svg_*]:stroke-current
+                  `}
+                  dangerouslySetInnerHTML={{ __html: logoSvg! }}
+                />
+                {siteLabel}
+                {' '}
+                Wallet (...
+                {safeSuffix}
+                )
+                {walletAddress && (
+                  <a
+                    href={`${POLYGON_SCAN_BASE}/address/${walletAddress}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex"
+                    aria-label="View wallet on Polygonscan"
+                  >
+                    <ExternalLink className="size-3" />
+                  </a>
+                )}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border">
+          <div className="px-4 py-1.5 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>You receive</span>
+              <span className="flex items-center gap-2 font-semibold text-foreground">
+                <Image
+                  src="/images/deposit/transfer/usdc_dark.png"
+                  alt="USDC"
+                  width={18}
+                  height={18}
+                  className="rounded-full"
+                />
+                4.28564
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {supportUrl && (
+        <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3 text-xs text-foreground">
+          <Info className="size-4 text-muted-foreground" />
+          <span>
+            Experiencing problems?
+            {' '}
+            <a
+              href={supportUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="underline"
+            >
+              Get help
+            </a>
+            .
+          </span>
+        </div>
+      )}
+
+      <div className="grid grid-cols-2 gap-3">
+        <Button type="button" className="h-11 bg-muted text-foreground hover:bg-muted/80" onClick={onClose}>
+          Close
+        </Button>
+        <Button type="button" className="h-11 text-foreground" onClick={onNewDeposit}>
+          New Deposit
+        </Button>
+      </div>
     </div>
   )
 }
@@ -1325,9 +1539,23 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
           ? (
               <WalletAmountStep onContinue={() => onViewChange('confirm')} />
             )
-          : (
-              <WalletConfirmStep walletEoaAddress={walletEoaAddress} siteLabel={siteLabel} />
-            )
+          : view === 'confirm'
+            ? (
+                <WalletConfirmStep
+                  walletEoaAddress={walletEoaAddress}
+                  siteLabel={siteLabel}
+                  onComplete={() => onViewChange('success')}
+                />
+              )
+            : (
+                <WalletSuccessStep
+                  walletEoaAddress={walletEoaAddress}
+                  walletAddress={walletAddress}
+                  siteLabel={siteLabel}
+                  onClose={() => onOpenChange(false)}
+                  onNewDeposit={() => onViewChange('fund')}
+                />
+              )
 
   async function handleCopy() {
     if (!walletAddress) {
@@ -1355,7 +1583,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
         <DrawerContent className="max-h-[90vh] w-full bg-background px-0">
           <DrawerHeader className="gap-1 px-4 pt-3 pb-2">
             <div className="flex items-center">
-              {view !== 'fund'
+              {view !== 'fund' && view !== 'success'
                 ? (
                     <button
                       type="button"
@@ -1412,7 +1640,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
         {view === 'confirm' && <CountdownBadge />}
         <DialogHeader className="gap-1">
           <div className="flex items-center">
-            {view !== 'fund'
+            {view !== 'fund' && view !== 'success'
               ? (
                   <button
                     type="button"
