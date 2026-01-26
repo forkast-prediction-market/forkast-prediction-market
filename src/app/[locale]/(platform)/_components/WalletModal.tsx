@@ -131,20 +131,30 @@ function WalletAddressCard({
   label?: string
 }) {
   return (
-    <div className="rounded-md border p-1.5 text-sm transition hover:bg-muted/40">
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onCopy}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onCopy()
+        }
+      }}
+      className={`
+        cursor-pointer rounded-md border p-1.5 text-sm transition
+        hover:bg-muted/40
+        focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2
+      `}
+    >
       <div className="flex items-center justify-between gap-3">
         <div className="space-y-1">
           <p className="text-xs font-semibold text-muted-foreground">{label}</p>
-          <p className="font-mono text-xs break-all">{walletAddress}</p>
+          <p className="ml-2 text-xs font-bold break-all">{walletAddress}</p>
         </div>
-        <Button
-          type="button"
-          size="icon"
-          variant="outline"
-          onClick={onCopy}
-        >
-          {copied ? <Check className="size-4 text-primary" /> : <Copy className="size-4" />}
-        </Button>
+        <span className="inline-flex size-8 items-center justify-center">
+          {copied ? <Check className="size-4 text-primary" /> : <Copy className="size-4 text-muted-foreground" />}
+        </span>
       </div>
     </div>
   )
@@ -167,17 +177,43 @@ function WalletReceiveView({
     <div className="space-y-4">
       <div className="space-y-2">
         <p className="text-center text-sm font-semibold text-muted-foreground">
-          Scan QR Code or copy your
+          <span>
+            Scan QR Code or copy your
+            {' '}
+            {siteLabel}
+            {' '}
+            wallet address to transfer
+          </span>
           {' '}
-          {siteLabel}
+          <span className="inline-flex items-center gap-1 align-middle">
+            <Image
+              src="/images/deposit/transfer/usdc_dark.png"
+              alt="USDC"
+              width={14}
+              height={14}
+              className="block"
+            />
+            <span>USDC</span>
+          </span>
           {' '}
-          wallet address to transfer USDC on Polygon
+          <span>on</span>
+          {' '}
+          <span className="inline-flex items-center gap-1 align-middle">
+            <Image
+              src="/images/deposit/transfer/polygon_dark.png"
+              alt="Polygon"
+              width={14}
+              height={14}
+              className="block"
+            />
+            <span>Polygon</span>
+          </span>
         </p>
         <div className="flex justify-center">
-          <div className="rounded-lg border p-2 transition hover:bg-muted/40">
+          <div className="rounded-lg border bg-white p-2 transition">
             {walletAddress
               ? <QRCode value={walletAddress} size={200} />
-              : <p className="text-sm text-destructive">Proxy wallet not ready yet.</p>}
+              : <p className="text-sm">Proxy wallet not ready yet.</p>}
           </div>
         </div>
       </div>
@@ -589,7 +625,7 @@ function WalletFundMenu({
             </p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>$0.00</span>
-              <span className="size-1.5 rounded-full bg-muted-foreground" />
+              <span className="size-1 rounded-full bg-muted-foreground" />
               <span>Instant</span>
             </div>
           </div>
@@ -626,7 +662,7 @@ function WalletFundMenu({
             <p className="text-sm font-semibold">Buy Crypto</p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>card</span>
-              <span className="size-1.5 rounded-full bg-muted-foreground" />
+              <span className="size-1 rounded-full bg-muted-foreground" />
               <span>bank wire</span>
             </div>
           </div>
@@ -668,7 +704,7 @@ function WalletFundMenu({
             <p className="text-sm font-semibold">Transfer Funds</p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span>USDC</span>
-              <span className="size-1.5 rounded-full bg-muted-foreground" />
+              <span className="size-1 rounded-full bg-muted-foreground" />
               <span>copy wallet or scan QR code</span>
             </div>
           </div>
