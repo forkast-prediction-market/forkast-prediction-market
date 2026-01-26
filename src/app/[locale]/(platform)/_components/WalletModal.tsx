@@ -246,7 +246,7 @@ function WalletSendForm({
       })
     : '0.00000'
   const formattedBalance = Number.isFinite(availableBalance)
-    ? availableBalance.toLocaleString('en-US', {
+    ? Number(availableBalance).toLocaleString('en-US', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       })
