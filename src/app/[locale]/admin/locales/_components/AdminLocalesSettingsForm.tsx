@@ -60,41 +60,32 @@ export default function AdminLocalesSettingsForm({
   }
 
   return (
-    <Form action={formAction} className="grid gap-6 rounded-lg border p-6">
-      <div>
-        <h2 className="text-xl font-semibold">Available locales</h2>
-        <p className="text-sm text-muted-foreground">
-          Users will only see enabled locales in the language switcher. Disabled locales return not found.
-        </p>
-      </div>
+    <Form action={formAction} className="grid gap-4 rounded-lg border p-6">
+      {supportedLocales.map((locale) => {
+        const isDefault = locale === DEFAULT_LOCALE
+        const checked = isDefault || enabledState[locale]
 
-      <div className="grid gap-4">
-        {supportedLocales.map((locale) => {
-          const isDefault = locale === DEFAULT_LOCALE
-          const checked = isDefault || enabledState[locale]
-
-          return (
-            <div key={locale} className="flex items-center justify-between gap-4">
-              <div className="grid gap-1">
-                <Label className="text-sm font-medium">{LOCALE_LABELS[locale]}</Label>
-                <span className="text-xs text-muted-foreground">
-                  {isDefault ? 'Default locale' : locale.toUpperCase()}
-                </span>
-              </div>
-              <div className="flex items-center gap-3">
-                <Switch
-                  checked={checked}
-                  onCheckedChange={value => handleToggle(locale, value)}
-                  disabled={isDefault || isPending}
-                />
-                {checked && (
-                  <input type="hidden" name="enabled_locales" value={locale} />
-                )}
-              </div>
+        return (
+          <div key={locale} className="flex items-center justify-between gap-4">
+            <div className="grid gap-1">
+              <Label className="text-sm font-medium">{LOCALE_LABELS[locale]}</Label>
+              <span className="text-xs text-muted-foreground">
+                {isDefault ? 'Default locale' : locale.toUpperCase()}
+              </span>
             </div>
-          )
-        })}
-      </div>
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={checked}
+                onCheckedChange={value => handleToggle(locale, value)}
+                disabled={isDefault || isPending}
+              />
+              {checked && (
+                <input type="hidden" name="enabled_locales" value={locale} />
+              )}
+            </div>
+          </div>
+        )
+      })}
 
       {state.error && <InputError message={state.error} />}
 

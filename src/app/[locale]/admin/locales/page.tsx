@@ -11,7 +11,7 @@ export default async function AdminLocalesSettingsPage() {
 
   return (
     <section className="grid gap-4">
-      <div>
+      <div className="grid gap-2">
         <h1 className="text-2xl font-semibold">Locales</h1>
         <p className="text-sm text-muted-foreground">
           Enable or disable locales available to users. English remains the default and cannot be turned off.

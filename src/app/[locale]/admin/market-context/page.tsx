@@ -39,7 +39,7 @@ export default async function AdminMarketContextSettingsPage() {
 
   return (
     <section className="grid gap-4">
-      <div>
+      <div className="grid gap-2">
         <h1 className="text-2xl font-semibold">Market context</h1>
         <p className="text-sm text-muted-foreground">
           Control the AI prompt, OpenRouter credentials, and model selection for market context generation.
