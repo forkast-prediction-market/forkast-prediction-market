@@ -1,0 +1,50 @@
+export const SUPPORTED_LOCALES = ['en', 'de', 'es', 'pt', 'fr', 'zh'] as const
+
+export type SupportedLocale = (typeof SUPPORTED_LOCALES)[number]
+
+export const DEFAULT_LOCALE: SupportedLocale = 'en'
+
+export const LOCALE_LABELS: Record<SupportedLocale, string> = {
+  en: 'English',
+  de: 'Deutsch',
+  es: 'Spanish',
+  pt: 'Português',
+  fr: 'French',
+  zh: '中文',
+}
+
+export const LOOP_LABELS: Record<SupportedLocale, string> = {
+  en: 'Language',
+  de: 'Sprache',
+  es: 'Idioma',
+  pt: 'Língua',
+  fr: 'Langue',
+  zh: '语言',
+}
+
+export function normalizeEnabledLocales(locales: string[]): SupportedLocale[] {
+  const normalized = SUPPORTED_LOCALES.filter(locale => locales.includes(locale))
+  if (!normalized.includes(DEFAULT_LOCALE)) {
+    return [DEFAULT_LOCALE, ...normalized]
+  }
+  return normalized
+}
+
+export function parseEnabledLocales(value?: string | null): SupportedLocale[] {
+  if (!value) {
+    return [...SUPPORTED_LOCALES]
+  }
+
+  try {
+    const parsed = JSON.parse(value)
+    if (!Array.isArray(parsed)) {
+      return [...SUPPORTED_LOCALES]
+    }
+    const filtered = parsed.filter((locale): locale is string => typeof locale === 'string')
+    const normalized = normalizeEnabledLocales(filtered)
+    return normalized.length > 0 ? normalized : [DEFAULT_LOCALE]
+  }
+  catch {
+    return [...SUPPORTED_LOCALES]
+  }
+}

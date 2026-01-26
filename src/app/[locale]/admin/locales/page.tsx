@@ -1,0 +1,27 @@
+'use cache'
+
+import AdminLocalesSettingsForm from '@/app/[locale]/admin/locales/_components/AdminLocalesSettingsForm'
+import { getEnabledLocalesFromSettings } from '@/i18n/locale-settings'
+import { SUPPORTED_LOCALES } from '@/i18n/locales'
+import { SettingsRepository } from '@/lib/db/queries/settings'
+
+export default async function AdminLocalesSettingsPage() {
+  const { data: allSettings } = await SettingsRepository.getSettings()
+  const enabledLocales = getEnabledLocalesFromSettings(allSettings ?? undefined)
+
+  return (
+    <section className="grid gap-4">
+      <div>
+        <h1 className="text-2xl font-semibold">Locales</h1>
+        <p className="text-sm text-muted-foreground">
+          Enable or disable locales available to users. English remains the default and cannot be turned off.
+        </p>
+      </div>
+
+      <AdminLocalesSettingsForm
+        supportedLocales={SUPPORTED_LOCALES}
+        enabledLocales={enabledLocales}
+      />
+    </section>
+  )
+}

@@ -1,6 +1,6 @@
 'use client'
 
-import type { Locale } from 'next-intl'
+import type { SupportedLocale } from '@/i18n/locales'
 import { CheckIcon } from 'lucide-react'
 import { useLocale } from 'next-intl'
 import { useParams } from 'next/navigation'
@@ -13,26 +13,8 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
 } from '@/components/ui/dropdown-menu'
+import { LOCALE_LABELS, LOOP_LABELS, normalizeEnabledLocales, SUPPORTED_LOCALES } from '@/i18n/locales'
 import { usePathname, useRouter } from '@/i18n/navigation'
-import { routing } from '@/i18n/routing'
-
-const LOCALE_LABELS: Record<Locale, string> = {
-  en: 'English',
-  de: 'Deutsch',
-  es: 'Spanish',
-  pt: 'Português',
-  fr: 'French',
-  zh: '中文',
-}
-
-const LOOP_LABELS: Record<Locale, string> = {
-  en: 'Language',
-  de: 'Sprache',
-  es: 'Idioma',
-  pt: 'Língua',
-  fr: 'Langue',
-  zh: '语言',
-}
 
 export default function LocaleSwitcherMenuItem() {
   const router = useRouter()
@@ -40,10 +22,12 @@ export default function LocaleSwitcherMenuItem() {
   const params = useParams()
   const locale = useLocale()
   const [isPending, startTransition] = useTransition()
+  const [enabledLocales, setEnabledLocales] = useState<SupportedLocale[] | null>(null)
   const [carouselIndex, setCarouselIndex] = useState(0)
   const [isSliding, setIsSliding] = useState(true)
-  const localeLabels = routing.locales.map(
-    option => LOOP_LABELS[option as Locale] ?? option.toUpperCase(),
+  const displayLocales = enabledLocales ?? SUPPORTED_LOCALES
+  const localeLabels = displayLocales.map(
+    option => LOOP_LABELS[option] ?? option.toUpperCase(),
   )
   const loopedLabels = [
     ...localeLabels,
@@ -53,6 +37,36 @@ export default function LocaleSwitcherMenuItem() {
   const displayDurationMs = 1000
   const transitionDurationMs = 200
   const itemHeightRem = 1.25
+
+  useEffect(() => {
+    let isActive = true
+
+    async function loadEnabledLocales() {
+      try {
+        const response = await fetch('/api/locales')
+        if (!response.ok) {
+          return
+        }
+        const payload = await response.json()
+        if (!isActive || !Array.isArray(payload?.locales)) {
+          return
+        }
+        const normalized = normalizeEnabledLocales(payload.locales)
+        if (normalized.length > 0) {
+          setEnabledLocales(normalized)
+        }
+      }
+      catch (error) {
+        console.error('Failed to load enabled locales', error)
+      }
+    }
+
+    void loadEnabledLocales()
+
+    return () => {
+      isActive = false
+    }
+  }, [])
 
   useEffect(() => {
     if (!shouldAnimate) {
@@ -67,6 +81,11 @@ export default function LocaleSwitcherMenuItem() {
     return () => window.clearInterval(interval)
   }, [shouldAnimate, displayDurationMs, transitionDurationMs])
 
+  useEffect(() => {
+    setCarouselIndex(0)
+    setIsSliding(true)
+  }, [displayLocales.length])
+
   function handleCarouselTransitionEnd() {
     if (carouselIndex === localeLabels.length) {
       setIsSliding(false)
@@ -79,7 +98,7 @@ export default function LocaleSwitcherMenuItem() {
       router.replace(
         // @ts-expect-error -- next-intl validates that params match the pathname.
         { pathname, params },
-        { locale: nextLocale as Locale },
+        { locale: nextLocale as SupportedLocale },
       )
     })
   }
@@ -111,14 +130,14 @@ export default function LocaleSwitcherMenuItem() {
             value={locale}
             onValueChange={handleValueChange}
           >
-            {routing.locales.map(option => (
+            {displayLocales.map(option => (
               <DropdownMenuRadioItem
                 key={option}
                 value={option}
                 className="group flex items-center gap-2 pr-8 pl-2 [&>span:first-child]:hidden"
               >
                 <span className="flex-1 font-medium">
-                  {LOCALE_LABELS[option as Locale] ?? option.toUpperCase()}
+                  {LOCALE_LABELS[option] ?? option.toUpperCase()}
                 </span>
                 <CheckIcon className="ml-auto size-4 opacity-0 group-data-[state=checked]:opacity-100" />
               </DropdownMenuRadioItem>

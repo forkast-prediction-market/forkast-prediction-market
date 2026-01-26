@@ -3,6 +3,7 @@ import { hasLocale, NextIntlClientProvider } from 'next-intl'
 import { setRequestLocale } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import TestModeBanner from '@/components/TestModeBanner'
+import { loadEnabledLocales } from '@/i18n/locale-settings'
 import { routing } from '@/i18n/routing'
 import { openSauceOne } from '@/lib/fonts'
 import { IS_TEST_MODE } from '@/lib/network'
@@ -37,6 +38,10 @@ export function generateStaticParams() {
 export default async function LocaleLayout({ params, children }: LayoutProps<'/[locale]'>) {
   const { locale } = await params
   if (!hasLocale(routing.locales, locale)) {
+    notFound()
+  }
+  const enabledLocales = await loadEnabledLocales()
+  if (!enabledLocales.includes(locale)) {
     notFound()
   }
 

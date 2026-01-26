@@ -1,5 +1,3 @@
-'use server'
-
 import { NextResponse } from 'next/server'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { ZERO_ADDRESS } from '@/lib/contracts'
