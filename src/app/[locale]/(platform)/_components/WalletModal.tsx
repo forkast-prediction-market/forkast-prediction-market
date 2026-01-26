@@ -12,11 +12,12 @@ import {
   CreditCard,
   Fuel,
   Info,
+  Loader2,
   Wallet,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import Image from 'next/image'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import QRCode from 'react-qr-code'
 import { Button } from '@/components/ui/button'
 import {
@@ -38,6 +39,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { svgLogo } from '@/lib/utils'
 
 const MELD_PAYMENT_METHODS = [
   'apple_pay',
@@ -84,7 +86,7 @@ const WITHDRAW_CHAIN_OPTIONS = [
   { value: 'Optimism', label: 'Optimism', icon: '/images/withdraw/chain/optimism.svg', enabled: false },
 ] as const
 
-type WalletDepositView = 'fund' | 'receive' | 'wallets' | 'amount'
+type WalletDepositView = 'fund' | 'receive' | 'wallets' | 'amount' | 'confirm'
 
 interface WalletDepositModalProps {
   open: boolean
@@ -628,7 +630,7 @@ function WalletFundMenu({
               )
             </p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <span>$0.00</span>
+              <span>$18,20</span>
               <span className="size-1 rounded-full bg-muted-foreground" />
               <span>Instant</span>
             </div>
@@ -867,7 +869,7 @@ function WalletTokenList({ onContinue }: { onContinue: () => void }) {
   )
 }
 
-function WalletAmountStep() {
+function WalletAmountStep({ onContinue }: { onContinue: () => void }) {
   function formatAmountInput(value: string) {
     const cleaned = value.replace(/[^\d.,]/g, '')
     if (!cleaned) {
@@ -978,8 +980,286 @@ function WalletAmountStep() {
           </div>
         </div>
       </div>
-      <Button type="button" className="h-12 w-full text-foreground">
+      <Button type="button" className="h-12 w-full text-foreground" onClick={onContinue}>
         Continue
+      </Button>
+    </div>
+  )
+}
+
+function CountdownBadge({ seconds = 30 }: { seconds?: number }) {
+  const [remaining, setRemaining] = useState(seconds)
+
+  useEffect(() => {
+    setRemaining(seconds)
+    const endTime = Date.now() + seconds * 1000
+    const interval = setInterval(() => {
+      const now = Date.now()
+      const next = Math.max(0, Math.ceil((endTime - now) / 1000))
+      setRemaining(next)
+      if (next === 0) {
+        setRemaining(seconds)
+      }
+    }, 250)
+
+    return () => clearInterval(interval)
+  }, [seconds])
+
+  const progress = seconds > 0 ? ((seconds - remaining) / seconds) * 360 : 0
+
+  return (
+    <div className="absolute top-4 right-4">
+      <div
+        className="size-9 rounded-full p-[2px]"
+        style={{
+          background: `conic-gradient(hsl(var(--primary)) ${progress}deg, hsl(var(--muted)) ${progress}deg 360deg)`,
+        }}
+      >
+        <div className={`
+          flex h-full w-full items-center justify-center rounded-full bg-background text-[9px] font-semibold
+          text-foreground
+        `}
+        >
+          {remaining}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function WalletConfirmStep({ walletEoaAddress, siteLabel }: { walletEoaAddress?: string | null, siteLabel: string }) {
+  const [status, setStatus] = useState<'quote' | 'gas' | 'ready'>('quote')
+  const isLoading = status !== 'ready'
+  const eoaSuffix = walletEoaAddress?.slice(-4) ?? '542d'
+  const [isBreakdownOpen, setIsBreakdownOpen] = useState(false)
+  const logoSvg = svgLogo()
+
+  useEffect(() => {
+    const quoteTimer = setTimeout(() => setStatus('gas'), 1800)
+    const readyTimer = setTimeout(() => setStatus('ready'), 3600)
+    return () => {
+      clearTimeout(quoteTimer)
+      clearTimeout(readyTimer)
+    }
+  }, [])
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-center">
+        {isLoading
+          ? <Skeleton className="h-12 w-40 rounded-md" />
+          : <p className="text-5xl font-semibold text-foreground">$2,00</p>}
+      </div>
+
+      <div className="space-y-3">
+        <div className="rounded-lg border">
+          <div className="px-4 py-1.5 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Source</span>
+              <span className="flex items-center gap-2 font-semibold text-foreground">
+                <Wallet className="size-4" />
+                Wallet (...
+                {eoaSuffix}
+                )
+              </span>
+            </div>
+          </div>
+          <div className="mx-auto h-px w-[90%] bg-border/60" />
+          <div className="px-4 py-1.5 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Destination</span>
+              <span className="flex items-center gap-2 font-semibold text-foreground">
+                <span
+                  className={`
+                    size-4 text-current
+                    [&_svg]:h-[1em] [&_svg]:w-[1em]
+                    [&_svg_*]:fill-current [&_svg_*]:stroke-current
+                  `}
+                  dangerouslySetInnerHTML={{ __html: logoSvg! }}
+                />
+                {siteLabel}
+                {' '}
+                Wallet
+              </span>
+            </div>
+          </div>
+          <div className="mx-auto h-px w-[90%] bg-border/60" />
+          <div className="px-4 py-1.5 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>Estimated time</span>
+              <span className="font-semibold text-foreground">&lt; 1 min</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border">
+          <div className="px-4 py-1.5 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>You send</span>
+              {isLoading
+                ? <Skeleton className="h-4 w-24 rounded-full" />
+                : (
+                    <span className="flex items-center gap-2 font-semibold text-foreground">
+                      <span className="relative">
+                        <Image
+                          src="/images/deposit/transfer/polygon_dark.png"
+                          alt="POL"
+                          width={18}
+                          height={18}
+                          className="rounded-full"
+                        />
+                        <span className="absolute -right-1 -bottom-1 rounded-full bg-background p-0.5">
+                          <Image
+                            src="/images/deposit/transfer/polygon_dark.png"
+                            alt="Polygon"
+                            width={10}
+                            height={10}
+                            className="rounded-full"
+                          />
+                        </span>
+                      </span>
+                      0,00036 POL
+                    </span>
+                  )}
+            </div>
+          </div>
+          <div className="mx-auto h-px w-[90%] bg-border/60" />
+          <div className="px-4 py-1.5 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
+              <span>You receive</span>
+              {isLoading
+                ? <Skeleton className="h-4 w-28 rounded-full" />
+                : (
+                    <span className="flex items-center gap-2 font-semibold text-foreground">
+                      <span className="relative">
+                        <Image
+                          src="/images/deposit/transfer/usdc_dark.png"
+                          alt="USDC"
+                          width={18}
+                          height={18}
+                          className="rounded-full"
+                        />
+                        <span className="absolute -right-1 -bottom-1 rounded-full bg-background p-0.5">
+                          <Image
+                            src="/images/deposit/transfer/polygon_dark.png"
+                            alt="Polygon"
+                            width={10}
+                            height={10}
+                            className="rounded-full"
+                          />
+                        </span>
+                      </span>
+                      1,00000 USDC
+                    </span>
+                  )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-2 text-xs text-muted-foreground">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between text-xs text-muted-foreground"
+          onClick={() => setIsBreakdownOpen(current => !current)}
+          disabled={isLoading}
+        >
+          <span>Transaction breakdown</span>
+          <span className="flex items-center gap-1">
+            {isLoading
+              ? <Skeleton className="h-3 w-20 rounded-full" />
+              : (
+                  <>
+                    {!isBreakdownOpen && <span>$0.15 • 2.63%</span>}
+                    <ChevronRight className={`size-3 transition ${isBreakdownOpen ? 'rotate-90' : ''}`} />
+                  </>
+                )}
+          </span>
+        </button>
+        {isBreakdownOpen && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                Network cost
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="size-3" />
+                  </TooltipTrigger>
+                  <TooltipContent hideArrow className="border bg-background text-foreground shadow-lg">
+                    <div className="space-y-1 text-xs text-foreground">
+                      <div className="flex items-center justify-between gap-4">
+                        <span>Total cost</span>
+                        <span className="text-right">$0.06</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <span>Source chain gas</span>
+                        <span className="text-right">$0.05</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <span>Destination chain gas</span>
+                        <span className="text-right">$0.01</span>
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+              <span className="flex items-center gap-2">
+                <Fuel className="size-3" />
+                $0.15
+              </span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                Price impact
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="size-3" />
+                  </TooltipTrigger>
+                  <TooltipContent hideArrow className="border bg-background text-foreground shadow-lg">
+                    <div className="space-y-1 text-xs text-foreground">
+                      <div className="flex items-center justify-between gap-4">
+                        <span>Total impact</span>
+                        <span className="text-right">2.71%</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <span>Swap impact</span>
+                        <span className="text-right">2.61%</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4">
+                        <span>Instant liquidity cost</span>
+                        <span className="text-right">0.10%</span>
+                      </div>
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+              <span>2.63%</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                Max slippage
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="size-3" />
+                  </TooltipTrigger>
+                  <TooltipContent hideArrow className="max-w-56 border bg-background text-foreground shadow-lg">
+                    <p className="text-xs text-foreground">
+                      Slippage occurs due to price changes during trade execution. Minimum received: $0.96
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </span>
+              <span>Auto • 4.00%</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <Button type="button" className="h-12 w-full text-foreground" disabled={isLoading}>
+        {isLoading && <Loader2 className="size-4 animate-spin" />}
+        {status === 'quote' && 'Preparing your quote...'}
+        {status === 'gas' && 'Estimating gas...'}
+        {status === 'ready' && 'Confirm order'}
       </Button>
     </div>
   )
@@ -1041,9 +1321,13 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
         ? (
             <WalletTokenList onContinue={() => onViewChange('amount')} />
           )
-        : (
-            <WalletAmountStep />
-          )
+        : view === 'amount'
+          ? (
+              <WalletAmountStep onContinue={() => onViewChange('confirm')} />
+            )
+          : (
+              <WalletConfirmStep walletEoaAddress={walletEoaAddress} siteLabel={siteLabel} />
+            )
 
   async function handleCopy() {
     if (!walletAddress) {
@@ -1121,7 +1405,11 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
         onOpenChange(next)
       }}
     >
-      <DialogContent className="max-w-md border bg-background pt-4 sm:max-w-md">
+      <DialogContent
+        className="max-w-md border bg-background pt-4 sm:max-w-md"
+        showCloseButton={view !== 'confirm'}
+      >
+        {view === 'confirm' && <CountdownBadge />}
         <DialogHeader className="gap-1">
           <div className="flex items-center">
             {view !== 'fund'
