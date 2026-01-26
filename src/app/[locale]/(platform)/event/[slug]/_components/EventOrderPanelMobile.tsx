@@ -1,6 +1,7 @@
 import type { Event } from '@/types'
 import { DialogTitle } from '@radix-ui/react-dialog'
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden'
+import { useExtracted } from 'next-intl'
 import EventOrderPanelForm from '@/app/[locale]/(platform)/event/[slug]/_components/EventOrderPanelForm'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
@@ -13,6 +14,7 @@ interface EventMobileOrderPanelProps {
 }
 
 export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelProps) {
+  const t = useExtracted('Event')
   const state = useOrder()
   const isSingleMarket = useIsSingleMarket()
   const yesPrice = useOutcomeTopOfBookPrice(OUTCOME_INDEX.YES, ORDER_SIDE.BUY)
@@ -41,7 +43,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
                 }}
               >
                 <span className="truncate opacity-70">
-                  Buy
+                  {t('Buy')}
                   {' '}
                   {state.market!.outcomes[0].outcome_text}
                 </span>
@@ -62,7 +64,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
                 }}
               >
                 <span className="truncate opacity-70">
-                  Buy
+                  {t('Buy')}
                   {' '}
                   {state.market!.outcomes[1].outcome_text}
                 </span>

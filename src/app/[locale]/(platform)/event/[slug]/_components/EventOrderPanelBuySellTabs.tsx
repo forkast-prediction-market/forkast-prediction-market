@@ -1,6 +1,7 @@
 import type { PointerEvent } from 'react'
 import type { OrderSide, OrderType } from '@/types'
 import { ChevronDownIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useEffect, useRef, useState } from 'react'
 import EventMergeSharesDialog from '@/app/[locale]/(platform)/event/[slug]/_components/EventMergeSharesDialog'
 import EventSplitSharesDialog from '@/app/[locale]/(platform)/event/[slug]/_components/EventSplitSharesDialog'
@@ -49,6 +50,7 @@ export default function EventOrderPanelBuySellTabs({
   onAmountReset,
   onFocusInput,
 }: EventOrderPanelBuySellTabsProps) {
+  const t = useExtracted('Event')
   const [typeMenuOpen, setTypeMenuOpen] = useState(false)
   const [isMergeDialogOpen, setIsMergeDialogOpen] = useState(false)
   const [isSplitDialogOpen, setIsSplitDialogOpen] = useState(false)
@@ -140,7 +142,7 @@ export default function EventOrderPanelBuySellTabs({
             )}
             onClick={() => handleSideChange(ORDER_SIDE.BUY)}
           >
-            Buy
+            {t('Buy')}
           </button>
           <button
             type="button"
@@ -159,7 +161,7 @@ export default function EventOrderPanelBuySellTabs({
             )}
             onClick={() => handleSideChange(ORDER_SIDE.SELL)}
           >
-            Sell
+            {t('Sell')}
           </button>
         </div>
 

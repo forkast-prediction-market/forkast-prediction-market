@@ -2,6 +2,7 @@ import type { Event } from '@/types'
 import { useAppKitAccount } from '@reown/appkit/react'
 import { useQueryClient } from '@tanstack/react-query'
 import { CheckIcon, TriangleAlertIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import Form from 'next/form'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSignTypedData } from 'wagmi'
@@ -83,6 +84,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const { open, close } = useAppKit()
   const { isConnected, embeddedWalletInfo } = useAppKitAccount()
   const { signTypedDataAsync } = useSignTypedData()
+  const t = useExtracted('Event')
   const user = useUser()
   const state = useOrder()
   const setUserShares = useOrder(store => store.setUserShares)
@@ -154,9 +156,9 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     [state.market],
   )
   const resolvedOutcomeLabel = resolvedOutcomeIndex === OUTCOME_INDEX.NO
-    ? 'No'
+    ? t('No')
     : resolvedOutcomeIndex === OUTCOME_INDEX.YES
-      ? 'Yes'
+      ? t('Yes')
       : 'Resolved'
   const resolvedMarketTitle = state.market?.short_title || state.market?.title
   const orderDomain = useMemo(() => getExchangeEip712Domain(isNegRiskEnabled), [isNegRiskEnabled])
@@ -254,9 +256,9 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
     : selectedTokenShares
   const selectedShareLabel = state.outcome?.outcome_text
     ?? (outcomeIndex === OUTCOME_INDEX.NO
-      ? 'No'
+      ? t('No')
       : outcomeIndex === OUTCOME_INDEX.YES
-        ? 'Yes'
+        ? t('Yes')
         : undefined)
 
   const marketSellFill = useMemo(() => {
@@ -780,7 +782,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 <EventOrderPanelOutcomeButton
                   variant="yes"
                   price={yesPrice}
-                  label={yesOutcome?.outcome_text ?? 'Yes'}
+                  label={yesOutcome?.outcome_text ?? t('Yes')}
                   isSelected={state.outcome?.outcome_index === OUTCOME_INDEX.YES}
                   onSelect={() => {
                     if (!state.market || !yesOutcome) {
@@ -793,7 +795,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 <EventOrderPanelOutcomeButton
                   variant="no"
                   price={noPrice}
-                  label={noOutcome?.outcome_text ?? 'No'}
+                  label={noOutcome?.outcome_text ?? t('No')}
                   isSelected={state.outcome?.outcome_index === OUTCOME_INDEX.NO}
                   onSelect={() => {
                     if (!state.market || !noOutcome) {
@@ -941,17 +943,17 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 }}
                 label={(() => {
                   if (!isConnected) {
-                    return 'Trade'
+                    return t('Trade')
                   }
                   if (shouldShowDepositCta) {
                     return 'Deposit'
                   }
                   const outcomeLabel = selectedShareLabel
                   if (outcomeLabel) {
-                    const verb = state.side === ORDER_SIDE.SELL ? 'Sell' : 'Buy'
+                    const verb = state.side === ORDER_SIDE.SELL ? t('Sell') : t('Buy')
                     return `${verb} ${outcomeLabel}`
                   }
-                  return 'Trade'
+                  return t('Trade')
                 })()}
               />
               <EventOrderPanelTermsDisclaimer />
