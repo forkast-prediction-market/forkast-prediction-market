@@ -280,7 +280,7 @@ function WalletSendForm({
               value={sendTo}
               onChange={onChangeSendTo}
               placeholder="0x..."
-              className={`${showConnectedWalletButton ? 'pr-28' : ''} h-14 text-sm placeholder:text-sm`}
+              className={`${showConnectedWalletButton ? 'pr-28' : ''} h-12 text-sm placeholder:text-sm`}
               required
             />
             {showConnectedWalletButton && (
@@ -290,7 +290,7 @@ function WalletSendForm({
                 size="sm"
                 onClick={onUseConnectedWallet}
                 disabled={!connectedWalletAddress}
-                className="absolute inset-y-3 right-2 text-xs"
+                className="absolute inset-y-2 right-2 text-xs"
               >
                 <Wallet className="size-3.5 shrink-0" />
                 <span>use connected</span>
@@ -310,14 +310,14 @@ function WalletSendForm({
               onChange={onChangeSendAmount}
               placeholder="0.00"
               className={`
-                h-14
+                h-12
                 [appearance:textfield]
                 pr-36 text-sm
                 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none
               `}
               required
             />
-            <div className="absolute inset-y-3 right-2 flex items-center gap-2">
+            <div className="absolute inset-y-2 right-2 flex items-center gap-2">
               <span className="text-sm font-semibold text-muted-foreground">USDC</span>
               <Button
                 type="button"
@@ -405,18 +405,18 @@ function WalletSendForm({
 
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">You will receive</span>
+            <span className="text-muted-foreground">You will receive</span>
+            <div className="flex items-center gap-3 text-right">
               <span className="text-foreground">
                 {receiveAmountDisplay}
                 {' '}
                 {receiveToken}
               </span>
+              <span className="text-muted-foreground">
+                $
+                {amountDisplay}
+              </span>
             </div>
-            <span className="text-muted-foreground">
-              $
-              {amountDisplay}
-            </span>
           </div>
           <button
             type="button"
@@ -438,39 +438,61 @@ function WalletSendForm({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="flex items-center gap-2">
-                        <Info className="size-4" />
                         <span>Network cost</span>
+                        <Info className="size-4" />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent
                       hideArrow
                       className="border bg-background text-foreground shadow-lg"
                     >
-                      <p className="text-sm text-foreground">Total cost $0.01</p>
-                      <p className="text-sm text-foreground">Source chain gas $0.01</p>
-                      <p className="text-sm text-foreground">Destination chain gas $0.00</p>
+                      <div className="space-y-1 text-sm text-foreground">
+                        <div className="flex items-center justify-between gap-4">
+                          <span>Total cost</span>
+                          <span className="text-right">$0.00</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <span>Source chain gas</span>
+                          <span className="text-right">$0.00</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <span>Destination chain gas</span>
+                          <span className="text-right">$0.00</span>
+                        </div>
+                      </div>
                     </TooltipContent>
                   </Tooltip>
                   <div className="flex items-center gap-1">
                     <Fuel className="size-4" />
-                    <span>$0.01</span>
+                    <span>$0.00</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="flex items-center gap-2">
-                        <Info className="size-4" />
                         <span>Price impact</span>
+                        <Info className="size-4" />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent
                       hideArrow
                       className="border bg-background text-foreground shadow-lg"
                     >
-                      <p className="text-sm text-foreground">Total impact 0.00%</p>
-                      <p className="text-sm text-foreground">Swap impact 0.00%</p>
-                      <p className="text-sm text-foreground">Fun.xyz fee 0.00%</p>
+                      <div className="space-y-1 text-sm text-foreground">
+                        <div className="flex items-center justify-between gap-4">
+                          <span>Total impact</span>
+                          <span className="text-right">0.00%</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <span>Swap impact</span>
+                          <span className="text-right">0.00%</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4">
+                          <span>Fun.xyz fee</span>
+                          <span className="text-right">0.00%</span>
+                        </div>
+                      </div>
                     </TooltipContent>
                   </Tooltip>
                   <span>0.00%</span>
@@ -479,16 +501,16 @@ function WalletSendForm({
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="flex items-center gap-2">
-                        <Info className="size-4" />
                         <span>Max slippage</span>
+                        <Info className="size-4" />
                       </div>
                     </TooltipTrigger>
                     <TooltipContent
                       hideArrow
-                      className="border bg-background text-foreground shadow-lg"
+                      className="max-w-56 border bg-background text-foreground shadow-lg"
                     >
                       <p className="text-sm text-foreground">
-                        Slippage occurs due to price changes during trade execution. Minimum received: $53.43
+                        Slippage occurs due to price changes during trade execution. Minimum received: $00.00
                       </p>
                     </TooltipContent>
                   </Tooltip>
