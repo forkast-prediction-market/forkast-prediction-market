@@ -320,9 +320,9 @@ function WalletSendForm({
               <span className="text-sm font-semibold text-muted-foreground">USDC</span>
               <Button
                 type="button"
-                variant="default"
+                variant="outline"
                 size="sm"
-                className="h-7 px-2 text-xs"
+                className="h-7 px-2 text-xs text-foreground hover:text-muted-foreground"
                 onClick={onMax}
                 disabled={!onMax || isBalanceLoading}
               >
@@ -404,7 +404,7 @@ function WalletSendForm({
 
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">You will receive</span>
+            <span className="text-foreground">You will receive</span>
             <div className="flex items-center gap-3 text-right">
               <span className="text-foreground">
                 {receiveAmountDisplay}
@@ -432,7 +432,7 @@ function WalletSendForm({
           </button>
           {isBreakdownOpen && (
             <TooltipProvider>
-              <div className="space-y-2 text-sm text-muted-foreground">
+              <div className="space-y-2 text-xs text-muted-foreground">
                 <div className="flex items-center justify-between">
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -445,7 +445,7 @@ function WalletSendForm({
                       hideArrow
                       className="border bg-background text-foreground shadow-lg"
                     >
-                      <div className="space-y-1 text-sm text-foreground">
+                      <div className="space-y-1 text-xs text-foreground">
                         <div className="flex items-center justify-between gap-4">
                           <span>Total cost</span>
                           <span className="text-right">$0.00</span>
@@ -478,7 +478,7 @@ function WalletSendForm({
                       hideArrow
                       className="border bg-background text-foreground shadow-lg"
                     >
-                      <div className="space-y-1 text-sm text-foreground">
+                      <div className="space-y-1 text-xs text-foreground">
                         <div className="flex items-center justify-between gap-4">
                           <span>Total impact</span>
                           <span className="text-right">0.00%</span>
@@ -508,7 +508,7 @@ function WalletSendForm({
                       hideArrow
                       className="max-w-56 border bg-background text-foreground shadow-lg"
                     >
-                      <p className="text-sm text-foreground">
+                      <p className="text-xs text-foreground">
                         Slippage occurs due to price changes during trade execution. Minimum received: $00.00
                       </p>
                     </TooltipContent>
@@ -522,12 +522,12 @@ function WalletSendForm({
 
         {isUsdcESelected && (
           <div className="rounded-lg bg-muted/60 p-4">
-            <div className="flex items-start gap-3 text-sm text-foreground">
+            <div className="flex items-start gap-3 text-xs text-foreground">
               <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-destructive">
                 <Info className="size-4 text-background" />
               </div>
               <div className="space-y-1">
-                <p className="font-semibold">USDCe is not widely supported by most exchanges.</p>
+                <p className="font-semibold">USDCe is not widely supported by most exchanges</p>
                 <p className="text-muted-foreground">
                   Sending USDCe to an unsupported platform may result in a permanent loss of funds. Always double-check token compatibility before transferring.
                 </p>
