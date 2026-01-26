@@ -80,8 +80,8 @@ function DialogContent({
           <DialogPrimitive.Close
             data-slot="dialog-close"
             className={`
-              absolute top-4 right-4 rounded-xs opacity-70 ring-offset-background transition-opacity
-              hover:opacity-100
+              absolute top-4 right-4 rounded-md p-2 opacity-70 ring-offset-background transition
+              hover:bg-muted hover:opacity-100
               focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden
               disabled:pointer-events-none
               data-[state=open]:bg-accent data-[state=open]:text-muted-foreground

@@ -213,6 +213,7 @@ export function WalletFlow({
         onOpenChange={handleDepositModalChange}
         isMobile={isMobile}
         walletAddress={user?.proxy_wallet_address ?? null}
+        walletEoaAddress={user?.address ?? null}
         siteName={process.env.NEXT_PUBLIC_SITE_NAME}
         meldUrl={meldUrl}
         hasDeployedProxyWallet={hasDeployedProxyWallet}

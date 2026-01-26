@@ -4,6 +4,7 @@ import type { ChangeEventHandler, FormEventHandler } from 'react'
 import {
   ArrowLeft,
   Check,
+  ChevronLeft,
   ChevronRight,
   CircleDollarSign,
   Copy,
@@ -89,6 +90,7 @@ interface WalletDepositModalProps {
   onOpenChange: (open: boolean) => void
   isMobile: boolean
   walletAddress?: string | null
+  walletEoaAddress?: string | null
   siteName?: string
   meldUrl: string | null
   hasDeployedProxyWallet: boolean
@@ -129,7 +131,7 @@ function WalletAddressCard({
   label?: string
 }) {
   return (
-    <div className="rounded-md border bg-muted/40 p-3 text-sm">
+    <div className="rounded-md border p-1.5 text-sm transition hover:bg-muted/40">
       <div className="flex items-center justify-between gap-3">
         <div className="space-y-1">
           <p className="text-xs font-semibold text-muted-foreground">{label}</p>
@@ -151,13 +153,11 @@ function WalletAddressCard({
 function WalletReceiveView({
   walletAddress,
   siteName,
-  onBack,
   onCopy,
   copied,
 }: {
   walletAddress?: string | null
   siteName?: string
-  onBack: () => void
   onCopy: () => void
   copied: boolean
 }) {
@@ -165,28 +165,28 @@ function WalletReceiveView({
 
   return (
     <div className="space-y-4">
-      <button
-        type="button"
-        className="flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"
-        onClick={onBack}
-      >
-        <ArrowLeft className="size-4" />
-        Back
-      </button>
+      <div className="space-y-2">
+        <p className="text-center text-sm font-semibold text-muted-foreground">
+          Scan QR Code or copy your
+          {' '}
+          {siteLabel}
+          {' '}
+          wallet address to transfer USDC on Polygon
+        </p>
+        <div className="flex justify-center">
+          <div className="rounded-lg border p-2 transition hover:bg-muted/40">
+            {walletAddress
+              ? <QRCode value={walletAddress} size={200} />
+              : <p className="text-sm text-destructive">Proxy wallet not ready yet.</p>}
+          </div>
+        </div>
+      </div>
       <WalletAddressCard
         walletAddress={walletAddress}
         onCopy={onCopy}
         copied={copied}
-        label={`Your ${siteLabel} wallet address`}
+        label=""
       />
-      <div className="flex justify-center rounded-lg border p-4">
-        {walletAddress
-          ? <QRCode value={walletAddress} size={200} />
-          : <p className="text-sm text-destructive">Proxy wallet not ready yet.</p>}
-      </div>
-      <p className="text-center text-xs text-muted-foreground">
-        Copy your address or scan this QR code to transfer USDC on Polygon
-      </p>
     </div>
   )
 }
@@ -550,26 +550,64 @@ function WalletFundMenu({
   disabledBuy,
   disabledReceive,
   meldUrl,
+  walletEoaAddress,
 }: {
   onBuy: (url: string) => void
   onReceive: () => void
   disabledBuy: boolean
   disabledReceive: boolean
   meldUrl: string | null
+  walletEoaAddress?: string | null
 }) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
   const logoVariant = isDark ? 'dark' : 'light'
   const paymentLogos = MELD_PAYMENT_METHODS.map(method => `/images/deposit/meld/${method}_${logoVariant}.png`)
   const transferLogos = TRANSFER_PAYMENT_METHODS.map(method => `/images/deposit/transfer/${method}_${logoVariant}.png`)
+  const walletSuffix = walletEoaAddress?.slice(-4) ?? '----'
 
   return (
     <div className="grid gap-2">
       <button
         type="button"
         className={`
-          group flex w-full items-center justify-between gap-4 rounded-lg border bg-card px-4 py-3 text-left transition
-          hover:border-primary hover:text-primary
+          group flex w-full items-center justify-between gap-4 rounded-lg border border-border px-4 py-2 text-left
+          transition
+          hover:bg-muted/50
+          disabled:cursor-not-allowed disabled:opacity-50
+        `}
+      >
+        <div className="flex items-center gap-3">
+          <div className="flex size-12 items-center justify-center text-foreground">
+            <Wallet className="size-6" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-sm font-semibold text-foreground">
+              Wallet (...
+              {walletSuffix}
+              )
+            </p>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>$0.00</span>
+              <span className="size-1.5 rounded-full bg-muted-foreground" />
+              <span>Instant</span>
+            </div>
+          </div>
+        </div>
+      </button>
+
+      <div className="mx-auto flex w-full items-center gap-3 text-xs text-muted-foreground">
+        <div className="h-px flex-1 bg-border/70" />
+        <span>more</span>
+        <div className="h-px flex-1 bg-border/70" />
+      </div>
+
+      <button
+        type="button"
+        className={`
+          group flex w-full items-center justify-between gap-4 rounded-lg border border-border px-4 py-2 text-left
+          transition
+          hover:bg-muted/50
           disabled:cursor-not-allowed disabled:opacity-50
         `}
         onClick={() => {
@@ -581,23 +619,23 @@ function WalletFundMenu({
         disabled={disabledBuy}
       >
         <div className="flex items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted/60 text-primary">
+          <div className="flex size-12 items-center justify-center text-foreground">
             <CreditCard className="size-6" />
           </div>
           <div>
             <p className="text-sm font-semibold">Buy Crypto</p>
-            <p className="text-xs text-muted-foreground">
-              card
-              {' \u00B7 '}
-              bank wire
-            </p>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>card</span>
+              <span className="size-1.5 rounded-full bg-muted-foreground" />
+              <span>bank wire</span>
+            </div>
           </div>
         </div>
         <div className="flex items-center -space-x-2 transition-all group-hover:-space-x-1">
           {paymentLogos.map(logo => (
             <div
               key={logo}
-              className="relative size-6 overflow-hidden rounded-full border bg-background shadow-sm"
+              className="relative size-5 overflow-hidden rounded-full bg-background shadow-sm"
             >
               <Image
                 src={logo}
@@ -614,31 +652,32 @@ function WalletFundMenu({
       <button
         type="button"
         className={`
-          group flex w-full items-center justify-between gap-4 rounded-lg border bg-card px-4 py-3 text-left transition
-          hover:border-primary hover:text-primary
+          group flex w-full items-center justify-between gap-4 rounded-lg border border-border px-4 py-2 text-left
+          transition
+          hover:bg-muted/50
           disabled:cursor-not-allowed disabled:opacity-50
         `}
         onClick={onReceive}
         disabled={disabledReceive}
       >
         <div className="flex items-center gap-3">
-          <div className="flex size-12 items-center justify-center rounded-full bg-muted/60 text-primary">
+          <div className="flex size-12 items-center justify-center text-foreground">
             <CircleDollarSign className="size-6" />
           </div>
           <div>
             <p className="text-sm font-semibold">Transfer Funds</p>
-            <p className="text-xs text-muted-foreground">
-              USDC
-              {' \u00B7 '}
-              copy wallet or scan QR code
-            </p>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span>USDC</span>
+              <span className="size-1.5 rounded-full bg-muted-foreground" />
+              <span>copy wallet or scan QR code</span>
+            </div>
           </div>
         </div>
         <div className="flex items-center -space-x-2 transition-all group-hover:-space-x-1">
           {transferLogos.map(logo => (
             <div
               key={logo}
-              className="relative size-7 overflow-hidden rounded-full border bg-background shadow-sm"
+              className="relative size-6 overflow-hidden rounded-full bg-background shadow-sm"
             >
               <Image
                 src={logo}
@@ -661,6 +700,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
     onOpenChange,
     isMobile,
     walletAddress,
+    walletEoaAddress,
     siteName,
     meldUrl,
     hasDeployedProxyWallet,
@@ -694,12 +734,12 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
           disabledBuy={!meldUrl}
           disabledReceive={!hasDeployedProxyWallet}
           meldUrl={meldUrl}
+          walletEoaAddress={walletEoaAddress}
         />
       )
     : (
         <WalletReceiveView
           walletAddress={walletAddress}
-          onBack={() => onViewChange('fund')}
           onCopy={handleCopy}
           copied={copied}
         />
@@ -729,9 +769,32 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
         }}
       >
         <DrawerContent className="max-h-[90vh] w-full bg-background px-0">
-          <DrawerHeader className="px-4 pt-4 pb-3">
-            <DrawerTitle className="text-center text-2xl font-semibold text-foreground">Deposit</DrawerTitle>
-            <DrawerDescription>
+          <DrawerHeader className="gap-1 px-4 pt-3 pb-2">
+            <div className="flex items-center">
+              {view === 'receive'
+                ? (
+                    <button
+                      type="button"
+                      className={`
+                        rounded-md p-2 opacity-70 ring-offset-background transition
+                        hover:bg-muted hover:opacity-100
+                        focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden
+                        disabled:pointer-events-none
+                        [&_svg]:pointer-events-none [&_svg]:shrink-0
+                        [&_svg:not([class*='size-'])]:size-4
+                      `}
+                      onClick={() => onViewChange('fund')}
+                    >
+                      <ChevronLeft />
+                    </button>
+                  )
+                : (
+                    <span className="size-8" aria-hidden="true" />
+                  )}
+              <DrawerTitle className="flex-1 text-center text-xl font-semibold text-foreground">Deposit</DrawerTitle>
+              <span className="size-8" aria-hidden="true" />
+            </div>
+            <DrawerDescription className="text-center text-xs text-muted-foreground">
               {siteLabel}
               {' '}
               Balance:
@@ -758,10 +821,33 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
         onOpenChange(next)
       }}
     >
-      <DialogContent className="w-full max-w-xl border bg-background">
-        <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-semibold text-foreground">Deposit</DialogTitle>
-          <DialogDescription className="text-center">
+      <DialogContent className="max-w-md border bg-background pt-4 sm:max-w-md">
+        <DialogHeader className="gap-1">
+          <div className="flex items-center">
+            {view === 'receive'
+              ? (
+                  <button
+                    type="button"
+                    className={`
+                      rounded-md p-2 opacity-70 ring-offset-background transition
+                      hover:bg-muted hover:opacity-100
+                      focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-hidden
+                      disabled:pointer-events-none
+                      [&_svg]:pointer-events-none [&_svg]:shrink-0
+                      [&_svg:not([class*='size-'])]:size-4
+                    `}
+                    onClick={() => onViewChange('fund')}
+                  >
+                    <ChevronLeft />
+                  </button>
+                )
+              : (
+                  <span className="size-8" aria-hidden="true" />
+                )}
+            <DialogTitle className="flex-1 text-center text-lg font-semibold text-foreground">Deposit</DialogTitle>
+            <span className="size-8" aria-hidden="true" />
+          </div>
+          <DialogDescription className="text-center text-xs text-muted-foreground">
             {siteLabel}
             {' '}
             Balance:
@@ -769,7 +855,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
             {balanceDisplay}
           </DialogDescription>
         </DialogHeader>
-        <div className="border-t" />
+        <div className="-mx-6 border-t" />
         {content}
       </DialogContent>
     </Dialog>
