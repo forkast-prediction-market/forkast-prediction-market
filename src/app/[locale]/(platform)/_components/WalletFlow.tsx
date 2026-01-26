@@ -41,7 +41,7 @@ export function WalletFlow({
 }: WalletFlowProps) {
   const isMobile = useIsMobile()
   const { signMessageAsync } = useSignMessage()
-  const [depositView, setDepositView] = useState<'fund' | 'receive'>('fund')
+  const [depositView, setDepositView] = useState<'fund' | 'receive' | 'wallets'>('fund')
   const [walletSendTo, setWalletSendTo] = useState('')
   const [walletSendAmount, setWalletSendAmount] = useState('')
   const [isWalletSending, setIsWalletSending] = useState(false)

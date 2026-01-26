@@ -83,7 +83,7 @@ const WITHDRAW_CHAIN_OPTIONS = [
   { value: 'Optimism', label: 'Optimism', icon: '/images/withdraw/chain/optimism.svg', enabled: false },
 ] as const
 
-type WalletDepositView = 'fund' | 'receive'
+type WalletDepositView = 'fund' | 'receive' | 'wallets'
 
 interface WalletDepositModalProps {
   open: boolean
@@ -583,6 +583,7 @@ function WalletSendForm({
 function WalletFundMenu({
   onBuy,
   onReceive,
+  onWallet,
   disabledBuy,
   disabledReceive,
   meldUrl,
@@ -590,6 +591,7 @@ function WalletFundMenu({
 }: {
   onBuy: (url: string) => void
   onReceive: () => void
+  onWallet: () => void
   disabledBuy: boolean
   disabledReceive: boolean
   meldUrl: string | null
@@ -612,6 +614,7 @@ function WalletFundMenu({
           hover:bg-muted/50
           disabled:cursor-not-allowed disabled:opacity-50
         `}
+        onClick={onWallet}
       >
         <div className="flex items-center gap-3">
           <div className="flex size-12 items-center justify-center text-foreground">
@@ -730,6 +733,139 @@ function WalletFundMenu({
   )
 }
 
+function WalletTokenList() {
+  const items = [
+    {
+      id: 'pol',
+      symbol: 'POL',
+      network: 'Amoy',
+      icon: '/images/deposit/transfer/polygon_dark.png',
+      balance: '41.78563',
+      usd: '5.0',
+      disabled: false,
+    },
+    {
+      id: 'usdc',
+      symbol: 'USDC',
+      network: 'Amoy',
+      icon: '/images/deposit/transfer/usdc_dark.png',
+      balance: '12.42000',
+      usd: '12.4',
+      disabled: false,
+    },
+    {
+      id: 'low',
+      symbol: 'POL',
+      network: 'Amoy',
+      icon: '/images/deposit/transfer/polygon_dark.png',
+      balance: '0.32000',
+      usd: '0.8',
+      disabled: true,
+    },
+  ]
+  const [selectedId, setSelectedId] = useState(items[0]?.id ?? '')
+
+  return (
+    <div className="space-y-4">
+      <div className="max-h-[360px] overflow-y-scroll pr-1">
+        <div className="space-y-2">
+          {items.map((item) => {
+            const isSelected = selectedId === item.id
+            const isDisabled = item.disabled
+            return (
+              <button
+                key={item.id}
+                type="button"
+                disabled={isDisabled}
+                onClick={() => {
+                  if (!isDisabled) {
+                    setSelectedId(item.id)
+                  }
+                }}
+                className={`
+                  flex w-full items-center justify-between rounded-lg px-3 py-1.5 text-left transition
+                  ${isSelected ? 'border border-foreground/20' : 'border border-transparent'}
+                  ${isDisabled ? 'cursor-not-allowed opacity-50' : isSelected ? '' : 'hover:bg-muted/50'}
+                `}
+              >
+                <div className="flex items-center gap-3">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <div className="relative">
+                        <Image
+                          src={item.icon}
+                          alt={item.symbol}
+                          width={34}
+                          height={34}
+                          className="rounded-full"
+                        />
+                        <span className="absolute -right-1 -bottom-1 rounded-full bg-background p-0.5">
+                          <Image
+                            src="/images/deposit/transfer/polygon_dark.png"
+                            alt="Polygon"
+                            width={14}
+                            height={14}
+                            className="rounded-full"
+                          />
+                        </span>
+                      </div>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      hideArrow
+                      className="border bg-background text-foreground shadow-lg"
+                    >
+                      <p className="text-sm text-foreground">
+                        {item.symbol}
+                        {' '}
+                        on
+                        {' '}
+                        {item.network}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-semibold text-foreground">{item.symbol}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {item.balance}
+                      {' '}
+                      {item.symbol}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {isDisabled && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                          Low Balance
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent
+                        hideArrow
+                        className="border bg-background text-foreground shadow-lg"
+                      >
+                        <p className="text-sm text-foreground">Minimum required: $2.00</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  )}
+                  <span className="text-lg font-semibold text-foreground">
+                    $
+                    {item.usd}
+                  </span>
+                </div>
+              </button>
+            )
+          })}
+        </div>
+      </div>
+      <div className="-mx-6 border-t" />
+      <Button type="button" className="h-12 w-full text-foreground">
+        Continue
+      </Button>
+    </div>
+  )
+}
+
 export function WalletDepositModal(props: WalletDepositModalProps) {
   const {
     open,
@@ -767,19 +903,24 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
             onBuy(url)
           }}
           onReceive={() => onViewChange('receive')}
+          onWallet={() => onViewChange('wallets')}
           disabledBuy={!meldUrl}
           disabledReceive={!hasDeployedProxyWallet}
           meldUrl={meldUrl}
           walletEoaAddress={walletEoaAddress}
         />
       )
-    : (
-        <WalletReceiveView
-          walletAddress={walletAddress}
-          onCopy={handleCopy}
-          copied={copied}
-        />
-      )
+    : view === 'receive'
+      ? (
+          <WalletReceiveView
+            walletAddress={walletAddress}
+            onCopy={handleCopy}
+            copied={copied}
+          />
+        )
+      : (
+          <WalletTokenList />
+        )
 
   async function handleCopy() {
     if (!walletAddress) {
@@ -807,7 +948,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
         <DrawerContent className="max-h-[90vh] w-full bg-background px-0">
           <DrawerHeader className="gap-1 px-4 pt-3 pb-2">
             <div className="flex items-center">
-              {view === 'receive'
+              {view !== 'fund'
                 ? (
                     <button
                       type="button"
@@ -860,7 +1001,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
       <DialogContent className="max-w-md border bg-background pt-4 sm:max-w-md">
         <DialogHeader className="gap-1">
           <div className="flex items-center">
-            {view === 'receive'
+            {view !== 'fund'
               ? (
                   <button
                     type="button"
