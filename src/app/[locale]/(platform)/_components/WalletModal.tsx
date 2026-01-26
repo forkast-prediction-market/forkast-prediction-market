@@ -3,6 +3,7 @@
 import type { ChangeEventHandler, FormEventHandler } from 'react'
 import {
   ArrowLeft,
+  ArrowRight,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -83,7 +84,7 @@ const WITHDRAW_CHAIN_OPTIONS = [
   { value: 'Optimism', label: 'Optimism', icon: '/images/withdraw/chain/optimism.svg', enabled: false },
 ] as const
 
-type WalletDepositView = 'fund' | 'receive' | 'wallets'
+type WalletDepositView = 'fund' | 'receive' | 'wallets' | 'amount'
 
 interface WalletDepositModalProps {
   open: boolean
@@ -733,7 +734,7 @@ function WalletFundMenu({
   )
 }
 
-function WalletTokenList() {
+function WalletTokenList({ onContinue }: { onContinue: () => void }) {
   const items = [
     {
       id: 'pol',
@@ -859,6 +860,124 @@ function WalletTokenList() {
         </div>
       </div>
       <div className="-mx-6 border-t" />
+      <Button type="button" className="h-12 w-full text-foreground" onClick={onContinue}>
+        Continue
+      </Button>
+    </div>
+  )
+}
+
+function WalletAmountStep() {
+  function formatAmountInput(value: string) {
+    const cleaned = value.replace(/[^\d.,]/g, '')
+    if (!cleaned) {
+      return ''
+    }
+
+    const hasSeparator = /[.,]/.test(cleaned)
+    const [rawInt = '', rawDec = ''] = cleaned.split(/[.,]/)
+    const intPart = rawInt.replace(/\D/g, '').slice(0, 15)
+    const decPart = rawDec.replace(/\D/g, '').slice(0, 2)
+
+    if (hasSeparator) {
+      return `${intPart},${decPart}`
+    }
+
+    return intPart
+  }
+
+  const [amountValue, setAmountValue] = useState('2,00')
+  const digitCount = amountValue.replace(/\D/g, '').length
+  const amountSizeClass = digitCount > 12
+    ? 'text-3xl'
+    : digitCount > 9
+      ? 'text-4xl'
+      : digitCount > 6
+        ? 'text-5xl'
+        : 'text-6xl'
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-center gap-1 text-center">
+        <span className={`${amountSizeClass} font-semibold text-foreground`}>$</span>
+        <input
+          type="text"
+          inputMode="decimal"
+          value={amountValue}
+          onChange={(event) => {
+            setAmountValue(formatAmountInput(event.target.value))
+          }}
+          className={`
+            bg-transparent text-left font-semibold text-foreground outline-none
+            ${amountSizeClass}
+          `}
+          style={{ width: `${Math.max(amountValue.length, 4)}ch`, maxWidth: '70vw' }}
+        />
+      </div>
+      <div className="flex flex-wrap justify-center gap-2">
+        {['25%', '50%', '75%', 'Max'].map(label => (
+          <button
+            key={label}
+            type="button"
+            className="rounded-md bg-muted/60 px-4 py-2 text-sm text-foreground transition hover:bg-muted"
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      <div className="flex items-center justify-center">
+        <div className="flex items-center gap-3 rounded-full bg-muted/60 px-4 py-2">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Image
+                src="/images/deposit/transfer/polygon_dark.png"
+                alt="POL"
+                width={30}
+                height={30}
+                className="rounded-full"
+              />
+              <span className="absolute -right-1 -bottom-1 rounded-full bg-background p-0.5">
+                <Image
+                  src="/images/deposit/transfer/polygon_dark.png"
+                  alt="Polygon"
+                  width={14}
+                  height={14}
+                  className="rounded-full"
+                />
+              </span>
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">You send</p>
+              <p className="text-sm font-semibold text-foreground">POL</p>
+            </div>
+          </div>
+          <ArrowRight className="size-4 text-muted-foreground" />
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Image
+                src="/images/deposit/transfer/usdc_dark.png"
+                alt="USDC"
+                width={30}
+                height={30}
+                className="rounded-full"
+              />
+              <span className="absolute -right-1 -bottom-1 rounded-full bg-background p-0.5">
+                <Image
+                  src="/images/deposit/transfer/polygon_dark.png"
+                  alt="Polygon"
+                  width={14}
+                  height={14}
+                  className="rounded-full"
+                />
+              </span>
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-xs text-muted-foreground">You receive</p>
+              <p className="text-sm font-semibold text-foreground">USDC</p>
+            </div>
+          </div>
+        </div>
+      </div>
       <Button type="button" className="h-12 w-full text-foreground">
         Continue
       </Button>
@@ -918,9 +1037,13 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
             copied={copied}
           />
         )
-      : (
-          <WalletTokenList />
-        )
+      : view === 'wallets'
+        ? (
+            <WalletTokenList onContinue={() => onViewChange('amount')} />
+          )
+        : (
+            <WalletAmountStep />
+          )
 
   async function handleCopy() {
     if (!walletAddress) {
