@@ -18,7 +18,7 @@ export default function EventOrderPanelMobileMarketInfo({
   balanceText,
   isBalanceLoading = false,
 }: EventOrderPanelMobileMarketInfoProps) {
-  const t = useExtracted('Event')
+  const t = useExtracted('Event.Trade')
 
   if (!market) {
     return <></>

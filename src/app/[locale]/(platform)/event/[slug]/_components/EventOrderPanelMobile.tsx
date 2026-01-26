@@ -14,7 +14,7 @@ interface EventMobileOrderPanelProps {
 }
 
 export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelProps) {
-  const t = useExtracted('Event')
+  const t = useExtracted('Event.Trade')
   const state = useOrder()
   const isSingleMarket = useIsSingleMarket()
   const yesPrice = useOutcomeTopOfBookPrice(OUTCOME_INDEX.YES, ORDER_SIDE.BUY)
