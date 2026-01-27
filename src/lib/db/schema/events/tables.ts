@@ -18,7 +18,7 @@ export const conditions = pgTable(
     oracle: text().notNull(),
     question_id: text().notNull(),
     resolved: boolean().default(false),
-    arweave_hash: text(),
+    metadata_hash: text(),
     creator: char('creator', { length: 42 }),
     uma_request_tx_hash: char('uma_request_tx_hash', { length: 66 }),
     uma_request_log_index: integer('uma_request_log_index'),

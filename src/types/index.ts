@@ -86,7 +86,7 @@ interface Condition {
   resolved: boolean
   payout_numerators?: number[]
   payout_denominator?: number
-  arweave_hash?: string
+  metadata_hash?: string
   creator?: string
   uma_request_tx_hash?: string
   uma_request_log_index?: number

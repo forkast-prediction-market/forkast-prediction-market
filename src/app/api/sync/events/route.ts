@@ -20,7 +20,7 @@ interface SubgraphCondition {
   oracle: string | null
   questionId: string | null
   resolved: boolean
-  arweaveHash: string | null
+  metadataHash: string | null
   creator: string | null
   creationTimestamp: string
   updatedAt: string
@@ -54,7 +54,7 @@ function getAllowedCreators(): string[] {
  *
  * This function syncs prediction markets from the Goldsky PnL subgraph to Supabase:
  * - Fetches new markets from blockchain via subgraph (INCREMENTAL)
- * - Downloads metadata and images from Irys/Arweave
+ * - Downloads metadata and images from Irys
  * - Stores everything in Supabase database and storage
  */
 export async function GET(request: Request) {
@@ -296,7 +296,7 @@ async function fetchPnLConditionsPage(afterCursor: SyncCursor | null): Promise<{
         oracle
         questionId
         resolved
-        arweaveHash
+        metadataHash
         creator
         creationTimestamp
         updatedAt
@@ -334,10 +334,10 @@ async function fetchPnLConditionsPage(afterCursor: SyncCursor | null): Promise<{
 async function processMarket(market: SubgraphCondition) {
   const timestamps = getMarketTimestamps(market)
   await processCondition(market, timestamps)
-  if (!market.arweaveHash) {
-    throw new Error(`Market ${market.id} missing required arweaveHash field`)
+  if (!market.metadataHash) {
+    throw new Error(`Market ${market.id} missing required metadataHash field`)
   }
-  const metadata = await fetchMetadata(market.arweaveHash)
+  const metadata = await fetchMetadata(market.metadataHash)
   const eventId = await processEvent(
     metadata.event,
     market.creator!,
@@ -346,8 +346,8 @@ async function processMarket(market: SubgraphCondition) {
   return await processMarketData(market, metadata, eventId, timestamps)
 }
 
-async function fetchMetadata(arweaveHash: string) {
-  const url = `${IRYS_GATEWAY}/${arweaveHash}`
+async function fetchMetadata(metadataHash: string) {
+  const url = `${IRYS_GATEWAY}/${metadataHash}`
 
   const response = await fetch(url, {
     keepalive: true,
@@ -379,8 +379,8 @@ async function processCondition(market: SubgraphCondition, timestamps: MarketTim
     throw new Error(`Market ${market.id} missing required creator field`)
   }
 
-  if (!market.arweaveHash) {
-    throw new Error(`Market ${market.id} missing required arweaveHash field`)
+  if (!market.metadataHash) {
+    throw new Error(`Market ${market.id} missing required metadataHash field`)
   }
 
   const { error } = await supabaseAdmin.from('conditions').upsert({
@@ -388,7 +388,7 @@ async function processCondition(market: SubgraphCondition, timestamps: MarketTim
     oracle: market.oracle,
     question_id: market.questionId,
     resolved: market.resolved,
-    arweave_hash: market.arweaveHash,
+    metadata_hash: market.metadataHash,
     creator: market.creator!,
     created_at: timestamps.createdAtIso,
     updated_at: timestamps.updatedAtIso,
@@ -805,9 +805,9 @@ async function processTags(eventId: string, tagNames: any[]) {
   }
 }
 
-async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
+async function downloadAndSaveImage(metadataHash: string, storagePath: string) {
   try {
-    const imageUrl = `${IRYS_GATEWAY}/${arweaveHash}`
+    const imageUrl = `${IRYS_GATEWAY}/${metadataHash}`
     const response = await fetch(imageUrl, {
       keepalive: true,
     })
@@ -835,7 +835,7 @@ async function downloadAndSaveImage(arweaveHash: string, storagePath: string) {
     return storagePath
   }
   catch (error) {
-    console.error(`Failed to process image ${arweaveHash}:`, error)
+    console.error(`Failed to process image ${metadataHash}:`, error)
     return null
   }
 }
