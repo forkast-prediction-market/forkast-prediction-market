@@ -75,6 +75,7 @@ export interface LiFiWalletTokenItem {
   icon: string
   chainIcon?: string
   balance: string
+  balanceRaw: number
   usd: string
   usdValue: number
   disabled: boolean
@@ -142,6 +143,7 @@ export function useLiFiWalletTokens(walletAddress?: string | null, options: UseL
               icon: token.logoURI ?? '/images/deposit/transfer/usdc_dark.png',
               chainIcon: networkIcon,
               balance: formatTokenAmount(token),
+              balanceRaw: Number(token.amount) / 10 ** Number(token.decimals),
               usd: USD_FORMATTER.format(usdValue),
               usdValue,
               disabled: usdValue < MIN_USD_BALANCE,

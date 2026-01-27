@@ -23,25 +23,14 @@ import { useEffect, useRef, useState } from 'react'
 import QRCode from 'react-qr-code'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
-  Drawer,
-  DrawerContent,
-  DrawerDescription,
-  DrawerHeader,
-  DrawerTitle,
-} from '@/components/ui/drawer'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Drawer, DrawerContent, DrawerDescription, DrawerHeader, DrawerTitle } from '@/components/ui/drawer'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useLiFiExecution } from '@/hooks/useLiFiExecution'
 import { useLiFiQuote } from '@/hooks/useLiFiQuote'
 import { useLiFiWalletTokens } from '@/hooks/useLiFiWalletTokens'
 import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
@@ -934,17 +923,17 @@ function WalletTokenList({
 function WalletAmountStep({
   onContinue,
   selectedTokenSymbol,
-  availableUsd,
+  availableTokenAmount,
   amountValue,
   onAmountChange,
 }: {
   onContinue: () => void
   selectedTokenSymbol?: string | null
-  availableUsd?: number | null
+  availableTokenAmount?: number | null
   amountValue: string
   onAmountChange: (value: string) => void
 }) {
-  const hasAvailableUsd = typeof availableUsd === 'number' && Number.isFinite(availableUsd)
+  const hasAvailableTokenAmount = typeof availableTokenAmount === 'number' && Number.isFinite(availableTokenAmount)
 
   function handleInputChange(rawValue: string) {
     const cleaned = sanitizeNumericInput(rawValue)
@@ -969,11 +958,11 @@ function WalletAmountStep({
   }
 
   function handleQuickFill(label: string) {
-    if (!hasAvailableUsd) {
+    if (!hasAvailableTokenAmount) {
       return
     }
 
-    const baseValue = Math.min(availableUsd ?? 0, MAX_AMOUNT_INPUT)
+    const baseValue = Math.min(availableTokenAmount ?? 0, MAX_AMOUNT_INPUT)
 
     if (label === 'Max') {
       onAmountChange(formatAmountInputValue(baseValue, { roundingMode: 'floor' }))
@@ -986,17 +975,16 @@ function WalletAmountStep({
   }
 
   const amountNumber = Number.parseFloat(amountValue || '0')
-  const isAmountExceedingBalance = hasAvailableUsd && amountNumber > (availableUsd ?? 0)
-  const availableUsdLabel = hasAvailableUsd
-    ? (availableUsd as number).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const isAmountExceedingBalance = hasAvailableTokenAmount && amountNumber > (availableTokenAmount ?? 0)
+  const availableTokenLabel = hasAvailableTokenAmount
+    ? (availableTokenAmount as number).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })
     : null
   const amountSizeClass = getAmountSizeClass(amountValue, {
     large: 'text-6xl',
     medium: 'text-5xl',
     small: 'text-4xl',
   })
-  const formattedAmount = formatDisplayAmount(amountValue)
-  const inputValue = formattedAmount
+  const inputValue = formatDisplayAmount(amountValue)
   const quickLabels = ['25%', '50%', '75%', 'Max']
   const placeholderText = selectedTokenSymbol ? `0.00 ${selectedTokenSymbol}` : '0.00'
   const minChWidth = placeholderText.length + 1
@@ -1035,9 +1023,9 @@ function WalletAmountStep({
             type="button"
             className={`
               rounded-md bg-muted/60 px-4 py-2 text-sm text-foreground transition hover:bg-muted
-              ${!hasAvailableUsd ? 'cursor-not-allowed opacity-50' : ''}
+              ${!hasAvailableTokenAmount ? 'cursor-not-allowed opacity-50' : ''}
             `}
-            disabled={!hasAvailableUsd}
+            disabled={!hasAvailableTokenAmount}
             onClick={() => handleQuickFill(label)}
           >
             {label}
@@ -1048,7 +1036,7 @@ function WalletAmountStep({
         <p className="text-center text-sm font-medium text-destructive">
           Amount exceeds the available balance
           {selectedTokenSymbol ? ` for ${selectedTokenSymbol}` : ''}
-          {availableUsdLabel ? ` ($${availableUsdLabel})` : ''}
+          {availableTokenLabel ? ` (${availableTokenLabel} ${selectedTokenSymbol ?? ''})` : ''}
           .
         </p>
       )}
@@ -1243,23 +1231,21 @@ function WalletConfirmStep({
   const hasAmount = amountValue.trim() !== ''
   const isQuoteLoading = isLoadingQuote && hasAmount
   const status: 'quote' | 'gas' | 'ready' = effectiveQuote ? 'ready' : (isLoadingQuote ? 'gas' : 'quote')
-  const isCtaDisabled = isSubmitting || !effectiveQuote || isLoadingQuote
+  const {
+    execute,
+    isExecuting,
+  } = useLiFiExecution({
+    fromToken: selectedToken,
+    amountValue,
+    fromAddress: walletEoaAddress,
+    toAddress: walletAddress,
+  })
+  const isCtaDisabled = isExecuting || isSubmitting || !effectiveQuote || isLoadingQuote
   const sendSymbol = selectedToken?.symbol ?? 'Token'
   const sendIcon = selectedToken?.icon ?? '/images/deposit/transfer/polygon_dark.png'
   const chainIcon = selectedToken?.chainIcon ?? '/images/deposit/transfer/polygon_dark.png'
   const receiveAmountDisplay = effectiveQuote?.toAmountDisplay ?? '—'
   const gasUsdDisplay = effectiveQuote?.gasUsdDisplay ?? null
-
-  useEffect(() => {
-    if (!isSubmitting) {
-      return
-    }
-    const doneTimer = setTimeout(() => {
-      onComplete()
-    }, 2000)
-
-    return () => clearTimeout(doneTimer)
-  }, [isSubmitting, onComplete])
 
   return (
     <div className="space-y-5">
@@ -1428,49 +1414,6 @@ function WalletConfirmStep({
                 {gasUsdDisplay ? `$${gasUsdDisplay}` : '—'}
               </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1">
-                Price impact
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="size-3" />
-                  </TooltipTrigger>
-                  <TooltipContent hideArrow className="border bg-background text-foreground shadow-lg">
-                    <div className="space-y-1 text-xs text-foreground">
-                      <div className="flex items-center justify-between gap-4">
-                        <span>Total impact</span>
-                        <span className="text-right">2.71%</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-4">
-                        <span>Swap impact</span>
-                        <span className="text-right">2.61%</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-4">
-                        <span>Instant liquidity cost</span>
-                        <span className="text-right">0.10%</span>
-                      </div>
-                    </div>
-                  </TooltipContent>
-                </Tooltip>
-              </span>
-              <span>2.63%</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1">
-                Max slippage
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Info className="size-3" />
-                  </TooltipTrigger>
-                  <TooltipContent hideArrow className="max-w-56 border bg-background text-foreground shadow-lg">
-                    <p className="text-xs text-foreground">
-                      Slippage occurs due to price changes during trade execution. Minimum received: $0.96
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </span>
-              <span>Auto • 4.00%</span>
-            </div>
           </div>
         )}
       </div>
@@ -1492,14 +1435,21 @@ function WalletConfirmStep({
         type="button"
         className="h-12 w-full"
         disabled={isCtaDisabled}
-        onClick={() => {
+        onClick={async () => {
           if (status !== 'ready') {
             return
           }
-          setIsSubmitting(true)
+          try {
+            setIsSubmitting(true)
+            await execute()
+            onComplete()
+          }
+          finally {
+            setIsSubmitting(false)
+          }
         }}
       >
-        {(isLoadingQuote || isSubmitting) && <Loader2 className="size-4 animate-spin" />}
+        {(isLoadingQuote || isSubmitting || isExecuting) && <Loader2 className="size-4 animate-spin" />}
         {isSubmitting && 'Confirm transaction in your wallet'}
         {!isSubmitting && status === 'quote' && 'Preparing your quote...'}
         {!isSubmitting && status === 'gas' && 'Estimating gas...'}
@@ -1815,7 +1765,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
               <WalletAmountStep
                 onContinue={() => onViewChange('confirm')}
                 selectedTokenSymbol={selectedToken?.symbol ?? null}
-                availableUsd={selectedToken?.usdValue ?? null}
+                availableTokenAmount={selectedToken?.balanceRaw ?? null}
                 amountValue={amountValue}
                 onAmountChange={setAmountValue}
               />
