@@ -918,7 +918,7 @@ function WalletTokenList({
       <div className="-mx-6 border-t" />
       <Button
         type="button"
-        className="h-12 w-full text-foreground"
+        className="h-12 w-full"
         onClick={onContinue}
       >
         Continue
@@ -992,13 +992,14 @@ function WalletAmountStep({
     small: 'text-4xl',
   })
   const formattedAmount = formatDisplayAmount(amountValue)
-  const inputValue = formattedAmount ? `$${formattedAmount}` : ''
+  const inputValue = formattedAmount
   const quickLabels = ['25%', '50%', '75%', 'Max']
-  const minChWidth = '$0.00'.length + 1
+  const placeholderText = selectedTokenSymbol ? `0.00 ${selectedTokenSymbol}` : '0.00'
+  const minChWidth = placeholderText.length + 1
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-center gap-1 text-center">
+      <div className="flex items-center justify-center gap-2 text-center">
         <input
           type="text"
           inputMode="decimal"
@@ -1009,7 +1010,7 @@ function WalletAmountStep({
           onBlur={(event) => {
             handleBlur(event.target.value)
           }}
-          placeholder="$0.00"
+          placeholder={placeholderText}
           className={`
             min-h-[1.2em] bg-transparent pb-1 text-center leading-tight font-semibold text-foreground outline-none
             placeholder:leading-tight
@@ -1017,6 +1018,11 @@ function WalletAmountStep({
           `}
           style={{ width: `${Math.max(inputValue.length, minChWidth)}ch`, maxWidth: '70vw' }}
         />
+        {selectedTokenSymbol && (
+          <span className="pb-1 text-xl leading-tight font-semibold text-muted-foreground">
+            {selectedTokenSymbol}
+          </span>
+        )}
       </div>
       <div className="flex flex-wrap justify-center gap-2">
         {quickLabels.map(label => (
@@ -1097,7 +1103,7 @@ function WalletAmountStep({
       </div>
       <Button
         type="button"
-        className="h-12 w-full text-foreground"
+        className="h-12 w-full"
         onClick={onContinue}
         disabled={isAmountExceedingBalance}
       >
@@ -1197,7 +1203,6 @@ function WalletConfirmStep({
           ? <Skeleton className="h-12 w-40 rounded-md" />
           : (
               <p className="text-5xl font-semibold text-foreground">
-                $
                 {displayAmount}
               </p>
             )}
@@ -1620,7 +1625,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
   const tokensQueryEnabled = open && (view === 'wallets' || view === 'amount' || view === 'confirm')
   const { items: walletTokenItems, isLoadingTokens } = useLiFiWalletTokens(walletEoaAddress, { enabled: tokensQueryEnabled })
   const [selectedTokenId, setSelectedTokenId] = useState('')
-  const [amountValue, setAmountValue] = useState('0.00')
+  const [amountValue, setAmountValue] = useState('')
   const formattedBalance = walletBalance && walletBalance !== ''
     ? walletBalance
     : '0.00'
