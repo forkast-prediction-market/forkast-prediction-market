@@ -11,6 +11,7 @@ import { WalletDepositModal, WalletWithdrawModal } from '@/app/[locale]/(platfor
 import { useTradingOnboarding } from '@/app/[locale]/(platform)/_providers/TradingOnboardingProvider'
 import { useBalance } from '@/hooks/useBalance'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { useLiFiWalletUsdBalance } from '@/hooks/useLiFiWalletUsdBalance'
 import { defaultNetwork } from '@/lib/appkit'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { COLLATERAL_TOKEN_ADDRESS } from '@/lib/contracts'
@@ -46,6 +47,10 @@ export function WalletFlow({
   const [walletSendAmount, setWalletSendAmount] = useState('')
   const [isWalletSending, setIsWalletSending] = useState(false)
   const { balance, isLoadingBalance } = useBalance()
+  const {
+    formattedUsdBalance,
+    isLoadingUsdBalance,
+  } = useLiFiWalletUsdBalance(user?.address, { enabled: depositOpen })
   const connectedWalletAddress = user?.address ?? null
   const { openTradeRequirements } = useTradingOnboarding()
 
@@ -220,8 +225,8 @@ export function WalletFlow({
         view={depositView}
         onViewChange={setDepositView}
         onBuy={handleBuy}
-        walletBalance={balance.text}
-        isBalanceLoading={isLoadingBalance}
+        walletBalance={formattedUsdBalance}
+        isBalanceLoading={isLoadingUsdBalance}
       />
       <WalletWithdrawModal
         open={withdrawOpen}

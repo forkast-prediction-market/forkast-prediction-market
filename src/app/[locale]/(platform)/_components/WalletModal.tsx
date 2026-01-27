@@ -593,6 +593,8 @@ function WalletFundMenu({
   disabledReceive,
   meldUrl,
   walletEoaAddress,
+  walletBalance,
+  isBalanceLoading,
 }: {
   onBuy: (url: string) => void
   onReceive: () => void
@@ -601,6 +603,8 @@ function WalletFundMenu({
   disabledReceive: boolean
   meldUrl: string | null
   walletEoaAddress?: string | null
+  walletBalance?: string | null
+  isBalanceLoading?: boolean
 }) {
   const { resolvedTheme } = useTheme()
   const isDark = resolvedTheme === 'dark'
@@ -608,12 +612,7 @@ function WalletFundMenu({
   const paymentLogos = MELD_PAYMENT_METHODS.map(method => `/images/deposit/meld/${method}_${logoVariant}.png`)
   const transferLogos = TRANSFER_PAYMENT_METHODS.map(method => `/images/deposit/transfer/${method}_${logoVariant}.png`)
   const walletSuffix = walletEoaAddress?.slice(-4) ?? '----'
-  const [showWalletValue, setShowWalletValue] = useState(false)
-
-  useEffect(() => {
-    const timer = setTimeout(() => setShowWalletValue(true), 1800)
-    return () => clearTimeout(timer)
-  }, [])
+  const formattedWalletBalance = walletBalance && walletBalance !== '' ? walletBalance : '0.00'
 
   return (
     <div className="grid gap-2">
@@ -638,9 +637,14 @@ function WalletFundMenu({
               )
             </p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              {showWalletValue
-                ? <span>$18,20</span>
-                : <Skeleton className="h-3 w-10 rounded-full" />}
+              {isBalanceLoading
+                ? <Skeleton className="h-3 w-10 rounded-full" />
+                : (
+                    <span>
+                      $
+                      {formattedWalletBalance}
+                    </span>
+                  )}
               <span className="size-1 rounded-full bg-muted-foreground" />
               <span>Instant</span>
             </div>
@@ -1521,6 +1525,8 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
           disabledReceive={!hasDeployedProxyWallet}
           meldUrl={meldUrl}
           walletEoaAddress={walletEoaAddress}
+          walletBalance={walletBalance}
+          isBalanceLoading={isBalanceLoading}
         />
       )
     : view === 'receive'
