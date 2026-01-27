@@ -36,6 +36,7 @@ import { useLiFiWalletTokens } from '@/hooks/useLiFiWalletTokens'
 import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { POLYGON_SCAN_BASE } from '@/lib/constants'
 import { formatAmountInputValue } from '@/lib/formatters'
+import { IS_TEST_MODE } from '@/lib/network'
 import { svgLogo } from '@/lib/utils'
 
 const MELD_PAYMENT_METHODS = [
@@ -620,6 +621,7 @@ function WalletFundMenu({
           disabled:cursor-not-allowed disabled:opacity-50
         `}
         onClick={onWallet}
+        disabled={IS_TEST_MODE}
       >
         <div className="flex items-center gap-3">
           <div className="flex size-12 items-center justify-center text-foreground">
@@ -630,6 +632,23 @@ function WalletFundMenu({
               Wallet (...
               {walletSuffix}
               )
+              {IS_TEST_MODE && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className={`
+                        ml-2 inline-flex size-4 items-center justify-center rounded-full text-muted-foreground
+                      `}
+                      >
+                        <Info className="size-3" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent hideArrow>
+                      Wallet deposits are not available in test mode.
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
             </p>
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {isBalanceLoading
