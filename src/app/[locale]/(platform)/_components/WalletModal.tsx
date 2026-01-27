@@ -1,6 +1,7 @@
 'use client'
 
 import type { ChangeEventHandler, FormEventHandler } from 'react'
+import type { LiFiWalletTokenItem } from '@/hooks/useLiFiWalletTokens'
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,6 +21,7 @@ import { useTheme } from 'next-themes'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import QRCode from 'react-qr-code'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -40,6 +42,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useLiFiQuote } from '@/hooks/useLiFiQuote'
 import { useLiFiWalletTokens } from '@/hooks/useLiFiWalletTokens'
 import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { POLYGON_SCAN_BASE } from '@/lib/constants'
@@ -1113,19 +1116,37 @@ function WalletAmountStep({
   )
 }
 
-function CountdownBadge({ seconds = 30 }: { seconds?: number }) {
+function CountdownBadge({
+  seconds = 30,
+  onReset,
+}: {
+  seconds?: number
+  onReset?: () => void
+}) {
   const [remaining, setRemaining] = useState(seconds)
   const endTimeRef = useRef(Date.now() + seconds * 1000)
+  const hasTriggeredResetRef = useRef(false)
+  const onResetRef = useRef(onReset)
+
+  useEffect(() => {
+    onResetRef.current = onReset
+  }, [onReset])
 
   useEffect(() => {
     setRemaining(seconds)
     endTimeRef.current = Date.now() + seconds * 1000
+    hasTriggeredResetRef.current = false
     const interval = setInterval(() => {
       const now = Date.now()
       let diff = endTimeRef.current - now
       if (diff <= 0) {
+        if (!hasTriggeredResetRef.current) {
+          hasTriggeredResetRef.current = true
+          onResetRef.current?.()
+        }
         endTimeRef.current = Date.now() + seconds * 1000
         diff = endTimeRef.current - now
+        hasTriggeredResetRef.current = false
       }
       const next = Math.max(0, Math.ceil(diff / 1000))
       setRemaining(next)
@@ -1134,19 +1155,48 @@ function CountdownBadge({ seconds = 30 }: { seconds?: number }) {
     return () => clearInterval(interval)
   }, [seconds])
 
-  const progress = seconds > 0 ? ((seconds - remaining) / seconds) * 360 : 0
+  const size = 36
+  const strokeWidth = 3
+  const radius = (size - strokeWidth) / 2
+  const circumference = 2 * Math.PI * radius
+  const progressRatio = seconds > 0 ? remaining / seconds : 0
+  const dashOffset = circumference * (1 - progressRatio)
 
   return (
     <div className="absolute top-4 right-4">
-      <div
-        className="size-9 rounded-full p-0.5"
-        style={{
-          background: `conic-gradient(hsl(var(--primary)) ${progress}deg, hsl(var(--muted)) ${progress}deg 360deg)`,
-        }}
-      >
+      <div className="relative size-9">
+        <svg
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+          className="-rotate-90"
+          aria-hidden="true"
+        >
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            fill="none"
+            className="text-muted-foreground/40"
+          />
+          <circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="currentColor"
+            strokeWidth={strokeWidth}
+            strokeLinecap="round"
+            fill="none"
+            strokeDasharray={circumference}
+            strokeDashoffset={dashOffset}
+            className="text-primary"
+          />
+        </svg>
         <div className={`
-          flex h-full w-full items-center justify-center rounded-full bg-background text-[9px] font-semibold
-          text-foreground
+          absolute inset-[3px] flex items-center justify-center rounded-full bg-background text-[9px] font-semibold
+          text-foreground ring-1 ring-border/60
         `}
         >
           {remaining}
@@ -1158,32 +1208,43 @@ function CountdownBadge({ seconds = 30 }: { seconds?: number }) {
 
 function WalletConfirmStep({
   walletEoaAddress,
+  walletAddress,
   siteLabel,
   onComplete,
   amountValue,
+  selectedToken,
+  refreshIndex,
 }: {
   walletEoaAddress?: string | null
+  walletAddress?: string | null
   siteLabel: string
   onComplete: () => void
   amountValue: string
+  selectedToken?: LiFiWalletTokenItem | null
+  refreshIndex: number
 }) {
-  const [status, setStatus] = useState<'quote' | 'gas' | 'ready'>('quote')
-  const isLoading = status !== 'ready'
   const [isSubmitting, setIsSubmitting] = useState(false)
   const eoaSuffix = walletEoaAddress?.slice(-4) ?? '542d'
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false)
   const logoSvg = svgLogo()
   const formattedAmount = formatDisplayAmount(amountValue)
   const displayAmount = formattedAmount && formattedAmount.trim() !== '' ? formattedAmount : '0.00'
-
-  useEffect(() => {
-    const quoteTimer = setTimeout(() => setStatus('gas'), 1800)
-    const readyTimer = setTimeout(() => setStatus('ready'), 3600)
-    return () => {
-      clearTimeout(quoteTimer)
-      clearTimeout(readyTimer)
-    }
-  }, [])
+  const { quote, isLoadingQuote } = useLiFiQuote({
+    fromToken: selectedToken,
+    amountValue,
+    fromAddress: walletEoaAddress,
+    toAddress: walletAddress,
+    refreshIndex,
+  })
+  const hasAmount = amountValue.trim() !== ''
+  const isQuoteLoading = isLoadingQuote && hasAmount
+  const status: 'quote' | 'gas' | 'ready' = isLoadingQuote ? 'gas' : quote ? 'ready' : 'quote'
+  const isCtaDisabled = isSubmitting || !quote || isLoadingQuote
+  const sendSymbol = selectedToken?.symbol ?? 'Token'
+  const sendIcon = selectedToken?.icon ?? '/images/deposit/transfer/polygon_dark.png'
+  const chainIcon = selectedToken?.chainIcon ?? '/images/deposit/transfer/polygon_dark.png'
+  const receiveAmountDisplay = quote?.toAmountDisplay ?? '—'
+  const gasUsdDisplay = quote?.gasUsdDisplay ?? null
 
   useEffect(() => {
     if (!isSubmitting) {
@@ -1199,13 +1260,9 @@ function WalletConfirmStep({
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-center">
-        {isLoading
-          ? <Skeleton className="h-12 w-40 rounded-md" />
-          : (
-              <p className="text-5xl font-semibold text-foreground">
-                {displayAmount}
-              </p>
-            )}
+        <p className="text-5xl font-semibold text-foreground">
+          {displayAmount}
+        </p>
       </div>
 
       <div className="space-y-3">
@@ -1253,38 +1310,38 @@ function WalletConfirmStep({
           <div className="px-4 py-1.5 text-sm">
             <div className="flex items-center justify-between text-muted-foreground">
               <span>You send</span>
-              {isLoading
-                ? <Skeleton className="h-4 w-24 rounded-full" />
-                : (
-                    <span className="flex items-center gap-2 font-semibold text-foreground">
-                      <span className="relative">
-                        <Image
-                          src="/images/deposit/transfer/polygon_dark.png"
-                          alt="POL"
-                          width={18}
-                          height={18}
-                          className="rounded-full"
-                        />
-                        <span className="absolute -right-1 -bottom-1 rounded-full bg-background p-0.5">
-                          <Image
-                            src="/images/deposit/transfer/polygon_dark.png"
-                            alt="Polygon"
-                            width={10}
-                            height={10}
-                            className="rounded-full"
-                          />
-                        </span>
-                      </span>
-                      0,00036 POL
-                    </span>
-                  )}
+              <span className="flex items-center gap-2 font-semibold text-foreground">
+                <span className="relative">
+                  <Image
+                    src={sendIcon}
+                    alt={sendSymbol}
+                    width={18}
+                    height={18}
+                    className="rounded-full"
+                    unoptimized
+                  />
+                  <span className="absolute -right-1 -bottom-1 rounded-full bg-background p-0.5">
+                    <Image
+                      src={chainIcon}
+                      alt={selectedToken?.network ?? 'Chain'}
+                      width={10}
+                      height={10}
+                      className="rounded-full"
+                      unoptimized={chainIcon.startsWith('http')}
+                    />
+                  </span>
+                </span>
+                {displayAmount}
+                {' '}
+                {sendSymbol}
+              </span>
             </div>
           </div>
           <div className="mx-auto h-px w-[90%] bg-border/60" />
           <div className="px-4 py-1.5 text-sm">
             <div className="flex items-center justify-between text-muted-foreground">
               <span>You receive</span>
-              {isLoading
+              {isQuoteLoading
                 ? <Skeleton className="h-4 w-28 rounded-full" />
                 : (
                     <span className="flex items-center gap-2 font-semibold text-foreground">
@@ -1306,7 +1363,9 @@ function WalletConfirmStep({
                           />
                         </span>
                       </span>
-                      1,00000 USDC
+                      {receiveAmountDisplay}
+                      {' '}
+                      USDC
                     </span>
                   )}
             </div>
@@ -1319,15 +1378,15 @@ function WalletConfirmStep({
           type="button"
           className="flex w-full items-center justify-between text-xs text-muted-foreground"
           onClick={() => setIsBreakdownOpen(current => !current)}
-          disabled={isLoading}
+          disabled={isQuoteLoading}
         >
           <span>Transaction breakdown</span>
           <span className="flex items-center gap-1">
-            {isLoading
+            {isQuoteLoading
               ? <Skeleton className="h-3 w-20 rounded-full" />
               : (
                   <>
-                    {!isBreakdownOpen && <span>$0.15 • 2.63%</span>}
+                    {!isBreakdownOpen && <span>{gasUsdDisplay ? `$${gasUsdDisplay}` : '—'}</span>}
                     <ChevronRight className={`size-3 transition ${isBreakdownOpen ? 'rotate-90' : ''}`} />
                   </>
                 )}
@@ -1346,15 +1405,15 @@ function WalletConfirmStep({
                     <div className="space-y-1 text-xs text-foreground">
                       <div className="flex items-center justify-between gap-4">
                         <span>Total cost</span>
-                        <span className="text-right">$0.06</span>
+                        <span className="text-right">{gasUsdDisplay ? `$${gasUsdDisplay}` : '—'}</span>
                       </div>
                       <div className="flex items-center justify-between gap-4">
                         <span>Source chain gas</span>
-                        <span className="text-right">$0.05</span>
+                        <span className="text-right">{gasUsdDisplay ? `$${gasUsdDisplay}` : '—'}</span>
                       </div>
                       <div className="flex items-center justify-between gap-4">
                         <span>Destination chain gas</span>
-                        <span className="text-right">$0.01</span>
+                        <span className="text-right">—</span>
                       </div>
                     </div>
                   </TooltipContent>
@@ -1362,7 +1421,7 @@ function WalletConfirmStep({
               </span>
               <span className="flex items-center gap-2">
                 <Fuel className="size-3" />
-                $0.15
+                {gasUsdDisplay ? `$${gasUsdDisplay}` : '—'}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -1412,7 +1471,7 @@ function WalletConfirmStep({
         )}
       </div>
 
-      <div className="rounded-lg bg-muted/50 p-3 text-xs text-foreground">
+      <Badge variant="outline" className="w-full p-3 text-muted-foreground">
         By clicking on Confirm Order, you agree to our
         {' '}
         <a
@@ -1424,11 +1483,11 @@ function WalletConfirmStep({
           terms
         </a>
         .
-      </div>
+      </Badge>
       <Button
         type="button"
-        className="h-12 w-full text-foreground"
-        disabled={isLoading || isSubmitting}
+        className="h-12 w-full"
+        disabled={isCtaDisabled}
         onClick={() => {
           if (status !== 'ready') {
             return
@@ -1436,7 +1495,7 @@ function WalletConfirmStep({
           setIsSubmitting(true)
         }}
       >
-        {(isLoading || isSubmitting) && <Loader2 className="size-4 animate-spin" />}
+        {(isLoadingQuote || isSubmitting) && <Loader2 className="size-4 animate-spin" />}
         {isSubmitting && 'Confirm transaction in your wallet'}
         {!isSubmitting && status === 'quote' && 'Preparing your quote...'}
         {!isSubmitting && status === 'gas' && 'Estimating gas...'}
@@ -1626,6 +1685,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
   const { items: walletTokenItems, isLoadingTokens } = useLiFiWalletTokens(walletEoaAddress, { enabled: tokensQueryEnabled })
   const [selectedTokenId, setSelectedTokenId] = useState('')
   const [amountValue, setAmountValue] = useState('')
+  const [confirmRefreshIndex, setConfirmRefreshIndex] = useState(0)
   const formattedBalance = walletBalance && walletBalance !== ''
     ? walletBalance
     : '0.00'
@@ -1708,9 +1768,12 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
             ? (
                 <WalletConfirmStep
                   walletEoaAddress={walletEoaAddress}
+                  walletAddress={walletAddress}
                   siteLabel={siteLabel}
                   onComplete={() => onViewChange('success')}
                   amountValue={amountValue}
+                  selectedToken={selectedToken}
+                  refreshIndex={confirmRefreshIndex}
                 />
               )
             : (
@@ -1803,7 +1866,11 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
         className="max-w-md border bg-background pt-4 sm:max-w-md"
         showCloseButton={view !== 'confirm'}
       >
-        {view === 'confirm' && <CountdownBadge />}
+        {view === 'confirm' && (
+          <CountdownBadge
+            onReset={() => setConfirmRefreshIndex(current => current + 1)}
+          />
+        )}
         <DialogHeader className="gap-1">
           <div className="flex items-center">
             {view !== 'fund' && view !== 'success'

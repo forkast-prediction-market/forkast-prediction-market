@@ -67,6 +67,9 @@ function formatTokenAmount(token: WalletTokenExtended) {
 
 export interface LiFiWalletTokenItem {
   id: string
+  chainId: number
+  address: string
+  decimals: number
   symbol: string
   network: string
   icon: string
@@ -131,6 +134,9 @@ export function useLiFiWalletTokens(walletAddress?: string | null, options: UseL
 
             items.push({
               id: `${chainId}:${token.address}`,
+              chainId,
+              address: token.address,
+              decimals: Number(token.decimals),
               symbol: token.symbol,
               network: networkName,
               icon: token.logoURI ?? '/images/deposit/transfer/usdc_dark.png',
