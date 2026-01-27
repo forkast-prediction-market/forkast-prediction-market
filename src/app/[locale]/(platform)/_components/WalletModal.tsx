@@ -976,6 +976,7 @@ function WalletAmountStep({
 
   const amountNumber = Number.parseFloat(amountValue || '0')
   const isAmountExceedingBalance = hasAvailableTokenAmount && amountNumber > (availableTokenAmount ?? 0)
+  const isAmountInvalid = !amountValue.trim() || !Number.isFinite(amountNumber) || amountNumber <= 0
   const availableTokenLabel = hasAvailableTokenAmount
     ? (availableTokenAmount as number).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })
     : null
@@ -1097,7 +1098,7 @@ function WalletAmountStep({
         type="button"
         className="h-12 w-full"
         onClick={onContinue}
-        disabled={isAmountExceedingBalance}
+        disabled={isAmountExceedingBalance || isAmountInvalid}
       >
         Continue
       </Button>

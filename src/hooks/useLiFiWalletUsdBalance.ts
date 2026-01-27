@@ -1,6 +1,7 @@
 import type { TokensExtendedResponse, WalletTokenExtended } from '@lifi/types'
 import { getTokens, getWalletBalances } from '@lifi/sdk'
 import { useQuery } from '@tanstack/react-query'
+import { formatUnits } from 'viem'
 
 export const LIFI_WALLET_USD_BALANCE_QUERY_KEY = 'lifi-wallet-usd-balance'
 
@@ -26,16 +27,28 @@ function buildAcceptedTokenMap(tokensResponse: TokensExtendedResponse) {
   return acceptedByChain
 }
 
+function normalizeAmount(token: WalletTokenExtended) {
+  try {
+    const decimals = Number(token.decimals)
+    if (!Number.isFinite(decimals)) {
+      return 0
+    }
+    const amount = BigInt(token.amount)
+    return Number(formatUnits(amount, decimals))
+  }
+  catch {
+    return 0
+  }
+}
+
 function toUsdValue(token: WalletTokenExtended) {
-  const amount = Number(token.amount)
-  const decimals = Number(token.decimals)
   const priceUsd = Number(token.priceUSD ?? 0)
 
-  if (!Number.isFinite(amount) || !Number.isFinite(decimals) || !Number.isFinite(priceUsd)) {
+  if (!Number.isFinite(priceUsd)) {
     return 0
   }
 
-  const normalizedAmount = amount / 10 ** decimals
+  const normalizedAmount = normalizeAmount(token)
   return normalizedAmount * priceUsd
 }
 

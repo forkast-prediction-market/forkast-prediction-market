@@ -2,6 +2,7 @@ import type { LiFiWalletTokenItem } from '@/hooks/useLiFiWalletTokens'
 import { getQuote, getTokens } from '@lifi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { parseUnits } from 'viem'
+import { sanitizeNumericInput } from '@/lib/amount-input'
 import { COLLATERAL_TOKEN_ADDRESS } from '@/lib/contracts'
 
 export const LIFI_QUOTE_QUERY_KEY = 'lifi-quote'
@@ -21,9 +22,20 @@ export function useLiFiQuote({
   toAddress,
   refreshIndex = 0,
 }: UseLiFiQuoteParams) {
-  const amountNumber = Number.parseFloat(amountValue || '0')
-  const hasValidAmount = Number.isFinite(amountNumber) && amountNumber > 0
-  const canQuote = Boolean(fromAddress && toAddress && fromToken && hasValidAmount)
+  const sanitizedAmount = sanitizeNumericInput(amountValue)
+  const hasAddresses = Boolean(fromAddress && toAddress && fromToken)
+  const hasValidAmount = (() => {
+    if (!fromToken || !sanitizedAmount) {
+      return false
+    }
+    try {
+      return parseUnits(sanitizedAmount, fromToken.decimals) > 0n
+    }
+    catch {
+      return false
+    }
+  })()
+  const canQuote = hasAddresses && hasValidAmount
 
   const query = useQuery({
     queryKey: [LIFI_QUOTE_QUERY_KEY, fromToken?.id, amountValue, fromAddress, toAddress, refreshIndex],
@@ -35,7 +47,7 @@ export function useLiFiQuote({
       }
 
       try {
-        const fromAmount = parseUnits(amountNumber.toString(), fromToken.decimals).toString()
+        const fromAmount = parseUnits(sanitizedAmount, fromToken.decimals).toString()
         const tokensResponse = await getTokens({ extended: true, chains: [fromToken.chainId] })
         const chainTokens = tokensResponse.tokens[fromToken.chainId] ?? []
         const usdcToken = chainTokens.find(token => token.address.toLowerCase() === COLLATERAL_TOKEN_ADDRESS.toLowerCase())

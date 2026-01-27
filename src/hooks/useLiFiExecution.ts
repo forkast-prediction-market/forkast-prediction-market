@@ -3,6 +3,7 @@ import { getQuote, getStepTransaction, getTokens } from '@lifi/sdk'
 import { useMutation } from '@tanstack/react-query'
 import { encodeFunctionData, erc20Abi, maxUint256, parseUnits } from 'viem'
 import { usePublicClient, useWalletClient } from 'wagmi'
+import { sanitizeNumericInput } from '@/lib/amount-input'
 import { COLLATERAL_TOKEN_ADDRESS, ZERO_ADDRESS } from '@/lib/contracts'
 
 interface UseLiFiExecutionParams {
@@ -33,12 +34,19 @@ export function useLiFiExecution({
         throw new Error('Missing token or wallet addresses.')
       }
 
-      const amountNumber = Number.parseFloat(amountValue || '0')
-      if (!Number.isFinite(amountNumber) || amountNumber <= 0) {
+      const sanitizedAmount = sanitizeNumericInput(amountValue)
+      let fromAmountBigInt: bigint
+      try {
+        fromAmountBigInt = parseUnits(sanitizedAmount, fromToken.decimals)
+      }
+      catch {
+        throw new Error('Enter a valid amount.')
+      }
+      if (fromAmountBigInt <= 0n) {
         throw new Error('Enter a valid amount.')
       }
 
-      const fromAmount = parseUnits(amountNumber.toString(), fromToken.decimals).toString()
+      const fromAmount = fromAmountBigInt.toString()
       const tokensResponse = await getTokens({ extended: true, chains: [fromToken.chainId] })
       const chainTokens = tokensResponse.tokens[fromToken.chainId] ?? []
       const usdcToken = chainTokens.find(token => token.address.toLowerCase() === COLLATERAL_TOKEN_ADDRESS.toLowerCase())

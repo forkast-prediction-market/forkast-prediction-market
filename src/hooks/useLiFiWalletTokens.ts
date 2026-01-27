@@ -1,6 +1,7 @@
 import type { ChainId, ExtendedChain, TokensExtendedResponse, WalletTokenExtended } from '@lifi/types'
 import { getChains, getTokens, getWalletBalances } from '@lifi/sdk'
 import { useQuery } from '@tanstack/react-query'
+import { formatUnits } from 'viem'
 
 export const LIFI_WALLET_TOKENS_QUERY_KEY = 'lifi-wallet-tokens'
 
@@ -36,28 +37,33 @@ function buildChainMap(chains: ExtendedChain[]) {
   return chainMap
 }
 
+function normalizeAmount(token: WalletTokenExtended) {
+  try {
+    const decimals = Number(token.decimals)
+    if (!Number.isFinite(decimals)) {
+      return 0
+    }
+    const amount = BigInt(token.amount)
+    return Number(formatUnits(amount, decimals))
+  }
+  catch {
+    return 0
+  }
+}
+
 function toUsdValue(token: WalletTokenExtended) {
-  const amount = Number(token.amount)
-  const decimals = Number(token.decimals)
   const priceUsd = Number(token.priceUSD ?? 0)
 
-  if (!Number.isFinite(amount) || !Number.isFinite(decimals) || !Number.isFinite(priceUsd)) {
+  if (!Number.isFinite(priceUsd)) {
     return 0
   }
 
-  const normalizedAmount = amount / 10 ** decimals
+  const normalizedAmount = normalizeAmount(token)
   return normalizedAmount * priceUsd
 }
 
 function formatTokenAmount(token: WalletTokenExtended) {
-  const amount = Number(token.amount)
-  const decimals = Number(token.decimals)
-
-  if (!Number.isFinite(amount) || !Number.isFinite(decimals)) {
-    return '0.00'
-  }
-
-  const normalizedAmount = amount / 10 ** decimals
+  const normalizedAmount = normalizeAmount(token)
 
   return normalizedAmount.toLocaleString('en-US', {
     minimumFractionDigits: 2,
@@ -143,7 +149,7 @@ export function useLiFiWalletTokens(walletAddress?: string | null, options: UseL
               icon: token.logoURI ?? '/images/deposit/transfer/usdc_dark.png',
               chainIcon: networkIcon,
               balance: formatTokenAmount(token),
-              balanceRaw: Number(token.amount) / 10 ** Number(token.decimals),
+              balanceRaw: normalizeAmount(token),
               usd: USD_FORMATTER.format(usdValue),
               usdValue,
               disabled: usdValue < MIN_USD_BALANCE,
