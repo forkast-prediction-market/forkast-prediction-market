@@ -1,10 +1,9 @@
 import type { LiFiWalletTokenItem } from '@/hooks/useLiFiWalletTokens'
-import { getQuote, getStepTransaction, getTokens } from '@lifi/sdk'
 import { useMutation } from '@tanstack/react-query'
 import { encodeFunctionData, erc20Abi, maxUint256, parseUnits } from 'viem'
 import { usePublicClient, useWalletClient } from 'wagmi'
 import { sanitizeNumericInput } from '@/lib/amount-input'
-import { COLLATERAL_TOKEN_ADDRESS, ZERO_ADDRESS } from '@/lib/contracts'
+import { ZERO_ADDRESS } from '@/lib/contracts'
 
 interface UseLiFiExecutionParams {
   fromToken?: LiFiWalletTokenItem | null
@@ -47,24 +46,29 @@ export function useLiFiExecution({
       }
 
       const fromAmount = fromAmountBigInt.toString()
-      const tokensResponse = await getTokens({ extended: true, chains: [fromToken.chainId] })
-      const chainTokens = tokensResponse.tokens[fromToken.chainId] ?? []
-      const usdcToken = chainTokens.find(token => token.address.toLowerCase() === COLLATERAL_TOKEN_ADDRESS.toLowerCase())
-        ?? chainTokens.find(token => token.symbol.toUpperCase() === 'USDC')
+      const quoteResponse = await fetch('/api/lifi/quote', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          fromChainId: fromToken.chainId,
+          fromTokenAddress: fromToken.address,
+          fromTokenDecimals: fromToken.decimals,
+          fromAddress,
+          toAddress,
+          amount: sanitizedAmount,
+        }),
+      })
 
-      if (!usdcToken) {
-        throw new Error('USDC token not available on this chain.')
+      if (!quoteResponse.ok) {
+        throw new Error('Failed to fetch LI.FI quote.')
       }
 
-      const quoteStep = await getQuote({
-        fromChain: fromToken.chainId,
-        toChain: fromToken.chainId,
-        fromToken: fromToken.address,
-        toToken: usdcToken.address,
-        fromAddress,
-        toAddress,
-        fromAmount,
-      })
+      const quoteJson = await quoteResponse.json()
+      const quoteStep = quoteJson?.quote
+
+      if (!quoteStep?.estimate) {
+        throw new Error('Invalid LI.FI quote response.')
+      }
       const approvalAddress = quoteStep.estimate?.approvalAddress
       const requiresApproval = Boolean(
         approvalAddress
@@ -97,7 +101,18 @@ export function useLiFiExecution({
         }
       }
 
-      const stepWithTx = await getStepTransaction(quoteStep)
+      const stepResponse = await fetch('/api/lifi/step-transaction', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ step: quoteStep }),
+      })
+
+      if (!stepResponse.ok) {
+        throw new Error('Failed to prepare LI.FI transaction.')
+      }
+
+      const stepJson = await stepResponse.json()
+      const stepWithTx = stepJson?.step
       const tx = stepWithTx.transactionRequest
 
       if (!tx?.to) {

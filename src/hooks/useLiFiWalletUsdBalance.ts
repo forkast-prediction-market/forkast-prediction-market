@@ -1,5 +1,4 @@
 import type { TokensExtendedResponse, WalletTokenExtended } from '@lifi/types'
-import { getTokens, getWalletBalances } from '@lifi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { formatUnits } from 'viem'
 
@@ -72,10 +71,27 @@ export function useLiFiWalletUsdBalance(walletAddress?: string | null, options: 
       }
 
       try {
-        const [tokensResponse, balancesByChain] = await Promise.all([
-          getTokens({ extended: true }),
-          getWalletBalances(walletAddress),
+        const [tokensResult, balancesResult] = await Promise.all([
+          fetch('/api/lifi/tokens', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({}),
+          }),
+          fetch('/api/lifi/balances', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ walletAddress }),
+          }),
         ])
+
+        if (!tokensResult.ok || !balancesResult.ok) {
+          return 0
+        }
+
+        const tokensJson = await tokensResult.json()
+        const balancesJson = await balancesResult.json()
+        const tokensResponse = tokensJson.tokens as TokensExtendedResponse
+        const balancesByChain = balancesJson.balances as Record<number, WalletTokenExtended[]>
 
         const acceptedByChain = buildAcceptedTokenMap(tokensResponse)
 

@@ -1,9 +1,7 @@
 import type { LiFiWalletTokenItem } from '@/hooks/useLiFiWalletTokens'
-import { getQuote, getTokens } from '@lifi/sdk'
 import { useQuery } from '@tanstack/react-query'
 import { parseUnits } from 'viem'
 import { sanitizeNumericInput } from '@/lib/amount-input'
-import { COLLATERAL_TOKEN_ADDRESS } from '@/lib/contracts'
 
 export const LIFI_QUOTE_QUERY_KEY = 'lifi-quote'
 
@@ -47,33 +45,36 @@ export function useLiFiQuote({
       }
 
       try {
-        const fromAmount = parseUnits(sanitizedAmount, fromToken.decimals).toString()
-        const tokensResponse = await getTokens({ extended: true, chains: [fromToken.chainId] })
-        const chainTokens = tokensResponse.tokens[fromToken.chainId] ?? []
-        const usdcToken = chainTokens.find(token => token.address.toLowerCase() === COLLATERAL_TOKEN_ADDRESS.toLowerCase())
-          ?? chainTokens.find(token => token.symbol.toUpperCase() === 'USDC')
+        const response = await fetch('/api/lifi/quote', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            fromChainId: fromToken.chainId,
+            fromTokenAddress: fromToken.address,
+            fromTokenDecimals: fromToken.decimals,
+            fromAddress,
+            toAddress,
+            amount: sanitizedAmount,
+          }),
+        })
 
-        if (!usdcToken) {
+        if (!response.ok) {
           return null
         }
 
-        const quote = await getQuote({
-          fromChain: fromToken.chainId,
-          toChain: fromToken.chainId,
-          fromToken: fromToken.address,
-          toToken: usdcToken.address,
-          fromAddress,
-          toAddress,
-          fromAmount,
-        })
+        const data = await response.json()
+        const quote = data?.quote
 
-        const toAmountRaw = Number.parseFloat(quote.estimate?.toAmount ?? '0')
-        const toAmount = toAmountRaw / 10 ** Number(usdcToken.decimals)
+        const toTokenDecimals = Number(quote?.action?.toToken?.decimals ?? 6)
+        const toAmountRaw = Number.parseFloat(quote?.estimate?.toAmount ?? '0')
+        const toAmount = toAmountRaw / 10 ** toTokenDecimals
         const toAmountDisplay = Number.isFinite(toAmount)
           ? toAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 6 })
           : null
 
-        const gasUsd = quote.estimate?.gasCosts?.reduce((sum, gas) => {
+        const gasUsd = quote?.estimate?.gasCosts?.reduce((sum: number, gas: { amountUSD?: string }) => {
           const usd = Number.parseFloat(gas.amountUSD ?? '0')
           return Number.isFinite(usd) ? sum + usd : sum
         }, 0) ?? 0
