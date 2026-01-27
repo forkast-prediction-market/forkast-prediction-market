@@ -40,6 +40,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { useLiFiWalletTokens } from '@/hooks/useLiFiWalletTokens'
 import { POLYGON_SCAN_BASE } from '@/lib/constants'
 import { svgLogo } from '@/lib/utils'
 
@@ -750,45 +751,68 @@ function WalletFundMenu({
   )
 }
 
-function WalletTokenList({ onContinue }: { onContinue: () => void }) {
-  const items = [
-    {
-      id: 'pol',
-      symbol: 'POL',
-      network: 'Amoy',
-      icon: '/images/deposit/transfer/polygon_dark.png',
-      balance: '41.78563',
-      usd: '5.0',
-      disabled: false,
-    },
-    {
-      id: 'usdc',
-      symbol: 'USDC',
-      network: 'Amoy',
-      icon: '/images/deposit/transfer/usdc_dark.png',
-      balance: '12.42000',
-      usd: '12.4',
-      disabled: false,
-    },
-    {
-      id: 'low',
-      symbol: 'POL',
-      network: 'Amoy',
-      icon: '/images/deposit/transfer/polygon_dark.png',
-      balance: '0.32000',
-      usd: '0.8',
-      disabled: true,
-    },
-  ]
-  const [selectedId, setSelectedId] = useState(items[0]?.id ?? '')
+function WalletTokenList({
+  onContinue,
+  items,
+  isLoadingTokens,
+  selectedId,
+  onSelect,
+}: {
+  onContinue: () => void
+  items: Array<{
+    id: string
+    symbol: string
+    network: string
+    icon: string
+    chainIcon?: string
+    balance: string
+    usd: string
+    disabled: boolean
+  }>
+  isLoadingTokens: boolean
+  selectedId: string
+  onSelect: (id: string) => void
+}) {
+  const showEmptyState = !isLoadingTokens && items.length === 0
 
   return (
     <div className="space-y-4">
       <div className="max-h-[360px] overflow-y-scroll pr-1">
         <div className="space-y-2">
+          {isLoadingTokens && (
+            Array.from({ length: 4 }).map((_, index) => (
+              <div
+                key={`wallet-token-skeleton-${index}`}
+                className="flex w-full items-center justify-between rounded-lg border border-transparent px-3 py-1.5"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="inline-flex align-middle">
+                    <span className="size-[34px] animate-pulse rounded-full bg-accent" />
+                  </span>
+                  <div className="space-y-1">
+                    <span className="inline-flex align-middle">
+                      <span className="h-4 w-16 animate-pulse rounded-md bg-accent" />
+                    </span>
+                    <span className="inline-flex align-middle">
+                      <span className="h-3 w-24 animate-pulse rounded-md bg-accent" />
+                    </span>
+                  </div>
+                </div>
+                <span className="inline-flex align-middle">
+                  <span className="h-6 w-16 animate-pulse rounded-md bg-accent" />
+                </span>
+              </div>
+            ))
+          )}
+          {showEmptyState && (
+            <div className="rounded-lg border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
+              No LI.FI-supported tokens with balance found.
+            </div>
+          )}
           {items.map((item) => {
             const isSelected = selectedId === item.id
             const isDisabled = item.disabled
+            const chainIconSrc = item.chainIcon ?? '/images/deposit/transfer/polygon_dark.png'
             return (
               <button
                 key={item.id}
@@ -796,7 +820,7 @@ function WalletTokenList({ onContinue }: { onContinue: () => void }) {
                 disabled={isDisabled}
                 onClick={() => {
                   if (!isDisabled) {
-                    setSelectedId(item.id)
+                    onSelect(item.id)
                   }
                 }}
                 className={`
@@ -815,15 +839,29 @@ function WalletTokenList({ onContinue }: { onContinue: () => void }) {
                           width={34}
                           height={34}
                           className="rounded-full"
+                          unoptimized
                         />
                         <span className="absolute -right-1 -bottom-1 rounded-full bg-background p-0.5">
-                          <Image
-                            src="/images/deposit/transfer/polygon_dark.png"
-                            alt="Polygon"
-                            width={14}
-                            height={14}
-                            className="rounded-full"
-                          />
+                          {chainIconSrc.startsWith('http')
+                            ? (
+                                <Image
+                                  src={chainIconSrc}
+                                  alt={item.network}
+                                  width={14}
+                                  height={14}
+                                  className="rounded-full"
+                                  unoptimized
+                                />
+                              )
+                            : (
+                                <Image
+                                  src={chainIconSrc}
+                                  alt={item.network}
+                                  width={14}
+                                  height={14}
+                                  className="rounded-full"
+                                />
+                              )}
                         </span>
                       </div>
                     </TooltipTrigger>
@@ -876,14 +914,30 @@ function WalletTokenList({ onContinue }: { onContinue: () => void }) {
         </div>
       </div>
       <div className="-mx-6 border-t" />
-      <Button type="button" className="h-12 w-full text-foreground" onClick={onContinue}>
+      <Button
+        type="button"
+        className="h-12 w-full text-foreground"
+        onClick={onContinue}
+      >
         Continue
       </Button>
     </div>
   )
 }
 
-function WalletAmountStep({ onContinue }: { onContinue: () => void }) {
+function WalletAmountStep({
+  onContinue,
+  selectedTokenSymbol,
+  availableUsd,
+  amountValue,
+  onAmountChange,
+}: {
+  onContinue: () => void
+  selectedTokenSymbol?: string | null
+  availableUsd?: number | null
+  amountValue: string
+  onAmountChange: (value: string) => void
+}) {
   function formatAmountInput(value: string) {
     const cleaned = value.replace(/[^\d.,]/g, '')
     if (!cleaned) {
@@ -902,7 +956,12 @@ function WalletAmountStep({ onContinue }: { onContinue: () => void }) {
     return intPart
   }
 
-  const [amountValue, setAmountValue] = useState('2,00')
+  function parseAmount(value: string) {
+    const normalized = value.replace(/\./g, '').replace(',', '.')
+    const parsed = Number(normalized)
+    return Number.isFinite(parsed) ? parsed : 0
+  }
+
   const digitCount = amountValue.replace(/\D/g, '').length
   const amountSizeClass = digitCount > 12
     ? 'text-3xl'
@@ -911,6 +970,12 @@ function WalletAmountStep({ onContinue }: { onContinue: () => void }) {
       : digitCount > 6
         ? 'text-5xl'
         : 'text-6xl'
+  const amountNumber = parseAmount(amountValue)
+  const hasAvailableUsd = typeof availableUsd === 'number' && Number.isFinite(availableUsd)
+  const isAmountExceedingBalance = hasAvailableUsd && amountNumber > (availableUsd ?? 0)
+  const availableUsdLabel = hasAvailableUsd
+    ? (availableUsd as number).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : null
 
   return (
     <div className="space-y-6">
@@ -921,7 +986,7 @@ function WalletAmountStep({ onContinue }: { onContinue: () => void }) {
           inputMode="decimal"
           value={amountValue}
           onChange={(event) => {
-            setAmountValue(formatAmountInput(event.target.value))
+            onAmountChange(formatAmountInput(event.target.value))
           }}
           className={`
             bg-transparent text-left font-semibold text-foreground outline-none
@@ -941,6 +1006,14 @@ function WalletAmountStep({ onContinue }: { onContinue: () => void }) {
           </button>
         ))}
       </div>
+      {isAmountExceedingBalance && (
+        <p className="text-center text-sm font-medium text-destructive">
+          Amount exceeds the available balance
+          {selectedTokenSymbol ? ` for ${selectedTokenSymbol}` : ''}
+          {availableUsdLabel ? ` ($${availableUsdLabel})` : ''}
+          .
+        </p>
+      )}
       <div className="flex items-center justify-center">
         <div className="flex items-center gap-3 rounded-full bg-muted/60 px-4 py-2">
           <div className="flex items-center gap-3">
@@ -964,7 +1037,7 @@ function WalletAmountStep({ onContinue }: { onContinue: () => void }) {
             </div>
             <div className="space-y-0.5">
               <p className="text-xs text-muted-foreground">You send</p>
-              <p className="text-sm font-semibold text-foreground">POL</p>
+              <p className="text-sm font-semibold text-foreground">{selectedTokenSymbol ?? 'Token'}</p>
             </div>
           </div>
           <ArrowRight className="size-4 text-muted-foreground" />
@@ -994,7 +1067,12 @@ function WalletAmountStep({ onContinue }: { onContinue: () => void }) {
           </div>
         </div>
       </div>
-      <Button type="button" className="h-12 w-full text-foreground" onClick={onContinue}>
+      <Button
+        type="button"
+        className="h-12 w-full text-foreground"
+        onClick={onContinue}
+        disabled={isAmountExceedingBalance}
+      >
         Continue
       </Button>
     </div>
@@ -1048,10 +1126,12 @@ function WalletConfirmStep({
   walletEoaAddress,
   siteLabel,
   onComplete,
+  amountValue,
 }: {
   walletEoaAddress?: string | null
   siteLabel: string
   onComplete: () => void
+  amountValue: string
 }) {
   const [status, setStatus] = useState<'quote' | 'gas' | 'ready'>('quote')
   const isLoading = status !== 'ready'
@@ -1059,6 +1139,7 @@ function WalletConfirmStep({
   const eoaSuffix = walletEoaAddress?.slice(-4) ?? '542d'
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false)
   const logoSvg = svgLogo()
+  const displayAmount = amountValue && amountValue.trim() !== '' ? amountValue : '0,00'
 
   useEffect(() => {
     const quoteTimer = setTimeout(() => setStatus('gas'), 1800)
@@ -1085,7 +1166,12 @@ function WalletConfirmStep({
       <div className="flex items-center justify-center">
         {isLoading
           ? <Skeleton className="h-12 w-40 rounded-md" />
-          : <p className="text-5xl font-semibold text-foreground">$2,00</p>}
+          : (
+              <p className="text-5xl font-semibold text-foreground">
+                $
+                {displayAmount}
+              </p>
+            )}
       </div>
 
       <div className="space-y-3">
@@ -1502,17 +1588,44 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
 
   const [copied, setCopied] = useState(false)
   const siteLabel = siteName ?? process.env.NEXT_PUBLIC_SITE_NAME!
+  const tokensQueryEnabled = open && (view === 'wallets' || view === 'amount' || view === 'confirm')
+  const { items: walletTokenItems, isLoadingTokens } = useLiFiWalletTokens(walletEoaAddress, { enabled: tokensQueryEnabled })
+  const [selectedTokenId, setSelectedTokenId] = useState('')
+  const [amountValue, setAmountValue] = useState('0.00')
   const formattedBalance = walletBalance && walletBalance !== ''
     ? walletBalance
     : '0.00'
   const balanceDisplay = isBalanceLoading
-    ? <Skeleton className="inline-block h-3 w-12 align-middle" />
+    ? (
+        <span className="inline-flex align-middle">
+          <span className="h-3 w-12 animate-pulse rounded-md bg-accent" />
+        </span>
+      )
     : (
         <>
           $
           {formattedBalance}
         </>
       )
+
+  useEffect(() => {
+    if (!walletTokenItems.length) {
+      setSelectedTokenId('')
+      return
+    }
+
+    setSelectedTokenId((currentSelectedId) => {
+      if (currentSelectedId && walletTokenItems.some(item => item.id === currentSelectedId && !item.disabled)) {
+        return currentSelectedId
+      }
+
+      const firstEnabledItem = walletTokenItems.find(item => !item.disabled)
+      return firstEnabledItem?.id ?? walletTokenItems[0].id
+    })
+  }, [walletTokenItems])
+
+  const selectedToken = walletTokenItems.find(item => item.id === selectedTokenId) ?? null
+
   const content = view === 'fund'
     ? (
         <WalletFundMenu
@@ -1539,11 +1652,23 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
         )
       : view === 'wallets'
         ? (
-            <WalletTokenList onContinue={() => onViewChange('amount')} />
+            <WalletTokenList
+              onContinue={() => onViewChange('amount')}
+              items={walletTokenItems}
+              isLoadingTokens={isLoadingTokens}
+              selectedId={selectedTokenId}
+              onSelect={setSelectedTokenId}
+            />
           )
         : view === 'amount'
           ? (
-              <WalletAmountStep onContinue={() => onViewChange('confirm')} />
+              <WalletAmountStep
+                onContinue={() => onViewChange('confirm')}
+                selectedTokenSymbol={selectedToken?.symbol ?? null}
+                availableUsd={selectedToken?.usdValue ?? null}
+                amountValue={amountValue}
+                onAmountChange={setAmountValue}
+              />
             )
           : view === 'confirm'
             ? (
@@ -1551,6 +1676,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
                   walletEoaAddress={walletEoaAddress}
                   siteLabel={siteLabel}
                   onComplete={() => onViewChange('success')}
+                  amountValue={amountValue}
                 />
               )
             : (
