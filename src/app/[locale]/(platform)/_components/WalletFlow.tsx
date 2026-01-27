@@ -12,9 +12,11 @@ import { useTradingOnboarding } from '@/app/[locale]/(platform)/_providers/Tradi
 import { useBalance } from '@/hooks/useBalance'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useLiFiWalletUsdBalance } from '@/hooks/useLiFiWalletUsdBalance'
+import { MAX_AMOUNT_INPUT } from '@/lib/amount-input'
 import { defaultNetwork } from '@/lib/appkit'
 import { DEFAULT_ERROR_MESSAGE } from '@/lib/constants'
 import { COLLATERAL_TOKEN_ADDRESS } from '@/lib/contracts'
+import { formatAmountInputValue } from '@/lib/formatters'
 import { buildSendErc20Transaction, getSafeTxTypedData, packSafeSignature } from '@/lib/safe/transactions'
 import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
 
@@ -201,14 +203,8 @@ export function WalletFlow({
 
   const handleSetMaxAmount = useCallback(() => {
     const amount = Number.isFinite(balance.raw) ? balance.raw : 0
-    const formattedAmount = amount.toLocaleString('en-US', {
-      useGrouping: false,
-      maximumFractionDigits: 6,
-    })
-    const [whole, fraction] = formattedAmount.split('.')
-    const trimmedFraction = fraction ? fraction.replace(/0+$/, '') : ''
-    const normalizedAmount = trimmedFraction ? `${whole}.${trimmedFraction}` : whole
-    setWalletSendAmount(normalizedAmount)
+    const limitedAmount = Math.min(amount, MAX_AMOUNT_INPUT)
+    setWalletSendAmount(formatAmountInputValue(limitedAmount, { roundingMode: 'floor' }))
   }, [balance.raw])
 
   return (
@@ -236,7 +232,7 @@ export function WalletFlow({
         sendTo={walletSendTo}
         onChangeSendTo={event => setWalletSendTo(event.target.value)}
         sendAmount={walletSendAmount}
-        onChangeSendAmount={event => setWalletSendAmount(event.target.value)}
+        onChangeSendAmount={setWalletSendAmount}
         isSending={isWalletSending}
         onSubmitSend={handleWalletSend}
         connectedWalletAddress={connectedWalletAddress}

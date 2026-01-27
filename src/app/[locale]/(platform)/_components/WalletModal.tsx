@@ -110,7 +110,7 @@ interface WalletWithdrawModalProps {
   sendTo: string
   onChangeSendTo: ChangeEventHandler<HTMLInputElement>
   sendAmount: string
-  onChangeSendAmount: ChangeEventHandler<HTMLInputElement>
+  onChangeSendAmount: (value: string) => void
   isSending: boolean
   onSubmitSend: FormEventHandler<HTMLFormElement>
   connectedWalletAddress?: string | null
@@ -245,7 +245,7 @@ function WalletSendForm({
   sendTo: string
   onChangeSendTo: ChangeEventHandler<HTMLInputElement>
   sendAmount: string
-  onChangeSendAmount: ChangeEventHandler<HTMLInputElement>
+  onChangeSendAmount: (value: string) => void
   isSending: boolean
   onSubmitSend: FormEventHandler<HTMLFormElement>
   onBack?: () => void
@@ -261,6 +261,7 @@ function WalletSendForm({
   const [receiveToken, setReceiveToken] = useState<string>('USDC.e')
   const [receiveChain, setReceiveChain] = useState<string>('Polygon')
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false)
+  const inputValue = formatDisplayAmount(sendAmount)
   const isSubmitDisabled = (
     isSending
     || !trimmedRecipient
@@ -293,6 +294,28 @@ function WalletSendForm({
   const selectedToken = WITHDRAW_TOKEN_OPTIONS.find(option => option.value === receiveToken)
   const selectedChain = WITHDRAW_CHAIN_OPTIONS.find(option => option.value === receiveChain)
   const isUsdcESelected = receiveToken === 'USDC.e'
+
+  function handleAmountChange(rawValue: string) {
+    const cleaned = sanitizeNumericInput(rawValue)
+    const numericValue = Number.parseFloat(cleaned)
+
+    if (cleaned === '' || numericValue <= MAX_AMOUNT_INPUT) {
+      onChangeSendAmount(cleaned)
+    }
+  }
+
+  function handleAmountBlur(rawValue: string) {
+    const cleaned = sanitizeNumericInput(rawValue)
+    const numeric = Number.parseFloat(cleaned)
+
+    if (!cleaned || Number.isNaN(numeric)) {
+      onChangeSendAmount('')
+      return
+    }
+
+    const clampedValue = Math.min(numeric, MAX_AMOUNT_INPUT)
+    onChangeSendAmount(formatAmountInputValue(clampedValue))
+  }
 
   return (
     <div className="space-y-5">
@@ -339,11 +362,11 @@ function WalletSendForm({
           <div className="relative">
             <Input
               id="wallet-send-amount"
-              type="number"
-              min="0"
-              step="any"
-              value={sendAmount}
-              onChange={onChangeSendAmount}
+              type="text"
+              inputMode="decimal"
+              value={inputValue}
+              onChange={event => handleAmountChange(event.target.value)}
+              onBlur={event => handleAmountBlur(event.target.value)}
               placeholder="0.00"
               className={`
                 h-12
