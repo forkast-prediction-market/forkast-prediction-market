@@ -923,6 +923,7 @@ function WalletTokenList({
         type="button"
         className="h-12 w-full"
         onClick={onContinue}
+        disabled={!selectedId || isLoadingTokens || showEmptyState}
       >
         Continue
       </Button>
@@ -1195,7 +1196,7 @@ function CountdownBadge({
           />
         </svg>
         <div className={`
-          absolute inset-[3px] flex items-center justify-center rounded-full bg-background text-[9px] font-semibold
+          absolute inset-0.75 flex items-center justify-center rounded-full bg-background text-[9px] font-semibold
           text-foreground ring-1 ring-border/60
         `}
         >
@@ -1213,6 +1214,7 @@ function WalletConfirmStep({
   onComplete,
   amountValue,
   selectedToken,
+  quote,
   refreshIndex,
 }: {
   walletEoaAddress?: string | null
@@ -1221,6 +1223,7 @@ function WalletConfirmStep({
   onComplete: () => void
   amountValue: string
   selectedToken?: LiFiWalletTokenItem | null
+  quote?: { toAmountDisplay: string | null, gasUsdDisplay: string | null } | null
   refreshIndex: number
 }) {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -1229,22 +1232,23 @@ function WalletConfirmStep({
   const logoSvg = svgLogo()
   const formattedAmount = formatDisplayAmount(amountValue)
   const displayAmount = formattedAmount && formattedAmount.trim() !== '' ? formattedAmount : '0.00'
-  const { quote, isLoadingQuote } = useLiFiQuote({
+  const { quote: fetchedQuote, isLoadingQuote } = useLiFiQuote({
     fromToken: selectedToken,
     amountValue,
     fromAddress: walletEoaAddress,
     toAddress: walletAddress,
     refreshIndex,
   })
+  const effectiveQuote = quote ?? fetchedQuote
   const hasAmount = amountValue.trim() !== ''
   const isQuoteLoading = isLoadingQuote && hasAmount
-  const status: 'quote' | 'gas' | 'ready' = isLoadingQuote ? 'gas' : quote ? 'ready' : 'quote'
-  const isCtaDisabled = isSubmitting || !quote || isLoadingQuote
+  const status: 'quote' | 'gas' | 'ready' = effectiveQuote ? 'ready' : (isLoadingQuote ? 'gas' : 'quote')
+  const isCtaDisabled = isSubmitting || !effectiveQuote || isLoadingQuote
   const sendSymbol = selectedToken?.symbol ?? 'Token'
   const sendIcon = selectedToken?.icon ?? '/images/deposit/transfer/polygon_dark.png'
   const chainIcon = selectedToken?.chainIcon ?? '/images/deposit/transfer/polygon_dark.png'
-  const receiveAmountDisplay = quote?.toAmountDisplay ?? '—'
-  const gasUsdDisplay = quote?.gasUsdDisplay ?? null
+  const receiveAmountDisplay = effectiveQuote?.toAmountDisplay ?? '—'
+  const gasUsdDisplay = effectiveQuote?.gasUsdDisplay ?? null
 
   useEffect(() => {
     if (!isSubmitting) {
@@ -1509,12 +1513,18 @@ function WalletSuccessStep({
   walletEoaAddress,
   walletAddress,
   siteLabel,
+  amountValue,
+  selectedToken,
+  quote,
   onClose,
   onNewDeposit,
 }: {
   walletEoaAddress?: string | null
   walletAddress?: string | null
   siteLabel: string
+  amountValue: string
+  selectedToken?: LiFiWalletTokenItem | null
+  quote?: { toAmountDisplay: string | null, gasUsdDisplay: string | null } | null
   onClose: () => void
   onNewDeposit: () => void
 }) {
@@ -1522,6 +1532,12 @@ function WalletSuccessStep({
   const safeSuffix = walletAddress?.slice(-4) ?? '5678'
   const logoSvg = svgLogo()
   const supportUrl = process.env.NEXT_PUBLIC_SUPPORT_URL
+  const formattedAmount = formatDisplayAmount(amountValue)
+  const displayAmount = formattedAmount && formattedAmount.trim() !== '' ? formattedAmount : '0.00'
+  const sendSymbol = selectedToken?.symbol ?? 'Token'
+  const sendIcon = selectedToken?.icon ?? '/images/deposit/transfer/polygon_dark.png'
+  const chainIcon = selectedToken?.chainIcon ?? '/images/deposit/transfer/polygon_dark.png'
+  const receiveAmountDisplay = quote?.toAmountDisplay ?? '—'
 
   return (
     <div className="space-y-5">
@@ -1615,6 +1631,39 @@ function WalletSuccessStep({
         <div className="rounded-lg border">
           <div className="px-4 py-1.5 text-sm">
             <div className="flex items-center justify-between text-muted-foreground">
+              <span>You send</span>
+              <span className="flex items-center gap-2 font-semibold text-foreground">
+                <span className="relative">
+                  <Image
+                    src={sendIcon}
+                    alt={sendSymbol}
+                    width={18}
+                    height={18}
+                    className="rounded-full"
+                    unoptimized
+                  />
+                  <span className="absolute -right-1 -bottom-1 rounded-full bg-background p-0.5">
+                    <Image
+                      src={chainIcon}
+                      alt={selectedToken?.network ?? 'Chain'}
+                      width={10}
+                      height={10}
+                      className="rounded-full"
+                      unoptimized={chainIcon.startsWith('http')}
+                    />
+                  </span>
+                </span>
+                {displayAmount}
+                {' '}
+                {sendSymbol}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-lg border">
+          <div className="px-4 py-1.5 text-sm">
+            <div className="flex items-center justify-between text-muted-foreground">
               <span>You receive</span>
               <span className="flex items-center gap-2 font-semibold text-foreground">
                 <Image
@@ -1624,7 +1673,7 @@ function WalletSuccessStep({
                   height={18}
                   className="rounded-full"
                 />
-                4.28564
+                {receiveAmountDisplay}
               </span>
             </div>
           </div>
@@ -1654,7 +1703,7 @@ function WalletSuccessStep({
         <Button type="button" className="h-11 bg-muted text-foreground hover:bg-muted/80" onClick={onClose}>
           Close
         </Button>
-        <Button type="button" className="h-11 text-foreground" onClick={onNewDeposit}>
+        <Button type="button" className="h-11" onClick={onNewDeposit}>
           New Deposit
         </Button>
       </div>
@@ -1719,6 +1768,13 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
   }, [walletTokenItems])
 
   const selectedToken = walletTokenItems.find(item => item.id === selectedTokenId) ?? null
+  const { quote } = useLiFiQuote({
+    fromToken: selectedToken,
+    amountValue,
+    fromAddress: walletEoaAddress,
+    toAddress: walletAddress,
+    refreshIndex: confirmRefreshIndex,
+  })
 
   const content = view === 'fund'
     ? (
@@ -1773,6 +1829,7 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
                   onComplete={() => onViewChange('success')}
                   amountValue={amountValue}
                   selectedToken={selectedToken}
+                  quote={quote}
                   refreshIndex={confirmRefreshIndex}
                 />
               )
@@ -1781,6 +1838,9 @@ export function WalletDepositModal(props: WalletDepositModalProps) {
                   walletEoaAddress={walletEoaAddress}
                   walletAddress={walletAddress}
                   siteLabel={siteLabel}
+                  amountValue={amountValue}
+                  selectedToken={selectedToken}
+                  quote={quote}
                   onClose={() => onOpenChange(false)}
                   onNewDeposit={() => onViewChange('fund')}
                 />
