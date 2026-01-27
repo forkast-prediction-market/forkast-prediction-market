@@ -4,6 +4,7 @@ import type { InfiniteData } from '@tanstack/react-query'
 import type { Event, UserOpenOrder } from '@/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { ChevronDown, ChevronUp, XIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useTradingOnboarding } from '@/app/[locale]/(platform)/_providers/TradingOnboardingProvider'
@@ -182,9 +183,10 @@ function formatFilledLabel(filledShares: number, totalShares: number) {
 }
 
 function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
+  const t = useExtracted('Event.Trade')
   const normalizeOutcomeLabel = useOutcomeLabel()
   const isBuy = order.side === 'buy'
-  const sideLabel = isBuy ? 'Buy' : 'Sell'
+  const sideLabel = isBuy ? t('Buy') : t('Sell')
   const priceLabel = formatSharePriceLabel(order.price, { fallback: '—' })
   const totalShares = microToUnit(isBuy ? order.taker_amount : order.maker_amount)
   const filledShares = microToUnit(order.size_matched)

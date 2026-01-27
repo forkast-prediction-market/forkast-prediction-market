@@ -29,31 +29,17 @@
     "TDaF6J": "Fechar"
   },
   "Event": {
-    "Comments": {
-      "2oCaym": "Tem certeza?",
-      "oIpOzP": "Tem certeza de que deseja excluir este comentário?",
-      "Yn86tb": "Cancelar",
-      "noZdV2": "Excluindo...",
-      "N2IrpM": "Confirmar",
-      "9HU8vw": "Responder",
-      "K3r6DQ": "Excluir",
-      "+5I2Cl": "Cuidado com links externos",
-      "fwIt1X": "Mais recentes",
-      "6mRa9V": "Mais curtidos",
-      "Riqzb0": "Detentores",
-      "fkEYTF": "Ainda não há comentários. Seja o primeiro a comentar!"
-    },
     "Trade": {
+      "EnCOBJ": "Comprar",
       "oUWADl": "Não",
       "a5msuh": "Sim",
       "47FYwb": "Cancelar",
       "EWw/tK": "Aplicar",
       "Pha+88": "Hora de expiração",
+      "9AgXoz": "Vender",
       "90axO4": "Negociar",
       "GCY0dr": "Mercado",
       "YH6meO": "Limite",
-      "EnCOBJ": "Comprar",
-      "9AgXoz": "Vender",
       "ff/yhF": "Preço médio {price}",
       "OunijE": "Você receberá",
       "RtHqrS": "Para ganhar",
@@ -94,6 +80,20 @@
       "IOy9zx": "Ao negociar, você concorda com nossos",
       "UhkSyx": "Termos de uso",
       "beB5uE": "posições"
+    },
+    "Comments": {
+      "2oCaym": "Tem certeza?",
+      "oIpOzP": "Tem certeza de que deseja excluir este comentário?",
+      "Yn86tb": "Cancelar",
+      "noZdV2": "Excluindo...",
+      "N2IrpM": "Confirmar",
+      "9HU8vw": "Responder",
+      "K3r6DQ": "Excluir",
+      "+5I2Cl": "Cuidado com links externos",
+      "fwIt1X": "Mais recentes",
+      "6mRa9V": "Mais curtidos",
+      "Riqzb0": "Detentores",
+      "fkEYTF": "Ainda não há comentários. Seja o primeiro a comentar!"
     },
     "LbOi59": "O vencedor leva tudo"
   }

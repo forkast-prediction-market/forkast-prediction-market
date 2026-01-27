@@ -183,9 +183,6 @@ function EventMarketCardComponent({
               }}
             >
               <span className="truncate opacity-70">
-                Buy
-                {' '}
-                {' '}
                 {yesOutcomeText}
               </span>
               <span className="shrink-0 text-base font-bold">
@@ -204,9 +201,6 @@ function EventMarketCardComponent({
               }}
             >
               <span className="truncate opacity-70">
-                Buy
-                {' '}
-                {' '}
                 {noOutcomeText}
               </span>
               <span className="shrink-0 text-base font-bold">
@@ -269,16 +263,13 @@ function EventMarketCardComponent({
                 variant="yes"
                 className={cn({
                   'bg-yes text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.YES,
-                }, 'w-[8.5rem]')}
+                }, 'w-34')}
                 onClick={(event) => {
                   event.stopPropagation()
                   onBuy(market, OUTCOME_INDEX.YES, 'desktop')
                 }}
               >
                 <span className="truncate opacity-70">
-                  Buy
-                  {' '}
-                  {' '}
                   {yesOutcomeText}
                 </span>
                 <span className="shrink-0 text-base font-bold">
@@ -291,16 +282,13 @@ function EventMarketCardComponent({
                 variant="no"
                 className={cn({
                   'bg-no text-white': isActiveMarket && activeOutcomeIndex === OUTCOME_INDEX.NO,
-                }, 'w-[8.5rem]')}
+                }, 'w-34')}
                 onClick={(event) => {
                   event.stopPropagation()
                   onBuy(market, OUTCOME_INDEX.NO, 'desktop')
                 }}
               >
                 <span className="truncate opacity-70">
-                  Buy
-                  {' '}
-                  {' '}
                   {noOutcomeText}
                 </span>
                 <span className="shrink-0 text-base font-bold">
@@ -337,6 +325,8 @@ function PositionTags({
   openOrdersCount?: number
   onCashOut?: (tag: MarketPositionTag) => void
 }) {
+  const t = useExtracted('Event.Trade')
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const hasOpenOrders = openOrdersCount > 0
   const openOrdersLabel = `${openOrdersCount} open order${openOrdersCount === 1 ? '' : 's'}`
   return (

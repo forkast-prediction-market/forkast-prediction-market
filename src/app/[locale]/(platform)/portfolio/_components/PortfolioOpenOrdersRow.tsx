@@ -1,6 +1,7 @@
 import type { Route } from 'next'
 import type { PortfolioUserOpenOrder } from '@/app/[locale]/(platform)/portfolio/_types/PortfolioOpenOrdersTypes'
 import { XIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import Image from 'next/image'
 import {
   formatCents,
@@ -21,6 +22,7 @@ interface PortfolioOpenOrdersRowProps {
 }
 
 export default function PortfolioOpenOrdersRow({ order }: PortfolioOpenOrdersRowProps) {
+  const t = useExtracted('Event.Trade')
   const normalizeOutcomeLabel = useOutcomeLabel()
   const totalShares = getOrderTotalShares(order)
   const filledShares = getOrderFilledShares(order)
@@ -76,7 +78,7 @@ export default function PortfolioOpenOrdersRow({ order }: PortfolioOpenOrdersRow
       </td>
 
       <td className="px-2 py-3 text-center text-sm font-semibold sm:px-3">
-        {order.side === 'buy' ? 'Buy' : 'Sell'}
+        {order.side === 'buy' ? t('Buy') : t('Sell')}
       </td>
 
       <td className="px-2 py-3 text-left text-sm font-semibold sm:px-3">

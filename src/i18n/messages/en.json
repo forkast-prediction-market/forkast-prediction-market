@@ -29,31 +29,17 @@
     "TDaF6J": "Dismiss"
   },
   "Event": {
-    "Comments": {
-      "2oCaym": "Are you sure?",
-      "oIpOzP": "Are you sure you want to delete this comment?",
-      "Yn86tb": "Never mind",
-      "noZdV2": "Deleting...",
-      "N2IrpM": "Confirm",
-      "9HU8vw": "Reply",
-      "K3r6DQ": "Delete",
-      "+5I2Cl": "Beware of external links",
-      "fwIt1X": "Newest",
-      "6mRa9V": "Most liked",
-      "Riqzb0": "Holders",
-      "fkEYTF": "No comments yet. Be the first to comment!"
-    },
     "Trade": {
+      "EnCOBJ": "Buy",
       "oUWADl": "No",
       "a5msuh": "Yes",
       "47FYwb": "Cancel",
       "EWw/tK": "Apply",
       "Pha+88": "Expiration Time",
+      "9AgXoz": "Sell",
       "90axO4": "Trade",
       "GCY0dr": "Market",
       "YH6meO": "Limit",
-      "EnCOBJ": "Buy",
-      "9AgXoz": "Sell",
       "ff/yhF": "Avg. price {price}",
       "OunijE": "You'll receive",
       "RtHqrS": "To win",
@@ -94,6 +80,20 @@
       "IOy9zx": "By trading, you agree to our",
       "UhkSyx": "Terms of Use",
       "beB5uE": "shares"
+    },
+    "Comments": {
+      "2oCaym": "Are you sure?",
+      "oIpOzP": "Are you sure you want to delete this comment?",
+      "Yn86tb": "Never mind",
+      "noZdV2": "Deleting...",
+      "N2IrpM": "Confirm",
+      "9HU8vw": "Reply",
+      "K3r6DQ": "Delete",
+      "+5I2Cl": "Beware of external links",
+      "fwIt1X": "Newest",
+      "6mRa9V": "Most liked",
+      "Riqzb0": "Holders",
+      "fkEYTF": "No comments yet. Be the first to comment!"
     },
     "LbOi59": "Winner-take-all"
   }

@@ -29,31 +29,17 @@
     "TDaF6J": "Fermer"
   },
   "Event": {
-    "Comments": {
-      "2oCaym": "Êtes-vous sûr ?",
-      "oIpOzP": "Êtes-vous sûr de vouloir supprimer ce commentaire ?",
-      "Yn86tb": "Annuler",
-      "noZdV2": "Suppression...",
-      "N2IrpM": "Confirmer",
-      "9HU8vw": "Répondre",
-      "K3r6DQ": "Supprimer",
-      "+5I2Cl": "Attention aux liens externes",
-      "fwIt1X": "Les plus récents",
-      "6mRa9V": "Les plus appréciés",
-      "Riqzb0": "Détenteurs",
-      "fkEYTF": "Aucun commentaire pour l'instant. Soyez le premier à commenter !"
-    },
     "Trade": {
+      "EnCOBJ": "Acheter",
       "oUWADl": "Non",
       "a5msuh": "Oui",
       "47FYwb": "Annuler",
       "EWw/tK": "Appliquer",
       "Pha+88": "Heure d'expiration",
+      "9AgXoz": "Vendre",
       "90axO4": "Trader",
       "GCY0dr": "Marché",
       "YH6meO": "Limite",
-      "EnCOBJ": "Acheter",
-      "9AgXoz": "Vendre",
       "ff/yhF": "Prix moyen {price}",
       "OunijE": "Vous recevrez",
       "RtHqrS": "Pour gagner",
@@ -94,6 +80,20 @@
       "IOy9zx": "En tradant, vous acceptez nos",
       "UhkSyx": "Conditions d'utilisation",
       "beB5uE": "parts"
+    },
+    "Comments": {
+      "2oCaym": "Êtes-vous sûr ?",
+      "oIpOzP": "Êtes-vous sûr de vouloir supprimer ce commentaire ?",
+      "Yn86tb": "Annuler",
+      "noZdV2": "Suppression...",
+      "N2IrpM": "Confirmer",
+      "9HU8vw": "Répondre",
+      "K3r6DQ": "Supprimer",
+      "+5I2Cl": "Attention aux liens externes",
+      "fwIt1X": "Les plus récents",
+      "6mRa9V": "Les plus appréciés",
+      "Riqzb0": "Détenteurs",
+      "fkEYTF": "Aucun commentaire pour l'instant. Soyez le premier à commenter !"
     },
     "LbOi59": "Le gagnant rafle tout"
   }
