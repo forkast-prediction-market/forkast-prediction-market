@@ -41,7 +41,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/u
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useLiFiWalletTokens } from '@/hooks/useLiFiWalletTokens'
+import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { POLYGON_SCAN_BASE } from '@/lib/constants'
+import { formatAmountInputValue } from '@/lib/formatters'
 import { svgLogo } from '@/lib/utils'
 
 const MELD_PAYMENT_METHODS = [
@@ -777,7 +779,7 @@ function WalletTokenList({
 
   return (
     <div className="space-y-4">
-      <div className="max-h-[360px] overflow-y-scroll pr-1">
+      <div className="max-h-90 overflow-y-scroll pr-1">
         <div className="space-y-2">
           {isLoadingTokens && (
             Array.from({ length: 4 }).map((_, index) => (
@@ -787,7 +789,7 @@ function WalletTokenList({
               >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex align-middle">
-                    <span className="size-[34px] animate-pulse rounded-full bg-accent" />
+                    <span className="size-8.5 animate-pulse rounded-full bg-accent" />
                   </span>
                   <div className="space-y-1">
                     <span className="inline-flex align-middle">
@@ -938,69 +940,95 @@ function WalletAmountStep({
   amountValue: string
   onAmountChange: (value: string) => void
 }) {
-  function formatAmountInput(value: string) {
-    const cleaned = value.replace(/[^\d.,]/g, '')
-    if (!cleaned) {
-      return ''
-    }
-
-    const hasSeparator = /[.,]/.test(cleaned)
-    const [rawInt = '', rawDec = ''] = cleaned.split(/[.,]/)
-    const intPart = rawInt.replace(/\D/g, '').slice(0, 15)
-    const decPart = rawDec.replace(/\D/g, '').slice(0, 2)
-
-    if (hasSeparator) {
-      return `${intPart},${decPart}`
-    }
-
-    return intPart
-  }
-
-  function parseAmount(value: string) {
-    const normalized = value.replace(/\./g, '').replace(',', '.')
-    const parsed = Number(normalized)
-    return Number.isFinite(parsed) ? parsed : 0
-  }
-
-  const digitCount = amountValue.replace(/\D/g, '').length
-  const amountSizeClass = digitCount > 12
-    ? 'text-3xl'
-    : digitCount > 9
-      ? 'text-4xl'
-      : digitCount > 6
-        ? 'text-5xl'
-        : 'text-6xl'
-  const amountNumber = parseAmount(amountValue)
   const hasAvailableUsd = typeof availableUsd === 'number' && Number.isFinite(availableUsd)
+
+  function handleInputChange(rawValue: string) {
+    const cleaned = sanitizeNumericInput(rawValue)
+    const numericValue = Number.parseFloat(cleaned)
+
+    if (cleaned === '' || numericValue <= MAX_AMOUNT_INPUT) {
+      onAmountChange(cleaned)
+    }
+  }
+
+  function handleBlur(rawValue: string) {
+    const cleaned = sanitizeNumericInput(rawValue)
+    const numeric = Number.parseFloat(cleaned)
+
+    if (!cleaned || Number.isNaN(numeric)) {
+      onAmountChange('')
+      return
+    }
+
+    const clampedValue = Math.min(numeric, MAX_AMOUNT_INPUT)
+    onAmountChange(formatAmountInputValue(clampedValue))
+  }
+
+  function handleQuickFill(label: string) {
+    if (!hasAvailableUsd) {
+      return
+    }
+
+    const baseValue = Math.min(availableUsd ?? 0, MAX_AMOUNT_INPUT)
+
+    if (label === 'Max') {
+      onAmountChange(formatAmountInputValue(baseValue, { roundingMode: 'floor' }))
+      return
+    }
+
+    const percentValue = Number.parseInt(label.replace('%', ''), 10) / 100
+    const nextValue = baseValue * percentValue
+    onAmountChange(formatAmountInputValue(nextValue))
+  }
+
+  const amountNumber = Number.parseFloat(amountValue || '0')
   const isAmountExceedingBalance = hasAvailableUsd && amountNumber > (availableUsd ?? 0)
   const availableUsdLabel = hasAvailableUsd
     ? (availableUsd as number).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : null
+  const amountSizeClass = getAmountSizeClass(amountValue, {
+    large: 'text-6xl',
+    medium: 'text-5xl',
+    small: 'text-4xl',
+  })
+  const formattedAmount = formatDisplayAmount(amountValue)
+  const inputValue = formattedAmount ? `$${formattedAmount}` : ''
+  const quickLabels = ['25%', '50%', '75%', 'Max']
+  const minChWidth = '$0.00'.length + 1
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-center gap-1 text-center">
-        <span className={`${amountSizeClass} font-semibold text-foreground`}>$</span>
         <input
           type="text"
           inputMode="decimal"
-          value={amountValue}
+          value={inputValue}
           onChange={(event) => {
-            onAmountChange(formatAmountInput(event.target.value))
+            handleInputChange(event.target.value)
           }}
+          onBlur={(event) => {
+            handleBlur(event.target.value)
+          }}
+          placeholder="$0.00"
           className={`
-            bg-transparent text-left font-semibold text-foreground outline-none
+            min-h-[1.2em] bg-transparent pb-1 text-center leading-tight font-semibold text-foreground outline-none
+            placeholder:leading-tight
             ${amountSizeClass}
           `}
-          style={{ width: `${Math.max(amountValue.length, 4)}ch`, maxWidth: '70vw' }}
+          style={{ width: `${Math.max(inputValue.length, minChWidth)}ch`, maxWidth: '70vw' }}
         />
       </div>
       <div className="flex flex-wrap justify-center gap-2">
-        {['25%', '50%', '75%', 'Max'].map(label => (
+        {quickLabels.map(label => (
           <button
             key={label}
             type="button"
-            className="rounded-md bg-muted/60 px-4 py-2 text-sm text-foreground transition hover:bg-muted"
+            className={`
+              rounded-md bg-muted/60 px-4 py-2 text-sm text-foreground transition hover:bg-muted
+              ${!hasAvailableUsd ? 'cursor-not-allowed opacity-50' : ''}
+            `}
+            disabled={!hasAvailableUsd}
+            onClick={() => handleQuickFill(label)}
           >
             {label}
           </button>
@@ -1105,7 +1133,7 @@ function CountdownBadge({ seconds = 30 }: { seconds?: number }) {
   return (
     <div className="absolute top-4 right-4">
       <div
-        className="size-9 rounded-full p-[2px]"
+        className="size-9 rounded-full p-0.5"
         style={{
           background: `conic-gradient(hsl(var(--primary)) ${progress}deg, hsl(var(--muted)) ${progress}deg 360deg)`,
         }}
@@ -1139,7 +1167,8 @@ function WalletConfirmStep({
   const eoaSuffix = walletEoaAddress?.slice(-4) ?? '542d'
   const [isBreakdownOpen, setIsBreakdownOpen] = useState(false)
   const logoSvg = svgLogo()
-  const displayAmount = amountValue && amountValue.trim() !== '' ? amountValue : '0,00'
+  const formattedAmount = formatDisplayAmount(amountValue)
+  const displayAmount = formattedAmount && formattedAmount.trim() !== '' ? formattedAmount : '0.00'
 
   useEffect(() => {
     const quoteTimer = setTimeout(() => setStatus('gas'), 1800)
