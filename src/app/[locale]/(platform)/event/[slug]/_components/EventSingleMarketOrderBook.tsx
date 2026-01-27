@@ -125,12 +125,12 @@ export default function EventSingleMarketOrderBook({ market, eventSlug }: EventS
           >
             <div className="flex flex-wrap gap-4">
               <OutcomeToggle
-                label={`${t('Trade')} ${t('Yes')}`}
+                label={t('Trade {outcome}', { outcome: t('Yes') })}
                 selected={selectedOutcomeIndex === OUTCOME_INDEX.YES}
                 onClick={() => handleOutcomeSelection(OUTCOME_INDEX.YES)}
               />
               <OutcomeToggle
-                label={`${t('Trade')} ${t('No')}`}
+                label={t('Trade {outcome}', { outcome: t('No') })}
                 selected={selectedOutcomeIndex === OUTCOME_INDEX.NO}
                 onClick={() => handleOutcomeSelection(OUTCOME_INDEX.NO)}
               />

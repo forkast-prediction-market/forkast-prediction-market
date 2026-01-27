@@ -178,9 +178,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
         <div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold">
-              {t('Yes')}
-              {' '}
-              holders
+              {t('Yes holders')}
             </span>
             <span className="text-2xs leading-none font-semibold tracking-wide text-muted-foreground">
               SHARES
@@ -211,9 +209,7 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
         <div>
           <div className="flex items-center justify-between">
             <span className="text-sm font-semibold">
-              {t('No')}
-              {' '}
-              holders
+              {t('No holders')}
             </span>
             <span className="text-2xs leading-none font-semibold tracking-wide text-muted-foreground">
               SHARES

@@ -432,7 +432,7 @@ export default function EventOrderPanelLimitControls({
       {showMinimumSharesWarning && (
         <div className="flex items-center justify-center gap-2 pt-2 text-sm font-semibold text-orange-500">
           <TriangleAlertIcon className="size-4" />
-          {t('Minimum {min} shares for limit orders', { min: `${MIN_LIMIT_ORDER_SHARES}` })}
+          {t('Minimum {min} shares for limit orders', { min: MIN_LIMIT_ORDER_SHARES })}
         </div>
       )}
 

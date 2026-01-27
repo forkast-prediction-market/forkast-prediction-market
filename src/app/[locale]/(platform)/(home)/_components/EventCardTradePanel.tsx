@@ -194,7 +194,7 @@ export default function EventCardTradePanel({
         }
         size="outcomeLg"
         variant={activeOutcome.variant}
-        className={`w-full text-white **:text-white ${buyButtonClassName}`}
+        className={`w-full text-white *:text-white ${buyButtonClassName}`}
       >
         {isLoading
           ? (
