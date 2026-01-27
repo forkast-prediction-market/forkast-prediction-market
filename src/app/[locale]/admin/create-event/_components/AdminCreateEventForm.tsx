@@ -2,6 +2,7 @@
 
 import type { ChangeEvent, FormEvent } from 'react'
 import { AlertCircle, Calendar, CheckCircle2, Image, Loader2, Plus, Tag, Trash2 } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -76,6 +77,7 @@ function createInitialForm(): EventForm {
 }
 
 export default function AdminCreateEventForm() {
+  const t = useExtracted('Event.Trade')
   const [isLoading, setIsLoading] = useState(false)
   const [availableTags, setAvailableTags] = useState<EventTag[]>([])
   const [eventIconFile, setEventIconFile] = useState<File | null>(null)
@@ -809,7 +811,7 @@ export default function AdminCreateEventForm() {
                           key={`admin-event-market-outcome-${marketIndex}-${outcomeIndex}`}
                           value={outcome.outcome}
                           onChange={e => handleOutcomeChange(marketIndex, outcomeIndex, e.target.value)}
-                          placeholder={outcomeIndex === OUTCOME_INDEX.YES ? 'Yes' : 'No'}
+                          placeholder={outcomeIndex === OUTCOME_INDEX.YES ? t('Yes') : t('No')}
                         />
                       ))}
                     </div>

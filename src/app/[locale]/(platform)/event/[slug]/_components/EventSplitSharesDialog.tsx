@@ -1,5 +1,6 @@
 import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
 import { useQueryClient } from '@tanstack/react-query'
+import { useExtracted } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { hashTypedData } from 'viem'
@@ -56,6 +57,7 @@ export default function EventSplitSharesDialog({
   isNegRiskMarket = false,
   onOpenChange,
 }: EventSplitSharesDialogProps) {
+  const t = useExtracted('Event.Trade')
   const queryClient = useQueryClient()
   const { ensureTradingReady } = useTradingOnboarding()
   const user = useUser()
@@ -247,7 +249,7 @@ export default function EventSplitSharesDialog({
   }
 
   const dialogTitle = 'Split shares'
-  const dialogDescription = 'Split a USDC into a share of Yes and No. You can do this to save cost by getting both and just selling the other side.'
+  const dialogDescription = `Split a USDC into a share of ${t('Yes')} and ${t('No')}. You can do this to save cost by getting both and just selling the other side.`
   const formBody = (
     <>
       <div className="space-y-2">

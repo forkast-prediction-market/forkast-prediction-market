@@ -1,6 +1,7 @@
 import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
 import { useQueryClient } from '@tanstack/react-query'
 import { CheckIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { hashTypedData } from 'viem'
@@ -56,6 +57,7 @@ export default function EventMergeSharesDialog({
   isNegRiskMarket = false,
   onOpenChange,
 }: EventMergeSharesDialogProps) {
+  const t = useExtracted('Event.Trade')
   const queryClient = useQueryClient()
   const { ensureTradingReady } = useTradingOnboarding()
   const user = useUser()
@@ -243,7 +245,7 @@ export default function EventMergeSharesDialog({
   }
 
   const dialogTitle = 'Merge shares'
-  const dialogDescription = 'Merge a share of Yes and No to get 1 USDC. You can do this to save cost when trying to get rid of a position.'
+  const dialogDescription = `Merge a share of ${t('Yes')} and ${t('No')} to get 1 USDC. You can do this to save cost when trying to get rid of a position.`
   const formBody = (
     <>
       <div className="space-y-2">

@@ -2,17 +2,20 @@ import type { Route } from 'next'
 import type { PublicActivity } from '@/types'
 import { SquareArrowOutUpRightIcon } from 'lucide-react'
 import Image from 'next/image'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { Link } from '@/i18n/navigation'
 import { formatCurrency, formatSharePriceLabel, formatSharesLabel, formatTimeAgo } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
 
 export function PublicActivityItem({ item }: { item: PublicActivity }) {
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const isSplit = item.type === 'split'
   const eventSlug = item.eventSlug || item.slug
   const marketSlug = item.eventSlug ? item.slug : null
   const eventHref = (marketSlug ? `/event/${eventSlug}/${marketSlug}` : `/event/${eventSlug}`) as Route
-  const outcomeText = item.outcomeText || 'Outcome'
-  const outcomeChipColor = outcomeText.toLowerCase() === 'yes'
+  const rawOutcomeText = item.outcomeText || 'Outcome'
+  const outcomeText = normalizeOutcomeLabel(item.outcomeText) ?? rawOutcomeText
+  const outcomeChipColor = rawOutcomeText.toLowerCase() === 'yes'
     ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
     : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
   const totalValueUsd = item.usdcValue
@@ -64,7 +67,7 @@ export function PublicActivityItem({ item }: { item: PublicActivity }) {
                       dark:bg-green-900/30 dark:text-green-300
                     `}
                     >
-                      Yes
+                      {normalizeOutcomeLabel('Yes') ?? 'Yes'}
                       {' '}
                       {formatSharePriceLabel(0.5)}
                     </span>
@@ -73,7 +76,7 @@ export function PublicActivityItem({ item }: { item: PublicActivity }) {
                       dark:bg-red-900/30 dark:text-red-300
                     `}
                     >
-                      No
+                      {normalizeOutcomeLabel('No') ?? 'No'}
                       {' '}
                       {formatSharePriceLabel(0.5)}
                     </span>

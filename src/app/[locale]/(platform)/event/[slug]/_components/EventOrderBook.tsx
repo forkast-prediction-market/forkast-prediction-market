@@ -5,6 +5,7 @@ import type { EventOrderBookProps, OrderBookLevel, OrderBookUserOrder } from '@/
 import type { UserOpenOrder } from '@/types'
 import { useQueryClient } from '@tanstack/react-query'
 import { AlignVerticalSpaceAroundIcon, Loader2Icon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { useTradingOnboarding } from '@/app/[locale]/(platform)/_providers/TradingOnboardingProvider'
@@ -23,6 +24,7 @@ import {
 } from '@/app/[locale]/(platform)/event/[slug]/_utils/EventOrderBookUtils'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { ORDER_SIDE, ORDER_TYPE, tableHeaderClass } from '@/lib/constants'
 import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
 import { cn } from '@/lib/utils'
@@ -40,6 +42,8 @@ export default function EventOrderBook({
   isLoadingSummaries,
   eventSlug,
 }: EventOrderBookProps) {
+  const t = useExtracted('Event.Trade')
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const user = useUser()
   const { openTradeRequirements } = useTradingOnboarding()
   const queryClient = useQueryClient()
@@ -258,6 +262,7 @@ export default function EventOrderBook({
     () => buildOrderBookSnapshot(summary, market, outcome),
     [summary, market, outcome],
   )
+  const displayOutcomeLabel = normalizeOutcomeLabel(outcomeLabel) ?? outcomeLabel
 
   const renderedAsks = useMemo(
     () => [...asks].sort((a, b) => b.priceCents - a.priceCents),
@@ -314,7 +319,7 @@ export default function EventOrderBook({
           )}
         >
           <div className="flex h-full items-center gap-2">
-            <span className="inline-flex -translate-y-[1px]">{`Trade ${outcomeLabel}`}</span>
+            <span className="inline-flex -translate-y-[1px]">{`${t('Trade')} ${displayOutcomeLabel}`}</span>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button

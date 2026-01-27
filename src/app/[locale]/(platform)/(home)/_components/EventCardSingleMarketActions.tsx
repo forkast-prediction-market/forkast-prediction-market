@@ -1,6 +1,7 @@
 import type { Market, Outcome } from '@/types'
 import { Check, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { OUTCOME_INDEX } from '@/lib/constants'
 
 interface EventCardSingleMarketActionsProps {
@@ -22,13 +23,14 @@ export default function EventCardSingleMarketActions({
   onTrade,
   onToggle,
 }: EventCardSingleMarketActionsProps) {
+  const normalizeOutcomeLabel = useOutcomeLabel()
   if (!primaryMarket) {
     return null
   }
 
   if (isResolvedEvent) {
     const resolvedOutcome = primaryMarket.outcomes.find(outcome => outcome.is_winning_outcome)
-    const resolvedLabel = resolvedOutcome?.outcome_text
+    const resolvedLabel = normalizeOutcomeLabel(resolvedOutcome?.outcome_text) ?? resolvedOutcome?.outcome_text
     const isYesOutcome = resolvedOutcome?.outcome_index === OUTCOME_INDEX.YES
 
     return (
@@ -77,7 +79,7 @@ export default function EventCardSingleMarketActions({
         variant="yes"
         size="outcome"
       >
-        <span className="truncate">{yesOutcome.outcome_text}</span>
+        <span className="truncate">{normalizeOutcomeLabel(yesOutcome.outcome_text) ?? yesOutcome.outcome_text}</span>
       </Button>
       <Button
         type="button"
@@ -90,7 +92,7 @@ export default function EventCardSingleMarketActions({
         variant="no"
         size="outcome"
       >
-        <span className="truncate">{noOutcome.outcome_text}</span>
+        <span className="truncate">{normalizeOutcomeLabel(noOutcome.outcome_text) ?? noOutcome.outcome_text}</span>
       </Button>
     </div>
   )

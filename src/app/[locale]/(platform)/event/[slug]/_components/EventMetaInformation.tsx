@@ -15,6 +15,7 @@ interface EventMetaInformationProps {
 
 export default function EventMetaInformation({ event }: EventMetaInformationProps) {
   const t = useExtracted('Event')
+  const tradeT = useExtracted('Event.Trade')
 
   const volumeRequestPayload = useMemo(() => {
     const conditions = event.markets
@@ -135,7 +136,17 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
                   </div>
                   <div className="flex items-start gap-3">
                     <CheckIcon className="mt-0.5 size-5 shrink-0 text-primary" />
-                    <span className="text-foreground">Supports negative risk (convert No shares to Yes of the other options)</span>
+                    <span className="text-foreground">
+                      Supports negative risk (convert
+                      {' '}
+                      {tradeT('No')}
+                      {' '}
+                      shares to
+                      {' '}
+                      {tradeT('Yes')}
+                      {' '}
+                      of the other options)
+                    </span>
                   </div>
                   {isNegRiskAugmented && (
                     <div className="flex items-start gap-3">
@@ -143,7 +154,11 @@ export default function EventMetaInformation({ event }: EventMetaInformationProp
                       <span>
                         <span className="font-bold text-foreground">Complete negative risk</span>
                         {' '}
-                        (users who convert will receive Yes shares in any outcomes added in the future)
+                        (users who convert will receive
+                        {' '}
+                        {tradeT('Yes')}
+                        {' '}
+                        shares in any outcomes added in the future)
                       </span>
                     </div>
                   )}

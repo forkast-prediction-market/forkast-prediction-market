@@ -2,6 +2,7 @@
 
 import type { Event } from '@/types'
 import { useQuery } from '@tanstack/react-query'
+import { useExtracted } from 'next-intl'
 import { useEffect, useState } from 'react'
 import AlertBanner from '@/components/AlertBanner'
 import ProfileLink from '@/components/ProfileLink'
@@ -41,6 +42,7 @@ function formatHolderShares(value: string | number | null | undefined) {
 }
 
 export default function EventTopHolders({ event }: EventTopHoldersProps) {
+  const t = useExtracted('Event.Trade')
   const isSingleMarket = useIsSingleMarket()
   const orderState = useOrder()
   const [selectedMarket, setSelectedMarket] = useState<string>('')
@@ -175,7 +177,11 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
       <div className="grid grid-cols-2 gap-6">
         <div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">Yes holders</span>
+            <span className="text-sm font-semibold">
+              {t('Yes')}
+              {' '}
+              holders
+            </span>
             <span className="text-2xs leading-none font-semibold tracking-wide text-muted-foreground">
               SHARES
             </span>
@@ -204,7 +210,11 @@ export default function EventTopHolders({ event }: EventTopHoldersProps) {
 
         <div>
           <div className="flex items-center justify-between">
-            <span className="text-sm font-semibold">No holders</span>
+            <span className="text-sm font-semibold">
+              {t('No')}
+              {' '}
+              holders
+            </span>
             <span className="text-2xs leading-none font-semibold tracking-wide text-muted-foreground">
               SHARES
             </span>

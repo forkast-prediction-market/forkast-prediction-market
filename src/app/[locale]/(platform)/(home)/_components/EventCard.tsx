@@ -19,6 +19,7 @@ import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { useBalance } from '@/hooks/useBalance'
 import { useEventCardOrderBook } from '@/hooks/useEventCardOrderBook'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { formatDisplayAmount } from '@/lib/amount-input'
 import { getExchangeEip712Domain, ORDER_SIDE, ORDER_TYPE } from '@/lib/constants'
 import { calculateMarketFill } from '@/lib/event-card-orderbook'
@@ -47,6 +48,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
   const { balance } = useBalance()
   const { ensureTradingReady } = useTradingOnboarding()
   const queryClient = useQueryClient()
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const hasDeployedProxyWallet = Boolean(user?.proxy_wallet_address && user?.proxy_wallet_status === 'deployed')
   const proxyWalletAddress = hasDeployedProxyWallet ? normalizeAddress(user?.proxy_wallet_address) : null
   const userAddress = normalizeAddress(user?.address)
@@ -233,7 +235,7 @@ export default function EventCard({ event, priceOverridesByMarket = EMPTY_PRICE_
       handleOrderSuccessFeedback({
         side: ORDER_SIDE.BUY,
         amountInput: tradeAmount,
-        outcomeText: selectedOutcome.outcome.outcome_text,
+        outcomeText: normalizeOutcomeLabel(selectedOutcome.outcome.outcome_text) ?? selectedOutcome.outcome.outcome_text,
         eventTitle: event.title,
         marketImage: selectedOutcome.market.icon_url,
         marketTitle: selectedOutcome.market.short_title || selectedOutcome.market.title,

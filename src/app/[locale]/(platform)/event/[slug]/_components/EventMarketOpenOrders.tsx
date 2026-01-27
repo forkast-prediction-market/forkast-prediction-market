@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dialog'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { SAFE_BALANCE_QUERY_KEY } from '@/hooks/useBalance'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { MICRO_UNIT, OUTCOME_INDEX, tableHeaderClass } from '@/lib/constants'
 import { formatCurrency, formatSharePriceLabel, formatSharesLabel } from '@/lib/formatters'
 import { isTradingAuthRequiredError } from '@/lib/trading-auth/errors'
@@ -181,6 +182,7 @@ function formatFilledLabel(filledShares: number, totalShares: number) {
 }
 
 function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const isBuy = order.side === 'buy'
   const sideLabel = isBuy ? 'Buy' : 'Sell'
   const priceLabel = formatSharePriceLabel(order.price, { fallback: '—' })
@@ -194,7 +196,8 @@ function OpenOrderRow({ order, onCancel, isCancelling }: OpenOrderRowProps) {
   })
   const expirationLabel = formatExpirationLabel(order)
   const isNoOutcome = order.outcome.index === OUTCOME_INDEX.NO
-  const outcomeLabel = order.outcome.text || (isNoOutcome ? 'No' : 'Yes')
+  const outcomeLabel = normalizeOutcomeLabel(order.outcome.text || (isNoOutcome ? 'No' : 'Yes'))
+    || (isNoOutcome ? 'No' : 'Yes')
 
   return (
     <tr className="text-2xs leading-tight text-foreground sm:text-xs">

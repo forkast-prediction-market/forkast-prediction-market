@@ -4,6 +4,7 @@ import type { Comment, Market } from '@/types'
 import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
 import { useState } from 'react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { formatCompactShares } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -170,7 +171,9 @@ export function CommentPositionBadge({
   label?: string
   className?: string
 }) {
-  const displayLabel = label ?? position.inlineLabel
+  const normalizeOutcomeLabel = useOutcomeLabel()
+  const rawLabel = label ?? position.inlineLabel
+  const displayLabel = normalizeOutcomeLabel(rawLabel) ?? rawLabel
 
   return (
     <span
@@ -195,10 +198,14 @@ export function CommentPositionsIndicator({
   isSingleMarket?: boolean
   marketsByConditionId?: Map<string, Market>
 }) {
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const entries = getCommentPositionEntries(positions, marketsByConditionId, isSingleMarket)
   const [open, setOpen] = useState(false)
 
   const primaryPosition = entries[0]
+  const primaryInlineLabel = primaryPosition
+    ? (normalizeOutcomeLabel(primaryPosition.inlineLabel) ?? primaryPosition.inlineLabel)
+    : ''
 
   if (!primaryPosition) {
     return null
@@ -220,11 +227,11 @@ export function CommentPositionsIndicator({
           )}
           aria-label={open ? 'Hide positions' : 'Show positions'}
           aria-expanded={open}
-          title={`${primaryPosition.amountLabel} ${primaryPosition.inlineLabel}`}
+          title={`${primaryPosition.amountLabel} ${primaryInlineLabel}`}
         >
           <CommentPositionBadgeContent
             amountLabel={primaryPosition.amountLabel}
-            label={primaryPosition.inlineLabel}
+            label={primaryInlineLabel}
           />
           {open ? <ChevronUpIcon className="size-3 shrink-0" /> : <ChevronDownIcon className="size-3 shrink-0" />}
         </button>

@@ -30,6 +30,7 @@ import {
 import { useAffiliateOrderMetadata } from '@/hooks/useAffiliateOrderMetadata'
 import { useAppKit } from '@/hooks/useAppKit'
 import { SAFE_BALANCE_QUERY_KEY, useBalance } from '@/hooks/useBalance'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { CLOB_ORDER_TYPE, getExchangeEip712Domain, ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel, formatCurrency, toCents } from '@/lib/formatters'
 import { buildOrderPayload, submitOrder } from '@/lib/orders'
@@ -85,6 +86,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const { isConnected, embeddedWalletInfo } = useAppKitAccount()
   const { signTypedDataAsync } = useSignTypedData()
   const t = useExtracted('Event.Trade')
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const user = useUser()
   const state = useOrder()
   const setUserShares = useOrder(store => store.setUserShares)
@@ -254,7 +256,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const selectedShares = state.side === ORDER_SIDE.SELL
     ? (isLimitOrder ? selectedTokenShares : selectedPositionShares)
     : selectedTokenShares
-  const selectedShareLabel = state.outcome?.outcome_text
+  const selectedShareLabel = normalizeOutcomeLabel(state.outcome?.outcome_text)
     ?? (outcomeIndex === OUTCOME_INDEX.NO
       ? t('No')
       : outcomeIndex === OUTCOME_INDEX.YES
@@ -670,7 +672,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
         amountInput: state.amount,
         sellSharesLabel,
         isLimitOrder: state.type === ORDER_TYPE.LIMIT,
-        outcomeText: state.outcome.outcome_text,
+        outcomeText: normalizeOutcomeLabel(state.outcome.outcome_text) ?? state.outcome.outcome_text,
         eventTitle: event.title,
         marketImage: state.market?.icon_url,
         marketTitle: state.market?.short_title || state.market?.title,
@@ -782,7 +784,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 <EventOrderPanelOutcomeButton
                   variant="yes"
                   price={yesPrice}
-                  label={yesOutcome?.outcome_text ?? t('Yes')}
+                  label={normalizeOutcomeLabel(yesOutcome?.outcome_text) ?? t('Yes')}
                   isSelected={state.outcome?.outcome_index === OUTCOME_INDEX.YES}
                   onSelect={() => {
                     if (!state.market || !yesOutcome) {
@@ -795,7 +797,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                 <EventOrderPanelOutcomeButton
                   variant="no"
                   price={noPrice}
-                  label={noOutcome?.outcome_text ?? t('No')}
+                  label={normalizeOutcomeLabel(noOutcome?.outcome_text) ?? t('No')}
                   isSelected={state.outcome?.outcome_index === OUTCOME_INDEX.NO}
                   onSelect={() => {
                     if (!state.market || !noOutcome) {

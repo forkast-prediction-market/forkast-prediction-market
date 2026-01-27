@@ -2,6 +2,7 @@
 
 import type { Market, Outcome } from '@/types'
 import { RefreshCwIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useEffect, useMemo, useState } from 'react'
 import EventOrderBook, {
   useOrderBookSummaries,
@@ -19,6 +20,7 @@ interface EventSingleMarketOrderBookProps {
 type OutcomeToggleIndex = typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO
 
 export default function EventSingleMarketOrderBook({ market, eventSlug }: EventSingleMarketOrderBookProps) {
+  const t = useExtracted('Event.Trade')
   const [isExpanded, setIsExpanded] = useState(false)
   const orderMarket = useOrder(state => state.market)
   const orderOutcome = useOrder(state => state.outcome)
@@ -123,12 +125,12 @@ export default function EventSingleMarketOrderBook({ market, eventSlug }: EventS
           >
             <div className="flex flex-wrap gap-4">
               <OutcomeToggle
-                label="Trade Yes"
+                label={`${t('Trade')} ${t('Yes')}`}
                 selected={selectedOutcomeIndex === OUTCOME_INDEX.YES}
                 onClick={() => handleOutcomeSelection(OUTCOME_INDEX.YES)}
               />
               <OutcomeToggle
-                label="Trade No"
+                label={`${t('Trade')} ${t('No')}`}
                 selected={selectedOutcomeIndex === OUTCOME_INDEX.NO}
                 onClick={() => handleOutcomeSelection(OUTCOME_INDEX.NO)}
               />

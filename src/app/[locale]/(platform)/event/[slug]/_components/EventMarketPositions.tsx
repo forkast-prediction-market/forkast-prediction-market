@@ -13,6 +13,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog'
 import { Drawer, DrawerContent } from '@/components/ui/drawer'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { MICRO_UNIT, ORDER_SIDE, OUTCOME_INDEX, tableHeaderClass } from '@/lib/constants'
 import { fetchUserPositionsForMarket } from '@/lib/data-api/user'
 import {
@@ -176,6 +177,7 @@ function MarketPositionRow({
   onShare: (position: UserPosition) => void
   onConvert?: (position: UserPosition) => void
 }) {
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const outcomeText = position.outcome_text
     || (position.outcome_index === 1 ? 'No' : 'Yes')
   const normalizedOutcome = outcomeText?.toLowerCase() ?? ''
@@ -234,7 +236,8 @@ function MarketPositionRow({
   const displayedReturnValue = isNeutralReturn
     ? neutralReturnLabel
     : `${isPositive ? '+' : '-'}${neutralReturnLabel}`
-  const outcomeButtonLabel = outcomeText || (isYesOutcome ? 'Yes' : 'No')
+  const fallbackOutcomeLabel = normalizeOutcomeLabel(isYesOutcome ? 'Yes' : 'No') || (isYesOutcome ? 'Yes' : 'No')
+  const outcomeButtonLabel = normalizeOutcomeLabel(outcomeText) || fallbackOutcomeLabel
 
   const returnColorClass = isPositive ? 'text-yes' : 'text-no'
   const signedPercentLabel = `${isPositive ? '+' : '-'}${percentLabel}`

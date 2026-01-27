@@ -3,6 +3,7 @@
 import type { SafeTransactionRequestPayload } from '@/lib/safe/transactions'
 import { useQueryClient } from '@tanstack/react-query'
 import { BadgeCheck, Loader2, LockKeyhole, MoveDown, MoveLeft } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { hashTypedData } from 'viem'
@@ -70,6 +71,7 @@ export default function EventConvertPositionsDialog({
   isNegRiskAugmented = false,
   onOpenChange,
 }: EventConvertPositionsDialogProps) {
+  const t = useExtracted('Event.Trade')
   const queryClient = useQueryClient()
   const { ensureTradingReady } = useTradingOnboarding()
   const user = useUser()
@@ -412,7 +414,7 @@ export default function EventConvertPositionsDialog({
                     inline-flex h-5 w-5 items-center justify-center rounded-sm bg-no/20 text-2xs font-semibold text-no
                   `}
                   >
-                    No
+                    {t('No')}
                   </span>
                 </div>
                 <span className="text-sm font-semibold text-muted-foreground tabular-nums">
@@ -481,7 +483,7 @@ export default function EventConvertPositionsDialog({
                       font-semibold text-no
                     `}
                     >
-                      No
+                      {t('No')}
                     </span>
                   </div>
                   <span className="text-sm font-semibold text-muted-foreground tabular-nums">
@@ -515,7 +517,7 @@ export default function EventConvertPositionsDialog({
                       font-semibold text-yes
                     `}
                     >
-                      Yes
+                      {t('Yes')}
                     </span>
                   </div>
                   <span className="text-sm font-semibold text-muted-foreground tabular-nums">
@@ -536,7 +538,7 @@ export default function EventConvertPositionsDialog({
                     `}
                     >
                       <LockKeyhole className="size-3" />
-                      Yes
+                      {t('Yes')}
                     </span>
                   </div>
                   <span className="text-sm font-semibold text-muted-foreground tabular-nums">
@@ -579,7 +581,7 @@ export default function EventConvertPositionsDialog({
   const content = step === 'review' ? reviewContent : selectContent
 
   const title = 'Convert positions'
-  const description = 'Convert your "No" positions to the complementary "Yes" positions (and potentially USDC).'
+  const description = `Convert your "${t('No')}" positions to the complementary "${t('Yes')}" positions (and potentially USDC).`
   const reviewHeader = (
     <button
       type="button"

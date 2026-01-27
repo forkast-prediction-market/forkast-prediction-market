@@ -7,6 +7,7 @@ import type { DataApiActivity } from '@/lib/data-api/user'
 import type { Event, UserPosition } from '@/types'
 import { useQuery } from '@tanstack/react-query'
 import { Check, ChevronDown, LockKeyhole, RefreshCwIcon, SquareArrowOutUpRight, X } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import SellPositionModal from '@/app/[locale]/(platform)/_components/SellPositionModal'
@@ -24,6 +25,7 @@ import { useUserOpenOrdersQuery } from '@/app/[locale]/(platform)/event/[slug]/_
 import { useUserShareBalances } from '@/app/[locale]/(platform)/event/[slug]/_hooks/useUserShareBalances'
 import { calculateMarketFill, normalizeBookLevels } from '@/app/[locale]/(platform)/event/[slug]/_utils/EventOrderPanelUtils'
 import { Button } from '@/components/ui/button'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { ORDER_SIDE, ORDER_TYPE, OUTCOME_INDEX } from '@/lib/constants'
 import { fetchUserActivityData, fetchUserOtherBalance, fetchUserPositionsForMarket } from '@/lib/data-api/user'
 import { formatAmountInputValue, formatSharesLabel, fromMicro } from '@/lib/formatters'
@@ -98,6 +100,8 @@ interface CashOutModalPayload {
 }
 
 export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
+  const t = useExtracted('Event.Trade')
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const selectedMarketId = useOrder(state => state.market?.condition_id)
   const selectedOutcome = useOrder(state => state.outcome)
   const setMarket = useOrder(state => state.setMarket)
@@ -289,15 +293,16 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
         : normalizedOutcome === 'no'
           ? OUTCOME_INDEX.NO
           : OUTCOME_INDEX.YES
-      const outcomeLabel = position.outcome_text || (resolvedOutcomeIndex === OUTCOME_INDEX.NO ? 'No' : 'Yes')
+      const outcomeLabel = normalizeOutcomeLabel(position.outcome_text)
+        || (resolvedOutcomeIndex === OUTCOME_INDEX.NO ? t('No') : t('Yes'))
       const avgPrice = toNumber(position.avgPrice)
         ?? Number(fromMicro(String(position.average_position ?? 0), 6))
       const normalizedAvgPrice = Number.isFinite(avgPrice) ? avgPrice : null
 
       if (!aggregated[conditionId]) {
         aggregated[conditionId] = {
-          [OUTCOME_INDEX.YES]: { outcomeIndex: OUTCOME_INDEX.YES, label: 'Yes', shares: 0, totalCost: null },
-          [OUTCOME_INDEX.NO]: { outcomeIndex: OUTCOME_INDEX.NO, label: 'No', shares: 0, totalCost: null },
+          [OUTCOME_INDEX.YES]: { outcomeIndex: OUTCOME_INDEX.YES, label: t('Yes'), shares: 0, totalCost: null },
+          [OUTCOME_INDEX.NO]: { outcomeIndex: OUTCOME_INDEX.NO, label: t('No'), shares: 0, totalCost: null },
         }
       }
 
@@ -330,7 +335,7 @@ export default function EventMarkets({ event, isMobile }: EventMarketsProps) {
       }
       return acc
     }, {})
-  }, [event.markets, userPositions])
+  }, [event.markets, normalizeOutcomeLabel, t, userPositions])
 
   const convertOptions = useMemo(() => {
     if (!isNegRiskEnabled || !userPositions?.length) {
@@ -715,11 +720,12 @@ function ResolvedMarketRow({
   isExpanded: boolean
   onToggle: () => void
 }) {
+  const t = useExtracted('Event.Trade')
   const { market } = row
   const resolvedOutcomeIndex = resolveWinningOutcomeIndex(market)
   const hasResolvedOutcome = resolvedOutcomeIndex === OUTCOME_INDEX.YES || resolvedOutcomeIndex === OUTCOME_INDEX.NO
   const isYesOutcome = resolvedOutcomeIndex !== OUTCOME_INDEX.NO
-  const resolvedOutcomeLabel = isYesOutcome ? 'Yes' : 'No'
+  const resolvedOutcomeLabel = isYesOutcome ? t('Yes') : t('No')
   const resolvedVolume = Number.isFinite(market.volume) ? market.volume : 0
   const shouldShowIcon = showMarketIcon && Boolean(market.icon_url)
 
@@ -801,6 +807,7 @@ function ResolvedMarketRow({
 }
 
 function OtherOutcomeRow({ shares, showMarketIcon }: { shares: number, showMarketIcon?: boolean }) {
+  const t = useExtracted('Event.Trade')
   const sharesLabel = formatSharesLabel(shares, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
@@ -838,7 +845,7 @@ function OtherOutcomeRow({ shares, showMarketIcon }: { shares: number, showMarke
           >
             <LockKeyhole className="size-3 text-yes" />
             <span className="tabular-nums">{sharesLabel}</span>
-            <span>Yes</span>
+            <span>{t('Yes')}</span>
           </span>
         </div>
       </div>
@@ -883,6 +890,7 @@ function MarketDetailTabs({
   orderBookData,
   sharesByCondition,
 }: MarketDetailTabsProps) {
+  const t = useExtracted('Event.Trade')
   const user = useUser()
   const { selected: controlledTab, select } = tabController
   const positionSizeThreshold = 0.01
@@ -975,9 +983,9 @@ function MarketDetailTabs({
   )
   const resolvedOutcomeIndex = useMemo(() => resolveWinningOutcomeIndex(market), [market])
   const resolvedOutcomeLabel = resolvedOutcomeIndex === OUTCOME_INDEX.NO
-    ? 'No'
+    ? t('No')
     : resolvedOutcomeIndex === OUTCOME_INDEX.YES
-      ? 'Yes'
+      ? t('Yes')
       : 'Unknown'
 
   useEffect(() => {

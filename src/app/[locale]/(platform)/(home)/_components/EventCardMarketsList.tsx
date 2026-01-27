@@ -1,6 +1,7 @@
 import type { Event, Market, Outcome } from '@/types'
 import { CheckIcon, XIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { Link } from '@/i18n/navigation'
 import { OUTCOME_INDEX } from '@/lib/constants'
 
@@ -19,6 +20,7 @@ export default function EventCardMarketsList({
   onTrade,
   onToggle,
 }: EventCardMarketsListProps) {
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const marketsToRender = isResolvedEvent
     ? event.markets
         .map((market, index) => {
@@ -48,6 +50,7 @@ export default function EventCardMarketsList({
           : null
         const resolvedLabel = resolvedOutcome?.outcome_text
         const isYesOutcome = resolvedOutcome?.outcome_index === OUTCOME_INDEX.YES
+        const displayResolvedLabel = normalizeOutcomeLabel(resolvedLabel) ?? resolvedLabel
 
         return (
           <div
@@ -79,7 +82,7 @@ export default function EventCardMarketsList({
                                 ? <CheckIcon className="size-3 text-background" strokeWidth={2.5} />
                                 : <XIcon className="size-3 text-background" strokeWidth={2.5} />}
                             </span>
-                            <span className="min-w-8 text-left">{resolvedLabel}</span>
+                            <span className="min-w-8 text-left">{displayResolvedLabel}</span>
                           </span>
                         )
                       : (
@@ -108,7 +111,7 @@ export default function EventCardMarketsList({
                               className="group h-7 w-10 px-2 py-1 text-xs"
                             >
                               <span className="truncate group-hover:hidden">
-                                {market.outcomes[0].outcome_text}
+                                {normalizeOutcomeLabel(market.outcomes[0].outcome_text) ?? market.outcomes[0].outcome_text}
                               </span>
                               <span className="hidden group-hover:inline">
                                 {displayChance}
@@ -127,7 +130,7 @@ export default function EventCardMarketsList({
                               className="group h-auto w-11 px-2 py-1 text-xs"
                             >
                               <span className="truncate group-hover:hidden">
-                                {market.outcomes[1].outcome_text}
+                                {normalizeOutcomeLabel(market.outcomes[1].outcome_text) ?? market.outcomes[1].outcome_text}
                               </span>
                               <span className="hidden group-hover:inline">
                                 {oppositeChance}

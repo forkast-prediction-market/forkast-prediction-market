@@ -5,6 +5,7 @@ import type { Market, Outcome } from '@/types'
 import type { PredictionChartCursorSnapshot, PredictionChartProps } from '@/types/PredictionChartTypes'
 import { useQuery } from '@tanstack/react-query'
 import { Clock3Icon, SparkleIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import dynamic from 'next/dynamic'
 import { useEffect, useMemo, useState } from 'react'
 import EventChartControls, { defaultChartSettings } from '@/app/[locale]/(platform)/event/[slug]/_components/EventChartControls'
@@ -20,6 +21,7 @@ import {
 import { loadStoredChartSettings, storeChartSettings } from '@/app/[locale]/(platform)/event/[slug]/_utils/chartSettingsStorage'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { useWindowSize } from '@/hooks/useWindowSize'
 import { OUTCOME_INDEX } from '@/lib/constants'
 import { formatDate } from '@/lib/formatters'
@@ -39,6 +41,8 @@ const PredictionChart = dynamic<PredictionChartProps>(
 )
 
 export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventCreatedAt, isMobile }: MarketOutcomeGraphProps) {
+  const t = useExtracted('Event.Trade')
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const [activeTimeRange, setActiveTimeRange] = useState<TimeRange>('ALL')
   const [activeOutcomeIndex, setActiveOutcomeIndex] = useState(outcome.outcome_index)
   const [cursorSnapshot, setCursorSnapshot] = useState<PredictionChartCursorSnapshot | null>(null)
@@ -85,8 +89,12 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
   const showOutcomeSwitch = market.outcomes.length > 1
     && oppositeOutcome.outcome_index !== activeOutcome.outcome_index
   const showBothOutcomes = chartSettings.bothOutcomes && showOutcomeSwitch
-  const yesOutcomeLabel = market.outcomes.find(item => item.outcome_index === OUTCOME_INDEX.YES)?.outcome_text ?? 'Yes'
-  const noOutcomeLabel = market.outcomes.find(item => item.outcome_index === OUTCOME_INDEX.NO)?.outcome_text ?? 'No'
+  const yesOutcomeLabel = normalizeOutcomeLabel(
+    market.outcomes.find(item => item.outcome_index === OUTCOME_INDEX.YES)?.outcome_text,
+  ) ?? t('Yes')
+  const noOutcomeLabel = normalizeOutcomeLabel(
+    market.outcomes.find(item => item.outcome_index === OUTCOME_INDEX.NO)?.outcome_text,
+  ) ?? t('No')
 
   const {
     normalizedHistory,
@@ -113,10 +121,10 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
         ]
       : [{
           key: 'value',
-          name: activeOutcome.outcome_text,
+          name: normalizeOutcomeLabel(activeOutcome.outcome_text) ?? activeOutcome.outcome_text,
           color: activeOutcome.outcome_index === OUTCOME_INDEX.NO ? '#FF6600' : '#2D9CDB',
         }]),
-    [activeOutcome.outcome_index, activeOutcome.outcome_text, showBothOutcomes, yesOutcomeLabel, noOutcomeLabel],
+    [activeOutcome.outcome_index, activeOutcome.outcome_text, showBothOutcomes, yesOutcomeLabel, noOutcomeLabel, normalizeOutcomeLabel],
   )
   const chartSignature = useMemo(
     () => `${market.condition_id}:${activeOutcomeIndex}:${activeTimeRange}:${showBothOutcomes ? 'both' : 'single'}`,
@@ -188,7 +196,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
               <EventChartHeader
                 isSingleMarket
                 activeOutcomeIndex={activeOutcome.outcome_index as typeof OUTCOME_INDEX.YES | typeof OUTCOME_INDEX.NO}
-                activeOutcomeLabel={activeOutcome.outcome_text}
+                activeOutcomeLabel={normalizeOutcomeLabel(activeOutcome.outcome_text) ?? activeOutcome.outcome_text}
                 primarySeriesColor={primarySeriesColor}
                 yesChanceValue={typeof resolvedValue === 'number' ? resolvedValue : null}
                 effectiveBaselineYesChance={typeof baselineValue === 'number' ? baselineValue : null}
@@ -235,7 +243,7 @@ export default function MarketOutcomeGraph({ market, outcome, allMarkets, eventC
                   activeTimeRange={activeTimeRange}
                   onTimeRangeChange={setActiveTimeRange}
                   showOutcomeSwitch={showOutcomeSwitch}
-                  oppositeOutcomeLabel={oppositeOutcome.outcome_text}
+                  oppositeOutcomeLabel={normalizeOutcomeLabel(oppositeOutcome.outcome_text) ?? oppositeOutcome.outcome_text}
                   onShuffle={() => setActiveOutcomeIndex(oppositeOutcome.outcome_index)}
                   settings={chartSettings}
                   onSettingsChange={setChartSettings}

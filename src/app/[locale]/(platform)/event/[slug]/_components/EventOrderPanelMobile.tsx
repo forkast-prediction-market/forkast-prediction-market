@@ -5,6 +5,7 @@ import { useExtracted } from 'next-intl'
 import EventOrderPanelForm from '@/app/[locale]/(platform)/event/[slug]/_components/EventOrderPanelForm'
 import { Button } from '@/components/ui/button'
 import { Drawer, DrawerContent, DrawerTrigger } from '@/components/ui/drawer'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { ORDER_SIDE, OUTCOME_INDEX } from '@/lib/constants'
 import { formatCentsLabel } from '@/lib/formatters'
 import { useIsSingleMarket, useOrder, useOutcomeTopOfBookPrice } from '@/stores/useOrder'
@@ -15,6 +16,7 @@ interface EventMobileOrderPanelProps {
 
 export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelProps) {
   const t = useExtracted('Event.Trade')
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const state = useOrder()
   const isSingleMarket = useIsSingleMarket()
   const yesPrice = useOutcomeTopOfBookPrice(OUTCOME_INDEX.YES, ORDER_SIDE.BUY)
@@ -45,7 +47,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
                 <span className="truncate opacity-70">
                   {t('Buy')}
                   {' '}
-                  {state.market!.outcomes[0].outcome_text}
+                  {normalizeOutcomeLabel(state.market!.outcomes[0].outcome_text) ?? state.market!.outcomes[0].outcome_text}
                 </span>
                 <span className="shrink-0 font-bold">
                   {formatCentsLabel(yesPrice)}
@@ -66,7 +68,7 @@ export default function EventOrderPanelMobile({ event }: EventMobileOrderPanelPr
                 <span className="truncate opacity-70">
                   {t('Buy')}
                   {' '}
-                  {state.market!.outcomes[1].outcome_text}
+                  {normalizeOutcomeLabel(state.market!.outcomes[1].outcome_text) ?? state.market!.outcomes[1].outcome_text}
                 </span>
                 <span className="shrink-0 font-bold">
                   {formatCentsLabel(noPrice)}

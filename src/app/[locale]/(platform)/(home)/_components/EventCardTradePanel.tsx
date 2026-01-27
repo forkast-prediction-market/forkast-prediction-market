@@ -1,6 +1,7 @@
 import type { SelectedOutcome } from '@/types/EventCardTypes'
 import { DollarSignIcon, GripVerticalIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { formatAmountInputValue } from '@/lib/formatters'
 
@@ -31,6 +32,7 @@ export default function EventCardTradePanel({
   onConfirmTrade,
   onCancelTrade,
 }: EventCardTradePanelProps) {
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const buyButtonClassName = activeOutcome.variant === 'yes'
     ? 'bg-yes-foreground text-white hover:bg-yes-foreground/90 dark:bg-yes dark:hover:bg-yes/90'
     : 'bg-no-foreground text-white hover:bg-no-foreground/90 dark:bg-no dark:hover:bg-no/90'
@@ -207,7 +209,7 @@ export default function EventCardTradePanel({
                 <div className="text-sm font-bold">
                   Buy
                   {' '}
-                  {activeOutcome.outcome.outcome_text}
+                  {normalizeOutcomeLabel(activeOutcome.outcome.outcome_text) ?? activeOutcome.outcome.outcome_text}
                 </div>
                 <div className="text-xs opacity-90">
                   To win $

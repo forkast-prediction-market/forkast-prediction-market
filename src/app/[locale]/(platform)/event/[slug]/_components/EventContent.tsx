@@ -2,6 +2,7 @@
 
 import type { Event, User } from '@/types'
 import { ArrowUpIcon } from 'lucide-react'
+import { useExtracted } from 'next-intl'
 import dynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -39,6 +40,7 @@ interface EventContentProps {
 }
 
 export default function EventContent({ event, user, marketContextEnabled, marketSlug }: EventContentProps) {
+  const t = useExtracted('Event.Trade')
   const setEvent = useOrder(state => state.setEvent)
   const setMarket = useOrder(state => state.setMarket)
   const setOutcome = useOrder(state => state.setOutcome)
@@ -75,9 +77,9 @@ export default function EventContent({ event, user, marketContextEnabled, market
     return resolveWinningOutcomeIndex(selectedMarket)
   }, [selectedMarket])
   const selectedResolvedOutcomeLabel = selectedResolvedOutcomeIndex === OUTCOME_INDEX.NO
-    ? 'No'
+    ? t('No')
     : selectedResolvedOutcomeIndex === OUTCOME_INDEX.YES
-      ? 'Yes'
+      ? t('Yes')
       : 'Unknown'
 
   useEffect(() => {

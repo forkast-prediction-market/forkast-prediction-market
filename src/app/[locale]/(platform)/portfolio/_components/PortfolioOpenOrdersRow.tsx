@@ -11,6 +11,7 @@ import {
 } from '@/app/[locale]/(platform)/portfolio/_utils/PortfolioOpenOrdersUtils'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useOutcomeLabel } from '@/hooks/useOutcomeLabel'
 import { Link } from '@/i18n/navigation'
 import { formatCurrency } from '@/lib/formatters'
 import { cn } from '@/lib/utils'
@@ -20,13 +21,15 @@ interface PortfolioOpenOrdersRowProps {
 }
 
 export default function PortfolioOpenOrdersRow({ order }: PortfolioOpenOrdersRowProps) {
+  const normalizeOutcomeLabel = useOutcomeLabel()
   const totalShares = getOrderTotalShares(order)
   const filledShares = getOrderFilledShares(order)
   const totalValue = order.side === 'buy'
     ? microToUnit(order.maker_amount)
     : microToUnit(order.taker_amount)
   const filledLabel = `${filledShares.toLocaleString(undefined, { maximumFractionDigits: 3 })} / ${totalShares.toLocaleString(undefined, { maximumFractionDigits: 3 })}`
-  const outcomeText = order.outcome.text || (order.outcome.index === 0 ? 'Yes' : 'No')
+  const outcomeText = normalizeOutcomeLabel(order.outcome.text || (order.outcome.index === 0 ? 'Yes' : 'No'))
+    || (order.outcome.index === 0 ? 'Yes' : 'No')
   const outcomeIsYes = order.outcome.index === 0
   const outcomeColor = outcomeIsYes ? 'bg-yes/15 text-yes' : 'bg-no/15 text-no'
   const priceLabel = formatCents(order.price)
