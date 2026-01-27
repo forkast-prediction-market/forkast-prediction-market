@@ -1,7 +1,7 @@
 import type { LiFiWalletTokenItem } from '@/hooks/useLiFiWalletTokens'
 import { useQuery } from '@tanstack/react-query'
 import { parseUnits } from 'viem'
-import { sanitizeNumericInput } from '@/lib/amount-input'
+import { sanitizeLiFiAmount } from '@/lib/lifi-amount'
 
 export const LIFI_QUOTE_QUERY_KEY = 'lifi-quote'
 
@@ -20,7 +20,8 @@ export function useLiFiQuote({
   toAddress,
   refreshIndex = 0,
 }: UseLiFiQuoteParams) {
-  const sanitizedAmount = sanitizeNumericInput(amountValue)
+  const tokenDecimals = fromToken?.decimals ?? 18
+  const sanitizedAmount = sanitizeLiFiAmount(amountValue, tokenDecimals)
   const hasAddresses = Boolean(fromAddress && toAddress && fromToken)
   const hasValidAmount = (() => {
     if (!fromToken || !sanitizedAmount) {

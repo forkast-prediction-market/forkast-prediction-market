@@ -2,8 +2,8 @@ import type { LiFiWalletTokenItem } from '@/hooks/useLiFiWalletTokens'
 import { useMutation } from '@tanstack/react-query'
 import { encodeFunctionData, erc20Abi, maxUint256, parseUnits } from 'viem'
 import { usePublicClient, useWalletClient } from 'wagmi'
-import { sanitizeNumericInput } from '@/lib/amount-input'
 import { ZERO_ADDRESS } from '@/lib/contracts'
+import { sanitizeLiFiAmount } from '@/lib/lifi-amount'
 
 interface UseLiFiExecutionParams {
   fromToken?: LiFiWalletTokenItem | null
@@ -33,7 +33,7 @@ export function useLiFiExecution({
         throw new Error('Missing token or wallet addresses.')
       }
 
-      const sanitizedAmount = sanitizeNumericInput(amountValue)
+      const sanitizedAmount = sanitizeLiFiAmount(amountValue, fromToken.decimals)
       let fromAmountBigInt: bigint
       try {
         fromAmountBigInt = parseUnits(sanitizedAmount, fromToken.decimals)
