@@ -1,7 +1,7 @@
 import type { RefObject } from 'react'
 import type { LimitExpirationOption } from '@/stores/useOrder'
 import type { OrderSide } from '@/types'
-import { TriangleAlertIcon } from 'lucide-react'
+import { InfoIcon, TriangleAlertIcon } from 'lucide-react'
 import { useExtracted } from 'next-intl'
 import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
@@ -22,10 +22,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useBalance } from '@/hooks/useBalance'
 import { formatDisplayAmount, getAmountSizeClass, MAX_AMOUNT_INPUT, sanitizeNumericInput } from '@/lib/amount-input'
 import { ORDER_SIDE } from '@/lib/constants'
-import { formatAmountInputValue, formatCurrency } from '@/lib/formatters'
+import { formatAmountInputValue, formatCurrency, formatSharesLabel } from '@/lib/formatters'
 import { MIN_LIMIT_ORDER_SHARES } from '@/lib/orders/validation'
 import { cn } from '@/lib/utils'
 
@@ -46,6 +47,7 @@ interface EventOrderPanelLimitControlsProps {
   limitExpirationOption: LimitExpirationOption
   limitExpirationTimestamp: number | null
   isLimitOrder: boolean
+  matchingShares?: number | null
   availableShares: number
   showLimitMinimumWarning: boolean
   shouldShakeShares?: boolean
@@ -66,6 +68,7 @@ export default function EventOrderPanelLimitControls({
   limitExpirationOption,
   limitExpirationTimestamp,
   isLimitOrder,
+  matchingShares,
   availableShares,
   showLimitMinimumWarning,
   shouldShakeShares,
@@ -118,6 +121,9 @@ export default function EventOrderPanelLimitControls({
     ? (balance?.raw ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
     : '0.00'
   const maxLabel = t('Max')
+  const matchingSharesLabel = matchingShares && matchingShares > 0
+    ? formatSharesLabel(matchingShares)
+    : null
   const [isExpirationModalOpen, setIsExpirationModalOpen] = useState(false)
   const [draftExpiration, setDraftExpiration] = useState<Date>(() => {
     const now = new Date()
@@ -319,6 +325,26 @@ export default function EventOrderPanelLimitControls({
                 })}
               </div>
             )}
+        {matchingSharesLabel && (
+          <div className="mt-2 ml-auto flex w-1/2 justify-end">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span
+                  className={`
+                    inline-flex items-center gap-1 rounded-md bg-yes/15 p-1 text-xs font-semibold text-yes-foreground
+                    transition-colors
+                  `}
+                >
+                  <InfoIcon className="size-3" aria-hidden />
+                  <span>{t('{shares} matching', { shares: matchingSharesLabel })}</span>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-48 text-xs" collisionPadding={8}>
+                {t('{shares} shares from this order will be executed imediatelly', { shares: matchingSharesLabel })}
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        )}
       </div>
 
       <div className="my-4 border-b border-border" />

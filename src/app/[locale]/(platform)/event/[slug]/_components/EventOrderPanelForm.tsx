@@ -108,9 +108,14 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
   const limitSharesNumber = Number.parseFloat(state.limitShares) || 0
   const { balance, isLoadingBalance } = useBalance()
   const outcomeTokenId = state.outcome?.token_id ? String(state.outcome.token_id) : null
+  const shouldLoadOrderBookSummary = Boolean(
+    outcomeTokenId
+    && (state.type === ORDER_TYPE.MARKET
+      || (state.type === ORDER_TYPE.LIMIT && Number.parseFloat(state.limitPrice || '0') > 0)),
+  )
   const orderBookSummaryQuery = useOrderBookSummaries(
     outcomeTokenId ? [outcomeTokenId] : [],
-    { enabled: Boolean(outcomeTokenId && state.type === ORDER_TYPE.MARKET) },
+    { enabled: shouldLoadOrderBookSummary },
   )
   const validCustomExpirationTimestamp = useMemo(() => {
     const nowSeconds = Math.floor(Date.now() / 1000)
@@ -182,6 +187,38 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
       asks: normalizeBookLevels(summary?.asks, 'ask'),
     }
   }, [orderBookSummaryQuery.data, outcomeTokenId])
+  const limitMatchingShares = useMemo(() => {
+    if (!isLimitOrder) {
+      return null
+    }
+
+    const limitPriceValue = Number.parseFloat(state.limitPrice || '0') || 0
+    const limitSharesValue = Number.parseFloat(state.limitShares || '0') || 0
+    if (limitPriceValue <= 0 || limitSharesValue <= 0) {
+      return null
+    }
+
+    const levels = state.side === ORDER_SIDE.BUY ? normalizedOrderBook.asks : normalizedOrderBook.bids
+    if (!levels.length) {
+      return null
+    }
+
+    const availableShares = levels.reduce((total, level) => {
+      if (state.side === ORDER_SIDE.BUY ? level.priceCents <= limitPriceValue : level.priceCents >= limitPriceValue) {
+        return total + level.size
+      }
+      return total
+    }, 0)
+    const matchingShares = Math.min(limitSharesValue, availableShares)
+    return matchingShares > 0 ? Number(matchingShares.toFixed(4)) : null
+  }, [
+    isLimitOrder,
+    normalizedOrderBook.asks,
+    normalizedOrderBook.bids,
+    state.limitPrice,
+    state.limitShares,
+    state.side,
+  ])
 
   const availableBalanceForOrders = Math.max(0, balance.raw)
   const formattedBalanceText = Number.isFinite(balance.raw)
@@ -827,6 +864,7 @@ export default function EventOrderPanelForm({ event, isMobile }: EventOrderPanel
                         limitExpirationOption={state.limitExpirationOption}
                         limitExpirationTimestamp={state.limitExpirationTimestamp}
                         isLimitOrder={isLimitOrder}
+                        matchingShares={limitMatchingShares}
                         availableShares={selectedShares}
                         showLimitMinimumWarning={showLimitMinimumWarning}
                         shouldShakeShares={shouldShakeLimitShares}
