@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'Admin',
 }
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
   return routing.locales.map(locale => ({ locale }))
 }
 

@@ -1,9 +1,14 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import EventContent from '@/app/[locale]/(platform)/event/[slug]/_components/EventContent'
+import { routing } from '@/i18n/routing'
 import { loadMarketContextSettings } from '@/lib/ai/market-context-config'
 import { EventRepository } from '@/lib/db/queries/event'
 import { UserRepository } from '@/lib/db/queries/user'
+
+export async function generateStaticParams() {
+  return routing.locales.map(locale => ({ locale }))
+}
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/event/[slug]/[market]'>): Promise<Metadata> {
   const { slug } = await params

@@ -1,3 +1,9 @@
+import { routing } from '@/i18n/routing'
+
+export async function generateStaticParams() {
+  return routing.locales.map(locale => ({ locale }))
+}
+
 export default async function EventLayout({ children }: LayoutProps<'/[locale]/event/[slug]'>) {
   return (
     <main className="container grid min-h-screen gap-8 pb-12 lg:grid-cols-[minmax(0,3fr)_21.25rem] lg:gap-10">

@@ -31,7 +31,7 @@ export const viewport: Viewport = {
   ],
 }
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
   return routing.locales.map(locale => ({ locale }))
 }
 

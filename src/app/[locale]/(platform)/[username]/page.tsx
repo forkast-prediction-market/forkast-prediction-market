@@ -4,9 +4,14 @@ import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import PublicProfileHeroCards from '@/app/[locale]/(platform)/[username]/_components/PublicProfileHeroCards'
 import PublicProfileTabs from '@/app/[locale]/(platform)/[username]/_components/PublicProfileTabs'
+import { routing } from '@/i18n/routing'
 import { UserRepository } from '@/lib/db/queries/user'
 import { truncateAddress } from '@/lib/formatters'
 import { fetchPortfolioSnapshot } from '@/lib/portfolio'
+
+export async function generateStaticParams() {
+  return routing.locales.map(locale => ({ locale }))
+}
 
 export async function generateMetadata({ params }: PageProps<'/[locale]/[username]'>): Promise<Metadata> {
   const { username } = await params

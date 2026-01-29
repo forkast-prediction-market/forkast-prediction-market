@@ -1,8 +1,13 @@
 import type { Metadata } from 'next'
 import SettingsSidebar from '@/app/[locale]/(platform)/settings/_components/SettingsSidebar'
+import { routing } from '@/i18n/routing'
 
 export const metadata: Metadata = {
   title: 'Settings',
+}
+
+export async function generateStaticParams() {
+  return routing.locales.map(locale => ({ locale }))
 }
 
 export default async function SettingsLayout({ children }: LayoutProps<'/[locale]/settings'>) {
