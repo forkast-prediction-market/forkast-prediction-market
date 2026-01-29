@@ -97,6 +97,23 @@ export default function EventOrderPanelLimitControls({
     return Number.isFinite(total) ? total : 0
   }, [limitPriceNumber, limitSharesNumber])
 
+  const effectivePriceDollars = Number.isFinite(limitPriceNumber) && limitPriceNumber > 0
+    ? limitPriceNumber / 100
+    : null
+  const decimalOdds = effectivePriceDollars ? 1 / effectivePriceDollars : null
+  const americanOdds = (() => {
+    if (!decimalOdds || decimalOdds <= 0) {
+      return null
+    }
+    if (decimalOdds === 1) {
+      return null
+    }
+    if (decimalOdds >= 2) {
+      return (decimalOdds - 1) * 100
+    }
+    return -100 / (decimalOdds - 1)
+  })()
+
   const potentialWin = useMemo(() => {
     if (limitSharesNumber <= 0) {
       return 0
@@ -433,9 +450,61 @@ export default function EventOrderPanelLimitControls({
               <>
                 <div className="flex items-center justify-between text-lg font-bold text-foreground">
                   <span>{t('Total')}</span>
-                  <span className="font-semibold text-primary">
-                    {totalValueLabel}
-                  </span>
+                  {effectivePriceDollars
+                    ? (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="border-b border-dotted border-primary font-semibold text-primary">
+                              {totalValueLabel}
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent
+                            side="top"
+                            sideOffset={8}
+                            hideArrow
+                            className={`
+                              w-52 border border-border bg-background px-4 py-3 text-sm font-semibold
+                              text-muted-foreground shadow-xl
+                            `}
+                          >
+                            <div className="flex flex-col gap-2">
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="h-4 w-1.5 rounded-full bg-blue-500" />
+                                  <span>{t('Price')}</span>
+                                </div>
+                                <span className="text-base font-bold">
+                                  {limitPriceNumber.toFixed(1)}
+                                  ¢
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="h-4 w-1.5 rounded-full bg-amber-400" />
+                                  <span>{t('American')}</span>
+                                </div>
+                                <span className="text-base font-bold">
+                                  {americanOdds != null ? `${americanOdds >= 0 ? '+' : ''}${americanOdds.toFixed(1)}` : '—'}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="flex items-center gap-2">
+                                  <span className="h-4 w-1.5 rounded-full bg-yes" />
+                                  <span>{t('Decimal')}</span>
+                                </div>
+                                <span className="text-base font-bold">
+                                  {decimalOdds != null ? decimalOdds.toFixed(3) : '—'}
+                                </span>
+                              </div>
+                            </div>
+                          </TooltipContent>
+                        </Tooltip>
+                      )
+                    : (
+                        <span className="border-b border-dotted border-primary font-semibold text-primary">
+                          {totalValueLabel}
+                        </span>
+                      )}
                 </div>
                 <div className="flex items-center justify-between text-lg font-bold">
                   <span className="flex items-center gap-2 text-foreground">
